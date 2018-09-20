@@ -1,0 +1,84 @@
+
+# ecmaspeak-py/emu_eqn.grammar:
+# A grammar for the content of <emu-eqn> elements.
+#
+# Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
+
+{START} :
+    {EMU_EQN_BODY}$
+
+{EMU_EQN_BODY} :
+    {ONE_LINE_EQN}
+    {MULTI_LINE_EQN}
+
+# --------------------------
+
+{MULTI_LINE_EQN} :
+    {ID}\({VAR}\){RHSS}{_NL} +
+
+{RHSS} :
+    {RHSS}{RHS}
+    {RHS}
+
+{RHS} :
+    {_NL} += {EXPR} +if {CONDITION}
+
+{CONDITION} :
+    {COND} and {COND}
+    {COND}
+
+{COND} :
+    {EXPR} &ne; {EXPR}
+    {EXPR} &le; {EXPR}
+    {EXPR} ?= ?{EXPR}
+    {EXPR} &le; {EXPR} &lt; {EXPR}
+
+# --------------------------
+
+{ONE_LINE_EQN} :
+    {CONSTANT_DEF}
+    {OPERATION_DEF}
+
+{CONSTANT_DEF} :
+    {ID} = {EXPR}
+    {ID} = {EXPR} = {EXPR}
+
+{OPERATION_DEF} :
+    {ID}\({VAR}\) = {EXPR}
+
+# ------
+
+{EXPR} :
+    the largest integer {VAR} \(closest to positive infinity\) such that {CONDITION}
+    {SUM}
+
+{SUM} :
+    {SUM} ?(\+|-) ?{TERM}
+    {TERM}
+
+{TERM} :
+    {PRODUCT}
+
+{PRODUCT} :
+    {FACTOR} &times; {FACTOR}
+    {FACTOR} modulo {FACTOR}
+    {FACTOR} ?/ ?{FACTOR}
+    {FACTOR}
+
+{FACTOR} :
+    \({SUM}\)
+    {ID}\({EXPR}\)
+    {ID}
+    {NUM_LITERAL}
+    {VAR}
+
+# ------
+
+{VAR} :
+    \b_\w+_\b
+
+{NUM_LITERAL} :
+    \d+
+
+{ID} :
+    \b[A-Za-z]\w*\b

@@ -1,0 +1,159 @@
+
+# ecmaspeak-py/early_error.grammar:
+# A grammar for Early Error rules.
+#
+# Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
+
+{START} :
+    {LI}$
+
+{LI} :
+    <li>{EE_RULE}</li>
+    <li>\n +{EE_RULE}\n +</li>
+
+{EE_RULE} :
+    <p>It is a Syntax Error if {LOCAL_REF} is\n +<br>\n +{EMU_GRAMMAR}\n +<br>\n +and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>
+    <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>\n +<emu-alg>(.|\n)+?</emu-alg>
+    All Early Error rules for {NONTERMINAL} and its derived productions( also)? apply to {NAMED_OPERATION_INVOCATION}\.
+    All early error rules for {NONTERMINAL} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}\.
+    Always throw a Syntax Error if code matches this production\.
+    For each {NONTERMINAL} {VAR} in ReferencedBindings of {NONTERMINAL}: It is a Syntax Error if {CONDITION}\.
+    If {CONDITION}, it is a Syntax Error if {CONDITION}\.
+    If {CONDITION}, the Early Error rules for {EMU_GRAMMAR} are applied\.
+    It is (a Syntax Error|an early Syntax Error|an early Reference Error) if {CONDITION}\.
+    It is a Syntax Error if {CONDITION}\. Additional early error rules for {G_SYM} (in|within) direct eval are defined in {EMU_XREF}\.
+
+{CONDITION} :
+    {CONDITION_1}
+    {CONDITION_1} and if {CONDITION_1}
+    {CONDITION_1} and {CONDITION_1}
+    {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
+    {CONDITION_1} or if {CONDITION_1}
+    {CONDITION_1} or {CONDITION_1}
+    {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>
+    {CONDITION_1} unless {CONDITION_1}
+
+    {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
+
+{CONDITION_1} :
+    any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
+    any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
+    any source text matches this rule
+    the <sub>\[Tagged\]</sub> parameter was not set
+    the List of Unicode code points that is SourceText of {NONTERMINAL} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {EMU_XREF}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
+    the List of Unicode code points that is SourceText of {NONTERMINAL} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
+    the List of Unicode code points that is SourceText of {NONTERMINAL} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by SourceText of {NONTERMINAL} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {EMU_XREF} or {EMU_XREF}
+    the StringValue of {LOCAL_REF} is `"eval"` or `"arguments"`
+    the enclosing {NONTERMINAL} does not contain a {NONTERMINAL} with an enclosed {NONTERMINAL} whose StringValue equals the StringValue of the {NONTERMINAL} of this production's {NONTERMINAL}
+    the goal symbol of the syntactic grammar is {NONTERMINAL}
+    the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
+    the source code containing {G_SYM} is eval code that is being processed by a direct eval
+    the source code matching this production is strict code
+    the source code matching this production is strict mode code
+    this production has an? <sub>\[\w+\]</sub> parameter
+    {LOCAL_REF} Contains {G_SYM}
+    {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
+    {LOCAL_REF} is not covering an? {NONTERMINAL}
+    {LOCAL_REF} contains a Unicode escape sequence
+    {LOCAL_REF} contains multiple {NONTERMINAL}s whose enclosed {NONTERMINAL}s have the same StringValue
+    {LOCAL_REF} derives a phrase that would produce a Syntax Error according to these rules if that phrase were substituted for {NONTERMINAL}. This rule is recursively applied
+    {LOCAL_REF} is an {NONTERMINAL} or an {NONTERMINAL}
+    {LOCAL_REF} is contained in strict mode code
+    {LOCAL_REF} is either an {NONTERMINAL} or an {NONTERMINAL}
+    {LOCAL_REF} is neither an {NONTERMINAL} nor an {NONTERMINAL}
+    {LOCAL_REF} is not nested, directly or indirectly \(but not crossing function boundaries\), within an {NONTERMINAL}
+    {LOCAL_REF} is not nested, directly or indirectly \(but not crossing function boundaries\), within an {NONTERMINAL} or a {NONTERMINAL}
+    {LOCAL_REF} is not present
+    {LOCAL_REF} is present
+    {LOCAL_REF} is {EMU_GRAMMAR}
+    {NAMED_OPERATION_INVOCATION} cannot be recognized using the goal symbol {NONTERMINAL} of the ECMAScript RegExp grammar specified in <emu-xref href="#sec-patterns"></emu-xref>
+    {NAMED_OPERATION_INVOCATION} contains any code points other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"`, or if it contains the same code point more than once
+    {NAMED_OPERATION_INVOCATION} contains any duplicate elements
+    {NAMED_OPERATION_INVOCATION} contains any duplicate entries
+    {NAMED_OPERATION_INVOCATION} contains more than one occurrence of `"constructor"`
+    {NAMED_OPERATION_INVOCATION} contains {STR_LITERAL}
+    {NAMED_OPERATION_INVOCATION} is `"arguments"` or `"eval"`
+    {NAMED_OPERATION_INVOCATION} is a {NONTERMINAL}
+    {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
+    {NAMED_OPERATION_INVOCATION} is larger than {VAR} \({EMU_XREF}\)
+    {NAMED_OPERATION_INVOCATION} is none of `"\$"`, or `"_"`, or the UTF16Encoding of a code point matched by the {NONTERMINAL} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is none of `"\$"`, or `"_"`, or the UTF16Encoding of either &lt;ZWNJ&gt; or &lt;ZWJ&gt;, or the UTF16Encoding of a Unicode code point that would be matched by the {NONTERMINAL} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is not {LITERAL}
+    {NAMED_OPERATION_INVOCATION} is one of: {STR_LITERAL}, {STR_LITERAL}, {STR_LITERAL}, {STR_LITERAL}, {STR_LITERAL}, {STR_LITERAL}, {STR_LITERAL}, or {STR_LITERAL}
+    {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any \|ReservedWord\| except for `yield` or `await`
+    {NAMED_OPERATION_INVOCATION} is {LITERAL}
+    {NAMED_OPERATION_INVOCATION} is: `"implements"`, `"interface"`, `"let"`, `"package"`, `"private"`, `"protected"`, `"public"`, `"static"`, or `"yield"`
+
+    {LOCAL_REF} is the {NONTERMINAL} {TERMINAL} or the {NONTERMINAL} {TERMINAL}
+
+    {VAR} &ge; 2<sup>32</sup> - 1
+
+    ## directed-operations:
+    ## {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
+
+{NAMED_OPERATION_INVOCATION} :
+    (?:the )?([A-Z][a-zA-Z]+) of {LOCAL_REF}
+    (?:the )?([A-Z][a-zA-Z]+) of {LOCAL_REF} {WITH_ARGS}
+    (SV|AssignmentTargetType|IsLabelledFunction)\({NONTERMINAL}\)
+
+    ## directed-operations:
+    ## {VAR}\.\w+\(\)
+    ## {NONTERMINAL}\.\w+\(\)
+    ## {NONTERMINAL}\.\w+\({G_SYM}\)
+
+
+{LOCAL_REF} :
+    {PROD_REF}
+    {VAR}
+
+{PROD_REF} :
+    the code matched by this production
+    the code that matches this production
+    the derived {NONTERMINAL}
+    the first {NONTERMINAL}
+    the second {NONTERMINAL}
+    the {NONTERMINAL}
+    the {NONTERMINAL} containing this {NONTERMINAL}
+    this phrase
+    this {NONTERMINAL}
+    {NONTERMINAL}
+
+{WITH_ARGS} :
+    with argument {EX}
+    with arguments {EX} and {EX}
+
+{EX} :
+    &laquo; &raquo;
+    {LITERAL}
+
+{LITERAL} :
+    {STR_LITERAL}
+    {BOOL_LITERAL}
+    ~(invalid|simple|strict)~
+
+{VAR} :
+    (_n_)
+    (_NcapturingParens_)
+
+{EMU_GRAMMAR} :
+    <emu-grammar>([^<>]+)</emu-grammar>
+
+{G_SYM} :
+    {NONTERMINAL}
+    {TERMINAL}
+
+{STR_LITERAL} :
+    `"[^"`]*"`
+
+{TERMINAL} :
+    `[a-z]+`
+
+{NONTERMINAL} :
+    \|([A-Za-z][A-Za-z0-9]+(?:\[[^][]+\])?(?:_opt)?)\|
+
+{BOOL_LITERAL} :
+    \*(true|false)\*
+
+{EMU_XREF} :
+    <emu-xref [^<>]+></emu-xref>
+

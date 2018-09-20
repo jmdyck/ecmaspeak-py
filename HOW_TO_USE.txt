@@ -1,0 +1,161 @@
+
+# ecmaspeak-py/HOW_TO_USE.txt:
+# Example commands for running the scripts in this repo.
+#
+# Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
+
+
+# (Although this file may look like a shell script,
+# you shouldn't treat it as such.)
+
+# The scripts in $EK communicate via a pickle-file ($D/spec.pickle).
+# To ensure that spec.pickle has the required info,
+# there are some constraints on the order in which
+# you run the scripts. 
+# In this chart, each script is a 'child' of the script that it must follow:
+#
+#    analyze_spec.py
+#     |- render_spec.py
+#     |- operation_headers.py
+#     |- parse_pseudocode.py
+#         |- static_type_analysis.py
+
+# (Actually, the circumstances for running static_type_analysis.py
+# are more complicated, but I'll get to that.)
+
+# You might wonder why there are multiple scripts.
+# If I had a faster computer or a faster implementation,
+# the various scripts would instead be modules of a single executable,
+# which would simply recalculate things from scratch
+# each time it was invoked, for whatever purpose.
+# But as things stand, that would take too long.
+# In particular, parse_pseudocode.py and static_type_analysis.py
+# take a while to run, so if I'm iterating on the latter,
+# I don't want to wait for the former each time.
+
+# ----
+
+# These commands assume you're running from the main directory
+# of the 'ecma262' repo (or a fork thereof).
+# I.e., 'spec.html' is a file in the current directory.
+
+# The location of the ecmaspeak-py directory:
+EK=../ecmaspeak-py
+
+# The scripts create a fair number of output files.
+# To prevent them cluttering up the current directory,
+# you specify (as the first arg to each script)
+# another directory where they should all go.
+# In the following commands, I use the shell variable $D for this.
+# Specifically, `gcbn` returns git's current branch name,
+alias gcbn='git rev-parse --abbrev-ref HEAD'
+# so D=_`gcbn` makes a separate directory for each branch.
+# (The initial underscore makes the directories easy to gitignore.)
+
+# Because of the large amount of output,
+# it isn't practical to examine it all after each run.
+# So instead, I typically only look at the differences
+# between successive runs.
+# The scripts generate their output as foo.new,
+# then the 'mu' command shows the difference (if any) between foo and foo.new,
+# and prompts me to accept the new file.
+
+# --------------------------------------------------------------------
+
+D=_`gcbn` && $EK/analyze_spec.py $D spec.html && mu -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B,J}_cfps.json sdo_coverage
+# (~ 2s)
+
+# {lexical,syntactic}{A,B,J}_{min_len,firstk,expanded_grammar,automaton}
+# {lexical,syntactic}_{min_len,firstk,expanded_grammar} syntactic_automaton
+# 
+# # LR0 machine constructed (in 13 sec) with 3394 states and 539 conflicts
+
+# --------------------------------------------------------------------
+D=_`gcbn` && $EK/parse_pseudocode.py $D && mu -d $D {emu_eqn,early_error,inline_SDO,emu_alg}_{ambig,errors,prod_counts,parsed}
+# (~ 18s)
+
+# parse_emu_eqns...
+# SLR(1) machine constructed with 66 states and 2 conflicts
+# LR_Parser construction took 0 seconds
+#
+# parse_early_errors:
+# SLR(1) machine constructed with 265 states and 0 conflicts
+# LR_Parser construction took 0 seconds
+#
+# parse_inline_SDO:
+# SLR(1) machine constructed with 178 states and 35 conflicts
+# LR_Parser construction took 0 seconds
+#
+# parse_emu_algs:
+# SLR(1) machine constructed with 3896 states and 2295 conflicts
+# LR_Parser construction took 0 seconds
+# parsing 1790 emu-algs took 15 seconds
+
+# If emu_alg has ambiguites:
+csplit $D/emu_alg_ambig.new '/^(/' '{*}'
+# then compare xx* to see where the problem is.
+
+# --------------------------------------------------------------------
+D=_`gcbn` && $EK/render_spec.py $D && mu -d $D index.html
+# (~ 3s)
+
+# Commands to help compare my rendering to the official rendering:
+git checkout upstream/gh-pages
+cp index.html _master/ref.index.html.new
+git checkout master
+# delete line 41
+# %s/ id="_ref_[0-9]*"//g
+# g/<emu-alg/,/<\/emu-alg>/ s!<\(ol\|ul\|li\|/ol\|/ul\)>!&!g
+# g/<emu-eqn/ s!</div><div!</div><div!g
+# %s/ ? / ?\&nbsp;/g
+# %s!\n  *</li>\n</ol>!</li></ol>!
+# %s!<emu-rhs a="\w\+"!<emu-rhs!g
+# %s/ title=""/ title/g
+mu _master/ref.index.html
+gdiff -R _master/ref.index.html _master/\index.html
+
+# --------------------------------------------------------------------
+D=_`gcbn` && $EK/operation_headers.py $D && mu -d $D oh_warnings unconverted_natures spec_w_eoh
+# (~ 2s)
+
+# ----------------------------------------------------
+
+git checkout operation_headers
+
+# See `git rebase --help`:
+# "The easy case"
+# git rebase editorial
+# "The hard case"
+git rebase --onto editorial HEAD~1
+
+diff _editorial/spec_w_eoh spec.html
+if necc:
+    gdiff _editorial/spec_w_eoh spec.html
+    git commit --amend spec.html
+
+Run the analyze_spec and parse_pseudocode commands
+
+D=_`gcbn` && $EK/static_type_analysis.py $D
+D=_`gcbn` && $EK/static_type_analysis.py $D && mu -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
+# (~ 23s)
+	# split_types
+
+
+git checkout op_headers2
+
+# git rebase operation_headers
+git rebase --onto operation_headers HEAD~1 && diff _operation_headers/spec_w_edits spec.html
+if necc:
+    gdiff _operation_headers/spec_w_edits spec.html
+    git commit --amend spec.html
+
+# ----------------------------
+
+git_review master..editorial
+or
+git_review origin/editorial..editorial
+
+# git push origin -f master reference_abstract_ops simplify_2_repeat_steps editorial ed_merge operation_headers op_headers2
+git push origin -f master editorial operation_headers op_headers2
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
