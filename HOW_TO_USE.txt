@@ -57,12 +57,14 @@ alias gcbn='git rev-parse --abbrev-ref HEAD'
 # So instead, I typically only look at the differences
 # between successive runs.
 # The scripts generate their output as foo.new,
-# then the 'mu' command shows the difference (if any) between foo and foo.new,
+# then the 'car' command shows the difference (if any) between foo and foo.new,
 # and prompts me to accept the new file.
+# (car is a symlink or alias of the compare_and_replace.py script:
+# https://github.com/jmdyck/compare_and_replace.py)
 
 # --------------------------------------------------------------------
 
-D=_`gcbn` && $EK/analyze_spec.py $D spec.html && mu -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B,J}_cfps.json sdo_coverage
+D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B,J}_cfps.json sdo_coverage
 # (~ 2s)
 
 # {lexical,syntactic}{A,B,J}_{min_len,firstk,expanded_grammar,automaton}
@@ -71,7 +73,7 @@ D=_`gcbn` && $EK/analyze_spec.py $D spec.html && mu -d $D warnings sections def_
 # # LR0 machine constructed (in 13 sec) with 3394 states and 539 conflicts
 
 # --------------------------------------------------------------------
-D=_`gcbn` && $EK/parse_pseudocode.py $D && mu -d $D {emu_eqn,early_error,inline_SDO,emu_alg}_{ambig,errors,prod_counts,parsed}
+D=_`gcbn` && $EK/parse_pseudocode.py $D && car -d $D {emu_eqn,early_error,inline_SDO,emu_alg}_{ambig,errors,prod_counts,parsed}
 # (~ 18s)
 
 # parse_emu_eqns...
@@ -96,7 +98,7 @@ csplit $D/emu_alg_ambig.new '/^(/' '{*}'
 # then compare xx* to see where the problem is.
 
 # --------------------------------------------------------------------
-D=_`gcbn` && $EK/render_spec.py $D && mu -d $D index.html
+D=_`gcbn` && $EK/render_spec.py $D && car -d $D index.html
 # (~ 3s)
 
 # Commands to help compare my rendering to the official rendering:
@@ -111,11 +113,11 @@ git checkout master
 # %s!\n  *</li>\n</ol>!</li></ol>!
 # %s!<emu-rhs a="\w\+"!<emu-rhs!g
 # %s/ title=""/ title/g
-mu _master/ref.index.html
+car _master/ref.index.html
 gdiff -R _master/ref.index.html _master/\index.html
 
 # --------------------------------------------------------------------
-D=_`gcbn` && $EK/operation_headers.py $D && mu -d $D oh_warnings unconverted_natures spec_w_eoh
+D=_`gcbn` && $EK/operation_headers.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh
 # (~ 2s)
 
 # ----------------------------------------------------
@@ -136,7 +138,7 @@ if necc:
 Run the analyze_spec and parse_pseudocode commands
 
 D=_`gcbn` && $EK/static_type_analysis.py $D
-D=_`gcbn` && $EK/static_type_analysis.py $D && mu -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
+D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
 # (~ 23s)
 	# split_types
 
