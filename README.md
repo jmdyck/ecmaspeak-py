@@ -18,8 +18,9 @@ but rather:
 ## Introduction
 
 "ECMASpeak" is the unofficial name for the notation
-that the ECMAScript specification (tc39/ecma262) uses
-to define the ECMAScript language.
+that the ECMAScript specification
+[tc39/ecma262](https://github.com/tc39/ecma262)
+uses to define the ECMAScript language.
 
 Roughly speaking, it consists of
 grammar productions + pseudocode + prose.
@@ -30,12 +31,14 @@ It's an ad hoc notation,
 outlined in the ES spec's "Notational Conventions" clause.
 
 *   The grammar notation is BNF plus various extensions.
+
     [5.1 Syntactic and Lexical Grammars](https://tc39.github.io/ecma262/#sec-syntactic-and-lexical-grammars)
     defines it fairly completely.
 
 *   There are several forms of pseudocode
     (at least 4, by my count: `<emu-alg>`, `<emu-eqn>`, inline SDO defns, and early error rules).
     (Probably some `<emu-table>` elements should also be considered pseudocode.)
+
     [5.2 Algorithm Conventions](https://tc39.github.io/ecma262/#sec-algorithm-conventions)
     mostly focuses on `<emu-alg>` elements.
     It covers the general appearance of their contents
