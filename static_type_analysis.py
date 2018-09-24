@@ -674,7 +674,7 @@ class Header:
                 try:
                     old_type = self.return_type if tpn == '*return*' else self.parameters[tpn]
                 except KeyError:
-                    print("%s does not have param named %s" % (ton, tpn))
+                    print("type_tweaks: %s does not have param named %s" % (ton, tpn))
                     sys.exit(1)
                 if tot != old_type:
                     # This can happen when you've read tweaks from the cheater file,
