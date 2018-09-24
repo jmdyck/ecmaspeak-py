@@ -656,7 +656,7 @@ def get_eoh_text_for_cm(s, header_text, preamble_text):
 
 # ------------------------------------------------------------------------------
 
-env_rec_method_declarations = '''
+rec_method_declarations = '''
     BindThisValue(V) -> TBD
     CanDeclareGlobalFunction(N) -> Boolean
     CanDeclareGlobalVar(N) -> Boolean
@@ -685,7 +685,7 @@ env_rec_method_declarations = '''
 
 '''
 
-env_rec_method_parameter_types = {
+rec_method_parameter_types = {
     '_D_' : 'Boolean',
     '_M_' : 'Module Record',
     '_N_' : 'String',
@@ -698,7 +698,7 @@ env_rec_method_parameter_types = {
 }
 
 predeclared_rec_method_info = {}
-for line in re.split(r'\n +', env_rec_method_declarations.strip()):
+for line in re.split(r'\n +', rec_method_declarations.strip()):
     mo = re.match(r'^(\w+)\(([^()]*)\) -> (.+)$', line)
     assert mo, line
     (name, params_str, return_type) = (mo.groups())
@@ -710,7 +710,7 @@ for line in re.split(r'\n +', env_rec_method_declarations.strip()):
             for name in params_str.split(', ')
         ]
     param_nature_ = dict(
-        (param_name, env_rec_method_parameter_types[param_name])
+        (param_name, rec_method_parameter_types[param_name])
         for param_name in param_names
     )
     predeclared_rec_method_info[name] = (param_names, param_nature_, return_type)
