@@ -236,35 +236,33 @@ def _validate(node):
     # First do a pass to figure whether the content of this node
     # is block items or inline items or (anomalously) both.
     node_contains_block_items = set()
-    node_contains_inline_items = set()
+    node.inline_child_element_names = set()
     for child in node.children:
         if child.element_name == '#COMMENT':
             continue
         elif child.element_name in ['#CHARREF', '#ENTITYREF']:
-            node_contains_inline_items.add(child.element_name)
+            node.inline_child_element_names.add(child.element_name)
         elif child.element_name == '#LITERAL':
             if not child.is_whitespace():
-                node_contains_inline_items.add(child.element_name)
+                node.inline_child_element_names.add(child.element_name)
         elif child.element_name in kind_:
             k = kind_[child.element_name]
             if k == 'B':
                 node_contains_block_items.add(child.element_name)
             elif k == 'I':
-                node_contains_inline_items.add(child.element_name)
+                node.inline_child_element_names.add(child.element_name)
         else:
             msg_at_posn(child.start_posn, "Is <%s> block or inline?" % child.element_name)
 
-    if node_contains_block_items and node_contains_inline_items:
+    if node_contains_block_items and node.inline_child_element_names:
         msg_at_posn(node.start_posn, "%s content includes both block-level items (%s) and inline-level items (%s)" % (
                 node.element_name,
                 ', '.join(sorted(list(node_contains_block_items))),
-                ', '.join(sorted(list(node_contains_inline_items)))
+                ', '.join(sorted(list(node.inline_child_element_names)))
             )
         )
 
     # ------------------------
-
-    node.inline_child_element_names = node_contains_inline_items
 
     children_names = []
     for child in node.children:
