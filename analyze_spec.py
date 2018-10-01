@@ -85,185 +85,183 @@ def handle_insdel(text):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_indentation():
-
-    # ------------------------------------------------------------------------------
-
-    class Block:
-        def __init__(self, parent, ind, head_line_csp, head_line):
-            self.parent = parent
-            if parent: parent.children.append(self)
-            self.ind = ind
-            self.head_line_csp = head_line_csp
-            self.head_line = head_line
-            # These will get set later:
-            self.children = []
-            self.tail_line_csp = None
-            self.tail_line = None
-            self.next_line_num = None
-
-        def is_root(self):
-            assert (self.parent is None) == (self.ind == -2) == (self.head_line == '')
-            return (self.parent is None)
-
-        def each_descendant_that_startswith(self, st):
-            if self.head_line.startswith(st):
-                yield self
-            for child in self.children:
-                for d in child.each_descendant_that_startswith(st):
-                    yield d
-
-        def source_text(self):
-            return (
-                (' '*self.ind) + self.head_line + '\n'
-                +
-                ''.join(
-                    child.source_text()
-                    for child in self.children
-                )
-                +
-                (
-                    (' '*self.ind) + self.tail_line + '\n'
-                    if
-                    self.tail_line is not None
-                    else
-                    ''
-                )
-            )
-
-    indented_line_reo = re.compile(r'(?m)^( *)(.*)$')
-
-    def blockify(start, end, report_errors):
-
-        line_ = []
-        for mo in indented_line_reo.finditer(spec.text, start, end):
-            ind = mo.end(1) - mo.start(1)
-            csp = mo.start(2)
-            content = mo.group(2)
-            if 0:
-                if ind % 2 != 0:
-                    stderr("Warning: odd indentation (%d): %s" % (ind, content))
-                # It'll be flagged below anyhow
-            line_.append( (ind, csp, content) )
-
-        # "CSP" = "content-start position"
-        # i.e. the position (within spec.text)
-        # of the start of content (end of indentation) of some line.
-
-        line_num = 1
-
-        def complete_block(parent):
-            # Gather the children of `parent`, if any,
-            # and its tail-line, if any.
-            # After this function returns,
-            # line_[line_num - 1] will be the next line after `parent`.
-
-            nonlocal line_, line_num
-
-            if parent.head_line == '<pre>':
-                in_a_pre = True
-                expected_end_tag = '</pre>'
-            elif parent.head_line == '<pre><code class="javascript">':
-                in_a_pre = True
-                expected_end_tag = '</code></pre>'
-            else:
-                in_a_pre = False
-                mo = re.match(r'^<([\w-]+)', parent.head_line)
-                if mo:
-                    # Note that this also matches if the head_line is (e.g.) <p>...</p>,
-                    # when we shouldn't be looking for an end tag on a subsequent line.
-                    # However, unless the file's indentation is off,
-                    # the question won't arise.
-                    # (We have to be loose because of
-                    #     <emu-eqn>Foo()..
-                    #     </emu-eqn>
-                    element_name = mo.group(1)
-                    expected_end_tag = '</%s>' % element_name
-                else:
-                    expected_end_tag = None
-
-            while True:
-                if line_num > len(line_):
-                    break
-
-                (ind, csp, linebody) = line_[line_num - 1]
-
-                if in_a_pre:
-                    # In a <pre>, child-lines don't follow the normal indentation rules.
-                    # Also, we don't bother to structure them in a hierarchy,
-                    # even though they might be nicely indented
-                    # (relative to each other).
-                    if ind == parent.ind and linebody == expected_end_tag:
-                        # the <pre> is ending
-                        parent.tail_line_csp = csp
-                        parent.tail_line = linebody
-                        line_num += 1
-                        break
-                    else:
-                        # the <pre> continues
-                        child = Block(parent, ind, csp, linebody)
-                        line_num += 1
-
-                else:
-                    if linebody == '':
-                        # This is a blank line
-                        if line_num == len(line_):
-                            # It's the last line,
-                            # so don't bother creating a Block for it.
-                            pass
-                        else:
-                            child = Block(parent, ind, csp, linebody)
-                            # It can't have children or a tail-line,
-                            # so calling complete_block() would just confuse things.
-                        line_num += 1
-
-                    elif ind > parent.ind:
-                        # This line is indented wrt the parent.
-                        if ind != parent.ind + 2 and report_errors:
-                            msg_at_posn(csp, "expected indent=%d, got %d" %
-                                (parent.ind+2, ind)
-                            )
-
-                        # It is the start of a child of the parent.
-                        child = Block(parent, ind, csp, linebody)
-                        line_num += 1
-                        complete_block(child)
-
-                    elif ind == parent.ind:
-                        # This is either the tail-line of the parent
-                        # or the start of a sibling of the parent.
-                        if linebody.startswith('</'):
-                            # Tail-line!
-                            if linebody != expected_end_tag and report_errors:
-                                msg_at_posn(csp, "expected '%s', got '%s'" %
-                                    (expected_end_tag, linebody)
-                                )
-                            parent.tail_line_csp = csp
-                            parent.tail_line = linebody
-                            line_num += 1
-                            break
-                        else:
-                            # start of sibling of parent
-                            break
-
-                    elif ind < parent.ind:
-                        break
-
-                    else:
-                        assert 0
-
-            parent.next_line_num = line_num
-            return
-
-        root = Block(None, -2, 0, '')
-        complete_block(root)
-        assert line_num == 1 + len(line_)
-        return root
-
-    # -------------------------------
-
     stderr("check_indentation...")
     header("checking indentation...")
-    blockify(0, len(spec.text), True)
+
+    INDENT_UNIT = 2
+
+    def check_indentation_for_node(node, expected_indent):
+        if node.element_name == '#DOC':
+            assert expected_indent is None
+            for child in node.children:
+                check_indentation_for_node(child, 0)
+            return
+
+        if node.element_name == '#LITERAL':
+            # Mostly whitespace, but also:
+            #     Editors:
+            #     For each pair (_R_, _W_) ...
+            #     For each element _eventsRecord_
+            # whose indentation we don't care about?
+            return
+
+        def get_span_of_line_containing_posn(posn):
+            # Excludes any newline at start or end.
+            s = spec.text.rfind('\n', 0, posn)
+            e = spec.text.find('\n', posn)
+            return (
+                0 if s == -1 else s+1,
+                len(spec.text) if e == -1 else e
+            )
+
+        (start_line_s, start_line_e) = get_span_of_line_containing_posn(node.start_posn)
+        (end_line_s,   end_line_e  ) = get_span_of_line_containing_posn(node.end_posn)
+
+        def check_tag_indent(line_s, tag_s, element_name):
+            portion_of_line_before_tag = spec.text[line_s : tag_s]
+            if (
+                portion_of_line_before_tag == ''
+                or
+                portion_of_line_before_tag.isspace()
+            ):
+                actual_indent = len(portion_of_line_before_tag)
+                if actual_indent != expected_indent:
+                    msg_at_posn(tag_s, f"expected indent={expected_indent}, got {actual_indent}")
+            else:
+                msg_at_posn(tag_s, f"{element_name} tag isn't the first non-blank thing on the line")
+
+        # Check indentation of start tag.
+        check_tag_indent(start_line_s, node.start_posn, node.element_name)
+
+        start_tag_indent = node.start_posn - start_line_s
+
+        if start_line_s == end_line_s:
+            # This node begins and ends on a single line.
+            # Therefore, all of its children (if any)
+            # also begin and end on the same single line,
+            # so no point looking at them.
+            # And no point looking at the end tag (if any).
+            return
+
+        # This node covers more than one line.
+
+        if node.element_name == '#COMMENT':
+            # No children, no end-tag.
+            # XXX We could look at the indentation of the text content,
+            # but ...
+            check_inline_content(node, start_tag_indent + INDENT_UNIT)
+            return
+
+        if node.element_name == 'pre' and len(node.children) == 1 and node.children[0].element_name == 'code':
+            # These cases are always formatted like this:
+            #     <pre><code>
+            #       foo
+            #     </code></pre>
+            # which complicates things.
+            code = node.children[0]
+            assert code.attrs['class'] == 'javascript'
+            check_inline_content(code, start_tag_indent + INDENT_UNIT)
+            check_tag_indent(end_line_s, code.inner_end_posn, code.element_name)
+            return
+
+        if node.element_name in ['emu-grammar', 'emu-alg', 'emu-eqn']:
+            # Indentation of content is checked elsewhere, as part of a more detailed check.
+            # But check it here anyway.
+            check_inline_content(node, start_tag_indent + INDENT_UNIT)
+
+        elif not node.block_child_element_names:
+            check_inline_content(node, start_tag_indent + INDENT_UNIT)
+
+        else:
+            # So recurse to its children.
+
+            if node.element_name in ['thead', 'tbody']:
+                # For obscure reasons, <tr> tags in spec.html
+                # generally have the same indentation as
+                # the surrounding <thead> and <tbody> tags.
+                # If we didn't special-case them here,
+                # they would cause a lot of warnings.
+                #
+                # However, we can't just say:
+                #     child_expected_indent = start_tag_indent
+                # because there are also a fair number of tables
+                # where the <tr> tags *are* indented wrt <thead> and <tbody>.
+                # And it would be impolite to complain when they're
+                # adhering to the general rule re indenting.
+                #
+                # So we peek ahead at the indentation of the next line
+                next_line_s = start_line_e + 1 # skip the newline character
+                if spec.text[next_line_s : next_line_s+start_tag_indent+INDENT_UNIT].isspace():
+                    # next line is indented wrt this line
+                    child_expected_indent = start_tag_indent + INDENT_UNIT
+                else:
+                    child_expected_indent = start_tag_indent
+            else:
+                child_expected_indent = start_tag_indent + INDENT_UNIT
+
+            for child in node.children:
+                check_indentation_for_node(child, child_expected_indent)
+
+        # ------------------------------
+        # Check indentation of end tag.
+        # 
+        if node.element_name == 'p' and 'br' in node.inline_child_element_names:
+            # Normally, a <p> element is all on one line.
+            # But if it contains <br> elements,
+            # we expect those to be either preceded or followed (or both) by newlines.
+            inner_text = node.inner_source_text()
+            if inner_text.startswith('\n'):
+                # Expect:
+                #    <p>
+                #      xxx<br>
+                #      yyy
+                #    </p>
+                pass
+            else:
+                # Expect:
+                #    <p>xxx
+                #      <br>
+                #      yyy</p>
+                # In this case, don't check the indentation of the end tag.
+                return
+        check_tag_indent(end_line_s, node.inner_end_posn, node.element_name)
+
+    def check_inline_content(parent, expected_min_indent):
+        if parent.element_name == '#COMMENT':
+            isp = parent.start_posn + 4
+            iep = parent.end_posn - 3
+        else:
+            isp = parent.inner_start_posn
+            iep = parent.inner_end_posn
+
+        line_ = [
+            ( mo.end(1) - mo.start(1), mo.end(1) )
+            for mo in re.compile(r'\n( *)\S').finditer(spec.text, isp, iep)
+            # Note that the pattern ignores blank lines.
+        ]
+
+        def check_lines(lo, hi, emi):
+            if lo == hi: return
+            assert lo < hi
+            (top_indent, x) = line_[lo]
+            if top_indent != emi:
+                msg_at_posn(x, f"expected indent={emi}, got {top_indent}")
+
+            siblings = []
+            for i in range(lo+1, hi):
+                (indent, x) = line_[i]
+                if indent < top_indent:
+                    msg_at_posn(x, f"expected indent<{top_indent}, got {indent}")
+                    siblings.append(i) # I guess
+                elif indent == top_indent:
+                    siblings.append(i)
+
+            for (i,j) in zip([lo] + siblings, siblings + [hi]):
+                check_lines(i+1, j, top_indent + INDENT_UNIT)
+
+        check_lines(0, len(line_), expected_min_indent)
+
+    check_indentation_for_node(spec.doc_node, None)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
