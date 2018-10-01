@@ -56,8 +56,8 @@ def establish_section_r(node, section_level, section_num):
             establish_section_r(child, section_level+1, sn)
 
     elif node.is_a_section():
-        assert not node.contains_inline_items
-        # if node.contains_inline_items:
+        assert not node.inline_child_element_names
+        # if node.inline_child_element_names:
         #     msg_at_posn(
         #         node.inner_start_posn,
         #         "'section' node contains inline items"

@@ -264,14 +264,14 @@ def _validate(node):
 
     # ------------------------
 
-    node.contains_inline_items = node_contains_inline_items
+    node.inline_child_element_names = node_contains_inline_items
 
     children_names = []
     for child in node.children:
         if child.element_name in ['#CHARREF', '#ENTITYREF']:
             x = '#TEXT;'
         elif child.element_name == '#LITERAL':
-            if node.contains_inline_items:
+            if node.inline_child_element_names:
                 x = '#TEXT;'
             else:
                 assert child.is_whitespace()

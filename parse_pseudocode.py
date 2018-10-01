@@ -96,7 +96,7 @@ def parse_early_errors():
 
     for s in spec.doc_node.each_descendant_that_is_a_section():
         if s.section_kind == 'early_errors':
-            assert not s.contains_inline_items
+            assert not s.inline_child_element_names
 
             if 0:
                 x = re.sub(r'\bemu-grammar ul\b', 'X X',
