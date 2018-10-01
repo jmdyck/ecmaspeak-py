@@ -2026,7 +2026,8 @@ def syntactic_terminal_node_if_token_matches_rsymbol(token, rsymbol):
 
 if __name__ == '__main__':
     # test
-    tree = parse('14* 3;\n', 'Script', trace_level=0)
+    script_text = '14* 3;\n'
+    tree = parse(script_text, 'Script', trace_level=0)
     print()
     print('=================')
     print()
