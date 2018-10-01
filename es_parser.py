@@ -2026,12 +2026,11 @@ def syntactic_terminal_node_if_token_matches_rsymbol(token, rsymbol):
 
 if __name__ == '__main__':
     # test
-    trees = parse('14* 3;\n', 'Script', trace_level=0)
+    tree = parse('14* 3;\n', 'Script', trace_level=0)
     print()
     print('=================')
-    for tree in trees:
-        print()
-        tree.dump()
-        print('----------')
+    print()
+    tree.dump()
+    print('----------')
 
 # vim: sw=4 ts=4 expandtab
