@@ -53,11 +53,21 @@ as if it's a real notation for specifying a programming language,
 and to write software that processes
 a specification written in ECMASpeak (i.e., the ES spec).
 
-There's 
+This processing falls into two broad areas:
 
  *  Static analysis of the ES spec.
 
-    This finds certain kinds of bugs and inconsistencies in the spec.
+    *   We can parse the spec --
+        not just the HTML skeleton,
+        but also lots of textual content,
+        such as grammars and pseudocode.
+        This finds certain kinds of bugs and inconsistencies.
+
+        (You could maybe also use it to do syntax-highlighting
+        of pseudocode.)
+
+    *   We can perform static type analysis of the algorithmic parts of the spec.
+        This finds subtler bugs.
 
  *  Execution of the ES spec.
 
