@@ -29,363 +29,378 @@ def main():
 
     replacements = []
     for s in spec.doc_node.each_descendant_that_is_a_section():
-        if (0
-            or s.section_kind == 'abstract_operation'
-            or s.section_kind == 'internal_method'
-            or s.section_kind.endswith('_rec_method')
-            #
-            or s.section_kind == 'function_property'
-            or s.section_kind == 'function_property_overload'
-            or s.section_kind == 'accessor_property'
-            or s.section_kind == 'CallConstruct'
-            or s.section_kind == 'CallConstruct_overload'
-            or s.section_kind == 'anonymous_built_in_function'
-        ):
-            if s.section_title == 'Object.prototype.__proto__':
-                # It doesn't contain an algorithm itself,
-                # it contains two subsections that do.
-                continue
-
-            algo_child_posns = [
-                i
-                for (i, child) in enumerate(s.block_children)
-                if (
-                    child.element_name == 'emu-alg'
-                    or
-                    (
-                        child.element_name == 'emu-table'
-                        and
-                        re.fullmatch(
-                            r'(To(Boolean|Number|String|Object)|RequireObjectCoercible) \( _argument_ \)',
-                            s.section_title
-                        )
-                    )
-                )
-            ]
-
-            n_algos = len(algo_child_posns)
-            if n_algos == 0:
-                # Even though the section has no algorithm,
-                # its paragraphs may give useful API information.
-                # I.e., some of its paragraphs may be in the 'preamble'.
-                spans = [(0, len(s.block_children))]
-
-                if s.section_title == 'Date.parse ( _string_ )':
-                    # But in this case, none of the paragraphs are preamble,
-                    # and it's easier to say that here than later.
-                    spans = [(0, 0)]
-            else:
-                spans = [
-                    (x+1, y)
-                    for (x,y) in zip([-1] + algo_child_posns, algo_child_posns)
-                ]
-
-            if s.section_title == 'Array.prototype.sort ( _comparefn_ )':
-                assert n_algos == 3
-                # but they're really 3 pieces of one algorithm,
-                # so only use the first span
-                spans = spans[0:1]
-            elif s.section_title == '%TypedArray%.prototype.sort ( _comparefn_ )':
-                assert n_algos == 2
-                # The first algo is just a variant of the first piece from Array.p.sort,
-                # but we still want an eoh for the function.
-                # And the second is an alternative defn of SortCompare,
-                # so use both spans.
-                pass
-
-            if len(spans) > 1:
-                assert s.section_title in [
-                    'MakeArgGetter ( _name_, _env_ )',
-                    'MakeArgSetter ( _name_, _env_ )',
-                    '%TypedArray%.prototype.sort ( _comparefn_ )',
-                ]
-
-            def isnt_preamble(child):
-                if child.element_name == 'emu-note':
-                    # Sometimes an 'emu-note' should be part of the preamble?
-                    # FunctionDeclarationInstantiation:
-                    #     The note is not really part of the preamble.
-                    #     The next child is the preamble.
-                    # String.prototype.* and Array.prototype.*:
-                    #     The note kind of *is* part of the preamble.
-                    #     XXX ignore for now.
-                    return True
-                elif child.element_name in ['ul', 'pre']:
-                    return True
-
-                assert child.element_name == 'p'
-
-                t = child.inner_source_text()
-                for x in [
-                    'The implementation of',                        # 15.2.1.17 Runtime Semantics: HostResolveImportedModule
-
-                    'An implementation of Host',                    # 16.1 HostReportErrors
-                                                                    # 18.2.1.2 HostEnsureCanCompileStrings
-                                                                    # 25.6.1.9 HostPromiseRejectionTracker
-
-                    'An ECMAScript implementation that includes',   # 20.1.3.4 Number.prototype.toLocaleString
-                                                                    # 20.3.4.38 Date.prototype.toLocaleDateString
-                                                                    # 20.3.4.39 Date.prototype.toLocaleString
-                                                                    # 20.3.4.40 Date.prototype.toLocaleTimeString
-                                                                    # 21.1.3.10 String.prototype.localeCompare
-                                                                    # 21.1.3.22 String.prototype.toLocaleLowerCase
-                                                                    # 21.1.3.23 String.prototype.toLocaleUpperCase
-                                                                    # 22.1.3.27 Array.prototype.toLocaleString
-
-                    'The meanings of the optional parameters',      # 20.1.3.4 Number.prototype.toLocaleString
-                                                                    # 22.1.3.27 Array.prototype.toLocaleString
-                    'The meaning of the optional parameters',       # 20.3.4.38 Date.prototype.toLocaleDateString
-                                                                    # 20.3.4.39 Date.prototype.toLocaleString
-                                                                    # 20.3.4.40 Date.prototype.toLocaleTimeString
-                                                                    # 21.1.3.22 String.prototype.toLocaleLowerCase
-                                                                    # 21.1.3.23 String.prototype.toLocaleUpperCase
-
-                    'When _isUTC_ is true',                         # 20.3.1.7 LocalTZA
-
-                    'Before performing the comparisons, the following steps are performed to prepare the Strings:',
-                        # 21.1.3.10 String.prototype.localeCompare
-
-                    'Upon entry, the following steps are performed to initialize evaluation of the `sort` function',
-                        # 22.1.3.25 Array.prototype.sort
-                        # 22.2.3.26 %TypedArray%.prototype.sort
-                    'The implementation-defined sort order condition',
-                        # 22.2.3.26 %TypedArray%.prototype.sort
-                    'The following version of SortCompare',
-                        # 22.2.3.26 %TypedArray%.prototype.sort
-
-                    'A <dfn>WaiterList</dfn>',                      # 24.4.1.3 GetWaiterList
-                    'The agent cluster has',                        # 24.4.1.3 GetWaiterList
-                    'Operations on a WaiterList',                   # 24.4.1.3 GetWaiterList
-
-                    'Let `',
-                        # 24.4.2 Atomics.add
-                        # 24.4.3 Atomics.and
-                        # 24.4.5 Atomics.exchange
-                        # 24.4.8 Atomics.or
-                        # 24.4.10 Atomics.sub
-                        # 24.4.13 Atomics.xor
-                ]:
-                    if t.startswith(x):
-                        # print(x, s.section_num, s.section_title)
-                        return True
-
-                return False
-
-            for (span_start_i, span_end_i) in spans:
-                # Within the span, find the preamble, if any.
-
-                p_start_i = span_start_i
-                p_end_i   = span_end_i
-                if p_start_i == p_end_i:
-                    pass
-                else:
-                    while p_start_i < p_end_i:
-                        if isnt_preamble(s.block_children[p_start_i]):
-                            p_start_i += 1
-                        else:
-                            break
-                    assert s.block_children[p_start_i].element_name == 'p'
-                    for i in range(p_start_i, p_end_i):
-                        if isnt_preamble(s.block_children[i]):
-                            p_end_i = i
-                            break
-
-                if p_start_i == p_end_i:
-                    # No preamble
-                    algo = s.block_children[p_end_i]
-                    r_start_posn = algo.start_posn
-                    r_end_posn   = algo.start_posn
-                    (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
-                    indentation = ' ' * (col_num-1)
-                    extra = '\n' + indentation
-                    preamble_text = ''
-                else:
-                    preamble_children = s.block_children[p_start_i:p_end_i]
-                    r_start_posn = preamble_children[0].start_posn
-                    r_end_posn   = preamble_children[-1].end_posn
-                    (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
-                    indentation = ' ' * (col_num-1)
-                    preamble_text = ' '.join(
-                        child.inner_source_text()
-                        for child in preamble_children
-                    )
-                    extra = ''
-
-                if span_start_i == 0:
-                    # The op is the one indicated by the section header.
-                    op_kind = s.section_kind
-                    header_text = s.section_title
-                else:
-                    # The op is *not* the one indicated by the section header.
-                    if s.section_title.startswith('MakeArgGetter'):
-                        op_kind = 'anonymous_built_in_function'
-                    elif s.section_title.startswith('MakeArgSetter'):
-                        op_kind = 'anonymous_built_in_function'
-                    elif s.section_title.startswith('%TypedArray%.prototype.sort'):
-                        op_kind = 'abstract_operation'
-                    else:
-                        assert 0, s.section_title
-                    header_text = ''
-
-                if op_kind == 'abstract_operation':
-                    eoh_text = get_eoh_text_for_ao(s, header_text, preamble_text)
-                elif op_kind.endswith('_rec_method'):
-                    eoh_text = get_eoh_text_for_cm(s, header_text, preamble_text)
-                elif op_kind == 'internal_method':
-                    eoh_text = get_eoh_text_for_im(s, header_text, preamble_text)
-
-                elif op_kind in [
-                    'function_property',
-                    'function_property_overload',
-                    'accessor_property',
-                    'CallConstruct',
-                    'CallConstruct_overload',
-                    'anonymous_built_in_function',
-                ]:
-                    eoh_text = get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text)
-
-                else:
-                    assert 0, op_kind
-
-                replacements.append((
-                    r_start_posn,
-                    r_end_posn, 
-                    eoh_text.replace('\n', '\n'+indentation) + extra
-                ))
-
-        elif s.section_kind == 'syntax_directed_operation':
-            # Rather than putting an EOH here
-            # (one for every defn of the SDO),
-            # we put one at the end, in section C.
-            something_sdo(s)
-
-        elif s.section_title in ['Statement Rules', 'Expression Rules']:
-            # HasCallInTailPosition
-            # These are 'covered' by the parent section.
-            pass
-
-        elif s.section_num == 'C':
-            posn_to_insert_at = s.end_posn
-
-            insertion =  ( ''
-                + '\n\n<emu-annex id="sec-headers-for-sdos">'
-                + '\n  <h1>Headers for Syntax-Directed Operations</h1>'
-                + '\n  <p>blah</p>'
-            )
-            for (_, oi) in sorted(oi_for_sdo_.items()):
-                insertion += \
-                    '\n  ' + oi.eoh_text().replace('\n', '\n  ')
-            insertion += '\n</emu-annex>'
-
-            replacements.append((
-                posn_to_insert_at,
-                posn_to_insert_at,
-                insertion
-            ))
-
-        elif s.section_title in ['Algorithm Conventions', 'Syntax-Directed Operations']:
-            # <emu-alg> elements are just examples
-            pass
-
-        elif s.section_kind == 'shorthand':
-            # <emu-alg> elements can't really be subjected to STA.
-            pass
-
-        else:
-            # typically no emu-alg, but occasionally e.g. thisNumberValue()
-            emu_algs = [
-                (i, child)
-                for (i, child) in enumerate(s.block_children)
-                if child.element_name == 'emu-alg'
-            ]
-
-            for (i, emu_alg) in emu_algs:
-                preceding = s.block_children[i-1]
-                if preceding.element_name == 'emu-grammar':
-                    # print(s.section_num, s.section_title)
-                    # 1 case  in B.3.1 __proto__ Property Names in Object Initializers
-                    # 7 cases in B.3.6 Initializers in ForIn Statement Heads
-                    pass # XXX
-                elif preceding.element_name == 'p':
-                    p_text = preceding.inner_source_text()
-                    if (0
-                        or 'the following steps are performed in place of step' in p_text
-                        or 'is replaced by:' in p_text
-                        or 'The following steps are inserted after step' in p_text
-                        or 'is replaced with the following algorithm:' in p_text
-                    ):
-                        # Replacement steps can't reasonably be STA-ed
-                        # unless you actually insert them in place.
-                        continue
-
-                    result = get_eoh_text_for_hidden_alg(s, preceding)
-                    if result:
-                        (replace_preceding, eoh_text) = result
-                        if replace_preceding:
-                            r_start_posn = preceding.start_posn
-                            r_end_posn = preceding.end_posn
-                        else:
-                            r_start_posn = r_end_posn = emu_alg.start_posn
-
-                        (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
-                        indentation = ' ' * (col_num-1)
-
-                        replacements.append((
-                            r_start_posn,
-                            r_end_posn, 
-                            eoh_text.replace('\n', '\n'+indentation) + ('' if replace_preceding else '\n' + indentation)
-                        ))
-                else:
-                    assert 0, preceding.element_name
+        for replacement in each_replacement_for_section(s):
+            replacements.append(replacement)
 
     shared.write_spec_with_replacements('spec_w_eoh', replacements)
 
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+def each_replacement_for_section(s):
+    # There are a few cases where a section contains <emu-alg> elements,
+    # but we don't want to create emu-operation-header elements for any of them,
+    # because we can't really apply STA to them.
 
-def get_eoh_text_for_hidden_alg(s, preamble):
-    preamble_text = preamble.inner_source_text()
+    if s.section_title in ['Algorithm Conventions', 'Syntax-Directed Operations']:
+        # Its emu-algs are just examples.
+        return
+    elif s.section_kind == 'shorthand':
+        # Its emu-algs are only in shorthand definitions.
+        return
+    elif s.section_title in [
+        'Changes to FunctionDeclarationInstantiation',
+        'Changes to GlobalDeclarationInstantiation',
+        'Changes to EvalDeclarationInstantiation',
+        'Changes to BlockDeclarationInstantiation',
+        'VariableStatements in Catch Blocks',
+        'Changes to Abstract Equality Comparison',
+    ]:
+        # Its emu-algs aren't complete, they just replace a step in another emu-alg.
+        # XXX: We could analyze them if we made the replacement.
+        return
 
-    mo = re.fullmatch(r'The abstract operation (<dfn [^<>]+>(this\w+Value)</dfn>)\(_value_\) performs the following steps:', preamble_text)
-    if mo:
-        (dfn_element, ao_name) = mo.groups()
-        oi = OperationInfo()
-        oi.kind = 'abstract operation'
-        oi.name = ao_name
-        oi.param_names = ['_value_']
-        oi.description = dfn_element
-        return (True, oi.eoh_text())
+    # ------------------------------------------------------
 
-    if preamble_text == 'The initial value of the @@unscopables data property is an object created by the following steps:':
-        oi = OperationInfo()
-        oi.kind = 'abstract operation'
-        oi.name = 'initializer for @@unscopables'
-        oi.param_names = []
-        return (False, oi.eoh_text())
+    if s.section_kind == 'syntax_directed_operation':
+        # Rather than putting an EOH here
+        # (one for every defn of the SDO),
+        # we put one at the end, in annex C.
+        something_sdo(s)
 
-    return None
+    elif s.section_num == 'C':
+        posn_to_insert_at = s.end_posn
 
-    # XXX because out-of-context syntax-directed ops are odd so far
+        insertion =  ( ''
+            + '\n\n<emu-annex id="sec-headers-for-sdos">'
+            + '\n  <h1>Headers for Syntax-Directed Operations</h1>'
+            + '\n  <p>blah</p>'
+        )
+        for (_, oi) in sorted(oi_for_sdo_.items()):
+            insertion += \
+                '\n  ' + oi.eoh_text().replace('\n', '\n  ')
+        insertion += '\n</emu-annex>'
 
-    if preamble_text.endswith('The default definition of Contains is:'):
-        oi = OperationInfo()
-        oi.kind = 'syntax-directed operation'
-        oi.name = 'Contains'
-        oi.owning_type = 'Parse Node'
-        oi.param_names = ['_symbol_']
-        # oi.param_nature_['_symbol_'] = 'a grammar symbol'
-        return (False, oi.eoh_text())
+        yield (
+            posn_to_insert_at,
+            posn_to_insert_at,
+            insertion
+        )
 
-    mo = re.fullmatch(r'The production <emu-grammar>.+</emu-grammar> evaluates as follows:', preamble_text)
-    if mo:
-        # 8 cases in B.1.4.4 Pattern Semantics
-        oi = OperationInfo()
-        oi.kind = 'syntax-directed operation'
-        oi.name = 'Evaluation'
-        oi.owning_type = 'Parse Node'
-        oi.param_names = []
-        return (False, oi.eoh_text())
+    # ------------------------------------------------------
 
-    assert 0, preamble_text
+    algo_child_posns = [
+        i
+        for (i, child) in enumerate(s.block_children)
+        if (
+            child.element_name == 'emu-alg'
+            or
+            (
+                # Conversions are often prsented in a table
+                # broken down by type.
+                # The <emu-table> is roughly equivalent to an <emu-alg>
+                # (or several of them).
+                child.element_name == 'emu-table'
+                and
+                re.fullmatch(
+                    r'(To(Boolean|Number|String|Object)|RequireObjectCoercible) \( _argument_ \)',
+                    s.section_title
+                )
+            )
+            or
+            (
+                # For most Math functions,
+                # a <ul> plays roughly the role of an <emu-alg>.
+                s.parent.section_title == 'Function Properties of the Math Object'
+                and
+                child.element_name == 'ul'
+            )
+        )
+    ]
+
+    n_algos = len(algo_child_posns)
+    if n_algos == 0:
+        if (
+            s.section_kind == 'function_property'
+            or
+            (
+                s.section_kind == 'abstract_operation'
+                and
+                (
+                    s.section_id.startswith('sec-host')
+                    or
+                    s.section_id == 'sec-local-time-zone-adjustment' # Should LocalTZA be HostLocalTZA?
+                )
+            )
+            or
+            (
+                s.section_kind == 'env_rec_method'
+                and
+                s.section_id == 'sec-object-environment-records-createimmutablebinding-n-s'
+            )
+        ):
+            # Even though the section has no algos,
+            # we want to create an <emu-operation-header>.
+            pre_algo_spans = [(0, len(s.block_children))]
+
+        else:
+            # We don't want to create an eoh.
+            return
+
+    else:
+        pre_algo_spans = [
+            (x+1, y)
+            for (x,y) in zip([-1] + algo_child_posns, algo_child_posns)
+        ]
+
+    # ------------
+
+    if s.section_title == 'Date.parse ( _string_ )':
+        # None of the paragraphs are preamble,
+        # and it's easier to say that here than later.
+        pre_algo_spans = [(0, 0)]
+
+    elif s.section_title == 'Array.prototype.sort ( _comparefn_ )':
+        assert n_algos == 3
+        # but they're really 3 pieces of one algorithm,
+        # so only use the first span
+        pre_algo_spans = pre_algo_spans[0:1]
+    elif s.section_title == '%TypedArray%.prototype.sort ( _comparefn_ )':
+        assert n_algos == 2
+        # The first algo is just a variant of the first piece from Array.p.sort,
+        # but we still want an eoh for the function.
+        # And the second is an alternative defn of SortCompare,
+        # so use both pre_algo_spans.
+        pass
+
+    # ------------
+
+    if len(pre_algo_spans) > 1:
+        assert (
+            s.section_kind == 'syntax_directed_operation'
+            or
+            s.section_title in [
+                'MakeArgGetter ( _name_, _env_ )',
+                'MakeArgSetter ( _name_, _env_ )',
+                '%TypedArray%.prototype.sort ( _comparefn_ )',
+            ]
+            or
+            s.section_id in [
+                'sec-regular-expression-patterns-semantics',
+                'sec-initializers-in-forin-statement-heads',
+            ] # in annex B
+        ), s.section_title
+
+    # ----------------------------------------------------------------
+
+    def isnt_preamble(child):
+        if child.element_name == 'emu-note':
+            # Sometimes an 'emu-note' should be part of the preamble?
+            # FunctionDeclarationInstantiation:
+            #     The note is not really part of the preamble.
+            #     The next child is the preamble.
+            # String.prototype.* and Array.prototype.*:
+            #     The note kind of *is* part of the preamble.
+            #     XXX ignore for now.
+            return True
+        elif child.element_name in ['ul', 'pre']:
+            return True
+
+        # ?
+        elif child.element_name == 'emu-table':
+            # e.g. ControlEscape Code Point Values
+            return True
+        elif child.element_name in ['emu-grammar', 'emu-see-also-para']:
+            return True
+
+        assert child.element_name == 'p', child.element_name
+
+        t = child.inner_source_text()
+        for x in [
+            'The implementation of',                        # 15.2.1.17 Runtime Semantics: HostResolveImportedModule
+
+            'An implementation of Host',                    # 16.1 HostReportErrors
+                                                            # 18.2.1.2 HostEnsureCanCompileStrings
+                                                            # 25.6.1.9 HostPromiseRejectionTracker
+
+            'The Boolean prototype object:',
+            'The Symbol prototype object:',
+            'The Number prototype object:',
+            'The Date prototype object:',
+            'The String prototype object:',
+            'Unless explicitly stated otherwise, the methods of the',
+            'Unless explicitly defined otherwise, the methods of the',
+
+            'An ECMAScript implementation that includes',   # 20.1.3.4 Number.prototype.toLocaleString
+                                                            # 20.3.4.38 Date.prototype.toLocaleDateString
+                                                            # 20.3.4.39 Date.prototype.toLocaleString
+                                                            # 20.3.4.40 Date.prototype.toLocaleTimeString
+                                                            # 21.1.3.10 String.prototype.localeCompare
+                                                            # 21.1.3.22 String.prototype.toLocaleLowerCase
+                                                            # 21.1.3.23 String.prototype.toLocaleUpperCase
+                                                            # 22.1.3.27 Array.prototype.toLocaleString
+
+            'The meanings of the optional parameters',      # 20.1.3.4 Number.prototype.toLocaleString
+                                                            # 22.1.3.27 Array.prototype.toLocaleString
+            'The meaning of the optional parameters',       # 20.3.4.38 Date.prototype.toLocaleDateString
+                                                            # 20.3.4.39 Date.prototype.toLocaleString
+                                                            # 20.3.4.40 Date.prototype.toLocaleTimeString
+                                                            # 21.1.3.22 String.prototype.toLocaleLowerCase
+                                                            # 21.1.3.23 String.prototype.toLocaleUpperCase
+
+            'When _isUTC_ is true',                         # 20.3.1.7 LocalTZA
+
+            'Before performing the comparisons, the following steps are performed to prepare the Strings:',
+                # 21.1.3.10 String.prototype.localeCompare
+
+            'Upon entry, the following steps are performed to initialize evaluation of the `sort` function',
+                # 22.1.3.25 Array.prototype.sort
+                # 22.2.3.26 %TypedArray%.prototype.sort
+            'The implementation-defined sort order condition',
+                # 22.2.3.26 %TypedArray%.prototype.sort
+            'The following version of SortCompare',
+                # 22.2.3.26 %TypedArray%.prototype.sort
+
+            'A <dfn>WaiterList</dfn>',                      # 24.4.1.3 GetWaiterList
+            'The agent cluster has',                        # 24.4.1.3 GetWaiterList
+            'Operations on a WaiterList',                   # 24.4.1.3 GetWaiterList
+
+            'Let `',
+                # 24.4.2 Atomics.add
+                # 24.4.3 Atomics.and
+                # 24.4.5 Atomics.exchange
+                # 24.4.8 Atomics.or
+                # 24.4.10 Atomics.sub
+                # 24.4.13 Atomics.xor
+        ]:
+            if t.startswith(x):
+                # print(x, s.section_num, s.section_title)
+                return True
+
+        return False
+
+    for (span_start_i, span_end_i) in pre_algo_spans:
+
+        # Within the span, find the preamble, if any.
+        p_start_i = span_start_i
+        p_end_i   = span_end_i
+        if p_start_i == p_end_i:
+            pass
+        else:
+            while p_start_i < p_end_i:
+                if isnt_preamble(s.block_children[p_start_i]):
+                    p_start_i += 1
+                else:
+                    break
+            if p_start_i < p_end_i:
+                assert s.block_children[p_start_i].element_name == 'p'
+            for i in range(p_start_i, p_end_i):
+                if isnt_preamble(s.block_children[i]):
+                    p_end_i = i
+                    break
+
+        if p_start_i == p_end_i:
+            # No preamble
+            algo = s.block_children[p_end_i]
+            r_start_posn = algo.start_posn
+            r_end_posn   = algo.start_posn
+            (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
+            indentation = ' ' * (col_num-1)
+            extra = '\n' + indentation
+            preamble_text = ''
+        else:
+            preamble_children = s.block_children[p_start_i:p_end_i]
+            r_start_posn = preamble_children[0].start_posn
+            r_end_posn   = preamble_children[-1].end_posn
+            (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
+            indentation = ' ' * (col_num-1)
+            preamble_text = ' '.join(
+                child.inner_source_text()
+                for child in preamble_children
+            )
+            extra = ''
+
+        if (
+            span_start_i == 0 and not (
+                s.section_title.startswith('Properties of the')
+                or
+                s.section_title == 'Array.prototype [ @@unscopables ]'
+            )
+            or
+            s.section_kind == 'syntax_directed_operation'
+        ):
+            # The op is the one indicated by the section header.
+            header_text = s.section_title
+            op_kind = s.section_kind
+        else:
+            # The op is *not* the one indicated by the section header.
+            header_text = ''
+            if s.section_title.startswith('MakeArgGetter'):
+                op_kind = 'anonymous_built_in_function'
+            elif s.section_title.startswith('MakeArgSetter'):
+                op_kind = 'anonymous_built_in_function'
+            elif s.section_title.startswith('%TypedArray%.prototype.sort'):
+                op_kind = 'abstract_operation'
+            elif s.section_title.startswith('Properties of the'):
+                op_kind = 'abstract_operation'
+            elif s.section_title == 'Array.prototype [ @@unscopables ]':
+                op_kind = 'abstract_operation'
+                # if 'unscop' in preamble_text: pdb.set_trace()
+            elif s.section_id in [
+                'sec-regular-expression-patterns-semantics',
+                'sec-initializers-in-forin-statement-heads',
+            ]:
+                # print('347', op_kind, s.section_num, s.section_title)
+                continue # XXX
+            else:
+                assert 0, s.section_title
+
+        if op_kind == 'abstract_operation':
+            eoh_text = get_eoh_text_for_ao(s, header_text, preamble_text)
+        elif op_kind.endswith('_rec_method'):
+            eoh_text = get_eoh_text_for_cm(s, header_text, preamble_text)
+        elif op_kind == 'internal_method':
+            eoh_text = get_eoh_text_for_im(s, header_text, preamble_text)
+
+        elif op_kind in [
+            'function_property',
+            'function_property_overload',
+            'accessor_property',
+            'CallConstruct',
+            'CallConstruct_overload',
+            'anonymous_built_in_function',
+        ]:
+            eoh_text = get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text)
+
+        elif op_kind == 'syntax_directed_operation':
+            # print('370', op_kind, s.section_num, s.section_title)
+            continue # XXX
+
+        else:
+            # print('374', op_kind, s.section_num, s.section_title)
+            continue
+            # assert 0, op_kind
+
+        if 0:
+            def each_piece_of_preamble_thing():
+                if span_start_i == span_end_i:
+                    assert p_start_i == p_end_i
+                    yield '['
+                    yield ']'
+                else:
+                    for i in range(span_start_i, span_end_i):
+                        if i == p_start_i: yield '['
+                        if i == p_end_i: yield ']'
+                        yield s.block_children[i].element_name
+                    if span_end_i == p_end_i: yield ']'
+                if span_end_i == len(s.block_children): yield '.'
+            preamble_thing = ' '.join( x for x in each_piece_of_preamble_thing() )
+
+            if p_start_i != span_start_i or p_end_i != span_end_i:
+                print(preamble_thing.ljust(30), s.section_kind, s.section_num, s.section_title)
+
+        yield (
+            r_start_posn,
+            r_end_posn, 
+            eoh_text.replace('\n', '\n'+indentation) + extra
+        )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -423,6 +438,10 @@ def something_sdo(s):
     elif s.parent.section_title == 'Pattern Semantics':
         op_name = 'regexp-Evaluate'
         declare_sdo(op_name, param_dict, regexp_also)
+    elif s.section_title in ['Statement Rules', 'Expression Rules']:
+        assert s.parent.section_title == 'Static Semantics: HasCallInTailPosition'
+        op_name = 'HasCallInTailPosition'
+        # declare_sdo(op_name, param_dict)
     else:
         mo = re.match(r'^(Static|Runtime) Semantics: (\w+)$', s.section_title)
         assert mo, s.section_title
@@ -731,6 +750,8 @@ def get_eoh_text_for_ao(s, header_text, preamble_text):
 
 def get_info_from_ao_preamble(preamble_text):
 
+    # if 'thisBooleanValue' in preamble_text: pdb.set_trace()
+
     oi = OperationInfo()
     oi.kind = 'abstract operation'
 
@@ -754,6 +775,21 @@ def get_info_from_ao_preamble(preamble_text):
         oi.param_nature_['_E_'] = 'a Shared Data Block event'
         oi.param_nature_['_D_'] = 'a Shared Data Block event'
         oi.description = preamble_text
+        return oi
+
+    # ----------------------------------------------------------------
+
+    mo = re.fullmatch(r'The abstract operation (<dfn [^<>]+>(this\w+Value)</dfn>)\(_value_\) performs the following steps:', preamble_text)
+    if mo:
+        (dfn_element, ao_name) = mo.groups()
+        oi.name = ao_name
+        oi.param_names = ['_value_']
+        oi.description = dfn_element
+        return oi
+
+    if preamble_text == 'The initial value of the @@unscopables data property is an object created by the following steps:':
+        oi.name = 'initializer for @@unscopables'
+        oi.param_names = []
         return oi
 
     # ----------------------------------------------------------------
@@ -2333,79 +2369,6 @@ nature_to_typ = {
     'the property key'                                           : 'String | Symbol',
 
 }
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def scrap_code():
-    # Not used any more.
-
-    child_element_names = [child.element_name for child in s.block_children]
-    n_algs = child_element_names.count('emu-alg')
-    n_tables = child_element_names.count('emu-table')
-
-    preamble_i = None
-
-    if n_algs == 0:
-        if n_tables == 0:
-            assert hoi.name.startswith('Host')
-            # host-defined operation
-        elif n_tables == 1:
-            # wholly defined by a table
-            # NYI
-            pass
-        else:
-            assert 0
-
-        preamble_i = 0
-
-    elif n_algs == 1:
-        if n_tables == 0:
-            # The common case.
-            alg_i = child_element_names.index('emu-alg')
-            emu_alg = s.block_children[alg_i]
-
-            if alg_i == 0:
-                # no preamble
-                # NYI
-                preamble_i = None
-                thing_to_insert_before = emu_alg
-            elif alg_i == 1:
-                assert child_element_names[0] == 'p'
-                preamble_i = 0
-            elif alg_i == 2:
-                if child_element_names[0:2] == ['emu-note','p']:
-                    preamble_i = 1
-                elif child_element_names[0:2] == ['p', 'emu-note']:
-                    preamble_i = 0
-                else:
-                    assert 0
-            elif alg_i == 3:
-                # Have submitted PR that eliminates the second para.
-                assert child_element_names[0] == 'p'
-                assert child_element_names[1] == 'p'
-                assert child_element_names[2] == 'emu-note'
-                assert hoi.name == 'ValidateAndApplyPropertyDescriptor'
-                preamble_i = 0
-            else:
-                assert 0
-
-        elif n_tables == 1:
-            # Either a table refers to an alg (ToPrimitive),
-            # or an alg refers to a table (GetSubstitution).
-            assert hoi.name in ['ToPrimitive', 'GetSubstitution']
-            preamble_i = 0
-        else:
-            assert 0
-
-    elif n_algs > 1:
-        assert hoi.name in ['NextJob', 'MakeArgGetter', 'MakeArgSetter']
-        preamble_i = 0
-        # NextJob will go away if my PR is accepted.
-        # The other two can be special-cased.
-        # NYI
-
-    else:
-        assert False
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
