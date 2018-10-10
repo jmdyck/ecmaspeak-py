@@ -496,7 +496,7 @@ def collect_sdo_coverage_info():
                 collect_sdo_coverage_info_for_section(s.section_children[1], 'HasCallInTailPosition')
 
             elif s.section_title == 'Static Semantics: TV and TRV':
-                # Each rule specifies while SDO(s) it pertains to.
+                # Each rule specifies which SDO(s) it pertains to.
                 collect_sdo_coverage_info_for_section(s, None)
 
             elif s.parent.section_title == 'Pattern Semantics':
