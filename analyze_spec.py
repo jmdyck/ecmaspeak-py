@@ -492,8 +492,10 @@ def collect_sdo_coverage_info():
                 assert s.block_children[0].element_name == 'p'
                 assert s.block_children[1].element_name == 'emu-note'
                 assert len(s.section_children) == 2
-                collect_sdo_coverage_info_for_section(s.section_children[0], 'HasCallInTailPosition')
-                collect_sdo_coverage_info_for_section(s.section_children[1], 'HasCallInTailPosition')
+                continue
+            elif s.section_title in ['Statement Rules', 'Expression Rules']:
+                assert s.parent.section_title == 'Static Semantics: HasCallInTailPosition'
+                collect_sdo_coverage_info_for_section(s, 'HasCallInTailPosition')
 
             elif s.section_title == 'Static Semantics: TV and TRV':
                 # Each rule specifies which SDO(s) it pertains to.

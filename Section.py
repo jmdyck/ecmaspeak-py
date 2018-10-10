@@ -196,6 +196,8 @@ def _infer_section_kinds(section):
 
             (r'^Static Semantics: \w+',           'syntax_directed_operation'),
             (r'^Runtime Semantics: \w+$',         'syntax_directed_operation'),
+            (r'^Statement Rules$',                'syntax_directed_operation'),
+            (r'^Expression Rules$',               'syntax_directed_operation'),
 
             (r'^_NativeError_ Object Structure$', 'loop'),
 

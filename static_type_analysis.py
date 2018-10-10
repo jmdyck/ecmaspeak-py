@@ -172,6 +172,12 @@ def define_ops_from_sdo_section(s):
     if s.section_title == 'Static Semantics: TV and TRV':
         # defines two sdo's in the same section, hrm
         op_name = None
+    elif s.section_title == 'Static Semantics: HasCallInTailPosition':
+        # Contains defns only via its child sections, see below.
+        return
+    elif s.section_title in ['Statement Rules', 'Expression Rules']:
+        assert s.parent.section_title == 'Static Semantics: HasCallInTailPosition'
+        op_name = 'HasCallInTailPosition'
     elif s.parent.section_title == 'Pattern Semantics':
         op_name = 'regexp-Evaluate'
     else:
@@ -179,14 +185,7 @@ def define_ops_from_sdo_section(s):
         assert mo, s.section_title
         op_name = mo.group(2)
 
-    if s.section_title == 'Static Semantics: HasCallInTailPosition':
-        [stmt_rules, expr_rules] = s.section_children
-        assert stmt_rules.section_title == 'Statement Rules'
-        assert expr_rules.section_title == 'Expression Rules'
-        add_defns_from_sdo_section(stmt_rules, op_name)
-        add_defns_from_sdo_section(expr_rules, op_name)
-    else:
-        add_defns_from_sdo_section(s, op_name)
+    add_defns_from_sdo_section(s, op_name)
 
 def add_defns_from_sdo_section(s, op_name):
     # There are 3 ways to contribute to a syntax-directed operation:
