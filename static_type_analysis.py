@@ -1220,6 +1220,8 @@ def member_is_a_subtype_or_equal(A, B):
             return (A.element_type.is_a_subtype_of_or_equal_to(B.element_type))
         elif isinstance(B, NamedType):
             return (T_List.is_a_subtype_of_or_equal_to(B))
+        elif isinstance(B, ThrowType):
+            return False
         else:
             assert 0, (A, B)
 
@@ -3856,8 +3858,8 @@ def tc_nonvalue(anode, env0):
         # property keys of an object:
 
         elif each_thing.prod.rhs_s in [
-            r"own property key {VAR} of {VAR} that is an integer index, in ascending numeric index order",
-            r"own property key {VAR} of {VAR} that is a String but is not an integer index, in ascending chronological order of property creation",
+            r"own property key {VAR} of {VAR} that is an array index, in ascending numeric index order",
+            r"own property key {VAR} of {VAR} that is a String but is not an array index, in ascending chronological order of property creation",
         ]:
             [loop_var, obj_var] = each_thing.children
             env0.assert_expr_is_of_type(obj_var, T_Object)
@@ -5339,7 +5341,10 @@ def tc_cond_(cond, env0, asserting):
             env0
         )
 
-    elif p == r"{CONDITION_1} : {VAR} is not an integer index":
+    elif p in [
+        r"{CONDITION_1} : {VAR} is not an array index",
+        r"{CONDITION_1} : {VAR} is not an integer index",
+    ]:
         [var] = children
         return (
             env0,
@@ -6105,16 +6110,9 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(t_var, T_String)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : The next step never returns an abrupt completion because {DOTTING} is not {LITERAL}':
-        [dotting, literal] = children
-        env0.assert_expr_is_of_type(dotting, T_String)
-        env0.assert_expr_is_of_type(literal, T_String)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : The next step never returns an abrupt completion because {VAR} is a String value":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
+    elif p == r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}":
+        [subcond] = children
+        return tc_cond(subcond, env0, asserting)
 
     elif p == r'{CONDITION_1} : {VAR} does not have an own property with key {VAR}':
         [obj_var, key_var] = children
@@ -10177,9 +10175,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(list_var, ListType(T_code_unit_))
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value that is made from {VAR} copies of {VAR} appended together. If {VAR} is 0, {VAR} is the empty String":
-        [n_var, s_var, n_var2, x_var] = children
-        assert same_source_text(n_var2, n_var)
+    elif p == r"{EXPR} : the String value that is made from {VAR} copies of {VAR} appended together":
+        [n_var, s_var] = children
         env0.assert_expr_is_of_type(s_var, T_String)
         env1 = env0.ensure_expr_is_of_type(n_var, T_Integer_)
         return (T_String, env1)
@@ -10915,7 +10912,7 @@ fields_for_record_type_named_ = {
 
     # 23627: Table 41: ExportEntry Record Fields
     'ExportEntry Record': {
-        'ExportName'    : T_String, # | T_Null,
+        'ExportName'    : T_String | T_Null,
         'ModuleRequest' : T_String | T_Null,
         'ImportName'    : T_String | T_Null,
         'LocalName'     : T_String | T_Null,

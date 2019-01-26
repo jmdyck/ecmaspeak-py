@@ -297,9 +297,9 @@
     module {VAR} in {VAR}
     own property key {VAR} of {VAR} such that {CONDITION}, in ascending chronological order of property creation
     own property key {VAR} of {VAR} such that {CONDITION}, in ascending numeric index order
-    own property key {VAR} of {VAR} that is a String but is not an integer index, in ascending chronological order of property creation
+    own property key {VAR} of {VAR} that is a String but is not an array index, in ascending chronological order of property creation
     own property key {VAR} of {VAR} that is a Symbol, in ascending chronological order of property creation
-    own property key {VAR} of {VAR} that is an integer index, in ascending numeric index order
+    own property key {VAR} of {VAR} that is an array index, in ascending numeric index order
     Parse Node {VAR} in {VAR}
     property of the Global Object specified in clause {EMU_XREF}
     string {VAR} in {VAR}
@@ -398,8 +398,7 @@
     The execution context stack is not empty
     The execution context stack is now empty
     The following loop will terminate
-    The next step never returns an abrupt completion because {DOTTING} is not {LITERAL}
-    The next step never returns an abrupt completion because {VAR} is a String value
+    The next step never returns an abrupt completion because {CONDITION_1}
     The value of {SETTABLE} is {LITERAL}
     The value of {VAR}'s `"length"` property is {EX}
     The value of {VAR}'s `length` property is {VAR}
@@ -487,10 +486,6 @@
     {EX} and {EX} have different results
     {EX} has the value {LITERAL}
     {EX} is -1
-    {EX} is a Boolean value
-    {EX} is a Number value
-    {EX} is a String value
-    {EX} is a Symbol value
     {EX} is absent
     {EX} is absent or has the value {LITERAL}
     {EX} is an Object
@@ -637,7 +632,6 @@
     {VAR} is a WriteSharedMemory event
     {VAR} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
     {VAR} is a callable object
-    {VAR} is a constructor function
     {VAR} is a data property
     {VAR} is a declarative Environment Record
     {VAR} is a function Environment Record
@@ -674,7 +668,6 @@
     {VAR} is an instance of the production {EMU_GRAMMAR}
     {VAR} is an instance of {VAR}
     {VAR} is an integer Number &ge; 0
-    {VAR} is an integer index
     {VAR} is an integer index &le; {VAR}
     {VAR} is an integer such that {CONDITION_1}
     {VAR} is an integer value &ge; 0
@@ -700,6 +693,7 @@
     {VAR} is not already suspended
     {VAR} is not an abrupt completion
     {VAR} is not an abrupt completion because of validation preceding step 12
+    {VAR} is not an array index
     {VAR} is not an empty List
     {VAR} is not an integer index
     {VAR} is not an object Environment Record
@@ -979,7 +973,7 @@
     the String value of the property name
     the String value of {DOTTING}
     the String value that is a copy of {VAR} with both leading and trailing white space removed. The definition of white space is the union of \|WhiteSpace\| and \|LineTerminator\|. When determining whether a Unicode code point is in Unicode general category &ldquo;Space_Separator&rdquo; \(&ldquo;Zs&rdquo;\), code unit sequences are interpreted as UTF-16 encoded code point sequences as specified in {EMU_XREF}
-    the String value that is made from {VAR} copies of {VAR} appended together. If {VAR} is 0, {VAR} is the empty String
+    the String value that is made from {VAR} copies of {VAR} appended together
     the String value that is the result of normalizing {VAR} into the normalization form named by {VAR} as specified in <a [^<>]+>[^<>]+</a>
     the String value that is the same as {VAR} except that each occurrence of {CU_LITERAL} in {VAR} has been replaced with the six code unit sequence {STR_LITERAL}
     the String value whose code units are the elements of {NAMED_OPERATION_INVOCATION} as defined in {EMU_XREF}
