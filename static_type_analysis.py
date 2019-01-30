@@ -5321,6 +5321,7 @@ def tc_cond_(cond, env0, asserting):
         )
 
     elif p in [
+        r"{CONDITION_1} : {VAR} is an ordinary, extensible object with no non-configurable properties",
         r"{CONDITION_1} : {VAR} is an extensible ordinary object with no own properties",
         r"{CONDITION_1} : {VAR} is an initialized RegExp instance",
         r'{CONDITION_1} : {VAR} is an Object that implements the <i>IteratorResult</i> interface',
@@ -6851,7 +6852,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
         return (env0, env0)
-
 
     # elif p == r"{CONDITION_1} : All named exports from {VAR} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {VAR} or {VAR}":

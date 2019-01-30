@@ -671,6 +671,7 @@
     {VAR} is an integer index &le; {VAR}
     {VAR} is an integer such that {CONDITION_1}
     {VAR} is an integer value &ge; 0
+    {VAR} is an ordinary, extensible object with no non-configurable properties
     {VAR} is an? {NONTERMINAL}
     {VAR} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {EMU_XREF} applies
     {VAR} is as small as possible
