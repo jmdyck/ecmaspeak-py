@@ -15,7 +15,11 @@ from shared import stderr, header, msg_at_posn
 
 def parse_and_validate():
     doc_node = _parse()
-    assert doc_node.element_name == '#DOC', doc_node.element_name
+    if doc_node.element_name != '#DOC':
+        stderr("After _parse(), doc_node.element_name should be #DOC, is", doc_node.element_name)
+        stderr("start_posn ~", shared.convert_posn_to_linecol(doc_node.start_posn))
+        stderr("aborting due to above error")
+        sys.exit()
     _validate(doc_node)
     return doc_node
 

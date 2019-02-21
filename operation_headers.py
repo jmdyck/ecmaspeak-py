@@ -1055,6 +1055,11 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
             r'OP takes an ECMAScript Number value _time_.', # assumed param name
             r'\1.'),
 
+        # 21.1.3.27.1 TrimString
+        (r'(OP is called with arguments .+), and interprets the String value (_string_ as .+)',
+            r'\1, where _string_ is a String value.',
+            r'OP interprets \2'),
+
         # 24.??? UnicodeEscape
         (r'(OP takes a code unit argument _C_) and represents it (as a Unicode escape sequence.)',
             r'\1.',

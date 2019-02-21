@@ -401,6 +401,8 @@ def define_ops_from_other_section(s):
             'Number.parseFloat ( _string_ )',
             'Number.parseInt ( _string_, _radix_ )',
             'Set.prototype.keys ( )',
+            'String.prototype.trimLeft ( )',
+            'String.prototype.trimRight ( )',
             'Date.prototype.toGMTString ( )',
 
             # similar alg to something else:
@@ -2450,6 +2452,7 @@ class Env:
                 '_p_ - (_e_ + 1)', # toPrecision
                 '_srcBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 '_targetBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
+                'the result of performing NamedEvaluation for |Initializer| with argument _bindingId_',
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -3854,6 +3857,11 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_String))
             env_for_commands = env1.plus_new_entry(loop_var, T_String)
 
+        elif each_thing.prod.rhs_s == 'code point {VAR} in {VAR}':
+            [loop_var, collection_expr] = each_thing.children
+            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_code_point_))
+            env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
+
         # ------------------------
         # property keys of an object:
 
@@ -3892,11 +3900,6 @@ def tc_nonvalue(anode, env0):
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Set)
             env_for_commands = env1.plus_new_entry(loop_var, T_event_)
-
-        elif each_thing.prod.rhs_s == 'code unit {VAR} in {VAR}':
-            [loop_var, collection_expr] = each_thing.children
-            env1 = env0.ensure_expr_is_of_type(collection_expr, T_String)
-            env_for_commands = env1.plus_new_entry(loop_var, T_code_unit_)
 
         elif each_thing.prod.rhs_s == r"index {VAR} of {VAR}":
             [loop_var, collection_var] = each_thing.children
@@ -5322,6 +5325,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {VAR} is an ordinary, extensible object with no non-configurable properties",
+        r"{CONDITION_1} : {VAR} is an extensible ordinary object",
         r"{CONDITION_1} : {VAR} is an extensible ordinary object with no own properties",
         r"{CONDITION_1} : {VAR} is an initialized RegExp instance",
         r'{CONDITION_1} : {VAR} is an Object that implements the <i>IteratorResult</i> interface',
@@ -5980,7 +5984,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{CONDITION_1} : {VAR} has a numeric value less than (0x0020 \(SPACE\))':
         [var, cu_literal] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
+        env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
         return (env1, env1)
 
     elif p in [
@@ -6853,6 +6857,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {EX} is listed in the Code Point column of {EMU_XREF}":
+        [ex, emu_xref] = children
+        env0.assert_expr_is_of_type(ex, T_code_point_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {VAR} has the same numeric value as a {EMU_XREF} or {EMU_XREF}":
+        [var, emu_xref1, emu_xref2] = children
+        env0.assert_expr_is_of_type(var, T_code_point_)
+        return (env0, env0)
+    
     # elif p == r"{CONDITION_1} : All named exports from {VAR} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {VAR} or {VAR}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
@@ -7172,7 +7186,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [callee_op_name] = callee.children
         if with_args.prod.rhs_s in [
             'with argument {EX}',
-            'with arguments {VAR} and {EX}',
+            'with arguments {EX} and {EX}',
             '(?:passing|using|with) {VAR} and {EX} as(?: the)? arguments',
             '(?:passing|using|with) {EX} as the argument',
             'using {VAR}, {VAR}, and {VAR} as(?: the)? arguments',
@@ -7511,6 +7525,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # Finished with "Completion Records"
         # ----------------------------------
 
+        # In some cases, we first need to change the type of lhs_var...
+
         if lhs_t == T_0:
             if lhs_text == '_starResolution_':
                 # ResolveExport _starResolution_
@@ -7621,6 +7637,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert narrower_type != it_type
                 it_type = narrower_type
             return (it_type, env2)
+
+        elif lhs_t == T_Symbol:
+            assert dsbn_name == 'Description'
+            return (T_String | T_Undefined, env2)
 
         elif lhs_t.is_a_subtype_of_or_equal_to(T_Abrupt):
             # Handle "Completion Records" specially.
@@ -8596,6 +8616,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
         return (T_code_unit_, env0)
 
+    elif p == r"{EXPR} : the code unit whose numeric value is that of {VAR}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_code_point_)
+        return (T_code_unit_, env0)
+
     # ----
 
     elif p == r"{EX} : the code unit at index {EX} within {EX}":
@@ -8603,6 +8628,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(str_ex, T_String)
         env1 = env0.ensure_expr_is_of_type(index_ex, T_Integer_)
         return (T_code_unit_, env1)
+
+    elif p == r"{EXPR} : the code unit \(represented as a 16-bit unsigned integer\) at index {VAR} within {VAR}":
+        [ivar, svar] = children
+        env0.assert_expr_is_of_type(ivar, T_Integer_)
+        env0.assert_expr_is_of_type(svar, T_String)
+        return (T_code_unit_, env0)
 
     # ----------------------------------------------------------
     # return T_code_point_
@@ -10072,16 +10103,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(nf_var, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value that is a copy of {VAR} with both leading and trailing white space removed. The definition of white space is the union of \|WhiteSpace\| and \|LineTerminator\|. When determining whether a Unicode code point is in Unicode general category &ldquo;Space_Separator&rdquo; \(&ldquo;Zs&rdquo;\), code unit sequences are interpreted as UTF-16 encoded code point sequences as specified in {EMU_XREF}":
-        [var, emu_xref] = children
+    elif p in [
+        r"{EXPR} : the String value that is a copy of {VAR} with both leading and trailing white space removed",
+        r"{EXPR} : the String value that is a copy of {VAR} with leading white space removed",
+        r"{EXPR} : the String value that is a copy of {VAR} with trailing white space removed",
+    ]:
+        [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_String, env0)
-
-    elif p == r"{EXPR} : the code unit \(represented as a 16-bit unsigned integer\) at index {VAR} within {VAR}":
-        [ivar, svar] = children
-        env0.assert_expr_is_of_type(ivar, T_Integer_)
-        env0.assert_expr_is_of_type(svar, T_String)
-        return (T_code_unit_, env0)
 
     elif p == r"{EXPR} : the String value containing the single code unit {VAR}":
         [var] = children
@@ -10205,6 +10234,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref, s_var, s_var2] = children
         assert same_source_text(s_var2, s_var)
         env0.assert_expr_is_of_type(s_var, T_String)
+        return (ListType(T_code_point_), env0)
+
+    elif p == r"{EXPR} : a List containing in order the code points of {VAR} when interpreted as a sequence of UTF-16 encoded code points as described in {EMU_XREF}":
+        [var, emu_xref] = children
+        env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_point_), env0)
 
     elif p == r"{EXPR} : a List where the elements are the result of toLowercase\({VAR}\), according to the Unicode Default Case Conversion algorithm":

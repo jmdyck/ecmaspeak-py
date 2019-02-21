@@ -323,6 +323,11 @@ def check_ids():
 
     def check_ref_ids(refnode):
         if refnode.element_name == 'emu-xref':
+            if 'href' not in refnode.attrs:
+                stderr("At", shared.convert_posn_to_linecol(refnode.start_posn))
+                stderr("emu-xref element doesn't have an 'href' attribute")
+                stderr("aborting")
+                sys.exit()
             href = refnode.attrs['href']
             assert href.startswith('#')
             refid = href[1:]
@@ -782,6 +787,23 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # Invocations of this SDO are guarded by `IsFunctionDefinition of _expr_ is *true*`,
         # so the SDO doesn't need to be defined for most kinds of expr.
         # Assume that it's defined for all that need it.
+        return True
+
+    if sdo_name == 'NamedEvaluation':
+        # NamedEvaluation is invoked on |Initializer| and |AssignmentExpression|,
+        # which are fairly general, except that it's only invoked on nodes
+        # for which IsAnonymousFunctionDefinition() is true,
+        # which implies that IsFunctionDefition is true and HasName is false.
+        # return lhs_nt not in [
+        #     'ArrowFunction',
+        #     'AsyncArrowFunction',
+        #     'FunctionExpression',
+        #     'GeneratorExpression',
+        #     'AsyncGeneratorExpression',
+        #     'ClassExpression',
+        #     'AsyncFunctionExpression',
+        # ]
+        # As above, assume it's defined for all that need it.
         return True
 
     if sdo_name == 'IsConstantDeclaration' and lhs_nt == 'ExportDeclaration' and def_i in [0,1,2,3]:

@@ -280,7 +280,7 @@
     String {VAR} in {VAR}, in list order
     String {VAR} that is an element of {EX}
     character {VAR} not in set {VAR} where {NAMED_OPERATION_INVOCATION} is in {VAR}
-    code unit {VAR} in {VAR}
+    code point {VAR} in {VAR}
     element {VAR} in {VAR}
     element {VAR} of {EX}
     element {VAR} of {VAR} in List order
@@ -495,7 +495,7 @@
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is equal to {EX}
-    {EX} is listed in the Code Unit Value column of {EMU_XREF}
+    {EX} is listed in the Code Point column of {EMU_XREF}
     {EX} is neither {LITERAL} nor the active function
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not an element of {VAR}
@@ -587,6 +587,7 @@
     {VAR} has no duplicate entries
     {VAR} has no elements
     {VAR} has no further use. It will never be activated as the running execution context
+    {VAR} has the same numeric value as a {EMU_XREF} or {EMU_XREF}
     {VAR} has {DSBN} and {DSBN} internal slots
     {VAR} has {VAR} in its range
     {VAR} imports a specific binding for this export
@@ -661,6 +662,7 @@
     {VAR} is an array index
     {VAR} is an empty List
     {VAR} is an extensible object that does not have a `("length"|prototype|name)` own property
+    {VAR} is an extensible ordinary object
     {VAR} is an extensible ordinary object with no own properties
     {VAR} is an initialized RegExp instance
     {VAR} is an instance of a concrete subclass of Module Record
@@ -675,7 +677,6 @@
     {VAR} is an? {NONTERMINAL}
     {VAR} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {EMU_XREF} applies
     {VAR} is as small as possible
-    {VAR} is bound by any syntactic form other than an? {NONTERMINAL}, an? {NONTERMINAL}, the {NONTERMINAL} of a for statement, the {NONTERMINAL} of a for-in statement, or the {NONTERMINAL} of a for-in statement
     {VAR} is divisible by {NUM_LITERAL}
     {VAR} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification
     {VAR} is either a String, Number, Boolean, Null, or an Object that is defined by either an {NONTERMINAL} or an {NONTERMINAL}
@@ -827,6 +828,7 @@
     a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
     a List consisting of the sequence of code points of {VAR} interpreted as a UTF-16 encoded \({EMU_XREF}\) Unicode string
     a List consisting of the sequence of code units that are the elements of {VAR}
+    a List containing in order the code points of {VAR} when interpreted as a sequence of UTF-16 encoded code points as described in {EMU_XREF}
     a List containing in order the code points as defined in {EMU_XREF} of {VAR}, starting at the first element of {VAR}
     a List containing only {VAR}
     a List containing the 4 bytes that are the result of converting {VAR} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value
@@ -973,7 +975,9 @@
     the String value of the Element Type value in {EMU_XREF} for {VAR}
     the String value of the property name
     the String value of {DOTTING}
-    the String value that is a copy of {VAR} with both leading and trailing white space removed. The definition of white space is the union of \|WhiteSpace\| and \|LineTerminator\|. When determining whether a Unicode code point is in Unicode general category &ldquo;Space_Separator&rdquo; \(&ldquo;Zs&rdquo;\), code unit sequences are interpreted as UTF-16 encoded code point sequences as specified in {EMU_XREF}
+    the String value that is a copy of {VAR} with both leading and trailing white space removed
+    the String value that is a copy of {VAR} with leading white space removed
+    the String value that is a copy of {VAR} with trailing white space removed
     the String value that is made from {VAR} copies of {VAR} appended together
     the String value that is the result of normalizing {VAR} into the normalization form named by {VAR} as specified in <a [^<>]+>[^<>]+</a>
     the String value that is the same as {VAR} except that each occurrence of {CU_LITERAL} in {VAR} has been replaced with the six code unit sequence {STR_LITERAL}
@@ -1016,6 +1020,7 @@
     the code point {VAR}
     the code unit \(represented as a 16-bit unsigned integer\) at index {VAR} within {VAR}
     the code unit sequence consisting of {VAR} followed by {VAR}
+    the code unit whose numeric value is that of {VAR}
     the code unit whose value is {EXPR}
     the element in {DOTTING} whose {DSBN} is {EX}
     the element of {DOTTING} whose {DSBN} field is {VAR}
@@ -1265,7 +1270,7 @@
     ## {NONTERMINAL}\.\w+\({EXLIST_OPT}\)
 
 {OPN_BEFORE_FOROF} :
-    (?:the )?((?!Function|LexicalEnvironment|Realm|ScriptOrModule|VariableEnvironment|Name)[A-Z]\w+)
+    (?:the )?((?!Function|LexicalEnvironment|Realm|ScriptOrModule|VariableEnvironment|Name\b)[A-Z]\w+)
 
     ## directed-operations:
     ## MV
@@ -1289,7 +1294,7 @@
 
 {WITH_ARGS} :
     with argument {EX}
-    with arguments {VAR} and {EX}
+    with arguments {EX} and {EX}
     with arguments {VAR} and {EX} as the optional {VAR} argument
     (?:passing|using|with) {EX} as the argument
     (?:passing|using|with) {VAR} and {EX} as(?: the)? arguments
