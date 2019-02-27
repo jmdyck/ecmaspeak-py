@@ -269,6 +269,7 @@
 
 {EACH_THING} :
     Agent Events Record {VAR} in {DOTTING}
+    Cyclic Module Record {VAR} in {VAR}
     ExportEntry Record {VAR} in {EX}
     ImportEntry Record {VAR} in {EX}
     ReadSharedMemory or ReadModifyWriteSharedMemory event {VAR} in SharedDataBlockEventSet\({VAR}\)
@@ -368,6 +369,7 @@
     {CONDITION_1} and if {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
+    {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or if {CONDITION_1}
     {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
@@ -388,7 +390,7 @@
     All dependencies of {VAR} have been transitively resolved and {VAR} is ready for evaluation
     All named exports from {VAR} are resolvable
     All of the above CreateDataProperty operations return {LITERAL}
-    Each of the above calls will return {LITERAL}
+    Each of the above calls returns {LITERAL}
     GlobalSymbolRegistry does not currently contain an entry for {VAR}
     In this case, {VAR} will never be {LITERAL} or {LITERAL}
     The VariableEnvironment and LexicalEnvironment of {VAR} are the same
@@ -592,6 +594,8 @@
     {VAR} has {VAR} in its range
     {VAR} imports a specific binding for this export
     {VAR} is a Bound Function exotic object
+    {VAR} is a Cyclic Module Record
+    {VAR} is a {EMU_XREF} or a {EMU_XREF}
     {VAR} is a Completion Record
     {VAR} is a Data Block
     {VAR} is a Lexical Environment
@@ -624,7 +628,6 @@
     {VAR} is a Reference to an Environment Record binding
     {VAR} is a ResolvedBinding Record
     {VAR} is a Shared Data Block
-    {VAR} is a Source Text Module Record
     {VAR} is a State
     {VAR} is a String exotic object
     {VAR} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
@@ -688,8 +691,8 @@
     {VAR} is hint String
     {VAR} is in {VAR}
     {VAR} is never an abrupt completion
+    {VAR} is not a Cyclic Module Record
     {VAR} is not a Shared Data Block
-    {VAR} is not a Source Text Module Record
     {VAR} is not a {EMU_XREF}
     {VAR} is not a {NONTERMINAL}
     {VAR} is not already suspended
@@ -765,7 +768,6 @@
 
 {TYPE_TEST} :
     Both Type\({TYPE_ARG}\) and Type\({TYPE_ARG}\) is {TYPE_NAME}
-    Type\({TYPE_ARG}\) is Object and is either a built-in function object or has an {DSBN} internal slot
     Type\({TYPE_ARG}\) is Object and it has an {DSBN} internal slot
     Type\({TYPE_ARG}\) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots
     Type\({TYPE_ARG}\) is an ECMAScript language type
@@ -912,8 +914,8 @@
     an empty set
     an implementation-defined Completion value
     an implementation-defined string that is either {EX} or {EXPR}
-    an implementation-dependent String source code representation of {VAR}\. The representation must conform to the rules below
-    an implementation-dependent String source code representation of {VAR}\. The representation must conform to the rules below. It is implementation-dependent whether the representation includes bound function information or information about the target function
+    an implementation-dependent String source code representation of {VAR}\. The representation must have the syntax of a {NONTERMINAL}
+    an implementation-dependent String source code representation of {VAR}\. The representation must have the syntax of a {NONTERMINAL}. Additionally, if {VAR} is a {EMU_XREF} and is not identified as an anonymous function, the portion of the returned String that would be matched by {NONTERMINAL} must be the initial value of the `name` property of {VAR}
     an instance of the production {EMU_GRAMMAR}
     such an object created in an implementation-defined manner
     the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}
@@ -989,6 +991,7 @@
     the String value whose elements are {NAMED_OPERATION_INVOCATION}
     the String value whose elements are, in order, the elements in the List {VAR}. If {VAR} is 0, the empty string is returned
     the String value whose elements are, in order, the elements in {NAMED_OPERATION_INVOCATION}
+
     the String value whose length is {EX}, containing code units from {VAR}, namely the code units with indices {VAR} through {EX}, in ascending order
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair \({VAR}, {VAR}\)
@@ -1066,6 +1069,7 @@
     the numeric value 1
     the one character in CharSet {VAR}
     the parse of some source text
+    the prefix associated with {VAR} in {EMU_XREF}
     the result of <emu-xref href="#sec-applying-the-exp-operator" title>Applying the \*\* operator</emu-xref> with {VAR} and {VAR} as specified in {EMU_XREF}
     the result of adding the value {NUM_LITERAL} to {VAR}, using the same rules as for the `\+` operator \(see {EMU_XREF}\)
     the result of appending to {VAR} the elements of {NAMED_OPERATION_INVOCATION}
@@ -1108,6 +1112,7 @@
     the smallest possible integer {VAR} not smaller than {VAR} such that {CONDITION}; but if there is no such integer {VAR}, return the value {NUM_EXPR}
     the sole element of {NAMED_OPERATION_INVOCATION}
     the sole element of {VAR}
+    the source text matched by {NONTERMINAL}
     the source text that was recognized as {PROD_REF}
     the steps of an ArgGetter function as specified below
     the steps of an ArgSetter function as specified below
@@ -1118,6 +1123,7 @@
     the string-concatenation of {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
+    the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the substring of {VAR} consisting of all code units before the first such code unit
     the substring of {VAR} from index {VAR} to index {VAR} inclusive
@@ -1135,6 +1141,7 @@
     the {NONTERMINAL} that is covered by {LOCAL_REF}
     the {NONTERMINAL}, {NONTERMINAL}, or {NONTERMINAL} that most closely contains {VAR}
     the {VAR} that was passed to this function by {DSBN} or {DSBN}
+    this Cyclic Module Record
     this Date object
     this Source Text Module Record
     {EX}
@@ -1479,7 +1486,7 @@
     the single-element String `","`
 
 {CU_LITERAL} :
-    the code unit 0x[0-9A-F]{4} \([A-Z -]+\)
+    (the code unit )?0x[0-9A-F]{4} \([A-Z -]+\)
 
 {NUM_LITERAL} :
     &infin;
@@ -1515,7 +1522,7 @@
     BigInt
 
 {EMU_XREF} :
-    <emu-xref [^<>]+></emu-xref>
+    <emu-xref [^<>]+>([^<>]*)</emu-xref>
 
 {EMU_GRAMMAR} :
     <emu-grammar>([^<>]+)</emu-grammar>

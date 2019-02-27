@@ -1550,7 +1550,10 @@ named_type_hierarchy = {
                     'Intrinsics Record': {},
                     'MapData_record_': {},
                     'Module Record': {
-                        'Source Text Module Record': {},
+                        'Cyclic Module Record': {
+                            'Source Text Module Record': {},
+                            'other Cyclic Module Record': {},
+                        },
                         'other Module Record': {},
                     },
                     'PendingJob': {},
@@ -3014,6 +3017,9 @@ def tc_header(header):
                 or
                 header.name == 'PerformPromiseThen' and pn == '_resultCapability_'
                 # STA wants to add T_Undefined, which is in the body type, but not the param type
+                or
+                header.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_Integer_ | T_throw_ and final_t == T_throw_
+                # not sure why STA isn't picking up Integer
             ):
                 # Don't change header types
                 continue
@@ -3072,6 +3078,7 @@ def tc_header(header):
                 pass
             else:
                 assert 0, (header.name, pn, str(init_t), str(final_t))
+                # We should deal with this case above.
 
             header.change_declared_type(pn, final_t)
 
@@ -3833,10 +3840,10 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_String))
             env_for_commands = env1.plus_new_entry(loop_var, T_String)
 
-        elif each_thing.prod.rhs_s == r"module {VAR} in {VAR}":
+        elif each_thing.prod.rhs_s == r"Cyclic Module Record {VAR} in {VAR}":
             [loop_var, collection_expr] = each_thing.children
-            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_Module_Record))
-            env_for_commands = env1.plus_new_entry(loop_var, T_Module_Record)
+            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_Cyclic_Module_Record))
+            env_for_commands = env1.plus_new_entry(loop_var, T_Cyclic_Module_Record)
 
         elif each_thing.prod.rhs_s in [
             r"{NONTERMINAL} {VAR} in {VAR}",
@@ -4757,6 +4764,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1} and {CONDITION_1}',
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
     ]:
@@ -4942,6 +4950,14 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {VAR} is a constructor function":
         [var] = children
         return env0.with_type_test(var, 'is a', T_constructor_object_, asserting)
+
+    elif p == r"{CONDITION_1} : {VAR} is a Cyclic Module Record":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Cyclic_Module_Record, asserting)
+
+    elif p == r"{CONDITION_1} : {VAR} is not a Cyclic Module Record":
+        [var] = children
+        return env0.with_type_test(var, 'isnt a', T_Cyclic_Module_Record, asserting)
 
     elif p == r"{CONDITION_1} : {VAR} is a Completion Record":
         # In a sense, this is a vacuous condition,
@@ -5278,6 +5294,12 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {VAR} is either a String, Number, Boolean, Null, or an Object that is defined by either an {NONTERMINAL} or an {NONTERMINAL}":
         [var, nonta, nontb] = children
         return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
+
+    elif p == r"{CONDITION_1} : {VAR} is a {EMU_XREF} or a {EMU_XREF}":
+        [var, xrefa, xrefb] = children
+        assert xrefa.source_text() == '<emu-xref href="#sec-bound-function-exotic-objects">Bound Function exotic object</emu-xref>'
+        assert xrefb.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>'
+        return env0.with_type_test(var, 'is a', T_function_object_, asserting)
 
     # ----------------------
     # quasi-type-conditions
@@ -6095,8 +6117,8 @@ def tc_cond_(cond, env0, asserting):
         elif isinstance(container_t, ListType):
             # env0.assert_expr_is_of_type(item_var, container_t.element_type)
             # The stack only contains STMRs:
-            assert container_t == ListType(T_Source_Text_Module_Record)
-            # _requiredModule_ might be a non-ST MR:
+            assert container_t == ListType(T_Cyclic_Module_Record)
+            # _requiredModule_ might be a non-C MR:
             env0.assert_expr_is_of_type(item_var, T_Module_Record)
             # It's still reasonable to ask if _requiredModule_ is in the stack.
         else:
@@ -6828,7 +6850,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : Each of the above calls will return {LITERAL}":
+    elif p == r"{CONDITION_1} : Each of the above calls returns {LITERAL}":
         [lit] = children
         assert lit.source_text() == '*true*'
         return (env0, env0)
@@ -7600,7 +7622,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # 'GeneratorContext': Generator Instance
 
             if dsbn_name == 'Realm':
-                assert candidate_type_names == ['Module Record', 'PendingJob', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
+                assert candidate_type_names == ['Cyclic Module Record', 'Module Record', 'PendingJob', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
                 if lhs_text == '_scriptRecord_':
                     lhs_t = T_Script_Record
                 elif lhs_text == '_module_':
@@ -8337,6 +8359,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
+        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
     ]:
         env1 = env0
@@ -8671,6 +8694,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # XXX Should check whether nonterminal makes sense
         # with respect to the emu-grammar accompanying this alg/expr.
         return (T_Unicode_code_points_, env0)
+
+    elif p == r"{EXPR} : the source text matched by {NONTERMINAL}":
+        [nont] = children
+        return (T_String, env0) # XXX spec bug: should be T_Unicode_code_points_
 
     elif p == r"{EXPR} : a List whose elements are the code points resulting from applying UTF-16 decoding to {VAR}'s sequence of elements":
         [var] = children
@@ -9924,6 +9951,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Source_Text_Module_Record, env0)
 
+    elif p == r"{EXPR} : this Cyclic Module Record":
+        [] = children
+        return (T_Cyclic_Module_Record, env0)
+
     elif p == r"{EX} : (ScriptEvaluationJob|TopLevelModuleEvaluationJob|PromiseResolveThenableJob|PromiseReactionJob)":
         [op_name] = children
         return (T_proc_, env0)
@@ -10497,6 +10528,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_Synchronize_event)
         return (T_pair_, env0)
 
+    elif p == r"{EXPR} : an implementation-dependent String source code representation of {VAR}\. The representation must have the syntax of a {NONTERMINAL}. Additionally, if {VAR} is a {EMU_XREF} and is not identified as an anonymous function, the portion of the returned String that would be matched by {NONTERMINAL} must be the initial value of the `name` property of {VAR}":
+        var = children[0]
+        env0.assert_expr_is_of_type(var, T_function_object_)
+        return (T_String, env0)
+
+    elif p == r"{EXPR} : an implementation-dependent String source code representation of {VAR}\. The representation must have the syntax of a {NONTERMINAL}":
+        [var, nont] = children
+        env0.assert_expr_is_of_type(var, T_function_object_)
+        return (T_String, env0)
+
+    elif p == r"{EXPR} : the prefix associated with {VAR} in {EMU_XREF}":
+        [var, xref] = children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_String, env0)
+
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {VAR} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {VAR}. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value":
     # elif p == r"{EXPR} : an implementation-dependent String value that represents {VAR} as a date and time in the current time zone using a convenient, human-readable form":
@@ -10896,24 +10942,29 @@ fields_for_record_type_named_ = {
         'Realm'           : T_Realm_Record | T_Undefined,
         'Environment'     : T_Lexical_Environment | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
-        'Status'          : T_String,
-        'ErrorCompletion' : T_Abrupt | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
+        'Status'           : T_String, # see Issue 1455
     },
 
     'other Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
         'Environment'     : T_Lexical_Environment | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
-        'Status'          : T_String,
-        'ErrorCompletion' : T_Abrupt | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
     },
 
-    # 23376
-    'ResolvedBinding Record': {
-        'Module'      : T_Module_Record,
-        'BindingName' : T_String,
+    # 
+    'Cyclic Module Record': {
+        'Realm'           : T_Realm_Record | T_Undefined,
+        'Environment'     : T_Lexical_Environment | T_Undefined,
+        'Namespace'       : T_Object | T_Undefined,
+        'HostDefined'     : T_host_defined_ | T_Undefined,
+        #
+        'Status'           : T_String,
+        'EvaluationError'  : T_Abrupt | T_Undefined,
+        'DFSIndex'         : T_Integer_ | T_Undefined,
+        'DFSAncestorIndex' : T_Integer_ | T_Undefined,
+        'RequestedModules' : ListType(T_String),
     },
 
     # 23406: Table 38: Additional Fields of Source Text Module Records
@@ -10921,20 +10972,25 @@ fields_for_record_type_named_ = {
         'Realm'           : T_Realm_Record | T_Undefined,
         'Environment'     : T_Lexical_Environment | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
-        'Status'          : T_String,
-        'ErrorCompletion' : T_Abrupt | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
+        'Status'           : T_String,
+        'EvaluationError'  : T_Abrupt | T_Undefined,
+        'DFSIndex'         : T_Integer_ | T_Undefined,
+        'DFSAncestorIndex' : T_Integer_ | T_Undefined,
+        'RequestedModules' : ListType(T_String),
+        #
         'ECMAScriptCode'       : T_Parse_Node,
-        'RequestedModules'     : ListType(T_String),
         'ImportEntries'        : ListType(T_ImportEntry_Record),
         'LocalExportEntries'   : ListType(T_ExportEntry_Record),
         'IndirectExportEntries': ListType(T_ExportEntry_Record),
         'StarExportEntries'    : ListType(T_ExportEntry_Record),
-        'Status'               : T_String,
-        'EvaluationError'      : T_Abrupt | T_Undefined,
-        'DFSIndex'             : T_Integer_ | T_Undefined,
-        'DFSAncestorIndex'     : T_Integer_ | T_Undefined,
+    },
+
+    # 23376
+    'ResolvedBinding Record': {
+        'Module'      : T_Module_Record,
+        'BindingName' : T_String,
     },
 
     # 23490: Table 39: ImportEntry Record Fields
@@ -11115,6 +11171,7 @@ type_of_internal_thing_ = {
     'ThisMode'         : T_this_mode,
     'Strict'           : T_Boolean,
     'HomeObject'       : T_Object,
+    'SourceText'       : T_String,
 
     # 9078: Table 28: Internal Slots of Exotic Bound Function Objects
     'BoundTargetFunction': T_function_object_,

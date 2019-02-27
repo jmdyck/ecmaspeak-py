@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import re
+import sys, re
 from html.parser import HTMLParser
 from collections import OrderedDict
 
@@ -318,7 +318,7 @@ element_info = {
         'table'             : ('B', '#WS;(thead;#WS;)?tbody;#WS;'),
         'tbody'             : ('B', '#WS;(tr;#WS;)+'),
         'thead'             : ('B', '#WS;(tr;#WS;)+'),
-        'tr'                : ('B', '#WS;((th;|td;)#WS;)+'),
+        'tr'                : ('B', '(#WS;)?((th;|td;)(#WS;)?)+'),
         'ul'                : ('B', '#WS;(li;#WS;)+'),
         'ol'                : ('B', '#WS;(li;#WS;)+'),
         'object'            : ('B', '#WS;img;#WS;'),

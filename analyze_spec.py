@@ -456,7 +456,7 @@ def check_tables():
                 assert caption in ['Essential Internal Methods', 'Additional Essential Internal Methods of Function Objects']
                 assert header_line == 'Internal Method; Signature; Description'
             elif 'Records' in caption:
-                assert re.fullmatch(r'(Abstract|Additional) Methods of .+ Records', caption)
+                assert re.fullmatch(r'(Additional )?(Abstract )?Methods of .+ Records', caption), caption
                 assert header_line == 'Method; Purpose'
             elif caption == 'Proxy Handler Methods':
                 assert header_line == 'Internal Method; Handler Method'

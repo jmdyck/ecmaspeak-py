@@ -611,7 +611,7 @@ def get_eoh_text_for_cm(s, header_text, preamble_text):
     pst = s.parent.section_title
     if pst.endswith(' Environment Records'):
         oi.owning_type = pst[0].lower() + pst[1:-1]
-    elif pst == 'Source Text Module Records':
+    elif pst in ['Source Text Module Records', 'Cyclic Module Records']:
         oi.owning_type = pst[0:-1]
     else:
         assert 0, pst
@@ -642,7 +642,7 @@ def get_eoh_text_for_cm(s, header_text, preamble_text):
     if preamble_text:
 
         patterns = [
-            r'^The (\w+) concrete method of a (Source Text Module Record) ',
+            r'^The (\w+) concrete method of a ((?:Cyclic|Source Text) Module Record) ',
             r'^The concrete Environment Record method (\w+) for (\w+ Environment Record)s ',
         ]
         for pattern in patterns:
@@ -660,10 +660,10 @@ def get_eoh_text_for_cm(s, header_text, preamble_text):
             (r'(?:the )?Boolean argument (_D_|_S_)', r'\1'),
             (r'_M_ is a Module Record, and ', r''),
             (r'^with arguments _exportName_, and _resolveSet_ ', ''),
-            (r'^implements the corresponding Module Record abstract method\. ', ''),
+            (r'^implements the corresponding (Module Record|Cyclic Module Record) abstract method\. ', ''),
             (r'^performs the following steps:$', r''),
             (r'^It performs the following steps.$', ''),
-            (r' This abstract method performs the following steps.$', ''),
+            (r' ?This abstract method performs the following steps.$', ''),
             (r' This abstract method performs the following steps \(most of the work (.+)\):$',
                 r' (Most of the work \1.)'),
             (':$', '.'),
@@ -701,7 +701,8 @@ rec_method_declarations = '''
     ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
     Instantiate() -> TBD
     Evaluate() -> TBD
-
+    InitializeEnvironment() -> TBD
+    ExecuteModule() -> TBD
 '''
 
 rec_method_parameter_types = {
@@ -1781,6 +1782,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         'zero or more arguments',
         'any number of arguments',
         'one or two arguments',
+        'zero or one arguments',
     ]:
         # XXX not sure what to do
         return
