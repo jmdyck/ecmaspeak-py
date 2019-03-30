@@ -3869,6 +3869,13 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_code_point_))
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
 
+        # explicit-exotics:
+        elif each_thing.prod.rhs_s == r"internal slot in {VAR}":
+            [collection_expr] = each_thing.children
+            loop_var = None # todo: no loop variable!
+            env0.assert_expr_is_of_type(collection_expr, ListType(T_SlotName_))
+            env_for_commands = env0
+
         # ------------------------
         # property keys of an object:
 
@@ -4661,6 +4668,22 @@ def tc_nonvalue(anode, env0):
         [cu_lit, var] = children
         env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
         env0.assert_expr_is_of_type(var, T_String)
+        result = env0
+
+    # explicit-exotics:
+    elif p == r"{SMALL_COMMAND} : append each of its elements to {VAR}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_List)
+        result = env0
+
+    elif p == r"{COMMAND} : Set {VAR}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {EMU_XREF}\.":
+        var = children[0]
+        env0.assert_expr_is_of_type(var, T_Object)
+        result = env0
+
+    elif p == r"{SMALL_COMMAND} : initialize the corresponding internal slot value on {VAR} to {LITERAL}":
+        [var, lit] = children
+        env0.assert_expr_is_of_type(var, T_Object)
         result = env0
 
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {VAR}\.":
@@ -6888,7 +6911,29 @@ def tc_cond_(cond, env0, asserting):
         [var, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (env0, env0)
-    
+
+    # explicit-exotics:
+    elif p in [
+        r"{CONDITION_1} : the caller will not be overriding both {VAR}'s {DSBN} and {DSBN} essential internal methods",
+        r"{CONDITION_1} : the caller will not be overriding all of {VAR}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods",
+    ]:
+        var = children[0]
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {VAR} contains {DSBN}":
+        [var, dsbn] = children
+        env0.assert_expr_is_of_type(var, ListType(T_SlotName_))
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {VAR} is a bound function exotic object":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_bound_function_exotic_object_, asserting)
+
+    elif p == r"{CONDITION_1} : {VAR} is a bound function exotic object or a {EMU_XREF}":
+        [var, xref] = children
+        return env0.with_type_test(var, 'is a', T_function_object_, asserting)
+
     # elif p == r"{CONDITION_1} : All named exports from {VAR} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {VAR} or {VAR}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
@@ -10542,6 +10587,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var, xref] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_String, env0)
+
+    # explicit-exotics:
+    elif p in [
+        r"{EXPR} : the internal slots listed in {EMU_XREF}",
+        r"{EXPR} : the internal slots listed in {EMU_XREF}, plus {DSBN} and {DSBN}",
+    ]:
+        # XXX really, the *names* of the internal slots...
+        return (ListType(T_SlotName_), env0)
+
+
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {VAR} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {VAR}. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value":

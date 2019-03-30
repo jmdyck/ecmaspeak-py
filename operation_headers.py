@@ -988,8 +988,8 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
         # 9.1.14 OrdinaryCreateFromConstructor
         # 9.3.3 CreateBuiltinFunction
         # 9.4.5.7 IntegerIndexedObjectCreate
-        (r'(The(( optional)?)( argument)? _internalSlotsList_ is a List of the names of additional internal slots that .+)',
-            r'_internalSlotsList_ is a\2 List of slot-names.',
+        (r'(The((?: optional)?)(?: argument)? (_\w+SlotsList_) is a List of the names of additional internal slots that .+)',
+            r'\3 is a\2 List of slot-names.',
             r'\1'),
 
         # 9.4.2.2

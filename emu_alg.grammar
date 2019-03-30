@@ -184,6 +184,9 @@
     Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it\.
     Set the code evaluation state of {VAR} such that when evaluation is resumed with a Completion {VAR}, the following steps of the algorithm that invoked Await will be performed, with {VAR} available\.
 
+    # explicit-exotics:
+    Set {VAR}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {EMU_XREF}\.
+
 # ----------------------------------------------
 
 {IF_CLOSED} :
@@ -265,6 +268,10 @@
     the replacement text is {EXPR}
     replace the text through `>` with {EXPR}
 
+    # explicit-exotics
+    initialize the corresponding internal slot value on {VAR} to {LITERAL}
+    append each of its elements to {VAR}
+
 # ------------------------------------------------------
 
 {EACH_THING} :
@@ -317,6 +324,9 @@
     {VAR} in {VAR}, in reverse list order
     {VAR} that is an element of {VAR}
     {VAR} that is an element of {VAR}, in original insertion order
+
+    # explicit-exotics:
+    internal slot in {VAR}
 
 # ------------------------------------------------------
 
@@ -766,6 +776,13 @@
     {NONTERMINAL} is `[*/%]`
     both {EX} and {EX} are Strings
 
+    # explicit-exotics:
+    the caller will not be overriding all of {VAR}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
+    the caller will not be overriding both {VAR}'s {DSBN} and {DSBN} essential internal methods
+    {VAR} is a bound function exotic object
+    {VAR} is a bound function exotic object or a {EMU_XREF}
+    {VAR} contains {DSBN}
+
 {TYPE_TEST} :
     Both Type\({TYPE_ARG}\) and Type\({TYPE_ARG}\) is {TYPE_NAME}
     Type\({TYPE_ARG}\) is Object and it has an {DSBN} internal slot
@@ -1174,6 +1191,10 @@
 
     ## directed-operations:
     ## {NAMED_OPERATION_INVOCATION}\. This may be of type Reference
+
+    # explicit-exotics:
+    the internal slots listed in {EMU_XREF}
+    the internal slots listed in {EMU_XREF}, plus {DSBN} and {DSBN}
 
 {EX} :
     &laquo; &raquo;
