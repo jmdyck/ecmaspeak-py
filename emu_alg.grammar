@@ -783,6 +783,18 @@
     {VAR} is a bound function exotic object or a {EMU_XREF}
     {VAR} contains {DSBN}
 
+    # scope-records:
+    it must be in the object Scope Record
+    the base of {VAR} is a Scope Record
+    {VAR} is a Reference to a Scope Record binding
+    {VAR} is a Scope Record
+    {VAR} is a declarative Scope Record
+    {VAR} is a function Scope Record
+    {VAR} is a global Scope Record
+    {VAR} is not an object Scope Record
+    {VAR} is not the Scope Record for a \|Catch\| clause
+    {VAR} must be a Scope Record
+
 {TYPE_TEST} :
     Both Type\({TYPE_ARG}\) and Type\({TYPE_ARG}\) is {TYPE_NAME}
     Type\({TYPE_ARG}\) is Object and it has an {DSBN} internal slot
@@ -1196,6 +1208,14 @@
     the internal slots listed in {EMU_XREF}
     the internal slots listed in {EMU_XREF}, plus {DSBN} and {DSBN}
 
+    # scope-records:
+    the (declarative|function|module|object|global) Scope Record for which the method was invoked
+    a new declarative Scope Record containing no bindings
+    a new function Scope Record containing no bindings
+    a new global Scope Record
+    a new module Scope Record containing no bindings
+    a new object Scope Record containing {VAR} as the binding object
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
@@ -1356,6 +1376,9 @@
 {RECORD_CONSTRUCTOR} :
     (?:the |a |a new )?(Record|Chosen Value Record|ExportEntry Record|ImportEntry Record|Completion|PropertyDescriptor|PendingJob|PromiseCapability|PromiseReaction|ReadModifyWriteSharedMemory|ReadSharedMemory|ResolvedBinding Record|Script Record|Source Text Module Record|WriteSharedMemory|AsyncGeneratorRequest) { {FIELDS} }
 
+    # scope-records:
+    Lexical Environment { {FIELDS} }
+
 {FIELDS} :
     {FIELD}
     {FIELDS}, {FIELD}
@@ -1386,6 +1409,9 @@
     {VAR}'s ScriptOrModule component
     {VAR}'s {DSBN} attribute
     {VAR}\[{EX}\]
+
+    # scope-records:
+    the _withEnvironment_ flag of {VAR}.\[\[ScopeRecord\]\]
 
 # --------------------------------
 

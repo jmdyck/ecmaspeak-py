@@ -264,6 +264,12 @@ def _infer_section_kinds(section):
             child.section_kind = 'env_rec_method'
             assert len(child.section_children) == 0
 
+    # scope-records:
+    elif section.section_title.endswith(' Scope Records'):
+        for child in section.section_children:
+            child.section_kind = 'env_rec_method' # XXX
+            assert len(child.section_children) == 0
+
     else:
         for child in section.section_children:
             _infer_section_kinds(child)
