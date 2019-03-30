@@ -6,9 +6,9 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 # example use:
-# test_parser.py --all && mu _{fail,early,pass}_output
+# test_parser.py --all && car _{fail,early,pass}_output
 # ^ takes about 2.5 minutes
-# test_parser.py --all-dir=fail && mu _fail_output
+# test_parser.py --all-dir=fail && car _fail_output
 
 # You may need to `export PYTHONIOENCODING=utf-8` before running this script.
 
