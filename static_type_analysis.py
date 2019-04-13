@@ -1137,15 +1137,13 @@ class Type(tuple):
                         if bs_within_a:
                             # break down `a`
                             if a == T_List:
-                                if bs_within_a == [ListType(T_String)]:
-                                    inside_B.add(ListType(T_String))
-                                    outside_B.add(ListType(T_other_))
-                                elif bs_within_a == [ListType(T_Symbol|T_String)]:
-                                    inside_B.add(ListType(T_Symbol|T_String))
-                                    outside_B.add(ListType(T_other_))
-                                elif bs_within_a == [ListType(T_Tangible_)]:
-                                    inside_B.add(ListType(T_Tangible_))
-                                    outside_B.add(ListType(T_other_))
+                                if len(bs_within_a) == 1:
+                                    [bwa] = bs_within_a
+                                    if isinstance(bwa, ListType):
+                                        inside_B.add(bwa)
+                                        outside_B.add(ListType(T_other_))
+                                    else:
+                                        assert 0
                                 else:
                                     assert 0
                             elif isinstance(a, ListType):
@@ -2894,7 +2892,7 @@ def mytrace(env):
         print("resulting env is None")
     else:
         # print("resulting env:", env)
-        for var_name in [ '_chosenValueRecord_', '_chosenValue_']:
+        for var_name in [ '_O_']:
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
             # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
@@ -2913,7 +2911,7 @@ def tc_operation(op_name):
 
     global trace_this_op
     trace_this_op = False
-    # trace_this_op = (op_name == 'Tear Free Reads') # and you may want to tweak mytrace just above
+    # trace_this_op = (op_name == 'RequireInternalSlot') # and you may want to tweak mytrace just above
 
     op = operation_named_[op_name]
 
@@ -2975,8 +2973,7 @@ def tc_header(header):
 
             if init_t == final_t: continue
 
-            # if header.name == 'ToLength': pdb.set_trace()
-            # if header.name == 'ArrayCreate': pdb.set_trace()
+            # if header.name == 'RequireInternalSlot': pdb.set_trace()
             if (
                 # cases in which we don't want to change header types:
                 init_t == ListType(T_code_unit_) and final_t == T_code_unit_ | ListType(T_code_unit_)
@@ -5090,6 +5087,16 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', ListType(T_Number), asserting)
 
+    elif p == r"{CONDITION_1} : {VAR} is a List of Source Text Module Records":
+        [var] = children
+        return env0.with_type_test(var, 'is a', ListType(T_Source_Text_Module_Record), asserting)
+
+    elif p == r"{CONDITION_1} : {VAR} is a List of Record { {DSBN}, {DSBN} }":
+        [var, dsbn1, dsbn2] = children
+        assert dsbn1.children == ['Module']
+        assert dsbn2.children == ['ExportName']
+        return env0.with_type_test(var, 'is a', ListType(T_ExportResolveSet_Record_), asserting)
+
     elif p == r"{CONDITION_1} : {VAR} is a List containing only String and Symbol values":
         [var] = children
         env0.assert_expr_is_of_type(var, ListType(T_String | T_Symbol))
@@ -5706,6 +5713,12 @@ def tc_cond_(cond, env0, asserting):
             assert 0
         # XXX The particular DSBN could have a (sub-)type-constraining effect
         return (env1, env1)
+
+    elif p == r"{CONDITION_1} : {VAR} does not have an? {VAR} internal slot":
+        [obj_var, slotname_var] = children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(slotname_var, T_SlotName_)
+        return (env0, env0)
 
     elif p in [
         r'{CONDITION_1} : {VAR} also has a {DSBN} internal slot',
@@ -6762,6 +6775,11 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {VAR} does not have all of the internal slots of an? (\w+) Iterator Instance \({EMU_XREF}\)":
         [var, x, emu_xref] = children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {VAR} does not have all of the internal slots of a RegExp String Iterator Object Instance \(see {EMU_XREF}\)":
+        [var, emu_xref] = children
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
@@ -9118,6 +9136,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
         return (T_Object, env1)
 
+    elif p == r"{EXPR} : a newly created module namespace exotic object with the internal slots listed in {EMU_XREF}":
+        [emu_xref] = children
+        return (T_Object, env0)
+
+    elif p == r"{EXPR} : a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}":
+        [dsbn1, dsbn2] = children
+        return (T_Object, env0)
+
     elif p == r'{EXPR} : a newly created object':
         [] = children
         return (T_Object, env0)
@@ -9147,10 +9173,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [r_var, n_var] = children
         env0.assert_expr_is_of_type(r_var, T_Realm_Record)
         env0.assert_expr_is_of_type(n_var, T_String)
-        return (T_Object, env0)
-
-    elif p == r"{EXPR} : a newly created String exotic object":
-        [] = children
         return (T_Object, env0)
 
     # -------------------------------------------------
@@ -9251,13 +9273,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_function_object_
 
-    elif p == r'{EXPR} : a newly created ECMAScript function object with the internal slots listed in {EMU_XREF}. All of those internal slots are initialized to {LITERAL}':
-        [emu_xref, literal] = children
+    elif p == r'{EXPR} : a newly created ECMAScript function object with the internal slots listed in {EMU_XREF}':
+        [emu_xref] = children
         return (T_function_object_, env0)
 
-    elif p == r'{EXPR} : a new built-in function object that when called performs the action described by {VAR}. The new function object has internal slots whose names are the elements of {VAR}. The initial value of each of those internal slots is {LITERAL}':
-        [var1, var2, literal] = children
-        # literal
+    elif p == r'{EXPR} : a new built-in function object that when called performs the action described by {VAR}. The new function object has internal slots whose names are the elements of {VAR}':
+        [var1, var2] = children
         env1 = env0.ensure_expr_is_of_type(var1, T_alg_steps)
         # env1 = env0.ensure_expr_is_of_type(var2, )
         return (T_function_object_, env1)
@@ -9828,7 +9849,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         proc_add_return(env1, abrupt_part_of_type, expr)
 
-        return (normal_part_of_type, env1)
+        # RequireInternalSlot is a quasi-type-test.
+        env2 = env1
+        if str(noi.prod) == '{NOI} : {PREFIX_PAREN}':
+            [pp] = noi.children
+            assert str(pp.prod) == r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}\({EXLIST_OPT}\)'
+            [opn_before_paren, exlist_opt] = pp.children
+            if opn_before_paren.source_text() == 'RequireInternalSlot':
+                # This amounts to a type-test.
+                # I.e., in the not-returning-early env resulting from this NAMED_OPERATION_INVOCATION,
+                # we can narrow the type of the first arg to RequireInternalSlot.
+                (obj_arg, slotname_arg) = exes_in_exlist_opt(exlist_opt)
+                env2 = env1.with_expr_type_narrowed(obj_arg, T_Object)
+                # XXX Depending on the slotname_arg, we could narrow it further.
+
+        return (normal_part_of_type, env2)
 
     elif p == r"{TYPE_ARG} : {VAR}'s base value component":
         [var] = children
@@ -10008,6 +10043,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Array_object_, env0)
 
+    elif p == r"{EXPR} : a newly created Integer-Indexed exotic object with an internal slot for each name in {VAR}":
+        [var] = children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
+        return (T_Integer_Indexed_object_, env1)
+
+    elif p == r"{EX} : a newly created {ERROR_TYPE} object":
+        [error_type] = children
+        [error_type_name] = error_type.children
+        return (NamedType(error_type_name), env0)
+
+    elif p == r"{EXPR} : a newly created bound function exotic object with the internal slots listed in {EMU_XREF}":
+        [emu_xref] = children
+        return (T_bound_function_exotic_object_, env0)
+
+    elif p == r"{EXPR} : a newly created String exotic object with a {DSBN} internal slot":
+        [dsbn] = children
+        return (T_String_exotic_object_, env0)
+
     elif p in [
         r"{EXPR} : a copy of {VAR}",
         r"{EXPR} : a copy of {DOTTING}",
@@ -10095,11 +10148,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(adotting, T_proc_)
         env0.assert_expr_is_of_type(bdotting, T_List)
         return (T_Tangible_ | T_empty_ | T_Abrupt, env0)
-    
-    elif p == r"{EX} : a newly created {ERROR_TYPE} object":
-        [error_type] = children
-        [error_type_name] = error_type.children
-        return (NamedType(error_type_name), env0)
 
     elif p == r"{EXPR} : the canonical property name of {VAR} as given in the &ldquo;Canonical property name&rdquo; column of the corresponding row":
         [v] = children
@@ -10551,7 +10599,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String, env0) # XXX: spec should talk about encoding source code in UTF-16?
 
     elif p in [
-        r"{EXPR} : the result of converting {VAR} to a value in IEEE 754-2008 binary32 format using roundTiesToEven",
+        r"{EXPR} : the result of converting {VAR} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode",
         r"{EXPR} : the result of converting {VAR} to a value in IEEE 754-2008 binary64 format",
         r"{EXPR} : the ECMAScript Number value corresponding to {VAR}",
     ]:
@@ -11289,6 +11337,13 @@ type_of_internal_thing_ = {
     'IteratedSet'      : T_Object,
     'SetNextIndex'     : T_Integer_,
     'SetIterationKind' : T_String,
+
+    # 36630: Table 58: Internal Slots of RegExp String Iterator Instances
+    'IteratingRegExp'  : T_Object,
+    'IteratedString'   : T_String,
+    'Global'           : T_Boolean,
+    'Unicode'          : T_Boolean,
+    'Done'             : T_Boolean,
 
     # 36817: Properties of the ArrayBuffer Instances
     # 36973: Properties of the SharedArrayBuffer Instances

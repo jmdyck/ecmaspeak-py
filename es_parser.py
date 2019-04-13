@@ -1609,9 +1609,9 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
         elif post.T == 'A_but_only_if':
             # assert rush.rsymbol.n == 'HexDigits'
             mv = int(node.text(), 16) # XXX should do it by invoking MV
-            if post.c == 'MV of HexDigits &le; 0x10FFFF ':
+            if post.c == 'MV of |HexDigits| &le; 0x10FFFF ':
                 return (mv <= 0x10ffff)
-            elif post.c == 'MV of HexDigits > 0x10FFFF ':
+            elif post.c == 'MV of |HexDigits| > 0x10FFFF ':
                 return (mv > 0x10ffff)
             else:
                 assert 0, post.c

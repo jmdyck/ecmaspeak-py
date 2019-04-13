@@ -85,7 +85,7 @@ class MyHTMLParser(HTMLParser):
                 self._report("Assuming that </%s> is missing" % self.curr_node.element_name)
                 self.curr_node.set_end_pos(self.getpos())
                 self.curr_node = self.curr_node.parent.parent
-                self.curr_node.set_inner_end_pos(pos)
+                self.curr_node.set_inner_end_pos(self.getpos())
         else:
             self.curr_node = self.curr_node.parent
             # print('self.curr_node is now', self.curr_node.element_name)

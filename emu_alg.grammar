@@ -579,8 +579,10 @@
     {VAR} does not have a Generator component
     {VAR} does not have a binding for {VAR}
     {VAR} does not have all of the internal slots of an? (\w+) Iterator Instance \({EMU_XREF}\)
+    {VAR} does not have all of the internal slots of a RegExp String Iterator Object Instance \(see {EMU_XREF}\)
     {VAR} does not have an own property with key {VAR}
     {VAR} does not have an? {DSBN} (field|internal slot)
+    {VAR} does not have an? {VAR} internal slot
     {VAR} does not have either a {DSBN} or an {DSBN} internal slot
     {VAR} does not include the element {LITERAL}
     {VAR} has a binding for the name that is the value of {VAR}
@@ -611,6 +613,8 @@
     {VAR} is a Lexical Environment
     {VAR} is a List
     {VAR} is a List containing only String and Symbol values
+    {VAR} is a List of Record { {DSBN}, {DSBN} }
+    {VAR} is a List of Source Text Module Records
     {VAR} is a List of String values
     {VAR} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF} or {EMU_XREF}
     {VAR} is a List of Unicode code points that is identical to a List of Unicode code points that is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {EMU_XREF}
@@ -862,7 +866,7 @@
     a List containing in order the code points of {VAR} when interpreted as a sequence of UTF-16 encoded code points as described in {EMU_XREF}
     a List containing in order the code points as defined in {EMU_XREF} of {VAR}, starting at the first element of {VAR}
     a List containing only {VAR}
-    a List containing the 4 bytes that are the result of converting {VAR} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value
+    a List containing the 4 bytes that are the result of converting {VAR} to IEEE 754-2008 binary32 format using roundTiesToEven mode. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value
     a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {VAR}. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value
     a List containing the arguments passed to this function
     a List containing the elements, in order, of {VAR} followed by {VAR}
@@ -911,7 +915,7 @@
     a new Realm Record
     a new Record
     a new \(possibly empty\) List consisting of all of the argument values provided after {VAR} in order
-    a new built-in function object that when called performs the action described by {VAR}. The new function object has internal slots whose names are the elements of {VAR}. The initial value of each of those internal slots is {LITERAL}
+    a new built-in function object that when called performs the action described by {VAR}. The new function object has internal slots whose names are the elements of {VAR}
     a new declarative Environment Record containing no bindings
     a new empty List
     a new execution context
@@ -922,11 +926,14 @@
     a new object Environment Record containing {VAR} as the binding object
     a new unique Symbol value whose {DSBN} value is {VAR}
     a newly created Array exotic object
-    a newly created ECMAScript function object with the internal slots listed in {EMU_XREF}. All of those internal slots are initialized to {LITERAL}
+    a newly created ECMAScript function object with the internal slots listed in {EMU_XREF}
+    a newly created Integer-Indexed exotic object with an internal slot for each name in {VAR}
     a newly created Property Descriptor with no fields
-    a newly created String exotic object
+    a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}
+    a newly created String exotic object with a {DSBN} internal slot
     a newly created arguments exotic object with a {DSBN} internal slot
-    a newly created object
+    a newly created bound function exotic object with the internal slots listed in {EMU_XREF}
+    a newly created module namespace exotic object with the internal slots listed in {EMU_XREF}
     a newly created object with an internal slot for each name in {VAR}
     a newly created substring of {VAR} consisting of the first code unit that is not a {NONTERMINAL} and all code units following that code unit. \(In other words, remove leading white space.\) If {VAR} does not contain any such code unit, let {VAR} be the empty string
     a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined
@@ -1109,7 +1116,7 @@
     the result of applying the subtraction operation to {VAR} and {VAR}. See the note below {EMU_XREF}
     the result of applying the {NONTERMINAL} \(.+\) to {VAR} and {VAR} as specified in {EMU_XREF}, {EMU_XREF}, or {EMU_XREF}
     the result of applying {VAR} to {VAR} and {VAR} as if evaluating the expression {VAR} {VAR} {VAR}
-    the result of converting {VAR} to a value in IEEE 754-2008 binary32 format using roundTiesToEven
+    the result of converting {VAR} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode
     the result of converting {VAR} to a value in IEEE 754-2008 binary64 format
     the result of evaluating {LOCAL_REF}
     the result of evaluating {LOCAL_REF} with argument {VAR}

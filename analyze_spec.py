@@ -307,6 +307,26 @@ def check_ids():
         if 'id' in node.attrs:
             defid = node.attrs['id']
 
+            id_prefix_expectation = {
+              'emu-intro' : 'sec-',
+              'emu-clause': 'sec-',
+              'emu-annex' : 'sec-',
+              'emu-eqn'   : 'eqn-',
+              'emu-figure': 'figure-',
+              'emu-table' : 'table-',
+            }.get(node.element_name, None)
+            if id_prefix_expectation:
+                if not defid.startswith(id_prefix_expectation):
+                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}">, expected its id to start with "{id_prefix_expectation}"')
+            else:
+                if (False
+                    or defid.startswith('sec-')
+                    or defid.startswith('eqn-')
+                    or defid.startswith('figure-')
+                    or defid.startswith('table-')
+                ):
+                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}">, did not expect its id to start that way')
+
             if defid in node_with_id_:
                 msg_at_posn(node.start_posn, f"duplicate id: '{defid}'")
 
@@ -349,7 +369,7 @@ def check_ids():
                     else:
                         msg_at_posn(refnode.start_posn, f"emu-xref used when auto-linking would work: '{refid}'")
                 else:
-                    assert 0, defnode.element_name
+                    msg_at_posn(defnode.start_posn, f"unexpected defnode element-name <{defnode.element_name}>")
 
             else:
                 if refid in [
