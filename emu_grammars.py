@@ -74,8 +74,10 @@ def process_defining_emu_grammars(emu_grammars):
         arena = get_grammar_arena_for_section(cc_section)
 
         if arena == 'B':
-            # Some are replacements, and some are augments.
-            # if preceding para says "The following augments the <Foo> production in <section-num>:"
+            # Some are replacements, and some are augments. Need to know which.
+            # Could detect it based on whether the preceding para says
+            #   "The following augments the <Foo> production in <section-num>:"
+            # but easier to hard-code it:
             augments = (cc_section.section_title in [
                 'FunctionDeclarations in IfStatement Statement Clauses',
                 'Initializers in ForIn Statement Heads',
@@ -106,7 +108,7 @@ def process_defining_emu_grammars(emu_grammars):
         # each with multiple goal symbols.
         grammar_name = 'syntactic' if nt_info.colons == ':' else 'lexical'
 
-        # See Bug 4088
+        # See Bug 4088: https://tc39.github.io/archives/bugzilla/4088/
         if grammar_name == 'lexical' and lhs_symbol in [
             'ReservedWord',
             'Keyword',
