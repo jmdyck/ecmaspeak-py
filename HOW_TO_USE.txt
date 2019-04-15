@@ -64,7 +64,7 @@ alias gcbn='git rev-parse --abbrev-ref HEAD'
 
 # --------------------------------------------------------------------
 
-D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B,J}_cfps.json sdo_coverage
+D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B}_cfps.json sdo_coverage
 # (~ 2s)
 
 # {lexical,syntactic}{A,B,J}_{min_len,firstk,expanded_grammar,automaton}

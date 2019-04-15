@@ -119,7 +119,7 @@ def process_defining_emu_grammars(emu_grammars):
             stderr('Changing from lexical to syntactic:', lhs_symbol)
             grammar_name = 'syntactic'
 
-        for arena in ['A', 'B', 'J']:
+        for arena in ['A', 'B']:
             r = nt_info.get_appropriate_def_occ(arena)
             if r is None: continue
             (prodn_posn, params, rhss) = r
@@ -473,9 +473,6 @@ def check_params_within_def_prodns():
 def get_grammar_arena_for_section(section):
     if section.section_title == 'Grammar Notation':
         return 'E' # Examples
-    elif section.section_title == "JSON.parse ( _text_ [ , _reviver_ ] )":
-        # DoubleStringCharacter
-        return 'J'
     elif section.section_num.startswith('B'):
         return 'B'
     else:
