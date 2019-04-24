@@ -79,7 +79,7 @@ def convert_posn_to_linecol(posn):
             col = posn - _newline_posns[i-1]
             return (line, col)
     assert posn > _newline_posns[-1]
-    assert posn == _newline_posns[-1] + 1
+    # assert posn == _newline_posns[-1] + 1 # That's true only if the file ends with a newline.
     line = i
     col = posn - _newline_posns[i-1]
     return (line, col)
