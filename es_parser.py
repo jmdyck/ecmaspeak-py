@@ -13,6 +13,8 @@ import misc
 
 from emu_grammar_tokens import *
 
+g_outdir = '../ecma262/_editorial' # XXX Should be able to set this dynamically.
+
 character_named_ = {
     # table-31:
     'ZWNJ'  : '\u200c',
@@ -83,7 +85,7 @@ class _Earley:
 
         this_parser.trace_prefix = '| ' if this_parser.name == 'lexical' else ''
 
-        filename = '../ecma262/_editorial/%sB_cfps.json' % this_parser.name
+        filename = f'{g_outdir}/{this_parser.name}B_cfps.json'
         cfps_from_file = json.load(open(filename, 'r'), object_hook=my_object_hook)
         #
         ns = [ prod['n'] for prod in cfps_from_file ]

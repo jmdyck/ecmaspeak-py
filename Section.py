@@ -316,7 +316,7 @@ def select_via_pattern(subject, pattern_results):
         if re.search(pattern, subject):
             return result
     assert 0, subject
-    # Look at stack trace to see caller
+    # If you get here, look at stack trace to see caller
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

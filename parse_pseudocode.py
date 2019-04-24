@@ -84,6 +84,7 @@ def parse_early_errors():
     # sec-for-in-and-for-of-statements-static-semantics-early-errors:
     # extra paragraph that is logically scoped to two bullets of three,
     # but 
+    # See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/
     #
     # sec-performeval-rules-outside-functions
     # sec-performeval-rules-outside-methods
@@ -92,7 +93,7 @@ def parse_early_errors():
     # Algo for PerformEval say exactly when they're applied.
     # See PR #1245.
 
-    something = defaultdict(list)
+    spec.early_error_map = defaultdict(list)
 
     for s in spec.doc_node.each_descendant_that_is_a_section():
         if s.section_kind == 'early_errors':
@@ -121,7 +122,7 @@ def parse_early_errors():
                             tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
                             li._syntax_tree = tree
                     # XXX connect production with block
-
+                    # spec.early_error_map[?] = block
 
     ee_parser.report()
 

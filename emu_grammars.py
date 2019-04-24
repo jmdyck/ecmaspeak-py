@@ -209,7 +209,7 @@ def parse_emu_grammar(emu_grammar, output_f):
                 assert len(rhs) == 1
                 rhs = []
 
-            # Merge adjacent LAX
+            # Merge adjacent LAX (in NotEscapeSequence RHS #5 + #11)
             for r in range(len(rhs)-1, 0, -1):
                 if type(rhs[r]) == LAX and r > 0 and type(rhs[r-1]) == LAX:
                     rhs[r-1] = LAX(ts= (rhs[r-1].ts + rhs[r].ts))

@@ -89,9 +89,9 @@ D=_`gcbn` && $EK/parse_pseudocode.py $D && car -d $D {emu_eqn,early_error,inline
 # LR_Parser construction took 0 seconds
 #
 # parse_emu_algs:
-# SLR(1) machine constructed with 3896 states and 2295 conflicts
+# SLR(1) machine constructed with 3991 states and 2254 conflicts
 # LR_Parser construction took 0 seconds
-# parsing 1790 emu-algs took 15 seconds
+# parsing 1814 emu-algs took 13 seconds
 
 # If emu_alg has ambiguites:
 csplit $D/emu_alg_ambig.new '/^(/' '{*}'
