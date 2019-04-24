@@ -8422,8 +8422,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
+        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
+        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
     ]:
         env1 = env0
         for ex in children:
@@ -8593,8 +8595,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String, env0)
 
     elif p in [
-        r"{EXPR} : the String representation of {EX}, formatted as a decimal number of at least four digits, padded to the left with zeroes if necessary",
-        r"{EXPR} : the String representation of {EX}, formatted as a number of at least four digits, padded to the left with zeroes if necessary",
+        r"{EXPR} : the String representation of {EX}, formatted as a decimal number",
         r"{EXPR} : the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary",
     ]:
         [ex] = children

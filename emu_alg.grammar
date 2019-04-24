@@ -988,7 +988,7 @@
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State \({EX}, {VAR}\)
     the String representation of this Number value using the radix specified by {VAR}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-dependent, however the algorithm should be a generalization of that specified in {EMU_XREF}
-    the String representation of {EX}, formatted as a decimal number of at least four digits, padded to the left with zeroes if necessary
+    the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary
     the String value consisting of repeated concatenations of {EX} truncated to length {VAR}
     the String value consisting of the first 10 code units of {VAR}
@@ -1159,8 +1159,10 @@
     the string-concatenation of {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
+    the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
+    the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the substring of {VAR} consisting of all code units before the first such code unit
     the substring of {VAR} from index {VAR} to index {VAR} inclusive
     the ten-element set of characters containing the characters `0` through `9` inclusive
