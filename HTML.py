@@ -395,4 +395,9 @@ for (element_name, (kind, content_model)) in element_info.items():
     anchored_re = '^(' + content_model + ')$'
     content_model_[element_name] = anchored_re
 
+if __name__ == '__main__':
+    text = '<tr><td>foo<emu-xhref="#sec-matchall">`String.prototype.matchAll`</emu-xref> method.</td></tr>'
+    shared.install_spec_text(text)
+    x = _parse()
+
 # vim: sw=4 ts=4 expandtab
