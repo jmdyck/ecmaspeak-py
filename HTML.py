@@ -47,7 +47,7 @@ class MyHTMLParser(HTMLParser):
     def finish(self):
         self._end_previous()
         if self.curr_node.element_name == '#DOC':
-            self.curr_node.set_end_pos(self.getpos())
+            self.curr_node.set_end_pos(self._getposn())
         else:
             self._report("at end of file, element still open: " + self.curr_node.element_name)
         return self.curr_node
@@ -76,16 +76,16 @@ class MyHTMLParser(HTMLParser):
         # so it's not possible to detect case anomalies.)
         # self.k -= 1; print('  '*self.k + "</" + element_name)
         self._end_previous()
-        self.curr_node.set_inner_end_pos(self.getpos())
+        self.curr_node.set_inner_end_pos(self._getposn())
         if element_name != self.curr_node.element_name:
             self._report( "Well-formedness error: got </%s> when the open element is %s" % (element_name, self.curr_node.element_name))
             if self.curr_node.parent is None:
                 self._report("self.curr_node.parent is None")
             elif element_name == self.curr_node.parent.element_name:
                 self._report("Assuming that </%s> is missing" % self.curr_node.element_name)
-                self.curr_node.set_end_pos(self.getpos())
+                self.curr_node.set_end_pos(self._getposn())
                 self.curr_node = self.curr_node.parent.parent
-                self.curr_node.set_inner_end_pos(self.getpos())
+                self.curr_node.set_inner_end_pos(self._getposn())
         else:
             self.curr_node = self.curr_node.parent
             # print('self.curr_node is now', self.curr_node.element_name)
@@ -122,41 +122,42 @@ class MyHTMLParser(HTMLParser):
 
     def _add_node(self, node_name, attrs):
         self._end_previous()
-        return HNode(self.curr_node, self.getpos(), node_name, attrs)
+        return HNode(self.curr_node, self._getposn(), node_name, attrs)
 
     def _end_previous(self):
         if not self.curr_node: return
-        pos = self.getpos()
         if self.curr_node.children:
-            self.curr_node.children[-1].set_end_pos(pos)
+            self.curr_node.children[-1].set_end_pos(self._getposn())
         else:
-            self.curr_node.set_inner_start_pos(pos)
+            self.curr_node.set_inner_start_pos(self._getposn())
 
     def _report(self, msg):
-        posn = shared.convert_HTMLParser_getpos_to_posn(self.getpos())
+        posn = self._getposn()
         msg_at_posn(posn, msg)
 
+    def _getposn(self):
+        return shared.convert_HTMLParser_getpos_to_posn(self.getpos())
+
 class HNode:
-    def __init__(self, parent, start_pos, element_name, attrs):
+    def __init__(self, parent, start_posn, element_name, attrs):
         self.parent = parent
-        self.start_posn = shared.convert_HTMLParser_getpos_to_posn(start_pos)
+        self.start_posn = start_posn
         self.element_name = element_name
         self.attrs =  OrderedDict(attrs)
         self.children = []
         if self.parent:
             self.parent.children.append(self)
 
-    def set_end_pos(self, end_pos):
-        self.end_posn = shared.convert_HTMLParser_getpos_to_posn(end_pos)
-        # print(end_pos, 'converted to', self.end_posn)
+    def set_end_pos(self, end_posn):
+        self.end_posn = end_posn
         # print(repr(shared.spec_text[self.start_posn:self.end_posn]))
         # input()
 
-    def set_inner_start_pos(self, pos):
-        self.inner_start_posn = shared.convert_HTMLParser_getpos_to_posn(pos)
+    def set_inner_start_pos(self, posn):
+        self.inner_start_posn = posn
 
-    def set_inner_end_pos(self, pos):
-        self.inner_end_posn = shared.convert_HTMLParser_getpos_to_posn(pos)
+    def set_inner_end_pos(self, posn):
+        self.inner_end_posn = posn
 
     def source_text(self):
         return shared.spec_text[self.start_posn:self.end_posn]
