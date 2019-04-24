@@ -76,17 +76,19 @@ class MyHTMLParser(HTMLParser):
         # so it's not possible to detect case anomalies.)
         # self.k -= 1; print('  '*self.k + "</" + element_name)
         self._end_previous()
-        self.curr_node.set_inner_end_pos(self._getposn())
         if element_name != self.curr_node.element_name:
             self._report( "Well-formedness error: got </%s> when the open element is %s" % (element_name, self.curr_node.element_name))
             if self.curr_node.parent is None:
                 self._report("self.curr_node.parent is None")
             elif element_name == self.curr_node.parent.element_name:
                 self._report("Assuming that </%s> is missing" % self.curr_node.element_name)
-                self.curr_node.set_end_pos(self._getposn())
-                self.curr_node = self.curr_node.parent.parent
-                self.curr_node.set_inner_end_pos(self._getposn())
+                # Pretend that we got the missing endtag:
+                self.handle_endtag(self.curr_node.element_name)
+                # That will change self.curr_node.
+                assert element_name == self.curr_node.element_name
+                self.handle_endtag(self.curr_node.element_name)
         else:
+            self.curr_node.set_inner_end_pos(self._getposn())
             self.curr_node = self.curr_node.parent
             # print('self.curr_node is now', self.curr_node.element_name)
 
