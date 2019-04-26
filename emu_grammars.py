@@ -254,6 +254,7 @@ rhs_tokenizer = Tokenizer([
     ('\[no LineTerminator here\]',    lambda g: A_no_LT()),
     ('\[lookahead == `([^` ]+)`\]',   lambda g: LAI(ts=(T_lit(c=g(1)),))),
     ('\[lookahead != `([^` ]+)` ?\]', lambda g: LAX(ts=(T_lit(c=g(1)),))),
+    ('\[lookahead != `(let` `\[)`\]', lambda g: LAX(ts=(T_lit(c=g(1)),))), # kludge
     ('\[lookahead != <([A-Z]+)> \]',  lambda g: LAX(ts=(T_nc(n=g(1)),))),
     ('\[lookahead <! (\w+)\]',        lambda g: LAX(ts=(GNT(n=g(1), a=(), o=False),))),
     ('\[lookahead <! {([^}]+)}\]',    lambda g: LAX(ts=parse_terminals(g(1)))),

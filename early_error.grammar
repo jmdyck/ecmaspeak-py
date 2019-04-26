@@ -48,8 +48,7 @@
     the goal symbol of the syntactic grammar is {NONTERMINAL}
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
-    the source code matching this production is strict code
-    the source code matching this production is strict mode code
+    the source code matching {NONTERMINAL} is strict mode code
     this production has an? <sub>\[\w+\]</sub> parameter
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
@@ -83,8 +82,6 @@
     {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any \|ReservedWord\| except for `yield` or `await`
     {NAMED_OPERATION_INVOCATION} is {LITERAL}
     {NAMED_OPERATION_INVOCATION} is: `"implements"`, `"interface"`, `"let"`, `"package"`, `"private"`, `"protected"`, `"public"`, `"static"`, or `"yield"`
-
-    {LOCAL_REF} is the {NONTERMINAL} {TERMINAL} or the {NONTERMINAL} {TERMINAL}
 
     {VAR} &ge; 2<sup>32</sup> - 1
 
