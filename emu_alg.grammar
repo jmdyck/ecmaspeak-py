@@ -59,8 +59,6 @@
     Create an immutable indirect binding in {VAR} for {VAR} that references {VAR} and {VAR} as its target binding and record that the binding is initialized\.
     Create any implementation-defined global object properties on {VAR}\.
     Create own properties of {VAR} corresponding to the definitions in {EMU_XREF}\.
-    Decrease {VAR} by {NUM_LITERAL}\.
-    Decrement {VAR} by {NUM_LITERAL}\.
     Evaluate {NAMED_OPERATION_INVOCATION} \(see {EMU_XREF}\) to obtain a code unit {VAR}\.
     Evaluate {PROD_REF} to obtain an? (\w+) {VAR} and a Boolean {VAR}\.
     Evaluate {PROD_REF} to obtain an? (\w+) {VAR}\.
@@ -71,10 +69,6 @@
     For each {EACH_THING}, {SMALL_COMMAND}\.
     IfAbruptRejectPromise\({VAR}, {VAR}\)\.
     In an implementation-dependent manner, obtain the ECMAScript source texts \(see clause {EMU_XREF}\) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {VAR} and {VAR}, do{IND_COMMANDS}
-    Increase {VAR} by {NUM_LITERAL}\.
-    Increment {VAR} and {VAR} each by {NUM_LITERAL}\.
-    Increment {VAR} by {NUM_LITERAL}\.
-    Increment {VAR}\.
     Insert {VAR} as the first element of {VAR}\.
     Leave the critical section for {VAR}\.
     Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {VAR}\.
@@ -93,7 +87,6 @@
     Let {VAR} be {EXPR}\. Remove that record from {VAR}\.
     Let {VAR} be {EXPR}\. This variable will be used throughout the algorithms in {EMU_XREF}\.
     Let {VAR} be {EXPR}\. \(However, if {VAR} is 10 and {VAR} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {VAR} is not 2, 4, 8, 10, 16, or 32, then {VAR} may be an implementation-dependent approximation to the mathematical integer value that is represented by {VAR} in radix-{VAR} notation.\)
-    Let {VAR} be {EXPR}\. \(If {VAR} is \*undefined\*, this step produces the value {NUM_LITERAL}.\)
     Let {VAR} be {EXPR}\. \(It may be evaluated repeatedly.\)
     Let {VAR} be {EXPR}\. \(This is the same value as {EMU_XREF}'s {VAR}.\)
     Let {VAR} be {MULTILINE_EXPR}
@@ -146,13 +139,11 @@
     Set fields of {VAR} with the values listed in {EMU_XREF} .+(?=\.\n)\.
     Set the code evaluation state of {VAR} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
     Set the code evaluation state of {VAR} such that when evaluation is resumed with a Completion {VAR} the following steps will be performed:{IND_COMMANDS}
-    Set the remainder of {VAR}'s essential internal methods to the default ordinary object definitions specified in {EMU_XREF}\.
     Set {DOTTING} to the definition specified in {EMU_XREF}\.
     Set {SETTABLE} as (described|specified) in {EMU_XREF}\.
     Set {SETTABLE} to {EXPR}\.
     Set {SETTABLE} to {MULTILINE_EXPR}
     Set {VAR}'s essential internal methods \(except for {DSBN} and {DSBN}\) to the definitions specified in {EMU_XREF}\.
-    Set {VAR}'s essential internal methods except for {DSBN} to the default ordinary object definitions specified in {EMU_XREF}\.
     Set {VAR}'s essential internal methods to the default ordinary object definitions specified in {EMU_XREF}\.
     Set {VAR}'s essential internal methods to the definitions specified in {EMU_XREF}\.
     Subtract {NUM_LITERAL} from {VAR}\.
@@ -171,21 +162,29 @@
     {IF_OTHER}
     {VAR} is an index into the {VAR} character list, derived from {VAR}, matched by {VAR}. Let {VAR} be the smallest index into {VAR} that corresponds to the character at element {VAR} of {VAR}. If {VAR} is greater than or equal to the number of elements in {VAR}, then {VAR} is the number of code units in {VAR}\.
 
+    # ?
     Scan until the next {CP_LITERAL}\.
     Search the enclosing {NONTERMINAL} for an instance of a {NONTERMINAL} for a {NONTERMINAL} which has a StringValue equal to the StringValue of the {NONTERMINAL} contained in {NONTERMINAL}\.
     Evaluate {PROD_REF} with argument {VAR} to obtain an? (\w+) {VAR}\.
     Evaluate {PROD_REF} with {PRODUCT} as its {VAR} argument to obtain an? (\w+) {VAR}\.
 
-    Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}\.
-    Repeat, until {CONDITION},{IND_COMMANDS}
-    Let {VAR} be {EXPR}\. Because {VAR} and {VAR} are primitive values evaluation order is not important.
-    Let {VAR} be {EXPR}\. NOTE: This extends the sign.
-
+    # ?
     Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it\.
     Set the code evaluation state of {VAR} such that when evaluation is resumed with a Completion {VAR}, the following steps of the algorithm that invoked Await will be performed, with {VAR} available\.
 
-    # explicit-exotics:
+    # PR 1460 explicit-exotics:
     Set {VAR}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {EMU_XREF}\.
+
+    # PR 1515 BigInt:
+    Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}\.
+    Let {VAR} be {EXPR}\. NOTE: Because {VAR} and {VAR} are primitive values evaluation order is not important.
+    Let {VAR} be {EXPR}\. NOTE: This extends the sign.
+    Repeat, until {CONDITION},{IND_COMMANDS}
+
+    # PR 1552 UTF16:
+    Parse {NOI} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification\.
+    Parse {VAR} using the grammars in {EMU_XREF}. The goal symbol for the parse is {NONTERMINAL}. If the result of parsing contains a {NONTERMINAL}, reparse with the goal symbol {NONTERMINAL} and use this result instead. Throw a {ERROR_TYPE} exception if {VAR} did not conform to the grammar, if any elements of {VAR} were not matched by the parse, or if any Early Error conditions exist\.
+    Parse {VAR} using the grammars in {EMU_XREF}. The goal symbol for the parse is {NONTERMINAL}. Throw a {ERROR_TYPE} exception if {VAR} did not conform to the grammar, if any elements of {VAR} were not matched by the parse, or if any Early Error conditions exist\.
 
 # ----------------------------------------------
 
@@ -207,8 +206,6 @@
     If {CONDITION}, {SMALL_COMMAND} and {SMALL_COMMAND}\.
     If {CONDITION}, {SMALL_COMMAND}\.
 
-    If {CONDITION}, {SMALL_COMMAND}\. \(A String value _p_ is a prefix of String value _q_ if _q_ can be the result of concatenating _p_ and some other String _r_. Note that any String is a prefix of itself, because _r_ may be the empty String.\)
-
 {IF_TAIL} :
     {_NL_N} {ELSEIF_PART}{IF_TAIL}
     {_NL_N} {ELSE_PART}
@@ -220,13 +217,9 @@
     Otherwise, if {CONDITION}, {MULTILINE_SMALL_COMMAND}
 
 {ELSE_PART} :
-    Else {CONDITION}, {SMALL_COMMAND}\.
-    Else {CONDITION},{IND_COMMANDS}
     Else, {SMALL_COMMAND}\.
     Else,{IND_COMMANDS}
     Otherwise,? {SMALL_COMMAND}\.
-
-    Otherwise, {CONDITION}; {SMALL_COMMAND}\.
 
 # ----------------------------------------------
 
@@ -244,18 +237,14 @@
     convert the property named {VAR} of object {VAR} from an accessor property to a data property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their default values
     create an own (accessor|data) property named {VAR} of object {VAR} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {VAR}. If the value of an attribute field of {VAR} is absent, the attribute of the newly created property is set to its default value
     in left to right order, starting with the second argument, append each argument as the last element of {VAR}
-    increase {VAR} by {NUM_LITERAL}
     let {VAR} be {EXPR}
     let {VAR} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {VAR} be {EXPR}, indicating that {VAR}'s global `this` binding should be the global object
     let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that {VAR} is the number of digits in the decimal representation of {VAR}, that {VAR} is not divisible by 10, and that the least significant digit of {VAR} is not necessarily uniquely determined by these criteria
-    # number-refactoring:
-    let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that {VAR} is the number of digits in the decimal representation of {VAR}, that {VAR} is not divisible by 10<sub>ℝ</sub>, and that the least significant digit of {VAR} is not necessarily uniquely determined by these criteria
     no further validation is required
     perform {NAMED_OPERATION_INVOCATION}
     remove that element from the {VAR}
     remove the first code unit from {VAR}
-    remove the first two code units from {VAR}
     return {EXPR}
     reverse the order of the elements of {VAR}
     set the corresponding attribute of the property named {VAR} of object {VAR} to the value of the field
@@ -268,7 +257,10 @@
     the replacement text is {EXPR}
     replace the text through `>` with {EXPR}
 
-    # explicit-exotics
+    # number-refactoring:
+    let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that {VAR} is the number of digits in the decimal representation of {VAR}, that {VAR} is not divisible by 10<sub>ℝ</sub>, and that the least significant digit of {VAR} is not necessarily uniquely determined by these criteria
+
+    # PR 1460 explicit-exotics
     initialize the corresponding internal slot value on {VAR} to {LITERAL}
     append each of its elements to {VAR}
 
@@ -302,7 +294,6 @@
     integer {VAR} starting with 0 such that {CONDITION}, in ascending order
     integer {VAR} such that {CONDITION}
     integer {VAR} that satisfies {CONDITION}
-    module {VAR} in {VAR}
     own property key {VAR} of {VAR} such that {CONDITION}, in ascending chronological order of property creation
     own property key {VAR} of {VAR} such that {CONDITION}, in ascending numeric index order
     own property key {VAR} of {VAR} that is a String but is not an array index, in ascending chronological order of property creation
@@ -325,8 +316,11 @@
     {VAR} that is an element of {VAR}
     {VAR} that is an element of {VAR}, in original insertion order
 
-    # explicit-exotics:
+    # PR 1460 explicit-exotics:
     internal slot in {VAR}
+
+    # PR 1552 UTF16:
+    code point {VAR} in {NOI}
 
 # ------------------------------------------------------
 
@@ -354,10 +348,20 @@
     {B} the code units of the remaining {NUM_EXPR} digits of the decimal representation of {VAR}
     {B} the code units of the {VAR} digits of the decimal representation of {VAR}
     {B} the code units of the {VAR} digits of the decimal representation of {VAR} \(in order, with no leading zeroes\)
+    {B} the previous value of {VAR}
     {B} {CU_LITERAL} or {CU_LITERAL} according to whether {VAR} - 1 is positive or negative
     {B} {EX} occurrences of {CU_LITERAL}
     {B} {LITERAL}
     {B} {VAR}
+
+    # PR 1515 BigInt:
+    {B} a literal produced by replacing each significant digit after the 20th with a `0` digit\.
+    {B} a literal produced by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position\.
+
+    # PR 1554 NumericValue:
+    {B} {NONTERMINAL}
+    {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit
+    {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position
 
 {B} :
     {_NL} +\*
@@ -386,13 +390,14 @@
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
-    {CONDITION_1}, when {CONDITION_1}
+    # {CONDITION_1}, when {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
+    # PR 1515 BigInt:
+    \({NUM_COMPARISON} or {NUM_COMPARISON}\) and \({NUM_COMPARISON} or {NUM_COMPARISON}\)
+    {CONDITION_1} and {CONDITION_1} or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
-    \({NUM_COMPARISON} or {NUM_COMPARISON}\) and \({NUM_COMPARISON} or {NUM_COMPARISON}\)
-
     {CONDITION_1}, or if {CONDITION_1}
 
 {CONDITION_1} :
@@ -413,11 +418,9 @@
     The next step never returns an abrupt completion because {CONDITION_1}
     The value of {SETTABLE} is {LITERAL}
     The value of {VAR}'s `"length"` property is {EX}
-    The value of {VAR}'s `length` property is {VAR}
     There are sufficient bytes in {VAR} starting at {VAR} to represent a value of {VAR}
     There is more than one `\*` import that includes the requested name
     This is a circular import request
-    This is a re-export of an imported module namespace object
     This is an attempt to change the value of an immutable binding
     This method is never invoked\. See {EMU_XREF}
     We've reached the starting point of an `import \*` circularity
@@ -467,11 +470,9 @@
     the mathematical value of {VAR} is less than the mathematical value of {VAR}
     the most significant bit in {VAR} is [01]
     the number of actual arguments is {NUM_LITERAL}
-    the order of evaluation needs to be reversed to preserve left to right evaluation
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the sequence of code units of {VAR} starting at {VAR} of length {VAR} is the same as the full code unit sequence of {VAR}
-    the sequence of elements of {VAR} starting at {VAR} of length {VAR} is the same as the full element sequence of {VAR}
     the source code matching {PROD_REF} is strict mode code
     the source code matching {VAR} is non-strict code
     the two code units at indices {SUM} and {SUM} within {VAR} are both hexadecimal digits
@@ -484,7 +485,6 @@
     there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {VAR} that has {VAR} in its range such that {CONDITION_1}
     there is an event {VAR} such that {CONDITION}
     there is no such integer {VAR}
-    this is a re-export of a single name
     this method was called with more than one argument
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
@@ -507,7 +507,7 @@
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is equal to {EX}
-    {EX} is listed in the Code Point column of {EMU_XREF}
+    {EX} is listed in the &ldquo;Code Point&rdquo; column of {EMU_XREF}
     {EX} is neither {LITERAL} nor the active function
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not an element of {VAR}
@@ -643,13 +643,11 @@
     {VAR} is a ResolvedBinding Record
     {VAR} is a Shared Data Block
     {VAR} is a State
-    {VAR} is a String exotic object
     {VAR} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {VAR} is a UTF-16 code unit
     {VAR} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
     {VAR} is a WriteSharedMemory event
     {VAR} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
-    {VAR} is a callable object
     {VAR} is a data property
     {VAR} is a declarative Environment Record
     {VAR} is a function Environment Record
@@ -659,7 +657,6 @@
     {VAR} is a normal completion with a value of {LITERAL}\. The possible sources of completion values are Await or, if the async function doesn't await anything, the step 3\.g above
     {VAR} is a possibly empty List of Strings
     {VAR} is a {EMU_XREF}
-    {VAR} is added as a single item rather than spread
     {VAR} is also {LITERAL}
     {VAR} is an Array exotic object
     {VAR} is an AsyncGenerator instance
@@ -755,8 +752,6 @@
     {VAR} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {VAR} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {VAR} is {NONTERMINAL}
-    {VAR} must be an Environment Record
-    {VAR} must be an accessor Property Descriptor
     {VAR} must have an uninitialized binding for {VAR}
     {VAR} occurs exactly once in {VAR}
     {VAR} provides the direct binding for this export
@@ -769,25 +764,14 @@
     A unique such \|GroupSpecifier\| is found
     none is found
 
-    {EX} contains the substring `"Big"`
-    {EX} does not contain the substring `"Big"`, or vice versa
-    {VAR} is not {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {VAR} or {VAR} are any of {LITERAL}, {LITERAL}, or {LITERAL}
-    one of {VAR} and {VAR} contains the substring `"Big"` and the other does not
-    {VAR} is a prefix of {VAR}
-    {VAR} or {VAR} is {LITERAL}
-    @ is {EX}
-    {NONTERMINAL} is `[*/%]`
-    both {EX} and {EX} are Strings
-
-    # explicit-exotics:
+    # PR 1460 explicit-exotics:
     the caller will not be overriding all of {VAR}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {VAR}'s {DSBN} and {DSBN} essential internal methods
     {VAR} is a bound function exotic object
     {VAR} is a bound function exotic object or a {EMU_XREF}
     {VAR} contains {DSBN}
 
-    # scope-records:
+    # PR 1477 scope-records:
     it must be in the object Scope Record
     the base of {VAR} is a Scope Record
     {VAR} is a Reference to a Scope Record binding
@@ -798,6 +782,31 @@
     {VAR} is not an object Scope Record
     {VAR} is not the Scope Record for a \|Catch\| clause
     {VAR} must be a Scope Record
+
+    # PR 1482 - dynamic import:
+    Evaluate has already been invoked on {VAR} and successfully completed
+
+    # PR 1515 BigInt:
+    @ is {EX}
+    one of {VAR} and {VAR} contains the substring `"Big"` and the other does not
+    {EX} contains the substring `"Big"`
+    {EX} does not contain the substring `"Big"`, or vice versa
+    {NONTERMINAL} has more than 20 significant digits
+    {NONTERMINAL} is `[*/%]`
+    {VAR} is not {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+    {VAR} or {VAR} are any of {LITERAL}, {LITERAL}, or {LITERAL}
+    {VAR} or {VAR} is {LITERAL}
+
+    # PR 1547 SourceText:
+    {EX} is a sequence of Unicode code points
+
+    # PR 1554 NumericValue:
+    {VAR} contains a {NONTERMINAL}
+    {VAR} has more than 20 significant digits
+    the first non white space code point in {VAR} is `"-"`
+
+    # PR ? function-strictness
+    the source text matching {VAR} is strict mode code
 
 {TYPE_TEST} :
     Both Type\({TYPE_ARG}\) and Type\({TYPE_ARG}\) is {TYPE_NAME}
@@ -816,9 +825,13 @@
     Type\({TYPE_ARG}\) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
     Type\({TYPE_ARG}\) is {VAR}
 
-    Type\({TYPE_ARG}\) is not Number or BigInt
-    Type\({TYPE_ARG}\) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+    # PR 1515 BigInt:
     Both Type\({VAR}\) and Type\({VAR}\) is Number or both are BigInt
+    Type\({TYPE_ARG}\) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+    Type\({TYPE_ARG}\) is not Number or BigInt
+
+    # PR 1532 CodePointAt:
+    {VAR} is not a {EMU_XREF} or {EMU_XREF}
 
 {TYPE_ARG} :
     {VAR}
@@ -857,14 +870,20 @@
     the string-concatenation of:{I_BULLETS}
     the result of parsing the source text{_INDENT}{_NL} +<pre><code class="javascript">([^<>]+)</code></pre>{_NL} +using the syntactic grammar with the goal symbol {NONTERMINAL}\.{_OUTDENT}
 
+    # PR 1515 BigInt:
+    one of:{I_BULLETS}
+
+    # PR ? N
+    an implementation-dependent choice of:{I_BULLETS}
+
 {EXPR} :
     a Continuation that always returns its State argument as a successful MatchResult
     a Continuation that takes a State argument {VAR} and returns the result of calling {PREFIX_PAREN}
     a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
     a List consisting of the sequence of code points of {VAR} interpreted as a UTF-16 encoded \({EMU_XREF}\) Unicode string
     a List consisting of the sequence of code units that are the elements of {VAR}
-    a List containing in order the code points of {VAR} when interpreted as a sequence of UTF-16 encoded code points as described in {EMU_XREF}
     a List containing in order the code points as defined in {EMU_XREF} of {VAR}, starting at the first element of {VAR}
+    a List containing in order the code points of {VAR} when interpreted as a sequence of UTF-16 encoded code points as described in {EMU_XREF}
     a List containing only {VAR}
     a List containing the 4 bytes that are the result of converting {VAR} to IEEE 754-2008 binary32 format using roundTiesToEven mode. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value
     a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {VAR}. If {VAR} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {VAR} is \*NaN\*, {VAR} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable \*NaN\* value
@@ -954,10 +973,10 @@
     an implementation-dependent String source code representation of {VAR}\. The representation must have the syntax of a {NONTERMINAL}. Additionally, if {VAR} is a {EMU_XREF} and is not identified as an anonymous function, the portion of the returned String that would be matched by {NONTERMINAL} must be the initial value of the `name` property of {VAR}
     an instance of the production {EMU_GRAMMAR}
     such an object created in an implementation-defined manner
-    the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}
     the (Matcher|CharSet|Completion Record) that is {EXPR}
     the (declarative|function|module|object|global) Environment Record for which the method was invoked
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
+    the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {VAR}
     the CharSet containing all Unicode code points whose character database definition includes the property {VAR} with value &ldquo;True&rdquo;
@@ -973,7 +992,7 @@
     the List of Unicode code points of {VAR}
     the List of argument values starting with the second argument
     the List of arguments passed to this function
-    the List of octets resulting by applying the UTF-8 transformation to {VAR}
+    the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {NONTERMINAL} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
     the List, in source text order, of Unicode code points in the source text matched by this production
@@ -992,16 +1011,15 @@
     the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary
     the String value consisting of repeated concatenations of {EX} truncated to length {VAR}
     the String value consisting of the first 10 code units of {VAR}
-    the String value consisting of the first 10 elements of {VAR}
     the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {NONTERMINAL} are first replaced with the code point represented by the {NONTERMINAL} and then the code points of the entire {PROD_REF} are converted to code units by UTF16Encoding each code point
     the String value consisting of the single code unit {VAR}
     the String value consisting of {EX}
     the String value consisting solely of {CU_LITERAL}
     the String value containing only the code unit {VAR}
     the String value containing the single code unit {VAR}
+    the String value containing {DOTTING} consecutive code units from {VAR} beginning with the code unit at index {VAR}
     the String value containing {VAR} consecutive code units from {VAR} beginning with the code unit at index {VAR}
-    the String value containing {VAR} consecutive elements from {VAR} beginning with the element at index {VAR}
-    the String value containing {VAR} occurrences of {CU_LITERAL}. This will be the empty String if {VAR} is less than 1
+    the String value containing {VAR} occurrences of {CU_LITERAL}
     the String value derived from {VAR} by copying code unit elements from {VAR} to {VAR} while performing replacements as specified in {EMU_XREF}. These `\$` replacements are done left-to-right, and, once such a replacement is performed, the new replacement text is not subject to further replacements
     the String value equal to the substring of {VAR} consisting of the (code units|elements) at indices {VAR} \(inclusive\) through {VAR} \(exclusive\)
     the String value for the list-separator String appropriate for the host environment's current locale \(this is derived in an implementation-defined way\)
@@ -1024,10 +1042,6 @@
     the String value whose code units are, in order, the elements in the List {VAR}. If {VAR} has no elements, the empty string is returned
     the String value whose code units are, in order, the elements in the List {VAR}. If {VAR} is 0, the empty string is returned
     the String value whose code units are, in order, the elements in {NAMED_OPERATION_INVOCATION}
-    the String value whose elements are {NAMED_OPERATION_INVOCATION}
-    the String value whose elements are, in order, the elements in the List {VAR}. If {VAR} is 0, the empty string is returned
-    the String value whose elements are, in order, the elements in {NAMED_OPERATION_INVOCATION}
-
     the String value whose length is {EX}, containing code units from {VAR}, namely the code units with indices {VAR} through {EX}, in ascending order
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair \({VAR}, {VAR}\)
@@ -1055,7 +1069,7 @@
     the code point value according to {EMU_XREF}
     the code point value of {CP_LITERAL}
     the code point value of {VAR}
-    the code point with the same numeric value as code unit {VAR}
+    the code point whose numeric value is that of {VAR}
     the code point {VAR}
     the code unit \(represented as a 16-bit unsigned integer\) at index {VAR} within {VAR}
     the code unit sequence consisting of {VAR} followed by {VAR}
@@ -1106,7 +1120,6 @@
     the one character in CharSet {VAR}
     the parse of some source text
     the prefix associated with {VAR} in {EMU_XREF}
-    the result of <emu-xref href="#sec-applying-the-exp-operator" title>Applying the \*\* operator</emu-xref> with {VAR} and {VAR} as specified in {EMU_XREF}
     the result of adding the value {NUM_LITERAL} to {VAR}, using the same rules as for the `\+` operator \(see {EMU_XREF}\)
     the result of appending to {VAR} the elements of {NAMED_OPERATION_INVOCATION}
     the result of applying bitwise complement to {VAR}. The result is a signed 32-bit integer
@@ -1132,6 +1145,7 @@
     the result of performing {NAMED_OPERATION_INVOCATION}
     the result of subtracting the value {NUM_LITERAL} from {VAR}, using the same rules as for the `-` operator \(see {EMU_XREF}\)
     the result of the comparison {EX} == {EX}
+    the result of {EMU_XREF} with {VAR} and {VAR} as specified in {EMU_XREF}
     the result of {NAMED_OPERATION_INVOCATION}
     the running execution context
     the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {VAR} as the \*this\* value
@@ -1193,14 +1207,7 @@
     {VAR}'s {DSBN} value
     {VAR}<sup>th</sup> element of {VAR}'s _captures_ List
 
-    a BigInt representing {EX}
-    the BigInt defined by the mathematical relation _r_ = _n_ - \(_d_ &times; _q_\) where _q_ is a BigInt that is negative only if _n_/_d_ is negative and positive only if _n_/_d_ is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of _n_ and _d_
-    the BigInt value that corresponds to {VAR}
-    Type\({VAR}\)
-    the value that {VAR} corresponds to in {EMU_XREF}
-    the String value consisting of the code units of the digits of the decimal representation of {VAR}
-
-    # number-refactoring:
+    # PR 1135 number-refactoring:
     the Element Size specified in {EMU_XREF} for Element Type {VAR}
     the Element Size value specified in {EMU_XREF} for Element Type {VAR}
     the Element Size value specified in {EMU_XREF} for {VAR}
@@ -1210,20 +1217,49 @@
     the Number value that is the same sign as {VAR} and whose magnitude is {EX}
     the mathematical integer number of code points in {PROD_REF}
 
-    ## directed-operations:
-    ## {NAMED_OPERATION_INVOCATION}\. This may be of type Reference
-
-    # explicit-exotics:
+    # PR 1460 explicit-exotics:
     the internal slots listed in {EMU_XREF}
     the internal slots listed in {EMU_XREF}, plus {DSBN} and {DSBN}
 
-    # scope-records:
+    # PR 1477 scope-records:
     the (declarative|function|module|object|global) Scope Record for which the method was invoked
     a new declarative Scope Record containing no bindings
     a new function Scope Record containing no bindings
     a new global Scope Record
     a new module Scope Record containing no bindings
     a new object Scope Record containing {VAR} as the binding object
+
+    # PR 1515 BigInt:
+    Type\({VAR}\)
+    a BigInt representing {EX}
+    the BigInt defined by the mathematical relation _r_ = _n_ - \(_d_ &times; _q_\) where _q_ is a BigInt that is negative only if _n_/_d_ is negative and positive only if _n_/_d_ is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of _n_ and _d_
+    the BigInt value that corresponds to {VAR}
+    the Number value for {VAR} \(as specified in {EMU_XREF}\)
+    the String value consisting of the code units of the digits of the decimal representation of {VAR}
+    the result of applying the addition operation to {VAR} and {VAR}. See the Note on {EMU_XREF}
+    the result of applying the bitwise operator _op_ to {VAR} and {VAR}. The result is a signed 32-bit integer
+    the result of applying the subtraction operation to {VAR} and {VAR}. See the Note on {EMU_XREF}
+    the result of {EMU_XREF} to {VAR} and {VAR} as specified in {EMU_XREF}
+    the value that {VAR} corresponds to in {EMU_XREF}
+
+    # PR 1547 SourceText:
+    the result of applying UTF-16 decoding to {VAR}
+
+    # PR 1552 UTF16:
+    a List consisting of the sequence of code points of {NOI}
+    a List whose elements are the code points of {VAR}
+    the ECMAScript code that is the result of parsing {NOI}, for the goal symbol {NONTERMINAL}. If {VAR} is {LITERAL}, additional early error rules from {EMU_XREF} are applied. If {VAR} is {LITERAL}, additional early error rules from {EMU_XREF} are applied. If {VAR} is {LITERAL}, additional early error rules from {EMU_XREF} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error \(but see also clause {EMU_XREF}\). Parsing and early error detection may be interweaved in an implementation-dependent manner
+    the internal procedure that evaluates the above parse by applying the semantics provided in {EMU_XREF} using {VAR} as the pattern's List of {NONTERMINAL} values and {VAR} as the flag parameters
+    the result of parsing and evaluating {NOI} as if it was the source text of an ECMAScript {NONTERMINAL}. The extended PropertyDefinitionEvaluation semantics defined in {EMU_XREF} must not be used during the evaluation
+    the result of parsing {NOI}, using {VAR} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
+    the result of replacing any occurrences of {TERMINAL} {NONTERMINAL} in {VAR} with the code point represented by the {NONTERMINAL}
+    the result of toLowercase\({VAR}\), according to the Unicode Default Case Conversion algorithm
+    the sequence of Unicode code points that results from interpreting {VAR} as UTF-16 encoded Unicode text as described in {EMU_XREF}
+    the sequence of code points resulting from interpreting each of the 16-bit elements of {VAR} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
+    the string-concatenation of the code units that are the UTF16Encoding of each code point in {VAR}, in order
+
+    # PR 1554 NumericValue:
+    the result of parsing {VAR} using the goal symbol {NONTERMINAL}. If {VAR} does not conform to the grammar, or if any elements of {VAR} were not matched by the parse, return {NUM_LITERAL}
 
 {EX} :
     &laquo; &raquo;
@@ -1241,7 +1277,6 @@
     a newly created {ERROR_TYPE} object
     an implementation-dependent timezone name
     hint (Number|String)
-    the Escape Sequence for {VAR} as specified in {EMU_XREF}
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List \(see {EMU_XREF}\)
     the Number value for {PRODUCT}
@@ -1251,14 +1286,13 @@
     the base value component of {VAR}
     the code unit at index {EX} within {EX}
     the code unit that is {NAMED_OPERATION_INVOCATION}
-    the code unit {VAR}
     the code units of {VAR}
     the current Realm Record
     the current value of {VAR}
     the digits of the decimal representation of {VAR} \(in order, with no leading zeroes\)
+    the escape sequence for {VAR} as specified in the &ldquo;Escape Sequence&rdquo; column of the corresponding row
     the first code unit of {VAR}
     the first {SUM} code units of {VAR}
-    the first {SUM} elements of {VAR}
     the first {VAR} code units of {VAR}
     the number of elements in {VAR}
     the numeric value of {EX}
@@ -1266,7 +1300,6 @@
     the referenced name component of {VAR}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {VAR}
-    the remaining {EX} elements of {VAR}
     the strict reference flag of {VAR}
     the substring of {VAR} consisting of the code units from {VAR} \(inclusive\) up through the final code unit of {VAR} \(inclusive\)
     the substring of {VAR} consisting of the code units from {VAR} \(inclusive\) up to {VAR} \(exclusive\)
@@ -1283,13 +1316,18 @@
     {VAR}'s _endIndex_
     {VAR}'s _endIndex_ value
 
+    # PR 1482 - dynamic import:
+    \xab {EXLIST} \xbb
+
+    # PR 1515 BigInt:
+    Type\({VAR}\)::unit
     `(&amp;|\^|\|)`
     the mathematical value of {VAR}
-    the mathematical value of {VAR} raised to the power {VAR}
     the mathematical value of {VAR} divided by {VAR}
-    {VAR} rounded towards 0 to the next integral value
-    Type\({VAR}\)::unit
+    the mathematical value of {VAR} raised to the power {VAR}
     {NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
+    {VAR} rounded towards 0 to the next integral value
+
 
 {PAIR} :
     \({VAR}, {VAR}\)
@@ -1310,7 +1348,7 @@
     a sign-extending right shift of {VAR} by {VAR} bits. The most significant bit is propagated. The result is a signed 32-bit integer
     a zero-filling right shift of {VAR} by {VAR} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
     the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
-    the UTF16Encoding of each code point of {NAMED_OPERATION_INVOCATION}
+    the UTF16Encoding of each code point of {EX}
     the UTF16Encoding of the code points of {VAR}
     {LOCAL_REF} Contains {NONTERMINAL}
     {LOCAL_REF} Contains {VAR}
@@ -1367,10 +1405,10 @@
     {VAR}\.([A-Z][A-Za-z0-9]+)
     {DOTTING}
 
-    (BigInt|Number)::\w+
-    Type\({VAR}\)::\w+
-    {VAR}::\w+
-    <a href="sec-samevaluenonnumber">SameValueNonNumeric</a>
+    # PR 1515 BigInt:
+    ((?:BigInt|Number)::\w+)
+    Type\({VAR}\)::(\w+)
+    {VAR}::(\w+)
 
 {EXLIST_OPT} :
     {EXLIST}
@@ -1385,7 +1423,7 @@
 {RECORD_CONSTRUCTOR} :
     (?:the |a |a new )?(Record|Chosen Value Record|ExportEntry Record|ImportEntry Record|Completion|PropertyDescriptor|PendingJob|PromiseCapability|PromiseReaction|ReadModifyWriteSharedMemory|ReadSharedMemory|ResolvedBinding Record|Script Record|Source Text Module Record|WriteSharedMemory|AsyncGeneratorRequest) { {FIELDS} }
 
-    # scope-records:
+    # PR 1477 scope-records:
     Lexical Environment { {FIELDS} }
 
 {FIELDS} :
@@ -1419,7 +1457,7 @@
     {VAR}'s {DSBN} attribute
     {VAR}\[{EX}\]
 
-    # scope-records:
+    # PR 1477 scope-records:
     the _withEnvironment_ flag of {VAR}.\[\[ScopeRecord\]\]
 
 # --------------------------------
@@ -1429,6 +1467,7 @@
     {PRODUCT}
     {SUM}
     the exact mathematical value of {SUM}
+
     # number-refactoring:
     ℝ\({VAR}\)
 
@@ -1478,7 +1517,7 @@
 
 {BASE} :
     10
-    2
+
     # number-refactoring:
     10<sub>ℝ</sub>
 
@@ -1526,8 +1565,6 @@
     `>` U\+003E \(GREATER-THAN SIGN\)
     `\\\\` U\+005C \(REVERSE SOLIDUS\)
 
-    `&amp;`
-    `\|`
 
 {STR_LITERAL} :
     `"[^`"]*"`
@@ -1557,6 +1594,7 @@
     the \*NaN\* Number value
     zero
 
+    # PR 1515 BigInt?
     \*\d+\*
     \*[01]n\*
 
@@ -1575,6 +1613,7 @@
     Symbol
     Undefined
 
+    # PR 1515 BigInt:
     BigInt
 
 {EMU_XREF} :

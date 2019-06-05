@@ -324,12 +324,14 @@ element_info = {
         'tr'                : ('B', '(#WS;)?((th;|td;)(#WS;)?)+'),
         'ul'                : ('B', '#WS;(li;#WS;)+'),
         'ol'                : ('B', '#WS;(li;#WS;)+'),
+        'dl'                : ('B', '#WS;(dt;#WS;dd;#WS;)+'),
         'object'            : ('B', '#WS;img;#WS;'),
+        'dd'                : ('B', '#WS;ul;#WS;'),
 
         # block contains blocks or contains inlines, but not both:
         'emu-integration-plans': ('B', '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
         'emu-note'             : ('B', '#WS;p;#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|#TEXT;(emu-xref;#TEXT;)?'),
-        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;)#WS;)?|(#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
+        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
         'div'                  : ('B', '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
 
@@ -346,6 +348,7 @@ element_info = {
         'h2'                   : ('B', '#TEXT;'),
         'th'                   : ('B', '#TEXT;(sup;#TEXT;)?'),
         'script'               : ('B', '(#TEXT;)?'),
+        'dt'                   : ('B', '#TEXT;'),
 
         # block is empty:
         '#DECL'             : ('B', ''),

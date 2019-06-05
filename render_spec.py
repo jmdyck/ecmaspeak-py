@@ -181,7 +181,7 @@ def prep_autolinking():
     for thing in spec.doc_node.each_descendant_named(re.compile('emu-clause|emu-annex|emu-eqn')):
         if 'aoid' not in thing.attrs: continue
         aoid = thing.attrs['aoid']
-        assert re.fullmatch(r'\w[-\w /]*\w', aoid)
+        assert re.fullmatch(r'\w[-\w /:]*\w', aoid)
 
         if aoid in ['Set', 'Type', 'UTC', 'Call']:
             aoid_pattern = aoid + r'(?= *\()'

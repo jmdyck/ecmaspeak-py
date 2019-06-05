@@ -223,8 +223,10 @@ def each_replacement_for_section(s):
             'The Boolean prototype object:',
             'The Symbol prototype object:',
             'The Number prototype object:',
+            'The BigInt prototype object:',
             'The Date prototype object:',
             'The String prototype object:',
+
             'Unless explicitly stated otherwise, the methods of the',
             'Unless explicitly defined otherwise, the methods of the',
 
@@ -699,7 +701,7 @@ rec_method_declarations = '''
     WithBaseObject() -> Object | Undefined
     GetExportedNames(exportStarSet) -> List of String
     ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
-    Instantiate() -> TBD
+    Link() -> TBD
     Evaluate() -> TBD
     InitializeEnvironment() -> TBD
     ExecuteModule() -> TBD
@@ -798,7 +800,7 @@ def get_info_from_ao_preamble(preamble_text):
 
     namers = [
         r'[Tt]he (\w+) abstract operation',
-        r'[Tt]he abstract operation ([\w/]+)',
+        r'[Tt]he abstract operation ([\w/:]+)',
         r'The internal comparison abstract operation (\w+)',
         r'The job (\w+)',
         r'^(\w+DeclarationInstantiation)',
@@ -1010,6 +1012,11 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
             r'OP takes a code unit \2 and a code unit \3.',
             r'\1 \4.'),
 
+        # 10.1.3 CodePointAt
+        (r'OP interprets (a String _string_) (as .+ at index _position_)\.',
+            r'OP takes \1 and an index _position_.',
+            r'OP interprets _string_ \2.'),
+
         # 12.9.4 InstanceofOperator
         (r'OP\((.+)\) (implements .+ ECMAScript value _V_ .+ object _target_ .+.)',
             r'OP is called with \1 where _V_ is an ECMAScript value and _target_ is an object.',
@@ -1116,6 +1123,7 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
 
     mo = fullmatch_any(sentence, [
 
+        r'OP with (?P<pl>.*arguments.*of type BigInt):', # syntactically odd
         r'OP called with (?P<pl>.+) performs the following steps:',
         r'OP is a recursive abstract operation that takes (?P<pl>.+)',
         r'OP is called with (?P<pl>.+?),? where (?P<ps>.+)',
@@ -1158,7 +1166,10 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
 
     if parameter_sentence == '': return
 
-    if parameter_sentence == 'neither _x_ nor _y_ are Number values.':
+    if parameter_sentence in [
+        'neither _x_ nor _y_ are Number values.',
+        'neither _x_ nor _y_ are numeric type values.',
+    ]:
         add_to_description(oi, parameter_sentence)
         oi.param_nature_['_x_'] = 'a value'
         oi.param_nature_['_y_'] = 'a value'
@@ -1719,7 +1730,7 @@ def get_info_from_header(header_text):
         oi.name = t
         return oi
 
-    mo = re.match(r'^([\w/.%]+(?: \[ @@\w+ \])?|\[\[\w+\]\]) *\( *(.*?) *\)$', t)
+    mo = re.match(r'^([\w/:.%]+(?: \[ @@\w+ \])?|\[\[\w+\]\]) *\( *(.*?) *\)$', t)
     assert mo, t
     (oi.name, parameter_listing) = mo.groups()
 
@@ -1834,6 +1845,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         # pre-handle cases that would give bad results when we split on comma and 'and'...
 
         # un-elide
+        ('(two )?arguments _x_ and _y_ of type BigInt', r'BigInt _x_ and BigInt _y_'),
         ('(argument _obj_) and (optional argument)s (_hint_) and (_method_)', r'\1 and \2 \3 and \2 \4'),
         ('(optionally) (_argumentsList_), and (_newTarget_)', r'\1 \2 and \1 \3'),
         ('(optionally), (a Boolean _writablePrototype_) and (an object _prototype_)', r'\1 \2 and \1 \3'),
@@ -1863,9 +1875,12 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         ('^as arguments ', ''),
         ('^the arguments: ', ''),
         ('^two arguments,? ', ''),
+        ('^the two arguments ', ''),
         ('^the three arguments ', ''),
         ('^three arguments[:,] ', ''),
         ('^four arguments, ', ''),
+
+        ('which is one of \(`"normal"`, .+?\)', 'which is a String'),
 
         (r'\(Normal, ', '(Normal<comma> '),
         (r'Method, Arrow\)', 'Method<comma> Arrow)'),
@@ -2047,7 +2062,7 @@ def resolve_oi(hoi, poi):
             pass
         else:
             oh_warn()
-            oh_warn('resolve_oi:', hoi.name, '!=', poi.name)
+            oh_warn(f'resolve_oi: name in header ({hoi.name}) != name in preamble ({poi.name})')
 
     # owning_type
     assert hoi.owning_type is None
@@ -2155,6 +2170,9 @@ nature_to_typ = {
         'an ECMAScript Number value' : 'Number',
         'a nonnegative non-*NaN* Number' : 'Number', # XXX loses info
 
+        # BigInt
+        'BigInt'      : 'BigInt',
+
         # Object
         'Object'      : 'Object',
         'an Object'   : 'Object',
@@ -2221,6 +2239,7 @@ nature_to_typ = {
         'either 0 or a positive integer' : 'NonNegativeInteger_',
         'a nonnegative integer'          : 'NonNegativeInteger_',
         'nonnegative integer'            : 'NonNegativeInteger_',
+        'an index'                       : 'NonNegativeInteger_',
 
     # ------------------------------
     # ECMAScript specification types
@@ -2360,6 +2379,7 @@ nature_to_typ = {
     # -----------------------------
     # union of named types
 
+    'a BigInt or a Number'                                       : 'BigInt | Number',
     'an Array object or *null*'                                  : 'Array_object_ | Null',
     '*false* or an integer index'                                : 'Boolean | Integer_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',

@@ -149,6 +149,8 @@ def check_section_title(h1, node):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _infer_section_kinds(section):
+    # We infer a section's kind almost entirely based on its title.
+
     if section.element_name == '#DOC':
         stderr("_infer_section_kinds...")
         for child in section.section_children:
@@ -189,6 +191,7 @@ def _infer_section_kinds(section):
 
             (r'Abstract Operation\b',                                     'abstract_operation'),
             (r'^((Static|Runtime) Semantics: )?[A-Z][\w/]+ ?\([^()]*\)$', 'abstract_operation'),
+            (r'(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)$',              'abstract_operation'),
             (r' Comparison$',                                             'abstract_operation'),
 
             (r'^(Valid Chosen|Coherent|Tear Free) Reads$',                'abstract_operation'),
@@ -264,7 +267,7 @@ def _infer_section_kinds(section):
             child.section_kind = 'env_rec_method'
             assert len(child.section_children) == 0
 
-    # scope-records:
+    # PR 1477 scope-records:
     elif section.section_title.endswith(' Scope Records'):
         for child in section.section_children:
             child.section_kind = 'env_rec_method' # XXX
