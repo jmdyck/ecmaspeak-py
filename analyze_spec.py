@@ -527,6 +527,7 @@ def collect_operation_info_for_section(section):
             # because it modifies the main-body grammar,
             # so RHS-indexes aren't always the same.
             # XXX For now, just skip it.
+            #! (STA has it)
             return
 
         if section.section_title == 'Static Semantics: HasCallInTailPosition':
@@ -589,7 +590,7 @@ def collect_operation_info_for_section(section):
 
                     li_ist = li.inner_source_text().strip()
                     if re.match(r'it is not `0`|there is a nonzero digit', li_ist):
-                        # This is the <ul> at the end of 
+                        # This is the <ul> for 'significant digit' at the end of 
                         # 7.1.3.1.1 Runtime Semantics: MV
                         # and
                         # 11.8.3.1 Static Semantics: MV
@@ -599,6 +600,7 @@ def collect_operation_info_for_section(section):
 
                     if li_ist == 'The TRV of a |HexDigit| is the SV of the |SourceCharacter| that is that |HexDigit|.':
                         # XXX not sure how to handle this yet. For now, ignore it.
+                        #! (STA has it)
                         continue
 
                     (emu_grammars, text) = extract_grammars(li)
@@ -643,6 +645,7 @@ def collect_operation_info_for_section(section):
                         assert emu_grammar.attrs.get('type', 'reference') == 'example'
                         assert emu_grammar.inner_source_text() == 'A : A @ B'
                         # XXX skip it?
+                        #! (STA has it)
 
                     elif text in [
                         'The production <G> evaluates by returning the CharSet containing all Unicode code points included in the CharSet returned by |UnicodePropertyValueExpression|.',
@@ -691,6 +694,7 @@ class Operation:
 def op_add_defn(op_kind, op_name, emu_grammar, emu_alg):
     assert type(op_name) == str
     assert emu_grammar.element_name == 'emu-grammar'
+    # print(op_name, op_kind, emu_grammar.source_text().replace('\n', '\\n'))
 
     if op_name in info_for_op_named_:
         op_info = info_for_op_named_[op_name]

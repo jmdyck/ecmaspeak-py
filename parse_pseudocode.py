@@ -320,4 +320,11 @@ class Emu_Alg_Parser(Pseudocode_Parser):
 
 main()
 
+# import cProfile
+# cProfile.run('main()', '_prof')
+# Roughly half the time is spent in _sre.SRE_Pattern.match():
+# 38 million calls, so even a tiny time per call adds up.
+# The other half is spent in _matcher (i.e., excluding time spent in any sub-call):
+# ~360k calls.
+
 # vim: sw=4 ts=4 expandtab

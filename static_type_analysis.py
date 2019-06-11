@@ -509,6 +509,7 @@ class Operation:
 
     def add_defn(self, discriminator, tree):
         assert len(self.headers) == 1
+        # print(self.name, self.kind, discriminator.source_text().replace('\n', '\\n'))
         self.headers[0].add_defn(discriminator, tree)
 
     def summarize_headers(self):
