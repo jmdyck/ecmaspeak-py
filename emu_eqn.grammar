@@ -21,7 +21,7 @@
     {RHS}
 
 {RHS} :
-    {_NL} += {EXPR} +if {CONDITION}
+    {_NL} += {EXPR} if {CONDITION}
 
 {CONDITION} :
     {COND} and {COND}
@@ -30,7 +30,7 @@
 {COND} :
     {EXPR} &ne; {EXPR}
     {EXPR} &le; {EXPR}
-    {EXPR} ?= ?{EXPR}
+    {EXPR} = {EXPR}
     {EXPR} &le; {EXPR} &lt; {EXPR}
 
 # --------------------------
@@ -53,7 +53,8 @@
     {SUM}
 
 {SUM} :
-    {SUM} ?(\+|-) ?{TERM}
+    {SUM} \+ {TERM}
+    {SUM} - {TERM}
     {TERM}
 
 {TERM} :
@@ -62,7 +63,7 @@
 {PRODUCT} :
     {FACTOR} &times; {FACTOR}
     {FACTOR} modulo {FACTOR}
-    {FACTOR} ?/ ?{FACTOR}
+    {FACTOR} / {FACTOR}
     {FACTOR}
 
 {FACTOR} :

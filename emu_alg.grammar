@@ -18,7 +18,10 @@
     {COMMANDS}{_NL_N} {COMMAND}
 
 {_NL_N} :
-    {_NL} +\d+\.
+    {_NL} +{DEC_INT}\.
+
+{DEC_INT} :
+    \d+
 
 {COMMAND} :
     Add 1 to {VAR}\.
@@ -49,10 +52,14 @@
     Assert: If {CONDITION}, then {CONDITION}\.
     Assert: If {CONDITION}, {CONDITION}\.
     Assert: Unless {CONDITION}, {CONDITION}\.
-    Assert: {CONDITION}\.
     Assert: {CONDITION_1} if and only if {CONDITION_1}\.
-    Call {PREFIX_PAREN} and let {VAR} be (its result|the resulting Boolean value|the Boolean result|the resulting CharSet)\.
-    Call {PREFIX_PAREN} and return its(?: Matcher)? result\.
+    Assert: {CONDITION}\.
+    Call {PREFIX_PAREN} and let {VAR} be its result\.
+    Call {PREFIX_PAREN} and let {VAR} be the Boolean result\.
+    Call {PREFIX_PAREN} and let {VAR} be the resulting Boolean value\.
+    Call {PREFIX_PAREN} and let {VAR} be the resulting CharSet\.
+    Call {PREFIX_PAREN} and return its Matcher result\.
+    Call {PREFIX_PAREN} and return its result\.
     Call {PREFIX_PAREN}\.
     Create a mutable binding in {VAR} for {VAR} and record that it is uninitialized\. If {VAR} is \*true\*, record that the newly created binding may be deleted by a subsequent DeleteBinding call\.
     Create an immutable binding in {VAR} for {VAR} and record that it is uninitialized\. If {VAR} is \*true\*, record that the newly created binding is a strict binding\.
@@ -60,10 +67,12 @@
     Create any implementation-defined global object properties on {VAR}\.
     Create own properties of {VAR} corresponding to the definitions in {EMU_XREF}\.
     Evaluate {NAMED_OPERATION_INVOCATION} \(see {EMU_XREF}\) to obtain a code unit {VAR}\.
-    Evaluate {PROD_REF} to obtain an? (\w+) {VAR} and a Boolean {VAR}\.
-    Evaluate {PROD_REF} to obtain an? (\w+) {VAR}\.
+    Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {VAR} and a Boolean {VAR}\.
+    Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {VAR}\.
     Evaluate {PROD_REF} to obtain the three results: an integer {VAR}, an integer \(or &infin;\) {VAR}, and Boolean {VAR}\.
     Evaluate {PROD_REF} to obtain the two results: an integer {VAR} and an integer \(or &infin;\) {VAR}\.
+    Evaluate {PROD_REF} with argument {VAR} to obtain an? {TYPE_NAME} {VAR}\.
+    Evaluate {PROD_REF} with {PRODUCT} as its {VAR} argument to obtain an? {TYPE_NAME} {VAR}\.
     Find a value {VAR} such that {CONDITION}; but if this is not possible \(because some argument is out of range\), return {LITERAL}\.
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}\.
@@ -76,12 +85,12 @@
     Let {VAR} and {VAR} be new Synchronize events\.
     Let {VAR} and {VAR} be the indirection values provided when this binding for {VAR} was created\.
     Let {VAR} and {VAR} be {LITERAL}\.
+    Let {VAR} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {VAR}, pick the larger {VAR}\.
     Let {VAR} be equivalent to a function that returns {VAR}\.
     Let {VAR} be equivalent to a function that throws {VAR}\.
     Let {VAR} be the first element of {VAR} and remove that element from {VAR}\.
     Let {VAR} be the smallest nonnegative integer such that {CONDITION}\.
     Let {VAR} be the smallest nonnegative integer such that {CONDITION}\. \(There must be such a {VAR}, for neither String is a prefix of the other.\)
-    Let {VAR} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {VAR}, pick the larger {VAR}\.
     Let {VAR} be {EXPR}, and let {VAR} be {EXPR}\.
     Let {VAR} be {EXPR}\.
     Let {VAR} be {EXPR}\. Remove that record from {VAR}\.
@@ -92,9 +101,10 @@
     Let {VAR} be {MULTILINE_EXPR}
     Let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. If there are multiple possibilities for {VAR}, choose the value of {VAR} for which {PRODUCT} is closest in value to {VAR}. If there are two such possible values of {VAR}, choose the one that is even\.
     Let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that the decimal representation of {VAR} has {SUM} digits, {VAR} is not divisible by 10, and the least significant digit of {VAR} is not necessarily uniquely determined by these criteria\.
-    NOTE:? .+(?=\.\n)\.
+    NOTE: {ARBITRARY_TEXT}\.
     Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted\.
     No action is required\.
+    Notify the agent {VAR}\.
     Once a generator enters the `"completed"` state it never leaves it and its associated execution context is never resumed. Any execution state associated with {VAR} can be discarded at this point\.
     Order the elements of {VAR} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method were invoked with {VAR}\.
     Parse {VAR} interpreted as UTF-16 encoded Unicode points \({EMU_XREF}\) as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if {VAR} is not a valid JSON text as defined in that specification\.
@@ -109,10 +119,11 @@
     Perform {NAMED_OPERATION_INVOCATION} and suspend {VAR} for up to {VAR} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost\.  {VAR} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter\({VAR}, {VAR}\), and not for any other reasons at all\.
     Perform {NAMED_OPERATION_INVOCATION}\.
     Pop {VAR} from the execution context stack. The execution context now on the top of the stack becomes the running execution context\.
-    Push {VAR} on ?to the execution context stack; {VAR} is now the running execution context\.
+    Push {VAR} onto the execution context stack; {VAR} is now the running execution context\.
     Record that the binding for {VAR} in {VAR} has been initialized\.
     Remove the binding for {VAR} from {VAR}\.
-    Remove the first element from {VAR} and let {VAR} be the value of (that|the) element\.
+    Remove the first element from {VAR} and let {VAR} be the value of that element\.
+    Remove the first element from {VAR} and let {VAR} be the value of the element\.
     Remove the first two code units from {VAR}\.
     Remove the last element of {VAR}\.
     Remove the own property with name {VAR} from {VAR}\.
@@ -121,12 +132,15 @@
     Remove {VAR} from the front of {VAR}\.
     Remove {VAR} from the list of waiters in {VAR}\.
     Remove {VAR} from {VAR}\.
-    Repeat, while {CONDITION},?{IND_COMMANDS}
+    Repeat, while {CONDITION}{IND_COMMANDS}
+    Repeat, while {CONDITION},{IND_COMMANDS}
     Repeat,{IND_COMMANDS}
     Replace the element of {VAR} whose value is {VAR} with an element whose value is {LITERAL}\.
     Resume the context that is now on the top of the execution context stack as the running execution context\.
-    Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it. Let {VAR} be the (value|completion record) returned by the resumed computation\.
-    Resume the suspended evaluation of {VAR}\. Let {VAR} be the (value|completion record) returned by the resumed computation\.
+    Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it. Let {VAR} be the completion record returned by the resumed computation\.
+    Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it. Let {VAR} be the value returned by the resumed computation\.
+    Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it\.
+    Resume the suspended evaluation of {VAR}\. Let {VAR} be the value returned by the resumed computation\.
     Return {EXPR} \(see {EMU_XREF}\)\.
     Return {EXPR}\.
     Return {EXPR}\. This call will always return \*true\*\.
@@ -134,13 +148,17 @@
     Return {VAR} as the Completion Record of this abstract operation\.
     ReturnIfAbrupt\({EX}\)\.
     Return\.
+    Scan until the next {CP_LITERAL}\.
+    Search the enclosing {NONTERMINAL} for an instance of a {NONTERMINAL} for a {NONTERMINAL} which has a StringValue equal to the StringValue of the {NONTERMINAL} contained in {NONTERMINAL}\.
     Search {VAR} for the first occurrence of {VAR} and let {VAR} be the index within {VAR} of the first code unit of the matched substring and let {VAR} be {VAR}. If no occurrences of {VAR} were found, return {VAR}\.
     Set all of the bytes of {VAR} to 0\.
-    Set fields of {VAR} with the values listed in {EMU_XREF} .+(?=\.\n)\.
-    Set the code evaluation state of {VAR} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
-    Set the code evaluation state of {VAR} such that when evaluation is resumed with a Completion {VAR} the following steps will be performed:{IND_COMMANDS}
+    Set fields of {VAR} with the values listed in {EMU_XREF} {ARBITRARY_TEXT}\.
     Set {DOTTING} to the definition specified in {EMU_XREF}\.
-    Set {SETTABLE} as (described|specified) in {EMU_XREF}\.
+    Set {SETTABLE} as described in {EMU_XREF}\.
+    Set {SETTABLE} as specified in {EMU_XREF}\.
+    Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
+    Set {SETTABLE} such that when evaluation is resumed with a Completion {VAR} the following steps will be performed:{IND_COMMANDS}
+    Set {SETTABLE} such that when evaluation is resumed with a Completion {VAR}, the following steps of the algorithm that invoked Await will be performed, with {VAR} available\.
     Set {SETTABLE} to {EXPR}\.
     Set {SETTABLE} to {MULTILINE_EXPR}
     Set {VAR}'s essential internal methods \(except for {DSBN} and {DSBN}\) to the definitions specified in {EMU_XREF}\.
@@ -154,23 +172,12 @@
     The code points `/` or any {NONTERMINAL} occurring in the pattern shall be escaped in {VAR} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed \(in an appropriate lexical context\) as a {NONTERMINAL} that behaves identically to the constructed regular expression. For example, if {VAR} is {STR_LITERAL}, then {VAR} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {VAR} would be parsed as a {NONTERMINAL} rather than a {NONTERMINAL}. If {VAR} is the empty String, this specification can be met by letting {VAR} be {STR_LITERAL}\.
     Throw a {ERROR_TYPE} exception\.
     Wait until no agent is in the critical section for {VAR}, then enter the critical section for {VAR} \(without allowing any other agent to enter\)\.
-    Notify the agent {VAR}\.
     When the {NONTERMINAL} {VAR} is evaluated, perform the following steps in place of the {NONTERMINAL} Evaluation algorithm provided in {EMU_XREF}:{IND_COMMANDS}
     \? OperationName\(\)\.
-    \? _someValue_.OperationName\(\)\.
+    \? {VAR}.OperationName\(\)\.
     {IF_CLOSED}
     {IF_OTHER}
     {VAR} is an index into the {VAR} character list, derived from {VAR}, matched by {VAR}. Let {VAR} be the smallest index into {VAR} that corresponds to the character at element {VAR} of {VAR}. If {VAR} is greater than or equal to the number of elements in {VAR}, then {VAR} is the number of code units in {VAR}\.
-
-    # ?
-    Scan until the next {CP_LITERAL}\.
-    Search the enclosing {NONTERMINAL} for an instance of a {NONTERMINAL} for a {NONTERMINAL} which has a StringValue equal to the StringValue of the {NONTERMINAL} contained in {NONTERMINAL}\.
-    Evaluate {PROD_REF} with argument {VAR} to obtain an? (\w+) {VAR}\.
-    Evaluate {PROD_REF} with {PRODUCT} as its {VAR} argument to obtain an? (\w+) {VAR}\.
-
-    # ?
-    Resume the suspended evaluation of {VAR} using {EX} as the result of the operation that suspended it\.
-    Set the code evaluation state of {VAR} such that when evaluation is resumed with a Completion {VAR}, the following steps of the algorithm that invoked Await will be performed, with {VAR} available\.
 
     # PR 1460 explicit-exotics:
     Set {VAR}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {EMU_XREF}\.
@@ -186,15 +193,21 @@
     Parse {VAR} using the grammars in {EMU_XREF}. The goal symbol for the parse is {NONTERMINAL}. If the result of parsing contains a {NONTERMINAL}, reparse with the goal symbol {NONTERMINAL} and use this result instead. Throw a {ERROR_TYPE} exception if {VAR} did not conform to the grammar, if any elements of {VAR} were not matched by the parse, or if any Early Error conditions exist\.
     Parse {VAR} using the grammars in {EMU_XREF}. The goal symbol for the parse is {NONTERMINAL}. Throw a {ERROR_TYPE} exception if {VAR} did not conform to the grammar, if any elements of {VAR} were not matched by the parse, or if any Early Error conditions exist\.
 
+{ARBITRARY_TEXT} :
+    .+(?=\.\n)
+
 # ----------------------------------------------
 
 {IF_CLOSED} :
     If any static semantics errors are detected for {VAR} or {VAR}, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error\. If {CONDITION}, the Early Error rules for {EMU_GRAMMAR} are applied. Parsing and early error detection may be interweaved in an implementation-dependent manner\.
     If {CONDITION}&mdash;note that these mathematical values are both finite and not both zero&mdash;{SMALL_COMMAND}\. Otherwise, {SMALL_COMMAND}\.
     If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}\.
-    If {CONDITION}, {SMALL_COMMAND}[;,] (?:else|otherwise),? {SMALL_COMMAND}\.
-    If {CONDITION}, {SMALL_COMMAND}\. Otherwise,? {SMALL_COMMAND}\.
-    If {CONDITION}, {SMALL_COMMAND}\. Otherwise,? {SMALL_COMMAND}\. {VAR} will be used throughout the algorithms in {EMU_XREF}. Each element of {VAR} is considered to be a character\.
+    If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}\.
+    If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}\.
+    If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}\.
+    If {CONDITION}, {SMALL_COMMAND}\. Otherwise {SMALL_COMMAND}\.
+    If {CONDITION}, {SMALL_COMMAND}\. Otherwise, {SMALL_COMMAND}\.
+    If {CONDITION}, {SMALL_COMMAND}\. Otherwise, {SMALL_COMMAND}\. {VAR} will be used throughout the algorithms in {EMU_XREF}. Each element of {VAR} is considered to be a character\.
 
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
@@ -219,7 +232,7 @@
 {ELSE_PART} :
     Else, {SMALL_COMMAND}\.
     Else,{IND_COMMANDS}
-    Otherwise,? {SMALL_COMMAND}\.
+    Otherwise, {SMALL_COMMAND}\.
 
 # ----------------------------------------------
 
@@ -233,14 +246,13 @@
     append {LITERAL} to {VAR}
     append {VAR} to {VAR}
     change its bound value to {VAR}
-    convert the property named {VAR} of object {VAR} from a data property to an accessor property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their default values
-    convert the property named {VAR} of object {VAR} from an accessor property to a data property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their default values
-    create an own (accessor|data) property named {VAR} of object {VAR} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {VAR}. If the value of an attribute field of {VAR} is absent, the attribute of the newly created property is set to its default value
+    convert the property named {VAR} of object {VAR} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their default values
+    create an own {PROPERTY_KIND} property named {VAR} of object {VAR} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {VAR}. If the value of an attribute field of {VAR} is absent, the attribute of the newly created property is set to its default value
     in left to right order, starting with the second argument, append each argument as the last element of {VAR}
     let {VAR} be {EXPR}
     let {VAR} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {VAR} be {EXPR}, indicating that {VAR}'s global `this` binding should be the global object
-    let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that {VAR} is the number of digits in the decimal representation of {VAR}, that {VAR} is not divisible by 10, and that the least significant digit of {VAR} is not necessarily uniquely determined by these criteria
+    let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that {VAR} is the number of digits in the decimal representation of {VAR}, that {VAR} is not divisible by {NUM_LITERAL}, and that the least significant digit of {VAR} is not necessarily uniquely determined by these criteria
     no further validation is required
     perform {NAMED_OPERATION_INVOCATION}
     remove that element from the {VAR}
@@ -256,9 +268,6 @@
 
     the replacement text is {EXPR}
     replace the text through `>` with {EXPR}
-
-    # number-refactoring:
-    let {VAR}, {VAR}, and {VAR} be integers such that {CONDITION}. Note that {VAR} is the number of digits in the decimal representation of {VAR}, that {VAR} is not divisible by 10<sub>ℝ</sub>, and that the least significant digit of {VAR} is not necessarily uniquely determined by these criteria
 
     # PR 1460 explicit-exotics
     initialize the corresponding internal slot value on {VAR} to {LITERAL}
@@ -402,6 +411,7 @@
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
+    A unique such {NONTERMINAL} is found
     All dependencies of {VAR} have been transitively resolved and {VAR} is ready for evaluation
     All named exports from {VAR} are resolvable
     All of the above CreateDataProperty operations return {LITERAL}
@@ -441,9 +451,11 @@
     neither {VAR} nor any prefix of {VAR} satisfies the syntax of a {NONTERMINAL} \(see {EMU_XREF}\)
     no arguments were passed to this function invocation
     no such execution context exists
+    none is found
     only one argument was passed
     replacing the {NONTERMINAL} {VAR} with a {NONTERMINAL} that has {VAR} as a {NONTERMINAL} would not produce any Early Errors for {VAR}
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
+    the _i_th capture of {VAR} was defined with a {NONTERMINAL}
     the above call will not return here, but instead evaluation will continue as if the following return has already occurred
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
@@ -468,7 +480,7 @@
     the host requires that the `this` binding in {VAR}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {VAR}'s global object
     the mathematical value of {VAR} is less than the mathematical value of {VAR}
-    the most significant bit in {VAR} is [01]
+    the most significant bit in {VAR} is {NUM_LITERAL}
     the number of actual arguments is {NUM_LITERAL}
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
@@ -530,9 +542,9 @@
     {LOCAL_REF} is an? {NONTERMINAL}, an? {NONTERMINAL}, or an? {NONTERMINAL}
     {LOCAL_REF} is either an? {NONTERMINAL} or an? {NONTERMINAL}
     {LOCAL_REF} is either an? {NONTERMINAL}, an? {NONTERMINAL}, an? {NONTERMINAL}, or an? {NONTERMINAL}
-    {LOCAL_REF} is neither an? {NONTERMINAL} n?or an? {NONTERMINAL}
+    {LOCAL_REF} is neither an? {NONTERMINAL} nor an? {NONTERMINAL}
     {LOCAL_REF} is neither an? {NONTERMINAL} nor an? {NONTERMINAL} nor an? {NONTERMINAL}
-    {LOCAL_REF} is {EMU_GRAMMAR}[ ]?
+    {LOCAL_REF} is {EMU_GRAMMAR} 
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {EMU_XREF}
     {NAMED_OPERATION_INVOCATION} is not the same character value as {NAMED_OPERATION_INVOCATION}
@@ -553,8 +565,9 @@
     {VAR} and {VAR} are in a race in {VAR}
     {VAR} and {VAR} are not the same Realm Record
     {VAR} and {VAR} are the same
-    {VAR} and {VAR} are the same (Number|Object) value
     {VAR} and {VAR} are the same Module Record
+    {VAR} and {VAR} are the same Number value
+    {VAR} and {VAR} are the same Object value
     {VAR} and {VAR} do not have disjoint ranges
     {VAR} and {VAR} each contain exactly one character
     {VAR} and {VAR} have equal ranges
@@ -565,6 +578,7 @@
     {VAR} contains a formal parameter mapping for {VAR}
     {VAR} contains any code unit other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"` or if it contains the same code unit more than once
     {VAR} contains any duplicate entries
+    {VAR} contains any {NONTERMINAL}
     {VAR} contains no duplicate entries
     {VAR} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}
     {VAR} contains {LITERAL}
@@ -578,21 +592,23 @@
     {VAR} does not currently have a property {VAR}
     {VAR} does not have a Generator component
     {VAR} does not have a binding for {VAR}
-    {VAR} does not have all of the internal slots of an? (\w+) Iterator Instance \({EMU_XREF}\)
     {VAR} does not have all of the internal slots of a RegExp String Iterator Object Instance \(see {EMU_XREF}\)
+    {VAR} does not have all of the internal slots of an? {TYPE_NAME} Iterator Instance \({EMU_XREF}\)
     {VAR} does not have an own property with key {VAR}
-    {VAR} does not have an? {DSBN} (field|internal slot)
+    {VAR} does not have an? {DSBN} field
+    {VAR} does not have an? {DSBN} internal slot
     {VAR} does not have an? {VAR} internal slot
     {VAR} does not have either a {DSBN} or an {DSBN} internal slot
     {VAR} does not include the element {LITERAL}
     {VAR} has a binding for the name that is the value of {VAR}
     {VAR} has a binding for {VAR}
-    {VAR} has a numeric value less than (0x0020 \(SPACE\))
+    {VAR} has a numeric value less than {CU_LITERAL}
     {VAR} has a thisValue component
     {VAR} has a {DSBN} internal slot. If it does not, the definition in {EMU_XREF} applies
     {VAR} has an? {DSBN} internal method
     {VAR} has an? {DSBN} internal slot
-    {VAR} has an? {DSBN} internal slot whose value is an? (Object|PromiseCapability Record)
+    {VAR} has an? {DSBN} internal slot whose value is a PromiseCapability Record
+    {VAR} has an? {DSBN} internal slot whose value is an Object
     {VAR} has an? {DSBN} or {DSBN} internal slot
     {VAR} has any duplicate entries
     {VAR} has any elements
@@ -606,9 +622,8 @@
     {VAR} has {VAR} in its range
     {VAR} imports a specific binding for this export
     {VAR} is a Bound Function exotic object
-    {VAR} is a Cyclic Module Record
-    {VAR} is a {EMU_XREF} or a {EMU_XREF}
     {VAR} is a Completion Record
+    {VAR} is a Cyclic Module Record
     {VAR} is a Data Block
     {VAR} is a Lexical Environment
     {VAR} is a List
@@ -637,26 +652,23 @@
     {VAR} is a ReadModifyWriteSharedMemory event
     {VAR} is a ReadSharedMemory or ReadModifyWriteSharedMemory event
     {VAR} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
-    {VAR} is a Synchronize event
     {VAR} is a Realm Record
     {VAR} is a Reference to an Environment Record binding
     {VAR} is a ResolvedBinding Record
     {VAR} is a Shared Data Block
     {VAR} is a State
     {VAR} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
+    {VAR} is a Synchronize event
     {VAR} is a UTF-16 code unit
     {VAR} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
     {VAR} is a WriteSharedMemory event
     {VAR} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {EMU_XREF}
-    {VAR} is a data property
-    {VAR} is a declarative Environment Record
-    {VAR} is a function Environment Record
-    {VAR} is a global Environment Record
     {VAR} is a nonnegative integer
     {VAR} is a normal completion
     {VAR} is a normal completion with a value of {LITERAL}\. The possible sources of completion values are Await or, if the async function doesn't await anything, the step 3\.g above
     {VAR} is a possibly empty List of Strings
     {VAR} is a {EMU_XREF}
+    {VAR} is a {EMU_XREF} or a {EMU_XREF}
     {VAR} is also {LITERAL}
     {VAR} is an Array exotic object
     {VAR} is an AsyncGenerator instance
@@ -672,7 +684,6 @@
     {VAR} is an Object that has {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
     {VAR} is an Object that implements the <i>IteratorResult</i> interface
     {VAR} is an abrupt completion
-    {VAR} is an accessor property
     {VAR} is an array index
     {VAR} is an empty List
     {VAR} is an extensible object that does not have a `("length"|prototype|name)` own property
@@ -688,12 +699,14 @@
     {VAR} is an integer such that {CONDITION_1}
     {VAR} is an integer value &ge; 0
     {VAR} is an ordinary, extensible object with no non-configurable properties
+    {VAR} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {VAR} is an? {NONTERMINAL}
+    {VAR} is an? {PROPERTY_KIND} property
     {VAR} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {EMU_XREF} applies
     {VAR} is as small as possible
     {VAR} is divisible by {NUM_LITERAL}
-    {VAR} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification
     {VAR} is either a String, Number, Boolean, Null, or an Object that is defined by either an {NONTERMINAL} or an {NONTERMINAL}
+    {VAR} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification
     {VAR} is either {LITERAL} or an? {NONTERMINAL}
     {VAR} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {VAR} is empty
@@ -712,7 +725,7 @@
     {VAR} is not an array index
     {VAR} is not an empty List
     {VAR} is not an integer index
-    {VAR} is not an object Environment Record
+    {VAR} is not an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {VAR} is not contained within an? {NONTERMINAL}, {NONTERMINAL}, or {NONTERMINAL}
     {VAR} is not currently an element of {VAR}
     {VAR} is not empty
@@ -759,11 +772,6 @@
     {VAR} will never be \*undefined\* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
     {VAR}, {VAR}, and {VAR} are integer values &ge; 0
 
-    _R_ contains any \|GroupName\|
-    the _i_th capture of _R_ was defined with a \|GroupName\|
-    A unique such \|GroupSpecifier\| is found
-    none is found
-
     # PR 1460 explicit-exotics:
     the caller will not be overriding all of {VAR}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {VAR}'s {DSBN} and {DSBN} essential internal methods
@@ -776,10 +784,8 @@
     the base of {VAR} is a Scope Record
     {VAR} is a Reference to a Scope Record binding
     {VAR} is a Scope Record
-    {VAR} is a declarative Scope Record
-    {VAR} is a function Scope Record
-    {VAR} is a global Scope Record
-    {VAR} is not an object Scope Record
+    {VAR} is an? {ENVIRONMENT_RECORD_KIND} Scope Record
+    {VAR} is not an? {ENVIRONMENT_RECORD_KIND} Scope Record
     {VAR} is not the Scope Record for a \|Catch\| clause
     {VAR} must be a Scope Record
 
@@ -808,6 +814,10 @@
     # PR ? function-strictness
     the source text matching {VAR} is strict mode code
 
+{PROPERTY_KIND} :
+    accessor
+    data
+
 {TYPE_TEST} :
     Both Type\({TYPE_ARG}\) and Type\({TYPE_ARG}\) is {TYPE_NAME}
     Type\({TYPE_ARG}\) is Object and it has an {DSBN} internal slot
@@ -816,7 +826,7 @@
     Type\({TYPE_ARG}\) is different from Type\({TYPE_ARG}\)
     Type\({TYPE_ARG}\) is either {TYPE_NAME} or {TYPE_NAME}
     Type\({TYPE_ARG}\) is either {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
-    Type\({TYPE_ARG}\) is neither {TYPE_NAME} n?or {TYPE_NAME}
+    Type\({TYPE_ARG}\) is neither {TYPE_NAME} nor {TYPE_NAME}
     Type\({TYPE_ARG}\) is not an element of {VAR}
     Type\({TYPE_ARG}\) is not {TYPE_NAME}
     Type\({TYPE_ARG}\) is the same as Type\({TYPE_ARG}\)
@@ -839,17 +849,9 @@
     {VAR}'s base value component
 
 {NUM_COMPARISON} :
-    {NUM_COMPARAND} (equals) {NUM_COMPARAND}
-    {NUM_COMPARAND} (is at least) {NUM_LITERAL}
-    {NUM_COMPARAND} (is greater than or equal to) {NUM_COMPARAND}
-    {NUM_COMPARAND} (is greater than) {NUM_COMPARAND}
-    {NUM_COMPARAND} (is less than or equal to) {NUM_COMPARAND}
-    {NUM_COMPARAND} (is not greater than) {VAR}
-    {NUM_COMPARAND} (is not less than) {VAR}
-    {NUM_COMPARAND} (&le;|&lt;) {NUM_COMPARAND} (&le;|&lt;) {NUM_COMPARAND}
-    {NUM_COMPARAND} (&lt;|&le;|&ge;|&gt;|=|&ne;|\u2265) {NUM_COMPARAND}
+    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
+    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
     {NUM_COMPARAND} is 10 or less
-    {VAR} (is less than) {FACTOR}
 
 {NUM_COMPARAND} :
     the length of {VAR}
@@ -858,17 +860,33 @@
     {SUM}
     {FACTOR}
 
+{NUM_COMPARATOR} :
+    &ge;
+    &gt;
+    &le;
+    &lt;
+    &ne;
+    =
+    \u2265
+    equals
+    is at least
+    is greater than
+    is greater than or equal to
+    is less than
+    is less than or equal to
+    is not greater than
+    is not less than
 
 # ---------------------------------------------------------------
 
 {MULTILINE_EXPR} :
     a set of characters containing the sixty-three characters:{FIGURE}
-    an internal AssertionTester closure that takes a State argument {VAR} and performs the following steps when evaluated:{IND_COMMANDS}
-    an internal Continuation closure that takes one State argument {VAR} and performs the following steps(?: when evaluated)?:{IND_COMMANDS}
-    an internal Matcher closure that takes two arguments, a State {VAR} and a Continuation {VAR}, and performs the following steps(?: when evaluated)?:{IND_COMMANDS}
+    an internal AssertionTester closure that takes a State argument {VAR} and performs the following steps:{IND_COMMANDS}
+    an internal Continuation closure that takes one State argument {VAR} and performs the following steps:{IND_COMMANDS}
+    an internal Matcher closure that takes two arguments, a State {VAR} and a Continuation {VAR}, and performs the following steps:{IND_COMMANDS}
     an internal closure that takes two arguments, a String {VAR} and an integer {VAR}, and performs the following steps:{IND_COMMANDS}
     the string-concatenation of:{I_BULLETS}
-    the result of parsing the source text{_INDENT}{_NL} +<pre><code class="javascript">([^<>]+)</code></pre>{_NL} +using the syntactic grammar with the goal symbol {NONTERMINAL}\.{_OUTDENT}
+    the result of parsing the source text{_INDENT}{_NL} +{H_PRE_CODE}{_NL} +using the syntactic grammar with the goal symbol {NONTERMINAL}\.{_OUTDENT}
 
     # PR 1515 BigInt:
     one of:{I_BULLETS}
@@ -922,10 +940,10 @@
     a copy of {VAR} with all the elements of {VAR} appended
     a copy of {VAR} with {VAR} appended
     a copy of {VAR}'s _captures_ List
-    a new (Data Block|Shared Data Block) value consisting of {VAR} bytes\. If it is impossible to create such a (Data Block|Shared Data Block), throw a {ERROR_TYPE} exception
+    a new Data Block value consisting of {VAR} bytes\. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
     a new Lexical Environment
-    a new List containing the same values as the list {VAR} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using \*undefined\* as _comparefn_
+    a new List containing the same values as the list {VAR} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using \*undefined\* as {VAR}
     a new List containing {EXPR}
     a new List of {VAR} with {LITERAL} appended
     a new List which is a copy of {VAR}
@@ -933,17 +951,16 @@
     a new Property Descriptor that initially has no fields
     a new Realm Record
     a new Record
+    a new Shared Data Block value consisting of {VAR} bytes\. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
     a new \(possibly empty\) List consisting of all of the argument values provided after {VAR} in order
     a new built-in function object that when called performs the action described by {VAR}. The new function object has internal slots whose names are the elements of {VAR}
-    a new declarative Environment Record containing no bindings
     a new empty List
     a new execution context
-    a new function Environment Record containing no bindings
-    a new global Environment Record
     a new list containing the same values as the list {VAR} in the same order followed by the same values as the list {VAR} in the same order
-    a new module Environment Record containing no bindings
     a new object Environment Record containing {VAR} as the binding object
     a new unique Symbol value whose {DSBN} value is {VAR}
+    a new {ENVIRONMENT_RECORD_KIND} Environment Record
+    a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
     a newly created Array exotic object
     a newly created ECMAScript function object with the internal slots listed in {EMU_XREF}
     a newly created Integer-Indexed exotic object with an internal slot for each name in {VAR}
@@ -973,8 +990,6 @@
     an implementation-dependent String source code representation of {VAR}\. The representation must have the syntax of a {NONTERMINAL}. Additionally, if {VAR} is a {EMU_XREF} and is not identified as an anonymous function, the portion of the returned String that would be matched by {NONTERMINAL} must be the initial value of the `name` property of {VAR}
     an instance of the production {EMU_GRAMMAR}
     such an object created in an implementation-defined manner
-    the (Matcher|CharSet|Completion Record) that is {EXPR}
-    the (declarative|function|module|object|global) Environment Record for which the method was invoked
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
@@ -984,6 +999,7 @@
     the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the single character {CP_LITERAL}
     the CharSet containing the single character {VAR}
+    the CharSet that is {EXPR}
     the Completion Record that is the result of evaluating {VAR} in an implementation-defined manner that conforms to the specification of {VAR}. The \*this\* value is uninitialized, {VAR} provides the named parameters, and {VAR} provides the NewTarget value
     the Completion Record that is the result of evaluating {VAR} in an implementation-defined manner that conforms to the specification of {VAR}. {VAR} is the \*this\* value, {VAR} provides the named parameters, and the NewTarget value is \*undefined\*
     the ECMAScript Number value corresponding to {VAR}
@@ -996,12 +1012,14 @@
     the List of {NONTERMINAL} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
     the List, in source text order, of Unicode code points in the source text matched by this production
+    the Matcher that is {EXPR}
     the Name of the entry in {EMU_XREF} with the Number {NAMED_OPERATION_INVOCATION}
     the Number that is the time value \(UTC\) identifying the current time
     the Number value for {VAR}
     the Number value of the Element Size specified in {EMU_XREF} for Element Type {VAR}
     the Number value of the Element Size value in {EMU_XREF} for {VAR}
-    the Number value of the Element Size value specified in {EMU_XREF} for(?: Element Type)? {VAR}
+    the Number value of the Element Size value specified in {EMU_XREF} for Element Type {VAR}
+    the Number value of the Element Size value specified in {EMU_XREF} for {VAR}
     the Number value that corresponds to {VAR}
     the PendingJob record at the front of {VAR}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
@@ -1021,7 +1039,7 @@
     the String value containing {VAR} consecutive code units from {VAR} beginning with the code unit at index {VAR}
     the String value containing {VAR} occurrences of {CU_LITERAL}
     the String value derived from {VAR} by copying code unit elements from {VAR} to {VAR} while performing replacements as specified in {EMU_XREF}. These `\$` replacements are done left-to-right, and, once such a replacement is performed, the new replacement text is not subject to further replacements
-    the String value equal to the substring of {VAR} consisting of the (code units|elements) at indices {VAR} \(inclusive\) through {VAR} \(exclusive\)
+    the String value equal to the substring of {VAR} consisting of the code units at indices {VAR} \(inclusive\) through {VAR} \(exclusive\)
     the String value for the list-separator String appropriate for the host environment's current locale \(this is derived in an implementation-defined way\)
     the String value formed by concatenating all the element Strings of {VAR} with each adjacent pair of Strings separated with {CU_LITERAL}. A comma is not inserted either before the first String or after the last String
     the String value formed by concatenating all the element Strings of {VAR} with each adjacent pair of Strings separated with {VAR}. The {VAR} String is not inserted either before the first String or after the last String
@@ -1035,7 +1053,7 @@
     the String value that is a copy of {VAR} with leading white space removed
     the String value that is a copy of {VAR} with trailing white space removed
     the String value that is made from {VAR} copies of {VAR} appended together
-    the String value that is the result of normalizing {VAR} into the normalization form named by {VAR} as specified in <a [^<>]+>[^<>]+</a>
+    the String value that is the result of normalizing {VAR} into the normalization form named by {VAR} as specified in {H_A}
     the String value that is the same as {VAR} except that each occurrence of {CU_LITERAL} in {VAR} has been replaced with the six code unit sequence {STR_LITERAL}
     the String value whose code units are the elements of {NAMED_OPERATION_INVOCATION} as defined in {EMU_XREF}
     the String value whose code units are {NAMED_OPERATION_INVOCATION}
@@ -1049,9 +1067,8 @@
     the abstract operation named in the Conversion Operation column in {EMU_XREF} for Element Type {VAR}
     the active function object
     the actual number of arguments passed to this function
-    the algorithm steps defined in (.+) \({EMU_XREF}\)
     the algorithm steps defined in {EMU_XREF}
-    the algorithm steps specified in {EMU_XREF} for the %ThrowTypeError% function
+    the algorithm steps specified in {EMU_XREF} for the {PERCENT_DELIMITED_WORD} function
     the arguments object
     the binding object for {VAR}
     the byte elements of {VAR} concatenated and interpreted as a bit string encoding of a binary little-endian 2's complement number of bit length {PRODUCT}
@@ -1090,7 +1107,8 @@
     the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {VAR}
     the integer that is {EXPR}
     the internal procedure that evaluates the above parse of {VAR} by applying the semantics provided in {EMU_XREF} using {VAR} as the pattern's List of {NONTERMINAL} values and {VAR} as the flag parameters
-    the intrinsic object (%\w+%)
+    the intrinsic function {PERCENT_DELIMITED_WORD}
+    the intrinsic object {PERCENT_DELIMITED_WORD}
     the intrinsic object listed in column one of {EMU_XREF} for {DOTTING}
     the larger of 0 and the result of {VAR} minus the number of elements of {VAR}
     the largest possible nonnegative integer {VAR} not larger than {VAR} such that {CONDITION}; but if there is no such integer {VAR}, return the value {NUM_EXPR}
@@ -1127,7 +1145,7 @@
     the result of applying the addition operation to {VAR} and {VAR}. See the Note below {EMU_XREF}
     the result of applying the bitwise operator @ to {VAR} and {VAR}. The result is a signed 32-bit integer
     the result of applying the subtraction operation to {VAR} and {VAR}. See the note below {EMU_XREF}
-    the result of applying the {NONTERMINAL} \(.+\) to {VAR} and {VAR} as specified in {EMU_XREF}, {EMU_XREF}, or {EMU_XREF}
+    the result of applying the {NONTERMINAL} \(`\*`, `/`, or `%`\) to {VAR} and {VAR} as specified in {EMU_XREF}, {EMU_XREF}, or {EMU_XREF}
     the result of applying {VAR} to {VAR} and {VAR} as if evaluating the expression {VAR} {VAR} {VAR}
     the result of converting {VAR} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode
     the result of converting {VAR} to a value in IEEE 754-2008 binary64 format
@@ -1137,7 +1155,7 @@
     the result of evaluating {NONTERMINAL} {VAR}
     the result of forming the value of the \|NumericLiteral\|
     the result of left shifting {VAR} by {VAR} bits. The result is a signed 32-bit integer
-    the result of masking out all but the least significant 5 bits of {VAR}, that is, compute {VAR} &amp; 0x1F
+    the result of masking out all but the least significant 5 bits of {VAR}, that is, compute {VAR} &amp; {HEX_LITERAL}
     the result of negating {VAR}; that is, compute a Number with the same magnitude but opposite sign
     the result of parsing and evaluating {VAR} as if it was the source text of an ECMAScript {NONTERMINAL}. The extended PropertyDefinitionEvaluation semantics defined in {EMU_XREF} must not be used during the evaluation
     the result of parsing {VAR} as a date, in exactly the same manner as for the `parse` method \({EMU_XREF}\)
@@ -1156,7 +1174,7 @@
     the set containing all characters numbered {VAR} through {VAR}, inclusive
     the set of all characters
     the set of all characters except {NONTERMINAL}
-    the set of all characters not included in the set returned by {EMU_GRAMMAR}[ ]?
+    the set of all characters not included in the set returned by {EMU_GRAMMAR} 
     the set of all characters returned by {PREFIX_PAREN}
     the set of characters containing the characters that are on the right-hand side of the {NONTERMINAL} or {NONTERMINAL} productions
     the smallest possible integer {VAR} not smaller than {VAR} such that {CONDITION}; but if there is no such integer {VAR}, return the value {NUM_EXPR}
@@ -1190,6 +1208,7 @@
     the value obtained by applying the UTF-8 transformation to {VAR}, that is, from a List of octets into a 21-bit value
     the value of the first element of {VAR}
     the value of the thisValue component of the reference {VAR}
+    the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked
     the {NONTERMINAL} that is covered by {LOCAL_REF}
     the {NONTERMINAL}, {NONTERMINAL}, or {NONTERMINAL} that most closely contains {VAR}
     the {VAR} that was passed to this function by {DSBN} or {DSBN}
@@ -1222,22 +1241,20 @@
     the internal slots listed in {EMU_XREF}, plus {DSBN} and {DSBN}
 
     # PR 1477 scope-records:
-    the (declarative|function|module|object|global) Scope Record for which the method was invoked
-    a new declarative Scope Record containing no bindings
-    a new function Scope Record containing no bindings
-    a new global Scope Record
-    a new module Scope Record containing no bindings
     a new object Scope Record containing {VAR} as the binding object
+    a new {ENVIRONMENT_RECORD_KIND} Scope Record
+    a new {ENVIRONMENT_RECORD_KIND} Scope Record containing no bindings
+    the {ENVIRONMENT_RECORD_KIND} Scope Record for which the method was invoked
 
     # PR 1515 BigInt:
     Type\({VAR}\)
     a BigInt representing {EX}
-    the BigInt defined by the mathematical relation _r_ = _n_ - \(_d_ &times; _q_\) where _q_ is a BigInt that is negative only if _n_/_d_ is negative and positive only if _n_/_d_ is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of _n_ and _d_
+    the BigInt defined by the mathematical relation {VAR} = {VAR} - \({VAR} &times; {VAR}\) where {VAR} is a BigInt that is negative only if {VAR}/{VAR} is negative and positive only if {VAR}/{VAR} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {VAR} and {VAR}
     the BigInt value that corresponds to {VAR}
     the Number value for {VAR} \(as specified in {EMU_XREF}\)
     the String value consisting of the code units of the digits of the decimal representation of {VAR}
     the result of applying the addition operation to {VAR} and {VAR}. See the Note on {EMU_XREF}
-    the result of applying the bitwise operator _op_ to {VAR} and {VAR}. The result is a signed 32-bit integer
+    the result of applying the bitwise operator {VAR} to {VAR} and {VAR}. The result is a signed 32-bit integer
     the result of applying the subtraction operation to {VAR} and {VAR}. See the Note on {EMU_XREF}
     the result of {EMU_XREF} to {VAR} and {VAR} as specified in {EMU_XREF}
     the value that {VAR} corresponds to in {EMU_XREF}
@@ -1264,11 +1281,13 @@
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
-    (ScriptEvaluationJob|TopLevelModuleEvaluationJob|PromiseResolveThenableJob|PromiseReactionJob)
-    <code>"%<var>NativeError</var>Prototype%"</code>
-    <code>"%<var>TypedArray</var>Prototype%"</code>
+    {H_CODE}
     NewTarget
+    PromiseReactionJob
+    PromiseResolveThenableJob
+    ScriptEvaluationJob
     The remainder of dividing {EX} by {EX}
+    TopLevelModuleEvaluationJob
     \({EX}, {EX}\)
     \({EX}\)
     \*this\* value
@@ -1276,7 +1295,8 @@
     `compareExchange`
     a newly created {ERROR_TYPE} object
     an implementation-dependent timezone name
-    hint (Number|String)
+    hint Number
+    hint String
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List \(see {EMU_XREF}\)
     the Number value for {PRODUCT}
@@ -1328,6 +1348,12 @@
     {NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
     {VAR} rounded towards 0 to the next integral value
 
+{ENVIRONMENT_RECORD_KIND} :
+    declarative
+    function
+    global
+    module
+    object
 
 {PAIR} :
     \({VAR}, {VAR}\)
@@ -1352,11 +1378,12 @@
     the UTF16Encoding of the code points of {VAR}
     {LOCAL_REF} Contains {NONTERMINAL}
     {LOCAL_REF} Contains {VAR}
-    {OPN_BEFORE_FOROF} (?:for|of) {LOCAL_REF}
-    {OPN_BEFORE_FOROF} (?:for|of) {LOCAL_REF} \(see {EMU_XREF}\)
-    {OPN_BEFORE_FOROF} (?:for|of) {LOCAL_REF} as defined in {EMU_XREF}
-    {OPN_BEFORE_FOROF} (?:for|of) {LOCAL_REF} {WITH_ARGS}
-    {OPN_BEFORE_FOROF} (?:for|of) {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero
+    {OPN_BEFORE_FOROF} for {LOCAL_REF} {WITH_ARGS}
+    {OPN_BEFORE_FOROF} of {LOCAL_REF}
+    {OPN_BEFORE_FOROF} of {LOCAL_REF} \(see {EMU_XREF}\)
+    {OPN_BEFORE_FOROF} of {LOCAL_REF} as defined in {EMU_XREF}
+    {OPN_BEFORE_FOROF} of {LOCAL_REF} {WITH_ARGS}
+    {OPN_BEFORE_FOROF} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero
     {PREFIX_PAREN}
 
     ## directed-operations:
@@ -1380,39 +1407,52 @@
     {SETTABLE}
 
 {PROD_REF} :
-    the (first|second|third) {NONTERMINAL}
     the {NONTERMINAL}
+    the {ORDINAL} {NONTERMINAL}
     this {NONTERMINAL}
     {NONTERMINAL}
     the corresponding {NONTERMINAL}
     the located {NONTERMINAL}
 
+{ORDINAL} :
+    first
+    second
+    third
+
 {WITH_ARGS} :
-    with argument {EX}
-    with arguments {EX} and {EX}
-    with arguments {VAR} and {EX} as the optional {VAR} argument
-    (?:passing|using|with) {EX} as the argument
-    (?:passing|using|with) {VAR} and {EX} as(?: the)? arguments
-    with {VAR}, {VAR}, and {VAR} as the arguments
-    using {VAR}, {VAR}, and {VAR} as(?: the)? arguments
+    {PASSING} argument {EX}
+    {PASSING} arguments {EX} and {EX}
+    {PASSING} arguments {VAR} and {EX} as the optional {VAR} argument
+    {PASSING} {EX} as the argument
+    {PASSING} {VAR} and {EX} as arguments
+    {PASSING} {VAR} and {EX} as the arguments
+    {PASSING} {VAR}, {VAR}, and {VAR} as the arguments
+
+{PASSING} :
+    passing
+    using
+    with
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}\({EXLIST_OPT}\)
 
 {OPN_BEFORE_PAREN} :
-    (ForIn/Of(?:Head|Body)Evaluation|(?!Type\b)[A-Za-z]\w+)
+    ForIn/OfHeadEvaluation
+    ForIn/OfBodyEvaluation
+    (?!Type\b)([A-Za-z]\w+)
     {VAR}
     {VAR}\.([A-Z][A-Za-z0-9]+)
     {DOTTING}
 
     # PR 1515 BigInt:
-    ((?:BigInt|Number)::\w+)
+    (BigInt::\w+)
+    (Number::\w+)
     Type\({VAR}\)::(\w+)
     {VAR}::(\w+)
 
 {EXLIST_OPT} :
     {EXLIST}
-    ()
+    {EPSILON}
 
 {EXLIST} :
     {EX}
@@ -1421,10 +1461,30 @@
 # ------------------------------------------------------
 
 {RECORD_CONSTRUCTOR} :
-    (?:the |a |a new )?(Record|Chosen Value Record|ExportEntry Record|ImportEntry Record|Completion|PropertyDescriptor|PendingJob|PromiseCapability|PromiseReaction|ReadModifyWriteSharedMemory|ReadSharedMemory|ResolvedBinding Record|Script Record|Source Text Module Record|WriteSharedMemory|AsyncGeneratorRequest) { {FIELDS} }
+    {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }
+
+{RECORD_CONSTRUCTOR_PREFIX} :
+    AsyncGeneratorRequest
+    Chosen Value Record
+    Completion
+    PendingJob
+    PropertyDescriptor
+    ReadModifyWriteSharedMemory
+    ReadSharedMemory
+    Record
+    ResolvedBinding Record
+    Script Record
+    Source Text Module Record
+    WriteSharedMemory
+    the ExportEntry Record
+    the ImportEntry Record
+    the PromiseCapability
+    the PromiseReaction
+    the PropertyDescriptor
+    the Record
 
     # PR 1477 scope-records:
-    Lexical Environment { {FIELDS} }
+    Lexical Environment
 
 {FIELDS} :
     {FIELD}
@@ -1436,34 +1496,48 @@
 # ------------------------------------------------------
 
 {SETTABLE} :
-    the (Function|Realm|ScriptOrModule|LexicalEnvironment|VariableEnvironment) of {VAR}
-    the EnvironmentRecord component of {VAR}
-    the Generator component of {VAR}
-    the LexicalEnvironment of the running execution context
     the _withEnvironment_ flag of {VAR}'s EnvironmentRecord
     the bound value for {VAR} in {VAR}
-    the outer lexical environment reference of {VAR}
-    the running execution context's (LexicalEnvironment|VariableEnvironment)
+    the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the {DSBN} field of {EXPR}
     the {DSBN} field of the surrounding agent's Agent Record
     the {DSBN} internal slot of this Date object
-    the {VAR}'s (Function|Realm|ScriptOrModule|LexicalEnvironment|VariableEnvironment)
+    the {EXECUTION_CONTEXT_COMPONENT} component of {VAR}
+    the {EXECUTION_CONTEXT_COMPONENT} of the running execution context
+    the {EXECUTION_CONTEXT_COMPONENT} of {VAR}
+    the {LEXICAL_ENVIRONMENT_COMPONENT} component of {VAR}
+    the {LEXICAL_ENVIRONMENT_COMPONENT} of {VAR}
+    the {VAR}'s {EXECUTION_CONTEXT_COMPONENT}
     {DOTTING}
     {DOTTING}\[{EX}\]
     {VAR}
-    {VAR}'s (Function|Realm|ScriptOrModule|LexicalEnvironment|VariableEnvironment)
-    {VAR}'s (EnvironmentRecord|outer environment reference)
-    {VAR}'s ScriptOrModule component
+    {VAR}'s {EXECUTION_CONTEXT_COMPONENT}
+    {VAR}'s {EXECUTION_CONTEXT_COMPONENT} component
+    {VAR}'s {LEXICAL_ENVIRONMENT_COMPONENT}
     {VAR}'s {DSBN} attribute
     {VAR}\[{EX}\]
 
     # PR 1477 scope-records:
     the _withEnvironment_ flag of {VAR}.\[\[ScopeRecord\]\]
 
+{EXECUTION_CONTEXT_COMPONENT} :
+    code evaluation state
+    Function
+    Realm
+    ScriptOrModule
+    LexicalEnvironment
+    VariableEnvironment
+    Generator
+
+{LEXICAL_ENVIRONMENT_COMPONENT} :
+    EnvironmentRecord
+    outer lexical environment reference
+    outer environment reference
+
 # --------------------------------
 
 {NUM_EXPR} :
-    {BIT_OP}
+    {BIT_EX}
     {PRODUCT}
     {SUM}
     the exact mathematical value of {SUM}
@@ -1471,16 +1545,25 @@
     # number-refactoring:
     ℝ\({VAR}\)
 
-{BIT_OP} :
-    {FACTOR} (&amp;|&gt;&gt;|&lt;&lt;) {FACTOR}
+{BIT_EX} :
+    {FACTOR} {BIT_OPERATOR} {FACTOR}
+
+{BIT_OPERATOR} :
+    &amp;
+    &gt;&gt;
+    &lt;&lt;
 
 {SUM} :
-    {SUM} [+-] {TERM}
-    {TERM} [+-] {TERM}
-    {TERM} plus {TERM}
+    {SUM} {SUM_OPERATOR} {TERM}
+    {TERM} {SUM_OPERATOR} {TERM}
+
+{SUM_OPERATOR} :
+    \+
+    -
+    plus
 
     # number-refactoring:
-    {TERM} -<sub>ℝ</sub> {TERM}
+    -<sub>ℝ</sub>
 
 {TERM} :
     the number of code units in {VAR}
@@ -1488,16 +1571,23 @@
     {PRODUCT}
 
 {PRODUCT} :
-    [+-]{FACTOR}
-    {FACTOR} (&times;) {FACTOR}
-    {FACTOR} (&divide;|/) {FACTOR}
-    {FACTOR} modulo {FACTOR}
-
+    {UNARY_OPERATOR}{FACTOR}
+    {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
     {FACTOR} &divide; {FACTOR}, rounding down to the nearest integer, including for negative numbers
 
+{UNARY_OPERATOR} :
+    \+
+    -
+
+{PRODUCT_OPERATOR} :
+    &times;
+    &divide;
+    /
+    modulo
+
     # number-refactoring:
-    {FACTOR} &times;<sub>ℝ</sub> {FACTOR}
-    {FACTOR} &divide;<sub>ℝ</sub> {FACTOR}
+    &times;<sub>ℝ</sub>
+    &divide;<sub>ℝ</sub>
 
 {FACTOR} :
     \({NUM_EXPR}\)
@@ -1512,7 +1602,6 @@
 
     # number-refactoring:
     ℝ\({VAR}\)
-    \d<sub>ℝ</sub>
 
 
 {BASE} :
@@ -1541,20 +1630,29 @@
     `\\\\`
 
 {LITERAL} :
-    (%\w+%)
     (@@\w+)
-    \*(false|true|null|undefined)\*
-    the intrinsic function %ObjProto_toString%
+    \*false\*
+    \*null\*
+    \*true\*
+    \*undefined\*
     the value \*undefined\*
     {COMPTYPE_LITERAL}
     {CU_LITERAL}
     {NUM_LITERAL}
+    {PERCENT_DELIMITED_WORD}
     {STR_LITERAL}
     {TYPE_NAME}
     ~(\[empty\]|failure|strict|empty|lexical|enumerate|Normal|Arrow|Method|assignment|varBinding|lexicalBinding|iterate|global|async|async-iterate|non-generator|sync|invalid|simple)~
 
+{PERCENT_DELIMITED_WORD} :
+    (%\w+%)
+
 {COMPTYPE_LITERAL} :
-    ~(normal|continue|break|return|throw)~
+    ~normal~
+    ~continue~
+    ~break~
+    ~return~
+    ~throw~
 
 {CP_LITERAL} :
     U\+0000 \(NULL\)
@@ -1585,7 +1683,6 @@
     &infin;
     (2|10)<sup>[0-9]+</sup>
     0.5
-    0x[0-9A-F]+
     8.64
     [0-9]+
     \*NaN\*
@@ -1593,25 +1690,45 @@
     \*[+-]0\*
     the \*NaN\* Number value
     zero
+    {HEX_LITERAL}
+
+    # number-refactoring:
+    \d+<sub>ℝ</sub>
 
     # PR 1515 BigInt?
     \*\d+\*
     \*[01]n\*
 
+{HEX_LITERAL} :
+    0x[0-9A-F]+
+
 {ERROR_TYPE} :
-    \*(TypeError|SyntaxError|RangeError|ReferenceError|URIError)\*
+    \*TypeError\*
+    \*SyntaxError\*
+    \*RangeError\*
+    \*ReferenceError\*
+    \*URIError\*
 
 {TYPE_NAME} :
+    Array
     Boolean
     Data Block
+    Map
     Null
     Number
     Object
     Reference
+    Set
     Shared Data Block
     String
     Symbol
     Undefined
+    #
+    AssertionTester
+    CharSet
+    integer
+    character
+    Matcher
 
     # PR 1515 BigInt:
     BigInt
@@ -1622,4 +1739,13 @@
 {EMU_GRAMMAR} :
     <emu-grammar>([^<>]+)</emu-grammar>
 
+{H_A} :
+    <a [^<>]+>[^<>]+</a>
+
+{H_CODE} :
+    <code>"%<var>NativeError</var>Prototype%"</code>
+    <code>"%<var>TypedArray</var>Prototype%"</code>
+
+{H_PRE_CODE} :
+    <pre><code class="javascript">([^<>]+)</code></pre>
 

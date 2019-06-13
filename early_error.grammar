@@ -14,14 +14,18 @@
 {EE_RULE} :
     <p>It is a Syntax Error if {LOCAL_REF} is\n +<br>\n +{EMU_GRAMMAR}\n +<br>\n +and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>\n +<emu-alg>(.|\n)+?</emu-alg>
-    All Early Error rules for {NONTERMINAL} and its derived productions( also)? apply to {NAMED_OPERATION_INVOCATION}\.
+    All Early Error rules for {NONTERMINAL} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}\.
+    All Early Error rules for {NONTERMINAL} and its derived productions apply to {NAMED_OPERATION_INVOCATION}\.
     All early error rules for {NONTERMINAL} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}\.
     Always throw a Syntax Error if code matches this production\.
     For each {NONTERMINAL} {VAR} in ReferencedBindings of {NONTERMINAL}: It is a Syntax Error if {CONDITION}\.
     If {CONDITION}, it is a Syntax Error if {CONDITION}\.
     If {CONDITION}, the Early Error rules for {EMU_GRAMMAR} are applied\.
-    It is (a Syntax Error|an early Syntax Error|an early Reference Error) if {CONDITION}\.
-    It is a Syntax Error if {CONDITION}\. Additional early error rules for {G_SYM} (in|within) direct eval are defined in {EMU_XREF}\.
+    It is a Syntax Error if {CONDITION}\.
+    It is a Syntax Error if {CONDITION}\. Additional early error rules for {G_SYM} in direct eval are defined in {EMU_XREF}\.
+    It is a Syntax Error if {CONDITION}\. Additional early error rules for {G_SYM} within direct eval are defined in {EMU_XREF}\.
+    It is an early Reference Error if {CONDITION}\.
+    It is an early Syntax Error if {CONDITION}\.
 
 {CONDITION} :
     {CONDITION_1}
@@ -49,7 +53,7 @@
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
     the source code matching {NONTERMINAL} is strict mode code
-    this production has an? <sub>\[\w+\]</sub> parameter
+    this production has an? <sub>\[{ID}\]</sub> parameter
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
     {LOCAL_REF} is not covering an? {NONTERMINAL}
@@ -89,9 +93,13 @@
     ## {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
 
 {NAMED_OPERATION_INVOCATION} :
-    (?:the )?([A-Z][a-zA-Z]+) of {LOCAL_REF}
-    (?:the )?([A-Z][a-zA-Z]+) of {LOCAL_REF} {WITH_ARGS}
-    (SV|AssignmentTargetType|IsLabelledFunction)\({NONTERMINAL}\)
+    {OP_NAME} of {LOCAL_REF}
+    {OP_NAME} of {LOCAL_REF} {WITH_ARGS}
+    the {OP_NAME} of {LOCAL_REF}
+    {OP_NAME}\({NONTERMINAL}\)
+
+{OP_NAME} :
+    ([A-Z][a-zA-Z]+)
 
     ## directed-operations:
     ## {VAR}\.\w+\(\)
@@ -144,6 +152,9 @@
 
 {TERMINAL} :
     `[a-z]+`
+
+{ID} :
+    (\w+)
 
 {NONTERMINAL} :
     \|([A-Za-z][A-Za-z0-9]+(?:\[[^][]+\])?(?:_opt)?)\|

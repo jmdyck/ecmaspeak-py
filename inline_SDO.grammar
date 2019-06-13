@@ -57,24 +57,30 @@
     {SUM}
     {U_LITERAL}
     {VAR}
-    [0-9]+
+    {NUM_LITERAL}
     # number-refactoring:
-    \d+<sub>ℝ</sub>
     the mathematical integer number of code points in {PROD_REF}
     the mathematical value of the number of code points in {PROD_REF}
 
 {NAMED_OPERATION_INVOCATION} :
-    (?:the )?{ISDO_NAME} of {PROD_REF}
+    the {ISDO_NAME} of {PROD_REF}
+    {ISDO_NAME} of {PROD_REF}
 
 {ISDO_NAME} :
     ([A-Z]+)
 
 {PROD_REF} :
-    the (first|second|third|fourth) {NONTERMINAL}
+    the {ORDINAL} {NONTERMINAL}
     the {NONTERMINAL}
     the {NONTERMINAL} that is that single code point
     the {NONTERMINAL} that is that {NONTERMINAL}
     {NONTERMINAL}
+
+{ORDINAL} :
+    first
+    second
+    third
+    fourth
 
 {CU_LITERAL} :
     the code unit 0x[0-9A-F]{4} \([A-Z -]+\)
@@ -88,7 +94,8 @@
     {TERM} plus {TERM} plus {TERM} plus {TERM}
 
     # number-refactoring:
-    {VAR}-<sub>ℝ</sub>{VAR}
+    # {VAR}-<sub>ℝ</sub>{VAR}
+
 
 {TERM} :
     \({PRODUCT}\)
@@ -99,25 +106,28 @@
     {FACTOR} &times; {FACTOR}
     -{VAR}
     # number-refactoring:
-    {FACTOR} &times;<sub>ℝ</sub> {FACTOR}
-    -<sub>ℝ</sub>{VAR}
+    # {FACTOR} &times;<sub>ℝ</sub> {FACTOR}
+    # -<sub>ℝ</sub>{VAR}
 
 {FACTOR} :
-    0x[0-9A-F]+
-    [0-9]+
+    {NUM_LITERAL}
     \({SUM}\)
     {BASE}<sup>{EX}</sup>
     {NAMED_OPERATION_INVOCATION}
     {VAR}
 
+{NUM_LITERAL} :
+    0x[0-9A-F]+
+    [0-9]+
+
     # number-refactoring:
-    0x[0-9A-F]+<sub>ℝ</sub>
-    \d+<sub>ℝ</sub>
+    # 0x[0-9A-F]+<sub>ℝ</sub>
+    # \d+<sub>ℝ</sub>
 
 {BASE} :
     10
     # number-refactoring:
-    10<sub>ℝ</sub>
+    # 10<sub>ℝ</sub>
 
 {VAR} :
     \b(_\w+_)\b
