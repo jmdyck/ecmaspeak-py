@@ -13,6 +13,264 @@ import shared
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+class Tokenizer:
+    def __init__(self, tokenizer_definition_string):
+        self.prod_for_pi = {}
+        patterns = []
+        i = 0
+        for line in tokenizer_definition_string.split('\n'):
+            line = line.lstrip()
+            if line == '':
+                # blank line
+                pass
+            elif line.startswith('#'):
+                # comment
+                pass
+            else:
+                mo = re.fullmatch(r'({\w+}) +: +([^ ].*)', line)
+                assert mo
+                (lhs, rhs) = mo.groups()
+                i += 1
+                pi = f"p{i}"
+                self.prod_for_pi[pi] = Production(True, lhs, rhs)
+                patterns.append(f"(?P<{pi}> {rhs} )")
+        pattern = '\n| '.join(patterns)
+        self.reo = re.compile(pattern, re.VERBOSE)
+
+    def tokenize(self, s, start_posn, end_posn, generate_dent_tokens, initial_indentation):
+        prev_indentation = initial_indentation
+        posn = start_posn
+        while True:
+            mo = self.reo.match(s, posn, end_posn)
+            if mo is None:
+                assert 0
+            pi = mo.lastgroup
+            text = mo.group(pi)
+            (tok_s_posn, tok_e_posn) = mo.span(pi)
+
+            # XXX The sub-pattern associated with this group
+            # might have a capturing subgroup
+            # (whose value might be more useful than the group's),
+            # but accessing it would be tricky,
+            # because it doesn't have a name,
+            # and we don't know its number in the overall pattern.
+            # Either would take a bit of work.
+
+            prod = self.prod_for_pi[pi]
+
+            if generate_dent_tokens and prod.lhs_s == '{nlai}':
+                this_indentation = len(text) - 1 # subtract 1 for the \n
+
+                change_in_indentation = this_indentation - prev_indentation
+                indent_unit = 2
+                assert change_in_indentation % indent_unit == 0
+                n_dents = change_in_indentation // indent_unit
+                if n_dents > 0:
+                    dent_prod = indent_prod
+                elif n_dents < 0:
+                    dent_prod = outdent_prod
+                else:
+                    dent_prod = None
+                for i in range(abs(n_dents)):
+                    yield (dent_prod, tok_s_posn, tok_s_posn, '')
+
+                prev_indentation = this_indentation
+
+            yield (prod, tok_s_posn, tok_e_posn, text)
+
+            if prod.lhs_s == '{_eos_}': break
+
+            posn = tok_e_posn
+
+class Production:
+    def __init__(self, is_token_prod, lhs_s, rhs_s):
+        self.is_token_prod = is_token_prod
+        self.lhs_s = lhs_s
+        self.rhs_s = rhs_s
+
+        if not self.is_token_prod:
+
+            pattern = r'''(?x)
+                { _NL } \x20 \+
+                | \\ n \x20 \+
+                | { [A-Z_][A-Z_0-9]* }
+                | { [a-z_]+ }
+                | \\ [()+.|*?]
+                | \\ \[
+                | \\ \]
+                | \x20
+                | \( \. \| \\ n \) \+ \? # ick
+                | \b an \?
+                | \\ u 2 2 6 5
+                | \\ x a b
+                | \\ x b b
+                | _captures_
+                | _endIndex_
+                | _withEnvironment_
+                | \u211d
+                
+        #        | \b U \+ [0-9A-F]{4} \b
+        #
+                | & [a-z]+ ;
+        #        | @@ \w+ \b
+        #        | % \w+ %
+        #
+                | \* [+-] 0 \*
+                | \* [A-Za-z]+ \*
+                | \* [+-]? &infin; \*
+                | \* " [^"*]+ " \*
+
+                | \* 
+
+        #        | \[\[ [A-Z][A-Za-z]* \]\]
+        #
+                | \b (don't | doesn't | We've) \b
+                | \b 20th \b
+                | \b   [A-Za-z][A-Za-z0-9]* \b
+                | \b General_Category \b
+        #
+        #        | \b _ [A-Za-z][A-Za-z0-9]* _ \b
+                | 's \b
+        #        | \b 0x [0-9A-F]{2,6} \b
+                | \b [0-9]+ \b
+        #
+                | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
+        #
+                | ` " [^"`]+ " `
+                | ` [^`]+ `
+        #
+        #        | <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
+        #        | < emu-grammar > .+? </ emu-grammar >
+                | < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
+                | </ [\w-]+ >
+        #
+                | ~ [-A-Za-z]+ ~
+        #        | ~ \[empty\] ~
+        #
+        #        | [-()=/+,.:?!;{}*@\u2265]
+                | [-/$=,.:;{}@!+()?]
+                | \[
+                | \]
+            '''
+            reo = re.compile(pattern)
+            rhs_tokens = temp_tokenize(reo, rhs_s, 0, len(rhs_s))
+
+            self.rhs_pieces = [
+                rhs_token.text
+                for rhs_token in rhs_tokens
+            ]
+
+#        if 0:
+#            self.rhs_pieces = [s for s in re.split(r'(%s)' % nt_pattern, rhs_s) if s != '']
+#        else:
+#            self.rhs_pieces = []
+#            # if '-<sub>' in rhs_s: pdb.set_trace()
+#            p = 0
+#            for mo in re.finditer(nt_pattern, rhs_s):
+#                (nt_start, nt_end) = mo.span()
+#                if p < nt_start:
+#                    self.rhs_pieces.append(rhs_s[p:nt_start])
+#                self.rhs_pieces.append(rhs_s[nt_start:nt_end])
+#                p = nt_end
+#            if p < len(rhs_s):
+#                self.rhs_pieces.append(rhs_s[p:])
+
+            if '{EPSILON}' in self.rhs_pieces:
+                assert self.rhs_pieces == ['{EPSILON}']
+                self.rhs_pieces = []
+
+        # In a GLR parse, there can be lots of reductions
+        # that ultimately don't appear in the final parse tree.
+        self.n_reductions = 0
+        self.n_delivered_instances = 0
+
+    def __str__(self):
+        return self.lhs_s + ' : ' + self.rhs_s
+
+indent_prod  = Production(True, '{_indent_}', '')
+outdent_prod = Production(True, '{_outdent_}', '')
+
+tokenizer_for_pseudocode = Tokenizer(r'''
+    {_eos_}          : $
+
+    # tokens that begin with whitespace:
+    {nlai}           : \n \x20*
+    {space}          : \x20
+
+    # tokens that begin with left-angle-bracket:
+    {h_a}            : <a \x20 [^<>]+> [^<>]+ </a> 
+    {h_code_quote}   : <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
+    {h_figure}       : <figure> (.|\n)+? </figure>
+    {h_pre_code}     : <pre><code \x20 class="javascript"> ([^<>]+) </code></pre>
+    {h_emu_grammar}  : < emu-grammar > .+? </ emu-grammar >
+    {h_emu_xref}     : < emu-xref (\x20 \w+ (= " [^"]+ ")? )* > [^<>]* < / emu-xref >
+    {h_emu_alg}      : < emu-alg > (.|\n)+? < / emu-alg >
+    {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
+    {h_end_tag}      : </ [\w-]+ >
+
+    # tokens that begin with '*':
+    {starred_int_lit}       : \* [+-] 0 \*
+    {starred_nonfinite_lit} : \* [+-]? &infin; \*
+    {starred_nonfinite_lit} : \* NaN \*
+    {starred_word}          : \* [A-Za-z]+ \*
+    {starred_str}           : \* " [^"*]+ " \*
+
+    # tokens that begin with '[':
+    {dsb_word}         : \[\[ [A-Z][A-Za-z0-9]* \]\]
+    {dsb_percent_word} : \[\[ % [A-Z][A-Za-z]* % \]\]
+    {punct}            : \[
+    {punct}            : \]
+
+    # tokens that begin with backtick:
+    {code_point_lit}  : ` [^`]+ ` \x20 U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)
+    {backticked_str}  : ` " [^"`]* " `
+    {backticked_word} : ` \w+ `
+    {backticked_oth}  : ` [^`]+ `
+
+    # tokens that begin with tilde:
+    {tilded_word}    : ~ [-A-Za-z]+ ~
+    {tilded_word}    : ~ \[empty\] ~
+
+    # tokens that begin with other distinctive characters:
+    {char_ref}       : & [a-z]+ ;
+    {atat_word}      : @@ \w+ \b
+    {percent_word}   : % \w+ %
+    {nonterminal}    : \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
+    {var}            : \b _ [A-Za-z][A-Za-z0-9]* _ \b
+
+    # tokens that begin with a digit:
+    {code_unit_lit}  : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)
+    {hex_int_lit}    : \b 0x [0-9A-F]{2,6} \b
+    {dec_int_lit}    : \b [0-9]+ \b
+    {wordish}        : \b 20th \b
+
+    # single-character punctuation:
+    {punct}          : [-()=/+,.:?!;{}*@\u2265]
+
+    # tokens that begin with a letter:
+
+    {that_have_not_already_etc} : that \x20 have \x20 not \x20 already \x20 been \x20 handled \x20 above\. \x20 .+\.
+
+    {code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)
+    {code_unit_lit}  : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)
+
+    {note}           : \b NOTE: \x20 .+ \.
+
+    {wordish}        : \b (don't | doesn't | We've) \b
+    {wordish}        : 's \b
+    {wordish}        : \b General_Category \b
+
+    {special_word}   : \b ( Type | Function | Realm | ScriptOrModule | LexicalEnvironment | VariableEnvironment | Generator ) \b
+    {cap_word}       : \b [A-Z][A-Za-z0-9]* \b
+    {low_word}       : \b [a-z][A-Za-z0-9]* \b
+
+''')
+
+tokenizer_for_RHSs_in_pseudocode_grammars = Tokenizer(r'''
+''')
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 class Pseudocode_Parser:
     def __init__(self, file_base):
         self.file_base = file_base
@@ -44,85 +302,103 @@ class Pseudocode_Parser:
         if self.group_errors_by_expectation:
             self.error_posns = collections.defaultdict(list)
 
-    def _reducer(self, pi, reductands, s_posn, e_posn):
-        prod = self.productions[pi]
-        prod.n_reductions += 1
-        assert len(reductands) == len(prod.rhs_pieces)
-
-        if prod.lhs_s.startswith('{_'):
-            # We're not interested in the details.
-            return None
-
-        node_children = []
-        for red in reductands:
-            if red is None:
-                # rhs_piece is a regex with no capturing group
-                # or is an uninteresting nonterminal
-                continue
-            node_children.append(red)
-
-        node = ANode(prod, node_children, s_posn, e_posn)
-        return node
-
-    def _matcher(self, curr_posn, end_posn, terminals):
-        results = []
-        for T in terminals:
-
-            if T == '{_NL}':
-                if shared.spec_text[curr_posn] == '\n':
-                    results.append( (T, curr_posn+1, None) )
-            else:
-                reo = reo_cache[T]
-                mo = reo.match(shared.spec_text, curr_posn, end_posn)
-                if mo:
-                    if reo.groups == 0:
-                        st = None
-                    elif reo.groups == 1:
-                        st = mo.group(1)
-                    else:
-                        assert 0
-                    results.append( (T, mo.end(0), st) )
-
-        return results
-
     def parse_and_handle_errors(self, start_posn, end_posn):
-        try:
-            # LR
-            def matcher_for_gparse(curr_posn, terminals):
-                return self._matcher(curr_posn, end_posn, terminals)
 
-            results = self.lr_parser.gparse(matcher_for_gparse, self._reducer, start_posn)
-            #   # Earley
-            #   curr_posn = start_posn
-            #   def get_next_token(expected_terminals):
-            #       nonlocal curr_posn
-            #       results = []
-            #       for T in expected_terminals:
-            #           mo = reo_cache[T].match(shared.spec_text, curr_posn, end_posn)
-            #           if mo:
-            #               results.append( (mo.end(0), T) )
-            #       assert len(results) > 0
-            #       if len(results) > 1:
-            #           results.sort(reverse=True)
-            #           assert results[0][0] > results[1][0] # XXX
-            #       (tok_end, T) = results[0]
-            #       token = ANode(T, [
-            #           shared.spec_text[curr_posn:tok_end]
-            #       ])
-            #       curr_posn = tok_end
-            #       return token
-            #
-            #   results = self.eparser.parse('{START}', get_next_token)
+        # hm
+        # Find the start of 'this line'
+        # (the line that contains start_posn)
+        for posn in range(start_posn, -1, -1):
+            if posn == 0 or shared.spec_text[posn-1] == '\n':
+                line_start_posn = posn
+                break
+        else:
+            assert 0
+        # And then find the end of this line's indentation
+        for posn in range(line_start_posn, start_posn+1):
+            if shared.spec_text[posn] != ' ':
+                line_indent_end_posn = posn
+                break
+        else:
+            assert 0
+        #
+        this_line_indentation = line_indent_end_posn - line_start_posn
+
+        token_generator = tokenizer_for_pseudocode.tokenize(
+            shared.spec_text,
+            start_posn,
+            end_posn,
+            (self.file_base == 'emu_alg'),
+            this_line_indentation
+        )
+
+        tokens = [ token_info for token_info in token_generator ]
+
+        def matcher_for_gparse(curr_tind, terminals):
+            assert curr_tind < len(tokens)
+            (tok_prod, tok_s_posn, tok_e_posn, tok_text) = tokens[curr_tind]
+
+            matching_terminals = []
+            for terminal in terminals:
+                    
+                assert isinstance(terminal, str)
+
+                match_token = False
+
+                if terminal.startswith('{') and terminal.endswith('}'):
+                    if tok_prod.lhs_s == terminal:
+                        if terminal in ['{nlai}', '{_indent_}', '{_outdent_}']:
+                            match_token = None
+                        else:
+                            match_token = ANode(tok_prod, [tok_text], tok_s_posn, tok_e_posn)
+                else:
+                    if terminal == 'an?':
+                        if tok_text in ['a', 'an']:
+                            match_token = None
+                    else:
+                        if tok_text == terminal:
+                            match_token = None
+
+                if match_token is not False:
+                    matching_terminals.append( (terminal, curr_tind+1, match_token) )
+
+            return matching_terminals
+
+        def reducer(pi, reductands, s_tind, e_tind):
+            prod = self.productions[pi]
+            prod.n_reductions += 1
+            assert len(reductands) == len(prod.rhs_pieces)
+
+            if prod.lhs_s.startswith('{_'):
+                # We're not interested in the details.
+                return None
+
+            node_children = []
+            for red in reductands:
+                if red is None:
+                    # rhs_piece is a regex with no capturing group
+                    # or is an uninteresting nonterminal
+                    continue
+                if red.prod.lhs_s == '{space}': continue
+                node_children.append(red)
+
+            (_, s_posn, _, _) = tokens[s_tind]
+            (_, e_posn, _, _) = tokens[e_tind]
+            node = ANode(prod, node_children, s_posn, e_posn)
+            return node
+
+        try:
+            results = self.lr_parser.gparse(matcher_for_gparse, reducer, 0)
 
         except ParsingError as e:
             self.error_count += 1
+            (_, tok_s_posn, _, _) = tokens[e.posn]
             if self.group_errors_by_expectation:
-                self.error_posns[tuple(e.expecting)].append(e.posn)
+                self.error_posns[tuple(e.expecting)].append(tok_s_posn)
             else:
                 print(
                     '\n'
                     +
-                    shared.source_line_with_caret_marking_column(e.posn)
+                    shared.source_line_with_caret_marking_column(tok_s_posn)
                     +
                     '\n'
                     +
@@ -144,6 +420,7 @@ class Pseudocode_Parser:
         def count(node):
             if isinstance(node, str): return
             assert isinstance(node, ANode)
+            if not hasattr(node.prod, 'n_delivered_instances'): return
             node.prod.n_delivered_instances += 1
             for child in node.children:
                 count(child)
@@ -155,6 +432,8 @@ class Pseudocode_Parser:
         return result
 
     def report(self):
+        report_file_base = self.file_base + '_prod_counts'
+        shared.stderr(f"generating new {report_file_base} ...")
 
         if self.group_errors_by_expectation:
             # This approach is better when I'm developing a grammar,
@@ -174,50 +453,45 @@ class Pseudocode_Parser:
                 for posn in posns:
                     err(shared.source_line_with_caret_marking_column(math.ceil(posn)))
 
-        f = shared.open_for_output(self.file_base + '_prod_counts')
+        f = shared.open_for_output(report_file_base)
         for prod in self.productions:
             print("%5d %s" % (prod.n_delivered_instances, prod), file=f)
 
 # ------------------------------------------------------------------------------
 
-class Production:
-    def __init__(self, lhs_s, rhs_s):
-        self.lhs_s = lhs_s
-        self.rhs_s = rhs_s
-
-        if 0:
-            self.rhs_pieces = [s for s in re.split(r'(%s)' % nt_pattern, rhs_s) if s != '']
+def temp_tokenize(reo, s, start_posn, end_posn):
+    tokens = []
+    posn = start_posn
+    while True:
+        if posn == end_posn:
+            break
+        mo = reo.match(s, posn, end_posn)
+        if mo:
+            t_end_posn = mo.end()
+            # shared.stderr(s[posn:t_end_posn])
+            prod = 'blah : blah'
+            text = s[posn:t_end_posn]
+            token = TNode(prod, text)
+            tokens.append(token)
+            posn = t_end_posn
         else:
-            self.rhs_pieces = []
-            # if '-<sub>' in rhs_s: pdb.set_trace()
-            p = 0
-            for mo in re.finditer(nt_pattern, rhs_s):
-                (nt_start, nt_end) = mo.span()
-                if p < nt_start:
-                    self.rhs_pieces.append(rhs_s[p:nt_start])
-                self.rhs_pieces.append(rhs_s[nt_start:nt_end])
-                p = nt_end
-            if p < len(rhs_s):
-                self.rhs_pieces.append(rhs_s[p:])
-            # print(self.rhs_pieces)
+            print('in some regex grammar for parsing pseudocode grammar')
+            caret_line = '-' * posn + '^'
+            x = s + '\n' + caret_line
+            print( '\n' + x + '\n', file=sys.stderr)
+    return tokens
 
-        if '{EPSILON}' in self.rhs_pieces:
-            assert self.rhs_pieces == ['{EPSILON}']
-            self.rhs_pieces = []
-
-        # In a GLR parse, there can be lots of reductions
-        # that ultimately don't appear in the final parse tree.
-        self.n_reductions = 0
-        self.n_delivered_instances = 0
-
-    def __str__(self):
-        return self.lhs_s + ' : ' + ''.join(self.rhs_pieces)
+class TNode:
+    def __init__(self, prod, text):
+        self.prod = prod
+        self.text = text
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 nt_pattern = r'\{[A-Z_][A-Z_0-9]*\}'
 
 def convert_grammar_string_to_productions(grammar_string):
+
     lhs_set = set()
     productions = []
     current_lhs = None
@@ -237,33 +511,24 @@ def convert_grammar_string_to_productions(grammar_string):
             lhs_set.add(current_lhs)
         else:
             # rhs
-            productions.append(Production(current_lhs, line.lstrip()))
+            productions.append(Production(False, current_lhs, line.lstrip()))
 
     # Now that we have all productions,
     # do a consistency check.
     for production in productions:
         for r_item in production.rhs_pieces:
             if re.match(r'^%s$' % nt_pattern, r_item):
-                if r_item in ['{_NL}', '{_INDENT}', '{_OUTDENT}']:
-                    pass
-                else:
-                    assert r_item in lhs_set, ("%s looks like a nonterminal but doesn't appear on a LHS" % r_item)
-            else:
-                compile_regex(r_item)
+                assert r_item in lhs_set, ("%s looks like a nonterminal but doesn't appear on a LHS" % r_item)
 
     return productions
-
-# Because Python's built-in cache isn't big enough.
-reo_cache = {}
-def compile_regex(regex):
-    if regex not in reo_cache:
-        reo_cache[regex] = re.compile(regex)
-        assert reo_cache[regex].groups <= 1, regex
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class ANode:
     def __init__(self, prod, children, start_posn, end_posn):
+        assert isinstance(prod, Production) or prod is None
+        assert isinstance(children, list) or children is None
+        # The 'None's come from Header::__init__ in static_type_analysis.py
         self.prod = prod
         self.children = children
         self.start_posn = int(start_posn)
@@ -272,9 +537,10 @@ class ANode:
     def __repr__(self):
         t = self.source_text()
         if len(t) <= 70:
-            return t
+            s = t
         else:
-            return t[0:67] + '...'
+            s = t[0:67] + '...'
+        return f'ANode(prod="{self.prod}", {len(self.children)} children, source_text={s!r}'
 
     def source_text(self):
         return shared.spec_text[self.start_posn:self.end_posn]

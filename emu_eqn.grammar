@@ -5,7 +5,7 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
-    {EMU_EQN_BODY}$
+    {EMU_EQN_BODY}{_eos_}
 
 {EMU_EQN_BODY} :
     {ONE_LINE_EQN}
@@ -14,14 +14,14 @@
 # --------------------------
 
 {MULTI_LINE_EQN} :
-    {ID}\({VAR}\){RHSS}{_NL} +
+    {OP_NAME}({var}){RHSS}{nlai}
 
 {RHSS} :
     {RHSS}{RHS}
     {RHS}
 
 {RHS} :
-    {_NL} += {EXPR} if {CONDITION}
+    {nlai}= {EXPR} if {CONDITION}
 
 {CONDITION} :
     {COND} and {COND}
@@ -40,20 +40,20 @@
     {OPERATION_DEF}
 
 {CONSTANT_DEF} :
-    {ID} = {EXPR}
-    {ID} = {EXPR} = {EXPR}
+    {CONSTANT_NAME} = {EXPR}
+    {CONSTANT_NAME} = {EXPR} = {EXPR}
 
 {OPERATION_DEF} :
-    {ID}\({VAR}\) = {EXPR}
+    {OP_NAME}({var}) = {EXPR}
 
 # ------
 
 {EXPR} :
-    the largest integer {VAR} \(closest to positive infinity\) such that {CONDITION}
+    the largest integer {var} (closest to positive infinity) such that {CONDITION}
     {SUM}
 
 {SUM} :
-    {SUM} \+ {TERM}
+    {SUM} + {TERM}
     {SUM} - {TERM}
     {TERM}
 
@@ -67,19 +67,37 @@
     {FACTOR}
 
 {FACTOR} :
-    \({SUM}\)
-    {ID}\({EXPR}\)
-    {ID}
-    {NUM_LITERAL}
-    {VAR}
+    ({SUM})
+    {OP_NAME}({EXPR})
+    floor({EXPR})
+    {CONSTANT_NAME}
+    {dec_int_lit}
+    {var}
+
+{CONSTANT_NAME} :
+    HoursPerDay
+    MinutesPerHour
+    SecondsPerMinute
+    msPerDay
+    msPerHour
+    msPerMinute
+    msPerSecond
+
+{OP_NAME} :
+    DateFromTime
+    Day
+    DayFromYear
+    DayWithinYear
+    DaysInYear
+    HourFromTime
+    InLeapYear
+    MinFromTime
+    MonthFromTime
+    SecFromTime
+    TimeFromYear
+    TimeWithinDay
+    WeekDay
+    YearFromTime
+    msFromTime
 
 # ------
-
-{VAR} :
-    \b_\w+_\b
-
-{NUM_LITERAL} :
-    \d+
-
-{ID} :
-    \b[A-Za-z]\w*\b

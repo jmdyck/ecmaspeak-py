@@ -5,39 +5,39 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
-    {LI}$
+    {LI}{_eos_}
 
 {LI} :
-    <li>\n +{ISDO_RULE}\n +</li>
+    <li>{nlai}{ISDO_RULE}{nlai}</li>
 
 {ISDO_RULE} :
-    The {ISDO_NAME} and {ISDO_NAME} of {EMU_GRAMMAR} is {EXPR}\.
-    The {ISDO_NAME} of a {NONTERMINAL} is {NAMED_OPERATION_INVOCATION}\.
-    The {ISDO_NAME} of {EMU_GRAMMAR} is {EXPR}, no matter whether white space is present or not\.
-    The {ISDO_NAME} of {EMU_GRAMMAR} is {EXPR}\.
-    The {ISDO_NAME} of {EMU_GRAMMAR} is {EXPR}\. \(Note that if {NAMED_OPERATION_INVOCATION} is 0, the negative of this MV is also 0\. The rounding rule described below handles the conversion of this signless mathematical zero to a floating-point \*\+0\* or \*-0\* as appropriate.\)
-    The {ISDO_NAME} of {EMU_GRAMMAR} or of {EMU_GRAMMAR} is {EXPR}\.
-    The {ISDO_NAME} of {EMU_GRAMMAR} or of {EMU_GRAMMAR} or of {EMU_GRAMMAR} is {EXPR}\.
-    The {ISDO_NAME} of {EMU_GRAMMAR} or of {EMU_GRAMMAR} or of {EMU_GRAMMAR} or of {EMU_GRAMMAR} is {EXPR}\.
-    The {ISDO_NAME} of {EMU_GRAMMAR} or of {EMU_GRAMMAR} or of {EMU_GRAMMAR} or of {EMU_GRAMMAR} or of {EMU_GRAMMAR} is {EXPR}\.
+    The {ISDO_NAME} and {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
+    The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
+    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}, no matter whether white space is present or not.
+    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
+    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}. (Note that if {NAMED_OPERATION_INVOCATION} is 0, the negative of this MV is also 0. The rounding rule described below handles the conversion of this signless mathematical zero to a floating-point *+0* or *-0* as appropriate.)
+    The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
 
 {EXPR} :
-    {FACTOR} \(a value so large that it will round to \*\+&infin;\*\)
+    {FACTOR} (a value so large that it will round to *+&infin;*)
     a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
     the code unit whose value is {SUM}
-    the code unit whose value is determined by the {NONTERMINAL} according to {EMU_XREF}
+    the code unit whose value is determined by the {nonterminal} according to {h_emu_xref}
     the empty code unit sequence
     the negative of {EX}
-    the sequence consisting of {CU_LITERAL}
+    the sequence consisting of {code_unit_lit}
     the sequence consisting of {EX} followed by {EX}
     the sequence consisting of {EX} followed by {EX} followed by {EX}
     the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}
     {EX}
     {EX} followed by {EX}
-    {EX} if {CONDITION}\. Otherwise, it is {EXPR}
-    {EX}, where {VAR} is {EX}
-    {EX}, where {VAR} is {EX} and {VAR} is {EX}
-    the UTF16Encoding of the code point value of {NONTERMINAL}
+    {EX} if {CONDITION}. Otherwise, it is {EXPR}
+    {EX}, where {var} is {EX}
+    {EX}, where {var} is {EX} and {var} is {EX}
+    the UTF16Encoding of the code point value of {nonterminal}
     the UTF16Encoding of {NAMED_OPERATION_INVOCATION}
 
 {CONDITION} :
@@ -51,12 +51,12 @@
     the code units of {NAMED_OPERATION_INVOCATION}
     the code units of {NAMED_OPERATION_INVOCATION} in order
     the number of code points in {PROD_REF}
-    {CU_LITERAL}
+    {code_unit_lit}
     {NAMED_OPERATION_INVOCATION}
     {PRODUCT}
     {SUM}
     {U_LITERAL}
-    {VAR}
+    {var}
     {NUM_LITERAL}
     # number-refactoring:
     the mathematical integer number of code points in {PROD_REF}
@@ -67,14 +67,14 @@
     {ISDO_NAME} of {PROD_REF}
 
 {ISDO_NAME} :
-    ([A-Z]+)
+    {cap_word}
 
 {PROD_REF} :
-    the {ORDINAL} {NONTERMINAL}
-    the {NONTERMINAL}
-    the {NONTERMINAL} that is that single code point
-    the {NONTERMINAL} that is that {NONTERMINAL}
-    {NONTERMINAL}
+    the {ORDINAL} {nonterminal}
+    the {nonterminal}
+    the {nonterminal} that is that single code point
+    the {nonterminal} that is that {nonterminal}
+    {nonterminal}
 
 {ORDINAL} :
     first
@@ -82,43 +82,46 @@
     third
     fourth
 
-{CU_LITERAL} :
-    the code unit 0x[0-9A-F]{4} \([A-Z -]+\)
-
 {U_LITERAL} :
-    \*undefined\*
+    *undefined*
 
 {SUM} :
-    {TERM} - {TERM}
-    {TERM} plus {TERM}
-    {TERM} plus {TERM} plus {TERM} plus {TERM}
+    {TERM} {SUM_OPERATOR} {TERM}
+    {SUM} {SUM_OPERATOR} {TERM}
+
+{SUM_OPERATOR} :
+    -
+    plus
 
     # number-refactoring:
-    # {VAR}-<sub>ℝ</sub>{VAR}
+    # {var}-<sub>ℝ</sub>{var}
 
 
 {TERM} :
-    \({PRODUCT}\)
+    ({PRODUCT})
     {FACTOR}
 
 {PRODUCT} :
-    {FACTOR} times {FACTOR}
-    {FACTOR} &times; {FACTOR}
-    -{VAR}
+    {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
+    -{var}
     # number-refactoring:
     # {FACTOR} &times;<sub>ℝ</sub> {FACTOR}
-    # -<sub>ℝ</sub>{VAR}
+    # -<sub>ℝ</sub>{var}
+
+{PRODUCT_OPERATOR} :
+    times
+    &times;
 
 {FACTOR} :
     {NUM_LITERAL}
-    \({SUM}\)
+    ({SUM})
     {BASE}<sup>{EX}</sup>
     {NAMED_OPERATION_INVOCATION}
-    {VAR}
+    {var}
 
 {NUM_LITERAL} :
-    0x[0-9A-F]+
-    [0-9]+
+    {hex_int_lit}
+    {dec_int_lit}
 
     # number-refactoring:
     # 0x[0-9A-F]+<sub>ℝ</sub>
@@ -128,16 +131,3 @@
     10
     # number-refactoring:
     # 10<sub>ℝ</sub>
-
-{VAR} :
-    \b(_\w+_)\b
-
-{EMU_GRAMMAR} :
-    <emu-grammar>([^<>]+)</emu-grammar>
-
-{EMU_XREF} :
-    <emu-xref [^<>]+></emu-xref>
-
-{NONTERMINAL} :
-    \|(\w+)\|
-

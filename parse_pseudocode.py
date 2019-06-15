@@ -8,7 +8,7 @@
 import sys, re, time, math
 from collections import defaultdict
 
-from Pseudocode_Parser import Pseudocode_Parser, reo_cache
+from Pseudocode_Parser import Pseudocode_Parser
 import shared
 from shared import spec, stderr
 
@@ -221,100 +221,29 @@ class Emu_Alg_Parser(Pseudocode_Parser):
     def __init__(self):
         Pseudocode_Parser.__init__(self, 'emu_alg')
 
-        # To handle the {_INDENT} and {_OUTDENT} symbols, ...
-        indent_info = [
-            (mo.start(), mo.end() - mo.start())
-            for mo in re.finditer(r'(?m)^ *', shared.spec_text)
-        ]
-        indent_change_info = dict(
-            (this_posn, this_ind - prev_ind)
-            for ((_, prev_ind),(this_posn, this_ind)) in zip([(None,0)] + indent_info[:-1], indent_info)
-        )
-        self.dent_symbols = {}
-        for (posn, indentation_change) in indent_change_info.items():
-            if indentation_change % 2 != 0:
-                shared.stderr("Warning: odd indentation-change (%d)" % indentation_change)
-            n_dents = abs(indentation_change) / 2
-
-            if indentation_change > 0:
-                symbol = '{_INDENT}'
-            elif indentation_change < 0:
-                symbol = '{_OUTDENT}'
-            else:
-                symbol = None
-
-            self.dent_symbols[posn] = (symbol, n_dents)
-
-    # override:
-    def _matcher(self, curr_posn, end_posn, terminals):
-        # print(curr_posn, len(terminals))
-        # if curr_posn == 2022487: pdb.set_trace()
-        # if '[ ]+<figure>' in terminals: pdb.set_trace()
-        # if r'(?=\n)' in terminals: pdb.set_trace()
-
-        FRAC_PER_DENT = 1/32
-        MAX_N_DENTS_CHANGE = 31
-
-        results = []
-
-        if isinstance(curr_posn, float):
-            # We can only accept '{_INDENT}' or '{_OUTDENT}' or '{_NL}' at this position.
-
-            int_posn = math.floor(curr_posn)
-            frac_posn = curr_posn - int_posn
-            assert frac_posn != 0
-
-            assert shared.spec_text[int_posn] == '\n'
-            (dent_symbol, n_dents) = self.dent_symbols[int_posn+1]
-            assert dent_symbol in ['{_INDENT}', '{_OUTDENT}']
-
-            if dent_symbol in terminals or '{_NL}' in terminals:
-
-                p = round(frac_posn / FRAC_PER_DENT)
-                # p == 0 was where we recognized the first dent,
-                # p == 1 is where we recognize the second dent,
-                # etc, up to
-                # p == n_dents-1 is where we recognize the last dent,
-                # p == n_dents is where we recognize the NL
-
-                if p < n_dents and dent_symbol in terminals:
-                    results.append( (dent_symbol, curr_posn + FRAC_PER_DENT, None) )
-                elif p == n_dents and '{_NL}' in terminals:
-                    results.append( ('{_NL}', int_posn+1, None) )
-                else:
-                    # assert 0
-                    pass
-
-        else:
-            assert isinstance(curr_posn, int)
-
-            for T in terminals:
-
-                if T in ['{_INDENT}', '{_OUTDENT}', '{_NL}']:
-                    if shared.spec_text[curr_posn] == '\n':
-                        (dent_symbol, n_dents) = self.dent_symbols[curr_posn+1]
-                        if n_dents == 0 and T == '{_NL}':
-                            results.append( (T, curr_posn+1, None) )
-                        elif n_dents > 0 and T == dent_symbol:
-                            results.append( (T, curr_posn + FRAC_PER_DENT, None) )
-
-                else:
-                    reo = reo_cache[T]
-                    mo = reo.match(shared.spec_text, curr_posn, end_posn)
-                    if mo:
-                        if reo.groups == 0:
-                            st = None
-                        elif reo.groups == 1:
-                            st = mo.group(1)
-                        else:
-                            assert 0
-                        results.append( (T, mo.end(0), st) )
-
-        if False and len(results) > 1:
-            s = ' '.join(repr(T) for (T, end, st) in results)
-            shared.stderr(f"returning {len(results)} results: {s}")
-
-        return results
+#        # To handle the {_INDENT} and {_OUTDENT} symbols, ...
+#        indent_info = [
+#            (mo.start(), mo.end() - mo.start())
+#            for mo in re.finditer(r'(?m)^ *', shared.spec_text)
+#        ]
+#        indent_change_info = dict(
+#            (this_posn, this_ind - prev_ind)
+#            for ((_, prev_ind),(this_posn, this_ind)) in zip([(None,0)] + indent_info[:-1], indent_info)
+#        )
+#        self.dent_symbols = {}
+#        for (posn, indentation_change) in indent_change_info.items():
+#            if indentation_change % 2 != 0:
+#                shared.stderr("Warning: odd indentation-change (%d)" % indentation_change)
+#            n_dents = abs(indentation_change) / 2
+#
+#            if indentation_change > 0:
+#                symbol = '{_INDENT}'
+#            elif indentation_change < 0:
+#                symbol = '{_OUTDENT}'
+#            else:
+#                symbol = None
+#
+#            self.dent_symbols[posn] = (symbol, n_dents)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -322,9 +251,5 @@ main()
 
 # import cProfile
 # cProfile.run('main()', '_prof')
-# Roughly half the time is spent in _sre.SRE_Pattern.match():
-# 38 million calls, so even a tiny time per call adds up.
-# The other half is spent in _matcher (i.e., excluding time spent in any sub-call):
-# ~360k calls.
 
 # vim: sw=4 ts=4 expandtab
