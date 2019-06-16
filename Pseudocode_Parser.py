@@ -407,10 +407,11 @@ def convert_grammar_string_to_productions(grammar_string):
                     prod.rhs_pieces.append(text)
                     posn = t_end_posn
                 else:
-                    print('in some regex grammar for parsing pseudocode grammar')
+                    print('in one of the grammars for pseudocode:')
                     caret_line = '-' * posn + '^'
                     x = rhs + '\n' + caret_line
                     print( '\n' + x + '\n', file=sys.stderr)
+                    sys.exit(1)
 
             if '{EPSILON}' in prod.rhs_pieces:
                 assert prod.rhs_pieces == ['{EPSILON}']
