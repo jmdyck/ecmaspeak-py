@@ -366,11 +366,6 @@ class Pseudocode_Parser:
         for prod in self.productions:
             print("%5d %s" % (prod.n_delivered_instances, prod), file=f)
 
-class TNode:
-    def __init__(self, prod, text):
-        self.prod = prod
-        self.text = text
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 nt_pattern = r'\{[A-Z_][A-Z_0-9]*\}'
@@ -408,10 +403,8 @@ def convert_grammar_string_to_productions(grammar_string):
                 if mo:
                     t_end_posn = mo.end()
                     # shared.stderr(rhs[posn:t_end_posn])
-                    tprod = 'blah : blah'
                     text = rhs[posn:t_end_posn]
-                    token = TNode(tprod, text)
-                    prod.rhs_pieces.append(token.text)
+                    prod.rhs_pieces.append(text)
                     posn = t_end_posn
                 else:
                     print('in some regex grammar for parsing pseudocode grammar')
