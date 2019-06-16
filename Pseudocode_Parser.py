@@ -423,70 +423,7 @@ def convert_grammar_string_to_productions(grammar_string):
             rhs = line.lstrip()
             prod = Production(False, current_lhs, rhs)
 
-            pattern = r'''(?x)
-                { _NL } \x20 \+
-                | \\ n \x20 \+
-                | { [A-Z_][A-Z_0-9]* }
-                | { [a-z_]+ }
-                | \\ [()+.|*?]
-                | \\ \[
-                | \\ \]
-                | \x20
-                | \( \. \| \\ n \) \+ \? # ick
-                | \b an \?
-                | \\ u 2 2 6 5
-                | \\ x a b
-                | \\ x b b
-                | _captures_
-                | _endIndex_
-                | _withEnvironment_
-                | \u211d
-                
-        #        | \b U \+ [0-9A-F]{4} \b
-        #
-                | & [a-z]+ ;
-        #        | @@ \w+ \b
-        #        | % \w+ %
-        #
-                | \* [+-] 0 \*
-                | \* [A-Za-z]+ \*
-                | \* [+-]? &infin; \*
-                | \* " [^"*]+ " \*
-
-                | \* 
-
-        #        | \[\[ [A-Z][A-Za-z]* \]\]
-        #
-                | \b (don't | doesn't | We've) \b
-                | \b 20th \b
-                | \b   [A-Za-z][A-Za-z0-9]* \b
-                | \b General_Category \b
-        #
-        #        | \b _ [A-Za-z][A-Za-z0-9]* _ \b
-                | 's \b
-        #        | \b 0x [0-9A-F]{2,6} \b
-                | \b [0-9]+ \b
-        #
-                | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
-        #
-                | ` " [^"`]+ " `
-                | ` [^`]+ `
-        #
-        #        | <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
-        #        | < emu-grammar > .+? </ emu-grammar >
-                | < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
-                | </ [\w-]+ >
-        #
-                | ~ [-A-Za-z]+ ~
-        #        | ~ \[empty\] ~
-        #
-        #        | [-()=/+,.:?!;{}*@\u2265]
-                | [-/$=,.:;{}@!+()?]
-                | \[
-                | \]
-            '''
-            reo = re.compile(pattern)
-            rhs_tokens = temp_tokenize(reo, rhs, 0, len(rhs))
+            rhs_tokens = temp_tokenize(reo_for_rhs_piece_in_pseudocode_grammar, rhs, 0, len(rhs))
 
             prod.rhs_pieces = [
                 rhs_token.text
@@ -507,6 +444,69 @@ def convert_grammar_string_to_productions(grammar_string):
                 assert r_item in lhs_set, ("%s looks like a nonterminal but doesn't appear on a LHS" % r_item)
 
     return productions
+
+reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
+    { _NL } \x20 \+
+    | \\ n \x20 \+
+    | { [A-Z_][A-Z_0-9]* }
+    | { [a-z_]+ }
+    | \\ [()+.|*?]
+    | \\ \[
+    | \\ \]
+    | \x20
+    | \( \. \| \\ n \) \+ \? # ick
+    | \b an \?
+    | \\ u 2 2 6 5
+    | \\ x a b
+    | \\ x b b
+    | _captures_
+    | _endIndex_
+    | _withEnvironment_
+    | \u211d
+    
+#   | \b U \+ [0-9A-F]{4} \b
+#
+    | & [a-z]+ ;
+#   | @@ \w+ \b
+#   | % \w+ %
+#
+    | \* [+-] 0 \*
+    | \* [A-Za-z]+ \*
+    | \* [+-]? &infin; \*
+    | \* " [^"*]+ " \*
+
+    | \* 
+
+#   | \[\[ [A-Z][A-Za-z]* \]\]
+#
+    | \b (don't | doesn't | We've) \b
+    | \b 20th \b
+    | \b   [A-Za-z][A-Za-z0-9]* \b
+    | \b General_Category \b
+#
+#   | \b _ [A-Za-z][A-Za-z0-9]* _ \b
+    | 's \b
+#        | \b 0x [0-9A-F]{2,6} \b
+    | \b [0-9]+ \b
+#
+    | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
+#
+    | ` " [^"`]+ " `
+    | ` [^`]+ `
+#
+#   | <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
+#   | < emu-grammar > .+? </ emu-grammar >
+    | < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
+    | </ [\w-]+ >
+#
+    | ~ [-A-Za-z]+ ~
+#   | ~ \[empty\] ~
+#
+#   | [-()=/+,.:?!;{}*@\u2265]
+    | [-/$=,.:;{}@!+()?]
+    | \[
+    | \]
+''')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
