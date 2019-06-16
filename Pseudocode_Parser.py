@@ -408,6 +408,7 @@ def convert_grammar_string_to_productions(grammar_string):
                     t_end_posn = mo.end()
                     # shared.stderr(rhs[posn:t_end_posn])
                     text = rhs[posn:t_end_posn]
+                    if text.startswith(r'\u'): text = chr(int(text[2:], 16))
                     prod.rhs_pieces.append(text)
                     posn = t_end_posn
                 else:
