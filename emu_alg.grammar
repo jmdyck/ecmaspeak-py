@@ -113,6 +113,7 @@
     Perform any implementation or host environment defined job initialization using {var}.
     Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.
     Perform any necessary implementation-defined initialization of {var}.
+    Perform the following substeps in an implementation-dependent order, possibly interleaving parsing and error detection:{IND_COMMANDS}
     Perform {NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
     Perform {NAMED_OPERATION_INVOCATION}.
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
@@ -193,7 +194,7 @@
 # ----------------------------------------------
 
 {IF_CLOSED} :
-    If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied. Parsing and early error detection may be interweaved in an implementation-dependent manner.
+    If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
     If {CONDITION}&mdash;note that these mathematical values are both finite and not both zero&mdash;{SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
@@ -524,6 +525,7 @@
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {var}
+    {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
     {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
@@ -988,7 +990,7 @@
     the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
-    the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner
+    the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a *SyntaxError* or a *ReferenceError* exception, depending on the type of the error (but see also clause {h_emu_xref})
     the Element Size value in {h_emu_xref} for {var}
     the List of Unicode code points of {var}
     the List of argument values starting with the second argument
