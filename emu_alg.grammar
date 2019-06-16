@@ -402,6 +402,7 @@
     All named exports from {var} are resolvable
     All of the above CreateDataProperty operations return {LITERAL}
     Each of the above calls returns {LITERAL}
+    Evaluate has already been invoked on {var} and successfully completed
     GlobalSymbolRegistry does not currently contain an entry for {var}
     In this case, {var} will never be {LITERAL} or {LITERAL}
     The VariableEnvironment and LexicalEnvironment of {var} are the same
@@ -775,9 +776,6 @@
     {var} is not an? {ENVIRONMENT_RECORD_KIND} Scope Record
     {var} is not the Scope Record for a |Catch| clause
     {var} must be a Scope Record
-
-    # PR 1482 - dynamic import:
-    Evaluate has already been invoked on {var} and successfully completed
 
     # PR 1515 BigInt:
     @ is {EX}
@@ -1266,6 +1264,7 @@
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
 
 {EX} :
+    \u00ab {EXLIST} \u00bb
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
     {h_code_quote}
@@ -1321,9 +1320,6 @@
     {RECORD_CONSTRUCTOR}
     {var}'s _endIndex_
     {var}'s _endIndex_ value
-
-    # PR 1482 - dynamic import:
-    \xab {EXLIST} \xbb
 
     # PR 1515 BigInt:
     Type({var})::unit
