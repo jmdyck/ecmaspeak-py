@@ -1539,7 +1539,7 @@
     the exact mathematical value of {SUM}
 
     # number-refactoring:
-    ℝ({var})
+    \u211d({var})
 
 {BIT_EX} :
     {FACTOR} {BIT_OPERATOR} {FACTOR}
@@ -1559,7 +1559,7 @@
     plus
 
     # number-refactoring:
-    -<sub>ℝ</sub>
+    -<sub>\u211d</sub>
 
 {TERM} :
     the number of code units in {var}
@@ -1582,8 +1582,8 @@
     /
 
     # number-refactoring:
-    &times;<sub>ℝ</sub>
-    &divide;<sub>ℝ</sub>
+    &times;<sub>\u211d</sub>
+    &divide;<sub>\u211d</sub>
 
 {FACTOR} :
     ({NUM_EXPR})
@@ -1598,7 +1598,7 @@
     {SETTABLE}
 
     # number-refactoring:
-    ℝ({var})
+    \u211d({var})
 
 
 {BASE} :
@@ -1606,7 +1606,7 @@
     10
 
     # number-refactoring:
-    10<sub>ℝ</sub>
+    10<sub>\u211d</sub>
 
 # --------------------------------
 
@@ -1660,7 +1660,7 @@
     {hex_int_lit}
 
     # number-refactoring:
-    {dec_int_lit}<sub>ℝ</sub>
+    {dec_int_lit}<sub>\u211d</sub>
 
     # PR 1515 BigInt?
     #! \*\d+\*
