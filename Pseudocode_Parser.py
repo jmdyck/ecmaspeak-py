@@ -88,97 +88,6 @@ class Production:
         self.lhs_s = lhs_s
         self.rhs_s = rhs_s
 
-        if not self.is_token_prod:
-
-            pattern = r'''(?x)
-                { _NL } \x20 \+
-                | \\ n \x20 \+
-                | { [A-Z_][A-Z_0-9]* }
-                | { [a-z_]+ }
-                | \\ [()+.|*?]
-                | \\ \[
-                | \\ \]
-                | \x20
-                | \( \. \| \\ n \) \+ \? # ick
-                | \b an \?
-                | \\ u 2 2 6 5
-                | \\ x a b
-                | \\ x b b
-                | _captures_
-                | _endIndex_
-                | _withEnvironment_
-                | \u211d
-                
-        #        | \b U \+ [0-9A-F]{4} \b
-        #
-                | & [a-z]+ ;
-        #        | @@ \w+ \b
-        #        | % \w+ %
-        #
-                | \* [+-] 0 \*
-                | \* [A-Za-z]+ \*
-                | \* [+-]? &infin; \*
-                | \* " [^"*]+ " \*
-
-                | \* 
-
-        #        | \[\[ [A-Z][A-Za-z]* \]\]
-        #
-                | \b (don't | doesn't | We've) \b
-                | \b 20th \b
-                | \b   [A-Za-z][A-Za-z0-9]* \b
-                | \b General_Category \b
-        #
-        #        | \b _ [A-Za-z][A-Za-z0-9]* _ \b
-                | 's \b
-        #        | \b 0x [0-9A-F]{2,6} \b
-                | \b [0-9]+ \b
-        #
-                | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
-        #
-                | ` " [^"`]+ " `
-                | ` [^`]+ `
-        #
-        #        | <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
-        #        | < emu-grammar > .+? </ emu-grammar >
-                | < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
-                | </ [\w-]+ >
-        #
-                | ~ [-A-Za-z]+ ~
-        #        | ~ \[empty\] ~
-        #
-        #        | [-()=/+,.:?!;{}*@\u2265]
-                | [-/$=,.:;{}@!+()?]
-                | \[
-                | \]
-            '''
-            reo = re.compile(pattern)
-            rhs_tokens = temp_tokenize(reo, rhs_s, 0, len(rhs_s))
-
-            self.rhs_pieces = [
-                rhs_token.text
-                for rhs_token in rhs_tokens
-            ]
-
-#        if 0:
-#            self.rhs_pieces = [s for s in re.split(r'(%s)' % nt_pattern, rhs_s) if s != '']
-#        else:
-#            self.rhs_pieces = []
-#            # if '-<sub>' in rhs_s: pdb.set_trace()
-#            p = 0
-#            for mo in re.finditer(nt_pattern, rhs_s):
-#                (nt_start, nt_end) = mo.span()
-#                if p < nt_start:
-#                    self.rhs_pieces.append(rhs_s[p:nt_start])
-#                self.rhs_pieces.append(rhs_s[nt_start:nt_end])
-#                p = nt_end
-#            if p < len(rhs_s):
-#                self.rhs_pieces.append(rhs_s[p:])
-
-            if '{EPSILON}' in self.rhs_pieces:
-                assert self.rhs_pieces == ['{EPSILON}']
-                self.rhs_pieces = []
-
         # In a GLR parse, there can be lots of reductions
         # that ultimately don't appear in the final parse tree.
         self.n_reductions = 0
@@ -513,6 +422,81 @@ def convert_grammar_string_to_productions(grammar_string):
             # rhs
             rhs = line.lstrip()
             prod = Production(False, current_lhs, rhs)
+
+            pattern = r'''(?x)
+                { _NL } \x20 \+
+                | \\ n \x20 \+
+                | { [A-Z_][A-Z_0-9]* }
+                | { [a-z_]+ }
+                | \\ [()+.|*?]
+                | \\ \[
+                | \\ \]
+                | \x20
+                | \( \. \| \\ n \) \+ \? # ick
+                | \b an \?
+                | \\ u 2 2 6 5
+                | \\ x a b
+                | \\ x b b
+                | _captures_
+                | _endIndex_
+                | _withEnvironment_
+                | \u211d
+                
+        #        | \b U \+ [0-9A-F]{4} \b
+        #
+                | & [a-z]+ ;
+        #        | @@ \w+ \b
+        #        | % \w+ %
+        #
+                | \* [+-] 0 \*
+                | \* [A-Za-z]+ \*
+                | \* [+-]? &infin; \*
+                | \* " [^"*]+ " \*
+
+                | \* 
+
+        #        | \[\[ [A-Z][A-Za-z]* \]\]
+        #
+                | \b (don't | doesn't | We've) \b
+                | \b 20th \b
+                | \b   [A-Za-z][A-Za-z0-9]* \b
+                | \b General_Category \b
+        #
+        #        | \b _ [A-Za-z][A-Za-z0-9]* _ \b
+                | 's \b
+        #        | \b 0x [0-9A-F]{2,6} \b
+                | \b [0-9]+ \b
+        #
+                | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
+        #
+                | ` " [^"`]+ " `
+                | ` [^`]+ `
+        #
+        #        | <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
+        #        | < emu-grammar > .+? </ emu-grammar >
+                | < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
+                | </ [\w-]+ >
+        #
+                | ~ [-A-Za-z]+ ~
+        #        | ~ \[empty\] ~
+        #
+        #        | [-()=/+,.:?!;{}*@\u2265]
+                | [-/$=,.:;{}@!+()?]
+                | \[
+                | \]
+            '''
+            reo = re.compile(pattern)
+            rhs_tokens = temp_tokenize(reo, rhs, 0, len(rhs))
+
+            prod.rhs_pieces = [
+                rhs_token.text
+                for rhs_token in rhs_tokens
+            ]
+
+            if '{EPSILON}' in prod.rhs_pieces:
+                assert prod.rhs_pieces == ['{EPSILON}']
+                prod.rhs_pieces = []
+
             productions.append(prod)
 
     # Now that we have all productions,
