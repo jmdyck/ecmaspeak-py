@@ -429,66 +429,40 @@ def convert_grammar_string_to_productions(grammar_string):
     return productions
 
 reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
-    { _NL } \x20 \+
-    | \\ n \x20 \+
+      \x20
+
     | { [A-Z_][A-Z_0-9]* }
     | { [a-z_]+ }
-    | \\ [()+.|*?]
-    | \\ \[
-    | \\ \]
-    | \x20
-    | \( \. \| \\ n \) \+ \? # ick
-    | \b an \?
-    | \\ u 2 2 6 5
-    | \\ x a b
-    | \\ x b b
+
+    | < /? (b|br|i|ins|li|p|sub|sup|var)>
+
+    | \* [+-] 0 \*
+    | \* [A-Za-z]+ \*
+    | \* [+-] &infin; \*
+
+    | ` " [^"`]+ " `
+    | ` [^`]+ `
+
+    | & [a-z]+ ;
+    | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
     | _captures_
     | _endIndex_
     | _withEnvironment_
-    | \u211d
-    
-#   | \b U \+ [0-9A-F]{4} \b
-#
-    | & [a-z]+ ;
-#   | @@ \w+ \b
-#   | % \w+ %
-#
-    | \* [+-] 0 \*
-    | \* [A-Za-z]+ \*
-    | \* [+-]? &infin; \*
-    | \* " [^"*]+ " \*
 
-    | \* 
+    | \b [0-9]+ \b
 
-#   | \[\[ [A-Z][A-Za-z]* \]\]
-#
+    | [-!()*+,./:;=?@{}]
+    | \[
+    | \]
+
+    | \\ u [0-9a-f]{4}
+
+    | \b an\?
     | \b (don't | doesn't | We've) \b
     | \b 20th \b
     | \b   [A-Za-z][A-Za-z0-9]* \b
     | \b General_Category \b
-#
-#   | \b _ [A-Za-z][A-Za-z0-9]* _ \b
     | 's \b
-#        | \b 0x [0-9A-F]{2,6} \b
-    | \b [0-9]+ \b
-#
-    | \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
-#
-    | ` " [^"`]+ " `
-    | ` [^`]+ `
-#
-#   | <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
-#   | < emu-grammar > .+? </ emu-grammar >
-    | < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
-    | </ [\w-]+ >
-#
-    | ~ [-A-Za-z]+ ~
-#   | ~ \[empty\] ~
-#
-#   | [-()=/+,.:?!;{}*@\u2265]
-    | [-/$=,.:;{}@!+()?]
-    | \[
-    | \]
 ''')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
