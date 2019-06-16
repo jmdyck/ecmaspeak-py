@@ -511,7 +511,9 @@ def convert_grammar_string_to_productions(grammar_string):
             lhs_set.add(current_lhs)
         else:
             # rhs
-            productions.append(Production(False, current_lhs, line.lstrip()))
+            rhs = line.lstrip()
+            prod = Production(False, current_lhs, rhs)
+            productions.append(prod)
 
     # Now that we have all productions,
     # do a consistency check.
