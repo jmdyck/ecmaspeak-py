@@ -399,7 +399,7 @@ def convert_grammar_string_to_productions(grammar_string):
             rhs = line.lstrip()
             prod = Production(False, current_lhs, rhs)
 
-            rhs_tokens = []
+            prod.rhs_pieces = []
             posn = 0
             while True:
                 if posn == len(rhs):
@@ -411,18 +411,13 @@ def convert_grammar_string_to_productions(grammar_string):
                     tprod = 'blah : blah'
                     text = rhs[posn:t_end_posn]
                     token = TNode(tprod, text)
-                    rhs_tokens.append(token)
+                    prod.rhs_pieces.append(token.text)
                     posn = t_end_posn
                 else:
                     print('in some regex grammar for parsing pseudocode grammar')
                     caret_line = '-' * posn + '^'
                     x = rhs + '\n' + caret_line
                     print( '\n' + x + '\n', file=sys.stderr)
-
-            prod.rhs_pieces = [
-                rhs_token.text
-                for rhs_token in rhs_tokens
-            ]
 
             if '{EPSILON}' in prod.rhs_pieces:
                 assert prod.rhs_pieces == ['{EPSILON}']
