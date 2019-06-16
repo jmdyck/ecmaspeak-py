@@ -43,6 +43,10 @@ class Tokenizer:
         while True:
             mo = self.reo.match(s, posn, end_posn)
             if mo is None:
+                shared.stderr(
+                    "\nTokenization error:\n",
+                    shared.source_line_with_caret_marking_column(tok_s_posn)
+                )
                 assert 0
             pi = mo.lastgroup
             text = mo.group(pi)
