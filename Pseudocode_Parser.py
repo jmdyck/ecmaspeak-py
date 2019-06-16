@@ -366,30 +366,6 @@ class Pseudocode_Parser:
         for prod in self.productions:
             print("%5d %s" % (prod.n_delivered_instances, prod), file=f)
 
-# ------------------------------------------------------------------------------
-
-def temp_tokenize(reo, s, start_posn, end_posn):
-    tokens = []
-    posn = start_posn
-    while True:
-        if posn == end_posn:
-            break
-        mo = reo.match(s, posn, end_posn)
-        if mo:
-            t_end_posn = mo.end()
-            # shared.stderr(s[posn:t_end_posn])
-            prod = 'blah : blah'
-            text = s[posn:t_end_posn]
-            token = TNode(prod, text)
-            tokens.append(token)
-            posn = t_end_posn
-        else:
-            print('in some regex grammar for parsing pseudocode grammar')
-            caret_line = '-' * posn + '^'
-            x = s + '\n' + caret_line
-            print( '\n' + x + '\n', file=sys.stderr)
-    return tokens
-
 class TNode:
     def __init__(self, prod, text):
         self.prod = prod
@@ -423,7 +399,25 @@ def convert_grammar_string_to_productions(grammar_string):
             rhs = line.lstrip()
             prod = Production(False, current_lhs, rhs)
 
-            rhs_tokens = temp_tokenize(reo_for_rhs_piece_in_pseudocode_grammar, rhs, 0, len(rhs))
+            rhs_tokens = []
+            posn = 0
+            while True:
+                if posn == len(rhs):
+                    break
+                mo = reo_for_rhs_piece_in_pseudocode_grammar.match(rhs, posn)
+                if mo:
+                    t_end_posn = mo.end()
+                    # shared.stderr(rhs[posn:t_end_posn])
+                    tprod = 'blah : blah'
+                    text = rhs[posn:t_end_posn]
+                    token = TNode(tprod, text)
+                    rhs_tokens.append(token)
+                    posn = t_end_posn
+                else:
+                    print('in some regex grammar for parsing pseudocode grammar')
+                    caret_line = '-' * posn + '^'
+                    x = rhs + '\n' + caret_line
+                    print( '\n' + x + '\n', file=sys.stderr)
 
             prod.rhs_pieces = [
                 rhs_token.text
