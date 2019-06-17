@@ -2963,7 +2963,7 @@ def tc_operation(op_name):
     global trace_this_op
     trace_this_op = False
     trace_this_op = (op_name in [
-        'MV'
+        'xxMV'
     ])
     # and you may want to tweak mytrace just above
 
@@ -3309,6 +3309,7 @@ def tc_nonvalue(anode, env0):
         r'{ELSE_PART} : Else, {SMALL_COMMAND}.',
         r'{ELSE_PART} : Else,{IND_COMMANDS}',
         r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.',
+        r"{COMMAND} : Perform the following substeps in an implementation-dependent order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
@@ -4660,7 +4661,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         result = env0
 
-    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied. Parsing and early error detection may be interweaved in an implementation-dependent manner.":
+    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
         [avar, bvar, error_type1, error_type2, cond, emu_grammar] = children
         env0.assert_expr_is_of_type(avar, T_Parse_Node)
         env0.assert_expr_is_of_type(bvar, T_Parse_Node)
@@ -4842,7 +4843,6 @@ def tc_nonvalue(anode, env0):
         [var, lit] = children
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
-
 
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
@@ -5524,11 +5524,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a bound function exotic object or a {h_emu_xref}":
         [var, xref] = children
         return env0.with_type_test(var, 'is a', T_function_object_, asserting)
-
-    # PR 1482: dynamic import
-    elif p == r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Module_Record, asserting)
 
     # ----------------------
     # quasi-type-conditions
@@ -6736,6 +6731,11 @@ def tc_cond_(cond, env0, asserting):
 #        env0.assert_expr_is_of_type(var, T_Module_Record)
 #        return (env0, env0)
 
+    elif p == r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Module_Record)
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Module_Record)
@@ -7178,11 +7178,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{TYPE_TEST} : {var} is not a {h_emu_xref} or {h_emu_xref}":
+    elif p == r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}":
         [var, xrefa, xrefb] = children
         assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
         assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
         env0.assert_expr_is_of_type(var, T_code_unit_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {nonterminal}":
+        [local_ref, nonterminal] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
@@ -9381,18 +9386,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner":
+    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})":
         [s_var, emu_xref, goal_nont,
-        b1_var, b1_lit, emu_xref1,
-        b2_var, b2_lit, emu_xref2,
-        b3_var, b3_lit, emu_xref3,
         error_type1,
         error_type2, error_type3, emu_xref4] = children
         #
         env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(b1_var, T_Boolean)
-        env0.assert_expr_is_of_type(b2_var, T_Boolean)
-        env0.assert_expr_is_of_type(b3_var, T_Boolean)
         error_type_name1 = error_type1.source_text()[1:-1]
         error_type_name2 = error_type2.source_text()[1:-1]
         error_type_name3 = error_type3.source_text()[1:-1]
@@ -9528,8 +9527,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the intrinsic object {percent_word}",
     ]:
         [percent_word] = children
-        return (T_Object, env0)
-        # could be more specific in some cases
+        pws = percent_word.source_text()
+        if pws in [
+            '%Promise%',
+            '%RegExp%',
+            '%ArrayBuffer%',
+            '%SharedArrayBuffer%',
+        ]:
+            rt = T_constructor_object_
+        else:
+            rt = T_Object
+        return (rt, env0)
+        # We could be more specific in many cases, but I'm not sure it would make any difference.
 
     elif p == r"{SETTABLE} : the Generator component of {var}":
         [var] = children
@@ -10339,7 +10348,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EX} : &laquo; {EXLIST} &raquo;",
-        r"{EX} : \xab {EXLIST} \xbb", # PR 1482: dynamic import
+        r"{EX} : \u00ab {EXLIST} \u00bb",
     ]:
         [exlist] = children
         ex_types = set()
