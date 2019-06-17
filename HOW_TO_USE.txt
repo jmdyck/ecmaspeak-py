@@ -146,10 +146,12 @@ D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D skipped_sections_with_a
 git checkout op_headers2
 
 # git rebase operation_headers
-git rebase --onto operation_headers HEAD~1 && diff _operation_headers/spec_w_edits spec.html
-if necc:
-    gdiff _operation_headers/spec_w_edits spec.html
-    git commit --amend spec.html
+# git rebase --onto operation_headers HEAD~1 && diff _operation_headers/spec_w_edits spec.html
+# if necc:
+#     gdiff _operation_headers/spec_w_edits spec.html
+#     git commit --amend spec.html
+cp _operation_headers/spec_w_edits spec.html
+git commit --amend spec.html
 
 # ----------------------------
 
