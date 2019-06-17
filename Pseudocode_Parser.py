@@ -158,7 +158,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {wordish}        : \b 20th \b
 
     # single-character punctuation:
-    {punct}          : [-()=/+,.:?!;{}*@\u2265]
+    {punct}          : [-()=/+,.:?!;{}*@\u2265\u00ab\u00bb]
 
     # tokens that begin with a letter:
 
