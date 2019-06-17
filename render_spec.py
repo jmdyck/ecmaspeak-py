@@ -24,6 +24,7 @@ def main():
     prep_autolinking()
     prep_grammar()
 
+    stderr("render ...")
     global _f
     _f = shared.open_for_output('index.html')
     render_node(spec.doc_node)
@@ -32,6 +33,7 @@ def main():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def prep_xrefs():
+    stderr("prep_xrefs ...")
     global _default_xref_text_for_fragid_, _title_xref_text_for_fragid_
     _default_xref_text_for_fragid_ = {}
     _title_xref_text_for_fragid_ = {}
@@ -69,6 +71,7 @@ def prep_xrefs():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def prep_autolinking():
+    stderr("prep_autolinking ...")
 
     plain_words = []
     percent_words = []
@@ -730,6 +733,7 @@ _something = defaultdict(set)
 _lhs_nts_in_namespace_ = defaultdict(set)
 
 def prep_grammar():
+    stderr("prep_grammar ...")
     for emu_grammar in spec.doc_node.each_descendant_named('emu-grammar'):
         ns = get_grammar_namespace(emu_grammar)
         trimmed_body = emu_grammars.trim_newlines(emu_grammar.inner_source_text())
