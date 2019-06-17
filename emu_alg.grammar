@@ -211,7 +211,6 @@
     If {CONDITION}, then {SMALL_COMMAND}.
     If {CONDITION}, then{IND_COMMANDS}
     If {CONDITION}, {MULTILINE_SMALL_COMMAND}
-    If {CONDITION}, {SMALL_COMMAND} and {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}.
 
 {IF_TAIL} :
@@ -386,7 +385,7 @@
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
-    # {CONDITION_1}, when {CONDITION_1}
+    {CONDITION_1}, or if {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
     # PR 1515 BigInt:
@@ -394,7 +393,6 @@
     {CONDITION_1} and {CONDITION_1} or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1}, or if {CONDITION_1}
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
@@ -443,7 +441,6 @@
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
-    the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     the above call will not return here, but instead evaluation will continue as if the following return has already occurred
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
@@ -463,7 +460,6 @@
     the file CaseFolding.txt of the Unicode Character Database provides a simple or common case folding mapping for {var}
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
     the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits
-    the function code for {PROD_REF} is strict mode code
     the generator either threw an exception or performed either an implicit or explicit return
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
@@ -475,9 +471,11 @@
     the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}
     the source code matching {PROD_REF} is strict mode code
     the source code matching {var} is non-strict code
+    the source text matching {var} is strict mode code
     the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits
     the two most significant bits in {var} are not 10
     the {DSBN} fields of {var} and {var} are the Boolean negation of each other
+    the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist a member {var} of set {var} such that {CONDITION_1}
     there exists a member {var} of set {var} such that {CONDITION_1}
     there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}
@@ -690,8 +688,8 @@
     {var} is an integer value &ge; 0
     {var} is an ordinary, extensible object with no non-configurable properties
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
-    {var} is an? {nonterminal}
     {var} is an? {PROPERTY_KIND} property
+    {var} is an? {nonterminal}
     {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {h_emu_xref} applies
     {var} is as small as possible
     {var} is divisible by {NUM_LITERAL}
@@ -708,6 +706,7 @@
     {var} is not a Cyclic Module Record
     {var} is not a Shared Data Block
     {var} is not a {h_emu_xref}
+    {var} is not a {h_emu_xref} or {h_emu_xref}
     {var} is not a {nonterminal}
     {var} is not already suspended
     {var} is not an abrupt completion
@@ -798,9 +797,6 @@
     {var} has more than 20 significant digits
     the first non white space code point in {var} is `"-"`
 
-    # PR ? function-strictness
-    the source text matching {var} is strict mode code
-
 {PROPERTY_KIND} :
     accessor
     data
@@ -827,9 +823,6 @@
     Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
     Type({TYPE_ARG}) is not Number or BigInt
 
-    # PR 1532 CodePointAt:
-    {var} is not a {h_emu_xref} or {h_emu_xref}
-
 {TYPE_ARG} :
     {var}
     {DOTTING}
@@ -854,7 +847,6 @@
     &lt;
     &ne;
     =
-    \u2265
     equals
     is at least
     is greater than
@@ -927,6 +919,7 @@
     a copy of {var} with all the elements of {var} appended
     a copy of {var} with {var} appended
     a copy of {var}'s _captures_ List
+    a new (possibly empty) List consisting of all of the argument values provided after {var} in order
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
     a new Lexical Environment
@@ -939,7 +932,6 @@
     a new Realm Record
     a new Record
     a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
-    a new (possibly empty) List consisting of all of the argument values provided after {var} in order
     a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}
     a new empty List
     a new execution context
@@ -990,7 +982,7 @@
     the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
-    the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a *SyntaxError* or a *ReferenceError* exception, depending on the type of the error (but see also clause {h_emu_xref})
+    the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})
     the Element Size value in {h_emu_xref} for {var}
     the List of Unicode code points of {var}
     the List of argument values starting with the second argument
@@ -1095,8 +1087,8 @@
     the integer that is {EXPR}
     the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     the intrinsic function {percent_word}
-    the intrinsic object {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
+    the intrinsic object {percent_word}
     the larger of 0 and the result of {var} minus the number of elements of {var}
     the largest possible nonnegative integer {var} not larger than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
     the last element in {var}
@@ -1150,8 +1142,8 @@
     the result of performing {NAMED_OPERATION_INVOCATION}
     the result of subtracting the value {NUM_LITERAL} from {var}, using the same rules as for the `-` operator (see {h_emu_xref})
     the result of the comparison {EX} == {EX}
-    the result of {h_emu_xref} with {var} and {var} as specified in {h_emu_xref}
     the result of {NAMED_OPERATION_INVOCATION}
+    the result of {h_emu_xref} with {var} and {var} as specified in {h_emu_xref}
     the running execution context
     the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
     the second element of {var}
@@ -1266,29 +1258,27 @@
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
 
 {EX} :
-    \u00ab {EXLIST} \u00bb
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
-    {h_code_quote}
+    ({EX})
+    ({EX}, {EX})
+    *this* value
     NewTarget
     PromiseReactionJob
     PromiseResolveThenableJob
     ScriptEvaluationJob
     The remainder of dividing {EX} by {EX}
     TopLevelModuleEvaluationJob
-    ({EX}, {EX})
-    ({EX})
-    *this* value
-    {backticked_word}
+    \u00ab {EXLIST} \u00bb
     a newly created {ERROR_TYPE} object
     an implementation-dependent timezone name
     hint Number
     hint String
+    the *this* value
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {PRODUCT}
     the String {var}
-    the *this* value
     the _withEnvironment_ flag of {var}
     the base value component of {var}
     the code unit at index {EX} within {EX}
@@ -1320,6 +1310,8 @@
     {NAMED_OPERATION_INVOCATION}
     {NUM_EXPR}
     {RECORD_CONSTRUCTOR}
+    {backticked_word}
+    {h_code_quote}
     {var}'s _endIndex_
     {var}'s _endIndex_ value
 
@@ -1544,7 +1536,6 @@
 
 {BIT_OPERATOR} :
     &amp;
-    &gt;&gt;
     &lt;&lt;
 
 {SUM} :
@@ -1568,7 +1559,6 @@
     {UNARY_OPERATOR}{FACTOR}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
     {FACTOR} modulo {FACTOR}
-    {FACTOR} &divide; {FACTOR}, rounding down to the nearest integer, including for negative numbers
 
 {UNARY_OPERATOR} :
     +
