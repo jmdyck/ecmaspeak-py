@@ -204,6 +204,9 @@
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
 
+    # tmp
+    If {CONDITION}, {SMALL_COMMAND}; else, {SMALL_COMMAND}.
+
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
 
@@ -1244,7 +1247,7 @@
     # PR 1552 UTF16:
     a List consisting of the sequence of code points of {NOI}
     a List whose elements are the code points of {var}
-    the ECMAScript code that is the result of parsing {NOI}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner
+    the ECMAScript code that is the result of parsing {NOI}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})
     the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     the result of parsing and evaluating {NOI} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of parsing {NOI}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
@@ -1504,7 +1507,7 @@
     {var}[{EX}]
 
     # PR 1477 scope-records:
-    the _withEnvironment_ flag of {var}.[[ScopeRecord]]
+    the _withEnvironment_ flag of {var}.{dsb_word}
 
 {EXECUTION_CONTEXT_COMPONENT} :
     code evaluation state
