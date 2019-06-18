@@ -25,6 +25,7 @@ shared.register_output_dir(sys.argv[1])
 def main():
     spec.restore()
 
+    stderr("collecting info...")
     convert_nature_init()
 
     replacements = []
@@ -32,7 +33,10 @@ def main():
         for replacement in each_replacement_for_section(s):
             replacements.append(replacement)
 
+    stderr("write_spec_w_replacements...")
     shared.write_spec_with_replacements('spec_w_eoh', replacements)
+
+    stderr("done!")
 
 def each_replacement_for_section(s):
     # There are a few cases where a section contains <emu-alg> elements,
