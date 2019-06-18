@@ -82,13 +82,6 @@ def parse_early_errors():
     # extra paragraph that is logically scoped to two bullets of three,
     # but 
     # See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/
-    #
-    # sec-performeval-rules-outside-functions
-    # sec-performeval-rules-outside-methods
-    # sec-performeval-rules-outside-constructors
-    # Paragraph says (vaguely) when the rule is applied.
-    # Algo for PerformEval say exactly when they're applied.
-    # See PR #1245.
 
     spec.early_error_map = defaultdict(list)
 
