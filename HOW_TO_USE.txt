@@ -17,7 +17,6 @@
 #    analyze_spec.py
 #     |- render_spec.py
 #     |- operation_headers.py
-#     |- parse_pseudocode.py
 #         |- static_type_analysis.py
 
 # (Actually, the circumstances for running static_type_analysis.py
@@ -64,17 +63,12 @@ alias gcbn='git rev-parse --abbrev-ref HEAD'
 
 # --------------------------------------------------------------------
 
-D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B}_cfps.json sdo_coverage
-# (~ 2s)
+D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D warnings sections def_prodns grammar_lr {lexical,syntactic}{A,B}_cfps.json sdo_coverage {emu_eqn,early_error,inline_SDO,emu_alg}_{ambig,errors,prod_counts,parsed}
+# (~ 7s)
 
 # {lexical,syntactic}{A,B,J}_{min_len,firstk,expanded_grammar,automaton}
 # {lexical,syntactic}_{min_len,firstk,expanded_grammar} syntactic_automaton
-# 
-# # LR0 machine constructed (in 13 sec) with 3394 states and 539 conflicts
 
-# --------------------------------------------------------------------
-D=_`gcbn` && $EK/parse_pseudocode.py $D && car -d $D {emu_eqn,early_error,inline_SDO,emu_alg}_{ambig,errors,prod_counts,parsed}
-# (~ 18s)
 
 # parse_emu_eqns...
 # SLR(1) machine constructed with 135 states and 4 conflicts
@@ -135,7 +129,7 @@ if necc:
     gdiff _editorial/spec_w_eoh spec.html
     git commit --amend spec.html
 
-Run the analyze_spec and parse_pseudocode commands
+Run the analyze_spec command
 
 D=_`gcbn` && $EK/static_type_analysis.py $D
 D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc

@@ -14,14 +14,11 @@ from shared import spec, stderr
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def main():
-    shared.register_output_dir(sys.argv[1])
-    spec.restore()
+def parse_all_pseudocode():
     parse_emu_eqns()
     parse_early_errors()
     parse_inline_sdo()
     parse_emu_algs()
-    spec.save()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -246,8 +243,6 @@ class Emu_Alg_Parser(Pseudocode_Parser):
 #            self.dent_symbols[posn] = (symbol, n_dents)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-main()
 
 # import cProfile
 # cProfile.run('main()', '_prof')

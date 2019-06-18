@@ -8,7 +8,7 @@
 import sys, re, pdb
 from collections import defaultdict, OrderedDict
 
-import HTML, Section, emu_grammars
+import HTML, Section, emu_grammars, parse_pseudocode
 import shared
 from shared import stderr, header, msg_at_posn, spec
 
@@ -47,6 +47,8 @@ def main():
     emu_grammars.do_stuff_with_grammars()
     collect_operation_info()
     check_sdo_coverage()
+
+    parse_pseudocode.parse_all_pseudocode()
 
     spec.save()
 
