@@ -8,7 +8,7 @@
 import sys, re, pdb
 from collections import defaultdict, OrderedDict
 
-import HTML, Section, emu_grammars, parse_pseudocode
+import HTML, Section, emu_grammars, Pseudocode
 import shared
 from shared import stderr, header, msg_at_posn, spec
 
@@ -48,7 +48,7 @@ def main():
     collect_operation_info()
     check_sdo_coverage()
 
-    parse_pseudocode.parse_all_pseudocode()
+    Pseudocode.parse_all_pseudocode()
 
     spec.save()
 
@@ -619,7 +619,7 @@ def collect_operation_info_for_section(section):
                     # The part of the <li> after the "is" isn't marked off at all,
                     # so there isn't an HNode to supply as the definition.
                     # Instead, use the li itself?
-                    # XXX Or does that argue that this stuff should be done after parse_pseudocode?
+                    # XXX Or does that argue that this stuff should be done after parse_all_pseudocode?
 
                     for sdo_name in sdo_names:
                         for emu_grammar in emu_grammars:

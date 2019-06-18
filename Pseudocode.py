@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# ecmaspeak-py/parse_pseudocode.py:
+# ecmaspeak-py/Pseudocode.py:
 # Parse various flavors of ECMASpeak pseudocode.
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>

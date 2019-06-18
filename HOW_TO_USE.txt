@@ -28,7 +28,7 @@
 # which would simply recalculate things from scratch
 # each time it was invoked, for whatever purpose.
 # But as things stand, that would take too long.
-# In particular, parse_pseudocode.py and static_type_analysis.py
+# In particular, parsing_all_pseudocode and static_type_analysis.py
 # take a while to run, so if I'm iterating on the latter,
 # I don't want to wait for the former each time.
 
