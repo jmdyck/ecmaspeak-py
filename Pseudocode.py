@@ -419,8 +419,19 @@ def collect_op_info_from_sdo_section(section):
                 if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
                     assert emu_grammar.attrs.get('type', 'reference') == 'example'
                     assert emu_grammar.inner_source_text() == 'A : A @ B'
-                    # XXX skip it?
-                    #! (STA has it)
+                    # It isn't really an example, and yet it isn't a proper production.
+                    # Because it's marked as an 'example', it didn't get a 'summary' property
+                    # over in check_non_defining_prodns().
+                    # Hard-code the summary.
+                    emu_grammar.summary = [
+                        ('BitwiseANDExpression', 1, []),
+                        ('BitwiseXORExpression', 1, []),
+                        ('BitwiseORExpression',  1, []),
+                    ]
+
+                    emu_alg = section.block_children[i+1]
+                    assert emu_alg.element_name == 'emu-alg'
+                    op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
 
                 elif text in [
                     'The production <G> evaluates by returning the CharSet containing all Unicode code points included in the CharSet returned by |UnicodePropertyValueExpression|.',
