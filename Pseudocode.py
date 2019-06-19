@@ -349,30 +349,54 @@ def collect_op_info_from_sdo_section(section):
                     # print(section.section_num, section.section_title, section.section_id)
                     continue
 
-                if li_ist == 'The TRV of a |HexDigit| is the SV of the |SourceCharacter| that is that |HexDigit|.':
-                    # XXX not sure how to handle this yet. For now, ignore it.
-                    #! (STA has it)
-                    continue
+                LI = li._syntax_tree
+                assert LI.prod.lhs_s == '{LI}'
+                [ISDO_RULE] = LI.children
+                assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
 
-                (emu_grammars, text) = extract_grammars(li)
+                emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
+                emu_grammar_anodes = [
+                    child
+                    for child in ISDO_RULE.children
+                    if child.prod.lhs_s == '{h_emu_grammar}'
+                ]
+                assert len(emu_grammar_hnodes) == len(emu_grammar_anodes)
+                for (emu_grammar_hnode, emu_grammar_anode) in zip(emu_grammar_hnodes, emu_grammar_anodes):
+                    emu_grammar_anode._hnode = emu_grammar_hnode
 
-                assert emu_grammars
+                rule_sdo_names = []
+                rule_grammars = []
+                rule_expr = None
 
-                if re.fullmatch(r'The TV and TRV of <G> is .+', text):
-                    sdo_names = ['TV', 'TRV']
-                else:
-                    mo = re.fullmatch(r'The (\w+) of <G>( or of <G>)* is .+', text)
-                    assert mo
-                    sdo_names = [mo.group(1)]
+                for child in ISDO_RULE.children:
+                    cl = child.prod.lhs_s
+                    if cl == '{ISDO_NAME}':
+                        [cap_word] = child.children
+                        [rule_sdo_name] = cap_word.children
+                        assert rule_sdo_name == sdo_name or sdo_name is None
+                        rule_sdo_names.append(rule_sdo_name)
+                    elif cl == '{h_emu_grammar}':
+                        rule_grammars.append(child._hnode)
+                    elif cl == '{nonterminal}':
+                        rule_grammars.append(child)
+                    elif cl == '{EXPR}':
+                        assert rule_expr is None
+                        rule_expr = child
+                    elif cl == '{NAMED_OPERATION_INVOCATION}':
+                        if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
+                            # skip it
+                            pass
+                        else:
+                            assert rule_expr is None
+                            rule_expr = child
+                    else:
+                        assert 0, cl
 
-                # The part of the <li> after the "is" isn't marked off at all,
-                # so there isn't an HNode to supply as the definition.
-                # Instead, use the li itself?
-                # XXX Or does that argue that this stuff should be done after parse_all_pseudocode?
-
-                for sdo_name in sdo_names:
-                    for emu_grammar in emu_grammars:
-                        op_add_defn('SDO', sdo_name, emu_grammar, li)
+                assert 0 < len(rule_sdo_names) <= 2
+                assert 0 < len(rule_grammars) <= 5
+                for rule_sdo_name in rule_sdo_names:
+                    for rule_grammar in rule_grammars:
+                        op_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
 
     elif 'emu-alg' in section.cen_set:
         assert section.cen_set <= set(['emu-alg', 'p', 'emu-note'])
@@ -440,8 +464,11 @@ class Operation:
 
 def op_add_defn(op_kind, op_name, discriminator, emu_alg):
     assert type(op_name) == str
-    assert discriminator.element_name == 'emu-grammar'
-    # print(op_name, op_kind, discriminator.source_text().replace('\n', '\\n'))
+    assert (
+        isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
+        or
+        isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}'
+    )
 
     if op_name in info_for_op_named_:
         op_info = info_for_op_named_[op_name]
@@ -463,6 +490,11 @@ def check_sdo_coverage():
     for (op_name, op_info) in info_for_op_named_.items():
         if op_info.kind == 'SDO':
             for (discriminator, emu_alg) in op_info.definitions:
+                if isinstance(discriminator, ANode):
+                    assert discriminator.prod.lhs_s == '{nonterminal}'
+                    assert discriminator.source_text() == '|HexDigit|'
+                    discriminator.summary = [] # XXX?
+
                 for (lhs_nt, def_i, optionals) in discriminator.summary:
                     sdo_coverage_map[op_name][lhs_nt][def_i].append(optionals)
 
