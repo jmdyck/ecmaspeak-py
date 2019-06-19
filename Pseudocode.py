@@ -438,10 +438,10 @@ class Operation:
         self.kind = kind
         self.definitions = []
 
-def op_add_defn(op_kind, op_name, emu_grammar, emu_alg):
+def op_add_defn(op_kind, op_name, discriminator, emu_alg):
     assert type(op_name) == str
-    assert emu_grammar.element_name == 'emu-grammar'
-    # print(op_name, op_kind, emu_grammar.source_text().replace('\n', '\\n'))
+    assert discriminator.element_name == 'emu-grammar'
+    # print(op_name, op_kind, discriminator.source_text().replace('\n', '\\n'))
 
     if op_name in info_for_op_named_:
         op_info = info_for_op_named_[op_name]
@@ -450,7 +450,7 @@ def op_add_defn(op_kind, op_name, emu_grammar, emu_alg):
         op_info = Operation(op_name, op_kind)
         info_for_op_named_[op_name] = op_info
 
-    op_info.definitions.append( (emu_grammar, emu_alg) )
+    op_info.definitions.append( (discriminator, emu_alg) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -462,8 +462,8 @@ def check_sdo_coverage():
     # collect sdo_coverage_info:
     for (op_name, op_info) in info_for_op_named_.items():
         if op_info.kind == 'SDO':
-            for (emu_grammar, emu_alg) in op_info.definitions:
-                for (lhs_nt, def_i, optionals) in emu_grammar.summary:
+            for (discriminator, emu_alg) in op_info.definitions:
+                for (lhs_nt, def_i, optionals) in discriminator.summary:
                     sdo_coverage_map[op_name][lhs_nt][def_i].append(optionals)
 
     analyze_sdo_coverage_info()
