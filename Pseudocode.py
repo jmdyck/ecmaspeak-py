@@ -259,166 +259,163 @@ def collect_operation_info():
         section.cen_str = ' '.join(section.cen_list)
         section.cen_set = set(section.cen_list)
 
-        collect_operation_info_for_section(section)
+        if section.section_kind == 'syntax_directed_operation':
+            collect_op_info_from_sdo_section(section)
+        else:
+            pass # XXX for now
 
 # ------------------------------------------------------------------------------
 
-def collect_operation_info_for_section(section):
+def collect_op_info_from_sdo_section(section):
 
-    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    assert section.section_kind == 'syntax_directed_operation'
 
-    if section.section_kind == 'syntax_directed_operation':
+    # XXX: See define_ops_from_sdo_section() in static_type_analysis.py
+    # Merge them somehow?
 
-        # XXX: See define_ops_from_sdo_section() in static_type_analysis.py
-        # Merge them somehow?
+    if section.section_num.startswith('B.'):
+        # Taking Annex B into account is difficult,
+        # because it modifies the main-body grammar,
+        # so RHS-indexes aren't always the same.
+        # XXX For now, just skip it.
+        #! (STA has it)
+        return
 
-        if section.section_num.startswith('B.'):
-            # Taking Annex B into account is difficult,
-            # because it modifies the main-body grammar,
-            # so RHS-indexes aren't always the same.
-            # XXX For now, just skip it.
-            #! (STA has it)
-            return
+    if section.section_title == 'Static Semantics: HasCallInTailPosition':
+        assert len(section.block_children) == 2
+        assert section.block_children[0].element_name == 'p'
+        assert section.block_children[1].element_name == 'emu-note'
+        assert len(section.section_children) == 2
+        return
+    elif section.section_title in ['Statement Rules', 'Expression Rules']:
+        assert section.parent.section_title == 'Static Semantics: HasCallInTailPosition'
+        sdo_name = 'HasCallInTailPosition'
 
-        if section.section_title == 'Static Semantics: HasCallInTailPosition':
-            assert len(section.block_children) == 2
-            assert section.block_children[0].element_name == 'p'
-            assert section.block_children[1].element_name == 'emu-note'
-            assert len(section.section_children) == 2
-            return
-        elif section.section_title in ['Statement Rules', 'Expression Rules']:
-            assert section.parent.section_title == 'Static Semantics: HasCallInTailPosition'
-            sdo_name = 'HasCallInTailPosition'
+    elif section.section_title == 'Static Semantics: TV and TRV':
+        # Each rule specifies which SDO(section) it pertains to.
+        sdo_name = None
 
-        elif section.section_title == 'Static Semantics: TV and TRV':
-            # Each rule specifies which SDO(section) it pertains to.
-            sdo_name = None
+    elif section.parent.section_title == 'Pattern Semantics':
+        sdo_name = 'regexp-Evaluate'
 
-        elif section.parent.section_title == 'Pattern Semantics':
-            sdo_name = 'regexp-Evaluate'
+    else:
+        mo = re.fullmatch('(Static|Runtime) Semantics: (\w+)', section.section_title)
+        assert mo, section.section_title
+        sdo_name = mo.group(2)
 
+    # ------------------------------------------------------------------------------
+
+    if section.section_title == 'Static Semantics: NumberValueNotEverReferenced':
+        # In the BigInt proposal, it has a <ul> defining "significant digit" and then <p> instead of <emu-alg>.
+        assert section.cen_list == ['p', 'ul', 'emu-grammar', 'p', 'emu-grammar', 'p']
+        return
+    elif section.section_title == 'Static Semantics: BigIntValueNotEverReferenced':
+        # In the BigInt proposal, it has <ul> instead of <emu-alg>
+        assert section.cen_list == ['emu-grammar', 'ul', 'emu-grammar', 'ul']
+        return
+
+    if 'emu-grammar' in section.cen_set:
+        if section.section_title == 'Static Semantics: NumericValue':
+            # In the BigInt proposal, it has a <ul> defining "significant digit"
+            assert section.cen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
         else:
-            mo = re.fullmatch('(Static|Runtime) Semantics: (\w+)', section.section_title)
-            assert mo, section.section_title
-            sdo_name = mo.group(2)
+            assert section.cen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-see-also-para', 'emu-table', 'p'])
+        # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
 
-        # ------------------------------------------------------------------------------
+        for (i,c) in enumerate(section.block_children):
+            if c.element_name == 'emu-grammar':
+                next_c = section.block_children[i+1]
+                assert next_c.element_name in ['emu-alg', 'p']
+                if next_c.element_name == 'p':
+                    assert next_c.inner_source_text().startswith('Is evaluated in exactly the same manner as')
+                op_add_defn('SDO', sdo_name, c, next_c)
 
-        if section.section_title == 'Static Semantics: NumberValueNotEverReferenced':
-            # In the BigInt proposal, it has a <ul> defining "significant digit" and then <p> instead of <emu-alg>.
-            assert section.cen_list == ['p', 'ul', 'emu-grammar', 'p', 'emu-grammar', 'p']
-            return
-        elif section.section_title == 'Static Semantics: BigIntValueNotEverReferenced':
-            # In the BigInt proposal, it has <ul> instead of <emu-alg>
-            assert section.cen_list == ['emu-grammar', 'ul', 'emu-grammar', 'ul']
-            return
+    elif 'ul' in section.cen_set:
+        assert section.cen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
+        # Each <li> in the <ul> is an "inline SDO".
 
-        if 'emu-grammar' in section.cen_set:
-            if section.section_title == 'Static Semantics: NumericValue':
-                # In the BigInt proposal, it has a <ul> defining "significant digit"
-                assert section.cen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
-            else:
-                assert section.cen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-see-also-para', 'emu-table', 'p'])
-            # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
+        for ul in section.block_children:
+            if ul.element_name != 'ul': continue
+            for li in ul.children:
+                if li.element_name != 'li': continue
 
-            for (i,c) in enumerate(section.block_children):
-                if c.element_name == 'emu-grammar':
-                    next_c = section.block_children[i+1]
-                    assert next_c.element_name in ['emu-alg', 'p']
-                    if next_c.element_name == 'p':
-                        assert next_c.inner_source_text().startswith('Is evaluated in exactly the same manner as')
-                    op_add_defn('SDO', sdo_name, c, next_c)
+                li_ist = li.inner_source_text().strip()
+                if re.match(r'it is not `0`|there is a nonzero digit', li_ist):
+                    # This is the <ul> for 'significant digit' at the end of 
+                    # 7.1.3.1.1 Runtime Semantics: MV
+                    # and
+                    # 11.8.3.1 Static Semantics: MV
+                    # We're not interested in it.
+                    # print(section.section_num, section.section_title, section.section_id)
+                    continue
 
-        elif 'ul' in section.cen_set:
-            assert section.cen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
-            # Each <li> in the <ul> is an "inline SDO".
+                if li_ist == 'The TRV of a |HexDigit| is the SV of the |SourceCharacter| that is that |HexDigit|.':
+                    # XXX not sure how to handle this yet. For now, ignore it.
+                    #! (STA has it)
+                    continue
 
-            for ul in section.block_children:
-                if ul.element_name != 'ul': continue
-                for li in ul.children:
-                    if li.element_name != 'li': continue
+                (emu_grammars, text) = extract_grammars(li)
 
-                    li_ist = li.inner_source_text().strip()
-                    if re.match(r'it is not `0`|there is a nonzero digit', li_ist):
-                        # This is the <ul> for 'significant digit' at the end of 
-                        # 7.1.3.1.1 Runtime Semantics: MV
-                        # and
-                        # 11.8.3.1 Static Semantics: MV
-                        # We're not interested in it.
-                        # print(section.section_num, section.section_title, section.section_id)
-                        continue
+                assert emu_grammars
 
-                    if li_ist == 'The TRV of a |HexDigit| is the SV of the |SourceCharacter| that is that |HexDigit|.':
-                        # XXX not sure how to handle this yet. For now, ignore it.
-                        #! (STA has it)
-                        continue
+                if re.fullmatch(r'The TV and TRV of <G> is .+', text):
+                    sdo_names = ['TV', 'TRV']
+                else:
+                    mo = re.fullmatch(r'The (\w+) of <G>( or of <G>)* is .+', text)
+                    assert mo
+                    sdo_names = [mo.group(1)]
 
-                    (emu_grammars, text) = extract_grammars(li)
+                # The part of the <li> after the "is" isn't marked off at all,
+                # so there isn't an HNode to supply as the definition.
+                # Instead, use the li itself?
+                # XXX Or does that argue that this stuff should be done after parse_all_pseudocode?
 
-                    assert emu_grammars
+                for sdo_name in sdo_names:
+                    for emu_grammar in emu_grammars:
+                        op_add_defn('SDO', sdo_name, emu_grammar, li)
 
-                    if re.fullmatch(r'The TV and TRV of <G> is .+', text):
-                        sdo_names = ['TV', 'TRV']
-                    else:
-                        mo = re.fullmatch(r'The (\w+) of <G>( or of <G>)* is .+', text)
-                        assert mo
-                        sdo_names = [mo.group(1)]
+    elif 'emu-alg' in section.cen_set:
+        assert section.cen_set <= set(['emu-alg', 'p', 'emu-note'])
+        # Each <p> + <emu-alg> pair is an SDO unit.
+        assert sdo_name in ['Evaluation', 'regexp-Evaluate']
 
-                    # The part of the <li> after the "is" isn't marked off at all,
-                    # so there isn't an HNode to supply as the definition.
-                    # Instead, use the li itself?
-                    # XXX Or does that argue that this stuff should be done after parse_all_pseudocode?
+        # print(section.cen_str)
+        for (i,c) in enumerate(section.block_children):
+            if c.element_name == 'p':
+                (emu_grammars, text) = extract_grammars(c)
 
-                    for sdo_name in sdo_names:
-                        for emu_grammar in emu_grammars:
-                            op_add_defn('SDO', sdo_name, emu_grammar, li)
+                if len(emu_grammars) == 0:
+                    assert text == 'With parameter _direction_.'
+                    # ignore it
+                    continue
 
-        elif 'emu-alg' in section.cen_set:
-            assert section.cen_set <= set(['emu-alg', 'p', 'emu-note'])
-            # Each <p> + <emu-alg> pair is an SDO unit.
-            assert sdo_name in ['Evaluation', 'regexp-Evaluate']
+                assert len(emu_grammars) == 1
+                [emu_grammar] = emu_grammars
 
-            # print(section.cen_str)
-            for (i,c) in enumerate(section.block_children):
-                if c.element_name == 'p':
-                    (emu_grammars, text) = extract_grammars(c)
+                if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
+                    assert emu_grammar.attrs.get('type', 'reference') == 'example'
+                    assert emu_grammar.inner_source_text() == 'A : A @ B'
+                    # XXX skip it?
+                    #! (STA has it)
 
-                    if len(emu_grammars) == 0:
-                        assert text == 'With parameter _direction_.'
-                        # ignore it
-                        continue
+                elif text in [
+                    'The production <G> evaluates by returning the CharSet containing all Unicode code points included in the CharSet returned by |UnicodePropertyValueExpression|.',
+                    'The production <G> evaluates by returning the CharSet containing all Unicode code points not included in the CharSet returned by |UnicodePropertyValueExpression|.',
+                ]:
+                    op_add_defn('SDO', sdo_name, emu_grammar, None)
 
-                    assert len(emu_grammars) == 1
-                    [emu_grammar] = emu_grammars
+                elif text == 'The production <G> evaluates as follows:':
+                    emu_alg = section.block_children[i+1]
+                    assert emu_alg.element_name == 'emu-alg'
+                    op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
 
-                    if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
-                        assert emu_grammar.attrs.get('type', 'reference') == 'example'
-                        assert emu_grammar.inner_source_text() == 'A : A @ B'
-                        # XXX skip it?
-                        #! (STA has it)
+                else:
+                    assert 0, text
 
-                    elif text in [
-                        'The production <G> evaluates by returning the CharSet containing all Unicode code points included in the CharSet returned by |UnicodePropertyValueExpression|.',
-                        'The production <G> evaluates by returning the CharSet containing all Unicode code points not included in the CharSet returned by |UnicodePropertyValueExpression|.',
-                    ]:
-                        op_add_defn('SDO', sdo_name, emu_grammar, None)
-
-                    elif text == 'The production <G> evaluates as follows:':
-                        emu_alg = section.block_children[i+1]
-                        assert emu_alg.element_name == 'emu-alg'
-                        op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
-
-                    else:
-                        assert 0, text
-
-        else:
-            print(section.section_num, section.section_title, section.section_id)
-            print(section.cen_str)
-            assert 0
-
-    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-    # elif section.section_kind == 'something else': ...
+    else:
+        print(section.section_num, section.section_title, section.section_id)
+        print(section.cen_str)
+        assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
