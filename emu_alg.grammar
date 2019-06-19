@@ -975,6 +975,8 @@
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
+    the CharSet containing all Unicode code points included in the CharSet returned by {nonterminal}
+    the CharSet containing all Unicode code points not included in the CharSet returned by {nonterminal}
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
