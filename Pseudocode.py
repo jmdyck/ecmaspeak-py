@@ -250,19 +250,20 @@ def collect_operation_info():
     info_for_op_named_ = {}
 
     for section in spec.doc_node.each_descendant_that_is_a_section():
+
+        # cen = "child element names"
+        section.cen_list = [
+            c.element_name
+            for c in section.block_children
+        ]
+        section.cen_str = ' '.join(section.cen_list)
+        section.cen_set = set(section.cen_list)
+
         collect_operation_info_for_section(section)
 
 # ------------------------------------------------------------------------------
 
 def collect_operation_info_for_section(section):
-
-    # cen = "child element names"
-    cen_list = [
-        c.element_name
-        for c in section.block_children
-    ]
-    cen_str = ' '.join(cen_list)
-    cen_set = set(cen_list)
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -305,19 +306,19 @@ def collect_operation_info_for_section(section):
 
         if section.section_title == 'Static Semantics: NumberValueNotEverReferenced':
             # In the BigInt proposal, it has a <ul> defining "significant digit" and then <p> instead of <emu-alg>.
-            assert cen_list == ['p', 'ul', 'emu-grammar', 'p', 'emu-grammar', 'p']
+            assert section.cen_list == ['p', 'ul', 'emu-grammar', 'p', 'emu-grammar', 'p']
             return
         elif section.section_title == 'Static Semantics: BigIntValueNotEverReferenced':
             # In the BigInt proposal, it has <ul> instead of <emu-alg>
-            assert cen_list == ['emu-grammar', 'ul', 'emu-grammar', 'ul']
+            assert section.cen_list == ['emu-grammar', 'ul', 'emu-grammar', 'ul']
             return
 
-        if 'emu-grammar' in cen_set:
+        if 'emu-grammar' in section.cen_set:
             if section.section_title == 'Static Semantics: NumericValue':
                 # In the BigInt proposal, it has a <ul> defining "significant digit"
-                assert cen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
+                assert section.cen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
             else:
-                assert cen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-see-also-para', 'emu-table', 'p'])
+                assert section.cen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-see-also-para', 'emu-table', 'p'])
             # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
 
             for (i,c) in enumerate(section.block_children):
@@ -328,8 +329,8 @@ def collect_operation_info_for_section(section):
                         assert next_c.inner_source_text().startswith('Is evaluated in exactly the same manner as')
                     op_add_defn('SDO', sdo_name, c, next_c)
 
-        elif 'ul' in cen_set:
-            assert cen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
+        elif 'ul' in section.cen_set:
+            assert section.cen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
             # Each <li> in the <ul> is an "inline SDO".
 
             for ul in section.block_children:
@@ -372,12 +373,12 @@ def collect_operation_info_for_section(section):
                         for emu_grammar in emu_grammars:
                             op_add_defn('SDO', sdo_name, emu_grammar, li)
 
-        elif 'emu-alg' in cen_set:
-            assert cen_set <= set(['emu-alg', 'p', 'emu-note'])
+        elif 'emu-alg' in section.cen_set:
+            assert section.cen_set <= set(['emu-alg', 'p', 'emu-note'])
             # Each <p> + <emu-alg> pair is an SDO unit.
             assert sdo_name in ['Evaluation', 'regexp-Evaluate']
 
-            # print(cen_str)
+            # print(section.cen_str)
             for (i,c) in enumerate(section.block_children):
                 if c.element_name == 'p':
                     (emu_grammars, text) = extract_grammars(c)
@@ -412,7 +413,7 @@ def collect_operation_info_for_section(section):
 
         else:
             print(section.section_num, section.section_title, section.section_id)
-            print(cen_str)
+            print(section.cen_str)
             assert 0
 
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
