@@ -3635,14 +3635,13 @@ def tc_nonvalue(anode, env0):
     # ---
     # parse
 
-    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} or {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.':
-        [source_var, nonterminal, result_var1, result_var2, error_type1, error_type2] = children
+    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.':
+        [source_var, nonterminal, result_var1, result_var2, error_type1] = children
         env1 = env0.ensure_expr_is_of_type(source_var, T_Unicode_code_points_)
         assert env1 is env0
         assert result_var1.children == result_var2.children
         error_type1_name = error_type1.source_text()[1:-1]
-        error_type2_name = error_type2.source_text()[1:-1]
-        result_type = ptn_type_for(nonterminal) | ListType(NamedType(error_type1_name) | NamedType(error_type2_name))
+        result_type = ptn_type_for(nonterminal) | ListType(NamedType(error_type1_name))
         result = env1.plus_new_entry(result_var1, result_type)
         # but no result variable, hm.
 
@@ -4661,12 +4660,11 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         result = env0
 
-    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
-        [avar, bvar, error_type1, error_type2, cond, emu_grammar] = children
+    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
+        [avar, bvar, error_type1, cond, emu_grammar] = children
         env0.assert_expr_is_of_type(avar, T_Parse_Node)
         env0.assert_expr_is_of_type(bvar, T_Parse_Node)
         error_type_name1 = error_type1.source_text()[1:-1]
-        error_type_name2 = error_type2.source_text()[1:-1]
         proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
         (t_env, f_env) = tc_cond(cond, env0); assert t_env.equals(env0); assert f_env.equals(env0)
         result = env0
@@ -9386,18 +9384,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})":
+    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
         [s_var, emu_xref, goal_nont,
         error_type1,
-        error_type2, error_type3, emu_xref4] = children
+        error_type2, emu_xref4] = children
         #
         env0.assert_expr_is_of_type(s_var, T_String)
         error_type_name1 = error_type1.source_text()[1:-1]
         error_type_name2 = error_type2.source_text()[1:-1]
-        error_type_name3 = error_type3.source_text()[1:-1]
         proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
         proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
-        proc_add_return(env0, ThrowType(NamedType(error_type_name3)), error_type3)
         return (ptn_type_for(goal_nont), env0)
 
     elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {NOI}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner":
