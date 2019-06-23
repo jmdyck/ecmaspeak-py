@@ -8,7 +8,8 @@
 import sys, re, time, math
 from collections import defaultdict
 
-from Pseudocode_Parser import Pseudocode_Parser
+from HTML import HNode
+from Pseudocode_Parser import Pseudocode_Parser, ANode
 import emu_grammars
 import shared
 from shared import spec, stderr
