@@ -33,7 +33,7 @@
     Append each item in {var} to the end of {var}.
     Append in list order the elements of {var} to the end of the List {var}.
     Append in order the code unit elements of {var} to the end of {var}.
-    Append the elements of {NAMED_OPERATION_INVOCATION} to the end of {var}.
+    Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} each element of {var} that is not already an element of {var}.
     Append to {var} the elements of {EXPR}.
@@ -63,7 +63,7 @@
     Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.
     Create any implementation-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
-    Evaluate {NAMED_OPERATION_INVOCATION} (see {h_emu_xref}) to obtain a code unit {var}.
+    Evaluate {PP_NAMED_OPERATION_INVOCATION} (see {h_emu_xref}) to obtain a code unit {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.
     Evaluate {PROD_REF} to obtain the three results: an integer {var}, an integer (or &infin;) {var}, and Boolean {var}.
@@ -114,8 +114,8 @@
     Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following substeps in an implementation-dependent order, possibly interleaving parsing and error detection:{IND_COMMANDS}
-    Perform {NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
-    Perform {NAMED_OPERATION_INVOCATION}.
+    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
+    Perform {PP_NAMED_OPERATION_INVOCATION}.
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
     Push {var} onto the execution context stack; {var} is now the running execution context.
     Record that the binding for {var} in {var} has been initialized.
@@ -187,7 +187,7 @@
     Repeat, until {CONDITION},{IND_COMMANDS}
 
     # PR 1552 UTF16:
-    Parse {NOI} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
+    Parse {NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
 
@@ -251,7 +251,7 @@
     let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria
     no further validation is required
-    perform {NAMED_OPERATION_INVOCATION}
+    perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
     remove the first code unit from {var}
     return {EXPR}
@@ -281,18 +281,18 @@
     Record { {DSBN}, {DSBN} } {var} in {var}
     Record { {DSBN}, {DSBN} } {var} that is an element of {var}
     Record { {DSBN}, {DSBN} } {var} that is an element of {var}, in original key insertion order
-    String {var} in {NAMED_OPERATION_INVOCATION}
+    String {var} in {PP_NAMED_OPERATION_INVOCATION}
     String {var} in {var}
     String {var} in {var}, in list order
     String {var} that is an element of {EX}
-    character {var} not in set {var} where {NAMED_OPERATION_INVOCATION} is in {var}
+    character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
     code point {var} in {var}
     element {var} in {var}
     element {var} of {EX}
     element {var} of {var} in List order
     element {var} of {var}, in ascending index order
     event {var} in {DOTTING}
-    event {var} in {NAMED_OPERATION_INVOCATION}
+    event {var} in {PP_NAMED_OPERATION_INVOCATION}
     event {var} such that {CONDITION}
     field of {var} that is present
     index {var} of {var}
@@ -326,7 +326,7 @@
     internal slot in {var}
 
     # PR 1552 UTF16:
-    code point {var} in {NOI}
+    code point {var} in {NAMED_OPERATION_INVOCATION}
 
 # ------------------------------------------------------
 
@@ -427,7 +427,7 @@
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When {SETTABLE} is instantiated it will have a direct binding for {var}
     an implementation-defined debugging facility is available and enabled
-    any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
+    any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
     both {EX} and {EX} are absent
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
@@ -521,7 +521,7 @@
     {EX} is present, and is neither {LITERAL} nor {LITERAL}
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
-    {EX} is the same value as {NAMED_OPERATION_INVOCATION}
+    {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
@@ -535,9 +535,9 @@
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is {h_emu_grammar} 
-    {NAMED_OPERATION_INVOCATION} contains any duplicate elements
-    {NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
-    {NAMED_OPERATION_INVOCATION} is not the same character value as {NAMED_OPERATION_INVOCATION}
+    {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements
+    {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
+    {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {NUM_COMPARISON}
     {PAIR} is in {EX}
     {PROD_REF} is `export` {nonterminal}
@@ -893,7 +893,7 @@
     a List containing the single element, {var}
     a List containing the {var}-byte binary 2's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List containing the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
-    a List containing {NAMED_OPERATION_INVOCATION}
+    a List containing {PP_NAMED_OPERATION_INVOCATION}
     a List containing {PROD_REF}
     a List containing {var} followed by the elements, in order, of {var}
     a List of 8-bit integers of size {var}
@@ -973,7 +973,7 @@
     an instance of the production {h_emu_grammar}
     such an object created in an implementation-defined manner
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
-    the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}
+    the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
     the CharSet containing all Unicode code points included in the CharSet returned by {nonterminal}
     the CharSet containing all Unicode code points not included in the CharSet returned by {nonterminal}
@@ -997,7 +997,7 @@
     the List that is {DOTTING}
     the List, in source text order, of Unicode code points in the source text matched by this production
     the Matcher that is {EXPR}
-    the Name of the entry in {h_emu_xref} with the Number {NAMED_OPERATION_INVOCATION}
+    the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number that is the time value (UTC) identifying the current time
     the Number value for {var}
     the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}
@@ -1039,11 +1039,11 @@
     the String value that is made from {var} copies of {var} appended together
     the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}
     the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}
-    the String value whose code units are the elements of {NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
-    the String value whose code units are {NAMED_OPERATION_INVOCATION}
+    the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
+    the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
     the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty string is returned
     the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty string is returned
-    the String value whose code units are, in order, the elements in {NAMED_OPERATION_INVOCATION}
+    the String value whose code units are, in order, the elements in {PP_NAMED_OPERATION_INVOCATION}
     the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair ({var}, {var})
@@ -1117,13 +1117,13 @@
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
     the number value that is the same sign as {var} and whose magnitude is {EX}
-    the number whose value is {NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
+    the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     the numeric value 1
     the one character in CharSet {var}
     the parse of some source text
     the prefix associated with {var} in {h_emu_xref}
     the result of adding the value {NUM_LITERAL} to {var}, using the same rules as for the `+` operator (see {h_emu_xref})
-    the result of appending to {var} the elements of {NAMED_OPERATION_INVOCATION}
+    the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
     the result of applying bitwise complement to {var}. The result is a signed 32-bit integer
     the result of applying that mapping to {var}
     the result of applying the addition operation to {var} and {var}. See the Note below {h_emu_xref}
@@ -1144,10 +1144,10 @@
     the result of parsing and evaluating {var} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
     the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
-    the result of performing {NAMED_OPERATION_INVOCATION}
+    the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of subtracting the value {NUM_LITERAL} from {var}, using the same rules as for the `-` operator (see {h_emu_xref})
     the result of the comparison {EX} == {EX}
-    the result of {NAMED_OPERATION_INVOCATION}
+    the result of {PP_NAMED_OPERATION_INVOCATION}
     the result of {h_emu_xref} with {var} and {var} as specified in {h_emu_xref}
     the running execution context
     the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
@@ -1162,13 +1162,13 @@
     the set of all characters returned by {PREFIX_PAREN}
     the set of characters containing the characters that are on the right-hand side of the {nonterminal} or {nonterminal} productions
     the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
-    the sole element of {NAMED_OPERATION_INVOCATION}
+    the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
     the source text matched by {nonterminal}
     the source text that was recognized as {PROD_REF}
     the steps of an ArgGetter function as specified below
     the steps of an ArgSetter function as specified below
-    the string that is the only element of {NAMED_OPERATION_INVOCATION}
+    the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
     the string-concatenation of {EX} and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String
@@ -1215,7 +1215,7 @@
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {var}
     the Number value for ({SUM})
-    the Number value for {NAMED_OPERATION_INVOCATION}
+    the Number value for {PP_NAMED_OPERATION_INVOCATION}
     the Number value represented by {nonterminal} as defined in {h_emu_xref}
     the Number value that is the same sign as {var} and whose magnitude is {EX}
     the mathematical integer number of code points in {PROD_REF}
@@ -1247,12 +1247,12 @@
     the result of applying UTF-16 decoding to {var}
 
     # PR 1552 UTF16:
-    a List consisting of the sequence of code points of {NOI}
+    a List consisting of the sequence of code points of {NAMED_OPERATION_INVOCATION}
     a List whose elements are the code points of {var}
-    the ECMAScript code that is the result of parsing {NOI}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})
+    the ECMAScript code that is the result of parsing {NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})
     the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-    the result of parsing and evaluating {NOI} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
-    the result of parsing {NOI}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
+    the result of parsing and evaluating {NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
+    the result of parsing {NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
     the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
     the sequence of Unicode code points that results from interpreting {var} as UTF-16 encoded Unicode text as described in {h_emu_xref}
@@ -1287,7 +1287,7 @@
     the _withEnvironment_ flag of {var}
     the base value component of {var}
     the code unit at index {EX} within {EX}
-    the code unit that is {NAMED_OPERATION_INVOCATION}
+    the code unit that is {PP_NAMED_OPERATION_INVOCATION}
     the code units of {var}
     the current Realm Record
     the current value of {var}
@@ -1312,7 +1312,7 @@
     {EX} occurrences of {code_unit_lit}
     {LITERAL}
     {LOCAL_REF}
-    {NAMED_OPERATION_INVOCATION}
+    {PP_NAMED_OPERATION_INVOCATION}
     {NUM_EXPR}
     {RECORD_CONSTRUCTOR}
     {backticked_word}
@@ -1326,7 +1326,7 @@
     the mathematical value of {var}
     the mathematical value of {var} divided by {var}
     the mathematical value of {var} raised to the power {var}
-    {NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
+    {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
     {var} rounded towards 0 to the next integral value
 
 {ENVIRONMENT_RECORD_KIND} :
@@ -1341,12 +1341,13 @@
 
 # ------------------------------------------------------
 
-{NAMED_OPERATION_INVOCATION} :
-    {NOI}
-    ! {NOI}
-    ? {NOI}
+# "PP" = Possibly-Prefixed
+{PP_NAMED_OPERATION_INVOCATION} :
+    {NAMED_OPERATION_INVOCATION}
+    ! {NAMED_OPERATION_INVOCATION}
+    ? {NAMED_OPERATION_INVOCATION}
 
-{NOI} :
+{NAMED_OPERATION_INVOCATION} :
     Abstract Equality Comparison {var} == {var}
     Abstract Relational Comparison {var} &lt; {var}
     Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}

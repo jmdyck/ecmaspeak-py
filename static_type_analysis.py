@@ -780,7 +780,7 @@ class Header:
 
         def recurse(x):
             if isinstance(x, ANode):
-                if x.prod.lhs_s == '{NOI}':
+                if x.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
                     if x.prod.rhs_s == 'Abstract Equality Comparison {var} == {var}':
                         depend_on('Abstract Equality Comparison')
                     elif x.prod.rhs_s in [
@@ -810,6 +810,8 @@ class Header:
                     ]:
                         depend_on('Contains')
                     elif x.prod.rhs_s in [
+                        'the {ISDO_NAME} of {PROD_REF}',
+                        '{ISDO_NAME} of {PROD_REF}',
                         '{OPN_BEFORE_FOROF} for {LOCAL_REF} {WITH_ARGS}',
                         '{OPN_BEFORE_FOROF} of {LOCAL_REF}',
                         '{OPN_BEFORE_FOROF} of {LOCAL_REF} (see {h_emu_xref})',
@@ -3627,7 +3629,7 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env0, T_String, s_var3)
         result = env0.plus_new_entry(leta_var, T_Integer_).plus_new_entry(letb_var, T_String)
 
-    elif p == r"{COMMAND} : Evaluate {NAMED_OPERATION_INVOCATION} (see {h_emu_xref}) to obtain a code unit {var}.":
+    elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} (see {h_emu_xref}) to obtain a code unit {var}.":
         [noi, _, v] = children
         env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
         result = env0.plus_new_entry(v, T_code_unit_)
@@ -3692,7 +3694,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(svar, T_String)
         result = env0
 
-    elif p == r"{COMMAND} : Parse {NOI} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.":
+    elif p == r"{COMMAND} : Parse {NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.":
         [noi, error_type] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         result = env0
@@ -4014,7 +4016,7 @@ def tc_nonvalue(anode, env0):
             env_for_commands = env0.plus_new_entry(loop_var, ptn_type_for(nont))
 
         elif each_thing.prod.rhs_s in [
-            r"String {var} in {NAMED_OPERATION_INVOCATION}",
+            r"String {var} in {PP_NAMED_OPERATION_INVOCATION}",
             r"String {var} in {var}, in list order",
             r"String {var} in {var}",
             r"string {var} in {var}",
@@ -4028,7 +4030,7 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_code_point_))
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
 
-        elif each_thing.prod.rhs_s == 'code point {var} in {NOI}':
+        elif each_thing.prod.rhs_s == 'code point {var} in {NAMED_OPERATION_INVOCATION}':
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Unicode_code_points_)
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
@@ -4074,7 +4076,7 @@ def tc_nonvalue(anode, env0):
         # -----------------------
         # other collections:
 
-        elif each_thing.prod.rhs_s == r"event {var} in {NAMED_OPERATION_INVOCATION}":
+        elif each_thing.prod.rhs_s == r"event {var} in {PP_NAMED_OPERATION_INVOCATION}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Set)
             env_for_commands = env1.plus_new_entry(loop_var, T_event_)
@@ -4118,7 +4120,7 @@ def tc_nonvalue(anode, env0):
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
-        elif each_thing.prod.rhs_s == r"character {var} not in set {var} where {NAMED_OPERATION_INVOCATION} is in {var}":
+        elif each_thing.prod.rhs_s == r"character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}":
             [loop_var, charset_var, noi, charset_var2] = each_thing.children
             assert charset_var.children == charset_var2.children
             env0.assert_expr_is_of_type(charset_var, T_CharSet)
@@ -4491,7 +4493,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var4, T_Integer_)
         result = env1
 
-    elif p == r"{COMMAND} : Perform {NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.":
+    elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.":
         [noi, w_var, t_var, *blah] = children
         env0.assert_expr_is_of_type(noi, T_not_returned)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
@@ -4499,8 +4501,8 @@ def tc_nonvalue(anode, env0):
         result = env0
 
     elif p in [
-        r"{COMMAND} : Perform {NAMED_OPERATION_INVOCATION}.",
-        r"{SMALL_COMMAND} : perform {NAMED_OPERATION_INVOCATION}",
+        r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.",
+        r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}",
         r"{COMMAND} : Call {PREFIX_PAREN}.",
     ]:
         [noi] = children
@@ -4750,7 +4752,7 @@ def tc_nonvalue(anode, env0):
         env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
         result = env2
 
-    elif p == r"{COMMAND} : Append the elements of {NAMED_OPERATION_INVOCATION} to the end of {var}.":
+    elif p == r"{COMMAND} : Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.":
         [noi, var] = children
         # over-specific, but it only occurs once, in String.fromCodePoint:
         env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
@@ -5967,7 +5969,7 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(var, T_grammar_symbol_)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {EX} is the same value as {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{CONDITION_1} : {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}":
         [ex, noi] = children
         assert ex.source_text() == 'StringValue of _symbol_'
         assert noi.source_text() == 'the StringValue of |IdentifierName|'
@@ -6708,13 +6710,13 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(bvar, T_Realm_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{CONDITION_1} : any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}":
         [anoi, bnoi] = children
         env0.assert_expr_is_of_type(anoi, ListType(T_String)) # T_String not justified, but always correct (currently)
         env0.assert_expr_is_of_type(bnoi, ListType(T_String))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements":
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements":
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
@@ -6757,7 +6759,7 @@ def tc_cond_(cond, env0, asserting):
         assert nonterminal.source_text() == '|LineTerminator|'
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the same character value as {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}":
         [anoi, bnoi] = children
         env0.assert_expr_is_of_type(anoi, T_character_)
         env0.assert_expr_is_of_type(bnoi, T_character_)
@@ -6870,7 +6872,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(v, ListType(T_Integer_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}":
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}":
         [noi, emu_xref] = children
         env0.assert_expr_is_of_type(noi, ListType(T_Integer_))
         return (env0, env0)
@@ -7312,8 +7314,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # stderr('>>>', expr.source_text())
 
     if p in [
-        r"{EXPR} : the result of performing {NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the result of {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the result of performing {PP_NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
         r"{EX} : ({EX})",
         r"{EX} : the previous value of {var}",
@@ -7325,6 +7327,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : {NAMED_OPERATION_INVOCATION}",
         r"{EX} : {NUM_EXPR}",
         r"{EX} : {NUM_LITERAL}",
+        r"{EX} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{EX} : {PRODUCT}",
         r"{EX} : {RECORD_CONSTRUCTOR}",
         r"{EX} : {SUM}",
@@ -7339,7 +7342,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{LITERAL} : {NUM_LITERAL}",
         r"{LOCAL_REF} : {PROD_REF}",
         r"{LOCAL_REF} : {SETTABLE}",
-        r"{NOI} : {PREFIX_PAREN}",
+        r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}",
         r"{NUM_COMPARAND} : {FACTOR}",
         r"{NUM_COMPARAND} : {NUM_LITERAL}",
         r"{NUM_COMPARAND} : {PREFIX_PAREN}",
@@ -7485,10 +7488,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}",
         r"{NAMED_OPERATION_INVOCATION} : {ISDO_NAME} of {PROD_REF}",
-        r"{NOI} : {OPN_BEFORE_FOROF} of {LOCAL_REF}",
-        r"{NOI} : {OPN_BEFORE_FOROF} of {LOCAL_REF} (see {h_emu_xref})",
-        r"{NOI} : {OPN_BEFORE_FOROF} of {LOCAL_REF} as defined in {h_emu_xref}",
-        r"{NOI} : {OPN_BEFORE_FOROF} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero",
+        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF}",
+        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF} (see {h_emu_xref})",
+        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF} as defined in {h_emu_xref}",
+        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero",
     ]:
         [callee, local_ref] = children[0:2]
         callee_op_name = callee.source_text().replace('the ', '')
@@ -7499,8 +7502,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
     elif p in [
-        r"{NOI} : {OPN_BEFORE_FOROF} for {LOCAL_REF} {WITH_ARGS}",
-        r"{NOI} : {OPN_BEFORE_FOROF} of {LOCAL_REF} {WITH_ARGS}",
+        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} for {LOCAL_REF} {WITH_ARGS}",
+        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF} {WITH_ARGS}",
     ]:
         [callee, local_ref, with_args] = children
         callee_op_name = callee.source_text().replace('the ', '')
@@ -7561,8 +7564,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #?        return tc_sdo_invocation('Evaluation', dotting, [], expr, env0)
 
     elif p in [
-        r"{NOI} : {LOCAL_REF} Contains {var}",
-        r"{NOI} : {LOCAL_REF} Contains {nonterminal}",
+        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}",
+        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {nonterminal}",
     ]:
         [lhs, rhs] = children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
@@ -7713,22 +7716,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # -----
 
-    elif p == r"{NOI} : Strict Equality Comparison {var} === {EX}":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : Strict Equality Comparison {var} === {EX}":
         [lhs, rhs] = children
         return tc_ao_invocation('Strict Equality Comparison', [lhs, rhs], expr, env0)
 
     elif p in [
         r"{EXPR} : the result of the comparison {EX} == {EX}",
-        r"{NOI} : Abstract Equality Comparison {var} == {var}",
+        r"{NAMED_OPERATION_INVOCATION} : Abstract Equality Comparison {var} == {var}",
     ]:
         [lhs, rhs] = children
         return tc_ao_invocation('Abstract Equality Comparison', [lhs, rhs], expr, env0)
 
-    elif p == r"{NOI} : Abstract Relational Comparison {var} &lt; {var}":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : Abstract Relational Comparison {var} &lt; {var}":
         [lhs, rhs] = children
         return tc_ao_invocation('Abstract Relational Comparison', [lhs, rhs], expr, env0)
 
-    elif p == r"{NOI} : Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}":
         [lhs, rhs, param, lit] = children
         return tc_ao_invocation('Abstract Relational Comparison', [lhs, rhs, lit], expr, env0)
 
@@ -8072,7 +8075,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the Number value for ({SUM})",
-        r"{EXPR} : the Number value for {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the Number value for {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the Number value for {var} (as specified in {h_emu_xref})",
         r"{EX} : the Number value for {PRODUCT}",
     ]:
@@ -8120,7 +8123,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Number, env0)
 
-    elif p == r"{EXPR} : the number whose value is {NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}": # XXX replaced by next
+    elif p == r"{EXPR} : the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}": # XXX replaced by next
         [noi, emu_xref] = children
         env0.assert_expr_is_of_type(noi, T_numeric_)
         return (T_Number, env0)
@@ -8168,8 +8171,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer",
-        r"{NOI} : a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer",
-        r"{NOI} : a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer",
+        r"{NAMED_OPERATION_INVOCATION} : a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer",
+        r"{NAMED_OPERATION_INVOCATION} : a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer",
         r"{EXPR} : the result of applying the bitwise operator @ to {var} and {var}. The result is a signed 32-bit integer",
     ]:
         [avar, bvar] = children
@@ -8834,14 +8837,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String, env1)
 
     elif p in [
-        r"{EXPR} : the sole element of {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the sole element of {var}",
     ]:
         [noi] = children
         env0.assert_expr_is_of_type(noi, ListType(T_String)) # not justified
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the string that is the only element of {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{EXPR} : the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}":
         [noi] = children
         env0.assert_expr_is_of_type(noi, ListType(T_String))
         return (T_String, env0)
@@ -8853,7 +8856,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String | T_Undefined, env0)
 
     elif p in [
-        r"{EXPR} : the String value whose code units are {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}",
         # r"{EXPR} : the String value whose elements are {NAMED_OPERATION_INVOCATION}",
     ]:
         [noi] = children
@@ -8864,7 +8867,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the String value consisting of the code units of {var}",
         r"{EXPR} : the String value consisting of {EX}",
         r"{EXPR} : the String value consisting of {NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the String value whose code units are, in order, the elements in {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the String value whose code units are, in order, the elements in {PP_NAMED_OPERATION_INVOCATION}",
         # r"{EXPR} : the String value whose elements are, in order, the elements in {NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the string consisting of the code units of {var}",
     ]:
@@ -8872,7 +8875,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(ex, ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are the elements of {NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}":
+    elif p == r"{EXPR} : the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}":
         [noi, emu_xref] = children    
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
         return (T_String, env1)
@@ -8907,7 +8910,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}":
         [emu_xref, noi] = children
         env0.assert_expr_is_of_type(noi, T_Number)
         return (T_String, env0)
@@ -9020,7 +9023,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        env0.assert_expr_is_of_type(var, T_Integer_)
 #        return (T_code_unit_, env0)
 
-    elif p == r"{EX} : the code unit that is {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{EX} : the code unit that is {PP_NAMED_OPERATION_INVOCATION}":
         [noi] = children
         env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
         return (T_code_unit_, env0)
@@ -9234,14 +9237,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ListType(T_code_unit_), env0)
 
     elif p in [
-        r"{NOI} : the UTF16Encoding of each code point of {NAMED_OPERATION_INVOCATION}",
-        r"{NOI} : the UTF16Encoding of each code point of {EX}",
+        r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of each code point of {NAMED_OPERATION_INVOCATION}",
+        r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of each code point of {EX}",
     ]:
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return (ListType(T_code_unit_), env0)
 
-    elif p == r"{NOI} : the UTF16Encoding of the code points of {var}":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of the code points of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, ListType(T_code_point_))
         return (ListType(T_code_unit_), env0)
@@ -9272,7 +9275,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : a List containing only {var}",
         r"{EXPR} : a List containing the one element which is {var}",
         r"{EXPR} : a List containing the single element, {var}",
-        r"{EXPR} : a List containing {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : a List containing {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : a List containing {PROD_REF}",
         r"{EXPR} : a List whose sole item is {var}",
         r"{EXPR} : a new List containing {EXPR}",
@@ -9282,7 +9285,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ListType(element_type), env0)
 
     elif p in [
-        r"{EXPR} : the result of appending to {var} the elements of {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : a copy of {var} with all the elements of {var} appended",
     ]:
         [var, noi] = children
@@ -9353,7 +9356,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_point_), env0)
 
-    elif p == r"{EXPR} : a List consisting of the sequence of code points of {NOI}":
+    elif p == r"{EXPR} : a List consisting of the sequence of code points of {NAMED_OPERATION_INVOCATION}":
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return (ListType(T_code_point_), env0)
@@ -9396,7 +9399,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
         return (ptn_type_for(goal_nont), env0)
 
-    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {NOI}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner":
+    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner":
         [s_noi, goal_nont,
         b1_var, b1_lit, emu_xref1,
         b2_var, b2_lit, emu_xref2,
@@ -9425,7 +9428,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
         return (T_Parse_Node, env0)
 
-    elif p == r"{EXPR} : the result of parsing {NOI}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
+    elif p == r"{EXPR} : the result of parsing {NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
         [noi, goal_var, error_type] = children    
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
@@ -9648,6 +9651,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;":
         [v] = children
         env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        return (T_CharSet, env0)
+
+    elif p in [
+        r"{EXPR} : the CharSet containing all Unicode code points included in the CharSet returned by {nonterminal}",
+        r"{EXPR} : the CharSet containing all Unicode code points not included in the CharSet returned by {nonterminal}",
+    ]:
+        [nont] = children
         return (T_CharSet, env0)
 
     # -------------------------------------------------
@@ -10169,7 +10179,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_Reference)
         return (T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record, env1)
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : {NOI}":
+    elif p == r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}":
         [noi] = children
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded)
         if noi_t == T_TBD:
@@ -10186,13 +10196,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             #         % (expr.source_text(), abrupt_part_of_type)
             #     )
             #     # But that might be okay.
-            #     # E.g. Return {NOI} -- inserting a '?' would have no effect.
+            #     # E.g. Return {NAMED_OPERATION_INVOCATION} -- inserting a '?' would have no effect.
             #     # or if next instruction is ReturnIfAbrupt.
             #     # So I dropped this warning,
             #     # and just rely on Abrupt values being flagged if necessary down the line.
             return (noi_t, env1)
 
-    elif p == r'{NAMED_OPERATION_INVOCATION} : ! {NOI}':
+    elif p == r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}':
         [noi] = children
         (noi_t, env1) = tc_expr(noi, env0)
 
@@ -10219,7 +10229,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return (normal_part_of_type, env1)
 
-    elif p == r'{NAMED_OPERATION_INVOCATION} : ? {NOI}':
+    elif p == r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}':
         [noi] = children
         (noi_t, env1) = tc_expr(noi, env0)
 
@@ -10244,7 +10254,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         # RequireInternalSlot is a quasi-type-test.
         env2 = env1
-        if str(noi.prod) == '{NOI} : {PREFIX_PAREN}':
+        if str(noi.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
             [pp] = noi.children
             assert str(pp.prod) == r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})'
             [opn_before_paren, exlist_opt] = pp.children
@@ -10538,7 +10548,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, ListType(T_PendingJob))
         return (T_PendingJob, env0)
 
-    elif p == r"{NOI} : the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments":
         [adotting, bdotting] = children
         env0.assert_expr_is_of_type(adotting, T_proc_)
         env0.assert_expr_is_of_type(bdotting, T_List)
@@ -10890,7 +10900,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(svar, T_String)
         return (T_Tangible_ | T_throw_, env0)
 
-    elif p == r"{EXPR} : the result of parsing and evaluating {NOI} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
+    elif p == r"{EXPR} : the result of parsing and evaluating {NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
         [noi, nont, emu_xref] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return (T_Tangible_ | T_throw_, env0)
@@ -10976,7 +10986,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             assert 0
 
-    elif p == r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}":
         [dotting, dsbn, e] = children
         env0.assert_expr_is_of_type(dotting, ListType(T_Agent_Events_Record))
         assert dsbn.source_text() == '[[AgentSignifier]]'
@@ -11088,7 +11098,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # elif p == r"{IF_OPEN} : If {CONDITION}, {SMALL_COMMAND}.":
     # elif p == r"{I_BULLETS} : {_indent_}{BULLETS}{_outdent_}":
     # elif p == r"{I_TABLE} : {_indent_}{nlai}<table class="lightweight(?:-table)?">(?:.|\n)+?</table>{_outdent_}":
-    # elif p == r"{NOI} : StringValue of the {nonterminal} of {nonterminal} {var}":
+    # elif p == r"{NAMED_OPERATION_INVOCATION} : StringValue of the {nonterminal} of {nonterminal} {var}":
     # elif p == r"{NUM_COMPARAND} : -1":
     # elif p == r"{NUM_COMPARAND} : ({SUM})":
     # elif p == r"{OPN_BEFORE_FOROF} : (?:the )?((?!Function|LexicalEnvironment|Realm|ScriptOrModule|VariableEnvironment)[A-Z]\w+)":
