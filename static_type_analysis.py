@@ -810,22 +810,24 @@ class Header:
                     ]:
                         depend_on('Contains')
                     elif x.prod.rhs_s in [
+                        'the {cap_word} of {LOCAL_REF}',
+                        'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
+                        'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
+                        'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
+                        'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
+                        '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
+                        '{cap_word} of {LOCAL_REF}',
+                        '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
+                    ]:
+                        depend_on(x.children[0])
+                    elif x.prod.rhs_s in [
                         'the {ISDO_NAME} of {PROD_REF}',
                         '{ISDO_NAME} of {PROD_REF}',
-                        '{OPN_BEFORE_FOROF} for {LOCAL_REF} {WITH_ARGS}',
-                        '{OPN_BEFORE_FOROF} of {LOCAL_REF}',
-                        '{OPN_BEFORE_FOROF} of {LOCAL_REF} (see {h_emu_xref})',
-                        '{OPN_BEFORE_FOROF} of {LOCAL_REF} {WITH_ARGS}',
-                        '{OPN_BEFORE_FOROF} of {LOCAL_REF} as defined in {h_emu_xref}',
-                        '{OPN_BEFORE_FOROF} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
                         '{PREFIX_PAREN}',
                     ]:
                         pass # handle deeper
                     else:
                         assert 0, x.prod
-
-                elif x.prod.lhs_s == '{OPN_BEFORE_FOROF}':
-                    depend_on(x.children[0])
 
                 elif x.prod.lhs_s == '{OPN_BEFORE_PAREN}':
                     if x.prod.rhs_s in [
@@ -7488,13 +7490,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}",
         r"{NAMED_OPERATION_INVOCATION} : {ISDO_NAME} of {PROD_REF}",
-        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF}",
-        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF} (see {h_emu_xref})",
-        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF} as defined in {h_emu_xref}",
-        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero",
+        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}",
+        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})",
+        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}",
+        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero",
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}",
+
     ]:
         [callee, local_ref] = children[0:2]
-        callee_op_name = callee.source_text().replace('the ', '')
+        callee_op_name = callee.source_text()
         if callee_op_name == 'UTF16Encoding':
             # An abstract operation that uses SDO-style invocation.
             return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
@@ -7502,11 +7506,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
     elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} for {LOCAL_REF} {WITH_ARGS}",
-        r"{NAMED_OPERATION_INVOCATION} : {OPN_BEFORE_FOROF} of {LOCAL_REF} {WITH_ARGS}",
+        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}",
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word} for {LOCAL_REF} {WITH_ARGS}",
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}",
     ]:
         [callee, local_ref, with_args] = children
-        callee_op_name = callee.source_text().replace('the ', '')
+        callee_op_name = callee.source_text()
         if with_args.prod.rhs_s in [
             '{PASSING} argument {EX}',
             '{PASSING} arguments {EX} and {EX}',
@@ -11101,7 +11106,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # elif p == r"{NAMED_OPERATION_INVOCATION} : StringValue of the {nonterminal} of {nonterminal} {var}":
     # elif p == r"{NUM_COMPARAND} : -1":
     # elif p == r"{NUM_COMPARAND} : ({SUM})":
-    # elif p == r"{OPN_BEFORE_FOROF} : (?:the )?((?!Function|LexicalEnvironment|Realm|ScriptOrModule|VariableEnvironment)[A-Z]\w+)":
     # elif p == r"{OPN_BEFORE_PAREN} : (ForIn/Of(?:Head|Body)Evaluation|(?!Type\b)[A-Za-z]\w+)":
     # elif p == r"{OPN_BEFORE_PAREN} : {DOTTING}":
     # elif p == r"{OPN_BEFORE_PAREN} : {SAB_FUNCTION}":
