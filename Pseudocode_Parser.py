@@ -493,6 +493,16 @@ class ANode:
     def source_text(self):
         return shared.spec_text[self.start_posn:self.end_posn]
 
+    def each_descendant_or_self(self):
+        yield self
+        yield from self.each_descendant()
+
+    def each_descendant(self):
+        for child in self.children:
+            if isinstance(child, ANode):
+                yield child
+                yield from child.each_descendant()
+
     def printTree(self, f=sys.stdout, level=0):
         indentation = '  '*level
         if self.children == []:
