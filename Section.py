@@ -96,6 +96,14 @@ def establish_section_r(node, section_level, section_num):
 
         assert len(node.block_children) > 0 or len(node.numless_children) > 0 or len(node.section_children) > 0
 
+        # "bcen" = "block children element names"
+        node.bcen_list = [
+            c.element_name
+            for c in node.block_children
+        ]
+        node.bcen_str = ' '.join(node.bcen_list)
+        node.bcen_set = set(node.bcen_list)
+
     else:
         assert 0, node.element_name
 
