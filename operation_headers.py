@@ -1447,7 +1447,7 @@ def get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text):
 
             if poi.overload_resolver is None:
                 # klugey fix
-                assert header_text.startswith('%TypedArray%.prototype.set ')
+                assert hoi.name == '%TypedArray%.prototype.set'
                 emu_alg_text = s.block_children[1].inner_source_text()
                 mo = re.search(r'\s+1. Assert: (.+?)\. ', emu_alg_text)
                 asserted_condition = mo.group(1)
@@ -1489,7 +1489,7 @@ def get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text):
         oi = resolve_oi(hoi, poi)
 
         if oi.param_names is None:
-            assert header_text == 'Proxy Revocation Functions'
+            assert oi.name == 'Proxy Revocation'
             oi.param_names = []
 
         if s.section_title.startswith('Math.'):
