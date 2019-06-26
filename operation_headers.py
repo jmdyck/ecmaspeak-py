@@ -1411,25 +1411,14 @@ def get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text):
 
     if op_kind == 'accessor_property':
         # For an accessor property, both the header and the preamble are unusual,
-        # so don't call get_info_from_header(header_text)
-        # or get_info_from_builtin_function_preamble(s, preamble_text)
-        # (Alternatively, I could modify those functions.)
+        # so don't call 
+        # get_info_from_builtin_function_preamble(s, preamble_text)
+        # (Alternatively, I could modify that function.)
 
-        oi = OperationInfo()
+        hoi = get_info_from_header(header_text)
+
+        oi = hoi
         oi.kind = 'accessor property'
-
-        for (pattern, repl) in [
-            (r'(get|set) ([\w%.]+)',               r'\1 \2'),
-            (r'(get|set) ([\w%.]+) \[ (@@\w+) \]', r'\1 \2[\3]'),
-        ]:
-            mo = re.fullmatch(pattern, header_text)
-            if mo:
-                oi.name = mo.expand(repl)
-                break
-        else:
-            assert 0, header_text
-
-        oi.param_names = []
 
         if preamble_text == 'The value of the [[Get]] attribute is a built-in function that requires no arguments. It performs the following steps:':
             pass
@@ -1708,6 +1697,7 @@ def get_info_from_header(header_text):
 
     if header_text == '': return oi
 
+    # First, handle a few odd cases.
     for (pattern, repl) in [
         # anonymous_built_in_function
         (r'(.+) Functions', r'\1'),
@@ -1715,11 +1705,17 @@ def get_info_from_header(header_text):
 
         # memory model abs op
         (r'((.+) Reads|Races|Data Races)', r'\1'),
+
+        # accessor properties:
+        (r'(get|set) ([\w%.]+)',               r'\1 \2'),
+        (r'(get|set) ([\w%.]+) \[ (@@\w+) \]', r'\1 \2[\3]'),
     ]:
         mo = re.fullmatch(pattern, header_text)
         if mo:
             oi.name = mo.expand(repl)
             if oi.name == 'ListIterator next':
+                oi.param_names = []
+            elif oi.name.startswith('get '):
                 oi.param_names = []
             return oi
 
