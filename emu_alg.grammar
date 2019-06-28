@@ -764,6 +764,9 @@
     {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
     {var}, {var}, and {var} are integer values &ge; 0
 
+    # PR 1174
+    {var} does not provide the direct binding for this export
+
     # PR 1460 explicit-exotics:
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
