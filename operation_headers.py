@@ -333,11 +333,11 @@ def each_replacement_for_section(s):
             s.section_kind == 'syntax_directed_operation'
         ):
             # The op is the one indicated by the section header.
-            header_text = s.section_title
+            hoi = get_info_from_header(s)
             op_kind = s.section_kind
         else:
             # The op is *not* the one indicated by the section header.
-            header_text = ''
+            hoi = OperationInfo()
             if s.section_title.startswith('MakeArgGetter'):
                 op_kind = 'anonymous_built_in_function'
             elif s.section_title.startswith('MakeArgSetter'):
@@ -359,13 +359,10 @@ def each_replacement_for_section(s):
                 assert 0, s.section_title
 
         if op_kind == 'abstract_operation':
-            hoi = get_info_from_header(header_text)
             eoh_text = get_eoh_text_for_ao(s, hoi, preamble_text)
         elif op_kind.endswith('_rec_method'):
-            hoi = get_info_from_header(header_text)
             eoh_text = get_eoh_text_for_cm(s, hoi, preamble_text)
         elif op_kind == 'internal_method':
-            hoi = get_info_from_header(header_text)
             eoh_text = get_eoh_text_for_im(s, hoi, preamble_text)
 
         elif op_kind in [
@@ -376,7 +373,6 @@ def each_replacement_for_section(s):
             'CallConstruct_overload',
             'anonymous_built_in_function',
         ]:
-            hoi = get_info_from_header(header_text)
             eoh_text = get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text)
 
         elif op_kind == 'syntax_directed_operation':
@@ -1692,12 +1688,26 @@ def re_sub_many_etc(subject, pattern_repls):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_info_from_header(header_text):
+def get_info_from_header(section):
+    header_text = section.section_title
     oi = OperationInfo()
 
-    if header_text == '': return oi
+    if section.section_kind == 'catchall':
+        return oi
 
-    # First, handle a few odd cases.
+    elif section.section_kind == 'syntax_directed_operation':
+        # See something_sdo
+        if header_text in ['Statement Rules', 'Expression Rules']:
+            oi.name = 'HasCallInTailPosition'
+        elif header_text.isalpha():
+            oi.name = header_text
+        else:
+            mo = re.fullmatch(r'(Static|Runtime) Semantics: (\w+)', header_text)
+            assert mo
+            oi.name = mo.group(2)
+        return oi
+
+    # Handle a few odd cases.
     for (pattern, repl) in [
         # anonymous_built_in_function
         (r'(.+) Functions', r'\1'),
