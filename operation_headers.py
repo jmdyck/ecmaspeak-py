@@ -359,11 +359,14 @@ def each_replacement_for_section(s):
                 assert 0, s.section_title
 
         if op_kind == 'abstract_operation':
-            eoh_text = get_eoh_text_for_ao(s, header_text, preamble_text)
+            hoi = get_info_from_header(header_text)
+            eoh_text = get_eoh_text_for_ao(s, hoi, preamble_text)
         elif op_kind.endswith('_rec_method'):
-            eoh_text = get_eoh_text_for_cm(s, header_text, preamble_text)
+            hoi = get_info_from_header(header_text)
+            eoh_text = get_eoh_text_for_cm(s, hoi, preamble_text)
         elif op_kind == 'internal_method':
-            eoh_text = get_eoh_text_for_im(s, header_text, preamble_text)
+            hoi = get_info_from_header(header_text)
+            eoh_text = get_eoh_text_for_im(s, hoi, preamble_text)
 
         elif op_kind in [
             'function_property',
@@ -373,7 +376,8 @@ def each_replacement_for_section(s):
             'CallConstruct_overload',
             'anonymous_built_in_function',
         ]:
-            eoh_text = get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text)
+            hoi = get_info_from_header(header_text)
+            eoh_text = get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text)
 
         elif op_kind == 'syntax_directed_operation':
             # print('370', op_kind, s.section_num, s.section_title)
@@ -495,8 +499,8 @@ def declare_sdo(op_name, param_dict, also=[]):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_im(s, header_text, preamble_text):
-    oi = get_info_from_header(header_text)
+def get_eoh_text_for_im(s, hoi, preamble_text):
+    oi = hoi
     oi.kind = 'internal method'
 
     pst = s.parent.section_title
@@ -609,9 +613,9 @@ im_param_map = {
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_cm(s, header_text, preamble_text):
-    oi = get_info_from_header(header_text)
+def get_eoh_text_for_cm(s, hoi, preamble_text):
 
+    oi = hoi
     oi.kind = 'concrete method'
 
     pst = s.parent.section_title
@@ -743,8 +747,7 @@ for line in re.split(r'\n +', rec_method_declarations.strip()):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_ao(s, header_text, preamble_text):
-    hoi = get_info_from_header(header_text)
+def get_eoh_text_for_ao(s, hoi, preamble_text):
     if preamble_text == '':
         oi = hoi
         oi.kind = 'abstract operation'
@@ -1407,15 +1410,13 @@ def add_to_description(oi, sentence):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text):
+def get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text):
 
     if op_kind == 'accessor_property':
         # For an accessor property, both the header and the preamble are unusual,
         # so don't call 
         # get_info_from_builtin_function_preamble(s, preamble_text)
         # (Alternatively, I could modify that function.)
-
-        hoi = get_info_from_header(header_text)
 
         oi = hoi
         oi.kind = 'accessor property'
@@ -1439,7 +1440,6 @@ def get_eoh_text_for_builtin_function(s, op_kind, header_text, preamble_text):
 
     # ----------------------------------------------------
     else:
-        hoi = get_info_from_header(header_text)
 
         poi = get_info_from_builtin_function_preamble(s, op_kind, preamble_text)
 
