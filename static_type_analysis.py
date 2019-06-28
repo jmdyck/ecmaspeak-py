@@ -11324,10 +11324,21 @@ def tc_args( params, args, env0, context ):
                 # Not really worth complaining about.
                 pass
             else:
+                if (
+                    # This condition, by focusing on T_throw_, is over-specific,
+                    # but I'm guessing it catches the common cases.
+                    T_throw_.is_a_subtype_of_or_equal_to(arg_type)
+                    and
+                    not T_throw_.is_a_subtype_of_or_equal_to(pt)
+                ):
+                    extra_msg = f' (arg could be abrupt completion?)'
+                else:
+                    extra_msg = ''
+
                 add_pass_error(
                     arg,
-                    "arg %s has type %s, but param %s requires type %s"
-                    % (arg.source_text(), arg_type, param_name, pt)
+                    "arg %s has type %s, but param %s requires type %s%s"
+                    % (arg.source_text(), arg_type, param_name, pt, extra_msg)
                 )
                 # The parameter-type might be too narrow,
                 # or the arg-type might be too wide.
