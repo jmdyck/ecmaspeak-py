@@ -150,6 +150,7 @@ def parse_emu_grammar(emu_grammar, output_f):
 
         (first_ind, first_line) = split_lines[0]
         mo = re.match(r'^(\w+)(?:\[(.+)\])? (:+)(.*)', first_line)
+        assert mo, first_line
         (lhs_symbol, prodn_params_str, colons, first_line_rem) = mo.groups()
 
         if prodn_params_str is None:
