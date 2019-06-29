@@ -182,11 +182,11 @@ def _infer_section_kinds(section):
 
             (r'^The Reference Specification Type$', 'abstract_operations'), # plural!
 
-            (r' Instances$',                'properties_of_instances'),
+            (r'^.+ Instances$',             'properties_of_instances'),
             (r'^Module Namespace Objects$', 'properties_of_instances'),
 
             (r'^Properties of Valid Executions$', 'catchall'),
-            (r'^(Additional )?Properties of',     'properties_of_an_intrinsic_object'),
+            (r'^(Additional )?Properties of .+$', 'properties_of_an_intrinsic_object'),
             (r'^The [\w%]+ Object$',              'properties_of_an_intrinsic_object'),
 
             (r'^The \w+ Constructor$',               'Call_and_Construct_ims_of_an_intrinsic_object'),
@@ -194,25 +194,27 @@ def _infer_section_kinds(section):
             (r'^The _TypedArray_ Constructors$',     'Call_and_Construct_ims_of_an_intrinsic_object'),
             (r'^The %TypedArray% Intrinsic Object$', 'Call_and_Construct_ims_of_an_intrinsic_object'),
 
-            (r'^Changes to ',                        'catchall'),
+            (r'^Changes to .+$',                     'catchall'),
 
             (r'^((Static|Runtime) Semantics: )?[A-Z][\w/]+ ?\([^()]*\)$', 'abstract_operation'),
-            (r'(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)$',              'abstract_operation'),
-            (r' Comparison$',                                             'abstract_operation'),
+            (r'^(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)$',             'abstract_operation'),
+            (r'^.+ Comparison$',                                          'abstract_operation'),
 
             (r'^(Valid Chosen|Coherent|Tear Free) Reads$',                'abstract_operation'),
             (r'^(Races|Data Races)$',                                     'abstract_operation'),
 
-            (r'^Static Semantics: \w+',           'syntax_directed_operation'),
+            (r'^Static Semantics: TV and TRV$',   'syntax_directed_operation'),
+            (r'^Static Semantics: \w+$',          'syntax_directed_operation'),
             (r'^Runtime Semantics: \w+$',         'syntax_directed_operation'),
             (r'^Statement Rules$',                'syntax_directed_operation'),
             (r'^Expression Rules$',               'syntax_directed_operation'),
 
             (r'^_NativeError_ Object Structure$', 'loop'),
 
-            (r'Concrete Method$',                 'module_rec_method'),
+            (r'^.+ Concrete Method$',                'module_rec_method'),
 
-            (r'(?<!Non-ECMAScript) Functions$',      'anonymous_built_in_function'),
+            (r'^Non-ECMAScript Functions$',          'catchall'),
+            (r'^.+ Functions$',      'anonymous_built_in_function'),
             (r'^ListIterator next \( \)$',           'anonymous_built_in_function'),
             (r'^%ThrowTypeError% \( \)$',            'anonymous_built_in_function'),
             # ArgGetter
@@ -220,7 +222,7 @@ def _infer_section_kinds(section):
 
             (r'^[gs]et Object.prototype.__proto__$', 'accessor_property'), # B.2.2.1.*
 
-            (r'.*',                                  'catchall'),
+            (r'^.*$',                                'catchall'),
         ]
     )
 
@@ -297,14 +299,14 @@ def _set_section_kind_for_properties(section):
     for child in section.section_children:
         child.section_kind = select_via_pattern( child.section_title,
             [
-                (r'^(Value|Function|Constructor|Other) Properties',    'group_of_properties1'),
+                (r'^(Value|Function|Constructor|Other) Properties of .+$', 'group_of_properties1'),
                 (r'^URI Handling Functions$',                          'group_of_properties2'),
                 (r'^URI Syntax and Semantics$',                        'catchall'),
                 (r'^get [\w.%]+( ?\[ ?@@\w+ ?\])?$',                   'accessor_property'),
                 (r'^Object.prototype.__proto__$',                      'accessor_property'),
                 (    r'^[\w.%]+( ?\[ ?@@\w+ ?\])? ?\([^()]*\)$',       'function_property'),
                 (    r'^[\w.%]+( ?\[ ?@@\w+ ?\])?$',                   'other_property'),
-                (                   r'@@\w+$',                         'other_property'), # 26.3.1
+                (                  r'^@@\w+$',                         'other_property'), # 26.3.1
                 (r'^Abstract Operations for Atomics$',                 'catchall'), # 24.4.1
                 (r'^Async-from-Sync Iterator Value Unwrap Functions$', 'anonymous_built_in_function'), # 25.1.4.2.5
             ]
