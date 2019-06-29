@@ -165,8 +165,7 @@ def _infer_section_kinds(section):
             _infer_section_kinds(child)
         return
 
-    section.section_kind = select_via_pattern(
-        section.section_title,
+    _extract_info_from_section_title( section,
         [
             (r'Implicit Completion Values',                        'shorthand'),
             (r'Throw an Exception',                                'shorthand'),
@@ -297,7 +296,7 @@ def _set_section_kind_for_properties(section):
         suffix = ''
 
     for child in section.section_children:
-        child.section_kind = select_via_pattern( child.section_title,
+        _extract_info_from_section_title( child,
             [
                 (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
                 (r'URI Handling Functions',                          'group_of_properties2'),
@@ -310,7 +309,8 @@ def _set_section_kind_for_properties(section):
                 (r'Abstract Operations for Atomics',                 'catchall'), # 24.4.1
                 (r'Async-from-Sync Iterator Value Unwrap Functions', 'anonymous_built_in_function'), # 25.1.4.2.5
             ]
-        ) + suffix
+        )
+        child.section_kind += suffix
 
         if child.section_kind.startswith('group_of_properties'):
             _set_section_kind_for_properties(child)
@@ -319,6 +319,9 @@ def _set_section_kind_for_properties(section):
                 _infer_section_kinds(gchild)
 
 # ----------------------------------------------------------
+
+def _extract_info_from_section_title(section, pattern_results):
+    section.section_kind = select_via_pattern(section.section_title, pattern_results)
 
 def select_via_pattern(subject, pattern_results):
     # Return the `result` for the first pattern in `pattern_results`
