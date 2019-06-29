@@ -179,7 +179,6 @@ def _infer_section_kinds(section):
 
             (r'^\[\[\w+\]\] ?\([^()]*\)$',        'internal_method'),
             (r'^Static Semantics: Early Errors$', 'early_errors'),
-            (r'^Additional Early Error Rules .+', 'early_errors'),
 
             (r'^The Reference Specification Type$', 'abstract_operations'), # plural!
 
@@ -197,7 +196,6 @@ def _infer_section_kinds(section):
 
             (r'^Changes to ',                        'catchall'),
 
-            (r'Abstract Operation\b',                                     'abstract_operation'),
             (r'^((Static|Runtime) Semantics: )?[A-Z][\w/]+ ?\([^()]*\)$', 'abstract_operation'),
             (r'(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)$',              'abstract_operation'),
             (r' Comparison$',                                             'abstract_operation'),
