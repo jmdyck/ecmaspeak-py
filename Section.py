@@ -168,61 +168,61 @@ def _infer_section_kinds(section):
     section.section_kind = select_via_pattern(
         section.section_title,
         [
-            (r'^Implicit Completion Values$',                        'shorthand'),
-            (r'^Throw an Exception$',                                'shorthand'),
-            (r'^ReturnIfAbrupt$',                                    'shorthand'),
-            (r'^ReturnIfAbrupt Shorthands$',                         'shorthand'),
-            (r'^Await$',                                             'shorthand'),
-            (r'^NormalCompletion$',                                  'shorthand'),
-            (r'^ThrowCompletion$',                                   'shorthand'),
-            (r'^IfAbruptRejectPromise \( _value_, _capability_ \)$', 'shorthand'),
+            (r'Implicit Completion Values',                        'shorthand'),
+            (r'Throw an Exception',                                'shorthand'),
+            (r'ReturnIfAbrupt',                                    'shorthand'),
+            (r'ReturnIfAbrupt Shorthands',                         'shorthand'),
+            (r'Await',                                             'shorthand'),
+            (r'NormalCompletion',                                  'shorthand'),
+            (r'ThrowCompletion',                                   'shorthand'),
+            (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
 
-            (r'^\[\[\w+\]\] ?\([^()]*\)$',        'internal_method'),
-            (r'^Static Semantics: Early Errors$', 'early_errors'),
+            (r'\[\[\w+\]\] ?\([^()]*\)',        'internal_method'),
+            (r'Static Semantics: Early Errors', 'early_errors'),
 
-            (r'^The Reference Specification Type$', 'abstract_operations'), # plural!
+            (r'The Reference Specification Type', 'abstract_operations'), # plural!
 
-            (r'^.+ Instances$',             'properties_of_instances'),
-            (r'^Module Namespace Objects$', 'properties_of_instances'),
+            (r'.+ Instances',             'properties_of_instances'),
+            (r'Module Namespace Objects', 'properties_of_instances'),
 
-            (r'^Properties of Valid Executions$', 'catchall'),
-            (r'^(Additional )?Properties of .+$', 'properties_of_an_intrinsic_object'),
-            (r'^The [\w%]+ Object$',              'properties_of_an_intrinsic_object'),
+            (r'Properties of Valid Executions', 'catchall'),
+            (r'(Additional )?Properties of .+', 'properties_of_an_intrinsic_object'),
+            (r'The [\w%]+ Object',              'properties_of_an_intrinsic_object'),
 
-            (r'^The \w+ Constructor$',               'Call_and_Construct_ims_of_an_intrinsic_object'),
-            (r'^The _NativeError_ Constructors$',    'Call_and_Construct_ims_of_an_intrinsic_object'),
-            (r'^The _TypedArray_ Constructors$',     'Call_and_Construct_ims_of_an_intrinsic_object'),
-            (r'^The %TypedArray% Intrinsic Object$', 'Call_and_Construct_ims_of_an_intrinsic_object'),
+            (r'The \w+ Constructor',               'Call_and_Construct_ims_of_an_intrinsic_object'),
+            (r'The _NativeError_ Constructors',    'Call_and_Construct_ims_of_an_intrinsic_object'),
+            (r'The _TypedArray_ Constructors',     'Call_and_Construct_ims_of_an_intrinsic_object'),
+            (r'The %TypedArray% Intrinsic Object', 'Call_and_Construct_ims_of_an_intrinsic_object'),
 
-            (r'^Changes to .+$',                     'catchall'),
+            (r'Changes to .+',                     'catchall'),
 
-            (r'^((Static|Runtime) Semantics: )?[A-Z][\w/]+ ?\([^()]*\)$', 'abstract_operation'),
-            (r'^(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)$',             'abstract_operation'),
-            (r'^.+ Comparison$',                                          'abstract_operation'),
+            (r'((Static|Runtime) Semantics: )?[A-Z][\w/]+ ?\([^()]*\)', 'abstract_operation'),
+            (r'(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)',             'abstract_operation'),
+            (r'.+ Comparison',                                          'abstract_operation'),
 
-            (r'^(Valid Chosen|Coherent|Tear Free) Reads$',                'abstract_operation'),
-            (r'^(Races|Data Races)$',                                     'abstract_operation'),
+            (r'(Valid Chosen|Coherent|Tear Free) Reads',                'abstract_operation'),
+            (r'(Races|Data Races)',                                     'abstract_operation'),
 
-            (r'^Static Semantics: TV and TRV$',   'syntax_directed_operation'),
-            (r'^Static Semantics: \w+$',          'syntax_directed_operation'),
-            (r'^Runtime Semantics: \w+$',         'syntax_directed_operation'),
-            (r'^Statement Rules$',                'syntax_directed_operation'),
-            (r'^Expression Rules$',               'syntax_directed_operation'),
+            (r'Static Semantics: TV and TRV',   'syntax_directed_operation'),
+            (r'Static Semantics: \w+',          'syntax_directed_operation'),
+            (r'Runtime Semantics: \w+',         'syntax_directed_operation'),
+            (r'Statement Rules',                'syntax_directed_operation'),
+            (r'Expression Rules',               'syntax_directed_operation'),
 
-            (r'^_NativeError_ Object Structure$', 'loop'),
+            (r'_NativeError_ Object Structure', 'loop'),
 
-            (r'^.+ Concrete Method$',                'module_rec_method'),
+            (r'.+ Concrete Method',                'module_rec_method'),
 
-            (r'^Non-ECMAScript Functions$',          'catchall'),
-            (r'^.+ Functions$',      'anonymous_built_in_function'),
-            (r'^ListIterator next \( \)$',           'anonymous_built_in_function'),
-            (r'^%ThrowTypeError% \( \)$',            'anonymous_built_in_function'),
+            (r'Non-ECMAScript Functions',          'catchall'),
+            (r'.+ Functions',      'anonymous_built_in_function'),
+            (r'ListIterator next \( \)',           'anonymous_built_in_function'),
+            (r'%ThrowTypeError% \( \)',            'anonymous_built_in_function'),
             # ArgGetter
             # ArgSetter
 
-            (r'^[gs]et Object.prototype.__proto__$', 'accessor_property'), # B.2.2.1.*
+            (r'[gs]et Object.prototype.__proto__', 'accessor_property'), # B.2.2.1.*
 
-            (r'^.*$',                                'catchall'),
+            (r'.*',                                'catchall'),
         ]
     )
 
@@ -299,16 +299,16 @@ def _set_section_kind_for_properties(section):
     for child in section.section_children:
         child.section_kind = select_via_pattern( child.section_title,
             [
-                (r'^(Value|Function|Constructor|Other) Properties of .+$', 'group_of_properties1'),
-                (r'^URI Handling Functions$',                          'group_of_properties2'),
-                (r'^URI Syntax and Semantics$',                        'catchall'),
-                (r'^get [\w.%]+( ?\[ ?@@\w+ ?\])?$',                   'accessor_property'),
-                (r'^Object.prototype.__proto__$',                      'accessor_property'),
-                (    r'^[\w.%]+( ?\[ ?@@\w+ ?\])? ?\([^()]*\)$',       'function_property'),
-                (    r'^[\w.%]+( ?\[ ?@@\w+ ?\])?$',                   'other_property'),
-                (                  r'^@@\w+$',                         'other_property'), # 26.3.1
-                (r'^Abstract Operations for Atomics$',                 'catchall'), # 24.4.1
-                (r'^Async-from-Sync Iterator Value Unwrap Functions$', 'anonymous_built_in_function'), # 25.1.4.2.5
+                (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
+                (r'URI Handling Functions',                          'group_of_properties2'),
+                (r'URI Syntax and Semantics',                        'catchall'),
+                (r'get [\w.%]+( ?\[ ?@@\w+ ?\])?',                   'accessor_property'),
+                (r'Object.prototype.__proto__',                      'accessor_property'),
+                (    r'[\w.%]+( ?\[ ?@@\w+ ?\])? ?\([^()]*\)',       'function_property'),
+                (    r'[\w.%]+( ?\[ ?@@\w+ ?\])?',                   'other_property'),
+                (                  r'@@\w+',                         'other_property'), # 26.3.1
+                (r'Abstract Operations for Atomics',                 'catchall'), # 24.4.1
+                (r'Async-from-Sync Iterator Value Unwrap Functions', 'anonymous_built_in_function'), # 25.1.4.2.5
             ]
         ) + suffix
 
@@ -324,7 +324,7 @@ def select_via_pattern(subject, pattern_results):
     # Return the `result` for the first pattern in `pattern_results`
     # that matches (via re.search) `subject`.
     for (pattern, result) in pattern_results:
-        if re.search(pattern, subject):
+        if re.fullmatch(pattern, subject):
             return result
     assert 0, subject
     # If you get here, look at stack trace to see caller
