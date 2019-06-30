@@ -5,6 +5,7 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 import re, string
+from collections import OrderedDict
 
 import shared
 from shared import stderr, header, msg_at_posn, spec
@@ -176,7 +177,7 @@ def _infer_section_kinds(section):
             (r'ThrowCompletion',                                   'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
 
-            (r'\[\[\w+\]\] ?\([^()]*\)',        'internal_method'),
+            (r'(?P<op_name>\[\[\w+\]\]) ?<PARAMETER_LIST>',        'internal_method'),
             (r'Static Semantics: Early Errors', 'early_errors'),
 
             (r'The Reference Specification Type', 'abstract_operations'), # plural!
@@ -195,94 +196,128 @@ def _infer_section_kinds(section):
 
             (r'Changes to .+',                     'catchall'),
 
-            (r'((Static|Runtime) Semantics: )?[A-Z][\w/]+ ?\([^()]*\)', 'abstract_operation'),
-            (r'(Number|BigInt)::[a-z][a-zA-Z]+ \([^()]*\)',             'abstract_operation'),
-            (r'.+ Comparison',                                          'abstract_operation'),
+            (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
+            (r'(?P<op_name>(Number|BigInt)::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'abstract_operation'),
+            (r'(Static|Runtime) Semantics: (?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>', 'abstract_operation'),
+            (r'(?P<op_name>.+ Comparison)',                                             'abstract_operation'),
 
-            (r'(Valid Chosen|Coherent|Tear Free) Reads',                'abstract_operation'),
-            (r'(Races|Data Races)',                                     'abstract_operation'),
+            (r'(?P<op_name>(Valid Chosen|Coherent|Tear Free) Reads)',                   'abstract_operation'),
+            (r'(?P<op_name>Races|Data Races)',                                          'abstract_operation'),
 
-            (r'Static Semantics: TV and TRV',   'syntax_directed_operation'),
-            (r'Static Semantics: \w+',          'syntax_directed_operation'),
-            (r'Runtime Semantics: \w+',         'syntax_directed_operation'),
-            (r'Statement Rules',                'syntax_directed_operation'),
-            (r'Expression Rules',               'syntax_directed_operation'),
+            (r'Static Semantics: (?P<op_name>TV and TRV)', 'syntax_directed_operation'),
+            (r'Static Semantics: (?P<op_name>\w+)',        'syntax_directed_operation'),
+            (r'Runtime Semantics: (?P<op_name>\w+)',       'syntax_directed_operation'),
+            (r'Statement Rules',                           'syntax_directed_operation'),
+            (r'Expression Rules',                          'syntax_directed_operation'),
 
             (r'_NativeError_ Object Structure', 'loop'),
 
-            (r'.+ Concrete Method',                'module_rec_method'),
+            (r'(?P<op_name>\w+) <PARAMETER_LIST> Concrete Method',                'module_rec_method'),
 
             (r'Non-ECMAScript Functions',          'catchall'),
-            (r'.+ Functions',      'anonymous_built_in_function'),
-            (r'ListIterator next \( \)',           'anonymous_built_in_function'),
-            (r'%ThrowTypeError% \( \)',            'anonymous_built_in_function'),
+            (r'(?P<prop_path>.+) Functions',                       'anonymous_built_in_function'),
+            (r'(?P<prop_path>ListIterator next) <PARAMETER_LIST>', 'anonymous_built_in_function'),
+            (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>',  'anonymous_built_in_function'),
             # ArgGetter
             # ArgSetter
-
-            (r'[gs]et Object.prototype.__proto__', 'accessor_property'), # B.2.2.1.*
 
             (r'.*',                                'catchall'),
         ]
     )
 
+    # Resolve ambiguous cases:
+    if section.section_kind == 'abstract_operation|env_rec_method':
+        if section.parent.section_title.endswith(' Environment Records'):
+            # PR 1477 scope-records:
+            # or section.section_title.endswith(' Scope Records')
+            section.section_kind = 'env_rec_method'
+        else:
+            section.section_kind = 'abstract_operation'
+
     # -----------
 
-    if section.parent.section_title == 'Pattern Semantics' and section.section_title not in ['Notation', 'Runtime Semantics: CharacterRangeOrUnion ( _A_, _B_ )']:
+    # Some stuff that isn't in the section_title, but should be?
+
+    if section.section_kind == 'syntax_directed_operation':
+        if section.section_title in ['Statement Rules', 'Expression Rules']:
+            assert section.ste == {}
+            section.ste = section.parent.ste.copy()
+
+        else:
+            # Parameters, if any, are stated in the section's first paragraph.
+            assert 'parameters' not in section.ste
+            parameters = OrderedDict()
+            c0 = section.block_children[0]
+            if c0.element_name == 'p':
+                p_text = c0.source_text()
+                if p_text.startswith('<p>With '):
+                    mo = re.match(r'^<p>With parameters? (.+)\.</p>$', p_text)
+                    assert mo
+                    params_s = mo.group(1)
+                    for param in re.split(r', and |, | and ', params_s):
+                        if param == 'optional parameter _functionPrototype_':
+                            param_name = '_functionPrototype_'
+                            param_punct = '[]'
+                        elif param == 'List _argumentsList_':
+                            param_name = '_argumentsList_'
+                            param_punct = ''
+                        else:
+                            assert re.match(r'^_[a-zA-Z]+_$', param)
+                            param_name = param
+                            param_punct = ''
+                        assert param_name not in parameters
+                        parameters[param_name] = param_punct
+            section.ste['parameters'] = parameters
+
+    elif section.parent.section_title == 'Pattern Semantics' and section.section_title not in ['Notation', 'Runtime Semantics: CharacterRangeOrUnion ( _A_, _B_ )']:
         assert section.section_kind == 'catchall'
         section.section_kind = 'syntax_directed_operation'
-    elif section.parent.section_title == '%TypedArray%.prototype.set ( _overloaded_ [ , _offset_ ] )':
-        # (kludgey)
-        assert section.section_kind == 'catchall'
-        section.section_kind = 'function_property_overload'
+        assert 'op_name' not in section.ste
+        section.ste['op_name'] = 'regexp-Evaluate'
+        section.ste['parameters'] = OrderedDict()
 
     # ======================================================
 
-    if section.section_kind == 'Call_and_Construct_ims_of_an_intrinsic_object':
-        mo = re.fullmatch(r'The (\S+) (Constructors?|Intrinsic Object)', section.section_title)
-        assert mo
-        thing = mo.group(1)
-        if thing == '_NativeError_': thing = 'NativeError' # Looks like a spec bug.
-
-        constructor_alg_children = []
-        other_children = []
-        for child in section.section_children:
-            if child.section_title.startswith(thing):
-                assert child.section_title.startswith(thing + ' (')
-                constructor_alg_children.append(child)
-            else:
-                other_children.append(child)
-
-        if len(constructor_alg_children) == 0:
-            assert 0
-        elif len(constructor_alg_children) == 1:
-            csk = 'CallConstruct'
-        else:
-            csk = 'CallConstruct_overload'
-        for child in constructor_alg_children:
-            child.section_kind = csk
-            for gchild in child.section_children:
-                _infer_section_kinds(gchild)
-
-        for child in other_children:
-            _infer_section_kinds(child)
-
-    elif section.section_kind.startswith('properties_of_'):
+    if section.section_kind.startswith('properties_of_'):
         _set_section_kind_for_properties(section)
 
-    elif section.section_title.endswith(' Environment Records'):
-        for child in section.section_children:
-            child.section_kind = 'env_rec_method'
-            assert len(child.section_children) == 0
-
-    # PR 1477 scope-records:
-    elif section.section_title.endswith(' Scope Records'):
-        for child in section.section_children:
-            child.section_kind = 'env_rec_method' # XXX
-            assert len(child.section_children) == 0
+    elif section.section_kind == 'Call_and_Construct_ims_of_an_intrinsic_object':
+        _set_section_kind_for_constructor(section)
 
     else:
         for child in section.section_children:
             _infer_section_kinds(child)
+
+def _set_section_kind_for_constructor(section):
+    # `section` contains clauses that declare the behavior of a built-in constructor
+
+    mo = re.fullmatch(r'The (\S+) (Constructors?|Intrinsic Object)', section.section_title)
+    assert mo
+    thing = mo.group(1)
+    if thing == '_NativeError_': thing = 'NativeError' # Looks like a spec bug.
+
+    for child in section.section_children: # constructor_alg_children:
+        _extract_info_from_section_title( child,
+            [
+                (f'(?P<prop_path>{thing}) <PARAMETER_LIST>', 'CallConstruct'),
+                (r'(?P<op_name>\w+) <PARAMETER_LIST>',       'abstract_operation'),
+                (r'Abstract Operations .+',                  'catchall'),
+            ]
+        )
+        
+        for gchild in child.section_children:
+            _infer_section_kinds(gchild)
+
+    n = sum(
+        1
+        for child in section.section_children
+        if child.section_kind == 'CallConstruct'
+    )
+    assert n > 0
+    if n > 1:
+        for child in section.section_children:
+            if child.section_kind == 'CallConstruct':
+                child.section_kind = 'CallConstruct_overload'
 
 def _set_section_kind_for_properties(section):
     # `section` contains clauses that declare (some of) the properties of some object.
@@ -299,21 +334,43 @@ def _set_section_kind_for_properties(section):
         _extract_info_from_section_title( child,
             [
                 (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
-                (r'URI Handling Functions',                          'group_of_properties2'),
-                (r'URI Syntax and Semantics',                        'catchall'),
-                (r'get [\w.%]+( ?\[ ?@@\w+ ?\])?',                   'accessor_property'),
-                (r'Object.prototype.__proto__',                      'accessor_property'),
-                (    r'[\w.%]+( ?\[ ?@@\w+ ?\])? ?\([^()]*\)',       'function_property'),
-                (    r'[\w.%]+( ?\[ ?@@\w+ ?\])?',                   'other_property'),
-                (                  r'@@\w+',                         'other_property'), # 26.3.1
-                (r'Abstract Operations for Atomics',                 'catchall'), # 24.4.1
-                (r'Async-from-Sync Iterator Value Unwrap Functions', 'anonymous_built_in_function'), # 25.1.4.2.5
+                (r'URI Handling Functions',                            'group_of_properties2'),
+                (r'URI Syntax and Semantics',                          'catchall'),
+
+                (r'(?P<prop_path>get [\w.%]+( ?\[ ?@@\w+ ?\])?)',      'accessor_property'),
+                (r'(?P<prop_path>set [\w.%]+)',                        'accessor_property'),
+                (r'(?P<prop_path>Object.prototype.__proto__)',         'accessor_property'),
+
+                (r'(?P<prop_path>[\w.%]+( ?\[ ?@@\w+ ?\])?) ?<PARAMETER_LIST>', 'function_property'),
+                (             r'([\w.%]+( ?\[ ?@@\w+ ?\])?)',                   'other_property'),
+                (                           r'(@@\w+)',                         'other_property'), # 26.3.1
+                (r'Abstract Operations for Atomics',                   'catchall'), # 24.4.1
+                (r'(?P<prop_path>Async-from-Sync Iterator Value Unwrap) Functions', 'anonymous_built_in_function'), # 25.1.4.2.5
             ]
         )
         child.section_kind += suffix
 
-        if child.section_kind.startswith('group_of_properties'):
+        if child.section_title.startswith('get '):
+            assert child.section_kind == 'accessor_property'
+            # The spec leaves off the empty parameter list
+            assert 'params_str' not in child.ste
+            child.ste['params_str'] = ''
+            child.ste['parameters'] = OrderedDict()
+
+        if child.section_kind.startswith('group_of_properties') or child.section_title == 'Object.prototype.__proto__' :
             _set_section_kind_for_properties(child)
+
+        elif child.section_title == '%TypedArray%.prototype.set ( _overloaded_ [ , _offset_ ] )':
+            assert child.section_kind == 'function_property'
+            assert len(child.section_children) == 2
+            for gchild in child.section_children:
+                _extract_info_from_section_title( gchild,
+                    [
+                        (r'(?P<prop_path>[\w.%]+) <PARAMETER_LIST>', 'function_property_overload'),
+                    ]
+                )
+                assert len(gchild.section_children) == 0
+
         else:
             for gchild in child.section_children:
                 _infer_section_kinds(gchild)
@@ -321,16 +378,76 @@ def _set_section_kind_for_properties(section):
 # ----------------------------------------------------------
 
 def _extract_info_from_section_title(section, pattern_results):
-    section.section_kind = select_via_pattern(section.section_title, pattern_results)
 
-def select_via_pattern(subject, pattern_results):
-    # Return the `result` for the first pattern in `pattern_results`
-    # that matches (via re.search) `subject`.
+    # Look for the first pattern in `pattern_results`
+    # that matches (via re.fullmatch) `section.section_title`.
     for (pattern, result) in pattern_results:
-        if re.fullmatch(pattern, subject):
-            return result
-    assert 0, subject
-    # If you get here, look at stack trace to see caller
+        pattern = pattern.replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
+        mo = re.fullmatch(pattern, section.section_title)
+        if mo:
+            break
+    else:
+        assert 0, section.section_title
+
+    assert isinstance(result, str)
+    section.section_kind = result
+
+    # "ste" = section-title extractions
+    section.ste = mo.groupdict()
+
+    # ---------------------------------
+
+    if 'params_str' in section.ste:
+        parameter_listing = section.ste['params_str'].strip()
+
+        if parameter_listing == '. . .':
+            assert section.section_kind == 'function_property' # _xref
+            # Doesn't mean anything, might as wel not be there.
+            del section.ste['params_str']
+
+        else:
+
+            params_info = OrderedDict()
+            if parameter_listing != '':
+                if parameter_listing == '_value1_, _value2_, ..._values_':
+                    # Math.{hypot,max,min}
+                    parameter_listing = '..._values_'
+                elif parameter_listing == '_p1_, _p2_, &hellip; , _pn_, _body_':
+                    # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction
+                    parameter_listing = '..._args_ [ , _body_ ]'
+
+                param_strs = parameter_listing.split(', ')
+                subsequent_are_optional = False
+                for param_str in param_strs:
+                    if param_str.startswith('[ '):
+                        subsequent_are_optional = True
+                        param_str = param_str[2:]
+
+                    mo = re.match(r'^(\.\.\.)?(_\w+_)(.*)$', param_str)
+                    assert mo, section.section_title
+                    (opt_dots, param_name, rest) = mo.groups()
+
+                    assert param_name not in params_info
+
+                    assert not (opt_dots and subsequent_are_optional)
+
+                    if opt_dots:
+                        param_punct = '...'
+                    elif subsequent_are_optional:
+                        param_punct = '[]'
+                    else:
+                        param_punct = ''
+
+                    params_info[param_name] = param_punct
+
+                    if re.match(r'^( \])*$', rest):
+                        pass
+                    elif rest == ' [ ':
+                        subsequent_are_optional = True
+                    else:
+                        assert 0, repr(param_str)
+
+            section.ste['parameters'] = params_info
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

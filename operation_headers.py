@@ -333,10 +333,12 @@ def each_replacement_for_section(s):
             s.section_kind == 'syntax_directed_operation'
         ):
             # The op is the one indicated by the section header.
+            # print(s.section_num, s.section_kind, 'is', span_end_i)
             hoi = get_info_from_header(s)
             op_kind = s.section_kind
         else:
             # The op is *not* the one indicated by the section header.
+            # print(s.section_num, s.section_kind, 'isnt', span_end_i)
             hoi = OperationInfo()
             if s.section_title.startswith('MakeArgGetter'):
                 op_kind = 'anonymous_built_in_function'
@@ -415,43 +417,28 @@ def something_sdo(s):
 
     # get parameters
     param_dict = OrderedDict()
-    c0 = s.block_children[0]
-    if c0.element_name == 'p':
-        p_text = c0.source_text()
-        if p_text.startswith('<p>With ') or p_text.startswith('<p>with '):
-            mo = re.match(r'^<p>With parameters? (.+)\.</p>$', p_text)
-            assert mo
-            params_s = mo.group(1)
-            for param in re.split(r', and |, | and ', params_s):
-                if param == 'List _argumentsList_':
-                    param_name = '_argumentsList_'
-                    param_type = 'List'
-                elif param == 'optional parameter _functionPrototype_':
-                    param_name = '_functionPrototype_'
-                    param_type = '(optional) TBD'
-                else:
-                    assert re.match(r'^_[a-zA-Z]+_$', param)
-                    param_name = param
-                    param_type = 'TBD'
-                assert param_name not in param_dict
-                param_dict[param_name] = param_type
+    for (param_name, param_punct) in s.ste['parameters'].items():
+        if param_name == '_argumentsList_':
+            param_type = 'List'
+        else:
+            param_type = 'TBD'
 
-    if s.section_title == 'Static Semantics: TV and TRV':
+        if param_punct == '[]':
+            param_type = '(optional) ' + param_type
+        else:
+            assert param_punct == ''
+
+        param_dict[param_name] = param_type
+
+    op_name = s.ste['op_name']
+
+    if op_name == 'TV and TRV':
         # defines two sdo's in the same section, hrm
-        op_name = None
         declare_sdo('TV', param_dict)
         declare_sdo('TRV', param_dict)
-    elif s.parent.section_title == 'Pattern Semantics':
-        op_name = 'regexp-Evaluate'
+    elif op_name == 'regexp-Evaluate':
         declare_sdo(op_name, param_dict, regexp_also)
-    elif s.section_title in ['Statement Rules', 'Expression Rules']:
-        assert s.parent.section_title == 'Static Semantics: HasCallInTailPosition'
-        op_name = 'HasCallInTailPosition'
-        # declare_sdo(op_name, param_dict)
     else:
-        mo = re.match(r'^(Static|Runtime) Semantics: (\w+)$', s.section_title)
-        assert mo, s.section_title
-        op_name = mo.group(2)
         declare_sdo(op_name, param_dict)
 
 regexp_also = [
@@ -1409,7 +1396,7 @@ def add_to_description(oi, sentence):
 def get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text):
 
     if op_kind == 'accessor_property':
-        # For an accessor property, both the header and the preamble are unusual,
+        # For an accessor property, the preamble is unusual,
         # so don't call 
         # get_info_from_builtin_function_preamble(s, preamble_text)
         # (Alternatively, I could modify that function.)
@@ -1432,7 +1419,7 @@ def get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text):
                 re.fullmatch(r'`[^`]+`', op_name_plus_ticks)
             )
             op_name = op_name_plus_ticks.replace('`', '')
-            assert 'get ' + op_name == oi.name
+            assert 'get ' + op_name == oi.name.replace(' [ ', '[').replace(' ]', ']')
 
     # ----------------------------------------------------
     else:
@@ -1689,99 +1676,50 @@ def re_sub_many_etc(subject, pattern_repls):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_header(section):
-    header_text = section.section_title
     oi = OperationInfo()
 
     if section.section_kind == 'catchall':
         return oi
 
-    elif section.section_kind == 'syntax_directed_operation':
-        # See something_sdo
-        if header_text in ['Statement Rules', 'Expression Rules']:
-            oi.name = 'HasCallInTailPosition'
-        elif header_text.isalpha():
-            oi.name = header_text
-        else:
-            mo = re.fullmatch(r'(Static|Runtime) Semantics: (\w+)', header_text)
-            assert mo
-            oi.name = mo.group(2)
-        return oi
-
-    # Handle a few odd cases.
-    for (pattern, repl) in [
-        # anonymous_built_in_function
-        (r'(.+) Functions', r'\1'),
-        (r'(ListIterator) (next) \( \)', r'\1 \2'),
-
-        # memory model abs op
-        (r'((.+) Reads|Races|Data Races)', r'\1'),
-
-        # accessor properties:
-        (r'(get|set) ([\w%.]+)',               r'\1 \2'),
-        (r'(get|set) ([\w%.]+) \[ (@@\w+) \]', r'\1 \2[\3]'),
+    if section.section_kind in [
+        'abstract_operation',
+        'syntax_directed_operation',
+        'env_rec_method',
+        'module_rec_method',
+        'internal_method',
     ]:
-        mo = re.fullmatch(pattern, header_text)
-        if mo:
-            oi.name = mo.expand(repl)
-            if oi.name == 'ListIterator next':
-                oi.param_names = []
-            elif oi.name.startswith('get '):
-                oi.param_names = []
-            return oi
+        oi.name = section.ste['op_name']
 
-    t = sub_many(header_text, [
-        (r'(Static|Runtime) Semantics: ', ''),
-        (r' Abstract Operation$', ''),
-        (r' Concrete Method$', ''),
-    ])
+    elif section.section_kind in [
+        'function_property',
+        'function_property_overload',
+        'accessor_property',
+        'CallConstruct',
+        'CallConstruct_overload',
+        'anonymous_built_in_function',
+    ]:
+        oi.name = section.ste['prop_path']
 
-    if '(' not in t:
-        oh_warn("no parens in section title:", header_text)
-        oi.name = t
+    else:
+        assert 0
+
+    if 'parameters' not in section.ste:
         return oi
-
-    mo = re.match(r'^([\w/:.%]+(?: \[ @@\w+ \])?|\[\[\w+\]\]) *\( *(.*?) *\)$', t)
-    assert mo, t
-    (oi.name, parameter_listing) = mo.groups()
 
     oi.param_names = []
 
-    if parameter_listing != '':
-        if parameter_listing == '_value1_, _value2_, ..._values_':
-            # Math.{hypot,max,min}
-            parameter_listing = '..._values_'
-        elif parameter_listing in [
-            '_p1_, _p2_, &hellip; , _pn_, _body_',
-            '_p1_, _p2_, ..., _pn_, _body_',
-        ]:
-            parameter_listing = '..._args_ [ , _body_ ]'
+    for (param_name, param_punct) in section.ste['parameters'].items():
+    
+        oi.param_names.append(param_name)
 
-        param_strs = parameter_listing.split(', ')
-        subsequent_are_optional = False
-        for param_str in param_strs:
-            if param_str.startswith('[ '):
-                subsequent_are_optional = True
-                param_str = param_str[2:]
-
-            mo = re.match(r'^(\.\.\.)?(_\w+_)(.*)$', param_str)
-            assert mo, param_strs
-            (opt_dots, param_name, rest) = mo.groups()
-
-            assert param_name not in oi.param_names
-            oi.param_names.append(param_name)
-
-            if opt_dots:
-                oi.rest_params.add(param_name)
-
-            if subsequent_are_optional:
-                oi.optional_params.add(param_name)
-
-            if re.match(r'^( \])*$', rest):
-                pass
-            elif rest == ' [ ':
-                subsequent_are_optional = True
-            else:
-                assert 0, repr(param_str)
+        if param_punct == '...':
+            oi.rest_params.add(param_name)
+        elif param_punct == '[]':
+            oi.optional_params.add(param_name)
+        elif param_punct == '':
+            pass
+        else:
+            assert 0, param_punct
 
     return oi
 
