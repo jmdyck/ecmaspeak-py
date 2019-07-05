@@ -281,6 +281,10 @@ def check_characters():
     for mo in re.finditer(r'[^\n -~]', spec.text):
         posn = mo.start()
         character = spec.text[posn]
+        if character == '\u211d':
+            # PR 1135 introduced tons of these
+            continue
+
         if character in ascii_replacement:
             suggestion = ": maybe change to %s" % ascii_replacement[character]
         else:

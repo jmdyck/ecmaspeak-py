@@ -116,7 +116,7 @@ def prep_autolinking():
         elif term.startswith('LocalTZA('):
             term = 'LocalTZA'
 
-        if re.fullmatch(r'\w[-\w ]*\w', term):
+        if re.fullmatch(r'\w[-\w ]*\w', term) or term in ['\u211d', '\U0001d53d']:
             if 'id' in dfn.attrs:
                 # Occurrences of this term should be linked to the dfn itself.
                 fragid = dfn.attrs['id']
@@ -228,7 +228,7 @@ def render_node(node):
         render_literal_node(node)
 
     elif node.element_name == 'meta':
-        assert node.attrs.get('charset','') == 'ascii'
+        assert node.attrs.get('charset','') == 'utf-8'
         put('<meta charset="utf-8">')
 
     elif node.element_name in ['#COMMENT', '#DECL', 'br', 'img', 'link']:

@@ -145,6 +145,7 @@ git checkout op_headers2
 #     gdiff _operation_headers/spec_w_edits spec.html
 #     git commit --amend spec.html
 cp _operation_headers/spec_w_edits spec.html
+git difftool
 git commit --amend spec.html
 
 # ----------------------------

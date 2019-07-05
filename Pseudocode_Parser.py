@@ -118,6 +118,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_emu_grammar}  : < emu-grammar > .+? </ emu-grammar >
     {h_emu_xref}     : < emu-xref (\x20 \w+ (= " [^"]+ ")? )* > [^<>]* < / emu-xref >
     {h_emu_alg}      : < emu-alg > (.|\n)+? < / emu-alg >
+    {h_sub_math_r}   : < sub > \u211d < / sub >
     {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
     {h_end_tag}      : </ [\w-]+ >
 
@@ -176,6 +177,8 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {special_word}   : \b ( Type | Function | Realm | ScriptOrModule | LexicalEnvironment | VariableEnvironment | Generator ) \b
     {cap_word}       : \b [A-Z][A-Za-z0-9]* \b
     {low_word}       : \b [a-z][A-Za-z0-9]* \b
+
+    {math_r}         : \u211d
 
 ''')
 

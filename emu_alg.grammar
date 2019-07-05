@@ -880,6 +880,14 @@
     an implementation-dependent choice of:{I_BULLETS}
 
 {EXPR} :
+    #pre-1135: the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}
+    #pre-1135: the Number value of the Element Size value in {h_emu_xref} for {var}
+    #pre-1135: the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}
+    #pre-1135: the Number value of the Element Size value specified in {h_emu_xref} for {var}
+    #pre-1135: the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))
+    #pre-1135: the number of code points in {PROD_REF}
+    #pre-1135: the number value that is the same sign as {var} and whose magnitude is {EX}
+    #pre-1135: the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     a Continuation that always returns its State argument as a successful MatchResult
     a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
     a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
@@ -991,7 +999,10 @@
     the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
     the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
+    the Element Size specified in {h_emu_xref} for Element Type {var}
     the Element Size value in {h_emu_xref} for {var}
+    the Element Size value specified in {h_emu_xref} for Element Type {var}
+    the Element Size value specified in {h_emu_xref} for {var}
     the List of Unicode code points of {var}
     the List of argument values starting with the second argument
     the List of arguments passed to this function
@@ -1002,12 +1013,12 @@
     the Matcher that is {EXPR}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number that is the time value (UTC) identifying the current time
+    the Number value for ({SUM})
+    the Number value for {PP_NAMED_OPERATION_INVOCATION}
     the Number value for {var}
-    the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}
-    the Number value of the Element Size value in {h_emu_xref} for {var}
-    the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}
-    the Number value of the Element Size value specified in {h_emu_xref} for {var}
+    the Number value represented by {nonterminal} as defined in {h_emu_xref}
     the Number value that corresponds to {var}
+    the Number value that is the same sign as {var} and whose magnitude is {EX}
     the PendingJob record at the front of {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
@@ -1103,14 +1114,13 @@
     the length of {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the matched substring (i.e. the portion of {var} between offset {var} inclusive and offset {var} exclusive)
+    the mathematical integer number of code points in {PROD_REF}
     the mathematical integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
-    the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))
     the number of actual arguments
     the number of actual arguments minus 2
     the number of arguments passed to this function call
     the number of bytes in {var}
     the number of characters contained in {var}
-    the number of code points in {PROD_REF}
     the number of code unit elements in {var}
     the number of code units in {var}
     the number of elements in the List {var}
@@ -1119,8 +1129,6 @@
     the number of leading zero bits in the 32-bit binary representation of {var}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
-    the number value that is the same sign as {var} and whose magnitude is {EX}
-    the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     the numeric value 1
     the one character in CharSet {var}
     the parse of some source text
@@ -1212,16 +1220,6 @@
     {var}'s single code unit element
     {var}'s {DSBN} value
     {var}<sup>th</sup> element of {var}'s _captures_ List
-
-    # PR 1135 number-refactoring:
-    the Element Size specified in {h_emu_xref} for Element Type {var}
-    the Element Size value specified in {h_emu_xref} for Element Type {var}
-    the Element Size value specified in {h_emu_xref} for {var}
-    the Number value for ({SUM})
-    the Number value for {PP_NAMED_OPERATION_INVOCATION}
-    the Number value represented by {nonterminal} as defined in {h_emu_xref}
-    the Number value that is the same sign as {var} and whose magnitude is {EX}
-    the mathematical integer number of code points in {PROD_REF}
 
     # PR 1460 explicit-exotics:
     the internal slots listed in {h_emu_xref}
@@ -1371,6 +1369,7 @@
     the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero
     {cap_word} for {LOCAL_REF} {WITH_ARGS}
     {cap_word} of {LOCAL_REF}
+    {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
 
     ## directed-operations:
@@ -1525,13 +1524,11 @@
 # --------------------------------
 
 {NUM_EXPR} :
+    #pre-1135: the exact mathematical value of {SUM}
     {BIT_EX}
     {PRODUCT}
     {SUM}
-    the exact mathematical value of {SUM}
-
-    # number-refactoring:
-    \u211d({var})
+    {math_r}({var})
 
 {BIT_EX} :
     {FACTOR} {BIT_OPERATOR} {FACTOR}
@@ -1547,10 +1544,8 @@
 {SUM_OPERATOR} :
     +
     -
+    #? -{h_sub_math_r}
     plus
-
-    # number-refactoring:
-    -<sub>\u211d</sub>
 
 {TERM} :
     the number of code units in {var}
@@ -1567,13 +1562,11 @@
     -
 
 {PRODUCT_OPERATOR} :
-    &times;
     &divide;
+    #? &divide;{h_sub_math_r}
+    &times;
+    &times;{h_sub_math_r}
     /
-
-    # number-refactoring:
-    &times;<sub>\u211d</sub>
-    &divide;<sub>\u211d</sub>
 
 {FACTOR} :
     ({NUM_EXPR})
@@ -1586,17 +1579,12 @@
     {NUM_LITERAL}
     {PREFIX_PAREN}
     {SETTABLE}
-
-    # number-refactoring:
-    \u211d({var})
-
+    {math_r}({var})
 
 {BASE} :
-    2
     10
-
-    # number-refactoring:
-    10<sub>\u211d</sub>
+    10{h_sub_math_r}
+    2
 
 # --------------------------------
 
@@ -1638,19 +1626,17 @@
     the single-element String `","`
 
 {NUM_LITERAL} :
-    &infin;
     #! (2|10)<sup>[0-9]+</sup>
+    &infin;
     0.5
     8.64
-    {dec_int_lit}
-    {starred_int_lit}
-    {starred_nonfinite_lit}
     the *NaN* Number value
     zero
+    {dec_int_lit}
+    {dec_int_lit}{h_sub_math_r}
     {hex_int_lit}
-
-    # number-refactoring:
-    {dec_int_lit}<sub>\u211d</sub>
+    {starred_int_lit}
+    {starred_nonfinite_lit}
 
     # PR 1515 BigInt?
     #! \*\d+\*

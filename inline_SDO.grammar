@@ -47,20 +47,19 @@
     {NAMED_OPERATION_INVOCATION} is {U_LITERAL}
 
 {EX} :
+    #pre-1135: the number of code points in {PROD_REF}
     a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
     the code units of {NAMED_OPERATION_INVOCATION}
     the code units of {NAMED_OPERATION_INVOCATION} in order
-    the number of code points in {PROD_REF}
-    {code_unit_lit}
+    the mathematical integer number of code points in {PROD_REF}
+    the mathematical value of the number of code points in {PROD_REF}
     {NAMED_OPERATION_INVOCATION}
+    {NUM_LITERAL}
     {PRODUCT}
     {SUM}
     {U_LITERAL}
+    {code_unit_lit}
     {var}
-    {NUM_LITERAL}
-    # number-refactoring:
-    the mathematical integer number of code points in {PROD_REF}
-    the mathematical value of the number of code points in {PROD_REF}
 
 {NAMED_OPERATION_INVOCATION} :
     the {ISDO_NAME} of {PROD_REF}
@@ -90,23 +89,18 @@
     {SUM} {SUM_OPERATOR} {TERM}
 
 {SUM_OPERATOR} :
-    -
+    #pre-1135: -
+    -{h_sub_math_r}
     plus
-
-    # number-refactoring:
-    # {var}-<sub>ℝ</sub>{var}
-
 
 {TERM} :
     ({PRODUCT})
     {FACTOR}
 
 {PRODUCT} :
+    #pre-1135: -{var}
+    -{h_sub_math_r}{var}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
-    -{var}
-    # number-refactoring:
-    # {FACTOR} &times;<sub>ℝ</sub> {FACTOR}
-    # -<sub>ℝ</sub>{var}
 
 {PRODUCT_OPERATOR} :
     times
@@ -120,14 +114,11 @@
     {var}
 
 {NUM_LITERAL} :
-    {hex_int_lit}
-    {dec_int_lit}
-
-    # number-refactoring:
-    # 0x[0-9A-F]+<sub>ℝ</sub>
-    # \d+<sub>ℝ</sub>
+    #pre-1135: {dec_int_lit}
+    #pre-1135: {hex_int_lit}
+    {dec_int_lit}{h_sub_math_r}
+    {hex_int_lit}{h_sub_math_r}
 
 {BASE} :
-    10
-    # number-refactoring:
-    # 10<sub>ℝ</sub>
+    #pre-1135: 10
+    10{h_sub_math_r}

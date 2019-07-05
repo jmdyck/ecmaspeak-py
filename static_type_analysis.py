@@ -1737,10 +1737,6 @@ T_bytes_combining_op_ = ProcType([ListType(T_Integer_), ListType(T_Integer_)], L
 T_captures_entry_ = ListType(T_character_) | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
 
-T_numeric_        = T_Number | T_code_unit_ | T_MathReal_ | T_BigInt
-
-T_transitioning_from_Number_to_MathReal = T_Number # T_MathReal_
-
 def maybe_NamedType(name):
     if name == 'TBD':
         return T_TBD
@@ -2163,9 +2159,6 @@ class Env:
 
         (expr_t, expr_env) = tc_expr(expr, self); assert expr_env is self
 
-#        if expected_t == T_numeric_:
-#            print(expr_t, ':', expr.prod, '<>', expr.source_text(), file=sta_misc_f)
-
         if expr_t == T_TBD:
             add_pass_error(
                 expr,
@@ -2403,9 +2396,6 @@ class Env:
                 old_t == ListType(T_code_unit_) | T_Reference | T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
                 # DefineMethod
                 or
-                old_t == T_Tangible_ and new_t == T_numeric_
-                # ArraySetLength
-                or
                 old_t == T_Integer_ | T_Tangible_ | T_code_unit_ and new_t == T_Integer_ | T_Number | T_code_unit_
                 # [[DefineOwnProperty]]
                 or
@@ -2473,6 +2463,7 @@ class Env:
                 '_scriptRecord_.[[Realm]]',
                 '_throwawayCapability_.[[Promise]]', # AsyncFunctionAwait
                 'the MV of |DecimalDigits|',
+                'the MV of the first |DecimalDigits|',
                 'the MV of |StrUnsignedDecimalLiteral|',
                 'the TV of |TemplateCharacter|',
                 'the TV of |TemplateCharacters|',
@@ -2967,7 +2958,7 @@ def tc_operation(op_name):
     global trace_this_op
     trace_this_op = False
     trace_this_op = (op_name in [
-        'xxMV'
+        'xNumber.prototype.toFixed'
     ])
     # and you may want to tweak mytrace just above
 
@@ -3447,10 +3438,8 @@ def tc_nonvalue(anode, env0):
         assert same_source_text(var2, let_var)
         assert same_source_text(var3, let_var)
         new_env = env0.plus_new_entry(let_var, T_Integer_)
-        (num_t, num_env) = tc_expr(num_expr, new_env)
-        assert num_t.is_a_subtype_of_or_equal_to(T_transitioning_from_Number_to_MathReal)
-        result = num_env
-
+        new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
+        result = new_env
 
 #    elif p == r'{COMMAND} : Let {SAB_FUNCTION} be {EX}.':
 #        [sab_fn, ex] = children
@@ -3482,8 +3471,8 @@ def tc_nonvalue(anode, env0):
         assert same_source_text(n_var3, n_var)
         new_env = env0.plus_new_entry(e_var, T_Integer_).plus_new_entry(n_var, T_Integer_)
         (t_env, f_env) = tc_cond(cond, new_env)
-        t_env.assert_expr_is_of_type(num_expr, T_Number)
-        t_env.assert_expr_is_of_type(product, T_Number)
+        t_env.assert_expr_is_of_type(num_expr, T_MathReal_)
+        t_env.assert_expr_is_of_type(product, T_MathReal_)
         result = t_env
 
     elif p in [
@@ -6112,17 +6101,37 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(var2, T_Number)
         return (env1, env1)
 
+    elif p == r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}':
+        [a, _, b, _, c] = children
+        env0.assert_expr_is_of_type(a, T_Integer_)
+        env0.ensure_expr_is_of_type(b, T_Number)
+        env0.assert_expr_is_of_type(c, T_Integer_)
+        return (env0, env0)
+
     elif p in [
         r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}",
-        r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}',
         r'{NUM_COMPARISON} : {var} (is less than) {FACTOR}',
     ]:
-        comparands = children[0::2]
-        env1 = env0
-        for comparand in comparands:
-            env1 = env1.ensure_expr_is_of_type(comparand, T_numeric_)
-        # if trace_this_op: pdb.set_trace()
-        return (env1, env1)
+        [a, _, b] = children
+        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
+        (b_t, env1) = tc_expr(b, env0); assert env1 is env0
+
+        if (
+            a_t.is_a_subtype_of_or_equal_to(T_MathReal_)
+            or
+            b_t.is_a_subtype_of_or_equal_to(T_MathReal_)
+        ):
+            assert a_t == T_MathInteger_
+            assert b_t == T_MathInteger_
+            env2 = env0
+        elif a_t == T_code_unit_ and b_t == T_Integer_:
+            env2 = env0
+        else:
+            env1 = env0.ensure_expr_is_of_type(a, T_Number)
+            env2 = env1.ensure_expr_is_of_type(b, T_Number)
+            # It's almost always T_Integer for both.
+
+        return (env2, env2)
 
     elif p in [
         r'{NUM_COMPARISON} : {NUM_COMPARAND} is not less than {NUM_LITERAL} and not greater than {NUM_LITERAL}',
@@ -8085,15 +8094,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : the Number value for {PRODUCT}",
     ]:
         sub = children[0]
-        env0.assert_expr_is_of_type(sub, T_transitioning_from_Number_to_MathReal)
-        # doesn't accomplish anything:
         (sub_t, env1) = tc_expr(sub, env0); assert env1 is env0
         result_t = T_Integer_ if sub_t.is_a_subtype_of_or_equal_to(T_MathInteger_) else T_Number
         return (result_t, env0)
 
     elif p == r"{EXPR} : the Number value for {var}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_numeric_)
+        env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_Number, env0)
 
     elif p in [
@@ -8126,11 +8133,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the result of forming the value of the |NumericLiteral|":
         [] = children
-        return (T_Number, env0)
-
-    elif p == r"{EXPR} : the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}": # XXX replaced by next
-        [noi, emu_xref] = children
-        env0.assert_expr_is_of_type(noi, T_numeric_)
         return (T_Number, env0)
 
     elif p == r"{EXPR} : the Number value represented by {nonterminal} as defined in {h_emu_xref}":
@@ -8193,21 +8195,29 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathInteger_, env0)
 
     elif p in [
-        u"{EX} : \\d+<sub>\u211d</sub>",
-        u"{FACTOR} : \\d+<sub>\u211d</sub>",
-        u"{BASE} : 10<sub>\u211d</sub>",
-        u"{FACTOR} : 0x[0-9A-F]+<sub>\u211d</sub>",
+        u"{EX} : \\d+{h_sub_math_r}",
+        u"{FACTOR} : \\d+{h_sub_math_r}",
+        u"{BASE} : 10{h_sub_math_r}",
+        u"{FACTOR} : 0x[0-9A-F]+{h_sub_math_r}",
     ]:
-        [] = children
+        [_] = children
         return (T_MathInteger_, env0)
 
-    elif p == u"{FACTOR} : \u211d({var})":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (T_MathInteger_, env0)
+    elif p in [
+        "{FACTOR} : {math_r}({var})",
+        "{NUM_EXPR} : {math_r}({var})",
+    ]:
+        [_, var] = children
+        (var_t, env1) = tc_expr(var, env0); assert env1 is env0
+        if var_t.is_a_subtype_of_or_equal_to(T_Integer_):
+            return (T_MathInteger_, env0)
+        elif var_t.is_a_subtype_of_or_equal_to(T_Number):
+            return (T_MathReal_, env0)
+        else:
+            assert 0, var_t
 
-    elif p == u"{PRODUCT} : -<sub>\u211d</sub>{var}":
-        [var] = children
+    elif p == r"{PRODUCT} : -{h_sub_math_r}{var}":
+        [_, var] = children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_MathInteger_, env0)
 
@@ -8236,19 +8246,26 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_BigInt)
         return (T_MathInteger_, env0)
 
-    elif p == r"{BASE} : 2":
-        [] = children
+    elif p in [
+        r"{NUM_LITERAL} : {dec_int_lit}{h_sub_math_r}",
+        r"{NUM_LITERAL} : {hex_int_lit}{h_sub_math_r}",
+    ]:
+        [int_lit, _] = children
+        return (T_MathInteger_, env0)
+
+    elif p == r"{BASE} : 10{h_sub_math_r}":
+        [_] = children
         return (T_MathInteger_, env0)
 
     # --------------------------------------------------------
     # return T_MathReal_
 
     elif p in [
-        u"{PRODUCT} : {FACTOR} &times;<sub>\u211d</sub> {FACTOR}",
-        u"{SUM} : {var}-<sub>\u211d</sub>{var}",
-        u"{SUM} : {TERM} -<sub>\u211d</sub> {TERM}",
+        u"{PRODUCT} : {FACTOR} &times;{h_sub_math_r} {FACTOR}",
+        u"{SUM} : {var}-{h_sub_math_r}{var}",
+        u"{SUM} : {TERM} -{h_sub_math_r} {TERM}",
     ]:
-        [left, right] = children
+        [left, _, right] = children
         env0.assert_expr_is_of_type(left, T_MathReal_)
         env0.assert_expr_is_of_type(right, T_MathReal_)
         return (T_MathReal_, env0)
@@ -8264,10 +8281,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r'{EXPR} : the negative of {EX}',
     ]:
         [ex] = children
-        # env0.assert_expr_is_of_type(ex, T_transitioning_from_Number_to_MathReal)
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
-        if ex_t != T_TBD:
-            assert ex_t.is_a_subtype_of_or_equal_to(T_numeric_)
+        assert ex_t == T_TBD or ex_t == T_MathInteger_
         return (ex_t, env0)
 
     # --------------------------------------------------------
@@ -8336,6 +8351,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_LITERAL} : *[+-]0*",
         r"{NUM_LITERAL} : zero",
         r"{BASE} : 10",
+        r"{BASE} : 2",
     ]:
         # [] = children
         return (T_Integer_, env0)
@@ -8356,12 +8372,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{FACTOR} : {BASE}<sup>{EX}</sup>",
     ]:
         [base, exponent] = children
-        # env0.assert_expr_is_of_type(base, T_Integer_)
-        # env0.assert_expr_is_of_type(exponent, T_Integer_)
         (base_t, env1) = tc_expr(base, env0); assert env1 is env0
-        assert base_t.is_a_subtype_of_or_equal_to(T_Integer_ | T_MathInteger_)
-        # env0.assert_expr_is_of_type(exponent, T_MathReal_ if base_t == T_MathInteger_ else T_Number)
-        env0.assert_expr_is_of_type(exponent, T_numeric_)
+        if base_t == T_Integer_:
+            env0.assert_expr_is_of_type(exponent, T_Number)
+        elif base_t == T_MathInteger_:
+            env0.assert_expr_is_of_type(exponent, T_MathReal_)
+        else:
+            assert 0, base_t
         return (base_t, env0) # XXX unless exponent is negative
 
     elif p == r"{EX} : the remainder of dividing {EX} by {EX}":
@@ -8376,11 +8393,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(numb, T_Integer_)
         return (T_Integer_, env0)
 
-    elif p == r"{SUM} : {TERM} plus {TERM} plus {TERM} plus {TERM}":
-        for term in children:
-            env0.assert_expr_is_of_type(term, T_transitioning_from_Number_to_MathReal)
-        return (T_MathReal_, env0)
-
     elif p == r"{EXPR} : the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))":
         [var1, var2] = children
         assert var1.children == var2.children
@@ -8389,8 +8401,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{PRODUCT} : {FACTOR} modulo {FACTOR}":
         [factor1, factor2] = children
-        env0.assert_expr_is_of_type(factor1, T_numeric_) # Should be Integer, but _m_ modulo 12
-        env0.assert_expr_is_of_type(factor2, T_numeric_)
+        env0.assert_expr_is_of_type(factor1, T_Number) # should be T_Integer_
+        env0.assert_expr_is_of_type(factor2, T_Integer_)
         return (T_Integer_, env0)
 
     elif p == r"{NUM_LITERAL} : (2|10)<sup>[0-9]+</sup>":
@@ -8488,169 +8500,43 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Integer_, env0)
 
     # -------------------------------------------------
-    # return Number or Integer_ (arithmetic)
+    # return MathReal_ or MathInteger_ or Number or Integer_ (arithmetic)
 
     elif p in [
         r'{SUM} : {TERM} {SUM_OPERATOR} {TERM}',
         r"{SUM} : {SUM} {SUM_OPERATOR} {TERM}",
-    ]:
-        t_ = [None, None]
-        for (i,term) in enumerate(children[::2]):
-            (t_[i], env1) = tc_expr(term, env0); assert env1 is env0
-            if t_[i].is_a_subtype_of_or_equal_to(T_numeric_):
-                pass
-            else:
-                # Only happens on non-final passes:
-                add_pass_error(
-                    expr,
-                    "Expected numeric, got %s" % str(t_[i])
-                )
-
-        if t_[0] == T_TBD and t_[1] == T_TBD:
-            assert 0
-            result_type = T_Integer_
-        elif t_[0] == T_TBD:
-            # non-final only
-            add_pass_error(expr, "t0 is TBD")
-            result_type = t_[1]
-        elif t_[1] == T_TBD:
-            result_type = t_[0]
-
-        elif t_[0] == t_[1]:
-            # usually Integer_, but twice Number:
-            # `_t_ + LocalTZA(_t_, *true*)`
-            # `_t_ - LocalTZA(_t_, *false*)`
-            # Although in practice, LocalTZA probably always returns an integer
-            result_type = t_[0]
-
-        elif t_[1].is_a_subtype_of_or_equal_to(t_[0]):
-            # 4 times
-            result_type = t_[0]
-        elif t_[0].is_a_subtype_of_or_equal_to(t_[1]):
-            # 3 times
-            result_type = t_[1]
-
-        elif t_[0] == T_code_unit_ and t_[1] == T_Integer_:
-            # 2 times, both in UTF16Decode:
-            # `_lead_ - 0xD800`
-            # `_trail_ - 0xDC00`
-            result_type = t_[1]
-
-        elif t_[0] == T_BigInt and t_[1] == T_MathInteger_:
-            # BitwiseOp
-            result_type = t_[0]
-
-        elif t_[0] == T_Integer_ and t_[1] == T_MathInteger_:
-            result_type = t_[0]
-
-        elif t_[0] == T_MathInteger_ and t_[1] == T_Integer_:
-            result_type = t_[1]
-
-        else:
-            assert 0, (t_[0], t_[1])
-        return (result_type, env1)
-
-    # merge the blocks above + below
-
-    elif p in [
         r'{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}',
     ]:
-        [a, _, b] = children
-        (a_type, enva) = tc_expr(a, env0); assert enva is env0
-        (b_type, envb) = tc_expr(b, env0); assert envb is env0
-        if a_type == T_TBD:
-            # Happens during non-final passes.
-            assert b_type != T_TBD
-            assert b_type.is_a_subtype_of_or_equal_to(T_numeric_)
-            a_type = b_type
-            # env1 = env0.with_expr_type_replaced(a, a_type)
-            env1 = env0
-            add_pass_error(
-                expr,
-                "left operand type is TBD"
-            )
-        elif b_type == T_TBD:
-            # Happens during non-final passes.
-            assert a_type != T_TBD
-            assert a_type.is_a_subtype_of_or_equal_to(T_numeric_)
-            b_type = a_type
-            env1 = env0
-            add_pass_error(
-                expr,
-                "right operand type is TBD"
-            )
-        elif a_type == T_Integer_ | T_not_set and b_type == T_Integer_:
-            add_pass_error(
-                expr,
-                "left operand might be not_set?"
-            )
-            a_type = T_Integer_
-            env1 = env0
-        else:
-            assert a_type.is_a_subtype_of_or_equal_to(T_numeric_)
-            assert b_type.is_a_subtype_of_or_equal_to(T_numeric_)
-            env1 = env0
+        [a, op, b] = children
+        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
+        (b_t, env1) = tc_expr(b, env0); assert env1 is env0
 
-        if a_type == T_Integer_ and b_type == T_Integer_:
-            return (T_Integer_, env1)
+        if a_t == T_MathReal_ or b_t == T_MathReal_:
+            env0.assert_expr_is_of_type(a, T_MathReal_)
+            env0.assert_expr_is_of_type(b, T_MathReal_)
+            return (T_MathReal_, env0)
 
-        # -------
+        elif a_t == T_MathInteger_ or b_t == T_MathInteger_:
+            env1 = env0.ensure_expr_is_of_type(a, T_MathInteger_)
+            env2 = env1.ensure_expr_is_of_type(b, T_MathInteger_)
+            return (T_MathInteger_, env2)
 
-        elif a_type == T_MathReal_ and b_type == T_MathReal_:
-            return (T_MathReal_, env1)
+        elif a_t == T_code_unit_ and b_t == T_Integer_:
+            assert op.source_text() == '-'
+            return (T_Integer_, env0)
 
-        elif a_type == T_MathReal_ and b_type == T_MathInteger_:
-            return (T_MathReal_, env1)
+        elif a_t == T_Number or b_t == T_Number:
+            env0.assert_expr_is_of_type(a, T_Number)
+            env0.assert_expr_is_of_type(b, T_Number)
+            return (T_Number, env0)
 
-        elif a_type == T_MathInteger_ and b_type == T_MathReal_:
-            return (T_MathReal_, env1)
-
-        # -------
-
-        elif a_type == T_MathInteger_ and b_type == T_MathInteger_:
-            return (T_MathInteger_, env1)
-
-        # -------
-
-        elif a_type == T_Number and b_type == T_Number:
-            return (T_Number, env1)
-
-        elif a_type == T_Number and b_type == T_Integer_:
-            # Only 2 occurrences:
-            # `_m_ / 12` in MakeDay
-            # `8.64 &times; 10<sup>15</sup>` in TimeClip
-            return (T_Number, env1)
-
-        elif a_type == T_Integer_ and b_type == T_Number:
-            return (T_Number, env1)
-
-        # -------
-
-        elif a_type == T_MathInteger_ and b_type == T_BigInt:
-            return (T_BigInt, env1)
-
-        elif a_type == T_MathInteger_ | T_Integer_ and b_type == T_Integer_:
-            return (T_Integer_, env1)
-
-        elif a_type == T_Integer_ and b_type == T_MathInteger_ | T_Integer_:
-            return (T_Integer_, env1)
-
-#        elif a_type == T_Integer_ | T_Number and b_type == T_Number:
-#            assert 0
-#            add_pass_error( expr, "Int|Num op Number -> Int|Num")
-#            return (a_type, env1)
-#
-#        elif a_type == T_Number and b_type == T_numeric_:
-#            assert 0
-#            add_pass_error( expr, "Number op numeric -> Number")
-#            return (T_Number, env1)
-#        elif a_type == T_numeric_ and b_type == T_Number:
-#            assert 0
-#            add_pass_error( expr, "numeric or Number -> Number")
-#            return (T_Number, env1)
+        elif a_t == T_Integer_ or b_t == T_Integer_:
+            env1 = env0.ensure_expr_is_of_type(a, T_Integer_)
+            env2 = env1.ensure_expr_is_of_type(b, T_Integer_)
+            return (T_Integer_, env2)
 
         else:
-            assert 0, (a_type, b_type)
+            assert 0, (a_t, b_t)
 
     elif p in [
         r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}",
@@ -8666,7 +8552,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             t = T_Integer_ # maybe
             env2 = env1.with_expr_type_replaced(ex, t)
         else:
-            assert t.is_a_subtype_of_or_equal_to(T_numeric_), t
+            assert t.is_a_subtype_of_or_equal_to(T_Number), t
             env2 = env1
         return (t, env2)
 
@@ -9238,7 +9124,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the UTF16Encoding of {NAMED_OPERATION_INVOCATION}":
         # todo: should be "the UTF16Encoding of the code point whose value is ..."
         [noi] = children
-        env0.assert_expr_is_of_type(noi, T_numeric_)
+        env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (ListType(T_code_unit_), env0)
 
     elif p in [
@@ -10694,11 +10580,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Integer_, env0)
 
-    elif p == r"{NUM_EXPR} : the exact mathematical value of {SUM}":
-        [summ] = children
-        env0.assert_expr_is_of_type(summ, T_Number)
-        return (T_transitioning_from_Number_to_MathReal, env0)
-
     elif p == r"{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
@@ -10819,7 +10700,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [zvar, rvar] = children
         env0.assert_expr_is_of_type(zvar, T_String)
         env0.assert_expr_is_of_type(rvar, T_Integer_)
-        return (T_transitioning_from_Number_to_MathReal, env0)
+        return (T_MathInteger_, env0)
 
     elif p == r"{EXPR} : the String value consisting of repeated concatenations of {EX} truncated to length {var}":
         [ex, var] = children
