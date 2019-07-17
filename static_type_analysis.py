@@ -9578,10 +9578,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_alg_steps, env0)
 
     elif p in [
-        r"{EXPR} : the steps of an ArgGetter function as specified below",
-        r"{EXPR} : the steps of an ArgSetter function as specified below",
+        r"{EXPR} : the steps of an {cap_word} function as specified below",
     ]:
-        [] = children
+        [cap_word] = children
         return (T_alg_steps, env0)
 
     elif p == r"{EXPR} : the algorithm steps specified in {h_emu_xref} for the {percent_word} function":

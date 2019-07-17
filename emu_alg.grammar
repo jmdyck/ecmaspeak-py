@@ -1211,8 +1211,7 @@
     the sole element of {var}
     the source text matched by {nonterminal}
     the source text that was recognized as {PROD_REF}
-    the steps of an ArgGetter function as specified below
-    the steps of an ArgSetter function as specified below
+    the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
     the string-concatenation of {EX} and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}
