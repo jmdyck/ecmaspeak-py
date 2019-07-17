@@ -68,11 +68,17 @@
 
 {FACTOR} :
     ({SUM})
-    {OP_NAME}({EXPR})
-    floor({EXPR})
     {CONSTANT_NAME}
+    {PREFIX_PAREN}
     {dec_int_lit}
     {var}
+
+{PREFIX_PAREN} :
+    {OPN_BEFORE_PAREN}({EXPR})
+
+{OPN_BEFORE_PAREN} :
+    {OP_NAME}
+    floor
 
 {CONSTANT_NAME} :
     HoursPerDay
