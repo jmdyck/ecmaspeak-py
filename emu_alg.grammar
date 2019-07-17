@@ -191,6 +191,9 @@
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
 
+    # PR 1585 
+    Sort {var} using an implementation-dependent sequence of calls to SortCompare.
+
     # PR 1612 sort_algo:
     Let {var} be {LITERAL} if any of the following conditions are satisfied, and let it be {LITERAL} otherwise:{I_BULLETS}
 
@@ -273,6 +276,10 @@
     initialize the corresponding internal slot value on {var} to {LITERAL}
     append each of its elements to {var}
 
+    # PR 1614 ValidateAndApplyPropertyDescriptor
+    convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
+    create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
+
 # ------------------------------------------------------
 
 {EACH_THING} :
@@ -330,6 +337,10 @@
 
     # PR 1552 UTF16:
     code point {var} in {NAMED_OPERATION_INVOCATION}
+
+    # PR 1623 index_strings
+    own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
+    own property key {var} of {var} that is a Uint32-string, in ascending numeric index order
 
 # ------------------------------------------------------
 
@@ -403,6 +414,9 @@
     {CONDITION_1} and {CONDITION_1} or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
+
+    # PR 1620 FlattenIntoArray
+    {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
@@ -819,6 +833,14 @@
     there exists a nonnegative integer {var} less than {var} such that {CONDITION_1}
     {var} is an exotic object (including Proxy exotic objects) whose behaviour for {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} is not the ordinary object implementation of these internal methods
     {var} is not *undefined* and is not a consistent comparison function for the elements of this array (see below)
+
+    # PR 1620 FlattenIntoArray
+    {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
+
+    # PR 1623 index_strings
+    {var} is a Uint32-string
+    {var} is not a Uint32-string
+    {var} is not a Uint53-string
 
 {PROPERTY_KIND} :
     accessor
