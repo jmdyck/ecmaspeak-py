@@ -10,7 +10,6 @@
 {EMU_EQN_BODY} :
     {CONSTANT_DEF}
     {OPERATION_DEF}
-    {MULTI_LINE_EQN}
 
 # --------------------------
 
@@ -22,8 +21,6 @@
 
 {OPERATION_DEF} :
     {OP_NAME}({var}) = {EXPR}
-
-{MULTI_LINE_EQN} :
     {OP_NAME}({var}){RHSS}{nlai}
 
 {RHSS} :
