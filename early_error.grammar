@@ -18,7 +18,7 @@
     All Early Error rules for {nonterminal} and its derived productions apply to {NAMED_OPERATION_INVOCATION}.
     All early error rules for {nonterminal} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}.
     Always throw a Syntax Error if code matches this production.
-    For each {nonterminal} {var} in ReferencedBindings of {nonterminal}: It is a Syntax Error if {CONDITION}.
+    For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
     If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
     It is a Syntax Error if {CONDITION}.
@@ -44,10 +44,9 @@
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text matches this rule
     the <sub>[Tagged]</sub> parameter was not set
-    the List of Unicode code points that is SourceText of {nonterminal} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    the List of Unicode code points that is SourceText of {nonterminal} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    the List of Unicode code points that is SourceText of {nonterminal} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by SourceText of {nonterminal} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}
-    the StringValue of {LOCAL_REF} is `"eval"` or `"arguments"`
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}
     the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose StringValue equals the StringValue of the {nonterminal} of this production's {nonterminal}
     the goal symbol of the syntactic grammar is {nonterminal}
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
@@ -76,6 +75,7 @@
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of `"constructor"`
     {NAMED_OPERATION_INVOCATION} contains {backticked_str}
     {NAMED_OPERATION_INVOCATION} is `"arguments"` or `"eval"`
+    {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
