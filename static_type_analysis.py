@@ -10537,11 +10537,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_code_unit_)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string":
-        [var1, var2, var3] = children
-        assert same_source_text(var1, var2)
-        env0.assert_expr_is_of_type(var1, T_String)
-        return (T_String, env0)
+# obsoleted by merge of PR #1602:
+#    elif p == r"{EXPR} : a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string":
+#        [var1, var2, var3] = children
+#        assert same_source_text(var1, var2)
+#        env0.assert_expr_is_of_type(var1, T_String)
+#        return (T_String, env0)
 
     elif p == r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}":
         [var1, var2, nont] = children
@@ -10685,11 +10686,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(strlit, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string":
-        [var, nont, var2, x] = children
-        assert same_source_text(var2, var)
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_String, env0)
+# obsoleted by merge of PR #1602:
+#    elif p == r"{EXPR} : a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string":
+#        [var, nont, var2, x] = children
+#        assert same_source_text(var2, var)
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (T_String, env0)
 
     elif p == r"{EXPR} : the substring of {var} consisting of all code units before the first such code unit":
         [var] = children

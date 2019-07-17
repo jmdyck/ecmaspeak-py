@@ -207,8 +207,8 @@
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
 
-    # tmp
-    If {CONDITION}, {SMALL_COMMAND}; else, {SMALL_COMMAND}.
+    # obsoleted by the merge of #1596:
+    # If {CONDITION}, {SMALL_COMMAND}; else, {SMALL_COMMAND}.
 
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
@@ -981,11 +981,9 @@
     a newly created bound function exotic object with the internal slots listed in {h_emu_xref}
     a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}
     a newly created object with an internal slot for each name in {var}
-    a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
     a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined
     a one-element CharSet containing the character {var}
     a reference to the list of waiters in {var}
-    a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
     a value of Number type, whose value is {EXPR}
     a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
     a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {var}
@@ -1237,6 +1235,10 @@
     {var}'s single code unit element
     {var}'s {DSBN} value
     {var}<sup>th</sup> element of {var}'s _captures_ List
+
+    # obsoleted by the merge of PR #1602:
+    # a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
+    # a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
 
     # PR 1460 explicit-exotics:
     the internal slots listed in {h_emu_xref}
