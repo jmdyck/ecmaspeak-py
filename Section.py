@@ -194,7 +194,10 @@ def _infer_section_kinds(section):
             (r'The _TypedArray_ Constructors',     'Call_and_Construct_ims_of_an_intrinsic_object'),
             (r'The %TypedArray% Intrinsic Object', 'Call_and_Construct_ims_of_an_intrinsic_object'),
 
-            (r'Changes to .+',                     'catchall'),
+            (r'Changes to .+',                                   'changes'),
+            (r'__proto__ Property Names in Object Initializers', 'changes'),
+            (r'VariableStatements in Catch Blocks',              'changes'),
+            (r'Initializers in ForIn Statement Heads',           'changes'),
 
             (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
             (r'(?P<op_name>(Number|BigInt)::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'abstract_operation'),
@@ -233,6 +236,10 @@ def _infer_section_kinds(section):
             section.section_kind = 'env_rec_method'
         else:
             section.section_kind = 'abstract_operation'
+
+    if section.section_title == 'Pattern Semantics':
+        if section.section_num.startswith('B.'):
+            section.section_kind = 'changes'
 
     # -----------
 

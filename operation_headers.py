@@ -1678,7 +1678,10 @@ def re_sub_many_etc(subject, pattern_repls):
 def get_info_from_header(section):
     oi = OperationInfo()
 
-    if section.section_kind == 'catchall':
+    if section.section_kind in [
+        'catchall',
+        'changes',
+    ]:
         return oi
 
     if section.section_kind in [
@@ -1701,7 +1704,7 @@ def get_info_from_header(section):
         oi.name = section.ste['prop_path']
 
     else:
-        assert 0
+        assert 0, section.section_kind
 
     if 'parameters' not in section.ste:
         return oi
