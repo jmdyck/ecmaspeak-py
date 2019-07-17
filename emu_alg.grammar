@@ -1192,6 +1192,8 @@
     the result of parsing and evaluating {var} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
     the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
+    the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer
+    the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of subtracting the value {NUM_LITERAL} from {var}, using the same rules as for the `-` operator (see {h_emu_xref})
     the result of the comparison {EX} == {EX}
@@ -1395,8 +1397,6 @@
     Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}
     Strict Equality Comparison {var} === {EX}
     StringValue of the {nonterminal} of {nonterminal} {var}
-    a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer
-    a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
     the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
     the UTF16Encoding of each code point of {EX}
     the UTF16Encoding of the code points of {var}

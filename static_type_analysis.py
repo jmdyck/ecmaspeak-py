@@ -793,8 +793,6 @@ class Header:
                     elif x.prod.rhs_s == 'Strict Equality Comparison {var} === {EX}':
                         depend_on('Strict Equality Comparison')
                     elif x.prod.rhs_s in [
-                        'a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer',
-                        'a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer',
                         'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments',
                     ]:
                         pass
@@ -8178,8 +8176,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer",
-        r"{NAMED_OPERATION_INVOCATION} : a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer",
-        r"{NAMED_OPERATION_INVOCATION} : a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer",
+        r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer",
+        r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer",
         r"{EXPR} : the result of applying the bitwise operator @ to {var} and {var}. The result is a signed 32-bit integer",
     ]:
         [avar, bvar] = children
