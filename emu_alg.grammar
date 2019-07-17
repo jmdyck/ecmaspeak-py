@@ -1141,7 +1141,6 @@
     the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}
     the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}
     the integer that is {EXPR}
-    the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the intrinsic object {percent_word}
@@ -1181,10 +1180,6 @@
     the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
     the result of converting {var} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2008 binary64 format
-    the result of evaluating {LOCAL_REF}
-    the result of evaluating {LOCAL_REF} with argument {var}
-    the result of evaluating {LOCAL_REF}. This may be of type Reference
-    the result of evaluating {nonterminal} {var}
     the result of forming the value of the |NumericLiteral|
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
     the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
@@ -1397,7 +1392,12 @@
     Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}
     Strict Equality Comparison {var} === {EX}
     StringValue of the {nonterminal} of {nonterminal} {var}
+    evaluating {LOCAL_REF}
+    evaluating {LOCAL_REF} with argument {var}
+    evaluating {LOCAL_REF}. This may be of type Reference
+    evaluating {nonterminal} {var}
     the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
+    the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     the UTF16Encoding of each code point of {EX}
     the UTF16Encoding of the code points of {var}
     {LOCAL_REF} Contains {nonterminal}

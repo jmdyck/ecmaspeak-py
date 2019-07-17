@@ -819,6 +819,15 @@ class Header:
                     ]:
                         depend_on(x.children[0])
                     elif x.prod.rhs_s in [
+                        'evaluating {LOCAL_REF}',
+                        'evaluating {LOCAL_REF} with argument {var}',
+                        'evaluating {LOCAL_REF}. This may be of type Reference',
+                        'evaluating {nonterminal} {var}',
+                    ]:
+                        depend_on('Evaluation')
+                    elif x.prod.rhs_s == "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+                        depend_on('regexp-Evaluate')
+                    elif x.prod.rhs_s in [
                         'the {ISDO_NAME} of {PROD_REF}',
                         '{ISDO_NAME} of {PROD_REF}',
                         '{PREFIX_PAREN}',
@@ -879,11 +888,6 @@ class Header:
 
                 elif x.prod.lhs_s == '{ISDO_NAME}':
                     depend_on(x.children[0])
-
-                elif x.prod.lhs_s == '{EXPR}':
-                    if x.prod.rhs_s.startswith('the result of evaluating'):
-                        depend_on('Evaluation')
-                        pass
 
                 for child in x.children:
                     recurse(child)
@@ -7535,8 +7539,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
 
     elif p in [
-        r"{EXPR} : the result of evaluating {LOCAL_REF}",
-        r"{EXPR} : the result of evaluating {LOCAL_REF}. This may be of type Reference",
+        r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF}",
+        r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF}. This may be of type Reference",
     ]:
         [local_ref] = children
         if local_ref.source_text() in [
@@ -7556,7 +7560,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             op_name = 'Evaluation'
         return tc_sdo_invocation(op_name, local_ref, [], expr, env0)
 
-    elif p == r"{EXPR} : the result of evaluating {LOCAL_REF} with argument {var}":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF} with argument {var}":
         [local_ref, var] = children
         assert local_ref.source_text() in [
             '|Atom|',
@@ -7566,7 +7570,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         op_name = 'regexp-Evaluate'
         return tc_sdo_invocation(op_name, local_ref, [var], expr, env0)
 
-    elif p == r"{EXPR} : the result of evaluating {nonterminal} {var}":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : evaluating {nonterminal} {var}":
         [nont, var] = children
         env0.assert_expr_is_of_type(var, ptn_type_for(nont))
         return tc_sdo_invocation('Evaluation', var, [], expr, env0)
@@ -9766,7 +9770,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
         return (ProcType([T_Number, T_Number], T_Number), env0)
 
-    elif p == r"{EXPR} : the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [source_var, emu_xref, chars_var, nont, f_var] = children
         env0.assert_expr_is_of_type(source_var, T_String)
         env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
