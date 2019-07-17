@@ -8,7 +8,8 @@
     {EMU_EQN_BODY}{_eos_}
 
 {EMU_EQN_BODY} :
-    {ONE_LINE_EQN}
+    {CONSTANT_DEF}
+    {OPERATION_DEF}
     {MULTI_LINE_EQN}
 
 # --------------------------
@@ -34,10 +35,6 @@
     {EXPR} &le; {EXPR} &lt; {EXPR}
 
 # --------------------------
-
-{ONE_LINE_EQN} :
-    {CONSTANT_DEF}
-    {OPERATION_DEF}
 
 {CONSTANT_DEF} :
     {CONSTANT_NAME} = {EXPR}
