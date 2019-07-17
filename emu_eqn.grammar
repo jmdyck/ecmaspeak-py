@@ -14,6 +14,15 @@
 
 # --------------------------
 
+{CONSTANT_DEF} :
+    {CONSTANT_NAME} = {EXPR}
+    {CONSTANT_NAME} = {EXPR} = {EXPR}
+
+# --------------------------
+
+{OPERATION_DEF} :
+    {OP_NAME}({var}) = {EXPR}
+
 {MULTI_LINE_EQN} :
     {OP_NAME}({var}){RHSS}{nlai}
 
@@ -33,15 +42,6 @@
     {EXPR} &le; {EXPR}
     {EXPR} = {EXPR}
     {EXPR} &le; {EXPR} &lt; {EXPR}
-
-# --------------------------
-
-{CONSTANT_DEF} :
-    {CONSTANT_NAME} = {EXPR}
-    {CONSTANT_NAME} = {EXPR} = {EXPR}
-
-{OPERATION_DEF} :
-    {OP_NAME}({var}) = {EXPR}
 
 # ------
 
