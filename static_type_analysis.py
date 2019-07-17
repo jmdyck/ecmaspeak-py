@@ -7575,6 +7575,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{NAMED_OPERATION_INVOCATION} : evaluating {nonterminal} {var}":
         [nont, var] = children
+        assert nont.source_text() == '|CaseClause|'
         env0.assert_expr_is_of_type(var, ptn_type_for(nont))
         return tc_sdo_invocation('Evaluation', var, [], expr, env0)
 
