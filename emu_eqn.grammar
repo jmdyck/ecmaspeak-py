@@ -14,8 +14,8 @@
 # --------------------------
 
 {CONSTANT_DEF} :
-    {CONSTANT_NAME} = {EXPR}
-    {CONSTANT_NAME} = {EXPR} = {EXPR}
+    {CONSTANT_NAME} = {dec_int_lit}
+    {CONSTANT_NAME} = {dec_int_lit} = {EXPR}
 
 # --------------------------
 
