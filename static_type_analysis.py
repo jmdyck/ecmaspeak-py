@@ -7544,16 +7544,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [local_ref] = children
         if local_ref.source_text() in [
-            '|Atom|',
             '|AtomEscape|',
-            '|Disjunction|',
-            '|RegExpUnicodeEscapeSequence|',
+            '|Atom|',
+            '|CharacterClassEscape|',
+            '|CharacterEscape|',
+            '|ClassAtomNoDash|',
             '|ClassAtom|',
             '|ClassEscape|',
+            '|Disjunction|',
             '|LeadSurrogate|',
-            '|TrailSurrogate|',
             '|NonSurrogate|',
-            '|CharacterEscape|',
+            '|NonemptyClassRanges|'
+            '|RegExpUnicodeEscapeSequence|',
+            '|TrailSurrogate|',
         ]:
             op_name = 'regexp-Evaluate'
         else:
