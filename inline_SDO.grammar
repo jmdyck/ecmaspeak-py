@@ -70,10 +70,12 @@
 
 {PROD_REF} :
     the {ORDINAL} {nonterminal}
-    the {nonterminal}
     the {nonterminal} that is that single code point
     the {nonterminal} that is that {nonterminal}
     {nonterminal}
+
+    # obsoleted by merge of PR #1571
+    # the {nonterminal}
 
 {ORDINAL} :
     first

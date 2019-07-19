@@ -4518,8 +4518,8 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var2, T_CharSet)
         result = env0
 
-    elif p == r"{SMALL_COMMAND} : create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its default value":
-        [kind, name_var, obj_var, *dsbn_, desc_var, desc_var2] = children
+    elif p == r"{SMALL_COMMAND} : create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}":
+        [kind, name_var, obj_var, *dsbn_, desc_var, desc_var2, emu_xref] = children
         assert desc_var.children == desc_var2.children
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
@@ -4530,8 +4530,8 @@ def tc_nonvalue(anode, env0):
         [] = children
         result = env0
 
-    elif p == r"{SMALL_COMMAND} : convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their default values":
-        [name_var, obj_var, kind1, kind2, dsbn1, dsbn2] = children
+    elif p == r"{SMALL_COMMAND} : convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}":
+        [name_var, obj_var, kind1, kind2, dsbn1, dsbn2, emu_xref] = children
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         result = env0
@@ -4940,6 +4940,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
     ]:
         t_env = env0
@@ -5328,6 +5329,10 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is an integer Number &ge; 0":
         [var] = children
+        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}":
+        [var, lita, litb] = children
         return env0.with_type_test(var, 'is a', T_Integer_, asserting)
 
     elif p in [
@@ -7250,7 +7255,6 @@ def tc_cond_(cond, env0, asserting):
     # elif p == r"{CONDITION_AS_SMALL_COMMAND} : there is no {var} such that {CONDITION}":
     # elif p == r"{CONDITION_AS_SMALL_COMMAND} : {var} _R_ {var}":
     # elif p == r"{CONDITION_AS_SMALL_COMMAND} : {var} {SAB_RELATION} {var}":
-    # elif p == r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}":
 
     else:
         stderr()
@@ -7526,6 +7530,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         if with_args.prod.rhs_s in [
             '{PASSING} argument {EX}',
             '{PASSING} arguments {EX} and {EX}',
+            '{PASSING} arguments {var}, {var}, and {var}',
             '{PASSING} {EX} as the argument',
             '{PASSING} {var} and {EX} as arguments',
             '{PASSING} {var} and {EX} as the arguments',

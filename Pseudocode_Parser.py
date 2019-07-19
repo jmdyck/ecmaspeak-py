@@ -124,6 +124,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
 
     # tokens that begin with '*':
     {starred_int_lit}       : \* [+-] 0 \*
+    {starred_int_lit}       : \* 1 \*
     {starred_nonfinite_lit} : \* [+-]? &infin; \*
     {starred_nonfinite_lit} : \* NaN \*
     {starred_word}          : \* [A-Za-z]+ \*

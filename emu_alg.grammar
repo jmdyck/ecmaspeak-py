@@ -21,7 +21,6 @@
     {nlai}{dec_int_lit}.
 
 {COMMAND} :
-    Add 1 to {var}.
     Add the characters in set {var} to set {var}.
     Add {EX} as the last element of {var}.
     Add {var} as an element of the list {var}.
@@ -162,7 +161,6 @@
     Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
-    Subtract {NUM_LITERAL} from {var}.
     Suspend the currently running execution context.
     Suspend the running execution context and remove it from the execution context stack.
     Suspend {var} and remove it from the execution context stack.
@@ -176,6 +174,10 @@
     {IF_CLOSED}
     {IF_OTHER}
     {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
+
+    # obsoleted by the merge of PR #1604:
+    # Add 1 to {var}.
+    # Subtract {NUM_LITERAL} from {var}.
 
     # PR 1460 explicit-exotics:
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
@@ -249,14 +251,13 @@
     append {LITERAL} to {var}
     append {var} to {var}
     change its bound value to {var}
-    convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their default values
-    create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its default value
+    convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
+    create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
     in left to right order, starting with the second argument, append each argument as the last element of {var}
     let {var} be {EXPR}
     let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria
-    no further validation is required
     perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
     remove the first code unit from {var}
@@ -268,17 +269,16 @@
     suspend {var}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
-
     the replacement text is {EXPR}
     replace the text through `>` with {EXPR}
+
+    # obsoleted by merge of PR #1614:
+    # no further validation is required
 
     # PR 1460 explicit-exotics
     initialize the corresponding internal slot value on {var} to {LITERAL}
     append each of its elements to {var}
 
-    # PR 1614 ValidateAndApplyPropertyDescriptor
-    convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
-    create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN} and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
 
 # ------------------------------------------------------
 
@@ -407,6 +407,7 @@
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1}
+    {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
     # PR 1515 BigInt:
@@ -415,8 +416,6 @@
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
 
-    # PR 1620 FlattenIntoArray
-    {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
@@ -498,7 +497,6 @@
     the source text matching {var} is strict mode code
     the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits
     the two most significant bits in {var} are not 10
-    the {DSBN} fields of {var} and {var} are the Boolean negation of each other
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist a member {var} of set {var} such that {CONDITION_1}
     there exists a member {var} of set {var} such that {CONDITION_1}
@@ -517,7 +515,6 @@
     {EX} and {EX} are distinct {TYPE_NAME} or {TYPE_NAME} values
     {EX} and {EX} are the same Shared Data Block values
     {EX} and {EX} are valid byte offsets within the memory of {var}
-    {EX} and {EX} have different results
     {EX} has the value {LITERAL}
     {EX} is -1
     {EX} is absent
@@ -707,6 +704,7 @@
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
     {var} is an integer Number &ge; 0
+    {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
     {var} is an integer index &le; {var}
     {var} is an integer such that {CONDITION_1}
     {var} is an integer value &ge; 0
@@ -785,6 +783,10 @@
     {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
     {var}, {var}, and {var} are integer values &ge; 0
 
+    # obsoleted by the merge of PR #1614:
+    # the {DSBN} fields of {var} and {var} are the Boolean negation of each other
+    # {EX} and {EX} have different results
+
     # PR 1174
     {var} does not provide the direct binding for this export
 
@@ -833,9 +835,6 @@
     there exists a nonnegative integer {var} less than {var} such that {CONDITION_1}
     {var} is an exotic object (including Proxy exotic objects) whose behaviour for {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} is not the ordinary object implementation of these internal methods
     {var} is not *undefined* and is not a consistent comparison function for the elements of this array (see below)
-
-    # PR 1620 FlattenIntoArray
-    {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
 
     # PR 1623 index_strings
     {var} is a Uint32-string
@@ -915,7 +914,7 @@
     # PR 1515 BigInt:
     one of:{I_BULLETS}
 
-    # PR ? N
+    # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
 
 {EXPR} :
@@ -1390,7 +1389,6 @@
     Abstract Relational Comparison {var} &lt; {var}
     Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}
     Strict Equality Comparison {var} === {EX}
-    StringValue of the {nonterminal} of {nonterminal} {var}
     evaluating {LOCAL_REF}
     evaluating {LOCAL_REF} with argument {var}
     evaluating {LOCAL_REF}. This may be of type Reference
@@ -1411,6 +1409,9 @@
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
+
+    # obsoleted by the merge of PR #1571:
+    # StringValue of the {nonterminal} of {nonterminal} {var}
 
     ## directed-operations:
     ## {nonterminal}.\w+() as defined in {h_emu_xref}
@@ -1439,11 +1440,14 @@
 {WITH_ARGS} :
     {PASSING} argument {EX}
     {PASSING} arguments {EX} and {EX}
-    {PASSING} arguments {EX} and {EX} as the optional {var} argument
+    {PASSING} arguments {var}, {var}, and {var}
     {PASSING} {EX} as the argument
     {PASSING} {var} and {EX} as arguments
     {PASSING} {var} and {EX} as the arguments
     {PASSING} {var}, {var}, and {var} as the arguments
+
+    # obsoleted by the merge of PR #1571:
+    # {PASSING} arguments {EX} and {EX} as the optional {var} argument
 
 {PASSING} :
     passing
@@ -1657,13 +1661,15 @@
 {STR_LITERAL} :
     {backticked_str}
     `","` (a comma)
-    {starred_str}
     the String {backticked_str}
     the empty String
     the empty String `""`
     the empty String value
     the empty string
     the single-element String `","`
+
+    # obsoleted by the merge of PR #1592:
+    # {starred_str}
 
 {NUM_LITERAL} :
     #! (2|10)<sup>[0-9]+</sup>
