@@ -184,8 +184,7 @@
 
     # PR 1515 BigInt:
     Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
-    Let {var} be {EXPR}. NOTE: Because {var} and {var} are primitive values evaluation order is not important.
-    Let {var} be {EXPR}. NOTE: This extends the sign.
+    Let {var} be {EXPR}. {note}
     Repeat, until {CONDITION},{IND_COMMANDS}
 
     # PR 1552 UTF16:
@@ -278,6 +277,10 @@
     # PR 1460 explicit-exotics
     initialize the corresponding internal slot value on {var} to {LITERAL}
     append each of its elements to {var}
+
+    # PR 1515 BigInt
+    @ is `^`; return {EXPR}
+    {nonterminal} is {backticked_oth}; return {EXPR}
 
 
 # ------------------------------------------------------
@@ -530,6 +533,7 @@
     {EX} is neither {LITERAL} nor the active function
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not an element of {var}
+    {EX} is not equal to {EX}
     {EX} is not present
     {EX} is not present, or is either {LITERAL} or {LITERAL}
     {EX} is not {LITERAL}
@@ -740,7 +744,6 @@
     {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}
     {var} is not currently an element of {var}
     {var} is not empty
-    {var} is not equal to {var}
     {var} is not finite
     {var} is not in {PREFIX_PAREN}
     {var} is not in {var}
@@ -809,12 +812,11 @@
 
     # PR 1515 BigInt:
     @ is {EX}
-    one of {var} and {var} contains the substring `"Big"` and the other does not
-    {EX} contains the substring `"Big"`
-    {EX} does not contain the substring `"Big"`, or vice versa
-    {nonterminal} has more than 20 significant digits
-    {nonterminal} is `[*/%]`
-    {var} is not {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+    {nonterminal} is {backticked_oth}
+    {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}
+    {var} is an Object that has {DSBN} and {DSBN} internal slots
+    {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
+    {var} is the String value of one of the Element Types in {h_emu_xref}
     {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}
     {var} or {var} is {LITERAL}
 
@@ -863,9 +865,10 @@
     Type({TYPE_ARG}) is {var}
 
     # PR 1515 BigInt:
-    Both Type({var}) and Type({var}) is Number or both are BigInt
+    Both Type({var}) and Type({var}) are Number or both are BigInt
     Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
     Type({TYPE_ARG}) is not Number or BigInt
+    Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
 
 {TYPE_ARG} :
     {var}
@@ -910,9 +913,6 @@
     an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
     the string-concatenation of:{I_BULLETS}
     the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
-
-    # PR 1515 BigInt:
-    one of:{I_BULLETS}
 
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
@@ -1080,7 +1080,7 @@
     the String value of length 1, containing one code unit from {var}, namely the code unit at index {var}
     the String value of length 1, containing one code unit from {var}, specifically the code unit at index {var}
     the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor
-    the String value of the Element Type value in {h_emu_xref} for {var}
+    the String value of the Element Type value in {h_emu_xref} for {EX}
     the String value of the property name
     the String value of {DOTTING}
     the String value that is a copy of {var} with both leading and trailing white space removed
@@ -1272,12 +1272,8 @@
     a BigInt representing {EX}
     the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
     the BigInt value that corresponds to {var}
-    the Number value for {var} (as specified in {h_emu_xref})
     the String value consisting of the code units of the digits of the decimal representation of {var}
-    the result of applying the addition operation to {var} and {var}. See the Note on {h_emu_xref}
     the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
-    the result of applying the subtraction operation to {var} and {var}. See the Note on {h_emu_xref}
-    the result of {h_emu_xref} to {var} and {var} as specified in {h_emu_xref}
     the value that {var} corresponds to in {h_emu_xref}
 
     # PR 1547 SourceText:
@@ -1360,11 +1356,13 @@
     # PR 1515 BigInt:
     Type({var})::unit
     {backticked_oth}
+    the mathematical value of negating {var}
     the mathematical value of {var}
     the mathematical value of {var} divided by {var}
     the mathematical value of {var} raised to the power {var}
     {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
     {var} rounded towards 0 to the next integral value
+    {EX}, rounding down to the nearest integer, including for negative numbers
 
 {ENVIRONMENT_RECORD_KIND} :
     declarative
@@ -1476,10 +1474,11 @@
     {var}.{cap_word}
 
     # PR 1515 BigInt:
-    BigInt::{word}
-    Number::{word}
-    Type({var})::{word}
-    {var}::{word}
+    BigInt::{low_word}
+    Number::{low_word}
+    Type({var})::{low_word}
+    thisBigIntValue
+    {var}::{low_word}
 
 {EXLIST_OPT} :
     {EXLIST}
@@ -1684,9 +1683,8 @@
     {starred_int_lit}
     {starred_nonfinite_lit}
 
-    # PR 1515 BigInt?
-    #! \*\d+\*
-    #! \*[01]n\*
+    # PR 1515 BigInt:
+    {starred_bigint_lit}
 
 {ERROR_TYPE} :
     *TypeError*
