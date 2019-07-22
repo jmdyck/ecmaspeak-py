@@ -1472,7 +1472,7 @@ def get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text):
         oi = resolve_oi(hoi, poi)
 
         if oi.param_names is None:
-            assert oi.name == 'Proxy Revocation'
+            assert oi.name in ['Proxy Revocation', 'ListIteratorNext']
             oi.param_names = []
 
         if s.section_title.startswith('Math.'):
@@ -1602,6 +1602,7 @@ def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
             (r'^IT is an anonymous function that ', 'IT '),
             (r'^IT is a standard built-in function object \(.+\) that ', 'IT '),
             (r'^IT is an anonymous built-in function with ', 'IT has '),
+            (r'^IT is an anonymous built-in function\. ', ''),
         ])
 
     if preamble_text in [
@@ -1612,6 +1613,7 @@ def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
 
     (preamble_text, group_dict) = re_sub_many_etc(preamble_text, [
         (r' These are the steps in stringifying an object:$', ''),
+        (r'^When called with (?P<PL>.+), it performs the following steps:$', ''),
         (r' When IT is called with (?P<PL>.+), the following steps are taken:$', ''),
         (r' When IT is called with (?P<PL>.+) it performs the following steps:$', ''),
         (r' When IT is called, the following steps are taken:$', ''),
