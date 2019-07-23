@@ -280,21 +280,8 @@ def collect_op_info_from_sdo_section(section):
         assert section.block_children[1].element_name == 'emu-note'
         assert len(section.section_children) == 2
         return
-    elif section.section_title in ['Statement Rules', 'Expression Rules']:
-        assert section.parent.section_title == 'Static Semantics: HasCallInTailPosition'
-        sdo_name = 'HasCallInTailPosition'
 
-    elif section.section_title == 'Static Semantics: TV and TRV':
-        # Each rule specifies which SDO(section) it pertains to.
-        sdo_name = None
-
-    elif section.parent.section_title == 'Pattern Semantics':
-        sdo_name = 'regexp-Evaluate'
-
-    else:
-        mo = re.fullmatch('(Static|Runtime) Semantics: (\w+)', section.section_title)
-        assert mo, section.section_title
-        sdo_name = mo.group(2)
+    sdo_name = section.ste['op_name']
 
     # ------------------------------------------------------------------------------
 
@@ -366,7 +353,10 @@ def collect_op_info_from_sdo_section(section):
                     if cl == '{ISDO_NAME}':
                         [cap_word] = child.children
                         [rule_sdo_name] = cap_word.children
-                        assert rule_sdo_name == sdo_name or sdo_name is None
+                        if sdo_name == 'TV and TRV':
+                            assert rule_sdo_name in ['TV', 'TRV']
+                        else:
+                            assert rule_sdo_name == sdo_name
                         rule_sdo_names.append(rule_sdo_name)
                     elif cl == '{h_emu_grammar}':
                         rule_grammars.append(child._hnode)
