@@ -487,12 +487,15 @@ def op_add_defn(op_kind, op_name, discriminator, emu_alg):
 
 def check_sdo_coverage():
     stderr('check_sdo_coverage...')
-    global sdo_coverage_map
-    sdo_coverage_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    spec.sdo_coverage_map = {}
 
     # collect sdo_coverage_info:
     for (op_name, op_info) in info_for_op_named_.items():
         if op_info.kind == 'SDO':
+
+            if op_name not in spec.sdo_coverage_map:
+                spec.sdo_coverage_map[op_name] = {}
+
             for (discriminator, emu_alg) in op_info.definitions:
                 if isinstance(discriminator, ANode):
                     assert discriminator.prod.lhs_s == '{nonterminal}'
@@ -500,7 +503,11 @@ def check_sdo_coverage():
                     discriminator.summary = [] # XXX?
 
                 for (lhs_nt, def_i, optionals) in discriminator.summary:
-                    sdo_coverage_map[op_name][lhs_nt][def_i].append(optionals)
+                    if lhs_nt not in spec.sdo_coverage_map[op_name]:
+                        spec.sdo_coverage_map[op_name][lhs_nt] = {}
+                    if def_i not in spec.sdo_coverage_map[op_name][lhs_nt]:
+                        spec.sdo_coverage_map[op_name][lhs_nt][def_i] = []
+                    spec.sdo_coverage_map[op_name][lhs_nt][def_i].append(optionals)
 
     analyze_sdo_coverage_info()
 
@@ -510,7 +517,7 @@ def analyze_sdo_coverage_info():
     coverage_f = shared.open_for_output('sdo_coverage')
     def put(*args): print(*args, file=coverage_f)
 
-    for (sdo_name, coverage_info_for_this_sdo) in sorted(sdo_coverage_map.items()):
+    for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
 
         if sdo_name == 'Contains':
             # XXX can we do anything useful here?
@@ -593,8 +600,8 @@ def required_nts_in(opt_combo):
     return [nt for (nt, omreq) in opt_combo if omreq == 'required']
 
 def sdo_rules_that_handle(sdo_name, lhs_nt, def_i, opt_combo):
-    coverage_info_for_this_sdo = sdo_coverage_map[sdo_name]
-    coverage_info_for_this_nt = coverage_info_for_this_sdo[lhs_nt]
+    coverage_info_for_this_sdo = spec.sdo_coverage_map[sdo_name]
+    coverage_info_for_this_nt = coverage_info_for_this_sdo.get(lhs_nt, {})
     if def_i not in coverage_info_for_this_nt: return []
     list_of_opt_covers = coverage_info_for_this_nt[def_i]
     covers = []
