@@ -470,6 +470,12 @@ def op_add_defn(op_kind, op_name, discriminator, emu_alg):
         op_info = Operation(op_name, op_kind)
         spec.info_for_op_named_[op_name] = op_info
 
+    assert (
+        isinstance(emu_alg, ANode) and emu_alg.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']
+        or
+        isinstance(emu_alg, HNode) and emu_alg.element_name in ['emu-alg', 'p']
+    )
+
     op_info.definitions.append( (discriminator, emu_alg) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
