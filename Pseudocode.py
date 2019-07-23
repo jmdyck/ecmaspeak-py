@@ -247,8 +247,7 @@ class Emu_Alg_Parser(Pseudocode_Parser):
 def collect_operation_info():
     stderr('collect_operation_info...')
 
-    global info_for_op_named_
-    info_for_op_named_ = {}
+    spec.info_for_op_named_ = {}
 
     for section in spec.doc_node.each_descendant_that_is_a_section():
 
@@ -464,12 +463,12 @@ def op_add_defn(op_kind, op_name, discriminator, emu_alg):
         isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}'
     )
 
-    if op_name in info_for_op_named_:
-        op_info = info_for_op_named_[op_name]
+    if op_name in spec.info_for_op_named_:
+        op_info = spec.info_for_op_named_[op_name]
         assert op_info.kind == op_kind
     else:
         op_info = Operation(op_name, op_kind)
-        info_for_op_named_[op_name] = op_info
+        spec.info_for_op_named_[op_name] = op_info
 
     op_info.definitions.append( (discriminator, emu_alg) )
 
@@ -480,7 +479,7 @@ def check_sdo_coverage():
     spec.sdo_coverage_map = {}
 
     # collect sdo_coverage_info:
-    for (op_name, op_info) in info_for_op_named_.items():
+    for (op_name, op_info) in spec.info_for_op_named_.items():
         if op_info.kind == 'SDO':
 
             if op_name not in spec.sdo_coverage_map:
