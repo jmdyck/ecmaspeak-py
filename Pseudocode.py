@@ -218,30 +218,6 @@ class Emu_Alg_Parser(Pseudocode_Parser):
     def __init__(self):
         Pseudocode_Parser.__init__(self, 'emu_alg')
 
-#        # To handle the {_INDENT} and {_OUTDENT} symbols, ...
-#        indent_info = [
-#            (mo.start(), mo.end() - mo.start())
-#            for mo in re.finditer(r'(?m)^ *', shared.spec_text)
-#        ]
-#        indent_change_info = dict(
-#            (this_posn, this_ind - prev_ind)
-#            for ((_, prev_ind),(this_posn, this_ind)) in zip([(None,0)] + indent_info[:-1], indent_info)
-#        )
-#        self.dent_symbols = {}
-#        for (posn, indentation_change) in indent_change_info.items():
-#            if indentation_change % 2 != 0:
-#                shared.stderr("Warning: odd indentation-change (%d)" % indentation_change)
-#            n_dents = abs(indentation_change) / 2
-#
-#            if indentation_change > 0:
-#                symbol = '{_INDENT}'
-#            elif indentation_change < 0:
-#                symbol = '{_OUTDENT}'
-#            else:
-#                symbol = None
-#
-#            self.dent_symbols[posn] = (symbol, n_dents)
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def collect_operation_info():
