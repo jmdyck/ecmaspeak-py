@@ -33,7 +33,7 @@ def parse_emu_eqns():
     stderr()
     stderr("parse_emu_eqns...")
 
-    emu_eqn_parser = Emu_Eqn_Parser()
+    emu_eqn_parser = Pseudocode_Parser('emu_eqn')
 
     for emu_eqn in spec.doc_node.each_descendant_named('emu-eqn'):
         st = emu_eqn.inner_source_text()
@@ -68,17 +68,13 @@ def parse_emu_eqns():
 
     emu_eqn_parser.report()
 
-class Emu_Eqn_Parser(Pseudocode_Parser):
-    def __init__(self):
-        Pseudocode_Parser.__init__(self, 'emu_eqn')
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def parse_early_errors():
     stderr()
     stderr("parse_early_errors...")
 
-    ee_parser = Early_Error_Parser()
+    ee_parser = Pseudocode_Parser('early_error')
 
     # XXX prose 'superstructure' outside early error rules:
     #
@@ -123,17 +119,13 @@ def parse_early_errors():
 
     ee_parser.report()
 
-class Early_Error_Parser(Pseudocode_Parser):
-    def __init__(self):
-        Pseudocode_Parser.__init__(self, 'early_error')
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def parse_inline_sdo():
     stderr()
     stderr("parse_inline_sdo...")
 
-    inline_sdo_parser = Inline_SDO_Parser()
+    inline_sdo_parser = Pseudocode_Parser('inline_SDO')
 
     for s in spec.doc_node.each_descendant_that_is_a_section():
         if s.section_kind == 'syntax_directed_operation':
@@ -153,17 +145,13 @@ def parse_inline_sdo():
 
     inline_sdo_parser.report()
 
-class Inline_SDO_Parser(Pseudocode_Parser):
-    def __init__(self):
-        Pseudocode_Parser.__init__(self, 'inline_SDO')
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def parse_emu_algs():
     stderr()
     stderr("parse_emu_algs...")
 
-    emu_alg_parser = Emu_Alg_Parser()
+    emu_alg_parser = Pseudocode_Parser('emu_alg')
 
     t_start = time.time()
 
@@ -211,12 +199,6 @@ def parse_emu_algs():
     stderr("parsing %d emu-algs took %d seconds" % (parse_count, t_end-t_start))
 
     emu_alg_parser.report()
-
-# ------------------------------------------------------------------------------
-
-class Emu_Alg_Parser(Pseudocode_Parser):
-    def __init__(self):
-        Pseudocode_Parser.__init__(self, 'emu_alg')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
