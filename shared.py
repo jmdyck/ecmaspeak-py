@@ -128,8 +128,8 @@ def write_spec_with_replacements(base, replacements):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def stderr(*s):
-    print(*s, file=sys.stderr)
+def stderr(*s, **kwargs):
+    print(*s, **kwargs, file=sys.stderr)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
