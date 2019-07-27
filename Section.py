@@ -230,9 +230,8 @@ def _infer_section_kinds(section):
 
     # Resolve ambiguous cases:
     if section.section_kind == 'abstract_operation|env_rec_method':
-        if section.parent.section_title.endswith(' Environment Records'):
+        if section.parent.section_title.endswith(' Environment Records') or section.parent.section_title.endswith(' Scope Records'):
             # PR 1477 scope-records:
-            # or section.section_title.endswith(' Scope Records')
             section.section_kind = 'env_rec_method'
         else:
             section.section_kind = 'abstract_operation'
@@ -452,7 +451,7 @@ def _extract_info_from_section_title(section, pattern_results):
                     elif rest == ' [ ':
                         subsequent_are_optional = True
                     else:
-                        assert 0, repr(param_str)
+                        assert 0, (section.section_title, repr(param_str))
 
             section.ste['parameters'] = params_info
 
