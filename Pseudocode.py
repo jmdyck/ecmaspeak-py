@@ -180,18 +180,8 @@ def parse_emu_algs():
             # because I can't parse an "Otherwise" without a preceding "If"
             # (NumberToString)
 
-        if 1:
-            tree = try_to_parse(emu_alg.inner_start_posn, emu_alg.inner_end_posn)
-            emu_alg._syntax_tree = tree
-        else:
-            # used this when I was parsing individual lines:
-            for mo in re.compile(r'(?m)^ +\d+\. .+\n').finditer(
-                spec.text,
-                emu_alg.inner_start_posn,
-                emu_alg.inner_end_posn
-            ):
-                (line_start, line_end) = mo.span(0)
-                try_to_parse(line_start, line_end)
+        tree = try_to_parse(emu_alg.inner_start_posn, emu_alg.inner_end_posn)
+        emu_alg._syntax_tree = tree
 
     print(file=sys.stderr)
 
