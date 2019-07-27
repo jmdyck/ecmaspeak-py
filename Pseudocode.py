@@ -286,57 +286,7 @@ def analyze_sdo_section(section):
             for li in ul.children:
                 if li.element_name != 'li': continue
 
-                LI = li._syntax_tree
-                assert LI.prod.lhs_s == '{LI}'
-                [ISDO_RULE] = LI.children
-                assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
-
-                emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
-                emu_grammar_anodes = [
-                    child
-                    for child in ISDO_RULE.children
-                    if child.prod.lhs_s == '{h_emu_grammar}'
-                ]
-                assert len(emu_grammar_hnodes) == len(emu_grammar_anodes)
-                for (emu_grammar_hnode, emu_grammar_anode) in zip(emu_grammar_hnodes, emu_grammar_anodes):
-                    emu_grammar_anode._hnode = emu_grammar_hnode
-
-                rule_sdo_names = []
-                rule_grammars = []
-                rule_expr = None
-
-                for child in ISDO_RULE.children:
-                    cl = child.prod.lhs_s
-                    if cl == '{ISDO_NAME}':
-                        [cap_word] = child.children
-                        [rule_sdo_name] = cap_word.children
-                        if sdo_name == 'TV and TRV':
-                            assert rule_sdo_name in ['TV', 'TRV']
-                        else:
-                            assert rule_sdo_name == sdo_name
-                        rule_sdo_names.append(rule_sdo_name)
-                    elif cl == '{h_emu_grammar}':
-                        rule_grammars.append(child._hnode)
-                    elif cl == '{nonterminal}':
-                        rule_grammars.append(child)
-                    elif cl == '{EXPR}':
-                        assert rule_expr is None
-                        rule_expr = child
-                    elif cl == '{NAMED_OPERATION_INVOCATION}':
-                        if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
-                            # skip it
-                            pass
-                        else:
-                            assert rule_expr is None
-                            rule_expr = child
-                    else:
-                        assert 0, cl
-
-                assert 0 < len(rule_sdo_names) <= 2
-                assert 0 < len(rule_grammars) <= 5
-                for rule_sdo_name in rule_sdo_names:
-                    for rule_grammar in rule_grammars:
-                        op_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
+                handle_inline_sdo(li, sdo_name)
 
     elif 'emu-alg' in section.bcen_set:
         assert section.bcen_set <= set(['emu-alg', 'p', 'emu-note'])
@@ -404,6 +354,63 @@ def extract_grammars(x):
         else:
             text += c.source_text()
     return (emu_grammars, text.strip())
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_inline_sdo(li, section_sdo_name):
+    assert li.element_name == 'li'
+
+    LI = li._syntax_tree
+    assert LI.prod.lhs_s == '{LI}'
+    [ISDO_RULE] = LI.children
+    assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
+
+    emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
+    emu_grammar_anodes = [
+        child
+        for child in ISDO_RULE.children
+        if child.prod.lhs_s == '{h_emu_grammar}'
+    ]
+    assert len(emu_grammar_hnodes) == len(emu_grammar_anodes)
+    for (emu_grammar_hnode, emu_grammar_anode) in zip(emu_grammar_hnodes, emu_grammar_anodes):
+        emu_grammar_anode._hnode = emu_grammar_hnode
+
+    rule_sdo_names = []
+    rule_grammars = []
+    rule_expr = None
+
+    for child in ISDO_RULE.children:
+        cl = child.prod.lhs_s
+        if cl == '{ISDO_NAME}':
+            [cap_word] = child.children
+            [rule_sdo_name] = cap_word.children
+            if section_sdo_name == 'TV and TRV':
+                assert rule_sdo_name in ['TV', 'TRV']
+            else:
+                assert rule_sdo_name == section_sdo_name
+            rule_sdo_names.append(rule_sdo_name)
+        elif cl == '{h_emu_grammar}':
+            rule_grammars.append(child._hnode)
+        elif cl == '{nonterminal}':
+            rule_grammars.append(child)
+        elif cl == '{EXPR}':
+            assert rule_expr is None
+            rule_expr = child
+        elif cl == '{NAMED_OPERATION_INVOCATION}':
+            if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
+                # skip it
+                pass
+            else:
+                assert rule_expr is None
+                rule_expr = child
+        else:
+            assert 0, cl
+
+    assert 0 < len(rule_sdo_names) <= 2
+    assert 0 < len(rule_grammars) <= 5
+    for rule_sdo_name in rule_sdo_names:
+        for rule_grammar in rule_grammars:
+            op_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
