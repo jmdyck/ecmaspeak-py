@@ -283,10 +283,13 @@ def analyze_sdo_section(section):
                 assert section.section_title in ['Runtime Semantics: MV', 'Static Semantics: MV']
                 continue
 
-            for li in ul.children:
-                if li.element_name != 'li': continue
-
-                handle_inline_sdo(li, sdo_name)
+            for child in ul.children:
+                if child.element_name == '#LITERAL':
+                    assert child.is_whitespace()
+                elif child.element_name == 'li':
+                    handle_inline_sdo(child, sdo_name)
+                else:
+                    assert 0, child.element_name
 
     elif 'emu-alg' in section.bcen_set:
         assert section.bcen_set <= set(['emu-alg', 'p', 'emu-note'])
