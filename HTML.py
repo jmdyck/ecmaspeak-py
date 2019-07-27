@@ -198,6 +198,7 @@ class HNode:
                     yield child
 
     def each_descendant_named(self, element_name):
+        # actually, descendant-or-self
         if hasattr(element_name, 'fullmatch'):
             if element_name.fullmatch(self.element_name):
                 yield self
