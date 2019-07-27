@@ -299,13 +299,10 @@ def analyze_sdo_section(section):
         # print(section.bcen_str)
         for (i,c) in enumerate(section.block_children):
             if c.element_name == 'p':
-                (emu_grammars, text) = extract_grammars(c)
-
-                if len(emu_grammars) == 0:
-                    assert text == 'With parameter _direction_.'
-                    # ignore it
+                if c.inner_source_text() == 'With parameter _direction_.':
                     continue
 
+                (emu_grammars, text) = extract_grammars(c)
                 assert len(emu_grammars) == 1
                 [emu_grammar] = emu_grammars
 
