@@ -262,10 +262,7 @@ def analyze_sdo_section(section):
         for (i,c) in enumerate(section.block_children):
             if c.element_name == 'emu-grammar':
                 next_c = section.block_children[i+1]
-                assert next_c.element_name in ['emu-alg', 'p']
-                if next_c.element_name == 'p':
-                    assert next_c.inner_source_text().startswith('Is evaluated in exactly the same manner as')
-                op_add_defn('SDO', sdo_name, c, next_c)
+                handle_composite_sdo(sdo_name, c, next_c)
 
     elif 'ul' in section.bcen_set:
         assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
@@ -304,31 +301,7 @@ def analyze_sdo_section(section):
 
                 emu_alg = section.block_children[i+1]
                 assert emu_alg.element_name == 'emu-alg'
-
-                (emu_grammars, text) = extract_grammars(c)
-                assert len(emu_grammars) == 1
-                [emu_grammar] = emu_grammars
-
-                if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
-                    assert emu_grammar.attrs.get('type', 'reference') == 'example'
-                    assert emu_grammar.inner_source_text() == 'A : A @ B'
-                    # It isn't really an example, and yet it isn't a proper production.
-                    # Because it's marked as an 'example', it didn't get a 'summary' property
-                    # over in check_non_defining_prodns().
-                    # Hard-code the summary.
-                    emu_grammar.summary = [
-                        ('BitwiseANDExpression', 1, []),
-                        ('BitwiseXORExpression', 1, []),
-                        ('BitwiseORExpression',  1, []),
-                    ]
-
-                elif text == 'The production <G> evaluates as follows:':
-                    pass
-
-                else:
-                    assert 0, text
-
-                op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
+                handle_composite_sdo(sdo_name, c, emu_alg)
 
     else:
         print(section.section_num, section.section_title, section.section_id)
@@ -336,6 +309,57 @@ def analyze_sdo_section(section):
         assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
+
+    # ---------------------------
+    # grammar_arg -> emu_grammar:
+
+    if grammar_arg.element_name == 'emu-grammar':
+        emu_grammar = grammar_arg
+
+    elif grammar_arg.element_name == 'p':
+        (emu_grammars, text) = extract_grammars(grammar_arg)
+        assert len(emu_grammars) == 1
+        [emu_grammar] = emu_grammars
+
+        if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
+            assert emu_grammar.attrs.get('type', 'reference') == 'example'
+            assert emu_grammar.inner_source_text() == 'A : A @ B'
+            # It isn't really an example, and yet it isn't a proper production.
+            # Because it's marked as an 'example', it didn't get a 'summary' property
+            # over in check_non_defining_prodns().
+            # Hard-code the summary.
+            emu_grammar.summary = [
+                ('BitwiseANDExpression', 1, []),
+                ('BitwiseXORExpression', 1, []),
+                ('BitwiseORExpression',  1, []),
+            ]
+
+        elif text == 'The production <G> evaluates as follows:':
+            pass
+
+        else:
+            assert 0, text
+
+    else:
+        assert 0, grammar_arg.element_name
+
+    # -----------------
+    # algo_arg
+
+    if algo_arg.element_name == 'emu-alg':
+        pass
+    elif algo_arg.element_name == 'p':
+        assert algo_arg.inner_source_text().startswith('Is evaluated in exactly the same manner as')
+    else:
+        assert 0, algo_arg.element_name
+
+    # ----------
+
+    op_add_defn('SDO', sdo_name, emu_grammar, algo_arg)
+
+# ------------------------------------------------------------------------------
 
 def extract_grammars(x):
     emu_grammars = []
