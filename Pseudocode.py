@@ -18,7 +18,7 @@ from shared import spec, stderr
 
 def do_stuff_with_pseudocode():
     parse_all_pseudocode()
-    collect_operation_info()
+    analyze_sections()
     check_sdo_coverage()
 
 def parse_all_pseudocode():
@@ -202,21 +202,21 @@ def parse_emu_algs():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def collect_operation_info():
-    stderr('collect_operation_info...')
+def analyze_sections():
+    stderr('analyze_sections...')
 
     spec.info_for_op_named_ = {}
 
     for section in spec.doc_node.each_descendant_that_is_a_section():
 
         if section.section_kind == 'syntax_directed_operation':
-            collect_op_info_from_sdo_section(section)
+            analyze_sdo_section(section)
         else:
             pass # XXX for now
 
 # ------------------------------------------------------------------------------
 
-def collect_op_info_from_sdo_section(section):
+def analyze_sdo_section(section):
 
     assert section.section_kind == 'syntax_directed_operation'
 
