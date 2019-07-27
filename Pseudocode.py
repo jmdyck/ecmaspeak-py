@@ -302,6 +302,9 @@ def analyze_sdo_section(section):
                 if c.inner_source_text() == 'With parameter _direction_.':
                     continue
 
+                emu_alg = section.block_children[i+1]
+                assert emu_alg.element_name == 'emu-alg'
+
                 (emu_grammars, text) = extract_grammars(c)
                 assert len(emu_grammars) == 1
                 [emu_grammar] = emu_grammars
@@ -319,17 +322,13 @@ def analyze_sdo_section(section):
                         ('BitwiseORExpression',  1, []),
                     ]
 
-                    emu_alg = section.block_children[i+1]
-                    assert emu_alg.element_name == 'emu-alg'
-                    op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
-
                 elif text == 'The production <G> evaluates as follows:':
-                    emu_alg = section.block_children[i+1]
-                    assert emu_alg.element_name == 'emu-alg'
-                    op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
+                    pass
 
                 else:
                     assert 0, text
+
+                op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
 
     else:
         print(section.section_num, section.section_title, section.section_id)
