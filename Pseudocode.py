@@ -326,12 +326,6 @@ def analyze_sdo_section(section):
                     assert emu_alg.element_name == 'emu-alg'
                     op_add_defn('SDO', sdo_name, emu_grammar, emu_alg)
 
-                elif text in [
-                    'The production <G> evaluates by returning the CharSet containing all Unicode code points included in the CharSet returned by |UnicodePropertyValueExpression|.',
-                    'The production <G> evaluates by returning the CharSet containing all Unicode code points not included in the CharSet returned by |UnicodePropertyValueExpression|.',
-                ]:
-                    op_add_defn('SDO', sdo_name, emu_grammar, None)
-
                 elif text == 'The production <G> evaluates as follows:':
                     emu_alg = section.block_children[i+1]
                     assert emu_alg.element_name == 'emu-alg'
