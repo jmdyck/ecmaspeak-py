@@ -273,18 +273,18 @@ def analyze_sdo_section(section):
 
         for ul in section.block_children:
             if ul.element_name != 'ul': continue
+
+            if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
+                # This is the <ul> for 'significant digit' at the end of 
+                # 7.1.3.1.1 Runtime Semantics: MV
+                # and
+                # 11.8.3.1 Static Semantics: MV
+                # We're not interested in it.
+                assert section.section_title in ['Runtime Semantics: MV', 'Static Semantics: MV']
+                continue
+
             for li in ul.children:
                 if li.element_name != 'li': continue
-
-                li_ist = li.inner_source_text().strip()
-                if re.match(r'it is not `0`|there is a nonzero digit', li_ist):
-                    # This is the <ul> for 'significant digit' at the end of 
-                    # 7.1.3.1.1 Runtime Semantics: MV
-                    # and
-                    # 11.8.3.1 Static Semantics: MV
-                    # We're not interested in it.
-                    # print(section.section_num, section.section_title, section.section_id)
-                    continue
 
                 LI = li._syntax_tree
                 assert LI.prod.lhs_s == '{LI}'
