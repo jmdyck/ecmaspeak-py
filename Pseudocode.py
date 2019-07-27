@@ -157,15 +157,6 @@ def parse_emu_algs():
 
     parse_count = 0
 
-    def try_to_parse(start_posn, end_posn):
-        nonlocal parse_count
-        parse_count += 1
-        if parse_count % 20 == 0:
-            print('.', file=sys.stderr, end='')
-            sys.stderr.flush()
-        tree = emu_alg_parser.parse_and_handle_errors(start_posn, end_posn)
-        return tree
-
     for emu_alg in spec.doc_node.each_descendant_named('emu-alg'):
         cc_section = emu_alg.closest_containing_section()
         if cc_section.section_title == 'Algorithm Conventions':
@@ -180,7 +171,11 @@ def parse_emu_algs():
             # because I can't parse an "Otherwise" without a preceding "If"
             # (NumberToString)
 
-        tree = try_to_parse(emu_alg.inner_start_posn, emu_alg.inner_end_posn)
+        parse_count += 1
+        if parse_count % 20 == 0:
+            print('.', file=sys.stderr, end='')
+            sys.stderr.flush()
+        tree = emu_alg_parser.parse_and_handle_errors(emu_alg.inner_start_posn, emu_alg.inner_end_posn)
         emu_alg._syntax_tree = tree
 
     print(file=sys.stderr)
