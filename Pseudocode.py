@@ -454,6 +454,19 @@ def handle_emu_eqn(emu_eqn):
 
     tree = emu_eqn_parser.parse_and_handle_errors(emu_eqn.inner_start_posn, emu_eqn.inner_end_posn)
     emu_eqn._syntax_tree = tree
+    assert tree.prod.lhs_s == '{EMU_EQN_BODY}'
+    [child] = tree.children
+    if child.prod.lhs_s == '{CONSTANT_DEF}':
+        [constant_name, dec_int_lit] = child.children[0:2]
+        assert constant_name.source_text() == aoid
+        # XXX op_add_defn('constant', aoid, None, dec_int_lit)
+    elif child.prod.lhs_s == '{OPERATION_DEF}':
+        [op_name, parameter, body] = child.children
+        assert op_name.source_text() == aoid
+        parameter_name = parameter.source_text()
+        op_add_defn('abstract_operation', aoid, None, body)
+    else:
+        assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -498,6 +511,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         '{EMU_ALG_BODY}',
         '{SAMEX}',
         '{EE_RULE}',
+        '{RHSS}',
     ]
 
     op_info.definitions.append( (discriminator, algo) )
