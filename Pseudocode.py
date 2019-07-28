@@ -29,6 +29,9 @@ def create_all_parsers():
     global samex_parser
     samex_parser = Pseudocode_Parser('samex')
 
+    global one_line_alg_parser
+    one_line_alg_parser = Pseudocode_Parser('one_line_alg')
+
     global emu_eqn_parser
     emu_eqn_parser = Pseudocode_Parser('emu_eqn')
 
@@ -43,6 +46,7 @@ def create_all_parsers():
 
 def report_all_parsers():
     samex_parser.report()
+    one_line_alg_parser.report()
     emu_eqn_parser.report()
     inline_sdo_parser.report()
     ee_parser.report()
@@ -121,6 +125,15 @@ def analyze_sections():
 
         elif section.section_kind == 'syntax_directed_operation':
             analyze_sdo_section(section)
+
+        elif section.section_kind in [
+            'abstract_operation',
+            'env_rec_method',
+            'internal_method',
+            'module_rec_method',
+        ]:
+            analyze_other_op_section(section)
+
         else:
             analyze_other_section(section)
 
@@ -288,6 +301,102 @@ def analyze_sdo_section(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def analyze_other_op_section(section):
+    assert 'op_name' in section.ste
+    op_name = section.ste['op_name']
+
+    n_emu_algs = section.bcen_list.count('emu-alg')
+
+    if n_emu_algs == 0:
+        # 13 cases
+
+        if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
+            assert section.bcen_str in ['p emu-table', 'emu-operation-header emu-table']
+            # The op is defined by a table that splits on argument type.
+            # The second cell in each row is a little algorithm,
+            # but it's generally not marked as an emu-alg.
+            emu_table = section.block_children[1]
+            assert emu_table.element_name == 'emu-table'
+            (_, table, _) = emu_table.children
+            assert table.element_name == 'table'
+            (_, tbody, _) = table.children
+            for tr in tbody.each_child_named('tr'):
+                (_, a, _, b, _) = tr.children 
+
+                if a.element_name == 'th' and b.element_name == 'th':
+                    assert a.inner_source_text().strip() == 'Argument Type'
+                    assert b.inner_source_text().strip() == 'Result'
+                    continue
+
+                handle_tabular_op_defn(op_name, a, b)
+
+        elif op_name == 'CreateImmutableBinding':
+            # This is a bit odd.
+            # The clause exists just to say that this definition doesn't exist.
+            # discriminator = None # XXX get the discriminator!
+            # emu_alg = None ?
+            # handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg)
+            pass
+
+        elif op_name.startswith('Host') or op_name == 'LocalTZA':
+            # These are host-defined ops, so we expect no alg.
+            ensure_op('abstract_operation', op_name)
+            pass
+
+        # PR 1515 BigInt:
+        elif op_name.startswith('Number::') or op_name.startswith('BigInt::'):
+            # A mathematical operation that we merely constrain, via a bullet-list.
+            ensure_op('abstract_operation', op_name)
+            pass
+
+        # PR 1515 BigInt:
+        elif op_name == 'StringToBigInt':
+            # Apply other alg with changes, ick.
+            ensure_op('abstract_operation', op_name)
+
+        else:
+            assert 0, (section.section_num, section.section_title)
+
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        assert emu_alg.element_name == 'emu-alg'
+
+        # The emu-alg is the 'body' of
+        # (this definition of) the operation named by the section_title.
+
+        if section.section_kind == 'abstract_operation':
+            handle_solo_op(op_name, emu_alg)
+
+        elif section.section_kind in [
+            'env_rec_method',
+            'module_rec_method',
+            'internal_method',
+        ]:
+            # type-discriminated operation
+            discriminator = None # XXX get the discriminator!
+            handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg)
+
+        else:
+            assert 0, section.section_kind
+
+
+    else:
+        assert op_name in ['MakeArgGetter', 'MakeArgSetter'], op_name
+        assert n_emu_algs == 2
+        assert section.bcen_str in [
+            'p emu-alg p emu-alg emu-note',
+            'emu-operation-header emu-alg emu-operation-header emu-alg emu-note'
+        ]
+
+        # The first emu-alg defines the operation.
+        handle_solo_op(op_name, section.block_children[1])
+
+        # The second emu-alg is the [[Call]] alg for an anonymous built-in function.
+        # handle_function('anonymous_built_in_function', op_name.replace('Make',''), section.block_children[3])
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def analyze_other_section(section):
 
     for child in section.block_children:
@@ -295,6 +404,55 @@ def analyze_other_section(section):
             handle_emu_eqn(child)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_solo_op(op_name, emu_alg):
+    # "solo" in the sense of having a single definition,
+    # in contrast to multiple definitions discriminated by type or syntax
+
+    parse_emu_alg(emu_alg)
+
+    op_add_defn('abstract_operation', op_name, None, emu_alg._syntax_tree)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_tabular_op_defn(op_name, tda, tdb):
+    assert tda.element_name == 'td'
+    assert tdb.element_name == 'td'
+
+    at = tda.inner_source_text().strip()
+    bt = tdb.inner_source_text().strip()
+
+    discriminator = at
+
+    x = ' '.join(c.element_name for c in tdb.children)
+
+    if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
+        syntax_tree = one_line_alg_parser.parse_and_handle_errors(tdb.inner_start_posn, tdb.inner_end_posn)
+        op_add_defn('abstract_operation', op_name, discriminator, syntax_tree)
+
+    elif x == '#LITERAL p #LITERAL p #LITERAL':
+        (_, p1, _, p2, _) = tdb.children
+        # XXX:
+        # print(p1.inner_source_text())
+        # print(p2.inner_source_text())
+        pass
+
+    elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
+        (_, p, _, emu_alg, _) = tdb.children
+        assert p.source_text() == '<p>Apply the following steps:</p>'
+        parse_emu_alg(emu_alg)
+        op_add_defn('abstract_operation', op_name, discriminator, emu_alg._syntax_tree)
+
+    else:
+        assert 0, x
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_type_discriminated_op(op_name, section_kind, discriminator, emu_alg):
+    parse_emu_alg(emu_alg)
+    op_add_defn(section_kind, op_name, discriminator, emu_alg._syntax_tree)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def handle_early_error(emu_grammar, ul):
@@ -505,9 +663,13 @@ def ensure_op(op_kind, op_name):
 def op_add_defn(op_kind, op_name, discriminator, algo):
     assert type(op_name) == str
     assert (
+        discriminator is None
+        or
         isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
         or
         isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}'
+        or
+        isinstance(discriminator, str) # type name
     )
 
     op_info = ensure_op(op_kind, op_name)
@@ -520,6 +682,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         '{SAMEX}',
         '{EE_RULE}',
         '{RHSS}',
+        '{ONE_LINE_ALG}',
     ]
 
     op_info.definitions.append( (discriminator, algo) )

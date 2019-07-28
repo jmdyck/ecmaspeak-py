@@ -1,0 +1,61 @@
+
+# ecmaspeak-py/one_line_alg.grammar:
+# A grammar for one-line algorithms
+#
+# Copyright (C) 2019  J. Michael Dyck <jmdyck@ibiblio.org>
+
+{START} :
+    {ONE_LINE_ALG}{_eos_}
+
+{ONE_LINE_ALG} :
+    {nlai}{COMMAND}{nlai}
+
+{COMMAND} :
+    If {CONDITION}, return {LITERAL}. If {CONDITION}, return {LITERAL}.
+    If {CONDITION}, return {LITERAL}; otherwise return {LITERAL}.
+    Return {EXPR} (no conversion).
+    Return {EXPR}.
+    See grammar and conversion algorithm below.
+    Throw a {ERROR_TYPE} exception.
+
+{CONDITION} :
+    {var} is the empty String (its length is zero)
+    {var} is {LITERAL}
+    {var} is {LITERAL}, {LITERAL}, or {LITERAL}
+
+{EXPR} :
+    a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects
+    {LITERAL}
+    {PREFIX_PAREN}
+    {var}
+
+{PREFIX_PAREN} :
+    {OPN_BEFORE_PAREN}({EXLIST_OPT})
+
+{OPN_BEFORE_PAREN} :
+    {cap_word}
+    Number::toString
+    BigInt::toString
+
+{EXLIST_OPT} :
+    {var}
+
+{LITERAL} :
+    *false*
+    *true*
+    {NUM_LITERAL}
+    {STR_LITERAL}
+
+{NUM_LITERAL} :
+    1
+    {starred_int_lit}
+    {starred_nonfinite_lit}
+
+    # PR 1515 BigInt:
+    {starred_bigint_lit}
+
+{STR_LITERAL} :
+    {backticked_str}
+
+{ERROR_TYPE} :
+    *TypeError*
