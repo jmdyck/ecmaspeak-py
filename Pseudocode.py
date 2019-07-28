@@ -134,6 +134,17 @@ def analyze_sections():
         ]:
             analyze_other_op_section(section)
 
+        elif section.section_kind in [
+            'CallConstruct',
+            'CallConstruct_overload',
+            'accessor_property',
+            'anonymous_built_in_function',
+            'function_property',
+            'function_property_overload',
+            'function_property_xref',
+        ]:
+            analyze_built_in_section(section)
+
         else:
             analyze_other_section(section)
 
@@ -393,7 +404,35 @@ def analyze_other_op_section(section):
         handle_solo_op(op_name, section.block_children[1])
 
         # The second emu-alg is the [[Call]] alg for an anonymous built-in function.
-        # handle_function('anonymous_built_in_function', op_name.replace('Make',''), section.block_children[3])
+        handle_function('anonymous_built_in_function', op_name.replace('Make',''), section.block_children[3])
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def analyze_built_in_section(section):
+    assert 'prop_path' in section.ste
+    prop_path = section.ste['prop_path']
+
+    n_emu_algs = section.bcen_list.count('emu-alg')
+
+    if n_emu_algs == 0:
+        # Various possibilities:
+        # - A Math function that we merely constrain, via a bullet-list.
+        # - "This function is like that function" (except different, maybe).
+        # - Other functions that we only define in prose.
+        # - A cross-reference to actual definition
+        # XXX handle_function(...) ?
+        pass
+
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        handle_function(section.section_kind, prop_path, emu_alg)
+
+    else:
+        assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
+        # It's an odd combination of the emu-algs in the clause.
+        # XXX SortCompare
+        # XXX handle_function(...)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -628,6 +667,13 @@ def handle_emu_eqn(emu_eqn):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def handle_function(section_kind, locater, emu_alg):
+    # XXX not using section_kind
+    parse_emu_alg(emu_alg)
+    op_add_defn('built-in function', locater, None, emu_alg._syntax_tree)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def parse_emu_alg(emu_alg):
     assert emu_alg.element_name == 'emu-alg'
     assert not hasattr(emu_alg, '_syntax_tree')
@@ -640,6 +686,9 @@ def parse_emu_alg(emu_alg):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 spec.info_for_op_named_ = {}
+spec.info_for_bif_named_ = {}
+# These need to be separate because Set() is both
+# an abstract operation and a built-in function.
 
 class Operation:
     def __init__(self, name, kind):
@@ -648,13 +697,18 @@ class Operation:
         self.definitions = []
 
 def ensure_op(op_kind, op_name):
-    if op_name in spec.info_for_op_named_:
-        op_info = spec.info_for_op_named_[op_name]
+    if op_kind == 'built-in function':
+        iffn = spec.info_for_bif_named_
+    else:
+        iffn = spec.info_for_op_named_
+
+    if op_name in iffn:
+        op_info = iffn[op_name]
         assert op_info.name == op_name
         assert op_info.kind == op_kind
     else:
         op_info = Operation(op_name, op_kind)
-        spec.info_for_op_named_[op_name] = op_info
+        iffn[op_name] = op_info
 
     return op_info
 
