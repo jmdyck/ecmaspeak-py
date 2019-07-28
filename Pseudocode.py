@@ -351,19 +351,19 @@ def analyze_other_op_section(section):
 
         elif op_name.startswith('Host') or op_name == 'LocalTZA':
             # These are host-defined ops, so we expect no alg.
-            ensure_op('abstract_operation', op_name)
+            ensure_foo('abstract_operation', op_name)
             pass
 
         # PR 1515 BigInt:
         elif op_name.startswith('Number::') or op_name.startswith('BigInt::'):
             # A mathematical operation that we merely constrain, via a bullet-list.
-            ensure_op('abstract_operation', op_name)
+            ensure_foo('abstract_operation', op_name)
             pass
 
         # PR 1515 BigInt:
         elif op_name == 'StringToBigInt':
             # Apply other alg with changes, ick.
-            ensure_op('abstract_operation', op_name)
+            ensure_foo('abstract_operation', op_name)
 
         else:
             assert 0, (section.section_num, section.section_title)
@@ -451,7 +451,7 @@ def handle_solo_op(op_name, emu_alg):
 
     parse_emu_alg(emu_alg)
 
-    op_add_defn('abstract_operation', op_name, None, emu_alg._syntax_tree)
+    foo_add_defn('abstract_operation', op_name, None, emu_alg._syntax_tree)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -468,7 +468,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
 
     if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
         syntax_tree = one_line_alg_parser.parse_and_handle_errors(tdb.inner_start_posn, tdb.inner_end_posn)
-        op_add_defn('abstract_operation', op_name, discriminator, syntax_tree)
+        foo_add_defn('abstract_operation', op_name, discriminator, syntax_tree)
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
@@ -481,7 +481,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
         (_, p, _, emu_alg, _) = tdb.children
         assert p.source_text() == '<p>Apply the following steps:</p>'
         parse_emu_alg(emu_alg)
-        op_add_defn('abstract_operation', op_name, discriminator, emu_alg._syntax_tree)
+        foo_add_defn('abstract_operation', op_name, discriminator, emu_alg._syntax_tree)
 
     else:
         assert 0, x
@@ -490,7 +490,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
 
 def handle_type_discriminated_op(op_name, section_kind, discriminator, emu_alg):
     parse_emu_alg(emu_alg)
-    op_add_defn(section_kind, op_name, discriminator, emu_alg._syntax_tree)
+    foo_add_defn(section_kind, op_name, discriminator, emu_alg._syntax_tree)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -506,7 +506,7 @@ def handle_early_error(emu_grammar, ul):
             li._syntax_tree = tree
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            op_add_defn('early_error', 'Early Errors', emu_grammar, ee_rule)
+            foo_add_defn('early_error', 'Early Errors', emu_grammar, ee_rule)
         else:
             assert 0, li.element_name
 
@@ -560,7 +560,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
 
     # ----------
 
-    op_add_defn('SDO', sdo_name, emu_grammar, algo)
+    foo_add_defn('SDO', sdo_name, emu_grammar, algo)
 
 # ------------------------------------------------------------------------------
 
@@ -632,7 +632,7 @@ def handle_inline_sdo(li, section_sdo_name):
     assert 0 < len(rule_grammars) <= 5
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
-            op_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
+            foo_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -656,12 +656,12 @@ def handle_emu_eqn(emu_eqn):
     if child.prod.lhs_s == '{CONSTANT_DEF}':
         [constant_name, dec_int_lit] = child.children[0:2]
         assert constant_name.source_text() == aoid
-        # XXX op_add_defn('constant', aoid, None, dec_int_lit)
+        # XXX foo_add_defn('constant', aoid, None, dec_int_lit)
     elif child.prod.lhs_s == '{OPERATION_DEF}':
         [op_name, parameter, body] = child.children
         assert op_name.source_text() == aoid
         parameter_name = parameter.source_text()
-        op_add_defn('abstract_operation', aoid, None, body)
+        foo_add_defn('abstract_operation', aoid, None, body)
     else:
         assert 0
 
@@ -670,7 +670,7 @@ def handle_emu_eqn(emu_eqn):
 def handle_function(section_kind, locater, emu_alg):
     # XXX not using section_kind
     parse_emu_alg(emu_alg)
-    op_add_defn('built-in function', locater, None, emu_alg._syntax_tree)
+    foo_add_defn('built-in function', locater, None, emu_alg._syntax_tree)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -690,32 +690,33 @@ spec.info_for_bif_named_ = {}
 # These need to be separate because Set() is both
 # an abstract operation and a built-in function.
 
-class Operation:
+class Foo:
+    # "Foo" = "Function or Operation"
     def __init__(self, name, kind):
         self.name = name
         self.kind = kind
         self.definitions = []
 
-def ensure_op(op_kind, op_name):
-    if op_kind == 'built-in function':
+def ensure_foo(foo_kind, foo_name):
+    if foo_kind == 'built-in function':
         iffn = spec.info_for_bif_named_
     else:
         iffn = spec.info_for_op_named_
 
-    if op_name in iffn:
-        op_info = iffn[op_name]
-        assert op_info.name == op_name
-        assert op_info.kind == op_kind
+    if foo_name in iffn:
+        foo_info = iffn[foo_name]
+        assert foo_info.name == foo_name
+        assert foo_info.kind == foo_kind
     else:
-        op_info = Operation(op_name, op_kind)
-        iffn[op_name] = op_info
+        foo_info = Foo(foo_name, foo_kind)
+        iffn[foo_name] = foo_info
 
-    return op_info
+    return foo_info
 
 # ------------------------------------------------
 
-def op_add_defn(op_kind, op_name, discriminator, algo):
-    assert type(op_name) == str
+def foo_add_defn(foo_kind, foo_name, discriminator, algo):
+    assert type(foo_name) == str
     assert (
         discriminator is None
         or
@@ -726,7 +727,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         isinstance(discriminator, str) # type name
     )
 
-    op_info = ensure_op(op_kind, op_name)
+    foo_info = ensure_foo(foo_kind, foo_name)
 
     assert isinstance(algo, ANode)
     assert algo.prod.lhs_s in [
@@ -739,7 +740,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         '{ONE_LINE_ALG}',
     ]
 
-    op_info.definitions.append( (discriminator, algo) )
+    foo_info.definitions.append( (discriminator, algo) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
