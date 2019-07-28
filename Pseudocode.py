@@ -19,12 +19,16 @@ from shared import spec, stderr
 def do_stuff_with_pseudocode():
     parse_all_pseudocode()
     analyze_sections()
+    check_emu_eqn_coverage()
+    emu_eqn_parser.report()
     ee_parser.report()
 
     check_sdo_coverage()
 
 def parse_all_pseudocode():
-    parse_emu_eqns()
+
+    global emu_eqn_parser
+    emu_eqn_parser = Pseudocode_Parser('emu_eqn')
 
     global ee_parser
     ee_parser = Pseudocode_Parser('early_error')
@@ -34,11 +38,9 @@ def parse_all_pseudocode():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def parse_emu_eqns():
-    stderr()
-    stderr("parse_emu_eqns...")
-
-    emu_eqn_parser = Pseudocode_Parser('emu_eqn')
+def check_emu_eqn_coverage():
+    # Check that every <emu-eqn> that should have been parsed was parsed.
+    stderr("check_emu_eqn_coverage...")
 
     for emu_eqn in spec.doc_node.each_descendant_named('emu-eqn'):
         st = emu_eqn.inner_source_text()
@@ -63,15 +65,10 @@ def parse_emu_eqns():
             # Skip it.
             continue
 
-        aoid = emu_eqn.attrs['aoid']
-        # id = emu_eqn.attrs['id']
-        # assert (id == 'eqn-' + aoid) or (id == 'eqn-DaysFromYear' and aoid == 'DayFromYear')
-        # 'id' not defined for 'DateFromTime'
+        assert emu_eqn.parent.element_name == 'emu-clause'
+        assert emu_eqn.parent.section_kind == 'catchall'
 
-        tree = emu_eqn_parser.parse_and_handle_errors(emu_eqn.inner_start_posn, emu_eqn.inner_end_posn)
-        emu_eqn._syntax_tree = tree
-
-    emu_eqn_parser.report()
+        assert hasattr(emu_eqn, '_syntax_tree')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -154,7 +151,7 @@ def analyze_sections():
         elif section.section_kind == 'syntax_directed_operation':
             analyze_sdo_section(section)
         else:
-            pass # XXX for now
+            analyze_other_section(section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -280,6 +277,15 @@ def analyze_sdo_section(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def analyze_other_section(section):
+
+    for child in section.block_children:
+        if child.element_name == 'emu-eqn':
+            handle_emu_eqn(child)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
 
     # ---------------------------
@@ -398,6 +404,24 @@ def handle_inline_sdo(li, section_sdo_name):
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
             op_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_emu_eqn(emu_eqn):
+    assert emu_eqn.element_name == 'emu-eqn'
+
+    aoid = emu_eqn.attrs['aoid']
+    if aoid in ['DateFromTime', 'WeekDay']:
+        assert 'id' not in emu_eqn.attrs
+    else:
+        id = emu_eqn.attrs['id']
+        if aoid == 'DayFromYear':
+            assert id == 'eqn-DaysFromYear' # "Day" vs "Days"
+        else:
+            assert id == 'eqn-' + aoid
+
+    tree = emu_eqn_parser.parse_and_handle_errors(emu_eqn.inner_start_posn, emu_eqn.inner_end_posn)
+    emu_eqn._syntax_tree = tree
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
