@@ -295,9 +295,13 @@ def handle_early_error(emu_grammar, ul):
     assert ul.element_name == 'ul'
 
     for li in ul.children:
-        if li.element_name == 'li':
+        if li.element_name == '#LITERAL':
+            assert li.source_text().isspace()
+        elif li.element_name == 'li':
             tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
             li._syntax_tree = tree
+        else:
+            assert 0, li.element_name
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
