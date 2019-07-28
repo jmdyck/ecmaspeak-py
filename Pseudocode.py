@@ -101,8 +101,6 @@ def check_emu_alg_coverage():
 def analyze_sections():
     stderr('analyze_sections...')
 
-    spec.info_for_op_named_ = {}
-
     t_start = time.time()
     prev_top_level_num = ''
 
@@ -447,6 +445,8 @@ def parse_emu_alg(emu_alg):
     emu_alg._syntax_tree = tree
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+spec.info_for_op_named_ = {}
 
 class Operation:
     def __init__(self, name, kind):
