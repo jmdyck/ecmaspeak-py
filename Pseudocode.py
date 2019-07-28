@@ -344,10 +344,11 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
         assert 0, grammar_arg.element_name
 
     # -----------------
-    # algo_arg
+    # algo_arg -> algo:
 
     if algo_arg.element_name == 'emu-alg':
         parse_emu_alg(algo_arg)
+        algo = algo_arg._syntax_tree
     elif algo_arg.element_name == 'p':
         algo = samex_parser.parse_and_handle_errors(algo_arg.inner_start_posn, algo_arg.inner_end_posn)
     else:
@@ -355,7 +356,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
 
     # ----------
 
-    op_add_defn('SDO', sdo_name, emu_grammar, algo_arg)
+    op_add_defn('SDO', sdo_name, emu_grammar, algo)
 
 # ------------------------------------------------------------------------------
 
@@ -484,9 +485,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         spec.info_for_op_named_[op_name] = op_info
 
     assert (
-        isinstance(algo, ANode) and algo.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']
-        or
-        isinstance(algo, HNode) and algo.element_name in ['emu-alg', 'p']
+        isinstance(algo, ANode) and algo.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}', '{EMU_ALG_BODY}', '{SAMEX}']
     )
 
     op_info.definitions.append( (discriminator, algo) )
