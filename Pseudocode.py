@@ -103,7 +103,17 @@ def analyze_sections():
 
     spec.info_for_op_named_ = {}
 
+    t_start = time.time()
+    prev_top_level_num = ''
+
     for section in spec.doc_node.each_descendant_that_is_a_section():
+
+        top_level_num = section.section_num.split('.')[0]
+        if top_level_num != prev_top_level_num:
+            stderr(f" {top_level_num}", end='', flush=True)
+            prev_top_level_num = top_level_num
+
+        # ------------------------------------------------
 
         if section.section_kind == 'early_errors':
             analyze_early_errors_section(section)
@@ -147,6 +157,11 @@ def analyze_sections():
                     continue
 
                 parse_emu_alg(emu_alg)
+
+    stderr()
+
+    t_end = time.time()
+    stderr(f"analyze_sections took {t_end-t_start:.2f} seconds")
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
