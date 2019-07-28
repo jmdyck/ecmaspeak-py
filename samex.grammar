@@ -1,0 +1,11 @@
+
+# ecmaspeak-py/samex.grammar:
+# A grammar for the "evaluated the same, except ..." paragraphs.
+#
+# Copyright (C) 2019  J. Michael Dyck <jmdyck@ibiblio.org>
+
+{START} :
+    {SAMEX}{_eos_}
+
+{SAMEX} :
+    Is evaluated in exactly the same manner as {h_emu_grammar} except that the contained {nonterminal} is evaluated in step {dec_int_lit}.

@@ -26,6 +26,8 @@ def do_stuff_with_pseudocode():
     check_sdo_coverage()
 
 def create_all_parsers():
+    global samex_parser
+    samex_parser = Pseudocode_Parser('samex')
 
     global emu_eqn_parser
     emu_eqn_parser = Pseudocode_Parser('emu_eqn')
@@ -40,6 +42,7 @@ def create_all_parsers():
     emu_alg_parser = Pseudocode_Parser('emu_alg')
 
 def report_all_parsers():
+    samex_parser.report()
     emu_eqn_parser.report()
     inline_sdo_parser.report()
     ee_parser.report()
@@ -346,7 +349,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
     if algo_arg.element_name == 'emu-alg':
         parse_emu_alg(algo_arg)
     elif algo_arg.element_name == 'p':
-        assert algo_arg.inner_source_text().startswith('Is evaluated in exactly the same manner as')
+        algo = samex_parser.parse_and_handle_errors(algo_arg.inner_start_posn, algo_arg.inner_end_posn)
     else:
         assert 0, algo_arg.element_name
 
