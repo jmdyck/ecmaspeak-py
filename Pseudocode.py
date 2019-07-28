@@ -183,11 +183,7 @@ def analyze_early_errors_section(section):
         if child.element_name == 'emu-grammar':
             curr_emu_grammar = child
         elif child.element_name == 'ul':
-            for li in child.children:
-                if li.element_name == 'li':
-                    tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
-                    li._syntax_tree = tree
-            # XXX connect production with child
+            handle_early_error(curr_emu_grammar, child)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -292,6 +288,17 @@ def analyze_other_section(section):
             handle_emu_eqn(child)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def handle_early_error(emu_grammar, ul):
+    assert emu_grammar.element_name == 'emu-grammar'
+    assert ul.element_name == 'ul'
+
+    for li in ul.children:
+        if li.element_name == 'li':
+            tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
+            li._syntax_tree = tree
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
