@@ -307,6 +307,9 @@ def handle_early_error(emu_grammar, ul):
         elif li.element_name == 'li':
             tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
             li._syntax_tree = tree
+            [ee_rule] = tree.children
+            assert ee_rule.prod.lhs_s == '{EE_RULE}'
+            op_add_defn('early_error', 'Early Errors', emu_grammar, ee_rule)
         else:
             assert 0, li.element_name
 
@@ -494,6 +497,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         '{NAMED_OPERATION_INVOCATION}',
         '{EMU_ALG_BODY}',
         '{SAMEX}',
+        '{EE_RULE}',
     ]
 
     op_info.definitions.append( (discriminator, algo) )
