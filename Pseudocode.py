@@ -17,7 +17,7 @@ from shared import spec, stderr
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def do_stuff_with_pseudocode():
-    parse_all_pseudocode()
+    create_all_parsers()
     analyze_sections()
     check_emu_alg_coverage()
     check_emu_eqn_coverage()
@@ -28,7 +28,7 @@ def do_stuff_with_pseudocode():
 
     check_sdo_coverage()
 
-def parse_all_pseudocode():
+def create_all_parsers():
 
     global emu_eqn_parser
     emu_eqn_parser = Pseudocode_Parser('emu_eqn')
