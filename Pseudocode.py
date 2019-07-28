@@ -19,11 +19,16 @@ from shared import spec, stderr
 def do_stuff_with_pseudocode():
     parse_all_pseudocode()
     analyze_sections()
+    ee_parser.report()
+
     check_sdo_coverage()
 
 def parse_all_pseudocode():
     parse_emu_eqns()
-    parse_early_errors()
+
+    global ee_parser
+    ee_parser = Pseudocode_Parser('early_error')
+
     parse_inline_sdo()
     parse_emu_algs()
 
@@ -67,57 +72,6 @@ def parse_emu_eqns():
         emu_eqn._syntax_tree = tree
 
     emu_eqn_parser.report()
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def parse_early_errors():
-    stderr()
-    stderr("parse_early_errors...")
-
-    ee_parser = Pseudocode_Parser('early_error')
-
-    # XXX prose 'superstructure' outside early error rules:
-    #
-    # sec-object-initializer-static-semantics-early-errors:
-    # extra paragraph that constrains application of subsequent emu-grammar + ul
-    #
-    # sec-for-in-and-for-of-statements-static-semantics-early-errors:
-    # extra paragraph that is logically scoped to two bullets of three,
-    # but 
-    # See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/
-
-    spec.early_error_map = defaultdict(list)
-
-    for s in spec.doc_node.each_descendant_that_is_a_section():
-        if s.section_kind == 'early_errors':
-            assert not s.inline_child_element_names
-
-            if 0:
-                x = re.sub(r'\bemu-grammar ul\b', 'X X',
-                        ' '.join(child.element_name for child in s.block_children)
-                    )
-                x = x.split()
-                assert len(x) == len(s.block_children)
-                for (block, x) in zip(s.block_children, x):
-                    if x == 'X': continue
-                    if block.element_name == 'emu-note': continue
-                    print('--------------------------')
-                    print(s.section_id)
-                    print()
-                    print(block.source_text())
-
-            for block in s.block_children:
-                if block.element_name == 'emu-grammar':
-                    curr_emu_grammar = block
-                elif block.element_name == 'ul':
-                    for li in block.children:
-                        if li.element_name == 'li':
-                            tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
-                            li._syntax_tree = tree
-                    # XXX connect production with block
-                    # spec.early_error_map[?] = block
-
-    ee_parser.report()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -194,12 +148,43 @@ def analyze_sections():
 
     for section in spec.doc_node.each_descendant_that_is_a_section():
 
-        if section.section_kind == 'syntax_directed_operation':
+        if section.section_kind == 'early_errors':
+            analyze_early_errors_section(section)
+
+        elif section.section_kind == 'syntax_directed_operation':
             analyze_sdo_section(section)
         else:
             pass # XXX for now
 
-# ------------------------------------------------------------------------------
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def analyze_early_errors_section(section):
+
+    # XXX prose 'superstructure' outside early error rules:
+    #
+    # 12.2.6.1
+    # sec-object-initializer-static-semantics-early-errors:
+    # extra paragraph that constrains application of subsequent emu-grammar + ul
+    #
+    # 13.7.5.1
+    # sec-for-in-and-for-of-statements-static-semantics-early-errors:
+    # extra paragraph that is logically scoped to two bullets of three,
+    #
+    # See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/
+
+    assert not section.inline_child_element_names
+
+    for child in section.block_children:
+        if child.element_name == 'emu-grammar':
+            curr_emu_grammar = child
+        elif child.element_name == 'ul':
+            for li in child.children:
+                if li.element_name == 'li':
+                    tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
+                    li._syntax_tree = tree
+            # XXX connect production with child
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def analyze_sdo_section(section):
 
