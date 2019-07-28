@@ -21,10 +21,7 @@ def do_stuff_with_pseudocode():
     analyze_sections()
     check_emu_alg_coverage()
     check_emu_eqn_coverage()
-    emu_eqn_parser.report()
-    inline_sdo_parser.report()
-    ee_parser.report()
-    emu_alg_parser.report()
+    report_all_parsers()
 
     check_sdo_coverage()
 
@@ -41,6 +38,12 @@ def create_all_parsers():
 
     global emu_alg_parser
     emu_alg_parser = Pseudocode_Parser('emu_alg')
+
+def report_all_parsers():
+    emu_eqn_parser.report()
+    inline_sdo_parser.report()
+    ee_parser.report()
+    emu_alg_parser.report()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
