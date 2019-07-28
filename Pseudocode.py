@@ -489,6 +489,19 @@ class Operation:
         self.kind = kind
         self.definitions = []
 
+def ensure_op(op_kind, op_name):
+    if op_name in spec.info_for_op_named_:
+        op_info = spec.info_for_op_named_[op_name]
+        assert op_info.name == op_name
+        assert op_info.kind == op_kind
+    else:
+        op_info = Operation(op_name, op_kind)
+        spec.info_for_op_named_[op_name] = op_info
+
+    return op_info
+
+# ------------------------------------------------
+
 def op_add_defn(op_kind, op_name, discriminator, algo):
     assert type(op_name) == str
     assert (
@@ -497,12 +510,7 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}'
     )
 
-    if op_name in spec.info_for_op_named_:
-        op_info = spec.info_for_op_named_[op_name]
-        assert op_info.kind == op_kind
-    else:
-        op_info = Operation(op_name, op_kind)
-        spec.info_for_op_named_[op_name] = op_info
+    op_info = ensure_op(op_kind, op_name)
 
     assert isinstance(algo, ANode)
     assert algo.prod.lhs_s in [
