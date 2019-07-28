@@ -488,9 +488,13 @@ def op_add_defn(op_kind, op_name, discriminator, algo):
         op_info = Operation(op_name, op_kind)
         spec.info_for_op_named_[op_name] = op_info
 
-    assert (
-        isinstance(algo, ANode) and algo.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}', '{EMU_ALG_BODY}', '{SAMEX}']
-    )
+    assert isinstance(algo, ANode)
+    assert algo.prod.lhs_s in [
+        '{EXPR}',
+        '{NAMED_OPERATION_INVOCATION}',
+        '{EMU_ALG_BODY}',
+        '{SAMEX}',
+    ]
 
     op_info.definitions.append( (discriminator, algo) )
 
