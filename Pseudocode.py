@@ -19,10 +19,12 @@ from shared import spec, stderr
 def do_stuff_with_pseudocode():
     parse_all_pseudocode()
     analyze_sections()
+    check_emu_alg_coverage()
     check_emu_eqn_coverage()
     emu_eqn_parser.report()
     inline_sdo_parser.report()
     ee_parser.report()
+    emu_alg_parser.report()
 
     check_sdo_coverage()
 
@@ -37,7 +39,8 @@ def parse_all_pseudocode():
     global ee_parser
     ee_parser = Pseudocode_Parser('early_error')
 
-    parse_emu_algs()
+    global emu_alg_parser
+    emu_alg_parser = Pseudocode_Parser('emu_alg')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -75,43 +78,20 @@ def check_emu_eqn_coverage():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def parse_emu_algs():
-    stderr()
-    stderr("parse_emu_algs...")
-
-    global emu_alg_parser
-    emu_alg_parser = Pseudocode_Parser('emu_alg')
-
-    t_start = time.time()
-
-    parse_count = 0
+def check_emu_alg_coverage():
+    stderr("check_emu_alg_coverage...")
 
     for emu_alg in spec.doc_node.each_descendant_named('emu-alg'):
-        cc_section = emu_alg.closest_containing_section()
-        if cc_section.section_title == 'Algorithm Conventions':
-            # stderr("skipping Algorithm Conventions")
-            continue
-            # because some of the <emu-alg>s in that section aren't really parseable
 
-        x = '\n            5. Otherwise, let '
-        if spec.text[emu_alg.inner_start_posn:emu_alg.inner_start_posn+len(x)] == x:
-            # stderr("skipping 5. Otherwise!")
-            continue
-            # because I can't parse an "Otherwise" without a preceding "If"
-            # (NumberToString)
+        assert emu_alg.parent.element_name in ['emu-clause', 'emu-annex', 'emu-note', 'td', 'li']
+        # print(emu_alg.parent.element_name)
+        # 1758 emu-clause
+        #   56 emu-annex
+        #    4 emu-note
+        #    3 td
+        #    1 li
 
-        parse_count += 1
-        if parse_count % 20 == 0:
-            print('.', file=sys.stderr, end='')
-            sys.stderr.flush()
-        parse_emu_alg(emu_alg)
-
-    print(file=sys.stderr)
-
-    t_end = time.time()
-    stderr("parsing %d emu-algs took %d seconds" % (parse_count, t_end-t_start))
-
-    emu_alg_parser.report()
+        assert hasattr(emu_alg, '_syntax_tree')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -129,6 +109,41 @@ def analyze_sections():
             analyze_sdo_section(section)
         else:
             analyze_other_section(section)
+
+        # ------------------------------------------------------------
+
+        # Ensure that we've parsed every <emu-alg>
+        # for which this is the closet-containing section.
+        # (Eventually, these should be reached by 'normal' means.)
+        for bc in section.block_children:
+            for emu_alg in bc.each_descendant_named('emu-alg'):
+
+                if hasattr(emu_alg, '_syntax_tree'):
+                    # already done
+                    continue
+
+                if spec.text.startswith(
+                    (
+                        '\n      1. Top-level step',
+                        # 5.2 Algorithm Conventions
+                        # This is just showing the format of algorithms,
+                        # so it's not meant to be parsable.
+
+                        '\n            5. Otherwise, let ',
+                        '\n              5. Otherwise, let ', # PR 1515 BigInt
+                        # 7.1.12.1 NumberToString
+                        # The is unparsable because the grammar doesn't
+                        # allow an "Otherwise" without a preceding "If",
+                        # and I don't want to warp the grammar to allow it.
+                    ),
+                    emu_alg.inner_start_posn,
+                    emu_alg.inner_end_posn
+                ):
+                    # unparsable, so don't try
+                    emu_alg._syntax_tree = None
+                    continue
+
+                parse_emu_alg(emu_alg)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -302,7 +317,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
     # algo_arg
 
     if algo_arg.element_name == 'emu-alg':
-        pass
+        parse_emu_alg(algo_arg)
     elif algo_arg.element_name == 'p':
         assert algo_arg.inner_source_text().startswith('Is evaluated in exactly the same manner as')
     else:
