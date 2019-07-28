@@ -433,7 +433,7 @@ class Operation:
         self.kind = kind
         self.definitions = []
 
-def op_add_defn(op_kind, op_name, discriminator, emu_alg):
+def op_add_defn(op_kind, op_name, discriminator, algo):
     assert type(op_name) == str
     assert (
         isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
@@ -449,12 +449,12 @@ def op_add_defn(op_kind, op_name, discriminator, emu_alg):
         spec.info_for_op_named_[op_name] = op_info
 
     assert (
-        isinstance(emu_alg, ANode) and emu_alg.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']
+        isinstance(algo, ANode) and algo.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']
         or
-        isinstance(emu_alg, HNode) and emu_alg.element_name in ['emu-alg', 'p']
+        isinstance(algo, HNode) and algo.element_name in ['emu-alg', 'p']
     )
 
-    op_info.definitions.append( (discriminator, emu_alg) )
+    op_info.definitions.append( (discriminator, algo) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
