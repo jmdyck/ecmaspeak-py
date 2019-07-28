@@ -187,6 +187,10 @@ def analyze_early_errors_section(section):
             curr_emu_grammar = child
         elif child.element_name == 'ul':
             handle_early_error(curr_emu_grammar, child)
+        elif child.element_name in ['p', 'emu-note']:
+            pass
+        else:
+            assert 0, child.element_name
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
