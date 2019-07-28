@@ -21,6 +21,7 @@ def do_stuff_with_pseudocode():
     analyze_sections()
     check_emu_eqn_coverage()
     emu_eqn_parser.report()
+    inline_sdo_parser.report()
     ee_parser.report()
 
     check_sdo_coverage()
@@ -30,10 +31,12 @@ def parse_all_pseudocode():
     global emu_eqn_parser
     emu_eqn_parser = Pseudocode_Parser('emu_eqn')
 
+    global inline_sdo_parser
+    inline_sdo_parser = Pseudocode_Parser('inline_SDO')
+
     global ee_parser
     ee_parser = Pseudocode_Parser('early_error')
 
-    parse_inline_sdo()
     parse_emu_algs()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -69,32 +72,6 @@ def check_emu_eqn_coverage():
         assert emu_eqn.parent.section_kind == 'catchall'
 
         assert hasattr(emu_eqn, '_syntax_tree')
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def parse_inline_sdo():
-    stderr()
-    stderr("parse_inline_sdo...")
-
-    inline_sdo_parser = Pseudocode_Parser('inline_SDO')
-
-    for s in spec.doc_node.each_descendant_that_is_a_section():
-        if s.section_kind == 'syntax_directed_operation':
-            for ul in s.block_children:
-                if ul.element_name == 'ul':
-                    if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
-                        # "A digit is significant if ..." in "Runtime Semantics: MV" and "Static Semantics: MV"
-                        continue
-                    for child in ul.children:
-                        if child.element_name == '#LITERAL':
-                            assert child.is_whitespace()
-                            continue
-
-                        assert child.element_name == 'li'
-                        tree = inline_sdo_parser.parse_and_handle_errors(child.start_posn, child.end_posn)
-                        child._syntax_tree = tree
-
-    inline_sdo_parser.report()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -352,6 +329,8 @@ def extract_grammars(x):
 
 def handle_inline_sdo(li, section_sdo_name):
     assert li.element_name == 'li'
+
+    li._syntax_tree = inline_sdo_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
 
     LI = li._syntax_tree
     assert LI.prod.lhs_s == '{LI}'
