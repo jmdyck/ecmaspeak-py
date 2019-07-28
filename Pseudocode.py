@@ -151,6 +151,7 @@ def parse_emu_algs():
     stderr()
     stderr("parse_emu_algs...")
 
+    global emu_alg_parser
     emu_alg_parser = Pseudocode_Parser('emu_alg')
 
     t_start = time.time()
@@ -175,8 +176,7 @@ def parse_emu_algs():
         if parse_count % 20 == 0:
             print('.', file=sys.stderr, end='')
             sys.stderr.flush()
-        tree = emu_alg_parser.parse_and_handle_errors(emu_alg.inner_start_posn, emu_alg.inner_end_posn)
-        emu_alg._syntax_tree = tree
+        parse_emu_alg(emu_alg)
 
     print(file=sys.stderr)
 
@@ -413,6 +413,17 @@ def handle_inline_sdo(li, section_sdo_name):
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
             op_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def parse_emu_alg(emu_alg):
+    assert emu_alg.element_name == 'emu-alg'
+    assert not hasattr(emu_alg, '_syntax_tree')
+    tree = emu_alg_parser.parse_and_handle_errors(
+        emu_alg.inner_start_posn,
+        emu_alg.inner_end_posn
+    )
+    emu_alg._syntax_tree = tree
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
