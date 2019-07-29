@@ -23,6 +23,7 @@ def do_stuff_with_pseudocode():
     check_emu_eqn_coverage()
     report_all_parsers()
 
+    analyze_static_dependencies()
     check_sdo_coverage()
 
 def create_all_parsers():
@@ -968,6 +969,229 @@ def foo_add_defn(foo_kind, foo_name, discriminator, algo):
 
     foo_info.definitions.append( (discriminator, algo, in_annex_b) )
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def analyze_static_dependencies():
+
+    f_deps = shared.open_for_output('static_deps')
+    def put(*args):
+        print(*args, file=f_deps)
+
+    # ----------------------------------------------------
+
+    # Find and print all the static dependencies:
+
+    for (foo_name, foo_info) in (
+        sorted(spec.info_for_op_named_.items())
+        +
+        sorted(spec.info_for_bif_named_.items())
+    ):
+        foo_info.callees = set()
+        for (_, algo, _) in foo_info.definitions:
+            for callee_name in each_callee_name_in_algo(algo):
+                foo_info.callees.add(callee_name)
+
+        put()
+        put(foo_name)
+        put(f"[{foo_info.kind}, {len(foo_info.definitions)} definitions]")
+        for callee in sorted(foo_info.callees):
+            put('  ', callee)
+
+    # ----------------------------------------------------
+
+    # Starting at known "top-level" points,
+    # do a depth-first search of the dependency graph,
+    # marking which operations are "reached".
+
+    op_names_with_no_info = set()
+
+    def reach_op(op_name, level):
+        if op_name in op_names_with_no_info:
+            # No point in continuing.
+            return
+        # put('  '*level, op_name)
+        if op_name not in spec.info_for_op_named_:
+            op_names_with_no_info.add(op_name)
+            return
+        op_info = spec.info_for_op_named_[op_name]
+        if hasattr(op_info, '_reached'): return
+        op_info._reached = True
+        for callee_name in sorted(list(op_info.callees)):
+            reach_op(callee_name, level+1)
+
+    reach_op('Early Errors', 0)
+    reach_op('RunJobs', 0)
+
+    # put('PromiseJobs queue')
+    reach_op('PromiseResolveThenableJob', 1)
+    reach_op('PromiseReactionJob', 1)
+
+    # The spec doesn't invoke, but the host can:
+    reach_op('FinishDynamicImport', 0)
+    reach_op('DetachArrayBuffer', 0)
+
+    # Memory Model
+    # put('Valid Executions')
+    # references things via bullet point prose
+    # put('  '*1, 'host-synchronizes-with')
+    reach_op('HostEventSet', 2)
+    reach_op('Valid Chosen Reads', 1)
+    reach_op('Coherent Reads', 1)
+    reach_op('Tear Free Reads', 1)
+    #
+    reach_op('Data Races', 0)
+
+    for (bif_name, bif_info) in sorted(spec.info_for_bif_named_.items()):
+        # put(bif_name)
+        for callee in sorted(bif_info.callees):
+            reach_op(callee, 1)
+
+    # --------------
+
+    # Print out dependency anomalies.
+
+    put()
+    put('X' * 40)
+
+    put()
+    put('operations referenced but not declared:')
+    for op_name in sorted(op_names_with_no_info):
+        put(f"    {op_name}")
+
+    put()
+    put('operations declared but not reached:')
+    for (op_name, op_info) in sorted(spec.info_for_op_named_.items()):
+        if not hasattr(op_info, '_reached'):
+            put(f"    {op_name}")
+
+    f_deps.close()
+
+# ------------------------------------------------------------------------------
+
+def each_callee_name_in_algo(algo):
+    for callee in each_op_reference_in_algo(algo):
+        if isinstance(callee, str):
+            yield callee
+        else:
+            assert isinstance(callee, ANode)
+            if callee.prod.lhs_s == '{cap_word}':
+                yield callee.source_text()
+
+            elif callee.prod.lhs_s == '{OPN_BEFORE_PAREN}':
+                if callee.prod.rhs_s == '{DOTTING}':
+                    [dotting] = callee.children
+                    [lhs, dsbn] = dotting.children
+                    yield dsbn.source_text()
+                elif callee.prod.rhs_s == '{var}.{cap_word}':
+                    [var, cap_word] = callee.children
+                    yield cap_word.source_text()
+                elif callee.prod.rhs_s == '{var}':
+                    # can't do much
+                    if callee.source_text() == '_convOp_':
+                        yield 'ToInt8'
+                        yield 'ToUint8'
+                        yield 'ToUint8Clamp'
+                        yield 'ToInt16'
+                        yield 'ToUint16'
+                        yield 'ToInt32'
+                        yield 'ToUint32'
+                else:
+                    yield callee.source_text()
+
+            elif callee.prod.lhs_s == '{ISDO_NAME}':
+                assert callee.prod.rhs_s == '{cap_word}'
+                yield callee.source_text()
+
+            else:
+                assert 0, callee.prod
+
+def each_op_reference_in_algo(algo):
+    for d in algo.each_descendant_or_self():
+        if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
+            rhs = d.prod.rhs_s
+            if rhs in [
+                'the {ISDO_NAME} of {PROD_REF}',
+                '{ISDO_NAME} of {PROD_REF}',
+                'the {cap_word} of {LOCAL_REF}',
+                'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
+                'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
+                'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
+                'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
+                '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
+                '{cap_word} of {LOCAL_REF}',
+                '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
+                '{cap_word}({nonterminal})',
+            ]:
+                yield d.children[0]
+
+            elif rhs == '{PREFIX_PAREN}':
+                # Handled below
+                pass
+
+            elif rhs == 'evaluating {LOCAL_REF}':
+                # 'Evaluation' or 'regexp-Evaluate',
+                # depending on the argument.
+                [local_ref] = d.children
+                if local_ref.source_text() in [
+                    '|NonemptyClassRanges|',
+                    '|ClassAtom|',
+                    '|ClassAtomNoDash|',
+                    '|ClassEscape|',
+                    '|CharacterClassEscape|',
+                ]:
+                    yield 'regexp-Evaluate'
+                else:
+                    yield 'Evaluation'
+
+            else:
+                callee_names = {
+                    'Abstract Equality Comparison {var} == {var}'      : ['Abstract Equality Comparison'],
+                    'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}' : [ 'Abstract Relational Comparison'],
+                    'Abstract Relational Comparison {var} &lt; {var}'  : ['Abstract Relational Comparison'],
+                    'Strict Equality Comparison {var} === {EX}'        : ['Strict Equality Comparison'],
+                    'StringValue of the {nonterminal} of {nonterminal} {var}' : ['StringValue'],
+                    'evaluating {LOCAL_REF} with argument {var}'       : ['regexp-Evaluate'],
+                    'evaluating {LOCAL_REF}. This may be of type Reference' : ['Evaluation'],
+                    'evaluating {nonterminal} {var}'                   : ['Evaluation'],
+                    'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments': ['ScriptEvaluationJob', 'TopLevelModuleEvaluationJob'],
+                    "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": ['regexp-Evaluate'],
+                    'the UTF16Encoding of each code point of {EX}'     : ['UTF16Encoding'],
+                    'the UTF16Encoding of the code points of {var}'    : ['UTF16Encoding'],
+                    '{LOCAL_REF} Contains {nonterminal}'               : ['Contains'],
+                    '{LOCAL_REF} Contains {var}'                       : ['Contains'],
+                }[rhs]
+                for callee_name in callee_names:
+                    yield callee_name
+
+        elif d.prod.lhs_s == '{PREFIX_PAREN}':
+            [opn_before_paren, exlist_opt] = d.children
+            assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
+            yield opn_before_paren
+
+        elif str(d.prod) == '{CONDITION_1} : {var} and {var} are in a race in {var}':
+            yield 'Races'
+
+        elif str(d.prod) == '{EXPR} : the steps of an {cap_word} function as specified below':
+            # [cap_word] = d.children
+            # yield cap_word
+            # No, because that's a function, not an operation.
+            pass
+
+        elif str(d.prod) == '{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref} {that_have_not_already_etc}':
+            yield 'CreateBuiltinFunction'
+            yield 'initialize_unscopables'
+
+        elif str(d.prod) == '{COMMAND} : IfAbruptRejectPromise({var}, {var}).':
+            yield 'IfAbruptRejectPromise'
+
+        elif str(d.prod) in [
+            '{COMMAND} : ReturnIfAbrupt({EX}).',
+            '{SMALL_COMMAND} : ReturnIfAbrupt({var})',
+        ]:
+            yield 'ReturnIfAbrupt'
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_sdo_coverage():
