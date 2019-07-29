@@ -576,10 +576,91 @@ def analyze_changes_section(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def analyze_other_section(section):
+    # The section_title doesn't declare an operation or a function-property,
+    # so we don't expect an algorithm.
+    # But sometimes there are some anyway.
 
     for child in section.block_children:
         if child.element_name == 'emu-eqn':
             handle_emu_eqn(child)
+
+    n_emu_algs = section.bcen_list.count('emu-alg')
+
+    if n_emu_algs == 0:
+        if section.section_title == 'Mathematical Operations':
+            ensure_foo('abstract_operation', 'abs')
+            ensure_foo('abstract_operation', 'min')
+            ensure_foo('abstract_operation', 'max')
+            ensure_foo('abstract_operation', 'floor')
+
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+
+        if section.section_title == 'Algorithm Conventions':
+            assert n_emu_algs == 1
+            # It's just the example of algorithm layout.
+            # Skip it.
+            pass
+
+        elif section.section_title == 'Static Semantics' and section.section_num == '5.2.4':
+            assert n_emu_algs == 1
+            # It's the default definition of Contains
+            preamble_text = section.block_children[emu_alg_posn-1].source_text()
+            assert preamble_text.endswith('The default definition of Contains is:</p>')
+            handle_composite_sdo('Contains', None, emu_alg)
+
+        elif section.section_title == 'Array.prototype [ @@unscopables ]':
+            assert n_emu_algs == 1
+            # The section_title identifies a data property,
+            # and the algorithm results in its initial value.
+            # So CreateIntrinsics invokes this alg, implicitly and indirectly.
+            handle_solo_op('initialize_unscopables', emu_alg)
+
+        elif section.section_kind == 'properties_of_an_intrinsic_object':
+            assert n_emu_algs == 1
+            # In addition to telling you about the intrinsic object,
+            # it also defines an abstract operation that is used
+            # by the object's function properties.
+            mo = re.fullmatch(r'Properties of the (\w+) Prototype Object', section.section_title)
+            which = mo.group(1)
+            op_name = f"this{'Time' if which == 'Date' else which}Value"
+
+            preamble = section.block_children[emu_alg_posn-1]
+            assert (
+                preamble.element_name == 'emu-operation-header'
+                or
+                preamble.source_text() == f'<p>The abstract operation <dfn id="sec-{op_name.lower()}" aoid="{op_name}">{op_name}</dfn>(_value_) performs the following steps:</p>'
+            )
+
+            handle_solo_op(op_name, emu_alg)
+
+        else:
+            assert 0
+
+    else:
+
+        if section.section_kind == 'shorthand':
+            if section.section_title == 'Implicit Completion Values':
+                ensure_foo('shorthand', 'Completion')
+            elif section.section_title in [
+                'ReturnIfAbrupt',
+                'Await',
+                'NormalCompletion',
+                'ThrowCompletion',
+            ]:
+                ensure_foo('shorthand', section.section_title)
+            elif section.section_title == 'IfAbruptRejectPromise ( _value_, _capability_ )':
+                ensure_foo('shorthand', 'IfAbruptRejectPromise')
+            else:
+                pass
+                # print('>', section.section_num, section.section_title)
+            pass
+        elif section.section_title == 'Syntax-Directed Operations':
+            # just examples
+            pass
+        else:
+            assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -656,7 +737,13 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
     # ---------------------------
     # grammar_arg -> emu_grammar:
 
-    if grammar_arg.element_name == 'emu-grammar':
+    if grammar_arg is None:
+        assert sdo_name == 'Contains'
+        # This is the default definition,
+        # which isn't associated with a particular production.
+        emu_grammar = None
+    
+    elif grammar_arg.element_name == 'emu-grammar':
         emu_grammar = grammar_arg
 
     elif grammar_arg.element_name == 'p':
@@ -902,6 +989,10 @@ def check_sdo_coverage():
                     assert discriminator.prod.lhs_s == '{nonterminal}'
                     assert discriminator.source_text() == '|HexDigit|'
                     discriminator.summary = [] # XXX?
+
+                if discriminator is None:
+                    assert op_name == 'Contains'
+                    continue
 
                 for (lhs_nt, def_i, optionals) in discriminator.summary:
                     if lhs_nt not in spec.sdo_coverage_map[op_name]:
