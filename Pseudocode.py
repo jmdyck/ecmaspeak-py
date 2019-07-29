@@ -410,7 +410,7 @@ def analyze_other_op_section(section):
             pass
 
         # PR 1515 BigInt:
-        elif op_name.startswith('Number::') or op_name.startswith('BigInt::'):
+        elif op_name.startswith('::'):
             # A mathematical operation that we merely constrain, via a bullet-list.
             ensure_foo('abstract_operation', op_name)
             pass
@@ -1125,6 +1125,9 @@ def each_callee_name_in_algo(algo):
                         yield 'ToUint16'
                         yield 'ToInt32'
                         yield 'ToUint32'
+                elif callee.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
+                    [_, low_word] = callee.children
+                    yield '::' + low_word.source_text()
                 else:
                     yield callee.source_text()
 

@@ -34,8 +34,11 @@
 
 {OPN_BEFORE_PAREN} :
     {cap_word}
-    Number::toString
-    BigInt::toString
+    {NUMERIC_TYPE_INDICATOR}::{low_word}
+
+{NUMERIC_TYPE_INDICATOR} :
+    BigInt
+    Number
 
 {EXLIST_OPT} :
     {var}

@@ -1474,11 +1474,15 @@
     {var}.{cap_word}
 
     # PR 1515 BigInt:
-    BigInt::{low_word}
-    Number::{low_word}
-    Type({var})::{low_word}
     thisBigIntValue
-    {var}::{low_word}
+    {NUMERIC_TYPE_INDICATOR}::{low_word}
+
+# PR 1515 BigInt:
+{NUMERIC_TYPE_INDICATOR} :
+    BigInt
+    Number
+    Type({var})
+    {var}
 
 {EXLIST_OPT} :
     {EXLIST}

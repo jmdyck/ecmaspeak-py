@@ -200,7 +200,7 @@ def _infer_section_kinds(section):
             (r'Initializers in ForIn Statement Heads',           'changes'),
 
             (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
-            (r'(?P<op_name>(Number|BigInt)::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'abstract_operation'),
+            (r'(Number|BigInt)(?P<op_name>::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'abstract_operation'),
             (r'(Static|Runtime) Semantics: (?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>', 'abstract_operation'),
             (r'(?P<op_name>.+ Comparison)',                                             'abstract_operation'),
 
