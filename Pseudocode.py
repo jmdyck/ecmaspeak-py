@@ -26,6 +26,8 @@ def do_stuff_with_pseudocode():
     analyze_static_dependencies()
     check_sdo_coverage()
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def create_all_parsers():
     global samex_parser
     samex_parser = Pseudocode_Parser('samex')
@@ -52,6 +54,54 @@ def report_all_parsers():
     inline_sdo_parser.report()
     ee_parser.report()
     emu_alg_parser.report()
+
+def parse(hnode, what=None):
+    assert isinstance(hnode, HNode)
+    assert not hasattr(hnode, '_syntax_tree')
+
+    # In most case, we parse the element's inner text.
+    start_posn = hnode.inner_start_posn
+    end_posn   = hnode.inner_end_posn
+
+    if hnode.element_name == 'emu-alg':
+        assert what is None
+        parser = emu_alg_parser
+
+    elif hnode.element_name == 'emu-eqn':
+        assert what is None
+        parser = emu_eqn_parser
+
+    elif hnode.element_name == 'td':
+        assert what is None
+        parser = one_line_alg_parser
+
+    elif hnode.element_name == 'p':
+        assert what is None
+        parser = samex_parser
+
+    elif hnode.element_name == 'li':
+        if what == 'early_error':
+            parser = ee_parser
+        elif what == 'inline_sdo':
+            parser = inline_sdo_parser
+        else:
+            assert 0, what
+        start_posn = hnode.start_posn
+        end_posn = hnode.end_posn
+
+    else:
+        assert 0, hnode.element_name
+
+    tree = parser.parse_and_handle_errors(start_posn, end_posn)
+    hnode._syntax_tree = tree
+
+    if tree is None:
+        # cc_section = hnode.closest_containing_section()
+        # stderr(f"Failed to parse <{hnode.element_name}> in {cc_section.section_num} {cc_section.section_title}")
+        # (Messes up the "progress bar")
+        pass
+
+    return tree
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -194,7 +244,7 @@ def analyze_sections():
                     emu_alg._syntax_tree = None
                     continue
 
-                parse_emu_alg(emu_alg)
+                parse(emu_alg)
 
     stderr()
 
@@ -667,9 +717,7 @@ def handle_solo_op(op_name, emu_alg):
     # "solo" in the sense of having a single definition,
     # in contrast to multiple definitions discriminated by type or syntax
 
-    parse_emu_alg(emu_alg)
-
-    foo_add_defn('abstract_operation', op_name, None, emu_alg._syntax_tree)
+    foo_add_defn('abstract_operation', op_name, None, parse(emu_alg))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -685,8 +733,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
     x = ' '.join(c.element_name for c in tdb.children)
 
     if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
-        syntax_tree = one_line_alg_parser.parse_and_handle_errors(tdb.inner_start_posn, tdb.inner_end_posn)
-        foo_add_defn('abstract_operation', op_name, discriminator, syntax_tree)
+        foo_add_defn('abstract_operation', op_name, discriminator, parse(tdb))
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
@@ -698,8 +745,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
     elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
         (_, p, _, emu_alg, _) = tdb.children
         assert p.source_text() == '<p>Apply the following steps:</p>'
-        parse_emu_alg(emu_alg)
-        foo_add_defn('abstract_operation', op_name, discriminator, emu_alg._syntax_tree)
+        foo_add_defn('abstract_operation', op_name, discriminator, parse(emu_alg))
 
     else:
         assert 0, x
@@ -707,8 +753,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def handle_type_discriminated_op(op_name, section_kind, discriminator, emu_alg):
-    parse_emu_alg(emu_alg)
-    foo_add_defn(section_kind, op_name, discriminator, emu_alg._syntax_tree)
+    foo_add_defn(section_kind, op_name, discriminator, parse(emu_alg))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -720,8 +765,7 @@ def handle_early_error(emu_grammar, ul):
         if li.element_name == '#LITERAL':
             assert li.source_text().isspace()
         elif li.element_name == 'li':
-            tree = ee_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
-            li._syntax_tree = tree
+            tree = parse(li, 'early_error')
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
             foo_add_defn('early_error', 'Early Errors', emu_grammar, ee_rule)
@@ -775,10 +819,9 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
     # algo_arg -> algo:
 
     if algo_arg.element_name == 'emu-alg':
-        parse_emu_alg(algo_arg)
-        algo = algo_arg._syntax_tree
+        algo = parse(algo_arg)
     elif algo_arg.element_name == 'p':
-        algo = samex_parser.parse_and_handle_errors(algo_arg.inner_start_posn, algo_arg.inner_end_posn)
+        algo = parse(algo_arg)
     else:
         assert 0, algo_arg.element_name
 
@@ -804,9 +847,8 @@ def extract_grammars(x):
 def handle_inline_sdo(li, section_sdo_name):
     assert li.element_name == 'li'
 
-    li._syntax_tree = inline_sdo_parser.parse_and_handle_errors(li.start_posn, li.end_posn)
+    LI = parse(li, 'inline_sdo')
 
-    LI = li._syntax_tree
     assert LI.prod.lhs_s == '{LI}'
     [ISDO_RULE] = LI.children
     assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
@@ -873,8 +915,7 @@ def handle_emu_eqn(emu_eqn):
         else:
             assert id == 'eqn-' + aoid
 
-    tree = emu_eqn_parser.parse_and_handle_errors(emu_eqn.inner_start_posn, emu_eqn.inner_end_posn)
-    emu_eqn._syntax_tree = tree
+    tree = parse(emu_eqn)
     assert tree.prod.lhs_s == '{EMU_EQN_BODY}'
     [child] = tree.children
     if child.prod.lhs_s == '{CONSTANT_DEF}':
@@ -893,19 +934,7 @@ def handle_emu_eqn(emu_eqn):
 
 def handle_function(section_kind, locater, emu_alg):
     # XXX not using section_kind
-    parse_emu_alg(emu_alg)
-    foo_add_defn('built-in function', locater, None, emu_alg._syntax_tree)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def parse_emu_alg(emu_alg):
-    assert emu_alg.element_name == 'emu-alg'
-    assert not hasattr(emu_alg, '_syntax_tree')
-    tree = emu_alg_parser.parse_and_handle_errors(
-        emu_alg.inner_start_posn,
-        emu_alg.inner_end_posn
-    )
-    emu_alg._syntax_tree = tree
+    foo_add_defn('built-in function', locater, None, parse(emu_alg))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -953,6 +982,8 @@ def foo_add_defn(foo_kind, foo_name, discriminator, algo):
     )
 
     foo_info = ensure_foo(foo_kind, foo_name)
+
+    if algo is None: return
 
     assert isinstance(algo, ANode)
     assert algo.prod.lhs_s in [
