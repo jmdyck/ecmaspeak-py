@@ -118,6 +118,10 @@ def analyze_sections():
             stderr(f" {top_level_num}", end='', flush=True)
             prev_top_level_num = top_level_num
 
+        global in_annex_b
+        in_annex_b = (top_level_num == 'B')
+        # This is kludgey, but it works.
+
         # ------------------------------------------------
 
         if section.section_kind == 'early_errors':
@@ -144,6 +148,9 @@ def analyze_sections():
             'function_property_xref',
         ]:
             analyze_built_in_section(section)
+
+        elif section.section_kind == 'changes':
+            analyze_changes_section(section)
 
         else:
             analyze_other_section(section)
@@ -433,6 +440,138 @@ def analyze_built_in_section(section):
         # It's an odd combination of the emu-algs in the clause.
         # XXX SortCompare
         # XXX handle_function(...)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def analyze_changes_section(section):
+
+    mo = re.fullmatch(r'Changes to (\w+|Abstract Equality Comparison)', section.section_title)
+    if mo:
+        op_name = mo.group(1)
+        assert section.bcen_str in ['p emu-alg', 'p emu-alg p emu-alg']
+        for i in range(0, len(section.block_children), 2):
+            p = section.block_children[i]
+            assert p.element_name == 'p'
+            p_ist = p.inner_source_text()
+            assert any(
+                re.fullmatch(pattern, p_ist)
+                for pattern in [
+                    f"During {op_name} the following steps are performed in place of step [\w.]+:",
+                    f"The following steps are inserted after step 3 of the .+{op_name}.+ algorithm:",
+                    f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
+                ]
+            ), p_ist
+
+            emu_alg = section.block_children[i+1]
+            assert emu_alg.element_name == 'emu-alg'
+            handle_solo_op(op_name, emu_alg)
+            # XXX debateable, since it's not a full algorithm
+
+    else:
+        emu_xref_re = r'<emu-xref href="[^"<>]+"></emu-xref>'
+        emu_grammar_re = r'<emu-grammar>[^<>]+</emu-grammar>'
+        nont_re = r'\|\w+\|'
+        i = 0
+        while i < len(section.block_children):
+            p = section.block_children[i]; i += 1
+
+            if p.element_name == 'emu-note':
+                continue
+
+            assert p.element_name == 'p'
+            p_ist = p.inner_source_text()
+
+            if (
+                p_ist == 'For web browser compatibility, that rule is modified with the addition of the <ins>highlighted</ins> text:'
+                or
+                re.fullmatch(fr'The following Early Error rule is added to those in {emu_xref_re}\. .+', p_ist)
+                or
+                re.fullmatch(fr'The content of subclause {emu_xref_re} is replaced with the following:', p_ist)
+            ):
+                emu_grammar = section.block_children[i]; i += 1
+                ul = section.block_children[i]; i += 1
+                handle_early_error(emu_grammar, ul)
+
+            elif re.fullmatch(fr'The semantics of {emu_xref_re} is extended as follows:', p_ist):
+                p2 = section.block_children[i]; i += 1
+                assert p2.element_name == 'p'
+                p2_ist = p2.inner_source_text()
+                assert re.fullmatch(fr'Within {emu_xref_re} reference to &ldquo;{emu_grammar_re} &rdquo; are to be interpreted as meaning &ldquo;{emu_grammar_re} &rdquo; or &ldquo;{emu_grammar_re} &rdquo;\.', p2_ist)
+
+            elif (
+                re.fullmatch(r'.+ includes the following additional evaluation rules?:', p_ist)
+                or 
+                re.fullmatch(r'.+ The following evaluation rules are also added:', p_ist)
+                or
+                re.fullmatch(r'.+ modifies the following evaluation rule:', p_ist)
+            ):
+                while True:
+                    p2 = section.block_children[i]; i += 1
+                    if p2.element_name == 'emu-note':
+                        break
+                    assert p2.element_name == 'p'
+                    p2_ist = p2.inner_source_text()
+                    if re.fullmatch(fr'The production {emu_grammar_re} evaluates the same as the production {emu_grammar_re} but with {nont_re} substituted for {nont_re}\.', p2_ist):
+                        pass
+                    elif re.fullmatch(fr'The production {emu_grammar_re} evaluates as follows:', p2_ist):
+                        [emu_grammar] = [*p2.each_child_named('emu-grammar')]
+                        emu_alg = section.block_children[i]; i += 1
+                        assert emu_alg.element_name == 'emu-alg'
+                        handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg)
+                    else:
+                        i -= 1
+                        break
+
+            elif re.fullmatch(fr'Assertion \({emu_xref_re}\) evaluation rules for the {emu_grammar_re} and {emu_grammar_re} productions are also used for the {nont_re} productions, but with {nont_re} substituted for {nont_re}\.', p_ist):
+                pass
+
+            elif re.fullmatch(fr'.+ This change is accomplished by modifying the algorithm of {emu_xref_re} as follows:', p_ist):
+                while i < len(section.block_children):
+                    p2 = section.block_children[i]; i += 1
+                    assert p2.element_name == 'p'
+                    p2_ist = p2.inner_source_text()
+                    assert re.fullmatch(r'Step [\w.]+ is replaced by:', p2_ist)
+
+                    emu_alg = section.block_children[i]; i += 1
+                    assert emu_alg.element_name == 'emu-alg'
+                    handle_solo_op('EvalDeclarationInstantiation', emu_alg)
+
+            elif re.fullmatch(fr'The following augments the \|IterationStatement\| production in {emu_xref_re}:', p_ist):
+                emu_grammar = section.block_children[i]; i += 1
+                assert emu_grammar.element_name == 'emu-grammar'
+                p2 = section.block_children[i]; i += 1
+                assert p2.element_name == 'p'
+                p2_ist = p2.inner_source_text()
+                assert p2_ist == 'This production only applies when parsing non-strict code.'
+
+            elif re.fullmatch(fr'The following table entry is inserted into {emu_xref_re} .+', p_ist):
+                emu_table = section.block_children[i]; i += 1
+                assert emu_table.element_name == 'emu-table'
+
+            else:
+                mo = (
+                    re.fullmatch(fr'In {emu_xref_re} the (PropertyDefinitionEvaluation) algorithm (.|\n)+ is replaced with the following definition:', p_ist)
+                    or
+                    re.fullmatch(fr'The (?:static|runtime) semantics of (\w+) in {emu_xref_re} are augmented with the following:', p_ist)
+                )
+                if mo:
+                    op_name = mo.group(1)
+                    emu_grammar = section.block_children[i]; i += 1
+                    emu_alg = section.block_children[i]; i += 1
+                    assert emu_grammar.element_name == 'emu-grammar'
+                    assert emu_alg.element_name == 'emu-alg'
+                    handle_composite_sdo(op_name, emu_grammar, emu_alg)
+
+                else:
+                    print()
+                    print('--------------------------------------')
+                    print(section.section_num, section.section_title)
+                    print(section.bcen_str)
+                    print()
+                    print(p_ist)
+                    print(section.block_children[i].source_text())
+                    assert 0
+                    break
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -740,7 +879,7 @@ def foo_add_defn(foo_kind, foo_name, discriminator, algo):
         '{ONE_LINE_ALG}',
     ]
 
-    foo_info.definitions.append( (discriminator, algo) )
+    foo_info.definitions.append( (discriminator, algo, in_annex_b) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -755,7 +894,10 @@ def check_sdo_coverage():
             if op_name not in spec.sdo_coverage_map:
                 spec.sdo_coverage_map[op_name] = {}
 
-            for (discriminator, emu_alg) in op_info.definitions:
+            for (discriminator, emu_alg, in_annex_b) in op_info.definitions:
+                # XXX Exclude Annex B definitions from sdo_coverage analysis:
+                if in_annex_b: continue
+
                 if isinstance(discriminator, ANode):
                     assert discriminator.prod.lhs_s == '{nonterminal}'
                     assert discriminator.source_text() == '|HexDigit|'

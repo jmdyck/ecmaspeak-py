@@ -21,6 +21,7 @@
     For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
     If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
+    It is a Syntax Error if {CONDITION_1}, <ins>unless {CONDITION_1} and {CONDITION_1}.</ins>
     It is a Syntax Error if {CONDITION}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.
@@ -43,14 +44,17 @@
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text matches this rule
+    at least two of those entries were obtained from productions of the form {h_emu_grammar}
     the <sub>[Tagged]</sub> parameter was not set
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}
+    the duplicate entries are only bound by {cap_word}
     the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose StringValue equals the StringValue of the {nonterminal} of this production's {nonterminal}
     the goal symbol of the syntactic grammar is {nonterminal}
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
+    the source code matching this production is not strict mode code
     the source code matching {nonterminal} is strict mode code
     this production has an? <sub>[{cap_word}]</sub> parameter
     {LOCAL_REF} Contains {G_SYM}
@@ -72,6 +76,7 @@
     {NAMED_OPERATION_INVOCATION} contains any code points other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"`, or if it contains the same code point more than once
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
+    {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {backticked_str}
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of `"constructor"`
     {NAMED_OPERATION_INVOCATION} contains {backticked_str}
     {NAMED_OPERATION_INVOCATION} is `"arguments"` or `"eval"`
