@@ -62,17 +62,20 @@ def check_emu_eqn_coverage():
     for emu_eqn in spec.doc_node.each_descendant_named('emu-eqn'):
         st = emu_eqn.inner_source_text()
         if '=' not in st:
+            # 67 of these.
             # The content is at best a formula or expression;
             # it doesn't define anything.
             # I suppose I could parse it for conformance to {EXPR},
             # but to what end?
             # Skip it.
+            assert not hasattr(emu_eqn, '_syntax_tree')
             continue
 
         if 'aoid' not in emu_eqn.attrs:
             # There are a few of these:
             #     abs(_k_) &lt; abs(_y_) and _x_-_k_ = _q_ &times; _y_
             #     floor(_x_) = _x_-(_x_ modulo 1)
+            #     60 &times; 60 &times; 24 &times; 1000 = 86,400,000
             #     MonthFromTime(0) = 0
             #     WeekDay(0) = 4
             #     _t_<sub>local</sub> = _t_
@@ -80,6 +83,7 @@ def check_emu_eqn_coverage():
             #     _comparefn_(_a_, _b_) = 0
             # They aren't definitions.
             # Skip it.
+            assert not hasattr(emu_eqn, '_syntax_tree')
             continue
 
         assert emu_eqn.parent.element_name == 'emu-clause'
@@ -113,6 +117,7 @@ def analyze_sections():
     prev_top_level_num = ''
 
     for section in spec.doc_node.each_descendant_that_is_a_section():
+        assert hasattr(section, 'ste')
 
         top_level_num = section.section_num.split('.')[0]
         if top_level_num != prev_top_level_num:
@@ -232,14 +237,6 @@ def analyze_sdo_section(section):
 
     # XXX: See define_ops_from_sdo_section() in static_type_analysis.py
     # Merge them somehow?
-
-    if section.section_num.startswith('B.'):
-        # Taking Annex B into account is difficult,
-        # because it modifies the main-body grammar,
-        # so RHS-indexes aren't always the same.
-        # XXX For now, just skip it.
-        #! (STA has it)
-        return
 
     if section.section_title == 'Static Semantics: HasCallInTailPosition':
         assert len(section.block_children) == 2
@@ -944,6 +941,7 @@ def ensure_foo(foo_kind, foo_name):
 
 def foo_add_defn(foo_kind, foo_name, discriminator, algo):
     assert type(foo_name) == str
+
     assert (
         discriminator is None
         or
