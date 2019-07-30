@@ -1118,6 +1118,7 @@ def each_callee_name_in_algo(algo):
                 elif callee.prod.rhs_s == '{var}':
                     # can't do much
                     if callee.source_text() == '_convOp_':
+                        # Should extract this from "The TypedArray Constructors" table
                         yield 'ToInt8'
                         yield 'ToUint8'
                         yield 'ToUint8Clamp'
@@ -1125,6 +1126,9 @@ def each_callee_name_in_algo(algo):
                         yield 'ToUint16'
                         yield 'ToInt32'
                         yield 'ToUint32'
+                        # PR 1515 BigInt:
+                        yield 'ToBigInt64'
+                        yield 'ToBigUint64'
                 elif callee.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
                     [_, low_word] = callee.children
                     yield '::' + low_word.source_text()
