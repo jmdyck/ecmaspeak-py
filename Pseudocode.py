@@ -356,6 +356,10 @@ def analyze_sdo_section(section):
                 if c.inner_source_text() == 'With parameter _direction_.':
                     continue
 
+                if 'evaluates by returning' in c.inner_source_text():
+                    # branch is based before the merge of PR #1596.
+                    continue
+
                 emu_alg = section.block_children[i+1]
                 assert emu_alg.element_name == 'emu-alg'
                 handle_composite_sdo(sdo_name, c, emu_alg)
@@ -708,7 +712,7 @@ def analyze_other_section(section):
             # just examples
             pass
         else:
-            assert 0
+            assert 0, (section.section_num, section.section_title)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -766,6 +770,7 @@ def handle_early_error(emu_grammar, ul):
             assert li.source_text().isspace()
         elif li.element_name == 'li':
             tree = parse(li, 'early_error')
+            if tree is None: continue
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
             foo_add_defn('early_error', 'Early Errors', emu_grammar, ee_rule)
@@ -848,6 +853,7 @@ def handle_inline_sdo(li, section_sdo_name):
     assert li.element_name == 'li'
 
     LI = parse(li, 'inline_sdo')
+    if LI is None: return
 
     assert LI.prod.lhs_s == '{LI}'
     [ISDO_RULE] = LI.children
@@ -916,6 +922,8 @@ def handle_emu_eqn(emu_eqn):
             assert id == 'eqn-' + aoid
 
     tree = parse(emu_eqn)
+    if tree is None: return
+
     assert tree.prod.lhs_s == '{EMU_EQN_BODY}'
     [child] = tree.children
     if child.prod.lhs_s == '{CONSTANT_DEF}':

@@ -154,6 +154,9 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {nonterminal}    : \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
     {var}            : \b _ [A-Za-z][A-Za-z0-9]* _ \b
 
+    {var} : \b _i_th \b
+    # for branches based before the merge of PR #1566
+
     # tokens that begin with a digit:
     {code_unit_lit}  : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)
     {hex_int_lit}    : \b 0x [0-9A-F]{2,6} \b

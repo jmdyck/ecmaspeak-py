@@ -176,6 +176,7 @@ def _infer_section_kinds(section):
             (r'NormalCompletion',                                  'shorthand'),
             (r'ThrowCompletion',                                   'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
+            (r'Shorthands Relating to Completion Records',         'shorthand'), # PR 1573
 
             (r'(?P<op_name>\[\[\w+\]\]) ?<PARAMETER_LIST>',        'internal_method'),
             (r'Static Semantics: Early Errors', 'early_errors'),
@@ -418,7 +419,10 @@ def _extract_info_from_section_title(section, pattern_results):
                 if parameter_listing == '_value1_, _value2_, ..._values_':
                     # Math.{hypot,max,min}
                     parameter_listing = '..._values_'
-                elif parameter_listing == '_p1_, _p2_, &hellip; , _pn_, _body_':
+                elif parameter_listing in [
+                    '_p1_, _p2_, ..., _pn_, _body_', # old
+                    '_p1_, _p2_, &hellip; , _pn_, _body_' # new
+                ]:
                     # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction
                     parameter_listing = '..._args_ [ , _body_ ]'
 
