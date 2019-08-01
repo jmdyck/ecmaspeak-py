@@ -258,13 +258,14 @@ def render_node(node):
         # Handled under emu-table
 
     elif node.element_name == 'pre' and node.attrs.get('class', '') == 'metadata':
-        put('''
-<title>ECMAScript® 2019 Language&nbsp;Specification</title>
+        pubyear = '2020'
+        put(f'''
+<title>ECMAScript® {pubyear} Language&nbsp;Specification</title>
 </head>
 <body>
 <div id="spec-container">
 <h1 class="version first">Draft ECMA-262 / March 21, 2018</h1>
-<h1 class="title">ECMAScript® 2019 Language&nbsp;Specification</h1>
+<h1 class="title">ECMAScript® {pubyear} Language&nbsp;Specification</h1>
         ''')
 
     elif node.element_name == '#DOC':
