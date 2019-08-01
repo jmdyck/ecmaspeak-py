@@ -5,7 +5,7 @@
 # 
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import sys, re, pdb
+import sys, re, pdb, time
 from collections import defaultdict, OrderedDict
 
 import emu_grammars
@@ -259,12 +259,13 @@ def render_node(node):
 
     elif node.element_name == 'pre' and node.attrs.get('class', '') == 'metadata':
         pubyear = '2020'
+        today = time.strftime("%B %d, %Y")
         put(f'''
 <title>ECMAScript® {pubyear} Language&nbsp;Specification</title>
 </head>
 <body>
 <div id="spec-container">
-<h1 class="version first">Draft ECMA-262 / March 21, 2018</h1>
+<h1 class="version first">Draft ECMA-262 / {today}</h1>
 <h1 class="title">ECMAScript® {pubyear} Language&nbsp;Specification</h1>
         ''')
 
