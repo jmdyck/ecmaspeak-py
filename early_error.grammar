@@ -97,6 +97,10 @@
     ## directed-operations:
     ## {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
 
+    # PR 1651 one-grammar
+    the source code matching this production is strict mode code
+    a {nonterminal} contains the source code matching this production
+
 {NAMED_OPERATION_INVOCATION} :
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}

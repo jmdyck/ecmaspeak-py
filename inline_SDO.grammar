@@ -40,6 +40,10 @@
     the UTF16Encoding of the code point value of {nonterminal}
     the UTF16Encoding of {NAMED_OPERATION_INVOCATION}
 
+    # PR 1651 one-grammar:
+    the code unit whose value is {NAMED_OPERATION_INVOCATION}
+
+
 {CONDITION} :
     either {CONDITION_1} or {CONDITION_1}
 
@@ -120,6 +124,9 @@
     #pre-1135: {hex_int_lit}
     {dec_int_lit}{h_sub_math_r}
     {hex_int_lit}{h_sub_math_r}
+
+    # PR 1651 one-grammar:
+    64{h_sub_math_r} (that is, 8<sup>2</sup>)
 
 {BASE} :
     #pre-1135: 10
