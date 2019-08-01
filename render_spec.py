@@ -231,14 +231,19 @@ def render_node(node):
         assert node.attrs.get('charset','') == 'utf-8'
         put('<meta charset="utf-8">')
 
-    elif node.element_name in ['#COMMENT', '#DECL', 'br', 'img', 'link']:
+    elif node.element_name in ['link', 'script']:
+        text = shared.spec_text[node.start_posn:node.end_posn]
+        text = re.sub(' (href|src)="(img|ecma)', r' \1="https://tc39.es/ecma262/\2', text)
+        put(text)
+
+    elif node.element_name in ['#COMMENT', '#DECL', 'br', 'img']:
         # `node` is either:
         # - a comment,
         # - a doctype decl,
         # - a self-closing tag: <br> <img ...> <link ...> <meta ...>
         put_node(node)
 
-    elif node.element_name in ['style', 'script']:
+    elif node.element_name in ['style']:
         put_node(node)
 
     elif node.element_name == 'code':
