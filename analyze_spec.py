@@ -307,6 +307,7 @@ def check_ids():
     header("checking ids...")
 
     node_with_id_ = OrderedDict()
+    all_oldids = set()
 
     def gather_def_ids(node):
         if 'id' in node.attrs:
@@ -337,10 +338,18 @@ def check_ids():
 
             node_with_id_[defid] = node
 
+        if 'oldids' in node.attrs:
+            for oldid in node.attrs['oldids'].split(','):
+                assert oldid not in all_oldids
+                all_oldids.add(oldid)
+
         for child in node.children:
             gather_def_ids(child)
     
     gather_def_ids(spec.doc_node)
+
+    # An id can't be both an oldid and a current id.
+    assert not all_oldids & set(node_with_id_.keys())
 
     # -------------------------------------------------------------
 
