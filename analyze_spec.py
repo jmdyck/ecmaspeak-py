@@ -351,6 +351,13 @@ def check_ids():
     # An id can't be both an oldid and a current id.
     assert not all_oldids & set(node_with_id_.keys())
 
+    # Print a sorted list of all ids
+    # (so that we notice if any ever go away):
+    ids_f = shared.open_for_output('ids')
+    for id in sorted(all_oldids | set(node_with_id_.keys())):
+        print(id, file=ids_f)
+    ids_f.close()
+
     # -------------------------------------------------------------
 
     refids = set()
