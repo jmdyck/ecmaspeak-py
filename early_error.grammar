@@ -28,6 +28,9 @@
     It is an early Reference Error if {CONDITION}.
     It is an early Syntax Error if {CONDITION}.
 
+    # PR 1658
+    All Early Error rules for {nonterminal} and its derived productions also apply to the {nonterminal} that is covered by {nonterminal}.
+
 {CONDITION} :
     {CONDITION_1}
     {CONDITION_1} and if {CONDITION_1}
