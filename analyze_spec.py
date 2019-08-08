@@ -43,6 +43,7 @@ def main():
     check_ids()
 
     check_tables()
+    check_intrinsics()
     Section.make_and_check_sections()
     emu_grammars.do_stuff_with_grammars()
     
@@ -508,9 +509,74 @@ def check_tables():
             assert re.fullmatch(r'<i>\w+</i> Interface( (Required|Optional))? Properties', caption)
             assert header_line == 'Property; Value; Requirements'
 
+        elif 'Intrinsic Objects' in caption:
+            assert caption in [
+                'Well-Known Intrinsic Objects',
+                'Additional Well-known Intrinsic Objects',
+            ]
+            well_known_intrinsics_table_spans.append( (et.start_posn, et.end_posn) )
+            
+            assert header_line == 'Intrinsic Name; Global Name; ECMAScript Language Association'
+            for tr in et.each_descendant_named('tr'):
+                if tr == header_tr: continue
+                [oname, global_name, assoc] = [
+                    td.inner_source_text().strip()
+                    for td in tr.each_descendant_named('td')
+                ]
+
+                assert re.fullmatch(r'%\w+%', oname)
+                assert oname not in well_known_intrinsics
+
+                assert re.fullmatch(r"|`\w+(\.\w+)*`", global_name)
+
+                if ';' in assoc or 'i.e.' in assoc:
+                    mo = re.search(r'; i.e., (%\w+(\.\w+)+%)$', assoc)
+                    assert mo
+                    new_name = mo.group(1)
+                    assert new_name not in well_known_intrinsics
+                    assert new_name != oname
+                    well_known_intrinsics[oname] = f"old name;  2950,$s/{oname}/{new_name}/gc"
+                    well_known_intrinsics[new_name] = "new name"
+                else:
+                    well_known_intrinsics[oname] = "only name"
+
         else:
             # print('>>>', header_line, '---', caption)
             pass
+
+well_known_intrinsics_table_spans = []
+well_known_intrinsics = {}
+
+def check_intrinsics():
+    stderr("checking intrinsics...")
+    header("checking intrinsics...")
+    # We can't just scan through spec.text looking for %...%,
+    # because that would find occurrences in element IDs,
+    # which are lower-cased.
+    # Instead, just look in literal (text) nodes.
+    # (Note that this skips occurrences of "%<var>Foo</var>Prototype%".)
+    for tnode in spec.doc_node.each_descendant_named('#LITERAL'):
+        for mo in re.compile(r'%\S+%').finditer(spec.text, tnode.start_posn, tnode.end_posn):
+            itext = mo.group(0)
+            itext_start = mo.start(0)
+            if itext in ['%name%', '%name.a.b%']:
+                # placeholders
+                continue
+            if itext in ['%_NativeError_%', '%_TypedArray_%']:
+                # metavariable interpolation
+                continue
+
+            is_in_table = any(
+                table_start < itext_start < table_end
+                for (table_start, table_end) in well_known_intrinsics_table_spans 
+            )
+
+            status = well_known_intrinsics.get(itext, "doesn't exist")
+            if status == "doesn't exist":
+                msg_at_posn(itext_start, f"Intrinsic doesn't exist: {itext}")
+            elif status.startswith("old name"):
+                if not is_in_table:
+                    msg_at_posn(itext_start, f"Using {status}")
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
