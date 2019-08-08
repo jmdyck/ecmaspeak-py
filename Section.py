@@ -188,7 +188,7 @@ def _infer_section_kinds(section):
 
             (r'Properties of Valid Executions', 'catchall'),
             (r'(Additional )?Properties of .+', 'properties_of_an_intrinsic_object'),
-            (r'The [\w%]+ Object',              'properties_of_an_intrinsic_object'),
+            (r'The [\w%.]+ Object',             'properties_of_an_intrinsic_object'),
 
             (r'The \w+ Constructor',               'Call_and_Construct_ims_of_an_intrinsic_object'),
             (r'The _NativeError_ Constructors',    'Call_and_Construct_ims_of_an_intrinsic_object'),

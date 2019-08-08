@@ -1142,7 +1142,6 @@
     the integer that is {EXPR}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
-    the intrinsic object {percent_word}
     the larger of 0 and the result of {var} minus the number of elements of {var}
     the largest possible nonnegative integer {var} not larger than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
     the last element in {var}
@@ -1256,6 +1255,9 @@
     # obsoleted by the merge of PR #1602:
     # a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
     # a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
+
+    # obsoleted by the merge of PR #1376:
+    # the intrinsic object {percent_word}
 
     # PR 1460 explicit-exotics:
     the internal slots listed in {h_emu_xref}

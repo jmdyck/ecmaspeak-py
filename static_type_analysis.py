@@ -8017,10 +8017,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         # Need to add something to fields_for_record_type_named_?
                 elif lhs_t.name == 'Intrinsics Record':
                     field_type = {
-                        '%Array%'             : T_constructor_object_,
-                        '%FunctionPrototype%' : T_Object,
-                        '%ObjectPrototype%'   : T_Object,
-                        '%ThrowTypeError%'    : T_function_object_,
+                        '%Array%'               : T_constructor_object_,
+                        # '%FunctionPrototype%' : T_Object,
+                        '%Function.prototype%'  : T_Object,
+                        # '%ObjectPrototype%'   : T_Object,
+                        '%Object.prototype%'    : T_Object,
+                        '%ThrowTypeError%'      : T_function_object_,
                     }[dsbn_name]
                 else:
                     assert lhs_t.name in fields_for_record_type_named_, lhs_t.name

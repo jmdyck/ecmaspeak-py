@@ -139,7 +139,7 @@ def prep_autolinking():
                 register('defterm', term2, fragid)
                 plain_words.append(term2)
 
-        elif re.fullmatch(r'%(\w+)%', term):
+        elif re.fullmatch(r'%(\w+(\.\w+)*)%', term):
             # link references to the section
             fragid = cc_section.section_id
             percent_words.append(term[1:-1])
@@ -622,6 +622,10 @@ def enhance_text(text, node):
         # if node.element_name == 'emu-table' and whole_match == 'ToBoolean': pdb.set_trace()
         # if whole_match == 'HourFromTime': pdb.set_trace()
         # if '[' in term: pdb.set_trace()
+        if term not in _fragid_for_term:
+            stderr(f"no fragid for term {term!r} ")
+            return whole_match
+
         term_fragid = _fragid_for_term[term]
         if node.element_name == 'p' and cc_section and term_fragid == cc_section.section_id:
             # This a reference to the term from within
