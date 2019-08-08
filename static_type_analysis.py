@@ -38,7 +38,8 @@ def gather_nonterminals():
 
     def recurse_h(hnode):
         if hasattr(hnode, '_syntax_tree'):
-            recurse_a(hnode._syntax_tree)
+            if hnode._syntax_tree is not None:
+                recurse_a(hnode._syntax_tree)
 
         else:
             for child in hnode.children:
@@ -6262,12 +6263,12 @@ def tc_cond_(cond, env0, asserting):
         return (env1, env1)
 
     elif p in [
-        r'{CONDITION_1} : {EX} is equal to {EX}',
         r"{CONDITION_1} : {EX} is different from {EX}",
+        r"{CONDITION_1} : {EX} is equal to {EX}",
+        r"{CONDITION_1} : {EX} is not equal to {EX}",
         r"{CONDITION_1} : {EX} is the same as {EX}",
-        r"{CONDITION_1} : {var} is not the same as {var}",
-        r"{CONDITION_1} : {var} is not equal to {var}",
         r"{CONDITION_1} : {var} and {var} are the same",
+        r"{CONDITION_1} : {var} is not the same as {var}",
     ]:
         [exa, exb] = children
         (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
@@ -8726,9 +8727,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value of the Element Type value in {h_emu_xref} for {var}":
-        [emu_xref, var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
+    elif p == r"{EXPR} : the String value of the Element Type value in {h_emu_xref} for {EX}":
+        [emu_xref, ex] = children
+        env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_String, env0)
 
     elif p in [

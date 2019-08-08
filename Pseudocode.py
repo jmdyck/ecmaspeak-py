@@ -688,7 +688,7 @@ def analyze_other_section(section):
             handle_solo_op(op_name, emu_alg)
 
         else:
-            assert 0
+            assert 0, section.section_title
 
     else:
 
