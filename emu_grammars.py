@@ -69,7 +69,7 @@ def process_defining_emu_grammars(emu_grammars):
 
         assert emu_grammar.attrs['type'] == 'definition'
 
-        cc_section = emu_grammar.nearest_ancestor_satisfying(lambda node: node.is_a_section())
+        cc_section = emu_grammar.closest_containing_section()
 
         arena = get_grammar_arena_for_section(cc_section)
 
@@ -489,8 +489,7 @@ def check_non_defining_prodns(emu_grammars):
     for emu_grammar in emu_grammars:
         emu_grammar.summary = []
 
-        # closest-containing section
-        cc_section = emu_grammar.nearest_ancestor_satisfying(lambda node: node.is_a_section())
+        cc_section = emu_grammar.closest_containing_section()
         arena = get_grammar_arena_for_section(cc_section)
 
         for (u_posn, lhs_nt, u_prodn_params, u_colons, u_rhss) in parse_emu_grammar(emu_grammar, None):
