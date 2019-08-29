@@ -821,8 +821,8 @@ def expand_emu_grammar_body(emu_grammar_body, emu_grammar_type, emu_grammar_pare
     id_insert = '' if namespace == '' else (namespace + '-')
 
     for (pi, production) in enumerate(re.split(r'\n{2,}', trimmed_body)):
-        mo = re.fullmatch(r'(?s) *([^:]+?) +(:+) *(.+)', production)
-        (pre, colons, post) = mo.groups()
+        mo = re.fullmatch(r'(?s) *([^:]+?) +(:+)(!?) *(.+)', production)
+        (pre, colons, optbang, post) = mo.groups()
 
         mo = re.fullmatch('(\w+)(?:\[([\w, ]+)\])?', pre)
         (lhs_nt, params) = mo.groups()
@@ -882,6 +882,8 @@ def expand_emu_grammar_body(emu_grammar_body, emu_grammar_type, emu_grammar_pare
             +
             '<emu-geq>%s</emu-geq>' % colons
             +
+            optbang
+            +
             '{RHSS}'
             +
             '</emu-production>'
@@ -905,7 +907,7 @@ def expand_emu_grammar_body(emu_grammar_body, emu_grammar_type, emu_grammar_pare
         else:
             rhss = []
             for rhs in post.split('\n'):
-                if rhs == '': continue
+                if rhs in ['', '!']: continue
                 (rhs_text, rhs_id) = expand_rhs(rhs, namespace)
                 rhss.append(rhs_text)
                 if rhs_id:

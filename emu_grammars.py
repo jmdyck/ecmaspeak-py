@@ -183,7 +183,7 @@ def parse_emu_grammar(emu_grammar, output_f):
                         msg_at_posn(prodn_posn, "ERROR: tokenization")
             else:
                 # multi-line production
-                if first_line_rem not in ['', ' one of']:
+                if first_line_rem not in ['', ' one of', '!']:
                     msg_at_posn(prodn_posn, "ERROR: Multi-line production's first line ends oddly")
                 else:
                     for (r_ind, r_line) in split_lines[1:]:
@@ -193,7 +193,7 @@ def parse_emu_grammar(emu_grammar, output_f):
                         except TokenizationError:
                             msg_at_posn(prodn_posn, "ERROR: tokenization")
                             rthings = []
-                        if first_line_rem == '':
+                        if first_line_rem in ['', '!']:
                             yield rthings
                         elif first_line_rem == ' one of':
                             # normalize 'one of' production
@@ -786,9 +786,9 @@ class RhsMatchesChecker:
                 # good
                 pass
             else:
-                # This would indicate an obvious ambiguity in the grammar,
-                # so is very unlikely. (I haven't seen it yet.)
-                assert 0
+                msg_at_posn(self.u_posn,
+                    f"WARNING: RHS#{u_i+1} matches {L} defining RHSs for {self.lhs_nt} [but probably resolved by guards]"
+                )
 
         # As you walk through the 'use' RHSs in order,
         # the corresponding 'def' RHSs should also be in order

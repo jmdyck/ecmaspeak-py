@@ -277,7 +277,7 @@ def _infer_section_kinds(section):
             section.ste['parameters'] = parameters
 
     elif (
-        section.parent.section_title == 'Pattern Semantics'
+        section.parent.section_title in ['Pattern Semantics', 'Runtime Semantics for Patterns']
         and
         section.section_title not in ['Notation', 'Runtime Semantics: CharacterRangeOrUnion ( _A_, _B_ )']
     ):

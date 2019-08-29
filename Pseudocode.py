@@ -361,9 +361,24 @@ def analyze_sdo_section(section):
                     # branch is based before the merge of PR #1596.
                     continue
 
-                emu_alg = section.block_children[i+1]
-                assert emu_alg.element_name == 'emu-alg'
-                handle_composite_sdo(sdo_name, c, emu_alg)
+                if (
+                    p_text.startswith('The production <emu-grammar')
+                    and
+                    (
+                        p_text.endswith('</emu-grammar> evaluates as follows:')
+                        or
+                        p_text.endswith('is evaluated as follows:')
+                    )
+                ):
+                    emu_alg = section.block_children[i+1]
+                    assert emu_alg.element_name == 'emu-alg'
+                    handle_composite_sdo(sdo_name, c, emu_alg)
+
+                else:
+                    # assert 0, p_text
+                    # print('>', p_text)
+                    pass
+                    # skip it for now
 
     else:
         print(section.section_num, section.section_title, section.section_id)
@@ -1400,7 +1415,7 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
     #
     # This function identifies exceptions to that rule of thumb.
 
-    if sdo_name == 'CharacterValue' and lhs_nt == 'ClassEscape' and def_i == 2:
+    if sdo_name == 'CharacterValue' and lhs_nt == 'ClassEscape' and def_i == (3 if shared.g_outdir == '_one-grammar' else 2):
         # Invocations of this SDO on ClassAtom and ClassAtomNoDash
         # are guarded by `IsCharacterClass ... is *false*`.
         # This excludes the `ClassEscape :: CharacterClassEscape` production.
