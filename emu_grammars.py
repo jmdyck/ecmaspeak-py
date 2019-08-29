@@ -39,6 +39,7 @@ def do_stuff_with_grammars():
     check_non_defining_prodns(emu_grammars_of_type_['reference'])
 
     check_emu_prodrefs(spec.doc_node)
+    approximate_annex_A(spec.doc_node)
 
     check_nonterminal_refs(spec.doc_node)
 
@@ -881,6 +882,215 @@ def check_emu_prodrefs(doc_node):
         import difflib
         for line in difflib.context_diff(referenced_names, arena_A_names, lineterm=''):
             print(line, file=shared.g_errors_f)
+
+# ------------------------------------------------------------------------------
+
+def approximate_annex_A(doc_node):
+
+    lines = []
+    def put(line=''):
+        lines.append(line)
+
+    # sections in the main body of the text that correspond to sections in Annex A:
+    grouping_sections = []
+    for section in doc_node.each_descendant_that_is_a_section():
+        # caast = corresponding_annex_a_section_title
+        mo = re.fullmatch(r'ECMAScript Language: (.+)', section.section_title)
+        if mo:
+            caast = mo.group(1)
+
+            if caast == 'Source Code':
+                # Annex A doesn't have a separate section corresponding to 10 "Source Code".
+                # Instead, it slips its single production into "Lexical Grammar"
+                caast = None
+                source_code_section = section
+
+            elif caast == 'Statements and Declarations':
+                caast = 'Statements'
+
+        elif section.section_title == 'ToNumber Applied to the String Type':
+            caast = 'Number Conversions'
+
+        elif section.section_title == 'URI Syntax and Semantics':
+            caast = 'Universal Resource Identifier Character Classes'
+
+        elif section.section_title == 'Syntax for Patterns':
+            caast = 'Regular Expressions'
+        
+        else:
+            caast = None
+        if caast: grouping_sections.append((section, caast))
+
+
+    put()
+    put(f'<emu-annex id="sec-grammar-summary">')
+    put(f'  <h1>Grammar Summary</h1>')
+
+    for (grouping_section, aa_section_title) in grouping_sections:
+        aa_section_id = 'sec-' + aa_section_title.lower().replace(' ', '-')
+        put(f'# {aa_section_title} !start')
+        put()
+        put(f'  <emu-annex id="{aa_section_id}">')
+        put(f'    <h1>{aa_section_title}</h1>')
+
+        if aa_section_title == 'Lexical Grammar':
+            lhs_symbol = 'SourceCharacter'
+            put(f'    <emu-prodref name={lhs_symbol}></emu-prodref>')
+
+        for section in grouping_section.each_descendant_that_is_a_section():
+            syntaxes = [
+                numless
+                for numless in section.numless_children
+                if (
+                    numless.title in ['Syntax', 'Supplemental Syntax']
+                    or
+                    grouping_section.section_title == 'Syntax for Patterns'
+                )
+            ]
+            if not syntaxes: continue
+
+            put(f'# {section.section_title} !start')
+            for syntax in syntaxes:
+                put(f'# {section.section_title} / {syntax.title} !start')
+
+                for bc in syntax.block_children:
+                    if bc.element_name == 'emu-grammar':
+                        for (_, lhs_symbol, _, _, _) in parse_emu_grammar(bc, None):
+                            put(f'    <emu-prodref name={lhs_symbol}></emu-prodref>')
+
+                        if syntax.title == 'Supplemental Syntax':
+                            put(f'    <p>&nbsp;</p>')
+
+                    elif bc.element_name  == 'p':
+
+                        if syntax.title == 'Supplemental Syntax':
+                            ptext = bc.source_text()
+
+                            ptext = re.sub(r'\s+<br>\s+', ' ', ptext)
+
+                            ptext = re.sub(r'<emu-grammar>(\w+).+?</emu-grammar>', r'<emu-prodref name=\1></emu-prodref>', ptext)
+
+                            for (nt, a) in [
+                                ('PrimaryExpression',    'parencover'),
+                                ('CallExpression',       'callcover'),
+                                ('AssignmentExpression', 'assignment'),
+                                ('ArrowParameters',      'parencover'),
+                                ('AsyncArrowFunction',   'callcover'),
+                            ]:
+                                ptext = ptext.replace(f'name={nt}>', f'name={nt} a={a}>')
+
+                            if section.section_title == 'Destructuring Assignment':
+                                ptext = ptext.replace('.</p>', ':</p>')
+                            elif section.section_title == 'Async Arrow Function Definitions':
+                                ptext = re.sub(
+                                    r'When processing an instance of (the production .+) (the interpretation of .+) is refined using the following grammar:',
+                                    r'When \1 is recognized the following grammar is used to refine \2:',
+                                    ptext)
+
+                            put(f'    {ptext}')
+
+                        elif section.section_title == 'ToNumber Applied to the String Type':
+                            ptext = bc.source_text()
+                            ptext = re.sub(
+                                r'(All grammar symbols not explicitly defined) above (have the definitions used in the) (Lexical Grammar for numeric literals) \((<.+>)(<.+>)\)',
+                                r'\1 by the |StringNumericLiteral| grammar \2 \4\3\5.',
+                                ptext)
+                            put(f'    {ptext}')
+
+                        elif section.section_title == 'Patterns':
+                            ptext = bc.source_text()
+                            put(f'    {ptext}')
+                            put(f'    <p>&nbsp;</p>')
+                            
+                    elif bc.element_name  == 'emu-note':
+                        if 'Use of the following tokens within strict mode code is also reserved.' in bc.source_text():
+                            put('    <p>The following tokens are also considered to be |FutureReservedWord|s when parsing strict mode code:</p>')
+                            put('    <p><emu-t>implements</emu-t> &nbsp;<emu-t>package</emu-t> &nbsp;<emu-t>protected</emu-t><br>')
+                            put('      <emu-t>interface</emu-t> &nbsp;<emu-t>private</emu-t> &nbsp;<emu-t>public</emu-t>')
+                            put('    </p>')
+                            put('    <p>&nbsp;</p>')
+
+                        else:
+                            pass
+
+                    else:
+                        assert 0
+
+                put(f'# {section.section_title} / {syntax.title} !end')
+
+            put(f'# {section.section_title} !end')
+
+        put('  </emu-annex>')
+        put(f'# {aa_section_title} !end')
+
+    put('</emu-annex>')
+    put()
+
+    # -----------------------------------------------------------------
+    # In Annex A, various things are out of order wrt the main text,
+    # so we need to move chunks of lines around.
+
+    def move(X, before, after):
+        def find(substring):
+            matching_indexes = [
+                i
+                for (i, line) in enumerate(lines)
+                if substring in line
+            ]
+            if len(matching_indexes) != 1:
+                stderr(f"find({substring!r}) has {len(matching_indexes)} matches:")
+                for i in matching_indexes:
+                    stderr(f"    {lines[i]}")
+                sys.exit(1)
+            return matching_indexes[0]
+
+        X_start_i = find(f"# {X} !start")
+        X_end_i   = find(f"# {X} !end")
+        assert X_start_i < X_end_i
+        X_lines = lines[X_start_i:X_end_i+1]
+        del lines[X_start_i:X_end_i+1]
+
+        before_i = find(before)
+        after_i  = find(after)
+        if before_i + 1 != after_i:
+            stderr(f"{before} matches:")
+            stderr(f"  {before_i:2d}: {lines[before_i]}")
+            stderr(f"{after} matches:")
+            stderr(f"  {after_i:2d}: {lines[after_i]}")
+            sys.exit(1)
+        lines[after_i:after_i] = X_lines
+
+    move('Number Conversions',
+        # to between:
+        '# Scripts and Modules !end',
+        '# Universal Resource Identifier Character Classes !start',
+    )
+
+    move('Left-Hand-Side Expressions / Supplemental Syntax',
+        # to between:
+        'name=CallExpression>',
+        'SuperCall'
+    )
+
+    move('Async Arrow Function Definitions',
+        # to between:
+        '# Arrow Function Definitions !end',
+        '# Method Definitions !start'
+    )
+
+    move('Async Function Definitions',
+        # to between:
+        '# Async Generator Function Definitions !end',
+        '# Class Definitions !start'
+    )
+
+    # ------------------------------------------------------------------
+
+    aaa_f = shared.open_for_output('approximate_annex_a')
+    for line in lines:
+        if line.startswith('#'): continue
+        print(line, file=aaa_f)
+    aaa_f.close()
 
 # ------------------------------------------------------------------------------
 
