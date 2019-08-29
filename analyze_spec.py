@@ -314,6 +314,18 @@ def check_ids():
         if 'id' in node.attrs:
             defid = node.attrs['id']
 
+            # ----------
+            # no duplicate ids, of course
+
+            if defid in node_with_id_:
+                msg_at_posn(node.start_posn, f"duplicate id: '{defid}'")
+
+            node_with_id_[defid] = node
+
+            # ----------
+            # id should begin with "(sec|eqn|figure|table)-"
+            # if and only if the node is of certain kinds.
+
             id_prefix_expectation = {
               'emu-intro' : 'sec-',
               'emu-clause': 'sec-',
@@ -333,11 +345,6 @@ def check_ids():
                     or defid.startswith('table-')
                 ):
                     msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}">, did not expect its id to start that way')
-
-            if defid in node_with_id_:
-                msg_at_posn(node.start_posn, f"duplicate id: '{defid}'")
-
-            node_with_id_[defid] = node
 
         if 'oldids' in node.attrs:
             for oldid in node.attrs['oldids'].split(','):
@@ -360,6 +367,8 @@ def check_ids():
     ids_f.close()
 
     # -------------------------------------------------------------
+
+    # Find "referenced but not declared" ids.
 
     refids = set()
 
@@ -421,6 +430,8 @@ def check_ids():
     check_ref_ids(spec.doc_node)
 
     # -------------------------------------------------------------
+
+    # Find "declared but nor referenced" ids.
 
     for (id, defnode) in node_with_id_.items():
         if id in refids: continue
