@@ -553,6 +553,7 @@ def check_tables():
             ]
             well_known_intrinsics_table_spans.append( (et.start_posn, et.end_posn) )
             
+            new_names = {}
             assert header_line == 'Intrinsic Name; Global Name; ECMAScript Language Association'
             for tr in et.each_descendant_named('tr'):
                 if tr == header_tr: continue
@@ -571,11 +572,25 @@ def check_tables():
                     assert mo
                     new_name = mo.group(1)
                     assert new_name not in well_known_intrinsics
+                    assert new_name not in new_names
+                    new_names[new_name] = tr.start_posn
+
                     assert new_name != oname
                     well_known_intrinsics[oname] = f"old name;  2950,$s/{oname}/{new_name}/gc"
                     well_known_intrinsics[new_name] = "new name"
                 else:
                     well_known_intrinsics[oname] = "only name"
+
+            # Have to do this after processing the table,
+            # because of possible forward references.
+            # (E.g., on the row for %AsyncGenerator%,
+            # column 3 mentions %AsyncGeneratorFunction.prototype%,
+            # which implies the existence of %AsyncGeneratorFunction%,
+            # which is declared in column 1 of the *next* row.)
+            for (new_name, tr_posn) in new_names.items():
+                base_of_new_name = re.sub(r'\..*', '%', new_name)
+                if base_of_new_name not in well_known_intrinsics:
+                    msg_at_posn(tr_posn, f"Implied intrinsic doesn't exist: {base_of_new_name}")
 
         else:
             # print('>>>', header_line, '---', caption)
