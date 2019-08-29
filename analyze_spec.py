@@ -346,6 +346,23 @@ def check_ids():
                 ):
                     msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}">, did not expect its id to start that way')
 
+            # ----------
+            # If an element defines an abstract operation,
+            # its id should be ...
+
+            if 'aoid' in node.attrs:
+                aoid = node.attrs['aoid']
+                assert node.element_name in ['emu-clause', 'emu-annex', 'emu-eqn', 'dfn']
+                if id_prefix_expectation is None:
+                    id_prefix_expectation = 'sec-' # for thisFooValue
+                possibles = [
+                    id_prefix_expectation + aoid.lower().replace(' ', '-'),
+                    id_prefix_expectation + aoid,
+                    id_prefix_expectation + kebab(aoid)
+                ]
+                if defid not in possibles:
+                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}" aoid={aoid}">, expected id="{possibles[0]}"')
+
         if 'oldids' in node.attrs:
             for oldid in node.attrs['oldids'].split(','):
                 assert oldid not in all_oldids
@@ -460,6 +477,15 @@ def check_ids():
             continue
 
         msg_at_posn(defnode.start_posn, f"id declared but not referenced: '{id}'")
+
+def kebab(id):
+    def replfunc(mo):
+        low = mo.group(0).lower()
+        if mo.start() == 0:
+            return low
+        else:
+            return '-' + low
+    return re.sub('[A-Z]', replfunc, id)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
