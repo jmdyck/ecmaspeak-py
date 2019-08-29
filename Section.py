@@ -276,7 +276,11 @@ def _infer_section_kinds(section):
                         parameters[param_name] = param_punct
             section.ste['parameters'] = parameters
 
-    elif section.parent.section_title == 'Pattern Semantics' and section.section_title not in ['Notation', 'Runtime Semantics: CharacterRangeOrUnion ( _A_, _B_ )']:
+    elif (
+        section.parent.section_title == 'Pattern Semantics'
+        and
+        section.section_title not in ['Notation', 'Runtime Semantics: CharacterRangeOrUnion ( _A_, _B_ )']
+    ):
         assert section.section_kind == 'catchall'
         section.section_kind = 'syntax_directed_operation'
         assert 'op_name' not in section.ste
