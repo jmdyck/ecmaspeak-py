@@ -182,6 +182,9 @@
     # PR 1460 explicit-exotics:
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
 
+    # PR 1464 static RegExp parsing:
+    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
+
     # PR 1515 BigInt:
     Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
     Let {var} be {EXPR}. {note}
@@ -799,6 +802,12 @@
     {var} is a bound function exotic object
     {var} is a bound function exotic object or a {h_emu_xref}
     {var} contains {DSBN}
+
+    # PR 1464 static RegExp parsing:
+    it contains the same code point more than once
+    {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, or {backticked_str}
+    {PP_NAMED_OPERATION_INVOCATION} contains {backticked_str}
+    {var} cannot be recognized using the goal symbol {nonterminal} of the ECMAScript RegExp grammar specified in {h_emu_xref}
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
