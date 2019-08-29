@@ -353,10 +353,11 @@ def analyze_sdo_section(section):
         # print(section.bcen_str)
         for (i,c) in enumerate(section.block_children):
             if c.element_name == 'p':
-                if c.inner_source_text() == 'With parameter _direction_.':
+                p_text = c.inner_source_text()
+                if p_text == 'With parameter _direction_.':
                     continue
 
-                if 'evaluates by returning' in c.inner_source_text():
+                if 'evaluates by returning' in p_text:
                     # branch is based before the merge of PR #1596.
                     continue
 
