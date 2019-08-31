@@ -1410,7 +1410,7 @@ class Grammar:
         # Also eliminate A_id items, as they don't contribute.)
         # Generally, convert the grammar to something closer to a CFG.
 
-        stderr('expand_abbreviations ...')
+        stderr('    expand_abbreviations ...')
 
         this_grammar.exp_prodns = OrderedDict()
 
@@ -1540,7 +1540,7 @@ class Grammar:
 
     def calc_min_length(this_grammar):
         # XXX UNUSED?
-        stderr('calc_min_length ...')
+        stderr('    calc_min_length ...')
 
         this_grammar.min_length_for_nt_named_ = defaultdict(int)
 
@@ -1580,7 +1580,7 @@ class Grammar:
     # --------------------------------------------------------------------------
 
     def compute_firstk(this_grammar):
-        stderr('compute_firstk ...')
+        stderr('    compute_firstk ...')
 
         this_grammar.firstk_for_nt_named_ = defaultdict(lambda: defaultdict(set))
 
@@ -1647,7 +1647,7 @@ class Grammar:
             if not something_changed:
                 break
 
-        stderr('   ', n_passes, 'passes')
+        stderr(f'        {n_passes} passes')
 
         filename = '%s_firstk' % this_grammar.name
         f = shared.open_for_output(filename)
@@ -1663,7 +1663,7 @@ class Grammar:
     # --------------------------------------------------------------------------
 
     def print_exp_prodns(this_grammar):
-        stderr('print_exp_prodns ...')
+        stderr('    print_exp_prodns ...')
         filename = '%s_expanded_grammar' % this_grammar.name
         f = shared.open_for_output(filename)
 
@@ -1683,7 +1683,7 @@ class Grammar:
     # --------------------------------------------------------------------------
 
     def generate_LR0_automaton(this_grammar):
-        stderr('generate_LR0_automaton ...')
+        stderr('    generate_LR0_automaton ...')
 
         n_conflicts = 0
 
@@ -1851,15 +1851,15 @@ class Grammar:
         t_end = time.time()
         t_elapsed = t_end - t_start
         stderr(
-            "LR0 machine constructed (in %d sec) with %d states and %d conflicts" %
+            "    LR0 machine constructed (in %d sec) with %d states and %d conflicts" %
             (t_elapsed, len(lr0.state_for_kernel_), n_conflicts)
         )
 
-        stderr("printing automaton...")
+        stderr("    printing automaton...")
         filename = '%s_automaton' % this_grammar.name
         f = shared.open_for_output(filename)
         lr0.print(f, stringify_rthing)
-        stderr("done")
+        stderr("    done")
 
         # ------------------------------------------------------------
 
@@ -1972,7 +1972,7 @@ class Grammar:
         # (to allow you to decide between conflicting states)
         for state in lr0.state_for_kernel_.values():
             if not state.has_conflict: continue
-            stderr("state #%d has a conflict" % state.number)
+            stderr("    state #%d has a conflict" % state.number)
 
             max_stacklet_len = 0
             stacklet = (state,)
