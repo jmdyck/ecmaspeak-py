@@ -54,7 +54,7 @@ class State:
         self.kernel = kernel
         self.eg_accessor = eg_accessor
         self.number = number
-        if self.number > 0 and self.number % 100 == 0: print('    ', self.number, file=sys.stderr)
+        # if self.number > 0 and self.number % 100 == 0: print('    ', self.number, file=sys.stderr)
 
     def should_be_closed(self):
         'Subclasses can override.'
