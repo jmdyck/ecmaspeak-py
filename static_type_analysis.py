@@ -1560,6 +1560,7 @@ named_type_hierarchy = {
                 'CharSet': {},
                 'Data Block': {},
                 'FunctionKind1_': {},
+                'event_pair_': {},
                 'IEEE_binary32_': {},
                 'IEEE_binary64_': {},
                 'Infinity_': {},
@@ -1577,7 +1578,6 @@ named_type_hierarchy = {
                     'MathInteger_': {},
                     'MathOther_': {},
                 },
-                'pair_': {},
                 'Parse Node' : {
                     'PTN_ForBinding': {},
                     'PTN_Script': {},
@@ -7098,7 +7098,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {PAIR} is in {EX}":
         [pair, ex] = children
-        env0.assert_expr_is_of_type(pair, T_pair_)
+        env0.assert_expr_is_of_type(pair, T_event_pair_)
         env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
@@ -7108,8 +7108,8 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : either {PAIR} or {PAIR} is in {EX}",
     ]:
         [paira, pairb, ex] = children
-        env0.assert_expr_is_of_type(paira, T_pair_)
-        env0.assert_expr_is_of_type(pairb, T_pair_)
+        env0.assert_expr_is_of_type(paira, T_event_pair_)
+        env0.assert_expr_is_of_type(pairb, T_event_pair_)
         env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
@@ -10866,7 +10866,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [a, b] = children
         env0.assert_expr_is_of_type(a, T_Shared_Data_Block_event)
         env0.assert_expr_is_of_type(b, T_Shared_Data_Block_event)
-        return (T_pair_, env0)
+        return (T_event_pair_, env0)
 
     elif p in [
         r"{EXPR} : the element in {DOTTING} whose {DSBN} is {EX}",
@@ -10923,7 +10923,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # over-specific:
         env0.assert_expr_is_of_type(a, T_Synchronize_event)
         env0.assert_expr_is_of_type(b, T_Synchronize_event)
-        return (T_pair_, env0)
+        return (T_event_pair_, env0)
 
     elif p == r"{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `name` property of {var}":
         var = children[0]
@@ -11501,7 +11501,7 @@ fields_for_record_type_named_ = {
     'Agent Events Record' : {
         'AgentSignifier'       : T_agent_signifier_,
         'EventList'            : ListType(T_event_),
-        'AgentSynchronizesWith': ListType(T_pair_),
+        'AgentSynchronizesWith': ListType(T_event_pair_),
     },
 
     # 39380: Candidate Execution Record Fields
