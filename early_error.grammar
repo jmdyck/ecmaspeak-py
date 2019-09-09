@@ -82,8 +82,7 @@
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {backticked_str}
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of `"constructor"`
     {NAMED_OPERATION_INVOCATION} contains {backticked_str}
-    {NAMED_OPERATION_INVOCATION} is `"arguments"` or `"eval"`
-    {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
+    {NAMED_OPERATION_INVOCATION} is {backticked_str} or {backticked_str}
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
