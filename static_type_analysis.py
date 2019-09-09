@@ -4257,8 +4257,8 @@ def tc_nonvalue(anode, env0):
     elif p == r'{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.':
         [var1, var2] = children
         assert var1.children == var2.children
-        env0.assert_expr_is_of_type(var1, T_execution_context)
-        result = env0
+        env1 = env0.ensure_expr_is_of_type(var1, T_execution_context)
+        result = env1
 
     elif p == r'{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.':
         [var] = children
@@ -4269,6 +4269,12 @@ def tc_nonvalue(anode, env0):
         [avar, bvar] = children
         env0.assert_expr_is_of_type(avar, T_execution_context)
         env0.assert_expr_is_of_type(bvar, T_execution_context)
+        result = env0
+
+    # PR 1670:
+    elif p == r"{COMMAND} : Remove {var} from the execution context stack.":
+        [avar] = children    
+        env0.assert_expr_is_of_type(avar, T_execution_context)
         result = env0
 
     elif p == r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.":
@@ -11595,6 +11601,7 @@ fields_for_record_type_named_ = {
         'DFSAncestorIndex' : T_Integer_ | T_Undefined,
         'RequestedModules' : ListType(T_String),
         #
+        'Context'              : T_execution_context | T_empty_, # PR 1670
         'ECMAScriptCode'       : T_Parse_Node,
         'ImportEntries'        : ListType(T_ImportEntry_Record),
         'LocalExportEntries'   : ListType(T_ExportEntry_Record),

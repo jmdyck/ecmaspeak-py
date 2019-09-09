@@ -201,6 +201,9 @@
     # PR 1612 sort_algo:
     Let {var} be {LITERAL} if any of the following conditions are satisfied, and let it be {LITERAL} otherwise:{I_BULLETS}
 
+    # PR 1670 fix null [[ScriptOrModule]]
+    Remove {var} from the execution context stack.
+
 # ----------------------------------------------
 
 {IF_CLOSED} :
