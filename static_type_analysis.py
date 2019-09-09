@@ -6378,7 +6378,7 @@ def tc_cond_(cond, env0, asserting):
         return (env2, env2)
 
     elif p in [
-        r'{CONDITION_1} : {var} is in {var}',
+        r'{CONDITION_1} : {EX} is in {EX}',
         r'{CONDITION_1} : {var} is not in {var}',
         r'{CONDITION_1} : {var} occurs exactly once in {var}',
     ]:
@@ -6388,6 +6388,8 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(item_var, T_code_unit_)
         elif container_t == T_CharSet:
             env0.assert_expr_is_of_type(item_var, T_character_)
+        elif container_t == T_Relation:
+            env0.assert_expr_is_of_type(item_var, T_event_pair_)
         elif isinstance(container_t, ListType):
             # env0.assert_expr_is_of_type(item_var, container_t.element_type)
             # The stack only contains STMRs:
@@ -7094,12 +7096,6 @@ def tc_cond_(cond, env0, asserting):
     ]:
         [var, dsbn] = children
         env0.assert_expr_is_of_type(var, T_Object) # more specific?
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {PAIR} is in {EX}":
-        [pair, ex] = children
-        env0.assert_expr_is_of_type(pair, T_event_pair_)
-        env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
     elif p in [

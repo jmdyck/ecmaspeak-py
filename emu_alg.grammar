@@ -532,6 +532,7 @@
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is equal to {EX}
+    {EX} is in {EX}
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
     {EX} is neither {LITERAL} nor the active function
     {EX} is neither {LITERAL} nor {LITERAL}
@@ -564,7 +565,6 @@
     {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {NUM_COMPARISON}
-    {PAIR} is in {EX}
     {PROD_REF} is `export` {nonterminal}
     {PROD_REF} is contained in strict mode code
     {PROD_REF} is the token `false`
@@ -730,7 +730,6 @@
     {var} is finite
     {var} is hint Number
     {var} is hint String
-    {var} is in {var}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
     {var} is not a Shared Data Block
