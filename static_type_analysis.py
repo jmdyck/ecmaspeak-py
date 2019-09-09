@@ -7623,11 +7623,39 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             [var, cap_word] = opn_before_paren.children
             callee_op_name = cap_word.source_text()
 
-            (var_type, env1) = tc_expr(var, env0); assert env1 is env0
-            var_type.is_a_subtype_of_or_equal_to(T_Environment_Record | T_Module_Record)
-
             callee_op = operation_named_[callee_op_name]
             assert callee_op.kind == 'concrete method'
+
+            # XXX If PR #955 is accepted, that will change things around here.
+
+            # When there's a type hierarchy (under Environment Record or Module Record),
+            # and sub-types augment the set of types defined at the root,
+            # then the use of one of those added methods
+            # implies a tighter constraint on the type of the LHS.
+
+            assert len(callee_op.headers) > 0
+            forp_types = [
+                header.for_param_type
+                for header in callee_op.headers
+            ]
+            if callee_op_name in ['Link', 'Evaluate']:
+                # These are abstract methods of all Module Records,
+                # but the spec only has definitions for Cyclic Module Records.
+                forp_types.append(T_other_Module_Record)
+            elif callee_op_name in ['GetExportedNames', 'ResolveExport']:
+                # These are abstract methods of all Module Records,
+                # but the spec only has definitions for Source Text Module Records.
+                forp_types.append(T_other_Module_Record)
+                forp_types.append(T_other_Cyclic_Module_Record)
+            elif callee_op_name in ['InitializeEnvironment', 'ExecuteModule']:
+                # These are abstract methods of all Cyclic Module Records,
+                # but the spec only has definitions for Source Text Module Records.
+                forp_types.append(T_other_Cyclic_Module_Record)
+
+            union_of_forp_types = union_of_types(forp_types)
+
+            env0 = env0.ensure_expr_is_of_type(var, union_of_forp_types)
+
             params = callee_op.parameters
             return_type = callee_op.return_type
 
