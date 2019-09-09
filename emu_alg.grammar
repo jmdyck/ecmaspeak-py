@@ -348,6 +348,9 @@
     own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
     own property key {var} of {var} that is a Uint32-string, in ascending numeric index order
 
+    # PR 1668 private fields
+    binding named {var} in {EX}
+
 # ------------------------------------------------------
 
 {I_BULLETS} :
@@ -851,6 +854,13 @@
     {var} is not a Uint32-string
     {var} is not a Uint53-string
 
+    # PR 1668 private fields:
+    {EX} contains a Private Name {var} such that {CONDITION_1}
+    {EX} contains an entry {var} such that {CONDITION_1}
+    {EX} does not contain an entry {var} such that {CONDITION_1}
+    {EX} is a Private Name
+    {var} is a ClassFieldDefinition Record
+
 {PROPERTY_KIND} :
     accessor
     data
@@ -1015,7 +1025,7 @@
     a reference to the list of waiters in {var}
     a value of Number type, whose value is {EXPR}
     a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
-    a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {var}
+    a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
     a zero-origined List containing the argument items in order
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
@@ -1305,6 +1315,10 @@
     # PR 1554 NumericValue:
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
 
+    # PR 1668 private fields:
+    a new unique Private Name whose {dsb_word} value is {var}
+    the concatenation of {var} with {EX}
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
@@ -1373,6 +1387,9 @@
     {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
     {var} rounded towards 0 to the next integral value
     {EX}, rounding down to the nearest integer, including for negative numbers
+
+    # PR 1668 private fields
+    \u00ab \u00bb
 
 {ENVIRONMENT_RECORD_KIND} :
     declarative
@@ -1530,6 +1547,10 @@
     # PR 1477 scope-records:
     Lexical Environment
 
+    # PR 1668 private fields:
+    PrivateField
+    the ClassFieldDefinition Record
+
 {FIELDS} :
     {FIELD}
     {FIELDS}, {FIELD}
@@ -1572,6 +1593,9 @@
     LexicalEnvironment
     VariableEnvironment
     Generator
+
+    # PR 1668 private fields:
+    PrivateEnvironment
 
 {LEXICAL_ENVIRONMENT_COMPONENT} :
     EnvironmentRecord
@@ -1730,5 +1754,8 @@
 
     # PR 1515 BigInt:
     BigInt
+
+    # PR 1668 privates:
+    Private Name
 
 # -----------------------

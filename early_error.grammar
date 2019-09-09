@@ -43,6 +43,9 @@
 
     {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
 
+    # PR 1668 
+    {CONDITION_1}, unless {CONDITION_1}
+
 {CONDITION_1} :
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
@@ -102,6 +105,11 @@
     # PR 1651 one-grammar
     the source code matching this production is strict mode code
     a {nonterminal} contains the source code matching this production
+
+    # PR 1668 private fields
+    the name is used once for a getter and once for a setter and in no other entries
+    {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
+    {NAMED_OPERATION_INVOCATION} is not empty
 
 {NAMED_OPERATION_INVOCATION} :
     {cap_word} of {LOCAL_REF}

@@ -181,7 +181,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {wordish}        : 's \b
     {wordish}        : \b General_Category \b
 
-    {special_word}   : \b ( Type | Function | Realm | ScriptOrModule | LexicalEnvironment | VariableEnvironment | Generator ) \b
+    {special_word}   : \b ( Type | Function | Realm | ScriptOrModule | LexicalEnvironment | VariableEnvironment | Generator | PrivateEnvironment ) \b
     {cap_word}       : \b [A-Z][A-Za-z0-9]* \b
     {low_word}       : \b [a-z][A-Za-z0-9]* \b
 

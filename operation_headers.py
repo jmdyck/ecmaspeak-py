@@ -2339,12 +2339,14 @@ nature_to_typ = {
     '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
     'an integer (or &infin;)'                                    : 'Integer_ | Infinity_',
     'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
+    'a Lexical Environment or *null*'                            : 'Lexical Environment | Null', # PR 1668
     'an object or null'                                          : 'Object | Null',
     'Object | Undefined'                                         : 'Object | Undefined',
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
     'a String or Symbol'                                         : 'String | Symbol',
+    'a String or Symbol or Private Name'                         : 'String | Symbol | Private Name', # PR 1668
     'property key'                                               : 'String | Symbol',
     'the property key'                                           : 'String | Symbol',
 

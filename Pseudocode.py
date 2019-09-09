@@ -1497,6 +1497,11 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # This is handled by the stupid "A : A @ B" rule.
         return True
 
+    if sdo_name in ['AllPrivateIdentifiersValid', 'ContainsArguments']:
+        # PR 1668 private fields:
+        # "For all other grammatical productions, ..."
+        return True
+
     return False
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
