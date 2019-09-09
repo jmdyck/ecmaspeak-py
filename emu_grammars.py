@@ -513,10 +513,6 @@ def check_non_defining_prodns(emu_grammars):
             if def_prodn_params:
                 # The 'def' production has parameters.
                 if u_prodn_params:
-                    # This is an uncommon case (~20 occurrences),
-                    # where the 'def' production has parameters
-                    # and the 'use' production repeats them
-                    # (because accompanying prose needs to refer to them).
                     u_lhs_args_are_suppressed = False
 
                     if u_prodn_params != def_prodn_params:
@@ -524,6 +520,25 @@ def check_non_defining_prodns(emu_grammars):
                             "ERROR: params in use (%s) does not match params in defn (%s)" %
                             (u_prodn_params, def_prodn_params)
                         )
+
+                    elif cc_section.attrs['id'] in [
+                        'sec-rules-of-automatic-semicolon-insertion',
+                        'sec-identifiers-static-semantics-early-errors',
+                        'sec-primary-expression',
+                        'sec-static-semantics-template-early-errors',
+                        'sec-arrow-function-definitions',
+                    ]:
+                        # This is an uncommon case (~20 occurrences),
+                        # where the 'def' production has parameters
+                        # and the 'use' production repeats them
+                        # (because accompanying prose needs to refer to them).
+                        pass
+
+                    else:
+                        msg_at_posn(u_posn,
+                            f"info: params in a 'use' prodn is unusual: {u_prodn_params}"
+                        )
+
                     # print(lhs_nt, def_prodn_params)
 
                 else:
