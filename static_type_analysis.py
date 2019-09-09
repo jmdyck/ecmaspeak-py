@@ -7345,6 +7345,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : {NAMED_OPERATION_INVOCATION}",
         r"{EX} : {NUM_EXPR}",
         r"{EX} : {NUM_LITERAL}",
+        r"{EX} : {PAIR}",
         r"{EX} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{EX} : {PRODUCT}",
         r"{EX} : {RECORD_CONSTRUCTOR}",
@@ -10862,12 +10863,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref] = children
         return (T_String, env0)
 
-    elif p == r"{PAIR} : ({var}, {var})":
-        [a, b] = children
-        env0.assert_expr_is_of_type(a, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(b, T_Shared_Data_Block_event)
-        return (T_event_pair_, env0)
-
     elif p in [
         r"{EXPR} : the element in {DOTTING} whose {DSBN} is {EX}",
         r"{EXPR} : the element of {DOTTING} whose {DSBN} field is {var}",
@@ -10918,11 +10913,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_Integer_)
         return (T_Integer_, env0)
 
-    elif p == r"{EX} : ({EX}, {EX})":
+    elif p == r"{PAIR} : ({EX}, {EX})":
         [a, b] = children
         # over-specific:
-        env0.assert_expr_is_of_type(a, T_Synchronize_event)
-        env0.assert_expr_is_of_type(b, T_Synchronize_event)
+        env0.assert_expr_is_of_type(a, T_event_)
+        env0.assert_expr_is_of_type(b, T_event_)
         return (T_event_pair_, env0)
 
     elif p == r"{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `name` property of {var}":

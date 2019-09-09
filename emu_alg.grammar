@@ -1310,7 +1310,6 @@
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
     ({EX})
-    ({EX}, {EX})
     *this* value
     NewTarget
     PromiseReactionJob
@@ -1356,6 +1355,7 @@
     {EX} occurrences of {code_unit_lit}
     {LITERAL}
     {LOCAL_REF}
+    {PAIR}
     {PP_NAMED_OPERATION_INVOCATION}
     {NUM_EXPR}
     {RECORD_CONSTRUCTOR}
@@ -1383,7 +1383,7 @@
     object
 
 {PAIR} :
-    ({var}, {var})
+    ({EX}, {EX})
 
 # ------------------------------------------------------
 
