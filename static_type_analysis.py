@@ -506,7 +506,6 @@ class Operation:
         self.name = name
         self.kind = kind
         self.headers = []
-        self.parameter_types = None
         self.return_type = None
 
     def add_defn(self, discriminator, tree):
@@ -710,6 +709,21 @@ class Header:
             operation_named_[self.name] = op
 
         op.headers.append(self)
+
+    # ------------------------------------------------------
+
+    def __repr__(self):
+        return f"""
+            Header:
+                name: {self.name}
+                kind: {self.kind}
+                for : {self.for_param_type}
+                params: {', '.join(
+                    pn + ' : ' + pt
+                    for (pn, pt) in self.parameters)}
+                returns: {self.return_type}
+                # defns: {len(self.defns)}
+        """
 
     # ------------------------------------------------------
 
@@ -3085,15 +3099,14 @@ def tc_header(header):
                 init_t == T_TBD | T_not_passed
                 or
                 init_t == ListType(T_TBD)
-                # ----
                 or
                 init_t == T_List and isinstance(final_t, ListType)
+                # ----
                 or
                 init_t.is_a_subtype_of_or_equal_to(final_t)
                 # This pass just widened the type.
                 # ------
                 or
-                # This pass just narrowed the type.
                 final_t.is_a_subtype_of_or_equal_to(init_t) and (
                     header.name == 'InstantiateFunctionObject'
                     or
@@ -3101,6 +3114,7 @@ def tc_header(header):
                     or
                     header.name == 'WithBaseObject' and init_t == T_Object | T_Undefined
                 )
+                # This pass just narrowed the type.
                 # ----
                 or
                 init_t == T_Tangible_ and header.name == 'SameValueNonNumber'
@@ -3113,7 +3127,7 @@ def tc_header(header):
                 or
                 init_t == T_Normal and final_t == T_function_object_
                 or
-                header.name == 'BindingClassDeclarationEvaluation' and init_t == T_Object and final_t == T_function_object_ | T_throw_
+                header.name == 'BindingClassDeclarationEvaluation' and pn == '*return*' and init_t == T_Object and final_t == T_function_object_ | T_throw_
                 or
                 header.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
                 or
@@ -7842,6 +7856,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             result_memtypes = set()
             for memtype in lhs_t.set_of_types():
                 if dsbn_name == 'Value':
+                    # Lots of things have a '[[Value]]' field.
                     if memtype.is_a_subtype_of_or_equal_to(T_Abrupt):
                         result_memtype = T_Tangible_ | T_empty_
                     elif memtype == T_Normal:
@@ -7995,6 +8010,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # --------------------------------------------
 
         if lhs_t.is_a_subtype_of_or_equal_to(T_Object):
+            # _foo_.[[Bar]] references an object's internal method or internal slot.
             assert dsbn_name in type_of_internal_thing_, dsbn_name
             it_type = type_of_internal_thing_[dsbn_name]
             # XXX We should require that lhs_t is allowed to have this internal thing.
@@ -8020,6 +8036,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (t, env2)
 
         elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
+            # _foo_.[[Bar]] references a record's field
             if isinstance(lhs_t, NamedType):
                 if lhs_t.name == 'Record':
                     add_pass_error(
@@ -8070,6 +8087,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         }[(lhs_t, dsbn_name)]
 
                 return (field_type, env2)
+
             elif isinstance(lhs_t, UnionType):
                 types_for_field = set()
                 for mt in lhs_t.member_types:
@@ -8080,6 +8098,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert len(types_for_field) == 1
                 field_type = types_for_field.pop()
                 return (field_type, env2)
+
             else:
                 assert 0, (expr.source_text(), lhs_t)
 
@@ -10063,11 +10082,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 (t, env1) = tc_expr(ex, env0); assert env1 is env0
             else:
                 declared_field_type = field_info[dsbn_name]
+                # If the constructor referred to an undeclared field, that would raise a KeyError
                 env1 = env0.ensure_expr_is_of_type(ex, declared_field_type)
             envs.append(env1)
         env2 = envs_or(envs)
 
-        # XXX: Should also ensure that each field is specified exactly once.
+        # XXX: Should also ensure that each declared field is specified exactly once.
 
         return ( parse_type_string(record_type_name), env2 )
 
