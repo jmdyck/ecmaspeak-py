@@ -261,19 +261,25 @@ def _infer_section_kinds(section):
                     mo = re.match(r'^<p>With parameters? (.+)\.</p>$', p_text)
                     assert mo
                     params_s = mo.group(1)
-                    for param in re.split(r', and |, | and ', params_s):
-                        if param == 'optional parameter _functionPrototype_':
-                            param_name = '_functionPrototype_'
-                            param_punct = '[]'
-                        elif param == 'List _argumentsList_':
-                            param_name = '_argumentsList_'
-                            param_punct = ''
-                        else:
-                            assert re.match(r'^_[a-zA-Z]+_$', param)
-                            param_name = param
-                            param_punct = ''
-                        assert param_name not in parameters
-                        parameters[param_name] = param_punct
+                    if params_s == '_object_ and optional parameters _name_ and _functionPrototype_':
+                        # kludge for PR 1490 set "name" for anonymous funcs
+                        parameters['_object_'] = ''
+                        parameters['_name_'] = '[]'
+                        parameters['_functionPrototype_'] = '[]'
+                    else:
+                        for param in re.split(r', and |, | and ', params_s):
+                            if param == 'optional parameter _functionPrototype_':
+                                param_name = '_functionPrototype_'
+                                param_punct = '[]'
+                            elif param == 'List _argumentsList_':
+                                param_name = '_argumentsList_'
+                                param_punct = ''
+                            else:
+                                assert re.match(r'^_[a-zA-Z]+_$', param)
+                                param_name = param
+                                param_punct = ''
+                            assert param_name not in parameters
+                            parameters[param_name] = param_punct
             section.ste['parameters'] = parameters
 
     elif (
