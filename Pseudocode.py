@@ -1128,6 +1128,87 @@ def analyze_static_dependencies():
         if not hasattr(op_info, '_reached'):
             put(f"    {op_name}")
 
+    # ===================================================================
+
+    # Static Semantics
+
+    put()
+    put('X' * 40)
+
+    op_names_labelled_ss = set()
+    for section in spec.doc_node.each_descendant_that_is_a_section():
+        if section.section_title.startswith('Static Semantics:'):
+            op_name = section.ste['op_name']
+            if op_name == 'TV and TRV':
+                op_names_labelled_ss.add('TV')
+                op_names_labelled_ss.add('TRV')
+            else:
+                op_names_labelled_ss.add(op_name)
+
+    # ------
+
+    if 1:
+        op_names_reached_from_ss_starting_points = set()
+
+        def ss_reach_op(op_name, level):
+            if op_name in op_names_with_no_info:
+                # No point in continuing.
+                return
+            if op_name in op_names_reached_from_ss_starting_points:
+                return
+            op_names_reached_from_ss_starting_points.add(op_name)
+            op_info = spec.info_for_op_named_[op_name]
+            for callee_name in sorted(list(op_info.callees)):
+                if op_name == 'ToString' and callee_name in ['ToPrimitive', 'ToString']:
+                    # These calls only happen for an Object argument,
+                    # which we'll assume doesn't occur during Static Semantics.
+                    # (ToPrimitive leads to lots of Runtime stuff.)
+                    continue
+
+                # put(f"{'  '*level}{level}. {op_name} -> {callee_name}")
+                ss_reach_op(callee_name, level+1)
+
+        ss_reach_op('Early Errors', 0)
+        ss_reach_op('ParseModule', 0)
+
+        # ----
+
+        put()
+        put("ops labelled 'Static Semantics' but not reachable from SS starting points:")
+        for op_name in sorted(op_names_labelled_ss - op_names_reached_from_ss_starting_points):
+            put(f"    {op_name}")
+
+        put()
+        put("ops reachable from SS starting points but not labelled 'Static Semantics':")
+        for op_name in sorted(op_names_reached_from_ss_starting_points - op_names_labelled_ss):
+            put(f"    {op_name}")
+
+    # ------
+
+    ss_calls_non = []
+    non_calls_ss = []
+
+    for (op_name, op_info) in sorted(spec.info_for_op_named_.items()):
+        caller_is_ss = op_name in op_names_labelled_ss
+        for callee_name in sorted(op_info.callees):
+            callee_is_ss = callee_name in op_names_labelled_ss
+            if caller_is_ss and not callee_is_ss:
+                ss_calls_non.append((op_name, callee_name))
+            elif not caller_is_ss and callee_is_ss:
+                non_calls_ss.append((op_name, callee_name))
+    
+    put()
+    put("op labelled 'Static Semantics' calls one that isn't:")
+    for (caller, callee) in ss_calls_non:
+        put(f"    {caller} -> {callee}")
+
+    put()
+    put("op not labelled 'Static Semantics' calls one that is:")
+    for (caller, callee) in non_calls_ss:
+        put(f"    {caller} -> {callee}")
+
+    # ===================================================================
+
     f_deps.close()
 
 # ------------------------------------------------------------------------------
