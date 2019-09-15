@@ -179,7 +179,7 @@ def _infer_section_kinds(section):
             (r'Shorthands Relating to Completion Records',         'shorthand'), # PR 1573
 
             (r'(?P<op_name>\[\[\w+\]\]) ?<PARAMETER_LIST>',        'internal_method'),
-            (r'Static Semantics: Early Errors', 'early_errors'),
+            (r'Static Semantics: (?P<op_name>Early Errors)', 'early_errors'),
 
             (r'The Reference Specification Type', 'abstract_operations'), # plural!
 
