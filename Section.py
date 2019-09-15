@@ -200,8 +200,9 @@ def _infer_section_kinds(section):
             (r'VariableStatements in Catch Blocks',              'changes'),
             (r'Initializers in ForIn Statement Heads',           'changes'),
 
+            (r'(Number|BigInt)(?P<op_name>::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'numeric_method'), # PR 1515 BigInt
+
             (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
-            (r'(Number|BigInt)(?P<op_name>::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'abstract_operation'),
             (r'(Static|Runtime) Semantics: (?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>', 'abstract_operation'),
             (r'(?P<op_name>.+ Comparison)',                                             'abstract_operation'),
 

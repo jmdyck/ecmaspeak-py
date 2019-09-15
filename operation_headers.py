@@ -139,6 +139,8 @@ def each_replacement_for_section(s):
                 and
                 s.section_id == 'sec-object-environment-records-createimmutablebinding-n-s'
             )
+            or
+            s.section_kind == 'numeric_method' # PR 1515 BigInt
         ):
             # Even though the section has no algos,
             # we want to create an <emu-operation-header>.
@@ -364,6 +366,8 @@ def each_replacement_for_section(s):
 
         if op_kind == 'abstract_operation':
             eoh_text = get_eoh_text_for_ao(s, hoi, preamble_text)
+        elif op_kind == 'numeric_method': # PR 1515 BigInt
+            eoh_text = get_eoh_text_for_nm(s, hoi, preamble_text)
         elif op_kind.endswith('_rec_method'):
             eoh_text = get_eoh_text_for_cm(s, hoi, preamble_text)
         elif op_kind == 'internal_method':
@@ -597,6 +601,77 @@ im_param_map = {
 }
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def get_eoh_text_for_nm(s, hoi, preamble_text):
+    if preamble_text == '':
+        oi = hoi
+        oi.kind = 'numeric_method'
+    else:
+        poi = OperationInfo()
+        poi.kind = 'numeric_method'
+
+        RE = rem()
+
+        if RE.fullmatch(r'The abstract operation (Number|BigInt)(::\w+) (.+)', preamble_text):
+            (poi.owning_type, poi.name, rest) = RE.groups()
+
+            if RE.fullmatch(r'converts a (Number|BigInt) (_x_) to String format as follows:', rest):
+                poi.param_names = ['_x_']
+                poi.param_nature_['_x_'] = RE.group(1)
+                poi.description = 'converts _x_ to String format'
+
+            elif RE.fullmatch(r"with an argument _x_ of type (BigInt) (returns the one's complement of _x_; that is, -_x_ - 1).", rest):
+                poi.param_names = ['_x_']
+                poi.param_nature_['_x_'] = RE.group(1)
+                poi.description = RE.group(2)
+
+            elif RE.fullmatch(r'with( two)? arguments _x_ and _y_ of type (Number|BigInt) performs the following steps:', rest):
+                poi.param_names = ['_x_', '_y_']
+                poi.param_nature_['_x_'] = RE.group(2)
+                poi.param_nature_['_y_'] = RE.group(2)
+
+            elif RE.fullmatch(r"with two arguments _x_ and _y_ of type (BigInt) (returns (a|the) BigInt representing .+)\.", rest):
+                poi.param_names = ['_x_', '_y_']
+                poi.param_nature_['_x_'] = RE.group(1)
+                poi.param_nature_['_y_'] = RE.group(1)
+                poi.returns_normal = 'BigInt'
+                poi.description = RE.group(2)
+
+            elif RE.fullmatch(r"with two arguments _x_ and _y_ of type (BigInt) (returns \*true\* .+)\.", rest):
+                poi.param_names = ['_x_', '_y_']
+                poi.param_nature_['_x_'] = RE.group(1)
+                poi.param_nature_['_y_'] = RE.group(1)
+                poi.returns_normal = 'Boolean'
+                poi.description = RE.group(2)
+
+            else:
+                assert 0, rest
+
+        else:
+            poi.description = preamble_text.strip()
+
+        oi = resolve_oi(hoi, poi)
+
+    return oi.eoh_text()
+
+class rem: # re with a memory
+
+    def _init__(self):
+        self.mo = None
+
+    def fullmatch(self, pattern, subject):
+        self.mo = re.fullmatch(pattern, subject)
+        return self.mo
+
+    def group(self, i):
+        assert self.mo
+        return self.mo.group(i)
+
+    def groups(self):
+        assert self.mo
+        return self.mo.groups()
+
+# ------------------------------------------------------------------------------
 
 def get_eoh_text_for_cm(s, hoi, preamble_text):
 
@@ -1694,6 +1769,7 @@ def get_info_from_header(section):
         'env_rec_method',
         'module_rec_method',
         'internal_method',
+        'numeric_method',
     ]:
         oi.name = section.ste['op_name']
 
@@ -1709,6 +1785,10 @@ def get_info_from_header(section):
 
     else:
         assert 0, section.section_kind
+
+    if section.section_kind == 'numeric_method':
+        oi.owning_type = re.sub(':.*', '', section.section_title)
+        # Should this be in section.ste?
 
     if 'parameters' not in section.ste:
         return oi

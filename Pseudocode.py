@@ -191,6 +191,7 @@ def analyze_sections():
             'env_rec_method',
             'internal_method',
             'module_rec_method',
+            'numeric_method', # PR 1515
         ]:
             analyze_other_op_section(section)
 
@@ -430,9 +431,9 @@ def analyze_other_op_section(section):
             pass
 
         # PR 1515 BigInt:
-        elif op_name.startswith('::'):
+        elif section.section_kind == 'numeric_method':
             # A mathematical operation that we merely constrain, via a bullet-list.
-            ensure_foo('abstract_operation', op_name)
+            ensure_foo('numeric_method', op_name)
             pass
 
         # PR 1515 BigInt:
@@ -458,6 +459,7 @@ def analyze_other_op_section(section):
             'env_rec_method',
             'module_rec_method',
             'internal_method',
+            'numeric_method', # PR 1515
         ]:
             # type-discriminated operation
             discriminator = None # XXX get the discriminator!

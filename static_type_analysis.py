@@ -441,7 +441,7 @@ def define_ops_from_other_section(s):
         if child_a.element_name == 'emu-operation-header':
             header = Header(child_a)
 
-            if s.section_kind in ['internal_method', 'env_rec_method', 'module_rec_method']:
+            if s.section_kind in ['internal_method', 'env_rec_method', 'module_rec_method', 'numeric_method']:
                 discriminator = header.for_param_type
             else:
                 discriminator = None
@@ -524,7 +524,7 @@ class Operation:
             pass
 
         else:
-            assert self.kind in ['concrete method', 'internal method']
+            assert self.kind in ['concrete method', 'internal method', 'numeric_method']
             n_params = len(self.headers[0].parameters)
             assert all(len(header.parameters) == n_params for header in self.headers)
 
@@ -584,6 +584,7 @@ class Header:
             'abstract operation',
             'syntax-directed operation',
             'concrete method',
+            'numeric_method', # PR 1515 BigInt
             'internal method',
             'function_property',
             'function_property_overload',
@@ -736,7 +737,7 @@ class Header:
                 isinstance(discriminator, ANode)
                     and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
             )
-        elif self.kind in ['concrete method', 'internal method']:
+        elif self.kind in ['concrete method', 'internal method', 'numeric_method']:
             assert isinstance(discriminator, Type)
         elif self.kind == 'abstract operation':
             assert discriminator is None
@@ -785,6 +786,9 @@ class Header:
                 pass
             elif self.name == 'DeleteBinding' and self.for_param_type == T_module_Environment_Record:
                 # pointless alg
+                pass
+            elif self.kind == 'numeric_method':
+                # PR 1515: some methods don't have an algorithmic definition
                 pass
             else:
                 assert 0, self.name
@@ -865,6 +869,7 @@ class Header:
                         'thisStringValue',
                         'thisSymbolValue',
                         'thisTimeValue',
+                        'thisBigIntValue', # PR 1515 BigInt
                     ]:
                         depend_on(x.prod.rhs_s)
                     elif x.prod.rhs_s == '{DOTTING}':
