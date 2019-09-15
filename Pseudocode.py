@@ -1074,7 +1074,17 @@ def analyze_static_dependencies():
             reach_op(callee_name, level+1)
 
     reach_op('Early Errors', 0)
-    reach_op('RunJobs', 0)
+    if shared.g_outdir == '_1597_ed':
+        reach_op('InitializeHostDefinedRealm', 1)
+        # ScriptEvaluationJob, 1
+        reach_op('ParseScript', 2)
+        reach_op('ScriptEvaluation', 2)
+        # TopLevelModuleEvaluationJob, 1
+        reach_op('ParseModule', 2)
+        reach_op('Link', 2)
+        reach_op('Evaluate', 2)
+    else:
+        reach_op('RunJobs', 0)
 
     # put('PromiseJobs queue')
     reach_op('PromiseResolveThenableJob', 1)
