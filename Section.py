@@ -211,6 +211,7 @@ def _infer_section_kinds(section):
 
             (r'Static Semantics: (?P<op_name>TV and TRV)', 'syntax_directed_operation'),
             (r'Static Semantics: (?P<op_name>\w+)',        'syntax_directed_operation'),
+            (r'Static Semantics: (?P<op_name>(Number|BigInt) Value)', 'syntax_directed_operation'), # PR 1515 BigInt
             (r'Runtime Semantics: (?P<op_name>\w+)',       'syntax_directed_operation'),
             (r'Statement Rules',                           'syntax_directed_operation'),
             (r'Expression Rules',                          'syntax_directed_operation'),

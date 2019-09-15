@@ -1278,7 +1278,8 @@
     # a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
 
     # obsoleted by the merge of PR #1376:
-    # the intrinsic object {percent_word}
+    # but still used in PR 1515 BigInt
+    the intrinsic object {percent_word}
 
     # PR 1460 explicit-exotics:
     the internal slots listed in {h_emu_xref}
@@ -1292,9 +1293,10 @@
 
     # PR 1515 BigInt:
     Type({var})
-    a BigInt representing {EX}
     the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
     the BigInt value that corresponds to {var}
+    the BigInt value that represents {EX}
+    the Number value that results from rounding {EX} as described below
     the String value consisting of the code units of the digits of the decimal representation of {var}
     the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
     the value that {var} corresponds to in {h_emu_xref}

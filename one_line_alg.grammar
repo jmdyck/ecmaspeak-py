@@ -26,8 +26,15 @@
 {EXPR} :
     a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects
     {LITERAL}
-    {PREFIX_PAREN}
+    {PP_NAMED_OPERATION_INVOCATION}
     {var}
+
+{PP_NAMED_OPERATION_INVOCATION} :
+    {NAMED_OPERATION_INVOCATION}
+    ! {NAMED_OPERATION_INVOCATION}
+
+{NAMED_OPERATION_INVOCATION} :
+    {PREFIX_PAREN}
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}({EXLIST_OPT})

@@ -356,7 +356,7 @@ def check_ids():
                 if id_prefix_expectation is None:
                     id_prefix_expectation = 'sec-' # for thisFooValue
                 possibles = [
-                    id_prefix_expectation + aoid.lower().replace(' ', '-'),
+                    id_prefix_expectation + aoid.lower().replace(' ', '-').replace('::', '-'),
                     id_prefix_expectation + aoid,
                     id_prefix_expectation + kebab(aoid)
                 ]

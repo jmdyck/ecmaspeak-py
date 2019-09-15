@@ -432,7 +432,7 @@ def something_sdo(s):
         if param_punct == '[]':
             param_type = '(optional) ' + param_type
         else:
-            assert param_punct == ''
+            assert param_punct == '', param_punct
 
         param_dict[param_name] = param_type
 
@@ -2100,8 +2100,13 @@ def resolve_oi(hoi, poi):
             oh_warn(f'resolve_oi: name in header ({hoi.name}) != name in preamble ({poi.name})')
 
     # owning_type
-    assert hoi.owning_type is None
-    oi.owning_type = poi.owning_type # which might or might not be None
+    if hoi.owning_type and poi.owning_type:
+        assert hoi.owning_type == poi.owning_type
+        oi.owning_type = hoi.owning_type
+    elif hoi.owning_type:
+        oi.owning_type = hoi.owning_type
+    else:
+        oi.owning_type = poi.owning_type # which might or might not be None
 
     # overload_resolver
     assert hoi.overload_resolver is None
@@ -2201,6 +2206,7 @@ nature_to_typ = {
         # Symbol
 
         # Number
+        'Number'                     : 'Number',
         'a Number'                   : 'Number',
         'an ECMAScript Number value' : 'Number',
         'a nonnegative non-*NaN* Number' : 'Number', # XXX loses info

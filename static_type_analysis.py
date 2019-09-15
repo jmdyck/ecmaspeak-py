@@ -893,15 +893,11 @@ class Header:
 #                    elif x.prod.rhs_s == '(HasPrimitiveBase)':
 #                        depend_on(x.children[0])
 
-                    # BigInt:
-                    elif x.prod.rhs_s == '((?:BigInt|Number)::\w+)':
-                        depend_on(x.children[0])
-                    elif x.prod.rhs_s in [
-                        'Type({var})::(\w+)',
-                        '{var}::(\w+)',
-                    ]:
-                        depend_on('BigInt::' + x.children[1])
-                        depend_on('Number::' + x.children[1])
+                    # PR 1515 BigInt:
+                    elif x.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
+                        [nti, lw] = x.children
+                        depend_on(lw.source_text())
+
                     else:
                         print(x.prod.rhs_s, x.source_text())
                         assert 0
@@ -3202,19 +3198,19 @@ def tc_proc(op_name, defns, init_env):
     # XXX This is a hack until I can do a better job of analyzing numeric exprs.
     if op_name and '::' in op_name:
         stderr("    hack!")
-        (base_type_name, specific_op_name) = op_name.split('::')
-        base_type = NamedType(base_type_name)
+        assert len(defns) == 1
+        [(base_type, body)] = defns
 
         final_env = Env()
         for name in header_names:
             if name == '*return*':
-                if specific_op_name in [
-                    'equal',
-                    'sameValue',
-                    'sameValueZero',
+                if op_name in [
+                    '::equal',
+                    '::sameValue',
+                    '::sameValueZero',
                 ]:
                     t = T_Boolean
-                elif specific_op_name == 'lessThan':
+                elif op_name == '::lessThan':
                     t = T_Boolean | T_Undefined
                 else:
                     t = base_type # XXX | ThrowType(?)
@@ -5062,6 +5058,7 @@ def tc_cond_(cond, env0, asserting):
         r"{TYPE_TEST} : Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
         r"{TYPE_TEST} : Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}",
         r"{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
+        r"{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
         r'{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}',
     ]:
         [type_arg, *type_name_] = children
@@ -6292,9 +6289,11 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}':
+    elif p in [
+        r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}",
+        r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}",
+    ]:
         [var, *dsbn_] = children
-        assert len(dsbn_) == 4
         # XXX assert that each dsbn_ is a slot name
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
@@ -9164,8 +9163,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         p.startswith(r'{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}.')
     ):
         var = children[0]
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (ListType(T_Integer_), env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_Number)
+        return (ListType(T_Integer_), env1)
 
     elif p in [
         r'{EXPR} : a List containing the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order',
@@ -11104,6 +11103,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsb_word.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Private_Name, env0)
+
+    # PR 1515 BigInt:
+    elif p == r"{EX} : {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_BigInt | T_Number)
+        return (T_MathReal_, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":

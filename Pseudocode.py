@@ -169,6 +169,7 @@ def analyze_sections():
     for section in spec.doc_node.each_descendant_that_is_a_section():
         assert hasattr(section, 'ste')
 
+        # "progress bar"
         top_level_num = section.section_num.split('.')[0]
         if top_level_num != prev_top_level_num:
             stderr(f" {top_level_num}", end='', flush=True)
@@ -300,13 +301,13 @@ def analyze_sdo_section(section):
 
     # ------------------------------------------------------------------------------
 
-    if section.section_title == 'Static Semantics: NumberValueNotEverReferenced':
+    if section.section_title == 'Static Semantics: Number Value':
         # In the BigInt proposal, it has a <ul> defining "significant digit" and then <p> instead of <emu-alg>.
         assert section.bcen_list == ['p', 'ul', 'emu-grammar', 'p', 'emu-grammar', 'p']
         return
-    elif section.section_title == 'Static Semantics: BigIntValueNotEverReferenced':
+    elif section.section_title == 'Static Semantics: BigInt Value':
         # In the BigInt proposal, it has <ul> instead of <emu-alg>
-        assert section.bcen_list == ['emu-grammar', 'ul', 'emu-grammar', 'ul']
+        assert section.bcen_list == ['emu-grammar', 'ul'] * 5
         return
 
     if 'emu-grammar' in section.bcen_set:
