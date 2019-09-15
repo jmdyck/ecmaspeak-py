@@ -1342,6 +1342,12 @@ def each_op_reference_in_algo(algo):
         ]:
             yield 'ReturnIfAbrupt'
 
+        elif d.prod.lhs_s == '{h_emu_alg}':
+            # If is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to *true*:
+            # Difficult to get from `d` to the HNode for the <emu-alg> and thence an ANode.
+            yield 'ConstructorMethod'
+            yield 'HasDirectSuper'
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
