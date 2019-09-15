@@ -183,6 +183,8 @@ def each_replacement_for_section(s):
             s.section_title in [
                 'MakeArgGetter ( _name_, _env_ )',
                 'MakeArgSetter ( _name_, _env_ )',
+                'MakeArgGetter ( _name_, _scope_ )', # PR 1477 scope-records
+                'MakeArgSetter ( _name_, _scope_ )', # PR 1477 scope-records
                 '%TypedArray%.prototype.sort ( _comparefn_ )',
             ]
             or
@@ -602,7 +604,7 @@ def get_eoh_text_for_cm(s, hoi, preamble_text):
     oi.kind = 'concrete method'
 
     pst = s.parent.section_title
-    if pst.endswith(' Environment Records'):
+    if pst.endswith((' Environment Records', ' Scope Records')): # PR 1477 scope-records
         oi.owning_type = pst[0].lower() + pst[1:-1]
     elif pst in ['Source Text Module Records', 'Cyclic Module Records']:
         oi.owning_type = pst[0:-1]
@@ -2219,6 +2221,7 @@ nature_to_typ = {
 
         # Environment Record
         'Environment Record' : 'Environment Record',
+        'Scope Record' : 'Scope Record', # PR 1477 scope-records
 
         # Data Block
         'a Shared Data Block' : 'Shared Data Block',
