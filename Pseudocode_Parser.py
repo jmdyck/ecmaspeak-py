@@ -340,6 +340,8 @@ class Pseudocode_Parser:
 
         result = results[0]
 
+        result.set_parent_links()
+
         def count(node):
             if isinstance(node, str): return
             assert isinstance(node, ANode)
@@ -492,6 +494,13 @@ class ANode:
         self.start_posn = int(start_posn)
         self.end_posn = int(end_posn)
 
+    def set_parent_links(self):
+        if self.children:
+            for child in self.children:
+                if isinstance(child, ANode):
+                    child.parent = self
+                    child.set_parent_links()
+
     def __repr__(self):
         t = self.source_text()
         if len(t) <= 70:
@@ -502,6 +511,18 @@ class ANode:
 
     def source_text(self):
         return shared.spec_text[self.start_posn:self.end_posn]
+
+    def closest_containing(self, lhs_s):
+        for ancestor in self.each_ancestor_or_self():
+            if ancestor.prod.lhs_s == lhs_s:
+                return ancestor
+        return None
+
+    def each_ancestor_or_self(self):
+        ancestor = self
+        while ancestor is not None:
+            yield ancestor
+            ancestor = ancestor.parent
 
     def each_descendant_or_self(self):
         yield self
