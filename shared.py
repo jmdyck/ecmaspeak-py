@@ -108,6 +108,8 @@ def header(msg):
 
 # We *don't* mutate the HTML tree and then serialize it.
 # Instead, we write the spec_text with replacements.
+# Each replacement is a tuple:
+# (start_posn, end_posn, replacement_string)
 
 def write_spec_with_replacements(base, replacements):
     f = open_for_output(base)
@@ -125,6 +127,27 @@ def write_spec_with_replacements(base, replacements):
     put(spec_text[prev_posn:])
 
     f.close()
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class rem: # re with a memory
+
+    def _init__(self):
+        self.mo = None
+
+    def fullmatch(self, pattern, subject):
+        self.mo = re.fullmatch(pattern, subject)
+        return self.mo
+
+    def group(self, i):
+        assert self.mo
+        return self.mo.group(i)
+
+    def groups(self):
+        assert self.mo
+        return self.mo.groups()
+
+RE = rem()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

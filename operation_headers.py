@@ -15,7 +15,7 @@ import sys, re, io, pdb
 from collections import OrderedDict
 
 import shared
-from shared import stderr, spec
+from shared import stderr, spec, RE
 from pprint import pprint
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -610,8 +610,6 @@ def get_eoh_text_for_nm(s, hoi, preamble_text):
         poi = OperationInfo()
         poi.kind = 'numeric_method'
 
-        RE = rem()
-
         if RE.fullmatch(r'The abstract operation (Number|BigInt)(::\w+) (.+)', preamble_text):
             (poi.owning_type, poi.name, rest) = RE.groups()
 
@@ -653,23 +651,6 @@ def get_eoh_text_for_nm(s, hoi, preamble_text):
         oi = resolve_oi(hoi, poi)
 
     return oi.eoh_text()
-
-class rem: # re with a memory
-
-    def _init__(self):
-        self.mo = None
-
-    def fullmatch(self, pattern, subject):
-        self.mo = re.fullmatch(pattern, subject)
-        return self.mo
-
-    def group(self, i):
-        assert self.mo
-        return self.mo.group(i)
-
-    def groups(self):
-        assert self.mo
-        return self.mo.groups()
 
 # ------------------------------------------------------------------------------
 
