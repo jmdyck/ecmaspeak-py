@@ -10417,7 +10417,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             list_type = ListType(element_type)
         return (list_type, env0)
 
-    elif p == r"{EX} : the _withEnvironment_ flag of {var}":
+    elif p == r"{SETTABLE} : the _withEnvironment_ flag of {var}":
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_object_Environment_Record)
         return (T_Boolean, env1)

@@ -1345,7 +1345,6 @@
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {PRODUCT}
     the String {var}
-    the _withEnvironment_ flag of {var}
     the base value component of {var}
     the code unit at index {EX} within {EX}
     the code unit that is {PP_NAMED_OPERATION_INVOCATION}
@@ -1566,6 +1565,7 @@
 # ------------------------------------------------------
 
 {SETTABLE} :
+    the _withEnvironment_ flag of {var}
     the _withEnvironment_ flag of {var}'s EnvironmentRecord
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
