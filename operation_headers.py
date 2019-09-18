@@ -365,13 +365,13 @@ def each_replacement_for_section(s):
                 assert 0, s.section_title
 
         if op_kind == 'abstract_operation':
-            eoh_text = get_eoh_text_for_ao(s, hoi, preamble_text)
+            oi = get_info_for_ao(s, hoi, preamble_text)
         elif op_kind == 'numeric_method': # PR 1515 BigInt
-            eoh_text = get_eoh_text_for_nm(s, hoi, preamble_text)
+            oi = get_info_for_nm(s, hoi, preamble_text)
         elif op_kind.endswith('_rec_method'):
-            eoh_text = get_eoh_text_for_cm(s, hoi, preamble_text)
+            oi = get_info_for_cm(s, hoi, preamble_text)
         elif op_kind == 'internal_method':
-            eoh_text = get_eoh_text_for_im(s, hoi, preamble_text)
+            oi = get_info_for_im(s, hoi, preamble_text)
 
         elif op_kind in [
             'function_property',
@@ -381,7 +381,7 @@ def each_replacement_for_section(s):
             'CallConstruct_overload',
             'anonymous_built_in_function',
         ]:
-            eoh_text = get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text)
+            oi = get_info_for_builtin_function(s, op_kind, hoi, preamble_text)
 
         elif op_kind == 'syntax_directed_operation':
             # print('370', op_kind, s.section_num, s.section_title)
@@ -413,7 +413,7 @@ def each_replacement_for_section(s):
         yield (
             r_start_posn,
             r_end_posn, 
-            eoh_text.replace('\n', '\n'+indentation) + extra
+            oi.eoh_text().replace('\n', '\n'+indentation) + extra
         )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -488,7 +488,7 @@ def declare_sdo(op_name, param_dict, also=[]):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_im(s, hoi, preamble_text):
+def get_info_for_im(s, hoi, preamble_text):
     oi = hoi
     oi.kind = 'internal method'
 
@@ -564,7 +564,7 @@ def get_eoh_text_for_im(s, hoi, preamble_text):
 
     oi.description = ptext
 
-    return oi.eoh_text()
+    return oi
 
 def get_im_params(oi, listing):
     listing = sub_many(listing, [
@@ -602,7 +602,7 @@ im_param_map = {
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_nm(s, hoi, preamble_text):
+def get_info_for_nm(s, hoi, preamble_text):
     if preamble_text == '':
         oi = hoi
         oi.kind = 'numeric_method'
@@ -628,7 +628,7 @@ def get_eoh_text_for_nm(s, hoi, preamble_text):
                 poi.param_nature_['_x_'] = RE.group(2)
                 poi.param_nature_['_y_'] = RE.group(2)
 
-            elif RE.fullmatch(r"with two arguments _x_ and _y_ of type (BigInt) (returns (a|the) BigInt representing .+)\.", rest):
+            elif RE.fullmatch(r"with two arguments _x_ and _y_ of type (BigInt) (returns (a|the) BigInt (value that represents|representing) .+)\.", rest):
                 poi.param_names = ['_x_', '_y_']
                 poi.param_nature_['_x_'] = RE.group(1)
                 poi.param_nature_['_y_'] = RE.group(1)
@@ -650,11 +650,11 @@ def get_eoh_text_for_nm(s, hoi, preamble_text):
 
         oi = resolve_oi(hoi, poi)
 
-    return oi.eoh_text()
+    return oi
 
 # ------------------------------------------------------------------------------
 
-def get_eoh_text_for_cm(s, hoi, preamble_text):
+def get_info_for_cm(s, hoi, preamble_text):
 
     oi = hoi
     oi.kind = 'concrete method'
@@ -722,7 +722,7 @@ def get_eoh_text_for_cm(s, hoi, preamble_text):
 
         oi.description = ptext
 
-    return oi.eoh_text()
+    return oi
 
 # ------------------------------------------------------------------------------
 
@@ -788,14 +788,14 @@ for line in re.split(r'\n +', rec_method_declarations.strip()):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_ao(s, hoi, preamble_text):
+def get_info_for_ao(s, hoi, preamble_text):
     if preamble_text == '':
         oi = hoi
         oi.kind = 'abstract operation'
     else:
         poi = get_info_from_ao_preamble(preamble_text)
         oi = resolve_oi(hoi, poi)
-    return oi.eoh_text()
+    return oi
 
 # ------------------------------------------------------------------------------
 
@@ -1451,7 +1451,7 @@ def add_to_description(oi, sentence):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text):
+def get_info_for_builtin_function(s, op_kind, hoi, preamble_text):
 
     if op_kind == 'accessor_property':
         # For an accessor property, the preamble is unusual,
@@ -1553,7 +1553,7 @@ def get_eoh_text_for_builtin_function(s, op_kind, hoi, preamble_text):
 
     # ----------------------------------------------------
 
-    return oi.eoh_text()
+    return oi
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
