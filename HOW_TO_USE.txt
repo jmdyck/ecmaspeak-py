@@ -19,9 +19,6 @@
 #     |- operation_headers.py
 #         |- static_type_analysis.py
 
-# (Actually, the circumstances for running static_type_analysis.py
-# are more complicated, but I'll get to that.)
-
 # You might wonder why there are multiple scripts.
 # If I had a faster computer or a faster implementation,
 # the various scripts would instead be modules of a single executable,
@@ -114,6 +111,11 @@ gdiff -R _master/ref.index.html _master/\index.html
 D=_`gcbn` && $EK/operation_headers.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh
 # (~ 2s)
 
+D=_`gcbn` && $EK/static_type_analysis.py $D
+D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
+# (~ 23s)
+	# split_types
+
 # ----------------------------------------------------
 
 git checkout operation_headers
@@ -124,29 +126,11 @@ git checkout operation_headers
 # "The hard case"
 git rebase --onto editorial HEAD~1
 
-diff _editorial/spec_w_eoh spec.html
+diff _editorial/spec_w_edits spec.html
 if necc:
-    gdiff _editorial/spec_w_eoh spec.html
+    gdiff _editorial/spec_w_edits spec.html
+    # copy stuff from left to right?
     git commit --amend spec.html
-
-Run the analyze_spec command
-
-D=_`gcbn` && $EK/static_type_analysis.py $D
-D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
-# (~ 23s)
-	# split_types
-
-
-git checkout op_headers2
-
-# git rebase operation_headers
-# git rebase --onto operation_headers HEAD~1 && diff _operation_headers/spec_w_edits spec.html
-# if necc:
-#     gdiff _operation_headers/spec_w_edits spec.html
-#     git commit --amend spec.html
-cp _operation_headers/spec_w_edits spec.html
-git difftool
-git commit --amend spec.html
 
 # ----------------------------
 
@@ -154,7 +138,7 @@ git_review master..editorial
 or
 git_review origin/editorial..editorial
 
-# git push origin -f master reference_abstract_ops simplify_2_repeat_steps editorial ed_merge operation_headers op_headers2
-git push origin -f master editorial operation_headers op_headers2
+# git push origin -f master reference_abstract_ops simplify_2_repeat_steps editorial ed_merge operation_headers
+git push origin -f master editorial operation_headers
 
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

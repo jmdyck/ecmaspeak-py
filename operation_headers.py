@@ -34,6 +34,7 @@ def main():
 
     write_spec_with_eoh()
 
+    spec.save()
     stderr("done!")
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -85,12 +86,143 @@ def write_spec_with_eoh():
             ind = ' ' * indentation
 
             for after_thing in line_info.afters:
-                for line in after_thing(ind):
+                for line in after_thing.lines(ind):
                     print(line, file=f)
 
     f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def should_create_op_info_for_algoless_section(s):
+
+    # It depends on what we intend to do with the op_info.
+    # From the point of view of static type analysis,
+    # there's no reason to generate op_info for an algoless section.
+
+    # -----------------------------
+
+    # It's the kind of section that we never want to create op info for:
+
+    if s.section_kind in [
+        'properties_of_an_intrinsic_object',
+        'catchall',
+        'other_property',
+        'shorthand',
+        #
+        'Call_and_Construct_ims_of_an_intrinsic_object',
+        'abstract_operations',
+        'early_errors',
+        'group_of_properties1',
+        'group_of_properties2',
+        'loop',
+        'properties_of_instances',
+        'function_property_xref',
+        'other_property_xref',
+    ]:
+        return False
+
+    # ----------------
+
+    # It's the kind of section that we might want to create op info for,
+    # but not if it's algoless?
+
+    if s.section_kind == 'changes':
+        assert s.section_title in [
+                "Changes to Block Static Semantics: Early Errors",
+                "Changes to `switch` Statement Static Semantics: Early Errors",
+                "Changes to the `typeof` Operator",
+        ]
+        return False
+
+    # -----------------------------
+
+    # It's the kind of section that we always want to create op info for:
+
+    if s.section_kind == 'abstract_operation':
+        assert (
+            s.section_id.startswith('sec-host')
+            or
+            s.section_id == 'sec-local-time-zone-adjustment' # Should LocalTZA be HostLocalTZA?
+            or
+            s.section_title == 'StringToBigInt ( _argument_ )'
+        )
+        return True
+
+    if s.section_kind == 'env_rec_method':
+        assert s.section_id == 'sec-object-environment-records-createimmutablebinding-n-s'
+        return True
+
+    if s.section_kind == 'numeric_method':
+        return True
+
+    # -----------------------------
+
+    # It's the kind of section that we usually want to create op info for,
+    # but with some exceptions:
+
+    if s.section_kind == 'accessor_property':
+        if s.section_title == 'Object.prototype.__proto__':
+            # The section is just a holder for subsections
+            # that define the 'get' and 'set' functions.
+            return False
+        else:
+            assert 0, s.section_title
+            return True
+
+    if s.section_kind == 'function_property':
+        if s.section_title in [
+            '%TypedArray%.prototype.set ( _overloaded_ [ , _offset_ ] )',
+            # This section is (mostly) just a holder for the two subsections
+            # that define the overloads
+        ]:
+            return False
+
+        # There are various reasons why the spec doesn't provide
+        # an algorithmic specification for a function property.
+        if (
+            s.section_title.startswith('Math.')
+            or
+            s.section_title.startswith('%TypedArray%.prototype.')
+            # A lot of these just say it implements the same algorithm
+            # as the corresponding Array.prototype.foo function.
+            # or
+            # 'Host' in s.section_title
+            or
+            '.prototype.toLocale' in s.section_title
+            or
+            '.prototype [ @@iterator ]' in s.section_title
+            or
+            s.section_title in [
+                # same function object as something else:
+                'Number.parseFloat ( _string_ )',
+                'Number.parseInt ( _string_, _radix_ )',
+                'Set.prototype.keys ( )',
+                'String.prototype.trimLeft ( )',
+                'String.prototype.trimRight ( )',
+                'Date.prototype.toGMTString ( )',
+
+                # similar alg to something else:
+                'String.prototype.toUpperCase ( )',
+
+                # implementation-defined/dependent:
+                # 'LocalTZA ( _t_, _isUTC_ )',
+                'Date.now ( )',
+                'Date.parse ( _string_ )',
+                'Date.prototype.toISOString ( )',
+            ]
+        ):
+            return True
+
+        else:
+            assert 0, s.section_title
+            return True
+
+    # ----------------
+
+    print('> Should I create an eoh for this?', s.section_kind, s.section_num, s.section_title)
+    return False
+
+# ------------------------------------------------------------------------------
 
 def create_operation_info_for_section(s):
 
@@ -121,6 +253,12 @@ def create_operation_info_for_section(s):
         # (It shouldn't even be there, really.)
         return
 
+    # if s.section_title.startswith('String.prototype.localeCompare'):
+        # The emu-alg in the section isn't the (full) alg for the function,
+        # so don't connect them.
+        # return
+
+
     # ------------------------------------------------------
 
     if s.section_kind == 'syntax_directed_operation':
@@ -128,11 +266,12 @@ def create_operation_info_for_section(s):
         # (one for every defn of the SDO),
         # we put one at the end, in annex C.
         something_sdo(s)
+        return
 
     elif s.section_num == 'C':
         (ln, _) = shared.convert_posn_to_linecol(s.end_posn)
 
-        spec.info_for_line_[ln].afters.append(AnnexForSDOs)
+        spec.info_for_line_[ln].afters.append(AnnexForSDOs())
 
     # ------------------------------------------------------
 
@@ -167,35 +306,11 @@ def create_operation_info_for_section(s):
 
     n_algos = len(algo_child_posns)
     if n_algos == 0:
-        if (
-            s.section_kind == 'function_property'
-            or
-            (
-                s.section_kind == 'abstract_operation'
-                and
-                (
-                    s.section_id.startswith('sec-host')
-                    or
-                    s.section_id == 'sec-local-time-zone-adjustment' # Should LocalTZA be HostLocalTZA?
-                )
-            )
-            or
-            (
-                s.section_kind == 'env_rec_method'
-                and
-                s.section_id == 'sec-object-environment-records-createimmutablebinding-n-s'
-            )
-            or
-            s.section_kind == 'numeric_method' # PR 1515 BigInt
-            or
-            s.section_title == 'StringToBigInt ( _argument_ )'
-        ):
-            # Even though the section has no algos,
-            # we want to create an <emu-operation-header>.
+        # Even though the section has no algos,
+        # we might want to create an <emu-operation-header>.
+        if should_create_op_info_for_algoless_section(s):
             pre_algo_spans = [(0, len(s.block_children))]
-
         else:
-            # We don't want to create an eoh.
             return
 
     else:
@@ -349,6 +464,15 @@ def create_operation_info_for_section(s):
         return False
 
     for (span_start_i, span_end_i) in pre_algo_spans:
+        if s.section_title == 'Date.parse ( _string_ )':
+            # kludge
+            algo = None
+        elif span_end_i < len(s.block_children):
+            algo = s.block_children[span_end_i]
+            assert algo.element_name in ['emu-alg', 'emu-table', 'ul']
+        else:
+            algo = None
+
 
         # Within the span, find the preamble, if any.
         p_start_i = span_start_i
@@ -373,9 +497,8 @@ def create_operation_info_for_section(s):
             # No preamble
             # So no lines to suppress when writing spec_w_eoh.
             lns_to_suppress = []
-            algo = s.block_children[p_end_i]
-            (algo_start_ln, _) = shared.convert_posn_to_linecol(algo.start_posn)
-            op_info_ln = algo_start_ln - 1
+            (p_end_ln, _) = shared.convert_posn_to_linecol(s.block_children[p_end_i].start_posn)
+            op_info_ln = p_end_ln - 1
             preamble_text = ''
         else:
             preamble_children = s.block_children[p_start_i:p_end_i]
@@ -471,6 +594,8 @@ def create_operation_info_for_section(s):
         # ------------------------------------------------------------------
         # Okay, so at this point we're finally committed to creating an eoh.
 
+        if algo: oi.definitions.append(algo)
+
         if 0:
             def each_piece_of_preamble_thing():
                 if span_start_i == span_end_i:
@@ -489,10 +614,14 @@ def create_operation_info_for_section(s):
             if p_start_i != span_start_i or p_end_i != span_end_i:
                 print(preamble_thing.ljust(30), s.section_kind, s.section_num, s.section_title)
 
+        oi.finalize()
+
         for ln in lns_to_suppress:
             spec.info_for_line_[ln].suppress = True
 
-        spec.info_for_line_[op_info_ln].afters.append(oi.eoh_lines)
+        spec.info_for_line_[op_info_ln].afters.append(oi)
+
+        oi.line_num = op_info_ln
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -539,7 +668,7 @@ regexp_also = [
 
 # ----------------------------
 
-oi_for_sdo_ = {}
+spec.oi_for_sdo_ = {}
 
 def declare_sdo(op_name, param_dict, also=[]):
     oi = OperationInfo()
@@ -556,23 +685,27 @@ def declare_sdo(op_name, param_dict, also=[]):
         oi.param_nature_ = OrderedDict( [('_direction_', 'integer')] )
         # oi.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
 
-    if op_name in oi_for_sdo_:
-        pre_oi = oi_for_sdo_[op_name]
+    if op_name in spec.oi_for_sdo_:
+        pre_oi = spec.oi_for_sdo_[op_name]
         assert pre_oi.param_names == oi.param_names
         assert pre_oi.param_nature_ == oi.param_nature_
         assert pre_oi.also == oi.also
     else:
-        oi_for_sdo_[op_name] = oi
+        spec.oi_for_sdo_[op_name] = oi
 
-def AnnexForSDOs(ind):
-    yield ''
-    yield '<emu-annex id="sec-headers-for-sdos">'
-    yield '  <h1>Headers for Syntax-Directed Operations</h1>'
-    yield '  <p>blah</p>'
-    for (_, oi) in sorted(oi_for_sdo_.items()):
-        for line in oi.eoh_lines('  '):
-            yield line
-    yield '</emu-annex>'
+class AnnexForSDOs:
+
+    def lines(self, ind):
+        # ignore `ind`
+        yield ''
+        yield '<emu-annex id="sec-headers-for-sdos">'
+        yield '  <h1>Headers for Syntax-Directed Operations</h1>'
+        yield '  <p>blah</p>'
+        for (_, oi) in sorted(spec.oi_for_sdo_.items()):
+            oi.finalize()
+            for line in oi.lines('  '):
+                yield line
+        yield '</emu-annex>'
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2085,8 +2218,34 @@ class OperationInfo:
         self.returns_normal = None
         self.returns_abrupt = None
         self.description = None
+        self.definitions = []
+        self.line_num = None
 
-    def eoh_lines(self, ind):
+    def finalize(self):
+        assert len(self.rest_params) in [0,1]
+
+        self.parameters = OrderedDict()
+        for param_name in self.param_names:
+            optionality = '(optional) ' if param_name in self.optional_params else ''
+
+            if param_name in self.rest_params:
+                assert param_name not in self.optional_params
+                if self.name.startswith('Math.'):
+                    typ = 'List of Number'
+                else:
+                    typ = 'List of Tangible_'
+            else:
+                nature = self.param_nature_.get(param_name, 'TBD')
+                typ = convert_nature_to_typ(nature)
+
+            param_type = optionality + typ
+
+            self.parameters[param_name] = param_type
+
+        self.return_type_normal = convert_nature_to_typ(self.returns_normal or 'TBD')
+        self.return_type_abrupt = convert_nature_to_typ(self.returns_abrupt or 'TBD')
+
+    def lines(self, ind):
         lines = []
         def p(s): lines.append(ind + s)
 
@@ -2100,27 +2259,15 @@ class OperationInfo:
         if self.overload_resolver:
             p("  overload selected when called with: " + self.overload_resolver)
 
-        assert self.param_names is not None
-        if self.param_names == []:
+        assert self.parameters is not None
+        if len(self.parameters) == 0:
             p("  parameters: none")
         else:
             p("  parameters:")
 
-            assert len(self.rest_params) in [0,1]
-
-            maxwidth = max(len(param_name) for param_name in self.param_names)
-            for param_name in self.param_names:
-                optionality = ' (optional)' if param_name in self.optional_params else ''
-                if param_name in self.rest_params:
-                    assert param_name not in self.optional_params
-                    if self.name.startswith('Math.'):
-                        typ = 'List of Number'
-                    else:
-                        typ = 'List of Tangible_'
-                else:
-                    nature = self.param_nature_.get(param_name, 'TBD')
-                    typ = convert_nature_to_typ(nature)
-                p("    - " + param_name.ljust(maxwidth) + ' :' + optionality + ' ' + typ)
+            maxwidth = max(len(param_name) for param_name in self.parameters.keys())
+            for (param_name, param_type) in self.parameters.items():
+                p("    - " + param_name.ljust(maxwidth) + ' : ' + param_type)
 
         if self.also:
             p("  also has access to:")
@@ -2129,8 +2276,8 @@ class OperationInfo:
                 p("    - %s : %s" % (var_name.ljust(maxwidth), expl))
 
         p("  returns:")
-        p("    - normal : " + convert_nature_to_typ(self.returns_normal or 'TBD'))
-        p("    - abrupt : " + convert_nature_to_typ(self.returns_abrupt or 'TBD'))
+        p("    - normal : " + self.return_type_normal)
+        p("    - abrupt : " + self.return_type_abrupt)
 
         if self.description:
             p("  description: " + self.description)

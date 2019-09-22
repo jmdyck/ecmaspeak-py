@@ -21,14 +21,39 @@ def main():
     outdir = sys.argv[1]
     shared.register_output_dir(outdir)
     spec.restore()
-    #
+
+    create_headers()
     gather_nonterminals()
     levels = compute_dependency_levels()
     do_static_type_analysis(levels)
 
+class LineInfo: pass
+class OperationInfo: pass
+class AnnexForSDOs: pass
+# We only need these for spec.restore().
+# The original declarations are in operation_headers.py.
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def create_headers():
+
+    # Create the headers for SDOs:
+    for oi in spec.oi_for_sdo_.values():
+        oi.header = Header(oi)
+
+    # Create the headers for everything else:
+    for line_info in spec.info_for_line_[1:]:
+        for after_thing in line_info.afters:
+            if isinstance(after_thing, OperationInfo):
+                after_thing.header = Header(after_thing)
+        line_info.msgs = []
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def gather_nonterminals():
+    # Find all the Nonterminals that are mentioned in pseudocode,
+    # and create a NamedType and a TNode for each.
+    #
     # This is a kludge because grammar info doesn't get passed through pickling yet.
 
     global nonterminals
@@ -98,17 +123,6 @@ def compute_dependency_levels():
     stderr()
     stderr('analyzing dependencies...')
 
-    # Get the headers for SDOs:
-    for c in spec.doc_node.section_children:
-        if c.section_title == 'Headers for Syntax-Directed Operations':
-            for eoh in c.block_children:
-                if eoh.element_name == 'p': continue
-                assert eoh.element_name == 'emu-operation-header'
-                header = Header(eoh)
-            break
-    else:
-        assert 0
-
     global f_skipped
     f_skipped = shared.open_for_output('skipped_sections_with_alg')
 
@@ -124,7 +138,7 @@ def compute_dependency_levels():
         elif s.section_kind == 'syntax_directed_operation':
             define_ops_from_sdo_section(s)
         else:
-            define_ops_from_other_section(s)
+            pass
 
     f_skipped.close()
 
@@ -189,6 +203,8 @@ def define_ops_from_sdo_section(s):
     add_defns_from_sdo_section(s, op_name)
 
 def add_defns_from_sdo_section(s, op_name):
+    # XXX This should be done in Pseudocode.py?
+
     # There are 3 ways to contribute to a syntax-directed operation:
     #
     # - <emu-grammar> + <emu-alg> pair
@@ -293,213 +309,6 @@ def add_defns_from_sdo_section(s, op_name):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def define_ops_from_other_section(s):
-
-    # number of children with element_name...
-    ncwen_ = defaultdict(int)
-    for child in s.block_children:
-        ncwen_[child.element_name] += 1
-
-    n_eoh = ncwen_['emu-operation-header']
-    n_emu_alg = ncwen_['emu-alg']
-
-    def skip_msg(line):
-        print(f"\n{s.section_num} {s.section_title}\n{line}", file=f_skipped)
-
-    if n_eoh == 0:
-        # Without an eoh, there's no involvement in STA,
-        # so we'll be skipping this section.
-        # However, we might or might not want to record that fact
-        # (... because I manufacture <eoh> elements,
-        # so the message might tell me of something I've missed.
-    
-        if n_emu_alg == 0:
-            if s.section_kind in [
-                'properties_of_an_intrinsic_object',
-                'catchall',
-                'other_property',
-                'shorthand',
-                #
-                'Call_and_Construct_ims_of_an_intrinsic_object',
-                'abstract_operations',
-                'early_errors',
-                'group_of_properties1',
-                'group_of_properties2',
-                'loop',
-                'properties_of_instances',
-                'function_property_xref',
-                'other_property_xref',
-            ]:
-                # There's no expectation that such a section would have an eoh
-                pass
-            elif s.section_title == 'Object.prototype.__proto__':
-                # It's an accessor property,
-                # but the section is just a holder for subsections
-                # that define the 'get' and 'set' functions.
-                pass
-            else:
-                skip_msg(f"skipping because no eoh, despite section_kind is {s.section_kind}")
-        
-        else:
-            if s.section_kind == 'shorthand':
-                pass
-            elif s.section_title in [
-                'Algorithm Conventions',
-                'Syntax-Directed Operations',
-                # just examples
-
-                'Statement Rules',
-                'Expression Rules',
-                # we actually don't skip them, we just get to them in a different way
-
-                'Array.prototype [ @@unscopables ]',
-                # <emu-alg> specifies the initial value of the data property
-                # XXX could treat it as a "hidden" abstract op.
-            ]:
-                pass
-            else:
-                skip_msg(f"skpping because no eoh, despite {n_emu_alg} <emu-alg> [{s.section_kind}]")
-
-        return
-
-    # So at this point, we're guaranteed at least one (and usually only one) eoh.
-    assert n_eoh >= 1
-
-    if n_emu_alg == 0:
-        # Not having any <emu-alg> isn't an automatic disqualification.
-        # because some algorithms are defined via an <emu-table>.
-        # So it might make more sense to defer this to "didn't find a definition" below.
-        # But if we don't exclude (some of) these now, we'll create a Header,
-        # which could cause complaints later on. XXX
-
-        # Generally, don't bother calling skip_msg,
-        # because I can't do anything (much?) about an absent <emu-alg>.
-
-        if s.section_title == '%TypedArray%.prototype.set ( _overloaded_ [ , _offset_ ] )':
-            # This section is (mostly) just a holder for the two subsections
-            # that define the overloads
-            # skip_msg("skipping because no <emu-alg>, despite {n_eoh} <eoh>, because it's mostly just a container for two subsections")
-            return
-
-        # The spec typically doesn't provide algorithmic specifications
-        # in a bunch of cases:
-        if (
-            s.section_title.startswith('Math.')
-            or
-            s.section_title.startswith('%TypedArray%.prototype.')
-            # A lot of these just say it implements the same algorithm
-            # as the corresponding Array.prototype.foo function.
-            # or
-            # 'Host' in s.section_title
-            or
-            '.prototype.toLocale' in s.section_title
-            or
-            '.prototype [ @@iterator ]' in s.section_title
-        ):
-            # Don't bother printing a skip-msg.
-            return
-        elif s.section_title in [
-            # same function object as something else:
-            'Number.parseFloat ( _string_ )',
-            'Number.parseInt ( _string_, _radix_ )',
-            'Set.prototype.keys ( )',
-            'String.prototype.trimLeft ( )',
-            'String.prototype.trimRight ( )',
-            'Date.prototype.toGMTString ( )',
-
-            # similar alg to something else:
-            'String.prototype.toUpperCase ( )',
-
-            # implementation-defined/dependent:
-            # 'LocalTZA ( _t_, _isUTC_ )',
-            'Date.now ( )',
-            'Date.parse ( _string_ )',
-            'Date.prototype.toISOString ( )',
-        ]:
-            # skip_msg(f"skipping because no <emu-alg>, despite {n_eoh} <eoh>")
-            return
-
-    if 0 and s.section_title.endswith('.prototype.sort ( _comparefn_ )'):
-        assert n_emu_alg in [2,3]
-        skip_msg(f"skipping because <emu-alg>s are incomplete, don't really define the function")
-        return
-
-    if s.section_title.startswith('String.prototype.localeCompare'):
-        # The emu-alg in the section isn't the (full) alg for the function,
-        # so don't connect them.
-        skip_msg(f"skipping because <emu-alg> is only a small part of behavior")
-        return
-
-    # --------------------------------------------------------------------------
-
-    # Look for an <emu-operation-header> element,
-    # and then look for an algorithm-defining element immediately or shortly thereafter.
-
-    i = 0
-    while i < len(s.block_children):
-        child_a = s.block_children[i]
-        if child_a.element_name == 'emu-operation-header':
-            header = Header(child_a)
-
-            if s.section_kind in ['internal_method', 'env_rec_method', 'module_rec_method', 'numeric_method']:
-                discriminator = header.for_param_type
-            else:
-                discriminator = None
-
-            if header.name == 'CreateImmutableBinding' and header.for_param_type == T_object_Environment_Record:
-                assert len(s.block_children) == 1
-                # i.e., nothing here but the header, no <emu-alg> to collect
-                return
-
-            for j in range(i+1, len(s.block_children)):
-
-                child_b = s.block_children[j]
-                cben = child_b.element_name
-
-                if cben == 'emu-alg':
-                    if header.name == 'DeleteBinding' and header.for_param_type == T_module_Environment_Record:
-                        # There *is* an <emu-alg> here, but I'd rather there weren't.
-                        assert child_b.source_text() == '<emu-alg>\n            1. Assert: This method is never invoked. See <emu-xref href="#sec-delete-operator-static-semantics-early-errors"></emu-xref>.\n          </emu-alg>'
-                        # Don't add this emu-alg to the header.
-                        return
-
-                    header.add_defn(discriminator, child_b._syntax_tree)
-                    break
-
-                elif cben == 'emu-table':
-                    assert header.name.startswith('To') or header.name == 'RequireObjectCoercible', header.name
-                    # header.add_defn(discriminator, child_b._syntax_tree)
-                    # skip_msg(f"skipping because <emu-alg> specifies the initial value of the data property")
-                    # NOT YET IMPLEMENTED
-                    break
-
-                elif cben in ['p', 'emu-note', 'ul', 'pre']:
-                    pass
-
-                else:
-                    assert 0, cben
-
-            else:
-                # Got to the end of s.block_children
-                # without finding a definition (emu-alg or emu-table) for the eoh.
-                if header.name.startswith('Host') or header.name == 'LocalTZA':
-                    # That's to be expected
-                    pass
-                else:
-                    skip_msg("Made a Header, but didn't find a definition of the op")
-                return
-
-            i = j
-
-        elif child_a.element_name == 'emu-alg':
-            skip_msg("got an extra <emu-alg>!")
-
-        else:
-            pass
-
-        i += 1
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class Operation:
     def __init__(self, name, kind):
@@ -571,116 +380,79 @@ class Operation:
 
 class Header:
 
-    def __init__(self, eoh):
-        (parsed_eoh, second_level_spans) = parse_eoh(eoh)
+    def __init__(self, oi):
 
-        self.fake_node_for_ = {}
-        for (name, (start_posn, end_posn)) in second_level_spans.items():
-            self.fake_node_for_[name] = ANode(None, None, start_posn, end_posn)
-            if name == 'abrupt':
-                self.fake_node_for_['*return*'] = ANode(None, None, start_posn, end_posn)
-                # In spec_w_errors, we don't bother decomposing 
-                # the return-type into normal and abrupt.
-                # During analysis, changes in return-type are associated with
-                # self.fake_node_for_['*return*'],
-                # which is co-located  with the fake node for 'abrupt',
-                # so that in spec_w_errors,
-                # they appear under the whole 'returns' section.
+        assert isinstance(oi, OperationInfo)
 
-        # -------------------------
-        # name:
+        self.kind = oi.kind
+        self.name = oi.name
+        self.description = oi.description
 
-        self.name = parsed_eoh['name']
-
-        # -----
-        # op kind:
-
-        self.kind = parsed_eoh['op kind']
-        assert self.kind in [
-            'abstract operation',
-            'syntax-directed operation',
-            'concrete method',
-            'numeric_method', # PR 1515 BigInt
-            'internal method',
-            'function_property',
-            'function_property_overload',
-            'accessor property',
-            'CallConstruct',
-            'CallConstruct_overload',
-            'anonymous_built_in_function',
-        ]
-
-        # -------------
-        # for:
-
-        if 'for' in parsed_eoh:
-            fr = parsed_eoh['for']
-            mo = re.match(r'^(.+) (_\w+_)$', fr)
-            if mo:
-                # The 'for' line introduces a metavariable.
-                (nature_s, var_name) = mo.groups()
-                t = {
-                    'ECMAScript function object'        : T_function_object_,
-                    'built-in function object'          : T_function_object_,
-                    'Proxy exotic object'               : T_Proxy_exotic_object_,
-                    'Integer-Indexed exotic object'     : T_Integer_Indexed_object_,
-                    'String exotic object'              : T_Object,
-                    'arguments exotic object'           : T_Object,
-                    'immutable prototype exotic object' : T_Object,
-                    'module namespace exotic object'    : T_Object,
-                    'ordinary object'                   : T_Object,
-
-                    'bound function exotic object'      : T_bound_function_exotic_object_,
-                    'Array exotic object'               : T_Array_object_,
-                }[nature_s]
-                self.for_param_type = t
-                self.for_param_name = var_name
-            else:   
-                # There's a 'for' line, but it doesn't introduce a metavariable
-                # (the 'concrete methods' for env records and module records).
-                # todo: Change the spec to introduce a metavariable?
-                # (instead of an ad hoc first step)
-                self.for_param_type = parse_type_string(fr)
-                self.for_param_name = None
-        else:
-            # No 'for' line
+        self.owning_type = oi.owning_type
+        if oi.owning_type is None:
             self.for_param_type = None
             self.for_param_name = None
-
-        # -------------
-        # parameters:
-
-        self.parameters = OrderedDict(
-            (pn, parse_type_string(pt))
-            for (pn, pt) in parsed_eoh['parameters'].items()
-        )
-        assert '' not in self.parameters
-
-        # -------------
-        # also has access to:
-
-        self.alsos = dict(
-            (pn, parse_type_string(ahat_[(pn, pt)]))
-            for (pn, pt) in parsed_eoh.get('also has access to', {}).items()
-        )
-
-        # -------------
-        # returns:
-
-        r = parsed_eoh['returns']
-        if r['normal'] == 'TBD' and r['abrupt'] == 'TBD':
-            rt = 'TBD'
-        elif r['abrupt'] == 'TBD':
-            rt = r['normal']
-        elif r['normal'] == 'TBD':
-            rt = r['abrupt']
         else:
-            rt = r['normal'] + " | " + r['abrupt']
+            mo = re.fullmatch(r'(.+) (_\w+_)', oi.owning_type)
+            if mo:
+                (owning_type_str, self.for_param_name) = mo.groups()
+            else:
+                owning_type_str = oi.owning_type
+                self.for_param_name = None
 
-        self.return_type = parse_type_string(rt)
+            x = {
+                'ECMAScript function object'        : T_function_object_,
+                'built-in function object'          : T_function_object_,
+                'Proxy exotic object'               : T_Proxy_exotic_object_,
+                'Integer-Indexed exotic object'     : T_Integer_Indexed_object_,
+                'String exotic object'              : T_Object,
+                'arguments exotic object'           : T_Object,
+                'immutable prototype exotic object' : T_Object,
+                'module namespace exotic object'    : T_Object,
+                'ordinary object'                   : T_Object,
 
-        # -------------
-        # description: (skip)
+                'bound function exotic object'      : T_bound_function_exotic_object_,
+                'Array exotic object'               : T_Array_object_,
+            }
+
+            if owning_type_str in x:
+                self.for_param_type = x[owning_type_str]
+            else:
+                self.for_param_type = parse_type_string(owning_type_str)
+
+        self.overload_resolver = oi.overload_resolver
+
+        self.initial_parameters = OrderedDict()
+        for (param_name, param_type_str) in oi.parameters.items():
+            self.initial_parameters[param_name] = parse_type_string(param_type_str)
+
+        self.parameters = self.initial_parameters.copy()
+
+        if oi.also is None:
+            self.alsos = {}
+        else:
+            self.alsos = dict(
+                (pn, parse_type_string(ahat_[(pn, pt)]))
+                for (pn, pt) in oi.also
+            )
+
+        if oi.return_type_normal == 'TBD' and oi.return_type_abrupt == 'TBD':
+            rt = 'TBD'
+        elif oi.return_type_abrupt == 'TBD':
+            rt = oi.return_type_normal
+        elif oi.return_type_normal == 'TBD':
+            rt = oi.return_type_abrupt
+        else:
+            rt = oi.return_type_normal + " | " + oi.return_type_abrupt
+        self.initial_return_type = parse_type_string(rt)
+        self.return_type = self.initial_return_type
+
+        self.fake_node_for_ = {}
+        for pname in oi.param_names:
+            self.fake_node_for_[pname] = ANode(None, None, 0, 0)
+        self.fake_node_for_['normal'] = ANode(None, None, 0, 0)
+        self.fake_node_for_['abrupt'] = ANode(None, None, 0, 0)
+        self.fake_node_for_['*return*'] = ANode(None, None, 0, 0)
 
         # -------------------------
 
@@ -709,21 +481,28 @@ class Header:
 
         self.defns = []
 
+        for algo in oi.definitions:
+            discriminator = self.for_param_type
+            if algo.element_name == 'emu-alg':
+                self.add_defn(discriminator, algo._syntax_tree)
+
         # -------------------------
 
         if self.name == 'Set' and self.kind == 'CallConstruct':
-            self.name = 'built-in Set'
+            lookup_name = 'built-in Set'
             # so that it doesn't collide with the abstract operation 'Set'
+        else:
+            lookup_name = self.name
 
-        if self.name in operation_named_:
+        if lookup_name in operation_named_:
             # We've already seen a header for an operation with this name.
-            op = operation_named_[self.name]
+            op = operation_named_[lookup_name]
             assert self.kind != 'abstract operation'
             assert op.kind == self.kind
         else:
             # First header for an operation with this name.
-            op = Operation(self.name, self.kind)
-            operation_named_[self.name] = op
+            op = Operation(lookup_name, self.kind)
+            operation_named_[lookup_name] = op
 
         op.headers.append(self)
 
@@ -736,11 +515,128 @@ class Header:
                 kind: {self.kind}
                 for : {self.for_param_type}
                 params: {', '.join(
-                    pn + ' : ' + pt
-                    for (pn, pt) in self.parameters)}
+                    pn + ' : ' + str(pt)
+                    for (pn, pt) in self.parameters.items())}
                 returns: {self.return_type}
                 # defns: {len(self.defns)}
         """
+
+    def lines_as_eoh(self, indentation, mode):
+        ind = ' ' * indentation
+
+        assert mode in ['show error messages', 'apply edits']
+
+        lines = []
+        def pwi(s): # put-with-indentation
+            lines.append(ind + s)
+
+        # Problems:
+        # - To reproduce both files, we need to suppress the lines
+        #   that the eoh is replacing.
+
+        pwi(f'<emu-operation-header>')
+        pwi(f'  op kind: {self.kind}')
+        pwi(f'  name: {self.name}')
+
+        if self.for_param_type:
+            pwi(f'  for: {self.owning_type}')
+
+        if self.overload_resolver:
+            pwi(f'  overload selected when called with: {self.overload_resolver}')
+
+        kludge = None
+
+        # ---------------------------------------
+        def foo(prefix, ptype):
+            nonlocal kludge
+            if ptype == T_0:
+                if mode == 'show error messages':
+                    pwi(f"    - {prefix} : TBD")
+                    kludge = 3
+                else:
+                    # show nothing
+                    pass
+            else:
+                s = ptype.unparse()
+                pwi(f"    - {prefix} : {s}")
+                kludge = len(s)
+        # ---------------------------------------
+
+        if len(self.initial_parameters) == 0:
+            pwi(f'  parameters: none')
+
+        else:
+            pwi(f'  parameters:')
+
+            if mode == 'show error messages':
+                params = self.initial_parameters
+            else:
+                params = self.parameters
+
+            pn_max_width = max(
+                len(pn)
+                for pn in params.keys()
+            )
+            for (pn, pt) in params.items():
+                foo(pn.ljust(pn_max_width), pt)
+
+                # XXX Cases where operation_headers types the parameter as 'NonNegativeInteger_',
+                # but then that gets translated to 'Integer',
+                # so that's how it appears here.
+                # - ArrayCreate              : _length_
+                # - CodePointAt              : _position_
+                # - GetModifySetValueInBuffer: _byteIndex_
+                # - GetWaiterList            : _i_
+                # - RemoveWaiters            : _c_
+                # - ComposeWriteEventBytes   : _byteIndex_
+
+                if mode == 'show error messages':
+                    p_node = self.fake_node_for_[pn]
+                    if hasattr(p_node, 'errors'):
+                        for msg in p_node.errors:
+                            lines.append('-' * (indentation + 4 + 2 + pn_max_width + 3) + '^' * kludge)
+                            lines.append('>>> ' + msg)
+                            lines.append('')
+
+        if self.alsos:
+            pwi(f'  also has access to:')
+            max_width = max(len(vn) for vn in self.alsos)
+            for (vn, vt) in self.alsos.items():
+                pwi(f'    - {vn: <{max_width}} : {vt}')
+
+        # -------------------------
+
+        pwi(f'  returns:')
+        if mode == 'show error messages':
+            rt = self.initial_return_type
+        else:
+            rt = self.return_type
+
+        if rt == T_TBD:
+            abrupt_part = T_TBD
+            normal_part = T_TBD
+        else:
+            (abrupt_part, normal_part) = rt.split_by(T_Abrupt)
+
+        foo('normal', normal_part)
+        foo('abrupt', abrupt_part)
+
+        if mode == 'show error messages':
+            p_node = self.fake_node_for_['*return*']
+            if hasattr(p_node, 'errors'):
+                for msg in p_node.errors:
+                    lines.append('-' * (indentation + 4 + 2 + 6 + 3) + '^' * kludge)
+                    lines.append('>>> ' + msg)
+                    lines.append('')
+
+        # -------------------------
+
+        if self.description:
+            pwi(f'  description: {self.description}')
+
+        pwi(f'</emu-operation-header>')
+
+        return lines
 
     # ------------------------------------------------------
 
@@ -818,67 +714,12 @@ class Header:
             g_level_prefix, verb, pname, old_t, new_t)
         node = self.fake_node_for_[pname]
         node._new_t = new_t
-        all_errors.append((node, change))
+        install_error(node, change)
 
         #!!! print("EDIT: In a header for `%s`: %s" % (self.name, change))
         # if self.name == 'LabelledEvaluation' and pname == '_labelSet_': pdb.set_trace()
 
 # ------------------------------------------------------------------------------
-
-def parse_eoh(eoh):
-    assert eoh.element_name == 'emu-operation-header'
-
-    # Quick and dirty parser.
-    # Doesn't care about indentation.
-    # (Doesn't have to, because there's only two levels.)
-    # (Properly, we would use a yaml parser.)
-
-    parsed_eoh = OrderedDict()
-    second_level_spans = {}
-
-    current_prop_name = None
-    for line_mo in re.compile('.+').finditer(spec.text, eoh.inner_start_posn, eoh.inner_end_posn):
-        (line_start, line_end) = line_mo.span(0)
-
-        mo = re.compile(r' +$').match(spec.text, line_start, line_end)
-        if mo:
-            assert line_end == eoh.inner_end_posn
-            # It's the last line in the eoh content
-            continue
-
-        # first level:
-
-        mo = re.compile(r' +(\w+|op kind|overload selected when called with): ([^ ].*)$').match(spec.text, line_start, line_end)
-        if mo:
-            (name, value) = mo.groups()
-            assert name not in parsed_eoh
-            if value == 'none':
-                assert name == 'parameters'
-                value = OrderedDict()
-            parsed_eoh[name] = value
-            continue
-
-        mo = re.compile(r' +(\w+|also has access to):$').match(spec.text, line_start, line_end)
-        if mo:
-            current_prop_name = mo.group(1)
-            parsed_eoh[current_prop_name] = OrderedDict()
-            continue
-
-        # second level:
-
-        mo = re.compile(r' +- (\w+) +: ([^ ].*)$').match(spec.text, line_start, line_end)
-        if mo:
-            (name, value) = mo.groups()
-            assert current_prop_name is not None
-            parsed_eoh[current_prop_name][name] = value
-            second_level_spans[name] = mo.span(2)
-            continue
-
-        stderr('>> parse_eoh could not parse line:', repr(line_mo.group(0)))
-
-    return (parsed_eoh, second_level_spans)
-
-# ------------------------------------------------------
 
 # "also has access to" type info
 ahat_ = {
@@ -905,21 +746,6 @@ ahat_ = {
     ('_comparefn_' , 'from the `sort` method'): 'function_object_ | Undefined',
     ('_buffer_'    , 'from the `sort` method'): 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
 }
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-#eohs = []
-#
-#def gather_eohs():
-#    def recurse(hnode):
-#        assert isinstance(hnode, HTML.HNode)
-#        if hnode.element_name == 'emu-operation-header':
-#            eohs.append(hnode)
-#        else:
-#            for child in hnode.children:
-#                recurse(child)
-#
-#    recurse(spec.doc_node)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2633,7 +2459,7 @@ def envs_or(envs):
 
 def do_static_type_analysis(levels):
 
-    atexit.register(print_spec_with_errors)
+    atexit.register(print_spec)
 
     global split_types_f
     split_types_f = shared.open_for_output('split_types')
@@ -2684,7 +2510,8 @@ def do_static_type_analysis(levels):
                     print("achieved fixed point after %d passes" % pass_num)
                     if pass_errors:
                         print("accepting %d errors" % len(pass_errors))
-                        all_errors.extend(pass_errors)
+                        for (anode, msg) in pass_errors:
+                            install_error(anode, msg)
                     break
 
         # if L == 1: break
@@ -2693,7 +2520,7 @@ def do_static_type_analysis(levels):
     print("Finished static analysis!")
     print()
 
-    print_spec_w_edits()
+    print_spec(mode = 'apply edits')
 
     # Analysis skips the following operations:
     #   SymbolDescriptiveString
@@ -2740,80 +2567,80 @@ def add_pass_error(anode, msg):
     print("??:", msg.encode('unicode_escape'))
     pass_errors.append((anode, g_level_prefix + msg))
 
-all_errors = []
+def install_error(anode, msg):
+    if not hasattr(anode, 'parent'):
+        # It's a fake node.
+        # Just attach the msg to the node.
+        if not hasattr(anode, 'errors'):
+            anode.errors = []
+        anode.errors.append(msg)
+    else:
+        # It's a real node.
+        #
+        # We *could* just attach the msg to the node,
+        # but then at each line, we'd need to get all the nodes
+        # that pertain to that line (i.e., end on it),
+        # and that'd be a pain?
 
-def print_spec_with_errors():
-    stderr("printing spec_w_errors...")
-
-    things = []
-    for (anode, error_msg) in all_errors:
         (sl, sc) = shared.convert_posn_to_linecol(anode.start_posn)
         (el, ec) = shared.convert_posn_to_linecol(anode.end_posn)
         if sl == el:
-            thing = (el, sc, ec, error_msg)
+            thing = (sc, ec, msg)
         else:
             stderr("Node spans multiple lines: (%d,%d) to (%d,%d)" % (sl,sc,el,ec))
-            thing = (el, 0, ec, error_msg)
-        things.append(thing)
-    things.sort(key=lambda t: (t[0], t[2]))
-    # For things on the same line, secondary sort by *end*-column.
+            thing = (0, ec, msg)
+        spec.info_for_line_[el].msgs.append(thing)
 
-    f = shared.open_for_output('spec_w_errors')
+def print_spec(mode = 'show error messages'):
 
-    prev_posn = 0
-    for (sl, sc, ec, error_msg) in things:
-        # print the spec up to and including the newline at the end of line `sl`
-        new_posn = shared._newline_posns[sl]+1
-        f.write(spec.text[prev_posn:new_posn])
-        caret_line = '-' * (sc-1) + '^' * (ec-sc) + '\n'
-        f.write(caret_line)
-        f.write('>>> ' + error_msg + '\n')
-        f.write('\n')
-        prev_posn = new_posn
+    assert mode in ['show error messages', 'apply edits']
 
-    f.write(spec.text[prev_posn:])
-    f.close()
+    if mode == 'show error messages':
+        filename = 'spec_w_errors'
+    else:
+        filename = 'spec_w_edits'
+    stderr(f"printing {filename} ...")
 
-# ------------------------------------------------------------------------------
+    f = shared.open_for_output(filename)
 
-def print_spec_w_edits():
-    stderr('printing spec_w_edits...')
+    for line_info in spec.info_for_line_[1:]:
 
-    edits = []
+        if not line_info.suppress:
+            print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
 
-    for (op_name, op) in sorted(operation_named_.items()):
-        for header in op.headers:
+        for after_thing in line_info.afters:
+            if isinstance(after_thing, OperationInfo):
+                header = after_thing.header
+                ind = line_info.indentation
+                if ind == 0:
+                    ind = spec.info_for_line_[line_info.line_num-1].indentation
+                for line in header.lines_as_eoh(ind, mode):
+                    print(line, file=f)
+            elif isinstance(after_thing, AnnexForSDOs):
+                print('', file=f)
+                print('<emu-annex id="sec-headers-for-sdos">', file=f)
+                print('  <h1>Headers for Syntax-Directed Operations</h1>', file=f)
+                print('  <p>blah</p>', file=f)
+                for (_, oi) in sorted(spec.oi_for_sdo_.items()):
+                    for line in oi.header.lines_as_eoh(2, mode):
+                        print(line, file=f)
+                print('</emu-annex>', file=f)
+            else:
+                assert 0, after_thing
 
-            def add(pname, ptype):
-                node = header.fake_node_for_[pname]
-                if ptype != T_0:
-                    edit = (node.start_posn, node.end_posn, ptype.unparse())
-                else:
-                    # delete the line
-                    (ln, _) = shared.convert_posn_to_linecol(node.start_posn)
-                    edit = (
-                        shared._newline_posns[ln-1],
-                        shared._newline_posns[ln],
-                        ''
-                    )
-                edits.append(edit)
+        if mode == 'show error messages':
+            # For each anode that ends on this line,
+            # show any messages relating to that anode.
 
-            for (pname, ptype) in header.parameters.items():
-                add(pname, ptype)
+            # For things on the same line, secondary sort by *end*-column.
+            for (sc,ec,msg) in sorted(line_info.msgs, key=lambda t: t[1]):
+                caret_line = '-' * (sc-1) + '^' * (ec-sc)
+                print(caret_line, file=f)
+                print('>>> ' + msg, file=f)
+                print(file=f)
+        else:
+            pass
 
-            (abrupt_part, normal_part) = header.return_type.split_by(T_Abrupt)
-            add('normal', normal_part)
-            add('abrupt', abrupt_part)
-
-    edits.sort()
-
-    f = shared.open_for_output('spec_w_edits')
-    prev_posn = 0
-    for (e_start_posn, e_end_posn, replacement) in edits:
-        f.write(spec.text[prev_posn:e_start_posn])
-        f.write(replacement)
-        prev_posn = e_end_posn
-    f.write(spec.text[prev_posn:])
     f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2984,6 +2811,9 @@ def tc_header(header):
                 )
                 or
                 header.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ and final_t == T_Proxy_exotic_object_ | T_bound_function_exotic_object_ | T_other_function_object_
+                or
+                header.name == 'String.prototype.localeCompare' and pn == '*return*'
+                # The algo is incomplete, so doesn't result in a reasonable return type.
             ):
                 # -------------------------
                 # Don't change header types
