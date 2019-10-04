@@ -51,6 +51,7 @@
     Assert: If {CONDITION}, {CONDITION}.
     Assert: Unless {CONDITION_1}, {CONDITION}.
     Assert: {CONDITION_1} if and only if {CONDITION_1}.
+    Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
     Assert: {CONDITION}.
     Call {PREFIX_PAREN} and let {var} be its result.
     Call {PREFIX_PAREN} and let {var} be the Boolean result.
@@ -96,6 +97,7 @@
     Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)
     Let {var} be {EXPR}. Remove that record from {var}.
     Let {var} be {EXPR}. This variable will be used throughout the algorithms in {h_emu_xref}.
+    Let {var} be {EXPR}. {note}
     Let {var} be {MULTILINE_EXPR}
     Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even.
     Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
@@ -130,6 +132,7 @@
     Remove {var} from the front of {var}.
     Remove {var} from the list of waiters in {var}.
     Remove {var} from {var}.
+    Repeat, until {CONDITION},{IND_COMMANDS}
     Repeat, while {CONDITION},{IND_COMMANDS}
     Repeat, while {CONDITION}{IND_COMMANDS}
     Repeat,{IND_COMMANDS}
@@ -184,11 +187,6 @@
 
     # PR 1464 static RegExp parsing:
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
-
-    # PR 1515 BigInt:
-    Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
-    Let {var} be {EXPR}. {note}
-    Repeat, until {CONDITION},{IND_COMMANDS}
 
     # PR 1552 UTF16:
     Parse {NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
@@ -250,6 +248,7 @@
     return {MULTILINE_EXPR}
 
 {SMALL_COMMAND} :
+    @ is `^`; return {EXPR}
     ReturnIfAbrupt({var})
     add {var} to {var}
     append {LITERAL} to {var}
@@ -276,6 +275,7 @@
     the replacement text is {EXPR}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
+    {nonterminal} is {backticked_oth}; return {EXPR}
 
     # obsoleted by merge of PR #1614:
     # no further validation is required
@@ -283,10 +283,6 @@
     # PR 1460 explicit-exotics
     initialize the corresponding internal slot value on {var} to {LITERAL}
     append each of its elements to {var}
-
-    # PR 1515 BigInt
-    @ is `^`; return {EXPR}
-    {nonterminal} is {backticked_oth}; return {EXPR}
 
 
 # ------------------------------------------------------
@@ -386,10 +382,6 @@
     {B} {LITERAL}
     {B} {var}
 
-    # PR 1515 BigInt:
-    {B} a literal produced by replacing each significant digit after the 20th with a `0` digit.
-    {B} a literal produced by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position.
-
     # PR 1554 NumericValue:
     {B} {nonterminal}
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit
@@ -405,6 +397,7 @@
 # ----------------------------------------------------------------------------------------
 
 {CONDITION} :
+    ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
     Either {CONDITION_1} or {CONDITION_1}
     either {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}
@@ -412,6 +405,8 @@
     {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
+    {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
+    {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or if {CONDITION_1}
     {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
@@ -422,14 +417,9 @@
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
-    # PR 1515 BigInt:
-    ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
-    {CONDITION_1} and {CONDITION_1} or if {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
-
 
 {CONDITION_1} :
+    @ is {EX}
     A `default` export was not explicitly defined by this module
     A unique such {nonterminal} is found
     All dependencies of {var} have been transitively resolved and {var} is ready for evaluation
@@ -578,6 +568,7 @@
     {SETTABLE} has an? {DSBN} field
     {SETTABLE} is not equal to {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
     {TYPE_TEST}
+    {nonterminal} is {backticked_oth}
     {var} also has a {DSBN} internal slot
     {var} and {DOTTING} are the same Module Record
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
@@ -601,7 +592,7 @@
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
-    {var} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}
+    {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}
     {var} contains {LITERAL}
     {var} contains {var}
     {var} does not already have a binding for {var}
@@ -702,7 +693,8 @@
     {var} is an IEEE 754-2008 binary32 NaN value
     {var} is an IEEE 754-2008 binary64 NaN value
     {var} is an Object that has a {DSBN} internal slot
-    {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
+    {var} is an Object that has {DSBN} and {DSBN} internal slots
+    {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
     {var} is an Object that implements the <i>IteratorResult</i> interface
     {var} is an abrupt completion
     {var} is an array index
@@ -762,7 +754,6 @@
     {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super`, or `this`
     {var} is not the Environment Record for a |Catch| clause
     {var} is not the same as {var}
-    {var} is not {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is not {var}
     {var} is now an empty List
     {var} is now the running execution context
@@ -789,6 +780,8 @@
     {var} is {nonterminal}
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
+    {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}
+    {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
     {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
@@ -823,16 +816,6 @@
     {var} is not an? {ENVIRONMENT_RECORD_KIND} Scope Record
     {var} is not the Scope Record for a |Catch| clause
     {var} must be a Scope Record
-
-    # PR 1515 BigInt:
-    @ is {EX}
-    {nonterminal} is {backticked_oth}
-    {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}
-    {var} is an Object that has {DSBN} and {DSBN} internal slots
-    {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
-    {var} is the String value of one of the Element Types in {h_emu_xref}
-    {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}
-    {var} or {var} is {LITERAL}
 
     # PR 1547 SourceText:
     {EX} is a sequence of Unicode code points
@@ -869,27 +852,22 @@
     data
 
 {TYPE_TEST} :
-    Both Type({TYPE_ARG}) and Type({TYPE_ARG}) is {TYPE_NAME}
+    Both Type({var}) and Type({var}) are Number or both are BigInt
     Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot
     Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots
     Type({TYPE_ARG}) is an ECMAScript language type
     Type({TYPE_ARG}) is different from Type({TYPE_ARG})
     Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}
-    Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+    Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
     Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}
+    Type({TYPE_ARG}) is not Number or BigInt
     Type({TYPE_ARG}) is not an element of {var}
     Type({TYPE_ARG}) is not {TYPE_NAME}
     Type({TYPE_ARG}) is the same as Type({TYPE_ARG})
     Type({TYPE_ARG}) is {TYPE_NAME}
     Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}
-    Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
-    Type({TYPE_ARG}) is {var}
-
-    # PR 1515 BigInt:
-    Both Type({var}) and Type({var}) are Number or both are BigInt
-    Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
-    Type({TYPE_ARG}) is not Number or BigInt
     Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+    Type({TYPE_ARG}) is {var}
 
 {TYPE_ARG} :
     {var}
@@ -947,6 +925,7 @@
     #pre-1135: the number of code points in {PROD_REF}
     #pre-1135: the number value that is the same sign as {var} and whose magnitude is {EX}
     #pre-1135: the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
+    Type({var})
     a Continuation that always returns its State argument as a successful MatchResult
     a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
     a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
@@ -1043,6 +1022,9 @@
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
+    the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
+    the BigInt value that corresponds to {var}
+    the BigInt value that represents {EX}
     the CharSet containing all Unicode code points included in the CharSet returned by {nonterminal}
     the CharSet containing all Unicode code points not included in the CharSet returned by {nonterminal}
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
@@ -1073,9 +1055,9 @@
     the Number value for ({SUM})
     the Number value for {PP_NAMED_OPERATION_INVOCATION}
     the Number value for {var}
-    the Number value represented by {nonterminal} as defined in {h_emu_xref}
     the Number value that corresponds to {var}
     the Number value that is the same sign as {var} and whose magnitude is {EX}
+    the Number value that results from rounding {EX} as described below
     the PendingJob record at the front of {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
@@ -1083,6 +1065,7 @@
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
+    the String value consisting of the code units of the digits of the decimal representation of {var}
     the String value consisting of the first 10 code units of {var}
     the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16Encoding each code point
     the String value consisting of the single code unit {var}
@@ -1188,18 +1171,13 @@
     the one character in CharSet {var}
     the parse of some source text
     the prefix associated with {var} in {h_emu_xref}
-    the result of adding the value {NUM_LITERAL} to {var}, using the same rules as for the `+` operator (see {h_emu_xref})
     the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
     the result of applying bitwise complement to {var}. The result is a signed 32-bit integer
     the result of applying that mapping to {var}
-    the result of applying the addition operation to {var} and {var}. See the Note below {h_emu_xref}
-    the result of applying the bitwise operator @ to {var} and {var}. The result is a signed 32-bit integer
-    the result of applying the subtraction operation to {var} and {var}. See the note below {h_emu_xref}
-    the result of applying the {nonterminal} (`*`, `/`, or `%`) to {var} and {var} as specified in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref}
+    the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
     the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
     the result of converting {var} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2008 binary64 format
-    the result of forming the value of the |NumericLiteral|
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
     the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
@@ -1209,10 +1187,8 @@
     the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
-    the result of subtracting the value {NUM_LITERAL} from {var}, using the same rules as for the `-` operator (see {h_emu_xref})
     the result of the comparison {EX} == {EX}
     the result of {PP_NAMED_OPERATION_INVOCATION}
-    the result of {h_emu_xref} with {var} and {var} as specified in {h_emu_xref}
     the running execution context
     the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
     the second element of {var}
@@ -1255,6 +1231,7 @@
     the value obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the value of the first element of {var}
     the value of the thisValue component of the reference {var}
+    the value that {var} corresponds to in {h_emu_xref}
     the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
@@ -1274,8 +1251,7 @@
     {var}<sup>th</sup> element of {var}'s _captures_ List
 
     # obsoleted by the merge of PR #1376:
-    # but still used in PR 1515 BigInt
-    the intrinsic object {percent_word}
+    # the intrinsic object {percent_word}
 
     # obsoleted by the merge of PR #1602:
     # a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
@@ -1290,16 +1266,6 @@
     a new {ENVIRONMENT_RECORD_KIND} Scope Record
     a new {ENVIRONMENT_RECORD_KIND} Scope Record containing no bindings
     the {ENVIRONMENT_RECORD_KIND} Scope Record for which the method was invoked
-
-    # PR 1515 BigInt:
-    Type({var})
-    the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
-    the BigInt value that corresponds to {var}
-    the BigInt value that represents {EX}
-    the Number value that results from rounding {EX} as described below
-    the String value consisting of the code units of the digits of the decimal representation of {var}
-    the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
-    the value that {var} corresponds to in {h_emu_xref}
 
     # PR 1547 SourceText:
     the result of applying UTF-16 decoding to {var}
@@ -1335,6 +1301,7 @@
     ScriptEvaluationJob
     The remainder of dividing {EX} by {EX}
     TopLevelModuleEvaluationJob
+    Type({var})::unit
     \u00ab {EXLIST} \u00bb
     a newly created {ERROR_TYPE} object
     an implementation-dependent timezone name
@@ -1356,6 +1323,10 @@
     the first code unit of {var}
     the first {SUM} code units of {var}
     the first {var} code units of {var}
+    the mathematical value of negating {var}
+    the mathematical value of {var}
+    the mathematical value of {var} divided by {var}
+    the mathematical value of {var} raised to the power {var}
     the number of elements in {var}
     the numeric value of {EX}
     the previous value of {var}
@@ -1370,27 +1341,20 @@
     the {var} flag
     {DSBN}
     {EX} occurrences of {code_unit_lit}
+    {EX}, rounding down to the nearest integer, including for negative numbers
     {LITERAL}
     {LOCAL_REF}
     {NUM_EXPR}
     {PAIR}
     {PP_NAMED_OPERATION_INVOCATION}
+    {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
     {RECORD_CONSTRUCTOR}
+    {backticked_oth}
     {backticked_word}
     {h_code_quote}
+    {var} rounded towards 0 to the next integral value
     {var}'s _endIndex_
     {var}'s _endIndex_ value
-
-    # PR 1515 BigInt:
-    Type({var})::unit
-    {backticked_oth}
-    the mathematical value of negating {var}
-    the mathematical value of {var}
-    the mathematical value of {var} divided by {var}
-    the mathematical value of {var} raised to the power {var}
-    {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
-    {var} rounded towards 0 to the next integral value
-    {EX}, rounding down to the nearest integer, including for negative numbers
 
     # PR 1668 private fields
     \u00ab \u00bb
@@ -1494,21 +1458,18 @@
     max
     min
     msFromTime
+    thisBigIntValue
     thisBooleanValue
     thisNumberValue
     thisStringValue
     thisSymbolValue
     thisTimeValue
     {DOTTING}
+    {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}
     {var}
     {var}.{cap_word}
 
-    # PR 1515 BigInt:
-    thisBigIntValue
-    {NUMERIC_TYPE_INDICATOR}::{low_word}
-
-# PR 1515 BigInt:
 {NUMERIC_TYPE_INDICATOR} :
     BigInt
     Number
@@ -1723,11 +1684,9 @@
     {dec_int_lit}
     {dec_int_lit}{h_sub_math_r}
     {hex_int_lit}
+    {starred_bigint_lit}
     {starred_int_lit}
     {starred_nonfinite_lit}
-
-    # PR 1515 BigInt:
-    {starred_bigint_lit}
 
 {ERROR_TYPE} :
     *TypeError*
@@ -1738,6 +1697,7 @@
 
 {TYPE_NAME} :
     Array
+    BigInt
     Boolean
     Data Block
     Map
@@ -1756,9 +1716,6 @@
     integer
     character
     Matcher
-
-    # PR 1515 BigInt:
-    BigInt
 
     # PR 1668 privates:
     Private Name

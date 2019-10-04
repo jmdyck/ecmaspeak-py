@@ -58,11 +58,9 @@
 
 {NUM_LITERAL} :
     1
+    {starred_bigint_lit}
     {starred_int_lit}
     {starred_nonfinite_lit}
-
-    # PR 1515 BigInt:
-    {starred_bigint_lit}
 
 {STR_LITERAL} :
     {backticked_str}

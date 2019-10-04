@@ -141,6 +141,8 @@ def each_replacement_for_section(s):
             )
             or
             s.section_kind == 'numeric_method' # PR 1515 BigInt
+            or
+            s.section_title == 'StringToBigInt ( _argument_ )'
         ):
             # Even though the section has no algos,
             # we want to create an <emu-operation-header>.
