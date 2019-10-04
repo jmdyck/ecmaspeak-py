@@ -624,7 +624,6 @@
     {var} has any duplicate entries
     {var} has any elements
     {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }
-    {var} has been linked and declarations in its module environment have been instantiated
     {var} has no duplicate entries
     {var} has no elements
     {var} has no further use. It will never be activated as the running execution context
@@ -789,6 +788,9 @@
     # obsoleted by the merge of PR #1614:
     # the {DSBN} fields of {var} and {var} are the Boolean negation of each other
     # {EX} and {EX} have different results
+
+    # obsoleted by the merge of PR #1670:
+    # {var} has been linked and declarations in its module environment have been instantiated
 
     # PR 1174
     {var} does not provide the direct binding for this export
