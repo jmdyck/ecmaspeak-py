@@ -2405,6 +2405,7 @@ nature_to_typ = {
     # union of named types
 
     'a BigInt or a Number'                                       : 'BigInt | Number',
+    'a Number or BigInt'                                         : 'Number | BigInt',
     'an Array object or *null*'                                  : 'Array_object_ | Null',
     '*false* or an integer index'                                : 'Boolean | Integer_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
