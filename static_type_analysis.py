@@ -4359,6 +4359,10 @@ def tc_nonvalue(anode, env0):
         [settable, expr] = children
         result = env0.set_A_to_B(settable, expr)
 
+    elif p == r'{COMMAND} : Set {SETTABLE} to {EXPR}. {note}':
+        [settable, expr, note] = children
+        result = env0.set_A_to_B(settable, expr)
+
     elif p == r'{COMMAND} : Set all of the bytes of {var} to 0.':
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Data_Block)

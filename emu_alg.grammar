@@ -161,6 +161,7 @@
     Set {SETTABLE} such that when evaluation is resumed with a Completion {var} the following steps will be performed:{IND_COMMANDS}
     Set {SETTABLE} such that when evaluation is resumed with a Completion {var}, the following steps of the algorithm that invoked Await will be performed, with {var} available.
     Set {SETTABLE} to {EXPR}.
+    Set {SETTABLE} to {EXPR}. {note}
     Set {SETTABLE} to {MULTILINE_EXPR}
     Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
@@ -248,7 +249,6 @@
     return {MULTILINE_EXPR}
 
 {SMALL_COMMAND} :
-    @ is `^`; return {EXPR}
     ReturnIfAbrupt({var})
     add {var} to {var}
     append {LITERAL} to {var}
@@ -275,7 +275,6 @@
     the replacement text is {EXPR}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
-    {nonterminal} is {backticked_oth}; return {EXPR}
 
     # obsoleted by merge of PR #1614:
     # no further validation is required
