@@ -1168,7 +1168,6 @@
     the number of leading zero bits in the 32-bit binary representation of {var}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
-    the numeric value 1
     the one character in CharSet {var}
     the parse of some source text
     the prefix associated with {var} in {h_emu_xref}
@@ -1250,6 +1249,9 @@
     {var}'s single code unit element
     {var}'s {DSBN} value
     {var}<sup>th</sup> element of {var}'s _captures_ List
+
+    # obsoleted by the merge of PR #1124:
+    # the numeric value 1
 
     # obsoleted by the merge of PR #1376:
     # the intrinsic object {percent_word}
@@ -1398,11 +1400,13 @@
     the {cap_word} of {LOCAL_REF} (see {h_emu_xref})
     the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     the {cap_word} of {LOCAL_REF} {WITH_ARGS}
-    the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero
     {cap_word} for {LOCAL_REF} {WITH_ARGS}
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
+
+    # obsoleted by the merge of PR #1124:
+    # the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero
 
     # obsoleted by the merge of PR #1571:
     # StringValue of the {nonterminal} of {nonterminal} {var}

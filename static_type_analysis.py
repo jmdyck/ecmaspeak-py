@@ -2510,6 +2510,8 @@ class Env:
                 'the result of evaluating |NonSurrogate|',
                 'the result of evaluating |NonemptyClassRanges|',
                 'the result of evaluating |TrailSurrogate|',
+                'the result of performing ArrayAccumulation for |ElementList| with arguments _array_ and _nextIndex_',
+                'the result of performing ArrayAccumulation for |Elision| with arguments _array_ and _nextIndex_',
                 'the result of performing IteratorDestructuringAssignmentEvaluation of |AssignmentRestElement| with _iteratorRecord_ as the argument',
                 'the result of performing IteratorDestructuringAssignmentEvaluation of |Elision| with _iteratorRecord_ as the argument', # hm
                 '(16 times the MV of the first |HexDigit|) plus the MV of the second |HexDigit|',
