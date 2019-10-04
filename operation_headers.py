@@ -1632,7 +1632,7 @@ def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
         r'\bthe `(@@\w+)` method\b',
         r'^`([\w.%]+)`(?= (?:puts|notifies|returns|is)\b)',
         #
-        r'\b(?:A|a|Each) (`Promise.all` resolve element) function\b',
+        r'\b(?:A|a|Each) (`Promise.(all|allSettled)` (resolve|reject) element) function\b',
         r'\b(?:A|a|An|an|Each) (?!standard|anonymous)([\w -]+?) function\b',
         #
         # no name:
@@ -1695,7 +1695,7 @@ def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
     if preamble_text == '': return poi
 
     if re.match(r'^IT (returns|produces|provides) ', preamble_text):
-        mo = re.match(r'IT (returns|produces|provides) (a Number|a String|a new promise|a substring|an Iterator object|an array|an implementation-dependent approximation of the square root|an integer|either a new promise)', preamble_text)
+        mo = re.match(r'IT (returns|produces|provides) (a Number|a String|a promise|a new promise|a substring|an Iterator object|an array|an implementation-dependent approximation of the square root|an integer|either a new promise)', preamble_text)
         assert mo, preamble_text
         r = mo.group(2)
         poi.returns_normal = {
