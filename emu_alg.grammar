@@ -1535,8 +1535,8 @@
     the _withEnvironment_ flag of {var}'s EnvironmentRecord
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
-    the {DSBN} field of {EXPR}
     the {DSBN} field of the surrounding agent's Agent Record
+    the {DSBN} field of {EXPR}
     the {DSBN} internal slot of this Date object
     the {EXECUTION_CONTEXT_COMPONENT} component of {var}
     the {EXECUTION_CONTEXT_COMPONENT} of the running execution context
@@ -1547,10 +1547,10 @@
     {DOTTING}
     {DOTTING}[{EX}]
     {var}
+    {var}'s {DSBN} attribute
     {var}'s {EXECUTION_CONTEXT_COMPONENT}
     {var}'s {EXECUTION_CONTEXT_COMPONENT} component
     {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}
-    {var}'s {DSBN} attribute
     {var}[{EX}]
 
     # PR 1477 scope-records:
@@ -1667,7 +1667,6 @@
     {tilded_word}
 
 {STR_LITERAL} :
-    {backticked_str}
     `","` (a comma)
     the String {backticked_str}
     the empty String
@@ -1675,6 +1674,7 @@
     the empty String value
     the empty string
     the single-element String `","`
+    {backticked_str}
 
     # obsoleted by the merge of PR #1592:
     # {starred_str}
