@@ -7419,6 +7419,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {EX} does not contain {starred_str}":
+        [ex, starred_str] = children
+        env0.assert_expr_is_of_type(ex, T_String)
+        return (env0, env0)
+
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":

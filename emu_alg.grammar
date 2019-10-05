@@ -518,6 +518,7 @@
     {EX} and {EX} are distinct {TYPE_NAME} or {TYPE_NAME} values
     {EX} and {EX} are the same Shared Data Block values
     {EX} and {EX} are valid byte offsets within the memory of {var}
+    {EX} does not contain {starred_str}
     {EX} has the value {LITERAL}
     {EX} is -1
     {EX} is absent
