@@ -3509,9 +3509,10 @@ def tc_nonvalue(anode, env0):
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
         result = env0.plus_new_entry(alet, lit_type).plus_new_entry(blet, lit_type)
 
-    elif p == r"{COMMAND} : Let {var} and {var} be new Synchronize events.":
-        [alet, blet] = children
-        result = env0.plus_new_entry(alet, T_Synchronize_event).plus_new_entry(blet, T_Synchronize_event)
+# PR 1692 obsoleted
+#    elif p == r"{COMMAND} : Let {var} and {var} be new Synchronize events.":
+#        [alet, blet] = children
+#        result = env0.plus_new_entry(alet, T_Synchronize_event).plus_new_entry(blet, T_Synchronize_event)
 
     elif p == r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.":
         [m_var, n2_var, n_var] = children
@@ -5654,9 +5655,10 @@ def tc_cond_(cond, env0, asserting):
         [ex] = children
         return env0.with_type_test(ex, 'is a', T_Symbol, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a Synchronize event":
-        [v] = children
-        return env0.with_type_test(v, 'is a', T_Synchronize_event, asserting)
+# PR 1692 obsoleted
+#    elif p == r"{CONDITION_1} : {var} is a Synchronize event":
+#        [v] = children
+#        return env0.with_type_test(v, 'is a', T_Synchronize_event, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a bound function exotic object":
         [var] = children
@@ -7405,6 +7407,11 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : @ is {EX}":
         [ex] = children
         env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} has a Synchronize event":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
@@ -10362,7 +10369,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return ( parse_type_string(record_type_name), env2 )
 
-    elif p == r"{SETTABLE} : the {DSBN} field of the surrounding agent's Agent Record":
+    elif p in [
+        r"{SETTABLE} : the {DSBN} field of the surrounding agent's Agent Record",
+        r"{SETTABLE} : the {DSBN} field of the calling surrounding's Agent Record", # XXX
+    ]:
         [dsbn] = children
         dsbn_name = dsbn.source_text()[2:-2]
         assert dsbn_name in fields_for_record_type_named_['Agent Record'], dsbn_name
@@ -11299,6 +11309,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Primitive)
         assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
         return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env0)
+
+    elif p == r"{EXPR} : a new Synchronize event":
+        [] = children
+        return (T_Synchronize_event, env0)
+
+    elif p == r"{SETTABLE} : the Synchronize event in {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
+        return (T_Synchronize_event, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":

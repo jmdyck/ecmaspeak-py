@@ -81,7 +81,6 @@
     Leave the critical section for {var}.
     Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
     Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.
-    Let {var} and {var} be new Synchronize events.
     Let {var} and {var} be the indirection values provided when this binding for {var} was created.
     Let {var} and {var} be {LITERAL}.
     Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
@@ -182,6 +181,9 @@
     # obsoleted by the merge of PR #1604:
     # Add 1 to {var}.
     # Subtract {NUM_LITERAL} from {var}.
+
+    # obsoleted by the merge of PR #1692:
+    # Let {var} and {var} be new Synchronize events.
 
     # PR 1460 explicit-exotics:
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
@@ -611,6 +613,7 @@
     {var} does not have an? {var} internal slot
     {var} does not have either a {DSBN} or an {DSBN} internal slot
     {var} does not include the element {LITERAL}
+    {var} has a Synchronize event
     {var} has a binding for the name that is the value of {var}
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
@@ -668,7 +671,6 @@
     {var} is a Shared Data Block
     {var} is a State
     {var} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
-    {var} is a Synchronize event
     {var} is a UTF-16 code unit
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a WriteSharedMemory event
@@ -794,6 +796,9 @@
 
     # PR 1174
     {var} does not provide the direct binding for this export
+
+    # obsoleted by the merge of PR #1692
+    # {var} is a Synchronize event
 
     # PR 1460 explicit-exotics:
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
@@ -985,6 +990,7 @@
     a new Realm Record
     a new Record
     a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
+    a new Synchronize event
     a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}
     a new empty List
     a new execution context
@@ -1531,10 +1537,12 @@
 # ------------------------------------------------------
 
 {SETTABLE} :
+    the Synchronize event in {var}
     the _withEnvironment_ flag of {var}
     the _withEnvironment_ flag of {var}'s EnvironmentRecord
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
+    the {DSBN} field of the calling surrounding's Agent Record
     the {DSBN} field of the surrounding agent's Agent Record
     the {DSBN} field of {EXPR}
     the {DSBN} internal slot of this Date object
