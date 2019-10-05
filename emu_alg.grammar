@@ -700,7 +700,6 @@
     {var} is an array index
     {var} is an empty List
     {var} is an extensible object that does not have a {backticked_str} own property
-    {var} is an extensible object that does not have a {backticked_word} own property
     {var} is an extensible ordinary object
     {var} is an extensible ordinary object with no own properties
     {var} is an initialized RegExp instance
@@ -800,6 +799,9 @@
 
     # obsoleted by the merge of PR #1692
     # {var} is a Synchronize event
+
+    # obsoleted by the merge of PR #1302
+    # {var} is an extensible object that does not have a {backticked_word} own property
 
     # PR 1460 explicit-exotics:
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
@@ -1023,7 +1025,7 @@
     an implementation-defined Completion value
     an implementation-defined string that is either {EX} or {EXPR}
     an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}
-    an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `name` property of {var}
+    an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `"name"` property of {var}
     an instance of the production {h_emu_grammar}
     such an object created in an implementation-defined manner
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
@@ -1686,9 +1688,7 @@
     the empty string
     the single-element String `","`
     {backticked_str}
-
-    # obsoleted by the merge of PR #1592:
-    # {starred_str}
+    {starred_str}
 
 {NUM_LITERAL} :
     #! (2|10)<sup>[0-9]+</sup>

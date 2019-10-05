@@ -5706,7 +5706,9 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {var} is an Object that has a {DSBN} internal slot",
         r'{CONDITION_1} : {var} is an extensible object that does not have a {backticked_str} own property',
-        r'{CONDITION_1} : {var} is an extensible object that does not have a {backticked_word} own property',
+
+        # PR 1302 obsoleted:
+        # r'{CONDITION_1} : {var} is an extensible object that does not have a {backticked_word} own property',
     ]:
         [var, _] = children
         return (
@@ -11263,7 +11265,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_event_)
         return (T_event_pair_, env0)
 
-    elif p == r"{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `name` property of {var}":
+    elif p == "{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `\"name\"` property of {var}":
         var = children[0]
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
