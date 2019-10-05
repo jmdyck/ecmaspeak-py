@@ -152,7 +152,7 @@
     Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {nonterminal}.
     Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.
     Set all of the bytes of {var} to 0.
-    Set fields of {var} with the values listed in {h_emu_xref} {that_have_not_already_etc}
+    Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
     Set {DOTTING} to the definition specified in {h_emu_xref}.
     Set {SETTABLE} as described in {h_emu_xref}.
     Set {SETTABLE} as specified in {h_emu_xref}.
@@ -1019,7 +1019,6 @@
     a zero-origined List containing the argument items in order
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
-    an empty sequence of algorithm steps
     an empty set
     an implementation-defined Completion value
     an implementation-defined string that is either {EX} or {EXPR}
@@ -1114,7 +1113,6 @@
     the active function object
     the actual number of arguments passed to this function
     the algorithm steps defined in {h_emu_xref}
-    the algorithm steps specified in {h_emu_xref} for the {percent_word} function
     the arguments object
     the binding object for {var}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian 2's complement number of bit length {PRODUCT}
@@ -1266,6 +1264,10 @@
     # obsoleted by the merge of PR #1602:
     # a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
     # a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
+
+    # obsoleted by the merge of PR #1635
+    # an empty sequence of algorithm steps
+    # the algorithm steps specified in {h_emu_xref} for the {percent_word} function
 
     # PR 1460 explicit-exotics:
     the internal slots listed in {h_emu_xref}

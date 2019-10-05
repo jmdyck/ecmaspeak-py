@@ -4750,7 +4750,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(bvar, T_Object)
         result = env0
 
-    elif p == r"{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref} {that_have_not_already_etc}":
+    elif p == r"{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}":
         [var, emu_xref, _] = children
         env0.assert_expr_is_of_type(var, T_Intrinsics_Record)
         result = env0
@@ -9924,13 +9924,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [cap_word] = children
         return (T_alg_steps, env0)
 
-    elif p == r"{EXPR} : the algorithm steps specified in {h_emu_xref} for the {percent_word} function":
-        [emu_xref, percent_word] = children
-        return (T_alg_steps, env0)
+# PR 1635 obsoleted
+#    elif p == r"{EXPR} : the algorithm steps specified in {h_emu_xref} for the {percent_word} function":
+#        [emu_xref, percent_word] = children
+#        return (T_alg_steps, env0)
 
-    elif p == r"{EXPR} : an empty sequence of algorithm steps":
-        [] = children
-        return (T_alg_steps, env0)
+# PR 1635 obsoleted
+#    elif p == r"{EXPR} : an empty sequence of algorithm steps":
+#        [] = children
+#        return (T_alg_steps, env0)
 
     # ------------------------------------------------
     # return T_execution_context

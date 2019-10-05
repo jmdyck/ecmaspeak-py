@@ -170,7 +170,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
 
     # tokens that begin with a letter:
 
-    {that_have_not_already_etc} : that \x20 have \x20 not \x20 already \x20 been \x20 handled \x20 above\. \x20 .+\.
+    {the_field_names_are_the_names_listed_etc} : The \x20 field \x20 names \x20 are \x20 the \x20 names \x20 listed \x20 .+\.
 
     {code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)
     {code_unit_lit}  : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)

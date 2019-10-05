@@ -1332,7 +1332,7 @@ def each_op_reference_in_algo(algo):
             # No, because that's a function, not an operation.
             pass
 
-        elif str(d.prod) == '{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref} {that_have_not_already_etc}':
+        elif str(d.prod) == '{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}':
             yield 'CreateBuiltinFunction'
             yield 'initialize_unscopables'
 
