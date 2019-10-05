@@ -425,8 +425,6 @@
     A unique such {nonterminal} is found
     All dependencies of {var} have been transitively resolved and {var} is ready for evaluation
     All named exports from {var} are resolvable
-    All of the above CreateDataProperty operations return {LITERAL}
-    Each of the above calls returns {LITERAL}
     Evaluate has already been invoked on {var} and successfully completed
     GlobalSymbolRegistry does not currently contain an entry for {var}
     In this case, {var} will never be {LITERAL} or {LITERAL}
@@ -795,6 +793,10 @@
 
     # obsoleted by the merge of PR #1670:
     # {var} has been linked and declarations in its module environment have been instantiated
+
+    # obsoleted by the merge of PR #1676
+    # All of the above CreateDataProperty operations return {LITERAL}
+    # Each of the above calls returns {LITERAL}
 
     # obsoleted by the merge of PR #1692
     # {var} is a Synchronize event

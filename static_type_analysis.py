@@ -6813,9 +6813,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : All of the above CreateDataProperty operations return {LITERAL}":
-        [literal] = children
-        return (env0, env0)
+# PR 1676 obsoleted
+#    elif p == r"{CONDITION_1} : All of the above CreateDataProperty operations return {LITERAL}":
+#        [literal] = children
+#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return":
         [] = children
@@ -7288,10 +7289,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : Each of the above calls returns {LITERAL}":
-        [lit] = children
-        assert lit.source_text() == '*true*'
-        return (env0, env0)
+# PR 1676 obsoleted
+#    elif p == r"{CONDITION_1} : Each of the above calls returns {LITERAL}":
+#        [lit] = children
+#        assert lit.source_text() == '*true*'
+#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} and {var} are in a race in {var}":
         [ea, eb, exe] = children
