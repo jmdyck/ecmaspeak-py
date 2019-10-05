@@ -613,6 +613,7 @@
     {var} does not have an? {var} internal slot
     {var} does not have either a {DSBN} or an {DSBN} internal slot
     {var} does not include the element {LITERAL}
+    {var} does not provide the direct binding for this export
     {var} has a Synchronize event
     {var} has a binding for the name that is the value of {var}
     {var} has a binding for {var}
@@ -793,9 +794,6 @@
 
     # obsoleted by the merge of PR #1670:
     # {var} has been linked and declarations in its module environment have been instantiated
-
-    # PR 1174
-    {var} does not provide the direct binding for this export
 
     # obsoleted by the merge of PR #1692
     # {var} is a Synchronize event
