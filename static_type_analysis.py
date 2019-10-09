@@ -7967,6 +7967,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert len(args) == 1
                 [arg] = args
                 (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+                assert arg_type.is_a_subtype_of_or_equal_to(T_Number)
                 if callee_op_name == 'floor':
                     return_type = T_Integer_
                 elif callee_op_name == 'abs':
