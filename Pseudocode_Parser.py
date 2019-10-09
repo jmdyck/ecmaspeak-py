@@ -44,7 +44,7 @@ class Tokenizer:
             mo = self.reo.match(s, posn, end_posn)
             if mo is None:
                 shared.stderr(
-                    "\nTokenization error:\n",
+                    f"\nTokenization error at: {s[posn:min(posn+20,end_posn)]}...\n",
                     shared.source_line_with_caret_marking_column(tok_s_posn)
                 )
                 assert 0
