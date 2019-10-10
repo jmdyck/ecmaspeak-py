@@ -205,6 +205,9 @@
     # PR 1670 fix null [[ScriptOrModule]]
     Remove {var} from the execution context stack.
 
+    # PR 1732 GetSubstitution
+    The replacement is {EXPR}.
+
 # ----------------------------------------------
 
 {IF_CLOSED} :
@@ -285,6 +288,8 @@
     initialize the corresponding internal slot value on {var} to {LITERAL}
     append each of its elements to {var}
 
+    # PR 1732 GetSubstitution
+    the replacement is {EXPR}
 
 # ------------------------------------------------------
 
@@ -1303,6 +1308,12 @@
     # PR 1668 private fields:
     a new unique Private Name whose {dsb_word} value is {var}
     the concatenation of {var} with {EX}
+
+    # PR 1732 GetSubstitution
+    the String value whose code units are the code units of {var}
+    the longest sequence of consecutive code units from {var} beginning with the code unit at index {var} such that {var} matches the &ldquo;Code units&rdquo; column of a row in {h_emu_xref}
+    the result of the &ldquo;Replacement text&rdquo; column of the corresponding row
+
 
 {EX} :
     &laquo; &raquo;
