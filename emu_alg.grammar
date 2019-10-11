@@ -1052,8 +1052,6 @@
     the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
     the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
-    the Element Size specified in {h_emu_xref} for Element Type {var}
-    the Element Size value in {h_emu_xref} for {var}
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {var}
     the Element Type value in {h_emu_xref} for {EX}
@@ -1278,6 +1276,10 @@
 
     # obsoleted by the merge of PR #1725:
     # the String value of the Element Type value in {h_emu_xref} for {EX}
+
+    # obsoleted by the merge of PR #1734:
+    # the Element Size specified in {h_emu_xref} for Element Type {var}
+    # the Element Size value in {h_emu_xref} for {var}
 
     # PR 1460 explicit-exotics:
     the internal slots listed in {h_emu_xref}

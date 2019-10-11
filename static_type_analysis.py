@@ -8531,8 +8531,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Number, env0)
 
     elif p in [
-        r"{EXPR} : the Element Size specified in {h_emu_xref} for Element Type {var}",
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}",
+        # r"{EXPR} : the Element Size specified in {h_emu_xref} for Element Type {var}",
         # r"{EXPR} : the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}",
         # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}",
     ]:
@@ -8542,8 +8542,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Integer_, env1)
 
     elif p in [
-        r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
+        # r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
         # r"{EXPR} : the Number value of the Element Size value in {h_emu_xref} for {var}",
         # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for {var}",
     ]:

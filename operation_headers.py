@@ -1289,7 +1289,7 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
                 'VAR is a |ScriptBody|'),
             (  r'VAR serves as both the lookup point for the property and ',
                 'VAR is a value'),
-            (  r'VAR is required to be the name of a TypedArray constructor in <emu-xref href="#table-49"></emu-xref>',
+            (  r'VAR is required to be the name of a TypedArray constructor in <emu-xref href="#table-[^"]+"></emu-xref>',
                 'VAR is a String'),
 
         ]:
