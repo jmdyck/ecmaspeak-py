@@ -146,7 +146,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {backticked_oth}  : ` [^`]+ `
 
     # tokens that begin with tilde:
-    {tilded_word}    : ~ [-A-Za-z]+ ~
+    {tilded_word}    : ~ [-A-Za-z0-9+]+ ~
     {tilded_word}    : ~ \[empty\] ~
 
     # tokens that begin with other distinctive characters:

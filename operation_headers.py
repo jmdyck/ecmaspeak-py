@@ -1900,6 +1900,10 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
         ('which is one of \(`"normal"`, .+?\)', 'which is a String'),
 
+        ('one of \(~key~, ~value~, ~key\+value~\)',  'one_of_key_value_key+value'),
+        ('one of \(~SeqCst~, ~Unordered~\)',         'one_of_SeqCst_Unordered'),
+        ('one of \(~SeqCst~, ~Unordered~, ~Init~\)', 'one_of_SeqCst_Unordered_Init'),
+
         (r'\(Normal, ', '(Normal<comma> '),
         (r'Method, Arrow\)', 'Method<comma> Arrow)'),
         (r'\(~Normal~, ', '(~Normal~<comma> '),
@@ -2380,12 +2384,13 @@ nature_to_typ = {
 
         'one of (~Normal~, ~Method~, ~Arrow~)' : 'FunctionKind1_',
         'one of (~Normal~, ~Method~)'          : 'FunctionKind1_',
-        'one of (Normal, Method, Arrow)'       : 'FunctionKind1_',
-        'one of (Normal, Method)'              : 'FunctionKind1_',
+        # 'one of (Normal, Method, Arrow)'       : 'FunctionKind1_',
+        # 'one of (Normal, Method)'              : 'FunctionKind1_',
 
-        'either `"normal"` or `"generator"`'             : 'String', # 'FunctionKind2_',
-        'either `"normal"`, `"generator"`, or `"async"`' : 'String', # 'FunctionKind2_',
-        'either `"normal"`, `"generator"`, `"async"`, or `"async generator"`': 'String', # 'FunctionKind2_',
+        # 'either `"normal"` or `"generator"`'             : 'String', # 'FunctionKind2_',
+        # 'either `"normal"`, `"generator"`, or `"async"`' : 'String', # 'FunctionKind2_',
+        # 'either `"normal"`, `"generator"`, `"async"`, or `"async generator"`': 'String', # 'FunctionKind2_',
+        'either ~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
 
         'either ~enumerate~ or ~iterate~' : 'IterationKind_',
         'either ~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
@@ -2400,6 +2405,11 @@ nature_to_typ = {
         'throw_ *ReferenceError*': 'throw_ *ReferenceError*',
 
         'one of the ECMAScript specification types String or Symbol' : 'LangTypeName_',
+
+        'a TypedArray element type'     : 'TypedArray_element_type_',
+        'one_of_SeqCst_Unordered'       : 'SharedMemory_ordering_',
+        'one_of_SeqCst_Unordered_Init'  : 'SharedMemory_ordering_',
+        'one_of_key_value_key+value'    : 'iteration_result_kind_',
 
     # -----------------------------
     # union of named types

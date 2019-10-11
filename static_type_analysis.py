@@ -1578,6 +1578,7 @@ named_type_hierarchy = {
                 'CharSet': {},
                 'Data Block': {},
                 'FunctionKind1_': {},
+                'FunctionKind2_': {},
                 'event_pair_': {},
                 'IEEE_binary32_': {},
                 'IEEE_binary64_': {},
@@ -1661,7 +1662,10 @@ named_type_hierarchy = {
                 'Relation': {},
                 'Set': {},
                 'Shared Data Block': {},
+                'SharedMemory_ordering_': {},
                 'SlotName_': {},
+                'TrimString_where_': {},
+                'TypedArray_element_type_': {},
                 'Unicode_code_points_': {},
                 'WaiterList' : {},
                 'agent_signifier_' : {},
@@ -1671,16 +1675,24 @@ named_type_hierarchy = {
                     'code_point_': {},
                 },
                 'completion_kind_': {},
+                'constructor_kind_': {},
                 'empty_': {},
+                'iteration_result_kind_': {},
                 'execution context': {},
+                'generator_state_': {},
                 'grammar_symbol_': {},
                 'host_defined_': {},
-                #
+                'integrity_level_': {},
+                'module_record_status_': {},
+                'numeric_primitive_type_': {},
                 'proc_': {},
+                'promise_state_': {},
                 'property_': {
                     'data_property_': {},
                     'accessor_property_': {},
                 },
+                'settlement_type_': {},
+                'this_binding_status_': {},
                 'this_mode': {},
                 'tuple_': {},
                 'other_': {},
@@ -2609,7 +2621,7 @@ class Env:
             # `DateFromTime(_t_) is 1`
             pass
         else:
-            stderr("expr type %s cannot be narrowed to %s" % (expr_t, narrower_t))
+            stderr("expr %r of type %s cannot be narrowed to %s" % (expr.source_text(), expr_t, narrower_t))
             assert 0
         #
         expr_text = expr.source_text()
@@ -4347,8 +4359,9 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_execution_context)
         result = env0
 
-    elif p == r'{COMMAND} : Once a generator enters the `"completed"` state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.':
-        [var] = children
+    elif p == r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.':
+        [tw, var] = children
+        assert tw.source_text() == '~completed~'
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
 
@@ -6591,7 +6604,7 @@ def tc_cond_(cond, env0, asserting):
         [ab_var, st_var, t_var] = children
         env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
         env0.assert_expr_is_of_type(st_var, T_Integer_)
-        env0.assert_expr_is_of_type(t_var, T_String)
+        env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}":
@@ -7111,10 +7124,10 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {EX} and {EX} are valid byte offsets within the memory of {var}":
         [offset1, offset2, sdb] = children
-        env0.assert_expr_is_of_type(offset1, T_Integer_)
-        env0.assert_expr_is_of_type(offset2, T_Integer_)
-        env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
-        return (env0, env0)
+        env1 = env0.ensure_expr_is_of_type(offset1, T_Integer_)
+        env1.assert_expr_is_of_type(offset2, T_Integer_)
+        env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
+        return (env1, env1)
 
     elif p == r"{CONDITION_1} : {var} is divisible by {NUM_LITERAL}":
         [var, lit] = children
@@ -7671,8 +7684,55 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 return (T_this_mode, env0)
             else:
                 return (T_AssignmentTargetType_, env0)
-        elif chars in ['lexical', 'global']:
+
+        elif chars == 'lexical':
+            # T_this_mode or T_this_binding_status_, depending on context
+            # super-kludge:
+            text = spec.text[expr.start_posn-30:expr.start_posn]
+            if 'ThisBindingStatus' in text:
+                return (T_this_binding_status_, env0)
+            elif 'ThisMode' in text or '_thisMode_' in text:
+                return (T_this_mode, env0)
+            assert 0, text
+
+        elif chars == 'async':
+            # T_IteratorKind_ or T_FunctionKind2_
+            text = spec.text[expr.start_posn-32:expr.start_posn]
+            if (
+                '~non-constructor~' in text
+                or
+                '_functionPrototype_,' in text
+                or
+                '_kind_ is' in text
+                or
+                'DynamicFunction(_C_, NewTarget,' in text
+            ):
+                return (T_FunctionKind2_, env0)
+            elif (
+                'State]]' in text
+                or
+                'GetGeneratorKind()' in text
+                or
+                '_generatorKind_' in text
+                or
+                '_iteratorKind_' in text
+                or
+                '_iteratorHint_' in text
+                or
+                '~sync~' in text
+                or
+                '_hint_' in text
+                or
+                '_labelSet_,' in text
+            ):
+                return (T_IteratorKind_, env0)
+
+            assert 0, text
+
+        elif chars in ['global']:
             return (T_this_mode, env0)
+        elif chars in ['initialized', 'uninitialized']:
+            return (T_this_binding_status_, env0)
         elif chars in ['enumerate', 'iterate', 'async-iterate']:
             return (T_IterationKind_, env0)
         elif chars in ['Normal', 'Arrow', 'Method']:
@@ -7683,6 +7743,42 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_IteratorKind_, env0)
         elif chars in ['simple', 'invalid']:
             return (T_AssignmentTargetType_, env0)
+        elif chars in ['SeqCst', 'Unordered', 'Init']:
+            return (T_SharedMemory_ordering_, env0)
+        elif chars in ['normal', 'non-constructor', 'classConstructor', 'generator', 'async', 'asyncGenerator']:
+            return (T_FunctionKind2_, env0)
+        elif chars in ['base', 'derived']:
+            return (T_constructor_kind_, env0)
+        elif chars in [
+            'BigInt64',
+            'BigUint64',
+            'Float32',
+            'Float64',
+            'Int16',
+            'Int32',
+            'Int8',
+            'Uint16',
+            'Uint32',
+            'Uint8',
+            'Uint8C',
+        ]:
+            return (T_TypedArray_element_type_, env0)
+        elif chars in ['BigInt', 'Number']:
+            return (T_numeric_primitive_type_, env0)
+        elif chars in ['suspendedStart', 'suspendedYield', 'executing', 'completed', 'awaiting-return']:
+            return (T_generator_state_, env0)
+        elif chars in ['start', 'end', 'start+end']:
+            return (T_TrimString_where_, env0)
+        elif chars in ['key', 'value', 'key+value']:
+            return (T_iteration_result_kind_, env0)
+        elif chars in ['Fulfill', 'Reject']:
+            return (T_settlement_type_, env0)
+        elif chars in ['pending', 'fulfilled', 'rejected']:
+            return (T_promise_state_, env0)
+        elif chars in ['unlinked', 'linking', 'linked', 'evaluating', 'evaluated']:
+            return (T_module_record_status_, env0)
+        elif chars in ['frozen', 'sealed']:
+            return (T_integrity_level_, env0)
         else:
             assert 0, chars
 
@@ -8436,15 +8532,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the Element Size specified in {h_emu_xref} for Element Type {var}",
-        r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}",
-        r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
-        r"{EXPR} : the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}",
-        r"{EXPR} : the Number value of the Element Size value in {h_emu_xref} for {var}",
-        r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for {var}",
-        r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}",
+        # r"{EXPR} : the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}",
+        # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}",
     ]:
         [emu_xref, var] = children
+        assert var.source_text() in ['_type_', '_srcType_']
+        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
+        return (T_Integer_, env1)
+
+    elif p in [
+        r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
+        r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
+        # r"{EXPR} : the Number value of the Element Size value in {h_emu_xref} for {var}",
+        # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for {var}",
+    ]:
+        [emu_xref, var] = children
+        assert var.source_text() in ['_constructorName_', '_srcName_', '_arrayTypeName_', '_targetName_', '_typedArrayName_', '_srcType_']
+        # print(p, var.source_text(), file=sta_misc_f)
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_Integer_, env1)
 
@@ -9059,10 +9164,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value of the Element Type value in {h_emu_xref} for {EX}":
+# PR 1725 obsoleted:
+#    elif p == r"{EXPR} : the String value of the Element Type value in {h_emu_xref} for {EX}":
+#        [emu_xref, ex] = children
+#        env1 = env0.ensure_expr_is_of_type(ex, T_String)
+#        return (T_String, env0)
+
+    elif p == r"{EXPR} : the Element Type value in {h_emu_xref} for {EX}":
         [emu_xref, ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
-        return (T_String, env0)
+        return (T_TypedArray_element_type_, env0)
 
     elif p in [
         r"{EXPR} : the String value of length 1, containing one code unit from {var}, namely the code unit at index {var}",
@@ -10111,7 +10222,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}':
         [emu_xref, var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
         return (ProcType([T_Tangible_], T_Integer_), env1)
 
     elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
@@ -11278,7 +11389,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the prefix associated with {var} in {h_emu_xref}":
         [var, xref] = children
-        env0.assert_expr_is_of_type(var, T_String)
+        env0.assert_expr_is_of_type(var, T_FunctionKind2_)
         return (T_String, env0)
 
     # explicit-exotics:
@@ -11718,7 +11829,7 @@ fields_for_record_type_named_ = {
     # 5731: Table 16: Additional Fields of Function Environment Records
     'function Environment Record': {
         'ThisValue'        : T_Tangible_,
-        'ThisBindingStatus': T_String, # enumeration
+        'ThisBindingStatus': T_this_binding_status_, # T_String, # enumeration
         'FunctionObject'   : T_function_object_,
         'HomeObject'       : T_Object | T_Undefined,
         'NewTarget'        : T_Object | T_Undefined,
@@ -11801,7 +11912,7 @@ fields_for_record_type_named_ = {
         'Environment'     : T_Lexical_Environment | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
-        'Status'           : T_String, # see Issue 1455
+        'Status'          : T_module_record_status_, # T_String, # see Issue 1455
     },
 
     'other Module Record': {
@@ -11818,7 +11929,7 @@ fields_for_record_type_named_ = {
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
-        'Status'           : T_String,
+        'Status'          : T_module_record_status_, # T_String,
         'EvaluationError'  : T_throw_ | T_Undefined,
         'DFSIndex'         : T_Integer_ | T_Undefined,
         'DFSAncestorIndex' : T_Integer_ | T_Undefined,
@@ -11832,7 +11943,7 @@ fields_for_record_type_named_ = {
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
-        'Status'           : T_String,
+        'Status'          : T_module_record_status_, # T_String,
         'EvaluationError'  : T_throw_ | T_Undefined,
         'DFSIndex'         : T_Integer_ | T_Undefined,
         'DFSAncestorIndex' : T_Integer_ | T_Undefined,
@@ -11889,7 +12000,7 @@ fields_for_record_type_named_ = {
     # 38864: Table 58: PromiseReaction Record Fields
     'PromiseReaction Record': {
         'Capability' : T_PromiseCapability_Record | T_Undefined,
-        'Type'       : T_String,
+        'Type'       : T_settlement_type_, # T_String,
         'Handler'    : T_function_object_ | T_Undefined,
     },
 
@@ -11937,7 +12048,7 @@ fields_for_record_type_named_ = {
 
     # 40060 ...
     'Shared Data Block event': {
-        'Order'       : T_String,
+        'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_Integer_,
@@ -11946,7 +12057,7 @@ fields_for_record_type_named_ = {
 
     # repetitive, but easier than factoring out...
     'ReadSharedMemory event': {
-        'Order'       : T_String,
+        'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_Integer_,
@@ -11954,7 +12065,7 @@ fields_for_record_type_named_ = {
     },
 
     'WriteSharedMemory event': {
-        'Order'       : T_String,
+        'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_Integer_,
@@ -11963,7 +12074,7 @@ fields_for_record_type_named_ = {
     },
 
     'ReadModifyWriteSharedMemory event': {
-        'Order'       : T_String,
+        'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_Integer_,
@@ -12029,10 +12140,10 @@ type_of_internal_thing_ = {
     'Environment'      : T_Lexical_Environment,
     'PrivateEnvironment' : T_Lexical_Environment, # PR 1668 privates
     'FormalParameters' : T_Parse_Node,
-    'FunctionKind'     : T_String, # could be more specific
+    'FunctionKind'     : T_FunctionKind2_, # T_String, # could be more specific
     'IsClassConstructor': T_Boolean, # PR 15xx re FunctionKind
     'ECMAScriptCode'   : T_Parse_Node,
-    'ConstructorKind'  : T_String, # could be more specific
+    'ConstructorKind'  : T_constructor_kind_, # T_String, # could be more specific
     'Realm'            : T_Realm_Record,
     'ScriptOrModule'   : T_Script_Record | T_Module_Record | T_Null, # XXX must add Null to spec
     'ThisMode'         : T_this_mode,
@@ -12062,7 +12173,7 @@ type_of_internal_thing_ = {
     'ViewedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_, #?
     'ArrayLength'       : T_Integer_,
     'ByteOffset'        : T_Integer_,
-    'ContentType'       : T_String,
+    'ContentType'       : T_numeric_primitive_type_, # T_String,
     'TypedArrayName'    : T_String,
 
     # 10066: Table 29: Internal Slots of Module Namespace Exotic Objects
@@ -12091,7 +12202,7 @@ type_of_internal_thing_ = {
     # 34123: Table 48: Internal Slots of Array Iterator Instances
     'IteratedObject'         : T_Object,
     'ArrayIteratorNextIndex' : T_Integer_,
-    'ArrayIterationKind'     : T_String,
+    'ArrayIterationKind'     : T_iteration_result_kind_, # T_String,
 
     # 35373 + 37350 NO TABLE
     'ByteLength' : T_Integer_,
@@ -12099,12 +12210,12 @@ type_of_internal_thing_ = {
     # 35719: Table 50: Internal Slots of Map Iterator Instances
     'Map'              : T_Object,
     'MapNextIndex'     : T_Integer_,
-    'MapIterationKind' : T_String,
+    'MapIterationKind' : T_iteration_result_kind_, # T_String,
 
     # 36073: Table 51: Internal Slots of Set Iterator Instances
     'IteratedSet'      : T_Object,
     'SetNextIndex'     : T_Integer_,
-    'SetIterationKind' : T_String,
+    'SetIterationKind' : T_iteration_result_kind_, # T_String,
 
     # 36630: Table 58: Internal Slots of RegExp String Iterator Instances
     'IteratingRegExp'  : T_Object,
@@ -12122,7 +12233,7 @@ type_of_internal_thing_ = {
     'ArrayBufferDetachKey'  : T_Tangible_, # could be anything, really
 
     # 38581: Table 56: Internal Slots of Generator Instances
-    'GeneratorState'  : T_Undefined | T_String,
+    'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
     'GeneratorContext': T_execution_context,
 
     # 38914: 25.4.1.3.1 ish, NO TABLE
@@ -12136,7 +12247,7 @@ type_of_internal_thing_ = {
     'Capability' : T_PromiseCapability_Record,
 
     # 39537: Table 59: Internal Slots of Promise Instances
-    'PromiseState'           : T_String,
+    'PromiseState'           : T_promise_state_, # T_String,
     'PromiseResult'          : T_Tangible_,
     'PromiseFulfillReactions': ListType(T_PromiseReaction_Record) | T_Undefined,
     'PromiseRejectReactions' : ListType(T_PromiseReaction_Record) | T_Undefined,
@@ -12168,7 +12279,7 @@ type_of_internal_thing_ = {
     'SyncIteratorRecord' : T_iterator_record_,
 
     # 41869: Table N: Internal Slots of AsyncGenerator Instances
-    'AsyncGeneratorState'   : T_Undefined | T_String,
+    'AsyncGeneratorState'   : T_Undefined | T_generator_state_, # T_String,
     'AsyncGeneratorContext' : T_execution_context,
     'AsyncGeneratorQueue'   : ListType(T_AsyncGeneratorRequest_Record),
 
