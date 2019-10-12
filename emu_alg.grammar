@@ -931,14 +931,6 @@
     an implementation-dependent choice of:{I_BULLETS}
 
 {EXPR} :
-    #pre-1135: the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}
-    #pre-1135: the Number value of the Element Size value in {h_emu_xref} for {var}
-    #pre-1135: the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}
-    #pre-1135: the Number value of the Element Size value specified in {h_emu_xref} for {var}
-    #pre-1135: the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))
-    #pre-1135: the number of code points in {PROD_REF}
-    #pre-1135: the number value that is the same sign as {var} and whose magnitude is {EX}
-    #pre-1135: the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     Type({var})
     a Continuation that always returns its State argument as a successful MatchResult
     a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
@@ -1262,6 +1254,16 @@
 
     # obsoleted by the merge of PR #1124:
     # the numeric value 1
+
+    # obsoleted by the merge of PR #1135:
+    # the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}
+    # the Number value of the Element Size value in {h_emu_xref} for {var}
+    # the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}
+    # the Number value of the Element Size value specified in {h_emu_xref} for {var}
+    # the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))
+    # the number of code points in {PROD_REF}
+    # the number value that is the same sign as {var} and whose magnitude is {EX}
+    # the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
 
     # obsoleted by the merge of PR #1376:
     # the intrinsic object {percent_word}
