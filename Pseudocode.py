@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import sys, re, time, math
+import sys, re, time, math, pdb
 from collections import defaultdict
 
 from HTML import HNode
@@ -1394,6 +1394,14 @@ def analyze_sdo_coverage_info():
     def put(*args): print(*args, file=coverage_f)
 
     for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
+
+        # We look at the productions that the SDO is defined on,
+        # and ensure that the coverage of the LHS non-terminals is complete.
+        # But that doesn't catch places where the SDO should be defined
+        # on a nonterminal but isn't at all.
+        # (E.g. ContainsUseStrict on AsyncConciseBody, see PR #1745.)
+        # Instead, each SDO, we should look at all of its *invocations*,
+        # and make sure those are covered.
 
         if sdo_name == 'Contains':
             # XXX can we do anything useful here?
