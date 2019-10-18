@@ -11191,6 +11191,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         word = backticked_word.source_text()[1:-1]
         if word in ['add', 'and', 'second', 'or', 'subtract', 'xor', 'compareExchange']:
             return (T_bytes_combining_op_, env0)
+        elif word == 'General_Category':
+            return (T_Unicode_code_points_, env0)
         else:
             assert 0, word
 
