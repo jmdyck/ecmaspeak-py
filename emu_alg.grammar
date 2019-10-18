@@ -1579,9 +1579,11 @@
     {var}
     {var}'s {DSBN} attribute
     {var}'s {EXECUTION_CONTEXT_COMPONENT}
-    {var}'s {EXECUTION_CONTEXT_COMPONENT} component
     {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}
     {var}[{EX}]
+
+    # obsoleted by the merge of PR #1743:
+    # {var}'s {EXECUTION_CONTEXT_COMPONENT} component
 
     # PR 1477 scope-records:
     the _withEnvironment_ flag of {var}.{dsb_word}

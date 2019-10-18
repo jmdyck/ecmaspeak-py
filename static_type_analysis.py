@@ -10150,7 +10150,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}",
         r"{SETTABLE} : the {var}'s {EXECUTION_CONTEXT_COMPONENT}",
         r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}",
-        r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT} component",
+        # r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT} component", # PR 1743 obsoleted
     ]:
         if p.endswith('{var}'):
             [component_name, var] = children
