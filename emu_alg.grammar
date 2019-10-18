@@ -1573,7 +1573,6 @@
     the {EXECUTION_CONTEXT_COMPONENT} of {var}
     the {LEXICAL_ENVIRONMENT_COMPONENT} component of {var}
     the {LEXICAL_ENVIRONMENT_COMPONENT} of {var}
-    the {var}'s {EXECUTION_CONTEXT_COMPONENT}
     {DOTTING}
     {DOTTING}[{EX}]
     {var}
@@ -1581,6 +1580,9 @@
     {var}'s {EXECUTION_CONTEXT_COMPONENT}
     {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}
     {var}[{EX}]
+
+    # obsoleted by the merge of PR #1740:
+    # the {var}'s {EXECUTION_CONTEXT_COMPONENT}
 
     # obsoleted by the merge of PR #1743:
     # {var}'s {EXECUTION_CONTEXT_COMPONENT} component
