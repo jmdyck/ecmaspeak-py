@@ -5718,7 +5718,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {var} is an Object that has a {DSBN} internal slot",
-        r'{CONDITION_1} : {var} is an extensible object that does not have a {backticked_str} own property',
+        r'{CONDITION_1} : {var} is an extensible object that does not have a {starred_str} own property',
 
         # PR 1302 obsoleted:
         # r'{CONDITION_1} : {var} is an extensible object that does not have a {backticked_word} own property',
@@ -5860,7 +5860,7 @@ def tc_cond_(cond, env0, asserting):
             # Because the type has only one value,
             # a value-comparison is equivalent to a type-comparison.
             return env0.with_type_test(ex, copula, lit_type, asserting)
-        elif literal.source_text() == '`"ambiguous"`':
+        elif literal.source_text() == '*"ambiguous"*':
             # The return-type of ResolveExport includes String,
             # but only for the single value "ambiguous".
             # So a test against that value is a type-comparison.
@@ -5914,7 +5914,7 @@ def tc_cond_(cond, env0, asserting):
         ):
             return env0.with_type_test(ex, copula, T_Null | T_Undefined, asserting)
 
-        elif lita_type == T_Null and litb_type == T_String and litb.source_text() == '`"ambiguous"`':
+        elif lita_type == T_Null and litb_type == T_String and litb.source_text() == '*"ambiguous"*':
             return env0.with_type_test(ex, copula, T_Null | T_String, asserting)
 
         elif lita_type == litb_type:
@@ -6012,7 +6012,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is {LITERAL} or a Module Record":
         [var, lit] = children
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
-        assert lit.source_text() == '`"ambiguous"`'
+        assert lit.source_text() == '*"ambiguous"*'
         return env0.with_type_test(var, 'is a', T_String | T_Module_Record, asserting)
 
     elif p == r'{CONDITION_1} : {var} is an integer such that {CONDITION_1}':
@@ -6866,7 +6866,7 @@ def tc_cond_(cond, env0, asserting):
         [alit, blit] = children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} contains any code unit other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"` or if it contains the same code unit more than once':
+    elif p == r'{CONDITION_1} : {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
@@ -6957,8 +6957,8 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    elif p == r'''{CONDITION_1} : The value of {var}'s `"length"` property is {EX}''':
-        [var, ex] = children
+    elif p == r'''{CONDITION_1} : The value of {var}'s {starred_str} property is {EX}''':
+        [var, prop_name, ex] = children
         env0.assert_expr_is_of_type(var, T_Object)
         env0.assert_expr_is_of_type(ex, T_Integer_)
         return (env0, env0)
@@ -8532,7 +8532,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}",
-        # r"{EXPR} : the Element Size specified in {h_emu_xref} for Element Type {var}",
+        r"{EXPR} : the Element Size specified in {h_emu_xref} for Element Type {var}",
         # r"{EXPR} : the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}",
         # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}",
     ]:
@@ -8543,7 +8543,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
-        # r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
+        r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
         # r"{EXPR} : the Number value of the Element Size value in {h_emu_xref} for {var}",
         # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for {var}",
     ]:
@@ -11281,7 +11281,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
         return (var_t, env0)
 
-    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains `\"u\"`) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the internal procedure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains `\"u\"`) must behave identically to the internal procedure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
+    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the internal procedure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the internal procedure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
         # XXX
         return (T_String, env0)
 
@@ -11379,7 +11379,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_event_)
         return (T_event_pair_, env0)
 
-    elif p == "{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `\"name\"` property of {var}":
+    elif p == "{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}":
         var = children[0]
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)

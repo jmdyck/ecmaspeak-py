@@ -63,7 +63,7 @@
     {starred_nonfinite_lit}
 
 {STR_LITERAL} :
-    {backticked_str}
+    {starred_str}
 
 {ERROR_TYPE} :
     *TypeError*

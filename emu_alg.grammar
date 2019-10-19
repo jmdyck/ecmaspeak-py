@@ -442,7 +442,7 @@
     The following loop will terminate
     The next step never returns an abrupt completion because {CONDITION_1}
     The value of {SETTABLE} is {LITERAL}
-    The value of {var}'s `"length"` property is {EX}
+    The value of {var}'s {starred_str} property is {EX}
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
     There is more than one `*` import that includes the requested name
     This is a circular import request
@@ -593,7 +593,7 @@
     {var} can be the string-concatenation of {var} and some other String {var}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
-    {var} contains any code unit other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"` or if it contains the same code unit more than once
+    {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
@@ -704,7 +704,7 @@
     {var} is an abrupt completion
     {var} is an array index
     {var} is an empty List
-    {var} is an extensible object that does not have a {backticked_str} own property
+    {var} is an extensible object that does not have a {starred_str} own property
     {var} is an extensible ordinary object
     {var} is an extensible ordinary object with no own properties
     {var} is an initialized RegExp instance
@@ -817,8 +817,8 @@
 
     # PR 1464 static RegExp parsing:
     it contains the same code point more than once
-    {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, or {backticked_str}
-    {PP_NAMED_OPERATION_INVOCATION} contains {backticked_str}
+    {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
+    {PP_NAMED_OPERATION_INVOCATION} contains {starred_str}
     {var} cannot be recognized using the goal symbol {nonterminal} of the ECMAScript RegExp grammar specified in {h_emu_xref}
 
     # PR 1477 scope-records:
@@ -970,7 +970,7 @@
     a String containing one instance of each code unit valid in {nonterminal}
     a String containing one instance of each code unit valid in {nonterminal} and {nonterminal} plus {STR_LITERAL}
     a String containing one instance of each code unit valid in {nonterminal} plus {STR_LITERAL}
-    a String in the form of a {nonterminal} ({nonterminal} if {var} contains `"u"`) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the internal procedure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains `"u"`) must behave identically to the internal procedure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
+    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the internal procedure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the internal procedure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {DOTTING}
     a copy of {var}
@@ -1022,7 +1022,7 @@
     an implementation-defined Completion value
     an implementation-defined string that is either {EX} or {EXPR}
     an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}
-    an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the `"name"` property of {var}
+    an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}
     an instance of the production {h_emu_grammar}
     such an object created in an implementation-defined manner
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
@@ -1701,14 +1701,13 @@
     {tilded_word}
 
 {STR_LITERAL} :
-    `","` (a comma)
-    the String {backticked_str}
+    *","* (a comma)
+    the String {starred_str}
     the empty String
-    the empty String `""`
+    the empty String *""*
     the empty String value
     the empty string
-    the single-element String `","`
-    {backticked_str}
+    the single-element String *","*
     {starred_str}
 
 {NUM_LITERAL} :

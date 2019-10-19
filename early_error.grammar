@@ -82,20 +82,20 @@
     {NAMED_OPERATION_INVOCATION} contains any code points other than `g`, `i`, `m`, `s`, `u`, or `y`, or if it contains the same code point more than once
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
-    {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {backticked_str}
-    {NAMED_OPERATION_INVOCATION} contains more than one occurrence of `"constructor"`
-    {NAMED_OPERATION_INVOCATION} contains {backticked_str}
-    {NAMED_OPERATION_INVOCATION} is {backticked_str} or {backticked_str}
+    {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}
+    {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
+    {NAMED_OPERATION_INVOCATION} contains {starred_str}
+    {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
-    {NAMED_OPERATION_INVOCATION} is none of `"$"`, or `"_"`, or the UTF16Encoding of a code point matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is none of `"$"`, or `"_"`, or the UTF16Encoding of either &lt;ZWNJ&gt; or &lt;ZWJ&gt;, or the UTF16Encoding of a Unicode code point that would be matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of a code point matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of either &lt;ZWNJ&gt; or &lt;ZWJ&gt;, or the UTF16Encoding of a Unicode code point that would be matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not {LITERAL}
-    {NAMED_OPERATION_INVOCATION} is one of: {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, {backticked_str}, or {backticked_str}
+    {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
     {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`
     {NAMED_OPERATION_INVOCATION} is {LITERAL}
-    {NAMED_OPERATION_INVOCATION} is: `"implements"`, `"interface"`, `"let"`, `"package"`, `"private"`, `"protected"`, `"public"`, `"static"`, or `"yield"`
+    {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
 
     {var} &ge; 2<sup>32</sup> - 1
 
@@ -151,7 +151,7 @@
     {LITERAL}
 
 {LITERAL} :
-    {backticked_str}
+    {starred_str}
     {BOOL_LITERAL}
     {tilded_word}
 

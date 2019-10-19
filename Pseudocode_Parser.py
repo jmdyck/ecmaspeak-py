@@ -131,7 +131,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {starred_nonfinite_lit} : \* [+-]? &infin; \*
     {starred_nonfinite_lit} : \* NaN \*
     {starred_word}          : \* [A-Za-z]+ \*
-    {starred_str}           : \* " [^"*]+ " \*
+    {starred_str}           : \* " ( [^"*] | \\ \* )* " \*
 
     # tokens that begin with '[':
     {dsb_word}         : \[\[ [A-Z][A-Za-z0-9]* \]\]
@@ -456,6 +456,7 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | \* [+-] 0 \*
     | \* [A-Za-z]+ \*
     | \* [+-] &infin; \*
+    | \* " [^"]? " \*
 
     | ` " [^"`]+ " `
     | ` [^`]+ `
