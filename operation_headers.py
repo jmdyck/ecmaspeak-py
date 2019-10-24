@@ -1892,6 +1892,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         ('^arguments ', ''),
         ('^as arguments ', ''),
         ('^the arguments: ', ''),
+        ('^the argument ', ''),
         ('^two arguments,? ', ''),
         ('^the two arguments ', ''),
         ('^the three arguments ', ''),

@@ -727,7 +727,6 @@
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
     {var} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification
     {var} is either {LITERAL} or an? {nonterminal}
-    {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is empty
     {var} is finite
     {var} is hint Number
@@ -790,6 +789,9 @@
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
     {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
     {var}, {var}, and {var} are integer values &ge; 0
+
+    # obsoleted by the merge of PR #1546:
+    # {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
 
     # obsoleted by the merge of PR #1614:
     # the {DSBN} fields of {var} and {var} are the Boolean negation of each other

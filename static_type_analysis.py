@@ -3133,6 +3133,8 @@ def tc_header(header):
                     and
                     T_continue_.is_a_subtype_of_or_equal_to(final_t)
                 )
+                or
+                header.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ and final_t == T_Proxy_exotic_object_ | T_bound_function_exotic_object_ | T_other_function_object_
             ):
                 # -------------------------
                 # Don't change header types
@@ -5986,7 +5988,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}",
-        r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
+        # r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}", # PR 1546 obsoleted
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is not {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
