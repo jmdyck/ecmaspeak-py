@@ -1217,56 +1217,18 @@ def analyze_static_dependencies():
 # ------------------------------------------------------------------------------
 
 def each_callee_name_in_algo(algo):
-    for callee in each_op_reference_in_algo(algo):
-        if isinstance(callee, str):
-            yield callee
-        else:
-            assert isinstance(callee, ANode)
-            if callee.prod.lhs_s == '{cap_word}':
-                yield callee.source_text()
-
-            elif callee.prod.lhs_s == '{OPN_BEFORE_PAREN}':
-                if callee.prod.rhs_s == '{DOTTING}':
-                    [dotting] = callee.children
-                    [lhs, dsbn] = dotting.children
-                    yield dsbn.source_text()
-                elif callee.prod.rhs_s == '{var}.{cap_word}':
-                    [var, cap_word] = callee.children
-                    yield cap_word.source_text()
-                elif callee.prod.rhs_s == '{var}':
-                    # can't do much
-                    if callee.source_text() == '_convOp_':
-                        # Should extract this from "The TypedArray Constructors" table
-                        yield 'ToInt8'
-                        yield 'ToUint8'
-                        yield 'ToUint8Clamp'
-                        yield 'ToInt16'
-                        yield 'ToUint16'
-                        yield 'ToInt32'
-                        yield 'ToUint32'
-                        # PR 1515 BigInt:
-                        yield 'ToBigInt64'
-                        yield 'ToBigUint64'
-                elif callee.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-                    [_, low_word] = callee.children
-                    yield '::' + low_word.source_text()
-                else:
-                    yield callee.source_text()
-
-            elif callee.prod.lhs_s == '{ISDO_NAME}':
-                assert callee.prod.rhs_s == '{cap_word}'
-                yield callee.source_text()
-
-            else:
-                assert 0, callee.prod
-
-def each_op_reference_in_algo(algo):
     for d in algo.each_descendant_or_self():
         if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
             rhs = d.prod.rhs_s
             if rhs in [
                 'the {ISDO_NAME} of {PROD_REF}',
                 '{ISDO_NAME} of {PROD_REF}',
+            ]:
+                isdo_name = d.children[0]
+                assert isdo_name.prod.rhs_s == '{cap_word}'
+                yield isdo_name.source_text()
+
+            elif rhs in [
                 'the {cap_word} of {LOCAL_REF}',
                 'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
                 'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
@@ -1277,7 +1239,8 @@ def each_op_reference_in_algo(algo):
                 '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
                 '{cap_word}({nonterminal})',
             ]:
-                yield d.children[0]
+                cap_word = d.children[0]
+                yield cap_word.source_text()
 
             elif rhs == '{PREFIX_PAREN}':
                 # Handled below
@@ -1321,7 +1284,37 @@ def each_op_reference_in_algo(algo):
         elif d.prod.lhs_s == '{PREFIX_PAREN}':
             [opn_before_paren, exlist_opt] = d.children
             assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
-            yield opn_before_paren
+
+            if opn_before_paren.prod.rhs_s == '{DOTTING}':
+                [dotting] = opn_before_paren.children
+                [lhs, dsbn] = dotting.children
+                yield dsbn.source_text()
+            elif opn_before_paren.prod.rhs_s == '{var}.{cap_word}':
+                [var, cap_word] = opn_before_paren.children
+                yield cap_word.source_text()
+            elif opn_before_paren.prod.rhs_s == '{var}':
+                # can't do much
+                if opn_before_paren.source_text() == '_convOp_':
+                    # Should extract this from "The TypedArray Constructors" table
+                    yield 'ToInt8'
+                    yield 'ToUint8'
+                    yield 'ToUint8Clamp'
+                    yield 'ToInt16'
+                    yield 'ToUint16'
+                    yield 'ToInt32'
+                    yield 'ToUint32'
+                    # PR 1515 BigInt:
+                    yield 'ToBigInt64'
+                    yield 'ToBigUint64'
+                else:
+                    # mostly closures created+invoked in RegExp semantics
+                    # print('>>>', opn_before_paren.source_text())
+                    pass
+            elif opn_before_paren.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
+                [_, low_word] = opn_before_paren.children
+                yield '::' + low_word.source_text()
+            else:
+                yield opn_before_paren.source_text()
 
         elif str(d.prod) == '{CONDITION_1} : {var} and {var} are in a race in {var}':
             yield 'Races'
