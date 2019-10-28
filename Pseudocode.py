@@ -192,7 +192,7 @@ def analyze_sections():
             'env_rec_method',
             'internal_method',
             'module_rec_method',
-            'numeric_method', # PR 1515
+            'numeric_method',
         ]:
             analyze_other_op_section(section)
 
@@ -232,8 +232,8 @@ def analyze_sections():
                         # This is just showing the format of algorithms,
                         # so it's not meant to be parsable.
 
-                        '\n            5. Otherwise, let ',
-                        '\n              5. Otherwise, let ', # PR 1515 BigInt
+                        '\n            5. Otherwise, let ', # PR 1515 BigInt obsoleted
+                        '\n              5. Otherwise, let ',
                         # 7.1.12.1 NumberToString
                         # The is unparsable because the grammar doesn't
                         # allow an "Otherwise" without a preceding "If",
@@ -431,13 +431,11 @@ def analyze_other_op_section(section):
             ensure_foo('abstract_operation', op_name)
             pass
 
-        # PR 1515 BigInt:
         elif section.section_kind == 'numeric_method':
             # A mathematical operation that we merely constrain, via a bullet-list.
             ensure_foo('numeric_method', op_name)
             pass
 
-        # PR 1515 BigInt:
         elif op_name == 'StringToBigInt':
             # Apply other alg with changes, ick.
             ensure_foo('abstract_operation', op_name)
@@ -460,7 +458,7 @@ def analyze_other_op_section(section):
             'env_rec_method',
             'module_rec_method',
             'internal_method',
-            'numeric_method', # PR 1515
+            'numeric_method',
         ]:
             # type-discriminated operation
             discriminator = None # XXX get the discriminator!
@@ -1303,7 +1301,6 @@ def each_callee_name_in_algo(algo):
                     yield 'ToUint16'
                     yield 'ToInt32'
                     yield 'ToUint32'
-                    # PR 1515 BigInt:
                     yield 'ToBigInt64'
                     yield 'ToBigUint64'
                 else:
