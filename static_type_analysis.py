@@ -5341,6 +5341,10 @@ def tc_cond_(cond, env0, asserting):
             envs_or([a_f_env, b_f_env, c_f_env])
         )
 
+    elif p == r"{CONDITION_1} : {var} is an Integer-Indexed exotic object":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Integer_Indexed_object_, asserting)
+
     elif p == r"{CONDITION_1} : {var} is a Lexical Environment":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Lexical_Environment, asserting)

@@ -697,9 +697,9 @@
     {var} is an Environment Record
     {var} is an IEEE 754-2008 binary32 NaN value
     {var} is an IEEE 754-2008 binary64 NaN value
+    {var} is an Integer-Indexed exotic object
     {var} is an Object that has a {DSBN} internal slot
     {var} is an Object that has {DSBN} and {DSBN} internal slots
-    {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
     {var} is an Object that implements the <i>IteratorResult</i> interface
     {var} is an abrupt completion
     {var} is an array index
@@ -809,6 +809,9 @@
 
     # obsoleted by the merge of PR #1302
     # {var} is an extensible object that does not have a {backticked_word} own property
+
+    # obsoleted by the merge of PR #1752 (index-checking for IIEOs)
+    # {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
 
     # PR 1460 explicit-exotics:
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
