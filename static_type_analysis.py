@@ -4069,7 +4069,7 @@ def tc_nonvalue(anode, env0):
 
         elif each_thing.prod.rhs_s in [
             r"{nonterminal} {var} in {var}",
-            r"{nonterminal} {var} in {var} (NOTE: this is another complete iteration of the second {nonterminal})",
+            r"{nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})",
             r"{nonterminal} {var} in order from {var}",
         ]:
             [nont, loop_var, collection_expr] = each_thing.children[0:3]
@@ -4786,8 +4786,8 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
-    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {nonterminal}.":
-        [nont1, nont2, nont3, nont4, nont5] = children
+    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.":
+        [nont1, nont2, nont3, nont4, prod_ref] = children
         result = env0
 
     elif p == r"{COMMAND} : Create any implementation-defined global object properties on {var}.":
@@ -7423,8 +7423,8 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(litc, T_Number)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {nonterminal} is {backticked_oth}":
-        [nont, oth] = children
+    elif p == r"{CONDITION_1} : {PROD_REF} is {backticked_oth}":
+        [prod_ref, oth] = children
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : @ is {EX}":
@@ -9360,7 +9360,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_code_unit_, env1)
 
-    elif p == r"{EXPR} : the code unit whose value is determined by the {nonterminal} according to {h_emu_xref}":
+    elif p == r"{EXPR} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}":
         [nonterminal, emu_xref] = children
         return (T_code_unit_, env0)
 
@@ -9418,7 +9418,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif expr.prod.lhs_s == '{code_point_lit}':
         return (T_code_point_, env0)
 
-    elif p == r"{EXPR} : the code point matched by {nonterminal}":
+    elif p == r"{EXPR} : the code point matched by {PROD_REF}":
         [nont] = children
         return (T_code_point_, env0)
 
@@ -9431,7 +9431,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # with respect to the emu-grammar accompanying this alg/expr.
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : the source text matched by {nonterminal}":
+    elif p == r"{EXPR} : the source text matched by {PROD_REF}":
         [nont] = children
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
@@ -9579,7 +9579,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var2, T_Integer_)
         return (ListType(T_code_unit_), env0)
 
-    elif p == r"{EXPR} : the UTF16Encoding of the code point value of {nonterminal}":
+    elif p == r"{EXPR} : the UTF16Encoding of the code point value of {PROD_REF}":
         [nonterminal] = children
         # Should look up the return type of UTF16Encoding
         return (ListType(T_code_unit_), env0)
@@ -10008,8 +10008,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_CharSet, env0)
 
     elif p in [
-        r"{EXPR} : the CharSet containing all Unicode code points included in the CharSet returned by {nonterminal}",
-        r"{EXPR} : the CharSet containing all Unicode code points not included in the CharSet returned by {nonterminal}",
+        r"{EXPR} : the CharSet containing all Unicode code points included in the CharSet returned by {PROD_REF}",
+        r"{EXPR} : the CharSet containing all Unicode code points not included in the CharSet returned by {PROD_REF}",
     ]:
         [nont] = children
         return (T_CharSet, env0)
@@ -10937,8 +10937,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(v, ListType(T_Integer_))
         return (ListType(T_Integer_), env0)
 
-    elif p == r"{EXPR} : the List, in source text order, of Unicode code points in the source text matched by this production":
-        [] = children
+    elif p == r"{EXPR} : the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}":
+        [prod_ref] = children
         return (ListType(T_Integer_), env0)
 
     # ----

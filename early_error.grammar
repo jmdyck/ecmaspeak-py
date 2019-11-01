@@ -55,20 +55,22 @@
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}
+    the code matched by {PROD_REF} is contained in strict mode code
+    the code that matches {PROD_REF} is contained in strict mode code
     the duplicate entries are only bound by {cap_word}
-    the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose StringValue equals the StringValue of the {nonterminal} of this production's {nonterminal}
+    the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose StringValue equals the StringValue of the {nonterminal} of {PROD_REF}
     the goal symbol of the syntactic grammar is {nonterminal}
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
-    the source code matching this production is not strict mode code
-    the source code matching {nonterminal} is strict mode code
+    the source code matching {PROD_REF} is not strict mode code
+    the source code matching {PROD_REF} is strict mode code
     this production has an? <sub>[{cap_word}]</sub> parameter
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
     {LOCAL_REF} is not covering an? {nonterminal}
     {LOCAL_REF} contains a Unicode escape sequence
     {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same StringValue
-    {LOCAL_REF} derives a phrase that would produce a Syntax Error according to these rules if that phrase were substituted for {nonterminal}. This rule is recursively applied
+    {LOCAL_REF} derives a phrase that would produce a Syntax Error according to these rules if that phrase were substituted for {PROD_REF}. This rule is recursively applied
     {LOCAL_REF} is an {nonterminal} or an {nonterminal}
     {LOCAL_REF} is contained in strict mode code
     {LOCAL_REF} is either an {nonterminal} or an {nonterminal}
@@ -106,8 +108,7 @@
     ## {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
 
     # PR 1651 one-grammar
-    the source code matching this production is strict mode code
-    a {nonterminal} contains the source code matching this production
+    a {nonterminal} contains the source code matching {PROD_REF}
 
     # PR 1668 private fields
     the name is used once for a getter and once for a setter and in no other entries
@@ -118,7 +119,7 @@
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
     the {cap_word} of {LOCAL_REF}
-    {cap_word}({nonterminal})
+    {cap_word}({PROD_REF})
 
     ## directed-operations:
     ## {var}.\w+()
@@ -131,13 +132,13 @@
     {var}
 
 {PROD_REF} :
-    the code matched by this production
-    the code that matches this production
     the derived {nonterminal}
     the {ORDINAL} {nonterminal}
     the {nonterminal}
     the {nonterminal} containing this {nonterminal}
     this phrase
+    this production
+    this production's {nonterminal}
     this {nonterminal}
     {nonterminal}
 

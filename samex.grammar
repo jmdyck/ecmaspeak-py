@@ -8,4 +8,7 @@
     {SAMEX}{_eos_}
 
 {SAMEX} :
-    Is evaluated in exactly the same manner as {h_emu_grammar} except that the contained {nonterminal} is evaluated in step {dec_int_lit}.
+    Is evaluated in exactly the same manner as {h_emu_grammar} except that {PROD_REF} is evaluated in step {dec_int_lit}.
+
+{PROD_REF} :
+    the contained {nonterminal}

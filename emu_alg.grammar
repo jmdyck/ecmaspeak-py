@@ -149,7 +149,7 @@
     Return.
     ReturnIfAbrupt({EX}).
     Scan until the next {code_point_lit}.
-    Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {nonterminal}.
+    Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.
     Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.
     Set all of the bytes of {var} to 0.
     Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
@@ -332,7 +332,7 @@
     child node {var} of this Parse Node
     {nonterminal} {var} in order from {var}
     {nonterminal} {var} in {var}
-    {nonterminal} {var} in {var} (NOTE: this is another complete iteration of the second {nonterminal})
+    {nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
     {var} from {var} in list order
@@ -389,7 +389,7 @@
     {B} {var}
 
     # PR 1554 NumericValue:
-    {B} {nonterminal}
+    {B} {PROD_REF}
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position
 
@@ -570,10 +570,10 @@
     {PROD_REF} is contained in strict mode code
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
+    {PROD_REF} is {backticked_oth}
     {SETTABLE} has an? {DSBN} field
     {SETTABLE} is not equal to {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
     {TYPE_TEST}
-    {nonterminal} is {backticked_oth}
     {var} also has a {DSBN} internal slot
     {var} and {DOTTING} are the same Module Record
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
@@ -1036,8 +1036,8 @@
     the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
     the BigInt value that corresponds to {var}
     the BigInt value that represents {EX}
-    the CharSet containing all Unicode code points included in the CharSet returned by {nonterminal}
-    the CharSet containing all Unicode code points not included in the CharSet returned by {nonterminal}
+    the CharSet containing all Unicode code points included in the CharSet returned by {PROD_REF}
+    the CharSet containing all Unicode code points not included in the CharSet returned by {PROD_REF}
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
@@ -1058,7 +1058,7 @@
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
-    the List, in source text order, of Unicode code points in the source text matched by this production
+    the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}
     the Matcher that is {EXPR}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number that is the time value (UTC) identifying the current time
@@ -1128,7 +1128,7 @@
     the character value of character {var}
     the character whose character value is {var}
     the character {SETTABLE}
-    the code point matched by {nonterminal}
+    the code point matched by {PROD_REF}
     the code point value according to {h_emu_xref}
     the code point value of {code_point_lit}
     the code point value of {var}
@@ -1211,7 +1211,7 @@
     the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
-    the source text matched by {nonterminal}
+    the source text matched by {PROD_REF}
     the source text that was recognized as {PROD_REF}
     the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
@@ -1458,6 +1458,7 @@
 {PROD_REF} :
     the {nonterminal}
     the {ORDINAL} {nonterminal}
+    this production
     this {nonterminal}
     {nonterminal}
     the corresponding {nonterminal}

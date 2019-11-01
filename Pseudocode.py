@@ -1058,7 +1058,7 @@ def annotate_algo(algo):
                 '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
                 '{cap_word} of {LOCAL_REF}',
                 '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                '{cap_word}({nonterminal})',
+                '{cap_word}({PROD_REF})',
             ]:
                 cap_word = d.children[0]
                 op_names = [cap_word.source_text()]

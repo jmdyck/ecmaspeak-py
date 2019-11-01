@@ -25,7 +25,7 @@
     {FACTOR} (a value so large that it will round to *+&infin;*)
     a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
     the code unit whose value is {SUM}
-    the code unit whose value is determined by the {nonterminal} according to {h_emu_xref}
+    the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the empty code unit sequence
     the negative of {EX}
     the sequence consisting of {code_unit_lit}
@@ -37,7 +37,7 @@
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
-    the UTF16Encoding of the code point value of {nonterminal}
+    the UTF16Encoding of the code point value of {PROD_REF}
     the UTF16Encoding of {NAMED_OPERATION_INVOCATION}
 
     # PR 1651 one-grammar:
@@ -74,6 +74,7 @@
 
 {PROD_REF} :
     the {ORDINAL} {nonterminal}
+    the {nonterminal}
     the {nonterminal} that is that single code point
     the {nonterminal} that is that {nonterminal}
     {nonterminal}
