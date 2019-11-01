@@ -134,13 +134,16 @@
     the code matched by this production
     the code that matches this production
     the derived {nonterminal}
-    the first {nonterminal}
-    the second {nonterminal}
+    the {ORDINAL} {nonterminal}
     the {nonterminal}
     the {nonterminal} containing this {nonterminal}
     this phrase
     this {nonterminal}
     {nonterminal}
+
+{ORDINAL} :
+    first
+    second
 
 {WITH_ARGS} :
     with argument {EX}
