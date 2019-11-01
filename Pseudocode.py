@@ -99,8 +99,10 @@ def parse(hnode, what=None):
         # cc_section = hnode.closest_containing_section()
         # stderr(f"Failed to parse <{hnode.element_name}> in {cc_section.section_num} {cc_section.section_title}")
         # (Messes up the "progress bar")
-        pass
+        return None
 
+    connect_anodes_to_hnodes(hnode, tree)
+    annotate_algo(tree)
     return tree
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -962,6 +964,246 @@ def handle_function(section_kind, locater, emu_alg):
     foo_add_defn('built-in function', locater, None, parse(emu_alg))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def connect_anodes_to_hnodes(base_hnode, base_anode):
+
+    pairs = [
+        ('emu-grammar', '{h_emu_grammar}'),
+        ('emu-alg',     '{h_emu_alg}'    ),
+        ('figure',      '{h_figure}'     ),
+        ('a',           '{h_a}'          ),
+        ('pre',         '{h_pre_code}'   ),
+        # ('emu-xref',    '{h_emu_xref}'   ),
+    ]
+
+    # We could include <emu-xref> and {h_emu_xref}, but
+    # - I don't think it'll be useful, and
+    # - there are cases
+    #       FunctionDeclarationInstantiation ( _func_, _argumentsList_ )
+    #       Runtime Semantics: GlobalDeclarationInstantiation ( _script_, _env_ )
+    #       Runtime Semantics: EvalDeclarationInstantiation ( _body_, _varEnv_, _lexEnv_, _strict_ )
+    #       NewPromiseCapability ( _C_ )
+    #   where an <emu-xref> appears in a NOTE-step
+    #   (base_hnode.element_name == 'emu-alg' and re.search('NOTE: .+ <emu-xref ', base_hnode.source_text())):
+    #   it'll show up as a connectable hnode, but not as a connectable anode.
+
+    # ------------------------
+
+    connectable_hnode_names = [ hnode_name for (hnode_name, _) in pairs ]
+    connectable_hnodes = [
+        child
+        for child in base_hnode.children
+        if child.element_name in connectable_hnode_names
+    ]
+
+    if base_hnode.element_name == 'li' and re.search('(?s)<p>.*<emu-grammar>', base_hnode.source_text()):
+        assert connectable_hnodes == []
+        (_, p, _) = base_hnode.children
+        assert p.element_name == 'p'
+        connectable_hnodes = [
+            child
+            for child in p.children
+            if child.element_name in connectable_hnode_names
+        ]
+
+    # ------------------------
+
+    connectable_anode_names = [ anode_name for (_, anode_name) in pairs ]
+    connectable_anodes = [
+        anode
+        for anode in base_anode.each_descendant()
+        if anode.prod.lhs_s in connectable_anode_names
+    ]
+
+    # ------------------------
+
+    assert len(connectable_anodes) == len(connectable_hnodes)
+
+    for (c_hnode, c_anode) in zip(connectable_hnodes, connectable_anodes):
+        assert (c_hnode.element_name, c_anode.prod.lhs_s) in pairs
+        c_anode._hnode = c_hnode
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def annotate_algo(algo):
+
+    # For each node in `algo` that is an invocation of an operation,
+    # annotate it with info about the invocation.
+    for d in algo.each_descendant_or_self():
+        op_names = None
+
+        if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
+            rhs = d.prod.rhs_s
+
+            if rhs == '{PREFIX_PAREN}':
+                # Handled below, when '{PREFIX_PAREN}' is the lhs.
+                pass
+
+            elif rhs in [
+                'the {ISDO_NAME} of {PROD_REF}',
+                '{ISDO_NAME} of {PROD_REF}',
+            ]:
+                isdo_name = d.children[0]
+                assert isdo_name.prod.rhs_s == '{cap_word}'
+                op_names = [isdo_name.source_text()]
+                args = [d.children[1]]
+
+            elif rhs in [
+                'the {cap_word} of {LOCAL_REF}',
+                'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
+                'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
+                'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
+                'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
+                '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
+                '{cap_word} of {LOCAL_REF}',
+                '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
+                '{cap_word}({nonterminal})',
+            ]:
+                cap_word = d.children[0]
+                op_names = [cap_word.source_text()]
+                args = [d.children[1]]
+                if '{WITH_ARGS}' in rhs:
+                    with_args = d.children[2]
+                    assert with_args.prod.lhs_s == '{WITH_ARGS}'
+                    if '{PASSING}' in with_args.prod.rhs_s:
+                        args.extend(with_args.children[1:])
+                    else:
+                        args.extend(with_args.children)
+
+            elif rhs == 'evaluating {LOCAL_REF}':
+                # 'Evaluation' or 'regexp-Evaluate',
+                # depending on the argument.
+                [local_ref] = d.children
+                if local_ref.source_text() in [
+                    '|NonemptyClassRanges|',
+                    '|ClassAtom|',
+                    '|ClassAtomNoDash|',
+                    '|ClassEscape|',
+                    '|CharacterClassEscape|',
+                ]:
+                    op_names = ['regexp-Evaluate']
+                else:
+                    op_names = ['Evaluation']
+                args = d.children
+
+            elif rhs == 'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments':
+                op_names = [ 'ScriptEvaluationJob', 'TopLevelModuleEvaluationJob']
+                args = [d.children[1]] # XXX
+
+            else:
+                callee_name = {
+                    'Abstract Equality Comparison {var} == {var}'      : 'Abstract Equality Comparison',
+                    'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}' :  'Abstract Relational Comparison',
+                    'Abstract Relational Comparison {var} &lt; {var}'  : 'Abstract Relational Comparison',
+                    'Strict Equality Comparison {var} === {EX}'        : 'Strict Equality Comparison',
+                    'evaluating {LOCAL_REF} with argument {var}'       : 'regexp-Evaluate',
+                    'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
+                    'evaluating {nonterminal} {var}'                   : 'Evaluation',
+                    "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
+                    'the UTF16Encoding of each code point of {EX}'     : 'UTF16Encoding',
+                    'the UTF16Encoding of the code points of {var}'    : 'UTF16Encoding',
+                    '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
+                    '{LOCAL_REF} Contains {var}'                       : 'Contains',
+                }[rhs]
+                op_names = [callee_name]
+                args = d.children # XXX incorrect for a few cases
+
+        elif d.prod.lhs_s == '{PREFIX_PAREN}':
+            [opn_before_paren, arg_list] = d.children
+            assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
+
+            if opn_before_paren.prod.rhs_s == '{DOTTING}':
+                [dotting] = opn_before_paren.children
+                [lhs, dsbn] = dotting.children
+                op_names = [dsbn.source_text()]
+            elif opn_before_paren.prod.rhs_s == '{var}.{cap_word}':
+                [var, cap_word] = opn_before_paren.children
+                op_names = [cap_word.source_text()]
+            elif opn_before_paren.prod.rhs_s == '{var}':
+                # can't do much
+                if opn_before_paren.source_text() == '_convOp_':
+                    # Should extract this from "The TypedArray Constructors" table
+                    op_names = [
+                        'ToInt8',
+                        'ToUint8',
+                        'ToUint8Clamp',
+                        'ToInt16',
+                        'ToUint16',
+                        'ToInt32',
+                        'ToUint32',
+                        'ToBigInt64',
+                        'ToBigUint64',
+                    ]
+                else:
+                    # mostly closures created+invoked in RegExp semantics
+                    # print('>>>', opn_before_paren.source_text())
+                    pass
+            elif opn_before_paren.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
+                [_, low_word] = opn_before_paren.children
+                op_names = ['::' + low_word.source_text()]
+            else:
+                op_names = [opn_before_paren.source_text()]
+
+            if arg_list.prod.lhs_s == '{EXLIST_OPT}':
+                args = exes_in_exlist_opt(arg_list)
+            elif arg_list.prod.lhs_s == '{EXPR}':
+                args = [arg_list]
+            else:
+                assert 0, arg_list.prod.lhs_s
+
+        elif str(d.prod) == '{CONDITION_1} : {var} and {var} are in a race in {var}':
+            op_names = ['Races']
+            args = [] # XXX
+
+        elif str(d.prod) == '{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}':
+            op_names = [ 'CreateBuiltinFunction', 'initialize_unscopables']
+            args = [] # XXX
+
+        elif str(d.prod) == '{COMMAND} : IfAbruptRejectPromise({var}, {var}).':
+            op_names = ['IfAbruptRejectPromise']
+            args = d.children[0:2]
+
+        elif str(d.prod) in [
+            '{COMMAND} : ReturnIfAbrupt({EX}).',
+            '{SMALL_COMMAND} : ReturnIfAbrupt({var})',
+        ]:
+            op_names = ['ReturnIfAbrupt']
+            args = [d.children[0]]
+
+        if op_names is not None:
+            d._op_invocation = (op_names, args)
+
+def exes_in_exlist_opt(exlist_opt):
+    assert exlist_opt.prod.lhs_s == '{EXLIST_OPT}'
+    if exlist_opt.prod.rhs_s == '{EPSILON}':
+        return []
+    elif exlist_opt.prod.rhs_s == '{EXLIST}':
+        [exlist] = exlist_opt.children
+        return exes_in_exlist(exlist)
+    elif exlist_opt.prod.rhs_s == '{var}':
+        return [exlist_opt.children[0]]
+    else:
+        assert 0, exlist_opt.prod.rhs_s
+
+def exes_in_exlist(exlist):
+    exes = []
+    while True:
+        assert exlist.prod.lhs_s == '{EXLIST}'
+        if exlist.prod.rhs_s == '{EX}':
+            [ex] = exlist.children
+            exes.insert(0, ex)
+            break
+        elif exlist.prod.rhs_s == '{EXLIST}, {EX}':
+            [inner_exlist, ex] = exlist.children
+            exes.insert(0, ex)
+            exlist = inner_exlist
+        else:
+            assert 0
+    return exes
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 spec.info_for_op_named_ = {}
 spec.info_for_bif_named_ = {}
@@ -974,6 +1216,8 @@ class Foo:
         self.name = name
         self.kind = kind
         self.definitions = []
+        self.invocations = []
+        self.callees = set()
 
 def ensure_foo(foo_kind, foo_name):
     if foo_kind == 'built-in function':
@@ -1001,7 +1245,7 @@ def foo_add_defn(foo_kind, foo_name, discriminator, algo):
         or
         isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
         or
-        isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}'
+        isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}' and discriminator.source_text() == '|HexDigit|' and foo_name == 'TRV' # This will be obsoleted by PR 1301
         or
         isinstance(discriminator, str) # type name
     )
@@ -1036,15 +1280,24 @@ def analyze_static_dependencies():
 
     # Find and print all the static dependencies:
 
+    def recurse(algo):
+        for d in algo.each_descendant_or_self():
+            if hasattr(d, '_op_invocation'):
+                (callee_names, args) = d._op_invocation
+                for callee_name in callee_names:
+                    foo_info.callees.add(callee_name)
+                    if callee_name not in ['[[ReadsBytesFrom]]', '[[ModifyOp]]']:
+                        spec.info_for_op_named_[callee_name].invocations.append(d)
+            elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
+                recurse(d._hnode._syntax_tree)
+
     for (foo_name, foo_info) in (
         sorted(spec.info_for_op_named_.items())
         +
         sorted(spec.info_for_bif_named_.items())
     ):
-        foo_info.callees = set()
         for (_, algo, _) in foo_info.definitions:
-            for callee_name in each_callee_name_in_algo(algo):
-                foo_info.callees.add(callee_name)
+            recurse(algo)
 
         put()
         put(foo_name)
@@ -1212,135 +1465,6 @@ def analyze_static_dependencies():
 
     f_deps.close()
 
-# ------------------------------------------------------------------------------
-
-def each_callee_name_in_algo(algo):
-    for d in algo.each_descendant_or_self():
-        if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
-            rhs = d.prod.rhs_s
-            if rhs in [
-                'the {ISDO_NAME} of {PROD_REF}',
-                '{ISDO_NAME} of {PROD_REF}',
-            ]:
-                isdo_name = d.children[0]
-                assert isdo_name.prod.rhs_s == '{cap_word}'
-                yield isdo_name.source_text()
-
-            elif rhs in [
-                'the {cap_word} of {LOCAL_REF}',
-                'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
-                'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
-                'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
-                '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
-                '{cap_word} of {LOCAL_REF}',
-                '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                '{cap_word}({nonterminal})',
-            ]:
-                cap_word = d.children[0]
-                yield cap_word.source_text()
-
-            elif rhs == '{PREFIX_PAREN}':
-                # Handled below
-                pass
-
-            elif rhs == 'evaluating {LOCAL_REF}':
-                # 'Evaluation' or 'regexp-Evaluate',
-                # depending on the argument.
-                [local_ref] = d.children
-                if local_ref.source_text() in [
-                    '|NonemptyClassRanges|',
-                    '|ClassAtom|',
-                    '|ClassAtomNoDash|',
-                    '|ClassEscape|',
-                    '|CharacterClassEscape|',
-                ]:
-                    yield 'regexp-Evaluate'
-                else:
-                    yield 'Evaluation'
-
-            else:
-                callee_names = {
-                    'Abstract Equality Comparison {var} == {var}'      : ['Abstract Equality Comparison'],
-                    'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}' : [ 'Abstract Relational Comparison'],
-                    'Abstract Relational Comparison {var} &lt; {var}'  : ['Abstract Relational Comparison'],
-                    'Strict Equality Comparison {var} === {EX}'        : ['Strict Equality Comparison'],
-                    'StringValue of the {nonterminal} of {nonterminal} {var}' : ['StringValue'],
-                    'evaluating {LOCAL_REF} with argument {var}'       : ['regexp-Evaluate'],
-                    'evaluating {LOCAL_REF}. This may be of type Reference' : ['Evaluation'],
-                    'evaluating {nonterminal} {var}'                   : ['Evaluation'],
-                    'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments': ['ScriptEvaluationJob', 'TopLevelModuleEvaluationJob'],
-                    "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": ['regexp-Evaluate'],
-                    'the UTF16Encoding of each code point of {EX}'     : ['UTF16Encoding'],
-                    'the UTF16Encoding of the code points of {var}'    : ['UTF16Encoding'],
-                    '{LOCAL_REF} Contains {nonterminal}'               : ['Contains'],
-                    '{LOCAL_REF} Contains {var}'                       : ['Contains'],
-                }[rhs]
-                for callee_name in callee_names:
-                    yield callee_name
-
-        elif d.prod.lhs_s == '{PREFIX_PAREN}':
-            [opn_before_paren, exlist_opt] = d.children
-            assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
-
-            if opn_before_paren.prod.rhs_s == '{DOTTING}':
-                [dotting] = opn_before_paren.children
-                [lhs, dsbn] = dotting.children
-                yield dsbn.source_text()
-            elif opn_before_paren.prod.rhs_s == '{var}.{cap_word}':
-                [var, cap_word] = opn_before_paren.children
-                yield cap_word.source_text()
-            elif opn_before_paren.prod.rhs_s == '{var}':
-                # can't do much
-                if opn_before_paren.source_text() == '_convOp_':
-                    # Should extract this from "The TypedArray Constructors" table
-                    yield 'ToInt8'
-                    yield 'ToUint8'
-                    yield 'ToUint8Clamp'
-                    yield 'ToInt16'
-                    yield 'ToUint16'
-                    yield 'ToInt32'
-                    yield 'ToUint32'
-                    yield 'ToBigInt64'
-                    yield 'ToBigUint64'
-                else:
-                    # mostly closures created+invoked in RegExp semantics
-                    # print('>>>', opn_before_paren.source_text())
-                    pass
-            elif opn_before_paren.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-                [_, low_word] = opn_before_paren.children
-                yield '::' + low_word.source_text()
-            else:
-                yield opn_before_paren.source_text()
-
-        elif str(d.prod) == '{CONDITION_1} : {var} and {var} are in a race in {var}':
-            yield 'Races'
-
-        elif str(d.prod) == '{EXPR} : the steps of an {cap_word} function as specified below':
-            # [cap_word] = d.children
-            # yield cap_word
-            # No, because that's a function, not an operation.
-            pass
-
-        elif str(d.prod) == '{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}':
-            yield 'CreateBuiltinFunction'
-            yield 'initialize_unscopables'
-
-        elif str(d.prod) == '{COMMAND} : IfAbruptRejectPromise({var}, {var}).':
-            yield 'IfAbruptRejectPromise'
-
-        elif str(d.prod) in [
-            '{COMMAND} : ReturnIfAbrupt({EX}).',
-            '{SMALL_COMMAND} : ReturnIfAbrupt({var})',
-        ]:
-            yield 'ReturnIfAbrupt'
-
-        elif d.prod.lhs_s == '{h_emu_alg}':
-            # If is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to *true*:
-            # Difficult to get from `d` to the HNode for the <emu-alg> and thence an ANode.
-            yield 'ConstructorMethod'
-            yield 'HasDirectSuper'
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1352,17 +1476,21 @@ def check_sdo_coverage():
     for (op_name, op_info) in spec.info_for_op_named_.items():
         if op_info.kind == 'SDO':
 
-            if op_name not in spec.sdo_coverage_map:
-                spec.sdo_coverage_map[op_name] = {}
+            assert op_name not in spec.sdo_coverage_map
+            spec.sdo_coverage_map[op_name] = {}
 
             for (discriminator, emu_alg, in_annex_b) in op_info.definitions:
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
                 if in_annex_b: continue
 
+                # This will be obsoleted by PR 1301:
                 if isinstance(discriminator, ANode):
                     assert discriminator.prod.lhs_s == '{nonterminal}'
                     assert discriminator.source_text() == '|HexDigit|'
-                    discriminator.summary = [] # XXX?
+                    discriminator.summary = [
+                        ('HexDigit', i, [])
+                        for i in range(22)
+                    ]
 
                 if discriminator is None:
                     assert op_name == 'Contains'
@@ -1385,20 +1513,132 @@ def analyze_sdo_coverage_info():
 
     for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
 
-        # We look at the productions that the SDO is defined on,
-        # and ensure that the coverage of the LHS non-terminals is complete.
-        # But that doesn't catch places where the SDO should be defined
-        # on a nonterminal but isn't at all.
-        # (E.g. ContainsUseStrict on AsyncConciseBody, see PR #1745.)
-        # Instead, each SDO, we should look at all of its *invocations*,
-        # and make sure those are covered.
-
         if sdo_name == 'Contains':
             # XXX can we do anything useful here?
             # we could check for conflicting defs
             continue
 
-        nt_queue = sorted(coverage_info_for_this_sdo.keys())
+        # print()
+        # print(sdo_name)
+
+        if 0:
+            # old scheme:
+            # We look at the productions that the SDO is defined on,
+            # and ensure that the coverage of the LHS non-terminals is complete.
+            # But that doesn't catch places where the SDO *should* be defined
+            # on a nonterminal but isn't at all.
+            # (E.g. ContainsUseStrict on AsyncConciseBody, see PR #1745.)
+
+            nt_queue = sorted(coverage_info_for_this_sdo.keys())
+
+        else:
+
+            # Look at the SDO's invocations.
+            # For each invocation, figure out the nonterminal
+            # of the parse node that is the 'target'? (primary argument) of the invocation.
+            # Make sure those nonterminals are covered.
+
+            # TODO: We should also detect when SDO rules don't appear to be used.
+            # (which might be a spec mistake,
+            # or might indicate that the code below has missed some invocations)
+
+            nt_set = set()
+            for opcall in spec.info_for_op_named_[sdo_name].invocations:
+                # opcall.printTree()
+                (callee_names, args) = opcall._op_invocation
+                assert sdo_name in callee_names
+                assert args
+                primary = args[0]
+                uprimary = descend_via_unit_derivations(primary)
+                u_st = uprimary.source_text()
+                u_lhs = uprimary.prod.lhs_s
+                nts = None
+
+                if u_lhs == '{nonterminal}':
+                    nt = u_st[1:-1]
+                    nts = [nt]
+
+                    if nt == 'Statement':
+                        opcall_st = opcall.source_text()
+                        if opcall_st == 'LabelledEvaluation of |Statement| with argument _labelSet_':
+                            # 1. If |Statement| is either a |LabelledStatement| or a |BreakableStatement|, then
+                            #   1. Return LabelledEvaluation of |Statement| with argument _labelSet_.
+                            nts = ['LabelledStatement', 'BreakableStatement']
+                        elif opcall_st == 'TopLevelVarDeclaredNames of |Statement|':
+                            # 1. If |Statement| is <emu-grammar>Statement : LabelledStatement</emu-grammar> ,
+                            #    return TopLevelVarDeclaredNames of |Statement|.
+                            nts = ['LabelledStatement']
+                        elif opcall_st == 'TopLevelVarScopedDeclarations of |Statement|':
+                            # 1. If |Statement| is <emu-grammar>Statement : LabelledStatement</emu-grammar> ,
+                            #    return TopLevelVarScopedDeclarations of |Statement|.
+                            nts = ['LabelledStatement']
+
+                elif u_lhs == '{PROD_REF}':
+                    u_rhs = uprimary.prod.rhs_s
+                    if u_rhs in [
+                        'this {nonterminal}',
+                        'the {nonterminal} containing this {nonterminal}',
+                        'the {nonterminal} that is that single code point',
+                        'the {nonterminal} that is that {nonterminal}',
+                        'the corresponding {nonterminal}',
+                    ]:
+                        nonterminal = uprimary.children[0]
+                    elif u_rhs == 'the {ORDINAL} {nonterminal}':
+                        nonterminal = uprimary.children[1]
+                    else:
+                        assert 0
+                    nts = [nonterminal.source_text()[1:-1]]
+
+                elif u_lhs == '{LOCAL_REF}':
+                    u_rhs = uprimary.prod.rhs_s
+                    # print('>>', u_rhs, '###', u_st, file=sys.stderr)
+                    if u_rhs == 'the {nonterminal} of {var}':
+                        nonterminal = uprimary.children[0]
+                        nts = [nonterminal.source_text()[1:-1]]
+                    elif u_st == 'the parsed code that is _F_.[[ECMAScriptCode]]':
+                        nts = [
+                            'FunctionBody',
+                            'ConciseBody',
+                            'GeneratorBody',
+                            'AsyncGeneratorBody',
+                            'AsyncFunctionBody',
+                            'AsyncConciseBody',
+                        ]
+                    else:
+                        assert 0
+
+                elif u_lhs in ['{var}', '{DOTTING}']:
+                    # {var} or {DOTTING} results in a Parse Node.
+                    # What *kind* of Parse Node should properly be determined via static type analysis.
+                    # I started to hard-code some info:
+                    #
+                    # nts = {
+                    #     ('ArgumentListEvaluation', '_arguments_'): ['Arguments'],
+                    #     ('BindingInitialization',  '_lhs_'      ): ['ForBinding', 'ForDeclaration'],
+                    #     ('BindingInstantiation',   '_lhs_'      ): ['ForDeclaration'],
+                    #     # ...
+                    # }.get((sdo_name, u_st), [])
+                    #
+                    # but then I found that I got useful results
+                    # by simply ignoring these cases.
+
+                    nts = []
+
+                else:
+                    assert 0
+
+                if nts:
+                    for nt in nts:
+                        nt_set.add(nt)
+                        # print(f" ++ {nt:36} from {opcall.source_text()}")
+                else:
+                    pass
+                    # print(f" ?? {' ':36} from {opcall.source_text()}")
+
+            nt_queue = sorted(nt_set)
+
+        # for nt in nt_queue: print('   ', nt)
+
         def queue_ensure(nt):
             if nt not in nt_queue: nt_queue.append(nt)
 
@@ -1406,7 +1646,8 @@ def analyze_sdo_coverage_info():
             # print('    ', lhs_nt)
 
             nt_info = emu_grammars.info_for_nt_[lhs_nt]
-            assert 'A' in nt_info.def_occs
+            # assert 'A' in nt_info.def_occs
+            if 'A' not in nt_info.def_occs: continue
             (_, _, def_rhss) = nt_info.def_occs['A']
 
             for (def_i, def_rhs) in enumerate(def_rhss):
@@ -1601,6 +1842,16 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         return True
 
     return False
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def descend_via_unit_derivations(anode):
+    if anode.prod.is_token_prod:
+        return anode
+    elif len(anode.prod.rhs_pieces) == 1 and anode.prod.rhs_pieces[0].startswith('{'):
+        return descend_via_unit_derivations(anode.children[0])
+    else:
+        return anode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
