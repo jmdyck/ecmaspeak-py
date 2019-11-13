@@ -5021,13 +5021,8 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
     ]:
-        t_envs = []
-        f_envs = []
-        for cond in children:
-            (t_env, f_env) = tc_cond(cond, env0, False)
-            t_envs.append(t_env)
-            f_envs.append(f_env)
-        return ( envs_or(t_envs), envs_and(f_envs) )
+        logical = ('or', children)
+        return tc_logical(logical, env0, asserting)
 
     elif p in [
         r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}",
@@ -5038,22 +5033,19 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
     ]:
-        t_env = env0
-        f_envs = []
-        for cond in children:
-            # each cond is type-checked under the assumption that
-            # all preceding conditions succeeded.
-            (t_env, f_env) = tc_cond(cond, t_env, asserting)
-            f_envs.append(f_env)
-
-        return ( t_env, envs_or(f_envs) )
+        logical = ('and', children)
+        return tc_logical(logical, env0, asserting)
 
     elif p == r"{CONDITION} : {CONDITION_1} or {CONDITION_1} and {CONDITION_1}":
         [conda, condb, condc] = children
-        (a_t_env, a_f_env) = tc_cond(conda, env0, asserting)
-        (b_t_env, b_f_env) = tc_cond(condb, a_f_env, asserting)
-        (c_t_env, c_f_env) = tc_cond(condc, a_f_env, asserting)
-        return (env_or(a_t_env, env_and(b_t_env, c_t_env)), env_or(b_f_env, c_f_env))
+        logical = (
+            'or',
+            [
+                conda,
+                ('and', [condb, condc])
+            ]
+        )
+        return tc_logical(logical, env0, asserting)
 
     # elif p == r"{CONDITION} : {CONDITION_1}, when {CONDITION_1}":
 
@@ -5062,39 +5054,25 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}",
     ]:
         [a, b, c, d] = children    
-        (a_t_env, a_f_env) = tc_cond(a, env0, asserting)
-        (b_t_env, b_f_env) = tc_cond(b, env0, asserting)
-        (c_t_env, c_f_env) = tc_cond(c, env0, asserting)
-        (d_t_env, d_f_env) = tc_cond(d, env0, asserting)
-        return (
-            env_or(
-                env_and(a_t_env, b_t_env),
-                env_and(c_t_env, d_t_env)
-            ),
-            env_and(
-                env_or(a_f_env, b_f_env),
-                env_or(c_f_env, d_f_env)
-            )
+        logical = (
+            'or',
+            [
+                ('and', [a, b]),
+                ('and', [c, d]),
+            ]
         )
+        return tc_logical(logical, env0, asserting)
 
     elif p == r"{CONDITION} : ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})":
         [a, b, c, d] = children
-        (a_t_env, a_f_env) = tc_cond(a, env0, asserting)
-        (b_t_env, b_f_env) = tc_cond(b, env0, asserting)
-        (c_t_env, c_f_env) = tc_cond(c, env0, asserting)
-        (d_t_env, d_f_env) = tc_cond(d, env0, asserting)
-        return (
-            env_and(
-                env_or(a_t_env, b_t_env),
-                env_or(c_t_env, d_t_env)
-            ),
-            env_or(
-                env_and(a_f_env, b_f_env),
-                env_and(c_f_env, d_f_env)
-            )
+        logical = (
+            'and',
+            [
+                ('or', [a, b]),
+                ('or', [c, d]),
+            ]
         )
-
-
+        return tc_logical(logical, env0, asserting)
 
     # ---------------
     # Type-conditions
@@ -7500,6 +7478,47 @@ def tc_cond_(cond, env0, asserting):
         stderr("tc_cond:")
         stderr('    elif p == r"%s":' % p)
         sys.exit(0)
+
+# ------------------------------------------------------------------------------
+
+def tc_logical(logical_structure, env0, asserting):
+
+    def appropriate_function(x):
+        if isinstance(x, ANode):
+            return tc_cond
+        elif isinstance(x, tuple):
+            return tc_logical
+        else:
+            assert 0
+
+    assert isinstance(logical_structure, tuple)
+    assert len(logical_structure) == 2
+    (operator, operands) = logical_structure
+    if operator == 'or':
+        # Each cond is type-checked under the assumption that
+        # all preceding conditions failed.
+        t_envs = []
+        f_env = env0
+        for cond in operands:
+            # If `asserting` is True, that only propagates to the last cond
+            # (again, assuming that all previous conditions failed).
+            sub_asserting = asserting if (cond is operands[-1]) else False
+            (t_env, f_env) = appropriate_function(cond)(cond, f_env, sub_asserting)
+            t_envs.append(t_env)
+        return ( envs_or(t_envs), f_env )
+
+    elif operator == 'and':
+        # Each cond is type-checked under the assumption that
+        # all preceding conditions succeeded.
+        t_env = env0
+        f_envs = []
+        for cond in operands:
+            (t_env, f_env) = appropriate_function(cond)(cond, t_env, asserting)
+            f_envs.append(f_env)
+        return ( t_env, envs_or(f_envs) )
+
+    else:
+        assert 0
 
 # ------------------------------------------------------------------------------
 
