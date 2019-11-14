@@ -3339,8 +3339,6 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
 
 # ------------------------------------------------------------------------------
 
-end_the_rep_envs_kludge = None
-
 def tc_nonvalue(anode, env0):
     # Return the env that this construct delivers to the 'next' thing
     # (i.e. when/if control leaves this construct 'normally')
@@ -3918,38 +3916,17 @@ def tc_nonvalue(anode, env0):
     ]:
         [commands] = children
 
-        # The only ways to leave a condition-less Repeat
-        # are via a Return command or via an 'end the repetition' command.
-        global end_the_rep_envs_kludge
-        assert end_the_rep_envs_kludge is None
-        end_the_rep_envs_kludge = []
-
         env_at_bottom = tc_nonvalue(commands, env0)
 
-        if end_the_rep_envs_kludge == []:
-            # When there's no "end the repetition" command,
-            # the only way out is via Return,
-            # so there can't be anything (except maybe a NOTE) after the loop.
-            result = None
-        else:
-            # The loop body has (at least) one "end the repetition" command,
-            # so the environment after the loop derives from the env at the point of that command.
-            assert len(end_the_rep_envs_kludge) == 1
-            [end_the_rep_env] = end_the_rep_envs_kludge
-            result = end_the_rep_env.reduce(env0.vars.keys())
-
-        end_the_rep_envs_kludge = None
+        # The only way to leave a condition-less Repeat
+        # is via a Return command,
+        # so there can't be anything (except maybe a NOTE) after the loop.
+        result = None
 
         # XXX Should repeat the analysis, feeding the bottom env to the top,
         # XXX until no change.
         # XXX (and likewise with other loops)
 
-
-    elif p == r"{SMALL_COMMAND} : end the repetition":
-        [] = children
-        assert end_the_rep_envs_kludge is not None
-        end_the_rep_envs_kludge.append(env0)
-        result = None
 
     elif p in [
         r'{COMMAND} : Repeat, while {CONDITION}{IND_COMMANDS}',
