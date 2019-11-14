@@ -10128,7 +10128,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env2 = env1.ensure_expr_is_of_type(bvar, T_Tangible_)
         return (T_Tangible_, env2)
 
-    elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*":
+    elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*":
         [avar, bvar, cvar, dvar] = children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
@@ -10136,7 +10136,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
         return (T_Tangible_ | T_throw_, env0)
 
-    elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value":
+    elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value":
         [avar, bvar, cvar, dvar] = children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
