@@ -9292,7 +9292,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert same_source_text(va, vb)
         env0.assert_expr_is_of_type(vb, T_String)
         # env0.assert_expr_is_of_type(vc, T_String) repeats the var-being-defined
-        return (T_String, env0)
+        return (T_String | T_throw_, env0)
 
     elif p == r"{EXPR} : the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order":
         [var] = children
