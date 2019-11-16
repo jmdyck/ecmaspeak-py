@@ -1694,6 +1694,7 @@ named_type_hierarchy = {
                 'settlement_type_': {},
                 'this_binding_status_': {},
                 'this_mode': {},
+                'this_mode2_': {},
                 'tuple_': {},
                 'other_': {},
             },
@@ -7781,6 +7782,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_module_record_status_, env0)
         elif chars in ['frozen', 'sealed']:
             return (T_integrity_level_, env0)
+        elif chars in ['lexical-this', 'non-lexical-this']:
+            return (T_this_mode2_, env0)
         else:
             assert 0, chars
 

@@ -2393,6 +2393,8 @@ nature_to_typ = {
         # 'either `"normal"`, `"generator"`, `"async"`, or `"async generator"`': 'String', # 'FunctionKind2_',
         'either ~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
 
+        'either ~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
+
         'either ~enumerate~ or ~iterate~' : 'IterationKind_',
         'either ~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
 
