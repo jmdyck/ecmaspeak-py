@@ -5917,27 +5917,30 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0
 
-    elif p == r"{CONDITION_1} : {EX} is either not present or {LITERAL}":
-        [ex, lit] = children
-        (t_lit, env1) = tc_expr(lit, env0); assert env1 is env0
-        assert t_lit == T_Undefined
-        return env0.with_type_test(ex, 'is a', T_not_passed | t_lit, asserting)
+# 1411 obsoleted:
+#    elif p == r"{CONDITION_1} : {EX} is either not present or {LITERAL}":
+#        [ex, lit] = children
+#        (t_lit, env1) = tc_expr(lit, env0); assert env1 is env0
+#        assert t_lit == T_Undefined
+#        return env0.with_type_test(ex, 'is a', T_not_passed | t_lit, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL} or not supplied":
-        [ex, lita, litb] = children
-        (t_lita, env1) = tc_expr(lita, env0); assert env1 is env0
-        (t_litb, env1) = tc_expr(litb, env0); assert env1 is env0
-        assert t_lita == T_Null
-        assert t_litb == T_Undefined
-        return env0.with_type_test(ex, 'is a', t_lita | t_litb | T_not_passed, asserting)
+# 1411 obsoleted:
+#     elif p == r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL} or not supplied":
+#         [ex, lita, litb] = children
+#         (t_lita, env1) = tc_expr(lita, env0); assert env1 is env0
+#         (t_litb, env1) = tc_expr(litb, env0); assert env1 is env0
+#         assert t_lita == T_Null
+#         assert t_litb == T_Undefined
+#         return env0.with_type_test(ex, 'is a', t_lita | t_litb | T_not_passed, asserting)
 
-    elif p == r"{CONDITION_1} : {EX} is not present, or is either {LITERAL} or {LITERAL}":
-        [ex, lita, litb] = children
-        (t_lita, env1) = tc_expr(lita, env0); assert env1 is env0
-        (t_litb, env1) = tc_expr(litb, env0); assert env1 is env0
-        assert t_lita == T_Undefined
-        assert t_litb == T_Null
-        return env0.with_type_test(ex, 'is a', T_not_passed | t_lita | t_litb, asserting)
+# 1411 obsoleted:
+#    elif p == r"{CONDITION_1} : {EX} is not present, or is either {LITERAL} or {LITERAL}":
+#        [ex, lita, litb] = children
+#        (t_lita, env1) = tc_expr(lita, env0); assert env1 is env0
+#        (t_litb, env1) = tc_expr(litb, env0); assert env1 is env0
+#        assert t_lita == T_Undefined
+#        assert t_litb == T_Null
+#        return env0.with_type_test(ex, 'is a', T_not_passed | t_lita | t_litb, asserting)
 
     elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}':
         [exa, exb, lit] = children
@@ -7244,9 +7247,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(x, T_Integer_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : no arguments were passed to this function invocation":
-        [] = children
-        return (env0, env0)
+# 1411 obsoleted:
+#    elif p == r"{CONDITION_1} : no arguments were passed to this function invocation":
+#        [] = children
+#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {EX} is neither {LITERAL} nor the active function":
         [ex, lit] = children
