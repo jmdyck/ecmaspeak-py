@@ -3759,6 +3759,28 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         result = env0
 
+    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
+        [var, emu_xref, goal_nont, contained_nont, foal_nont2, var2, var3, lita, litb] = children
+        assert var.children == var2.children
+        assert var.children == var3.children
+        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        env0.assert_expr_is_of_type(lita, T_Boolean)
+        env0.assert_expr_is_of_type(litb, T_Boolean)
+        proc_add_return(env0, T_Boolean, lita)
+        proc_add_return(env0, T_Boolean, litb)
+        result = None
+
+    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
+        [var, emu_xref, goal_nont, var2, var3, lita, litb] = children
+        assert var.children == var2.children
+        assert var.children == var3.children
+        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        env0.assert_expr_is_of_type(lita, T_Boolean)
+        env0.assert_expr_is_of_type(litb, T_Boolean)
+        proc_add_return(env0, T_Boolean, lita)
+        proc_add_return(env0, T_Boolean, litb)
+        result = None
+
     # ----------------------------------
     # IF stuff
 
@@ -7401,6 +7423,19 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {EX} does not contain {starred_str}":
         [ex, starred_str] = children
         env0.assert_expr_is_of_type(ex, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once":
+        [noi, *bw_] = children
+        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+        for bw in bw_:
+            assert len(bw.source_text()) == 3 # single-character 'words'
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}":
+        [noi, bw] = children
+        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+        assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":

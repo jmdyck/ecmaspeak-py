@@ -80,8 +80,6 @@
     {LOCAL_REF} is not present
     {LOCAL_REF} is present
     {LOCAL_REF} is {h_emu_grammar}
-    {NAMED_OPERATION_INVOCATION} cannot be recognized using the goal symbol {nonterminal} of the ECMAScript RegExp grammar specified in {h_emu_xref}
-    {NAMED_OPERATION_INVOCATION} contains any code points other than `g`, `i`, `m`, `s`, `u`, or `y`, or if it contains the same code point more than once
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}
@@ -100,6 +98,10 @@
     {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
 
     {var} &ge; 2<sup>32</sup> - 1
+
+    # obsoleted by the merge of PR #1464:
+    # {NAMED_OPERATION_INVOCATION} cannot be recognized using the goal symbol {nonterminal} of the ECMAScript RegExp grammar specified in {h_emu_xref}
+    # {NAMED_OPERATION_INVOCATION} contains any code points other than `g`, `i`, `m`, `s`, `u`, or `y`, or if it contains the same code point more than once
 
     # obsoleted by the merge of PR #1724:
     # {NAMED_OPERATION_INVOCATION} contains any code points other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"`, or if it contains the same code point more than once
