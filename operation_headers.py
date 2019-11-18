@@ -308,7 +308,8 @@ def each_replacement_for_section(s):
                     p_end_i = i
                     break
 
-        if p_start_i == p_end_i:
+        n_children_in_preamble = p_end_i - p_start_i
+        if n_children_in_preamble == 0:
             # No preamble
             algo = s.block_children[p_end_i]
             r_start_posn = algo.start_posn
@@ -318,6 +319,9 @@ def each_replacement_for_section(s):
             extra = '\n' + indentation
             preamble_text = ''
         else:
+            if False and n_children_in_preamble > 1:
+                print('-', n_children_in_preamble, s.section_num, s.section_title)
+
             preamble_children = s.block_children[p_start_i:p_end_i]
             r_start_posn = preamble_children[0].start_posn
             r_end_posn   = preamble_children[-1].end_posn
