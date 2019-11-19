@@ -841,13 +841,26 @@ class Header:
                     ]:
                         depend_on(x.children[0])
                     elif x.prod.rhs_s in [
-                        'evaluating {LOCAL_REF}',
-                        'evaluating {LOCAL_REF} with argument {var}',
                         'evaluating {LOCAL_REF}. This may be of type Reference',
                         'evaluating {nonterminal} {var}',
                     ]:
                         depend_on('Evaluation')
-                    elif x.prod.rhs_s == "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+                    elif x.prod.rhs_s == 'evaluating {LOCAL_REF}':
+                        [local_ref] = x.children
+                        if local_ref.source_text() in [
+                            '|NonemptyClassRanges|',
+                            '|ClassAtom|',
+                            '|ClassAtomNoDash|',
+                            '|ClassEscape|',
+                            '|CharacterClassEscape|',
+                        ]:
+                            depend_on('regexp-Evaluate')
+                        else:
+                            depend_on('Evaluation')
+                    elif x.prod.rhs_s in [
+                        'evaluating {LOCAL_REF} with argument {var}',
+                        "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters",
+                    ]:
                         depend_on('regexp-Evaluate')
                     elif x.prod.rhs_s in [
                         'the {ISDO_NAME} of {PROD_REF}',
@@ -904,6 +917,9 @@ class Header:
                     else:
                         print(x.prod.rhs_s, x.source_text())
                         assert 0
+
+                elif x.prod.lhs_s == '{COMMAND}' and x.prod.rhs_s.startswith('Evaluate {PROD_REF}'):
+                    depend_on('regexp-Evaluate')
 
                 elif x.prod.lhs_s == '{ISDO_NAME}':
                     depend_on(x.children[0])
