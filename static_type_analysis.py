@@ -12196,7 +12196,7 @@ type_of_internal_thing_ = {
 
     # 5253: NO TABLE, no mention
     'IteratedList'          : ListType(T_Tangible_),
-    'ListIteratorNextIndex' : T_Integer_,
+    'ListNextIndex'         : T_Integer_,
 
     # 8329: Table 30: Internal Slots of ECMAScript Function Objects
     'Environment'      : T_Lexical_Environment,
@@ -12254,7 +12254,7 @@ type_of_internal_thing_ = {
 
     # 30738: Table 46: Internal Slots of String Iterator Instances
     'IteratedString' : T_String,
-    'StringIteratorNextIndex': T_Integer_,
+    'StringNextIndex': T_Integer_,
 
     # 32711: Properties of RegExp Instances NO TABLE
     'RegExpMatcher'  : ProcType([T_String, T_Integer_], T_MatchResult),
@@ -12262,15 +12262,15 @@ type_of_internal_thing_ = {
     'OriginalFlags'  : T_String,
 
     # 34123: Table 48: Internal Slots of Array Iterator Instances
-    'IteratedObject'         : T_Object,
-    'ArrayIteratorNextIndex' : T_Integer_,
-    'ArrayIterationKind'     : T_iteration_result_kind_, # T_String,
+    'IteratedArrayLike'      : T_Object,
+    'ArrayLikeNextIndex'     : T_Integer_,
+    'ArrayLikeIterationKind' : T_iteration_result_kind_, # T_String,
 
     # 35373 + 37350 NO TABLE
     'ByteLength' : T_Integer_,
 
     # 35719: Table 50: Internal Slots of Map Iterator Instances
-    'Map'              : T_Object,
+    'IteratedMap'      : T_Object,
     'MapNextIndex'     : T_Integer_,
     'MapIterationKind' : T_iteration_result_kind_, # T_String,
 
