@@ -327,6 +327,7 @@
     own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation
     own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation
     own property key {var} of {var} that is an array index, in ascending numeric index order
+    own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
     string {var} in {var}
     {nonterminal} {var} in order from {var}
@@ -1662,12 +1663,11 @@
     ({NUM_EXPR})
     msPerDay
     msPerMinute
-    the MV of {PROD_REF}
     {BASE}<sup>{NUM_EXPR}</sup>
     {BASE}<sup>{NUM_LITERAL}</sup>
     {BASE}<sup>{var}</sup>
     {NUM_LITERAL}
-    {PREFIX_PAREN}
+    {PP_NAMED_OPERATION_INVOCATION}
     {SETTABLE}
     {math_r}({var})
 

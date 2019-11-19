@@ -4122,6 +4122,12 @@ def tc_nonvalue(anode, env0):
         # ------------------------
         # property keys of an object:
 
+        elif each_thing.prod.rhs_s == r"own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order":
+            [loop_var, obj_var, lo_var] = each_thing.children
+            env0.assert_expr_is_of_type(obj_var, T_Object)
+            env0.assert_expr_is_of_type(lo_var, T_Number)
+            env_for_commands = env0.plus_new_entry(loop_var, T_String)
+
         elif each_thing.prod.rhs_s in [
             r"own property key {var} of {var} that is an array index, in ascending numeric index order",
             r"own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation",
@@ -7645,7 +7651,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{FACTOR} : ({SUM})",
         r"{FACTOR} : {NAMED_OPERATION_INVOCATION}",
         r"{FACTOR} : {NUM_LITERAL}",
-        r"{FACTOR} : {PREFIX_PAREN}",
+        r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{FACTOR} : {SETTABLE}",
         r"{LITERAL} : {code_unit_lit}",
         r"{LITERAL} : {NUM_LITERAL}",
@@ -7972,9 +7978,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [lhs, rhs] = children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
 
-    elif p == r"{FACTOR} : the MV of {PROD_REF}":
-        [prod_ref] = children
-        return tc_sdo_invocation('MV', prod_ref, [], expr, env0)
 
     # ------
 
