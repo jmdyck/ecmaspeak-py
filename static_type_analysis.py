@@ -8565,21 +8565,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_Integer_)
         return (T_Number, env1)
 
-    elif p in [
-        r"{EXPR} : the Number value for ({SUM})",
-        r"{EXPR} : the Number value for {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the Number value for {var} (as specified in {h_emu_xref})",
-        r"{EX} : the Number value for {PRODUCT}",
-    ]:
-        sub = children[0]
-        (sub_t, env1) = tc_expr(sub, env0); assert env1 is env0
-        result_t = T_Integer_ if sub_t.is_a_subtype_of_or_equal_to(T_MathInteger_) else T_Number
-        return (result_t, env0)
-
-    elif p == r"{EXPR} : the Number value for {var}":
+    elif p == r"{EX} : the Number value for {EX}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_MathReal_)
-        return (T_Number, env0)
+        (var_t, env1) = tc_expr(var, env0); assert env1 is env0
+        result_t = T_Integer_ if var_t.is_a_subtype_of_or_equal_to(T_MathInteger_) else T_Number
+        return (result_t, env0)
 
     elif p in [
         r"{EXPR} : the number value that is the same sign as {var} and whose magnitude is {EX}",

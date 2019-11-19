@@ -1059,9 +1059,6 @@
     the Matcher that is {EXPR}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number that is the time value (UTC) identifying the current time
-    the Number value for ({SUM})
-    the Number value for {PP_NAMED_OPERATION_INVOCATION}
-    the Number value for {var}
     the Number value that corresponds to {var}
     the Number value that is the same sign as {var} and whose magnitude is {EX}
     the Number value that results from rounding {EX} as described below
@@ -1347,7 +1344,7 @@
     the *this* value
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List (see {h_emu_xref})
-    the Number value for {PRODUCT}
+    the Number value for {EX}
     the String {var}
     the base value component of {var}
     the code unit at index {EX} within {EX}
