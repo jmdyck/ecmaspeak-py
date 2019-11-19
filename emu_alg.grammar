@@ -297,6 +297,7 @@
     Cyclic Module Record {var} in {var}
     ExportEntry Record {var} in {EX}
     ImportEntry Record {var} in {EX}
+    Parse Node {var} in {var}
     ReadSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})
     Record { {DSBN}, {DSBN} } {var} in {var}
     Record { {DSBN}, {DSBN} } {var} that is an element of {var}
@@ -306,6 +307,7 @@
     String {var} in {var}, in list order
     String {var} that is an element of {EX}
     character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
+    child node {var} of this Parse Node
     code point {var} in {var}
     element {var} in {var}
     element {var} of {EX}
@@ -325,10 +327,8 @@
     own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation
     own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation
     own property key {var} of {var} that is an array index, in ascending numeric index order
-    Parse Node {var} in {var}
     property of the Global Object specified in clause {h_emu_xref}
     string {var} in {var}
-    child node {var} of this Parse Node
     {nonterminal} {var} in order from {var}
     {nonterminal} {var} in {var}
     {nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})
