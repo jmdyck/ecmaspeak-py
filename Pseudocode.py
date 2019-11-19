@@ -509,8 +509,17 @@ def analyze_built_in_section(section):
     else:
         assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
         # It's an odd combination of the emu-algs in the clause.
-        # XXX SortCompare
-        # XXX handle_function(...)
+        # The first emu-alg is at least the *start* of the full algorithm.
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        handle_function(section.section_kind, prop_path, emu_alg)
+
+        if prop_path == '%TypedArray%.prototype.sort':
+            assert n_emu_algs == 2
+            # The second emu-alg defines the TypedArray SortCompare.
+            emu_alg_posn = section.bcen_list.index('emu-alg', emu_alg_posn+1)
+            emu_alg = section.block_children[emu_alg_posn]
+            handle_function('abstract_operation', 'TypedArray SortCompare', emu_alg)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
