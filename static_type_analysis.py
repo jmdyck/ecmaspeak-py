@@ -7747,6 +7747,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             if 'Mode' in spec.text[expr.start_posn-20:expr.start_posn]:
                 return (T_this_mode, env0)
             else:
+                assert 0 # since PR #1652 was merged
                 return (T_AssignmentTargetType_, env0)
 
         elif chars == 'lexical':
