@@ -420,6 +420,7 @@
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1}
+    {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
@@ -679,7 +680,6 @@
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a WriteSharedMemory event
     {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    {var} is a nonnegative integer
     {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, the step 3.g above
     {var} is a possibly empty List of Strings
@@ -711,11 +711,7 @@
     {var} is an instance of a nonterminal
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
-    {var} is an integer Number &ge; 0
-    {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
     {var} is an integer index &le; {var}
-    {var} is an integer such that {CONDITION_1}
-    {var} is an integer value &ge; 0
     {var} is an ordinary, extensible object with no non-configurable properties
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is an? {PROPERTY_KIND} property
@@ -796,6 +792,13 @@
 
     # obsoleted by the merge of PR #1546:
     # {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+
+    # obsoleted by the merge of PR #1567:
+    # {CONDITION_1} : {var} is a nonnegative integer
+    # {CONDITION_1} : {var} is an integer Number &ge; 0
+    # {CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
+    # {CONDITION_1} : {var} is an integer such that {CONDITION_1}
+    # {CONDITION_1} : {var} is an integer value &ge; 0
 
     # obsoleted by the merge of PR #1614:
     # the {DSBN} fields of {var} and {var} are the Boolean negation of each other

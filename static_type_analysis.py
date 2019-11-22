@@ -5042,6 +5042,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
     ]:
         logical = ('or', children)
         return tc_logical(logical, env0, asserting)
@@ -5327,10 +5328,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_function_object_, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is an integer value &ge; 0':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
-
     elif p == r'{CONDITION_1} : {var}, {var}, and {var} are integer values &ge; 0':
         [vara, varb, varc] = children
         (a_t_env, a_f_env) = env0.with_type_test(vara, 'is a', T_Integer_, asserting)
@@ -5465,13 +5462,18 @@ def tc_cond_(cond, env0, asserting):
         assert ex.is_a('{DOTTING}')
         return env0.with_type_test(ex, 'is a', T_not_in_record, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is an integer Number &ge; 0":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}":
-        [var, lita, litb] = children
-        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+# PR 1567 obsoleted:
+#    elif p == r'{CONDITION_1} : {var} is an integer value &ge; 0':
+#        [var] = children
+#        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+#
+#    elif p == r"{CONDITION_1} : {var} is an integer Number &ge; 0":
+#        [var] = children
+#        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+#
+#    elif p == r"{CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}":
+#        [var, lita, litb] = children
+#        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
 
     elif p in [
         r'{CONDITION_1} : {EXPR} is an object',
@@ -5830,6 +5832,8 @@ def tc_cond_(cond, env0, asserting):
                 t = T_String | T_Symbol
             elif callee_op_name == 'IsInteger':
                 t = T_Integer_
+            elif callee_op_name == 'IsNonNegativeInteger':
+                t = T_Integer_
             else:
                 t = None
             #
@@ -6024,20 +6028,21 @@ def tc_cond_(cond, env0, asserting):
         assert lit.source_text() == '*"ambiguous"*'
         return env0.with_type_test(var, 'is a', T_String | T_Module_Record, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is an integer such that {CONDITION_1}':
-        [var, cond] = children
-        (t_env, f_env) = tc_cond(cond, env0)
-        return (
-            t_env.with_expr_type_narrowed(var, T_Integer_),
-            t_env
-        )
-
-    elif p == r"{CONDITION_1} : {var} is a nonnegative integer":
-        [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_Integer_),
-            env0
-        )
+# PR 1567 obsoleted:
+#    elif p == r'{CONDITION_1} : {var} is an integer such that {CONDITION_1}':
+#        [var, cond] = children
+#        (t_env, f_env) = tc_cond(cond, env0)
+#        return (
+#            t_env.with_expr_type_narrowed(var, T_Integer_),
+#            t_env
+#        )
+#
+#    elif p == r"{CONDITION_1} : {var} is a nonnegative integer":
+#        [var] = children
+#        return (
+#            env0.with_expr_type_narrowed(var, T_Integer_),
+#            env0
+#        )
 
     elif p == r'{CONDITION_1} : {var} has an? {DSBN} internal method':
         [var, dsbn] = children
