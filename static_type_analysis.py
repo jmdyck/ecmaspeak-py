@@ -548,8 +548,24 @@ class Operation:
             self.return_type = union_of_types(return_types)
 
     def find_dependencies(self, dep_graph):
-        for header in self.headers:
-            header.find_dependencies(dep_graph)
+        if self.kind in [
+            'function_property',
+            'anonymous_built_in_function',
+            'CallConstruct',
+            'function_property_overload',
+            'CallConstruct_overload',
+            'accessor property',
+        ]:
+            d = spec.info_for_bif_named_
+        else:
+            d = spec.info_for_op_named_
+
+        dep_graph.add_vertex(self.name)
+
+        foo_info = d['Set' if self.name == 'built-in Set' else self.name]
+        for callee in sorted(foo_info.callees):
+            if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
+            dep_graph.add_arc(self.name, callee)
 
 # ------------------------------------------------------------------------------
 
@@ -764,190 +780,6 @@ class Header:
         self.defns.append((discriminator,tree))
 
     # ------------------------------------------------------
-
-    def find_dependencies(self, dep_graph):
-
-        if len(self.defns) == 0:
-            if self.name.startswith('Host') or self.name == 'LocalTZA':
-                # makes sense that there's no defns
-                pass
-            elif self.name in [
-                'ToBoolean',
-                'ToNumber',
-                'ToObject',
-                'ToPrimitive',
-                'ToString',
-                'RequireObjectCoercible',
-            ]:
-                # defined by table, not handling that yet XXX
-                pass
-            elif self.name == 'CreateImmutableBinding' and self.for_param_type == T_object_Environment_Record:
-                # no alg
-                pass
-            elif self.name == 'DeleteBinding' and self.for_param_type == T_module_Environment_Record:
-                # pointless alg
-                pass
-            elif self.kind == 'numeric_method':
-                # PR 1515: some methods don't have an algorithmic definition
-                pass
-            elif self.name == 'StringToBigInt':
-                # no explicit alg, "Apply another algorithm with changes."
-                pass
-            else:
-                assert 0, self.name
-                # HasCallInTailPosition
-
-        assert isinstance(self.name, str)
-        dep_graph.add_vertex(self.name)
-
-        def recurse(x):
-            if isinstance(x, ANode):
-                if x.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
-                    if x.prod.rhs_s == 'Abstract Equality Comparison {var} == {var}':
-                        depend_on('Abstract Equality Comparison')
-                    elif x.prod.rhs_s in [
-                        'Abstract Relational Comparison {var} &lt; {var}',
-                        'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}',
-                    ]:
-                        depend_on('Abstract Relational Comparison')
-                    elif x.prod.rhs_s == 'EvaluateBody of the parsed code that is {DOTTING} {WITH_ARGS}':
-                        depend_on('EvaluateBody')
-                    elif x.prod.rhs_s == 'Strict Equality Comparison {var} === {EX}':
-                        depend_on('Strict Equality Comparison')
-                    elif x.prod.rhs_s in [
-                        'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments',
-                    ]:
-                        pass
-                    elif x.prod.rhs_s in [
-                        'the UTF16Encoding of the code points of {var}',
-                        'the UTF16Encoding of each code point of {EX}',
-                        'the UTF16Encoding of each code point of {NAMED_OPERATION_INVOCATION}',
-                    ]:
-                        depend_on('UTF16Encoding')
-                    elif x.prod.rhs_s in [
-                        '{LOCAL_REF} Contains {nonterminal}',
-                        '{LOCAL_REF} Contains {var}',
-                    ]:
-                        depend_on('Contains')
-                    elif x.prod.rhs_s in [
-                        'the {cap_word} of {LOCAL_REF}',
-                        'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
-                        'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
-                        'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                        'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
-                        '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
-                        '{cap_word} of {LOCAL_REF}',
-                        '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                    ]:
-                        depend_on(x.children[0])
-                    elif x.prod.rhs_s in [
-                        'evaluating {LOCAL_REF}. This may be of type Reference',
-                        'evaluating {nonterminal} {var}',
-                    ]:
-                        depend_on('Evaluation')
-                    elif x.prod.rhs_s == 'evaluating {LOCAL_REF}':
-                        [local_ref] = x.children
-                        if local_ref.source_text() in [
-                            '|NonemptyClassRanges|',
-                            '|ClassAtom|',
-                            '|ClassAtomNoDash|',
-                            '|ClassEscape|',
-                            '|CharacterClassEscape|',
-                        ]:
-                            depend_on('regexp-Evaluate')
-                        else:
-                            depend_on('Evaluation')
-                    elif x.prod.rhs_s in [
-                        'evaluating {LOCAL_REF} with argument {var}',
-                        "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters",
-                    ]:
-                        depend_on('regexp-Evaluate')
-                    elif x.prod.rhs_s in [
-                        'the {ISDO_NAME} of {PROD_REF}',
-                        '{ISDO_NAME} of {PROD_REF}',
-                        '{PREFIX_PAREN}',
-                    ]:
-                        pass # handle deeper
-                    else:
-                        assert 0, x.prod
-
-                elif x.prod.lhs_s == '{OPN_BEFORE_PAREN}':
-                    if x.prod.rhs_s in [
-                        'ForIn/OfBodyEvaluation',
-                        'ForIn/OfHeadEvaluation',
-                        'abs',
-                        'floor',
-                        'max',
-                        'min',
-                        'msFromTime',
-                        'thisBooleanValue',
-                        'thisNumberValue',
-                        'thisStringValue',
-                        'thisSymbolValue',
-                        'thisTimeValue',
-                        'thisBigIntValue', # PR 1515 BigInt
-                    ]:
-                        depend_on(x.prod.rhs_s)
-                    elif x.prod.rhs_s == '{DOTTING}':
-                        [dotting] = x.children
-                        assert dotting.prod.lhs_s == '{DOTTING}'
-                        [base, dsbn] = dotting.children
-                        assert dsbn.prod.lhs_s == '{DSBN}'
-                        depend_on(dsbn.source_text())
-                    elif x.prod.rhs_s == '{cap_word}':
-                        depend_on(x.children[0])
-                    elif x.prod.rhs_s == '{var}':
-                        # Difficult to make a specific dependency.
-                        pass
-                    elif x.prod.rhs_s == '{var}.{cap_word}':
-                        depend_on(x.children[1])
-
-#                    elif x.prod.rhs_s == 'Atomics.load':
-#                        depend_on('Atomics.load')
-#                    elif x.prod.rhs_s == '{SAB_FUNCTION}':
-#                        depend_on('reads-bytes-from')
-#                    elif x.prod.rhs_s == '(HasPrimitiveBase)':
-#                        depend_on(x.children[0])
-
-                    # PR 1515 BigInt:
-                    elif x.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-                        [nti, lw] = x.children
-                        depend_on(lw.source_text())
-
-                    else:
-                        print(x.prod.rhs_s, x.source_text())
-                        assert 0
-
-                elif x.prod.lhs_s == '{COMMAND}' and x.prod.rhs_s.startswith('Evaluate {PROD_REF}'):
-                    depend_on('regexp-Evaluate')
-
-                elif x.prod.lhs_s == '{ISDO_NAME}':
-                    depend_on(x.children[0])
-
-                for child in x.children:
-                    recurse(child)
-
-            elif isinstance(x, str):
-                pass
-
-            else:
-                assert 0, x
-
-        def depend_on(called_op):
-            if isinstance(called_op, ANode):
-                assert called_op.prod.lhs_s == '{cap_word}'
-                called_op = called_op.source_text()
-
-            caller_op_name = self.name
-
-            assert isinstance(caller_op_name, str)
-            assert isinstance(called_op, str)
-            dep_graph.add_arc(caller_op_name, called_op)
-
-        for (discriminator,tree) in self.defns:
-            recurse(tree)
-
-    # ----------------------------------------------------------------
 
     def make_env(self):
         e = Env()
