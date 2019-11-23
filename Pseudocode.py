@@ -1180,6 +1180,12 @@ def annotate_algo(algo):
             op_names = ['ReturnIfAbrupt']
             args = [d.children[0]]
 
+        elif d.prod.lhs_s == '{COMMAND}' and d.prod.rhs_s.startswith('Evaluate {PROD_REF}'):
+            op_names = ['regexp-Evaluate']
+            args = [d.children[0]]
+            if d.prod.rhs_s.startswith('Evaluate {PROD_REF} with'):
+                args.append(d.children[1])
+
         if op_names is not None:
             d._op_invocation = (op_names, args)
 
@@ -1634,7 +1640,7 @@ def analyze_sdo_coverage_info():
                     nts = []
 
                 else:
-                    assert 0
+                    assert 0, (u_lhs, opcall.source_text())
 
                 if nts:
                     for nt in nts:
