@@ -695,7 +695,7 @@ def analyze_other_section(section):
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
-            handle_solo_op('initialize_unscopables', emu_alg)
+            handle_solo_op('initializer for @@unscopables', emu_alg)
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
             assert n_emu_algs == 1
@@ -1166,7 +1166,7 @@ def annotate_algo(algo):
             args = [] # XXX
 
         elif str(d.prod) == '{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}':
-            op_names = [ 'CreateBuiltinFunction', 'initialize_unscopables']
+            op_names = [ 'CreateBuiltinFunction', 'initializer for @@unscopables']
             args = [] # XXX
 
         elif str(d.prod) == '{COMMAND} : IfAbruptRejectPromise({var}, {var}).':
