@@ -224,6 +224,15 @@ def each_replacement_for_section(s):
 
         t = child.inner_source_text()
         for x in [
+            'Context-free grammars are not sufficiently powerful', # 5.2.4 Static Seantics
+            'Static Semantic Rules have names and typically are defined',
+
+            'The `*` |MultiplicativeOperator| performs multiplication', # 6.1.6.1.4
+            'The `+` operator performs addition',                       # 6.1.6.1.7
+            'Addition is a commutative operation',
+            'The `-` operator performs subtraction',                    # 6.1.6.1.8
+            # 'The result of `-` operator is then',
+
             'The implementation of',                        # 15.2.1.17 Runtime Semantics: HostResolveImportedModule
 
             'An implementation of Host',                    # 16.1 HostReportErrors
@@ -319,10 +328,16 @@ def each_replacement_for_section(s):
             extra = '\n' + indentation
             preamble_text = ''
         else:
-            if False and n_children_in_preamble > 1:
-                print('-', n_children_in_preamble, s.section_num, s.section_title)
-
             preamble_children = s.block_children[p_start_i:p_end_i]
+
+            if False and n_children_in_preamble > 1:
+                print()
+                print('--------', s.section_num, s.section_title)
+                print(f"{n_children_in_preamble} children in preamble:")
+                for c in preamble_children:
+                    print(c.source_text())
+
+
             r_start_posn = preamble_children[0].start_posn
             r_end_posn   = preamble_children[-1].end_posn
             (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
