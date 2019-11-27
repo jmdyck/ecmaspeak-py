@@ -2016,7 +2016,7 @@ class OperationInfo:
 
     def eoh_text(self):
         sio = io.StringIO()
-        def p(s, end='\n'): print(s, end=end, file=sio)
+        def p(s): print(s, file=sio)
 
         p("<emu-operation-header>")
         p("  op kind: " + self.kind)
@@ -2063,9 +2063,9 @@ class OperationInfo:
         if self.description:
             p("  description: " + self.description)
 
-        p("</emu-operation-header>", end='')
+        p("</emu-operation-header>")
 
-        return sio.getvalue()
+        return sio.getvalue().rstrip()
 
 def resolve_oi(hoi, poi):
     if poi is None:
