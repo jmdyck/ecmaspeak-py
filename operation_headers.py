@@ -24,21 +24,76 @@ shared.register_output_dir(sys.argv[1])
 
 def main():
     spec.restore()
+    add_line_info()
 
     stderr("collecting info...")
     convert_nature_init()
 
-    replacements = []
     for s in spec.doc_node.each_descendant_that_is_a_section():
-        for replacement in each_replacement_for_section(s):
-            replacements.append(replacement)
+        create_operation_info_for_section(s)
 
-    stderr("write_spec_w_replacements...")
-    shared.write_spec_with_replacements('spec_w_eoh', replacements)
+    write_spec_with_eoh()
 
     stderr("done!")
 
-def each_replacement_for_section(s):
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def add_line_info():
+    # This (or something like it) should maybe be pushed down to shared.py
+    # and used earlier/more.
+    stderr('add_line_info ...')
+    ln = 0
+    spec.info_for_line_ = [None] # "line #0"
+    for mo in re.finditer('(?m)^( *).*$', spec.text):
+        (s,e) = mo.span()
+
+        # If `spec.text` ends with a newline,
+        # then the pattern will match immediately after that newline,
+        # but we don't want a line for that.
+        if s == e and s == len(spec.text):
+            break
+
+        i = len(mo.group(1))
+        ln += 1
+        spec.info_for_line_.append(LineInfo(ln, s, e, i))
+
+class LineInfo:
+    def __init__(self, line_num, start_posn, end_posn, indentation):
+        self.line_num = line_num
+        self.start_posn = start_posn
+        self.end_posn = end_posn
+        self.indentation = indentation
+        self.suppress = False
+        self.afters = []
+
+def write_spec_with_eoh():
+    stderr("write_spec_with_eoh ...")
+
+    f = shared.open_for_output('spec_w_eoh')
+
+    for line_info in spec.info_for_line_[1:]:
+        if not line_info.suppress:
+            print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
+
+        if line_info.afters:
+            if line_info.indentation == 0:
+                # somewhat kludgey
+                indentation = spec.info_for_line_[line_info.line_num-1].indentation
+            else:
+                indentation = line_info.indentation
+
+            ind = ' ' * indentation
+
+            for after_thing in line_info.afters:
+                for line in after_thing(ind):
+                    print(line, file=f)
+
+    f.close()
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def create_operation_info_for_section(s):
+
     # There are a few cases where a section contains <emu-alg> elements,
     # but we don't want to create emu-operation-header elements for any of them,
     # because we can't really apply STA to them.
@@ -70,23 +125,9 @@ def each_replacement_for_section(s):
         something_sdo(s)
 
     elif s.section_num == 'C':
-        posn_to_insert_at = s.end_posn
+        (ln, _) = shared.convert_posn_to_linecol(s.end_posn)
 
-        insertion =  ( ''
-            + '\n\n<emu-annex id="sec-headers-for-sdos">'
-            + '\n  <h1>Headers for Syntax-Directed Operations</h1>'
-            + '\n  <p>blah</p>'
-        )
-        for (_, oi) in sorted(oi_for_sdo_.items()):
-            insertion += \
-                '\n  ' + oi.eoh_text().replace('\n', '\n  ')
-        insertion += '\n</emu-annex>'
-
-        yield (
-            posn_to_insert_at,
-            posn_to_insert_at,
-            insertion
-        )
+        spec.info_for_line_[ln].afters.append(AnnexForSDOs)
 
     # ------------------------------------------------------
 
@@ -320,12 +361,11 @@ def each_replacement_for_section(s):
         n_children_in_preamble = p_end_i - p_start_i
         if n_children_in_preamble == 0:
             # No preamble
+            # So no lines to suppress when writing spec_w_eoh.
+            lns_to_suppress = []
             algo = s.block_children[p_end_i]
-            r_start_posn = algo.start_posn
-            r_end_posn   = algo.start_posn
-            (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
-            indentation = ' ' * (col_num-1)
-            extra = '\n' + indentation
+            (algo_start_ln, _) = shared.convert_posn_to_linecol(algo.start_posn)
+            op_info_ln = algo_start_ln - 1
             preamble_text = ''
         else:
             preamble_children = s.block_children[p_start_i:p_end_i]
@@ -340,13 +380,16 @@ def each_replacement_for_section(s):
 
             r_start_posn = preamble_children[0].start_posn
             r_end_posn   = preamble_children[-1].end_posn
-            (_, col_num) = shared.convert_posn_to_linecol(r_start_posn)
-            indentation = ' ' * (col_num-1)
+            (r_start_ln, _) = shared.convert_posn_to_linecol(r_start_posn)
+            (r_end_ln,   _) = shared.convert_posn_to_linecol(r_end_posn)
+            lns_to_suppress = range(r_start_ln, r_end_ln+1)
+
+            op_info_ln = r_start_ln
+
             preamble_text = ' '.join(
                 child.inner_source_text()
                 for child in preamble_children
             )
-            extra = ''
 
         if (
             span_start_i == 0 and not (
@@ -409,9 +452,13 @@ def each_replacement_for_section(s):
             continue # XXX
 
         else:
+            # 5 cases
             # print('374', op_kind, s.section_num, s.section_title)
             continue
             # assert 0, op_kind
+
+        # ------------------------------------------------------------------
+        # Okay, so at this point we're finally committed to creating an eoh.
 
         if 0:
             def each_piece_of_preamble_thing():
@@ -431,11 +478,10 @@ def each_replacement_for_section(s):
             if p_start_i != span_start_i or p_end_i != span_end_i:
                 print(preamble_thing.ljust(30), s.section_kind, s.section_num, s.section_title)
 
-        yield (
-            r_start_posn,
-            r_end_posn, 
-            oi.eoh_text().replace('\n', '\n'+indentation) + extra
-        )
+        for ln in lns_to_suppress:
+            spec.info_for_line_[ln].suppress = True
+
+        spec.info_for_line_[op_info_ln].afters.append(oi.eoh_lines)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -506,6 +552,16 @@ def declare_sdo(op_name, param_dict, also=[]):
         assert pre_oi.also == oi.also
     else:
         oi_for_sdo_[op_name] = oi
+
+def AnnexForSDOs(ind):
+    yield ''
+    yield '<emu-annex id="sec-headers-for-sdos">'
+    yield '  <h1>Headers for Syntax-Directed Operations</h1>'
+    yield '  <p>blah</p>'
+    for (_, oi) in sorted(oi_for_sdo_.items()):
+        for line in oi.eoh_lines('  '):
+            yield line
+    yield '</emu-annex>'
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2014,9 +2070,9 @@ class OperationInfo:
         self.returns_abrupt = None
         self.description = None
 
-    def eoh_text(self):
-        sio = io.StringIO()
-        def p(s): print(s, file=sio)
+    def eoh_lines(self, ind):
+        lines = []
+        def p(s): lines.append(ind + s)
 
         p("<emu-operation-header>")
         p("  op kind: " + self.kind)
@@ -2065,7 +2121,7 @@ class OperationInfo:
 
         p("</emu-operation-header>")
 
-        return sio.getvalue().rstrip()
+        return lines
 
 def resolve_oi(hoi, poi):
     if poi is None:
