@@ -2016,7 +2016,7 @@ class OperationInfo:
 
     def eoh_text(self):
         sio = io.StringIO()
-        def p(*a, end='\n'): print(*a, end=end, file=sio)
+        def p(s, end='\n'): print(s, end=end, file=sio)
 
         p("<emu-operation-header>")
         p("  op kind: " + self.kind)
@@ -2057,11 +2057,11 @@ class OperationInfo:
                 p("    - %s : %s" % (var_name.ljust(maxwidth), expl))
 
         p("  returns:")
-        p("    - normal :", convert_nature_to_typ(self.returns_normal or 'TBD'))
-        p("    - abrupt :", convert_nature_to_typ(self.returns_abrupt or 'TBD'))
+        p("    - normal : " + convert_nature_to_typ(self.returns_normal or 'TBD'))
+        p("    - abrupt : " + convert_nature_to_typ(self.returns_abrupt or 'TBD'))
 
         if self.description:
-            p("  description:", self.description)
+            p("  description: " + self.description)
 
         p("</emu-operation-header>", end='')
 
