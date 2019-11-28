@@ -457,13 +457,47 @@ def analyze_other_op_section(section):
             handle_solo_op(op_name, emu_alg)
 
         elif section.section_kind in [
+            'numeric_method',
             'env_rec_method',
             'module_rec_method',
             'internal_method',
-            'numeric_method',
         ]:
             # type-discriminated operation
-            discriminator = None # XXX get the discriminator!
+            discriminator = {
+                # numeric_method:
+                'The Number Type': 'Number',
+                'The BigInt Type': 'BigInt',
+
+                # env_rec_method:
+                'Declarative Environment Records' : 'declarative Environment Record',
+                'Object Environment Records'      : 'object Environment Record',
+                'Function Environment Records'    : 'function Environment Record',
+                'Global Environment Records'      : 'global Environment Record',
+                'Module Environment Records'      : 'module Environment Record',
+
+                # module_rec_method:
+                'Cyclic Module Records'           : 'Cyclic Module Record',
+                'Source Text Module Records'      : 'Source Text Module Record',
+
+                # internal_method:
+                'Ordinary Object Internal Methods and Internal Slots': 'ordinary object',
+                'ECMAScript Function Objects'       : 'ECMAScript function object',
+                'Built-in Function Objects'         : 'built-in function object',
+                'Bound Function Exotic Objects'     : 'bound function exotic object',
+                'Array Exotic Objects'              : 'Array exotic object',
+                'String Exotic Objects'             : 'String exotic object',
+                'Arguments Exotic Objects'          : 'arguments exotic object',
+                'Integer-Indexed Exotic Objects'    : 'Integer-Indexed exotic object',
+                'Module Namespace Exotic Objects'   : 'module namespace exotic object',
+                'Immutable Prototype Exotic Objects': 'immutable prototype exotic object',
+                'Proxy Object Internal Methods and Internal Slots': 'Proxy exotic object',
+            }[section.parent.section_title]
+
+            if op_name == 'DeleteBinding' and discriminator == 'module Environment Record':
+                # "Assert: This method is never invoked"
+                # So type-checking it will not confirm the signature.
+                return
+
             handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg)
 
         else:
