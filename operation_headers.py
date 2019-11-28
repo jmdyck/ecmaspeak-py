@@ -325,9 +325,14 @@ def create_operation_info_for_section(s):
             'The following version of SortCompare',
                 # 22.2.3.26 %TypedArray%.prototype.sort
 
-            'A <dfn>WaiterList</dfn>',                      # 24.4.1.3 GetWaiterList
-            'The agent cluster has',                        # 24.4.1.3 GetWaiterList
-            'Operations on a WaiterList',                   # 24.4.1.3 GetWaiterList
+            # 22.1.3.34:
+            'The initial value of the @@unscopables data property',
+
+            # 24.4.1.3 GetWaiterList:
+            'A <dfn>WaiterList</dfn>',
+            'Initially a WaiterList object has',            
+            'The agent cluster has',
+            'Each WaiterList has',
 
             'Let `',
                 # 24.4.2 Atomics.add
@@ -423,7 +428,8 @@ def create_operation_info_for_section(s):
                 op_kind = 'abstract_operation'
             elif s.section_title == 'Array.prototype [ @@unscopables ]':
                 op_kind = 'abstract_operation'
-                # if 'unscop' in preamble_text: pdb.set_trace()
+                hoi.name = 'initializer for @@unscopables'
+                hoi.param_names = []
             elif s.section_id in [
                 'sec-regular-expression-patterns-semantics',
                 'sec-initializers-in-forin-statement-heads',
@@ -920,11 +926,6 @@ def get_info_from_ao_preamble(preamble_text):
         oi.description = dfn_element
         return oi
 
-    if preamble_text == 'The initial value of the @@unscopables data property is an object created by the following steps:':
-        oi.name = 'initializer for @@unscopables'
-        oi.param_names = []
-        return oi
-
     # ----------------------------------------------------------------
     # Ascertain the name of the operation.
 
@@ -975,6 +976,11 @@ def get_info_from_ao_preamble(preamble_text):
         # copy param name from one sentence to the next
         ('(In addition) to _x_ and _y_ (the algorithm takes a Boolean flag named _LeftFirst_ as a parameter.) The (flag is used to .+)',
             r'\1 \2 The _LeftFirst_ \3'),
+
+        # 15.2.1.18 HostResolveImportedModule
+        # 15.2.1.19 HostImportModuleDynamically
+        (r'(the Script Record or Module Record) (_referencingScriptOrModule_)\. (\(?\2 may also be \*null\*)',
+            r'\1 or *null* \2. \3'),
 
     ])
 
@@ -1035,7 +1041,7 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
     # and other useful content.
     # We need to disentangle those, and return the non-parameter info.
 
-    # if 'Two code units' in sentence: stderr('epi', sentence)
+    if '_i_ a byte offset' in sentence: stderr('epi', sentence)
 
     for (pattern, r1, r2) in [
 
@@ -1162,10 +1168,11 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
             r'OP is called with Module Record _module_',
             r'\1'),
 
-        # 15.2.1.17 HostResolveImportedModule
-        (r'(OP is .+ to the \|ModuleSpecifier\| String, _specifier_, .+ by) the (Module Record) _referencingModule_.',
-            r'OP is called with a \2 _referencingModule_ and a String _specifier_.',
-            r'\1 _referencingModule_.'),
+        # 15.2.1.18 HostResolveImportedModule
+        # 15.2.1.19 HostImportModuleDynamically
+        (r'(OP is .+ to the \|ModuleSpecifier\| String, _specifier_, .+ by) the (Script Record or Module Record or \*null\*) (_referencingScriptOrModule_)\.',
+            r'OP is called with a \2 \3 and a String _specifier_.',
+            r'\1 \3.'),
 
         # 18.2.6.1.1 Encode
         # 18.2.6.1.2 Decode
@@ -1202,6 +1209,8 @@ def extract_parameter_info_from_ao_preamble(oi, sentence):
         (r'(OP takes a code unit argument _C_) and represents it (as a Unicode escape sequence.)',
             r'\1.',
             r'OP represents _C_ \2'),
+
+        # 23.4.1.3 GetWaiterList
 
         # AllocateTypedArrayBuffer
         (r'OP with arguments _O_ and _length_ (allocates and associates an ArrayBuffer with) the (TypedArray instance) _O_.',
@@ -1527,6 +1536,7 @@ def add_to_description(oi, sentence):
     else:
         oi.description += ' ' + sub_many(sentence, [
             ('^OP ', 'This operation '),
+            (' OP ', ' this operation '),
             (' by performing the following steps:$', '.'),
         ])
 
@@ -1663,6 +1673,7 @@ def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
         poi.overload_resolver = group_dict['X']
 
     preamble_text = re.sub(' +The following steps are taken:$', '', preamble_text)
+    preamble_text = re.sub(' +It performs the following steps:$', '', preamble_text)
 
     # Not sure if I should make this change in the spec:
     # because the preamble has later imperatives.
@@ -2511,6 +2522,7 @@ nature_to_typ = {
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
+    'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
     'a String or Symbol'                                         : 'String | Symbol',
     'a String or Symbol or Private Name'                         : 'String | Symbol | Private Name', # PR 1668
     'property key'                                               : 'String | Symbol',
