@@ -112,7 +112,7 @@
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
     Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.
     Perform an implementation-defined debugging action.
-    Perform an implementation-dependent sequence of calls to the {DSBN} and {DSBN} internal methods of {var}, to the DeletePropertyOrThrow and HasOwnProperty abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
+    Perform an implementation-dependent sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
     Perform any implementation or host environment defined job initialization using {var}.
     Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.
     Perform any necessary implementation-defined initialization of {var}.
@@ -179,6 +179,9 @@
     {IF_OTHER}
     {note}
     {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
+
+    # obsoleted by the merge of PR #1180:
+    # Perform an implementation-dependent sequence of calls to the {DSBN} and {DSBN} internal methods of {var}, to the DeletePropertyOrThrow and HasOwnProperty abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
 
     # obsoleted by the merge of PR #1604:
     # Add 1 to {var}.
@@ -367,10 +370,10 @@
 
 {BULLET_LINE} :
     {B} If an abrupt completion is returned from any of these operations, it is immediately returned as the value of this function.
-    {B} If any {DSBN} call returns {LITERAL} a {ERROR_TYPE} exception is thrown.
     {B} If {var} is not sparse then DeletePropertyOrThrow must not be called.
-    {B} The arguments for calls to SortCompare are values returned by a previous call to the {DSBN} internal method, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
-    {B} The property key argument for each call to {DSBN}, {DSBN}, HasOwnProperty, or DeletePropertyOrThrow is the string representation of a nonnegative integer less than {var}.
+    {B} The `Throw` argument for every call to {h_emu_xref} is {LITERAL}.
+    {B} The arguments for calls to SortCompare are values returned by a previous call to the {cap_word} abstract operation, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
+    {B} The property key argument for each call to {cap_word}, {h_emu_xref}, {cap_word}, or {cap_word} is the string representation of a nonnegative integer less than {var}.
 
     {B} the String representation of {EX}, formatted as a four-digit lowercase hexadecimal number, padded to the left with zeroes if necessary
     {B} the String representation of {EX}, formatted as a four-digit uppercase hexadecimal number, padded to the left with zeroes if necessary
@@ -387,6 +390,11 @@
     {B} {EX} occurrences of {code_unit_lit}
     {B} {LITERAL}
     {B} {var}
+
+    # obsoleted by the merge of PR #1180.
+    # {B} If any {DSBN} call returns {LITERAL} a {ERROR_TYPE} exception is thrown.
+    # {B} The arguments for calls to SortCompare are values returned by a previous call to the {DSBN} internal method, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
+    # {B} The property key argument for each call to {DSBN}, {DSBN}, HasOwnProperty, or DeletePropertyOrThrow is the string representation of a nonnegative integer less than {var}.
 
     # PR 1554 NumericValue:
     {B} {PROD_REF}
