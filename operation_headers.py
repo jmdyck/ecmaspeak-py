@@ -115,6 +115,11 @@ def create_operation_info_for_section(s):
         # Its emu-algs aren't complete, they just replace a step in another emu-alg.
         # XXX: We could analyze them if we made the replacement.
         return
+    elif s.section_id == 'sec-module-environment-records-deletebinding-n':
+        # "Assert: This method is never invoked."
+        # So there's no point type-checking it.
+        # (It shouldn't even be there, really.)
+        return
 
     # ------------------------------------------------------
 
