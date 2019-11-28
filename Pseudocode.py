@@ -498,8 +498,7 @@ def analyze_built_in_section(section):
         # - "This function is like that function" (except different, maybe).
         # - Other functions that we only define in prose.
         # - A cross-reference to actual definition
-        # XXX handle_function(...) ?
-        pass
+        handle_function(section.section_kind, prop_path, None)
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
@@ -970,7 +969,8 @@ def handle_emu_eqn(emu_eqn):
 
 def handle_function(section_kind, locater, emu_alg):
     # XXX not using section_kind
-    foo_add_defn('built-in function', locater, None, parse(emu_alg))
+    algo = None if emu_alg is None else parse(emu_alg)
+    foo_add_defn('built-in function', locater, None, algo)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
