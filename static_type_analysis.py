@@ -388,16 +388,16 @@ class Header:
         self.name = oi.name
         self.description = oi.description
 
-        self.owning_type = oi.owning_type
-        if oi.owning_type is None:
+        self.for_phrase = oi.for_phrase
+        if oi.for_phrase is None:
             self.for_param_type = None
             self.for_param_name = None
         else:
-            mo = re.fullmatch(r'(.+) (_\w+_)', oi.owning_type)
+            mo = re.fullmatch(r'(.+) (_\w+_)', oi.for_phrase)
             if mo:
-                (owning_type_str, self.for_param_name) = mo.groups()
+                (for_param_type_string, self.for_param_name) = mo.groups()
             else:
-                owning_type_str = oi.owning_type
+                for_param_type_string = oi.for_phrase
                 self.for_param_name = None
 
             x = {
@@ -415,10 +415,10 @@ class Header:
                 'Array exotic object'               : T_Array_object_,
             }
 
-            if owning_type_str in x:
-                self.for_param_type = x[owning_type_str]
+            if for_param_type_string in x:
+                self.for_param_type = x[for_param_type_string]
             else:
-                self.for_param_type = parse_type_string(owning_type_str)
+                self.for_param_type = parse_type_string(for_param_type_string)
 
         self.overload_resolver = oi.overload_resolver
 
@@ -538,8 +538,8 @@ class Header:
         pwi(f'  op kind: {self.kind}')
         pwi(f'  name: {self.name}')
 
-        if self.for_param_type:
-            pwi(f'  for: {self.owning_type}')
+        if self.for_phrase:
+            pwi(f'  for: {self.for_phrase}')
 
         if self.overload_resolver:
             pwi(f'  overload selected when called with: {self.overload_resolver}')

@@ -674,7 +674,7 @@ def declare_sdo(op_name, param_dict, also=[]):
     oi = OperationInfo()
     oi.kind = 'syntax-directed operation'
     oi.name = op_name
-    oi.owning_type = 'Parse Node'
+    oi.for_phrase = 'Parse Node'
     oi.param_names = list(param_dict.keys())
     oi.param_nature_ = param_dict
     oi.also = also
@@ -714,7 +714,7 @@ def get_info_for_im(s, hoi, preamble_text):
     oi.kind = 'internal method'
 
     pst = s.parent.section_title
-    oi.owning_type = {
+    oi.for_phrase = {
         'Ordinary Object Internal Methods and Internal Slots' : 'ordinary object',
         'ECMAScript Function Objects'                         : 'ECMAScript function object',
         'Built-in Function Objects'                           : 'built-in function object',
@@ -747,16 +747,16 @@ def get_info_for_im(s, hoi, preamble_text):
             assert d['name'] == oi.name
 
             if 'thing' in d:
-                assert d['thing'] == oi.owning_type
+                assert d['thing'] == oi.for_phrase
             else:
-                assert oi.owning_type == 'ordinary object'
+                assert oi.for_phrase == 'ordinary object'
 
             if 'thing_var' in d:
                 thing_var = d['thing_var']
             else:
                 assert d['thing'] == 'arguments exotic object'
                 thing_var = '_args_'
-            oi.owning_type += ' ' + thing_var
+            oi.for_phrase += ' ' + thing_var
             #
             ptext = preamble_text[0:mo.start()] + 'OP' + preamble_text[mo.end():]
             break
@@ -832,7 +832,7 @@ def get_info_for_nm(s, hoi, preamble_text):
         poi.kind = 'numeric_method'
 
         if RE.fullmatch(r'The abstract operation (Number|BigInt)(::\w+) (.+)', preamble_text):
-            (poi.owning_type, poi.name, rest) = RE.groups()
+            (poi.for_phrase, poi.name, rest) = RE.groups()
 
             if RE.fullmatch(r'converts a (Number|BigInt) (_x_) to String format as follows:', rest):
                 poi.param_names = ['_x_']
@@ -882,9 +882,9 @@ def get_info_for_cm(s, hoi, preamble_text):
 
     pst = s.parent.section_title
     if pst.endswith((' Environment Records', ' Scope Records')): # PR 1477 scope-records
-        oi.owning_type = pst[0].lower() + pst[1:-1]
+        oi.for_phrase = pst[0].lower() + pst[1:-1]
     elif pst in ['Source Text Module Records', 'Cyclic Module Records']:
-        oi.owning_type = pst[0:-1]
+        oi.for_phrase = pst[0:-1]
     else:
         assert 0, pst
 
@@ -920,9 +920,9 @@ def get_info_for_cm(s, hoi, preamble_text):
         for pattern in patterns:
             mo = re.search(pattern, preamble_text)
             if mo:
-                (name, owning_type) = mo.groups()
+                (name, for_phrase) = mo.groups()
                 assert name == oi.name
-                assert owning_type == oi.owning_type
+                assert for_phrase == oi.for_phrase
                 ptext = re.sub(pattern, '', preamble_text)
                 break
         else:
@@ -1994,7 +1994,7 @@ def get_info_from_header(section):
         assert 0, section.section_kind
 
     if section.section_kind == 'numeric_method':
-        oi.owning_type = re.sub(':.*', '', section.section_title)
+        oi.for_phrase = re.sub(':.*', '', section.section_title)
         # Should this be in section.ste?
 
     if 'parameters' not in section.ste:
@@ -2208,7 +2208,7 @@ class OperationInfo:
     def __init__(self):
         self.kind = None
         self.name = None
-        self.owning_type = None
+        self.for_phrase = None
         self.overload_resolver = None
         self.param_names = None
         self.optional_params = set()
@@ -2253,8 +2253,8 @@ class OperationInfo:
         p("  op kind: " + self.kind)
         p("  name: " + self.name)
 
-        if self.owning_type:
-            p("  for: " + self.owning_type)
+        if self.for_phrase:
+            p("  for: " + self.for_phrase)
 
         if self.overload_resolver:
             p("  overload selected when called with: " + self.overload_resolver)
@@ -2325,14 +2325,14 @@ def resolve_oi(hoi, poi):
             oh_warn()
             oh_warn(f'resolve_oi: name in header ({hoi.name}) != name in preamble ({poi.name})')
 
-    # owning_type
-    if hoi.owning_type and poi.owning_type:
-        assert hoi.owning_type == poi.owning_type
-        oi.owning_type = hoi.owning_type
-    elif hoi.owning_type:
-        oi.owning_type = hoi.owning_type
+    # for_phrase
+    if hoi.for_phrase and poi.for_phrase:
+        assert hoi.for_phrase == poi.for_phrase
+        oi.for_phrase = hoi.for_phrase
+    elif hoi.for_phrase:
+        oi.for_phrase = hoi.for_phrase
     else:
-        oi.owning_type = poi.owning_type # which might or might not be None
+        oi.for_phrase = poi.for_phrase # which might or might not be None
 
     # overload_resolver
     assert hoi.overload_resolver is None
