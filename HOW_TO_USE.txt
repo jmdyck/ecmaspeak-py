@@ -16,8 +16,7 @@
 #
 #    analyze_spec.py
 #     |- render_spec.py
-#     |- operation_headers.py
-#         |- static_type_analysis.py
+#     |- static_type_analysis.py
 
 # You might wonder why there are multiple scripts.
 # If I had a faster computer or a faster implementation,
@@ -108,11 +107,14 @@ car _master/ref.index.html
 gdiff -R _master/ref.index.html _master/\index.html
 
 # --------------------------------------------------------------------
-D=_`gcbn` && $EK/operation_headers.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh
+
+# Optional, if you only want to see the initial headers,
+# without waiting for the whole static type analysis:
+D=_`gcbn` && $EK/static_type_analysis.py -just_initial_headers $D && car -d $D oh_warnings unconverted_natures spec_w_eoh
 # (~ 2s)
 
 D=_`gcbn` && $EK/static_type_analysis.py $D
-D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
+D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
 # (~ 23s)
 	# split_types
 
