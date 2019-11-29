@@ -533,12 +533,12 @@ def create_operation_info_for_section(s):
             or
             s.section_kind == 'syntax_directed_operation'
         ):
-            # The op is the one indicated by the section header.
+            # The op is the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'is', span_end_i)
-            hoi = get_info_from_header(s)
+            hoi = get_info_from_heading(s)
             op_kind = s.section_kind
         else:
-            # The op is *not* the one indicated by the section header.
+            # The op is *not* the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
             hoi = OperationInfo()
             if s.section_title.startswith('MakeArgGetter'):
@@ -1961,7 +1961,7 @@ def re_sub_many_etc(subject, pattern_repls):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_info_from_header(section):
+def get_info_from_heading(section):
     oi = OperationInfo()
 
     if section.section_kind in [
@@ -2288,7 +2288,7 @@ class OperationInfo:
 
 def resolve_oi(hoi, poi):
     if poi is None:
-        # no preamble, so just use info from header
+        # no preamble, so just use info from heading
         return hoi
 
     oi = OperationInfo()
@@ -2306,7 +2306,7 @@ def resolve_oi(hoi, poi):
         # within a section that is about something else.
         oi.name = poi.name
     else:
-        # We prefer to use the header-name:
+        # We prefer to use the heading-name:
         oi.name = hoi.name
         # ... but we also check that it's consistent with the preamble-name, if any:
         if (
@@ -2323,7 +2323,7 @@ def resolve_oi(hoi, poi):
             pass
         else:
             oh_warn()
-            oh_warn(f'resolve_oi: name in header ({hoi.name}) != name in preamble ({poi.name})')
+            oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({poi.name})')
 
     # for_phrase
     if hoi.for_phrase and poi.for_phrase:
@@ -2352,7 +2352,7 @@ def resolve_oi(hoi, poi):
     else:
         # neither is None
 
-        # When the header contains a signature,
+        # When the heading contains a signature,
         # it's deemed authoritative:
         oi.param_names = hoi.param_names
         oi.optional_params = hoi.optional_params
@@ -2375,7 +2375,7 @@ def resolve_oi(hoi, poi):
 
         assert not poi.rest_params
 
-    assert hoi.param_nature_ == {} # header never has type info
+    assert hoi.param_nature_ == {} # heading never has type info
     oi.param_nature_ = poi.param_nature_
 
     assert hoi.also is None
