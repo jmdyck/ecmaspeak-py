@@ -68,28 +68,6 @@ class LineInfo:
         self.suppress = False
         self.afters = []
 
-def write_spec_with_eoh():
-    stderr("write_spec_with_eoh ...")
-
-    f = shared.open_for_output('spec_w_eoh')
-
-    for line_info in spec.info_for_line_[1:]:
-        if not line_info.suppress:
-            print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
-
-        if line_info.afters:
-            if line_info.indentation == 0:
-                # somewhat kludgey
-                indentation = spec.info_for_line_[line_info.line_num-1].indentation
-            else:
-                indentation = line_info.indentation
-
-            for after_thing in line_info.afters:
-                for line in after_thing.lines(indentation, 'show initial info'):
-                    print(line, file=f)
-
-    f.close()
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def make_initial_headers():
@@ -102,7 +80,7 @@ def make_initial_headers():
     for s in spec.doc_node.each_descendant_that_is_a_section():
         create_operation_info_for_section(s)
 
-    write_spec_with_eoh()
+    write_modified_spec('show initial info')
 
     un_f.close()
     oh_inc_f.close()
@@ -708,20 +686,6 @@ def declare_sdo(op_name, param_dict, also=[]):
         assert pre_oi.also == oi.also
     else:
         spec.oi_for_sdo_[op_name] = oi
-
-class AnnexForSDOs:
-
-    def lines(self, ind, mode):
-        # ignore `ind`
-        yield ''
-        yield '<emu-annex id="sec-headers-for-sdos">'
-        yield '  <h1>Headers for Syntax-Directed Operations</h1>'
-        yield '  <p>blah</p>'
-        for (_, oi) in sorted(spec.oi_for_sdo_.items()):
-            oi.finish_initialization()
-            for line in oi.lines(2, mode):
-                yield line
-        yield '</emu-annex>'
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -5106,7 +5070,7 @@ def envs_or(envs):
 
 def do_static_type_analysis(levels):
 
-    atexit.register(print_spec)
+    atexit.register(write_modified_spec)
 
     global split_types_f
     split_types_f = shared.open_for_output('split_types')
@@ -5167,7 +5131,7 @@ def do_static_type_analysis(levels):
     print("Finished static analysis!")
     print()
 
-    print_spec(mode = 'apply edits')
+    write_modified_spec(mode = 'apply edits')
 
     # Analysis skips the following operations:
     #   SymbolDescriptiveString
@@ -5238,11 +5202,14 @@ def install_error(anode, msg):
             thing = (0, ec, msg)
         spec.info_for_line_[el].msgs.append(thing)
 
-def print_spec(mode = 'show error messages'):
+# ------------------------------------------------------------------------------
 
-    assert mode in ['show error messages', 'apply edits']
+def write_modified_spec(mode = 'show error messages'):
+    assert mode in ['show initial info', 'show error messages', 'apply edits']
 
-    if mode == 'show error messages':
+    if mode == 'show initial info':
+        filename = 'spec_w_eoh'
+    elif mode == 'show error messages':
         filename = 'spec_w_errors'
     else:
         filename = 'spec_w_edits'
@@ -5255,24 +5222,15 @@ def print_spec(mode = 'show error messages'):
         if not line_info.suppress:
             print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
 
-        for after_thing in line_info.afters:
-            if isinstance(after_thing, Header):
-                ind = line_info.indentation
-                if ind == 0:
-                    ind = spec.info_for_line_[line_info.line_num-1].indentation
-                for line in after_thing.lines(ind, mode):
+        if line_info.afters:
+            indentation = line_info.indentation
+            if indentation == 0:
+                # somewhat kludgey
+                indentation = spec.info_for_line_[line_info.line_num-1].indentation
+
+            for after_thing in line_info.afters:
+                for line in after_thing.lines(indentation, mode):
                     print(line, file=f)
-            elif isinstance(after_thing, AnnexForSDOs):
-                print('', file=f)
-                print('<emu-annex id="sec-headers-for-sdos">', file=f)
-                print('  <h1>Headers for Syntax-Directed Operations</h1>', file=f)
-                print('  <p>blah</p>', file=f)
-                for (_, header) in sorted(spec.oi_for_sdo_.items()):
-                    for line in header.lines(2, mode):
-                        print(line, file=f)
-                print('</emu-annex>', file=f)
-            else:
-                assert 0, after_thing
 
         if mode == 'show error messages':
             # For each anode that ends on this line,
@@ -5284,10 +5242,22 @@ def print_spec(mode = 'show error messages'):
                 print(caret_line, file=f)
                 print('>>> ' + msg, file=f)
                 print(file=f)
-        else:
-            pass
 
     f.close()
+
+class AnnexForSDOs:
+
+    def lines(self, ind, mode):
+        # ignore `ind`
+        yield ''
+        yield '<emu-annex id="sec-headers-for-sdos">'
+        yield '  <h1>Headers for Syntax-Directed Operations</h1>'
+        yield '  <p>blah</p>'
+        for (_, header) in sorted(spec.oi_for_sdo_.items()):
+            if mode == 'show initial info': header.finish_initialization()
+            for line in header.lines(2, mode):
+                yield line
+        yield '</emu-annex>'
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
