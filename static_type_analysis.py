@@ -3008,7 +3008,7 @@ class Operation:
         assert len(self.headers) > 0
         if len(self.headers) == 1:
             [header] = self.headers
-            self.parameters = header.parameters.items()
+            self.parameters = header.parameter_types.items()
             self.return_type = header.return_type
 
         elif self.kind in ['CallConstruct_overload', 'function_property_overload']:
@@ -3016,14 +3016,14 @@ class Operation:
 
         else:
             assert self.kind in ['concrete method', 'internal method', 'numeric_method']
-            n_params = len(self.headers[0].parameters)
-            assert all(len(header.parameters) == n_params for header in self.headers)
+            n_params = len(self.headers[0].parameter_types)
+            assert all(len(header.parameter_types) == n_params for header in self.headers)
 
             param_names_ = [set() for i in range(n_params)]
             param_types_ = [set() for i in range(n_params)]
             return_types = set()
             for header in self.headers:
-                for (i, (param_name, param_type)) in enumerate(header.parameters.items()):
+                for (i, (param_name, param_type)) in enumerate(header.parameter_types.items()):
                     param_names_[i].add(param_name)
                     param_types_[i].add(param_type)
                 return_types.add(header.return_type)
@@ -3104,16 +3104,16 @@ class Header:
 
         self.overload_resolver = oi.overload_resolver
 
-        self.initial_parameters = OrderedDict()
+        self.initial_parameter_types = OrderedDict()
         for (param_name, param_type_str) in oi.param_tipes.items():
-            self.initial_parameters[param_name] = parse_type_string(param_type_str)
+            self.initial_parameter_types[param_name] = parse_type_string(param_type_str)
 
-        self.parameters = self.initial_parameters.copy()
+        self.parameter_types = self.initial_parameter_types.copy()
 
         if oi.also is None:
-            self.alsos = {}
+            self.typed_alsos = {}
         else:
-            self.alsos = dict(
+            self.typed_alsos = dict(
                 (pn, parse_type_string(ahat_[(pn, pt)]))
                 for (pn, pt) in oi.also
             )
@@ -3146,7 +3146,7 @@ class Header:
             if tot == T_Number and tnt == T_Number: continue
             if ton == self.name:
                 try:
-                    old_type = self.return_type if tpn == '*return*' else self.parameters[tpn]
+                    old_type = self.return_type if tpn == '*return*' else self.parameter_types[tpn]
                 except KeyError:
                     print("type_tweaks: %s does not have param named %s" % (ton, tpn))
                     sys.exit(1)
@@ -3198,7 +3198,7 @@ class Header:
                 for : {self.for_param_type}
                 params: {', '.join(
                     pn + ' : ' + str(pt)
-                    for (pn, pt) in self.parameters.items())}
+                    for (pn, pt) in self.parameter_types.items())}
                 returns: {self.return_type}
                 # defns: {len(self.defns)}
         """
@@ -3244,16 +3244,16 @@ class Header:
                 kludge = len(s)
         # ---------------------------------------
 
-        if len(self.initial_parameters) == 0:
+        if len(self.initial_parameter_types) == 0:
             pwi(f'  parameters: none')
 
         else:
             pwi(f'  parameters:')
 
             if mode == 'show error messages':
-                params = self.initial_parameters
+                params = self.initial_parameter_types
             else:
-                params = self.parameters
+                params = self.parameter_types
 
             pn_max_width = max(
                 len(pn)
@@ -3280,10 +3280,10 @@ class Header:
                             lines.append('>>> ' + msg)
                             lines.append('')
 
-        if self.alsos:
+        if self.typed_alsos:
             pwi(f'  also has access to:')
-            max_width = max(len(vn) for vn in self.alsos)
-            for (vn, vt) in self.alsos.items():
+            max_width = max(len(vn) for vn in self.typed_alsos)
+            for (vn, vt) in self.typed_alsos.items():
                 pwi(f'    - {vn: <{max_width}} : {vt}')
 
         # -------------------------
@@ -3366,11 +3366,11 @@ class Header:
             assert self.for_param_type is not None
             e.vars[self.for_param_name] = self.for_param_type
 
-        for (pn, pt) in self.parameters.items():
+        for (pn, pt) in self.parameter_types.items():
             assert isinstance(pt, Type)
             e.vars[pn] = pt
 
-        for (vn, vt) in self.alsos.items():
+        for (vn, vt) in self.typed_alsos.items():
             assert isinstance(vt, Type)
             e.vars[vn] = vt
 
@@ -3386,8 +3386,8 @@ class Header:
             old_t = self.return_type
             self.return_type = new_t
         else:
-            old_t = self.parameters[pname]
-            self.parameters[pname] = new_t
+            old_t = self.parameter_types[pname]
+            self.parameter_types[pname] = new_t
 
         assert old_t != new_t
 
@@ -10433,7 +10433,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             for header in callee_op.headers:
                 if for_type is None or header.for_param_type == for_type:
-                    params = header.parameters.items()
+                    params = header.parameter_types.items()
                     return_type = header.return_type
                     break
             else:
