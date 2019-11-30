@@ -32,7 +32,7 @@ def main():
     make_initial_headers()
     if stop_after_initial_headers: return
 
-    create_headers()
+    prep_for_STA()
     gather_nonterminals()
     levels = compute_dependency_levels()
     do_static_type_analysis(levels)
@@ -632,7 +632,7 @@ def create_operation_info_for_section(s):
             if p_start_i != span_start_i or p_end_i != span_end_i:
                 print(preamble_thing.ljust(30), s.section_kind, s.section_num, s.section_title)
 
-        oi.finalize()
+        oi.finish_initialization()
 
         for ln in lns_to_suppress:
             spec.info_for_line_[ln].suppress = True
@@ -720,7 +720,7 @@ class AnnexForSDOs:
         yield '  <h1>Headers for Syntax-Directed Operations</h1>'
         yield '  <p>blah</p>'
         for (_, oi) in sorted(spec.oi_for_sdo_.items()):
-            oi.finalize()
+            oi.finish_initialization()
             for line in oi.lines('  '):
                 yield line
         yield '</emu-annex>'
@@ -2239,7 +2239,7 @@ class OperationInfo:
         self.definitions = []
         self.line_num = None
 
-    def finalize(self):
+    def finish_initialization(self):
         assert len(self.rest_params) in [0,1]
 
         self.param_tipes = OrderedDict()
@@ -2717,7 +2717,7 @@ def sub_many(subject, pattern_repls):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def create_headers():
+def prep_for_STA():
 
     # Create the headers for SDOs:
     for oi in spec.oi_for_sdo_.values():
