@@ -2242,26 +2242,26 @@ class OperationInfo:
     def finalize(self):
         assert len(self.rest_params) in [0,1]
 
-        self.parameters = OrderedDict()
+        self.param_tipes = OrderedDict()
         for param_name in self.param_names:
             optionality = '(optional) ' if param_name in self.optional_params else ''
 
             if param_name in self.rest_params:
                 assert param_name not in self.optional_params
                 if self.name.startswith('Math.'):
-                    typ = 'List of Number'
+                    tipe = 'List of Number'
                 else:
-                    typ = 'List of Tangible_'
+                    tipe = 'List of Tangible_'
             else:
                 nature = self.param_nature_.get(param_name, 'TBD')
-                typ = convert_nature_to_typ(nature)
+                tipe = convert_nature_to_tipe(nature)
 
-            param_type = optionality + typ
+            param_tipe = optionality + tipe
 
-            self.parameters[param_name] = param_type
+            self.param_tipes[param_name] = param_tipe
 
-        self.return_type_normal = convert_nature_to_typ(self.returns_normal or 'TBD')
-        self.return_type_abrupt = convert_nature_to_typ(self.returns_abrupt or 'TBD')
+        self.return_tipe_normal = convert_nature_to_tipe(self.returns_normal or 'TBD')
+        self.return_tipe_abrupt = convert_nature_to_tipe(self.returns_abrupt or 'TBD')
 
     def lines(self, ind):
         lines = []
@@ -2277,15 +2277,15 @@ class OperationInfo:
         if self.overload_resolver:
             p("  overload selected when called with: " + self.overload_resolver)
 
-        assert self.parameters is not None
-        if len(self.parameters) == 0:
+        assert self.param_tipes is not None
+        if len(self.param_tipes) == 0:
             p("  parameters: none")
         else:
             p("  parameters:")
 
-            maxwidth = max(len(param_name) for param_name in self.parameters.keys())
-            for (param_name, param_type) in self.parameters.items():
-                p("    - " + param_name.ljust(maxwidth) + ' : ' + param_type)
+            maxwidth = max(len(param_name) for param_name in self.param_tipes.keys())
+            for (param_name, param_tipe) in self.param_tipes.items():
+                p("    - " + param_name.ljust(maxwidth) + ' : ' + param_tipe)
 
         if self.also:
             p("  also has access to:")
@@ -2294,8 +2294,8 @@ class OperationInfo:
                 p("    - %s : %s" % (var_name.ljust(maxwidth), expl))
 
         p("  returns:")
-        p("    - normal : " + self.return_type_normal)
-        p("    - abrupt : " + self.return_type_abrupt)
+        p("    - normal : " + self.return_tipe_normal)
+        p("    - abrupt : " + self.return_tipe_abrupt)
 
         if self.description:
             p("  description: " + self.description)
@@ -2415,16 +2415,16 @@ def resolve_oi(hoi, poi):
 def oh_warn(*args):
     print(*args, file=oh_inc_f)
 
-def convert_nature_to_typ(nature):
+def convert_nature_to_tipe(nature):
     if nature == 'TBD': return 'TBD'
 
-    t = nature_to_typ.get(nature, None)
+    t = nature_to_tipe.get(nature, None)
     if t is not None: return t
 
     print(nature, file=un_f)
     return nature
 
-nature_to_typ = {
+nature_to_tipe = {
     # ------------------------------
     # ECMAScript language types
 
@@ -3105,7 +3105,7 @@ class Header:
         self.overload_resolver = oi.overload_resolver
 
         self.initial_parameters = OrderedDict()
-        for (param_name, param_type_str) in oi.parameters.items():
+        for (param_name, param_type_str) in oi.param_tipes.items():
             self.initial_parameters[param_name] = parse_type_string(param_type_str)
 
         self.parameters = self.initial_parameters.copy()
@@ -3118,14 +3118,14 @@ class Header:
                 for (pn, pt) in oi.also
             )
 
-        if oi.return_type_normal == 'TBD' and oi.return_type_abrupt == 'TBD':
+        if oi.return_tipe_normal == 'TBD' and oi.return_tipe_abrupt == 'TBD':
             rt = 'TBD'
-        elif oi.return_type_abrupt == 'TBD':
-            rt = oi.return_type_normal
-        elif oi.return_type_normal == 'TBD':
-            rt = oi.return_type_abrupt
+        elif oi.return_tipe_abrupt == 'TBD':
+            rt = oi.return_tipe_normal
+        elif oi.return_tipe_normal == 'TBD':
+            rt = oi.return_tipe_abrupt
         else:
-            rt = oi.return_type_normal + " | " + oi.return_type_abrupt
+            rt = oi.return_tipe_normal + " | " + oi.return_tipe_abrupt
         self.initial_return_type = parse_type_string(rt)
         self.return_type = self.initial_return_type
 
