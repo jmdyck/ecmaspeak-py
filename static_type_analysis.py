@@ -558,7 +558,7 @@ def create_operation_info_for_section(s):
         else:
             # The op is *not* the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
-            hoi = OperationInfo()
+            hoi = Header()
             if s.section_title.startswith('MakeArgGetter'):
                 op_kind = 'anonymous_built_in_function'
             elif s.section_title.startswith('MakeArgSetter'):
@@ -689,7 +689,7 @@ regexp_also = [
 spec.oi_for_sdo_ = {}
 
 def declare_sdo(op_name, param_dict, also=[]):
-    oi = OperationInfo()
+    oi = Header()
     oi.kind = 'syntax-directed operation'
     oi.name = op_name
     oi.for_phrase = 'Parse Node'
@@ -846,7 +846,7 @@ def get_info_for_nm(s, hoi, preamble_text):
         oi = hoi
         oi.kind = 'numeric_method'
     else:
-        poi = OperationInfo()
+        poi = Header()
         poi.kind = 'numeric_method'
 
         if RE.fullmatch(r'The abstract operation (Number|BigInt)(::\w+) (.+)', preamble_text):
@@ -1042,7 +1042,7 @@ def get_info_from_ao_preamble(preamble_text):
 
     # if 'thisBooleanValue' in preamble_text: pdb.set_trace()
 
-    oi = OperationInfo()
+    oi = Header()
     oi.kind = 'abstract operation'
 
     # ----------------------------------------------------------------
@@ -1801,7 +1801,7 @@ def get_info_for_builtin_function(s, op_kind, hoi, preamble_text):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
-    poi = OperationInfo()
+    poi = Header()
     poi.kind = op_kind
 
     if preamble_text in [
@@ -1980,7 +1980,7 @@ def re_sub_many_etc(subject, pattern_repls):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_heading(section):
-    oi = OperationInfo()
+    oi = Header()
 
     if section.section_kind in [
         'catchall',
@@ -2222,94 +2222,12 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class OperationInfo:
-    def __init__(self):
-        self.kind = None
-        self.name = None
-        self.for_phrase = None
-        self.overload_resolver = None
-        self.param_names = None
-        self.optional_params = set()
-        self.rest_params = set()
-        self.param_nature_ = {}
-        self.also = None
-        self.returns_normal = None
-        self.returns_abrupt = None
-        self.description = None
-        self.definitions = []
-        self.line_num = None
-
-    def finish_initialization(self):
-        assert len(self.rest_params) in [0,1]
-
-        self.param_tipes = OrderedDict()
-        for param_name in self.param_names:
-            optionality = '(optional) ' if param_name in self.optional_params else ''
-
-            if param_name in self.rest_params:
-                assert param_name not in self.optional_params
-                if self.name.startswith('Math.'):
-                    tipe = 'List of Number'
-                else:
-                    tipe = 'List of Tangible_'
-            else:
-                nature = self.param_nature_.get(param_name, 'TBD')
-                tipe = convert_nature_to_tipe(nature)
-
-            param_tipe = optionality + tipe
-
-            self.param_tipes[param_name] = param_tipe
-
-        self.return_tipe_normal = convert_nature_to_tipe(self.returns_normal or 'TBD')
-        self.return_tipe_abrupt = convert_nature_to_tipe(self.returns_abrupt or 'TBD')
-
-    def lines(self, ind):
-        lines = []
-        def p(s): lines.append(ind + s)
-
-        p("<emu-operation-header>")
-        p("  op kind: " + self.kind)
-        p("  name: " + self.name)
-
-        if self.for_phrase:
-            p("  for: " + self.for_phrase)
-
-        if self.overload_resolver:
-            p("  overload selected when called with: " + self.overload_resolver)
-
-        assert self.param_tipes is not None
-        if len(self.param_tipes) == 0:
-            p("  parameters: none")
-        else:
-            p("  parameters:")
-
-            maxwidth = max(len(param_name) for param_name in self.param_tipes.keys())
-            for (param_name, param_tipe) in self.param_tipes.items():
-                p("    - " + param_name.ljust(maxwidth) + ' : ' + param_tipe)
-
-        if self.also:
-            p("  also has access to:")
-            maxwidth = max(len(var_name) for (var_name,_) in self.also)
-            for (var_name, expl) in self.also:
-                p("    - %s : %s" % (var_name.ljust(maxwidth), expl))
-
-        p("  returns:")
-        p("    - normal : " + self.return_tipe_normal)
-        p("    - abrupt : " + self.return_tipe_abrupt)
-
-        if self.description:
-            p("  description: " + self.description)
-
-        p("</emu-operation-header>")
-
-        return lines
-
 def resolve_oi(hoi, poi):
     if poi is None:
         # no preamble, so just use info from heading
         return hoi
 
-    oi = OperationInfo()
+    oi = Header()
 
     # kind
     assert hoi.kind is None
@@ -2719,15 +2637,15 @@ def sub_many(subject, pattern_repls):
 
 def prep_for_STA():
 
-    # Create the headers for SDOs:
-    for oi in spec.oi_for_sdo_.values():
-        oi.header = Header(oi)
+    # headers for SDOs:
+    for header in spec.oi_for_sdo_.values():
+        header.prep_for_STA()
 
-    # Create the headers for everything else:
+    # headers for everything else:
     for line_info in spec.info_for_line_[1:]:
         for after_thing in line_info.afters:
-            if isinstance(after_thing, OperationInfo):
-                after_thing.header = Header(after_thing)
+            if isinstance(after_thing, Header):
+                after_thing.prep_for_STA()
         line_info.msgs = []
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -3058,28 +2976,101 @@ class Operation:
             if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
             dep_graph.add_arc(self.name, callee)
 
-# ------------------------------------------------------------------------------
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class Header:
+    def __init__(self):
+        self.kind = None
+        self.name = None
+        self.for_phrase = None
+        self.overload_resolver = None
+        self.param_names = None
+        self.optional_params = set()
+        self.rest_params = set()
+        self.param_nature_ = {}
+        self.also = None
+        self.returns_normal = None
+        self.returns_abrupt = None
+        self.description = None
+        self.definitions = []
+        self.line_num = None
 
-    def __init__(self, oi):
+    def finish_initialization(self):
+        assert len(self.rest_params) in [0,1]
 
-        assert isinstance(oi, OperationInfo)
+        self.param_tipes = OrderedDict()
+        for param_name in self.param_names:
+            optionality = '(optional) ' if param_name in self.optional_params else ''
 
-        self.kind = oi.kind
-        self.name = oi.name
-        self.description = oi.description
+            if param_name in self.rest_params:
+                assert param_name not in self.optional_params
+                if self.name.startswith('Math.'):
+                    tipe = 'List of Number'
+                else:
+                    tipe = 'List of Tangible_'
+            else:
+                nature = self.param_nature_.get(param_name, 'TBD')
+                tipe = convert_nature_to_tipe(nature)
 
-        self.for_phrase = oi.for_phrase
-        if oi.for_phrase is None:
+            param_tipe = optionality + tipe
+
+            self.param_tipes[param_name] = param_tipe
+
+        self.return_tipe_normal = convert_nature_to_tipe(self.returns_normal or 'TBD')
+        self.return_tipe_abrupt = convert_nature_to_tipe(self.returns_abrupt or 'TBD')
+
+    def lines(self, ind):
+        lines = []
+        def p(s): lines.append(ind + s)
+
+        p("<emu-operation-header>")
+        p("  op kind: " + self.kind)
+        p("  name: " + self.name)
+
+        if self.for_phrase:
+            p("  for: " + self.for_phrase)
+
+        if self.overload_resolver:
+            p("  overload selected when called with: " + self.overload_resolver)
+
+        assert self.param_tipes is not None
+        if len(self.param_tipes) == 0:
+            p("  parameters: none")
+        else:
+            p("  parameters:")
+
+            maxwidth = max(len(param_name) for param_name in self.param_tipes.keys())
+            for (param_name, param_tipe) in self.param_tipes.items():
+                p("    - " + param_name.ljust(maxwidth) + ' : ' + param_tipe)
+
+        if self.also:
+            p("  also has access to:")
+            maxwidth = max(len(var_name) for (var_name,_) in self.also)
+            for (var_name, expl) in self.also:
+                p("    - %s : %s" % (var_name.ljust(maxwidth), expl))
+
+        p("  returns:")
+        p("    - normal : " + self.return_tipe_normal)
+        p("    - abrupt : " + self.return_tipe_abrupt)
+
+        if self.description:
+            p("  description: " + self.description)
+
+        p("</emu-operation-header>")
+
+        return lines
+
+    def prep_for_STA(self):
+
+        if self.for_phrase is None:
             self.for_param_type = None
             self.for_param_name = None
         else:
-            mo = re.fullmatch(r'(.+) (_\w+_)', oi.for_phrase)
+            mo = re.fullmatch(r'(.+) (_\w+_)', self.for_phrase)
             if mo:
                 (for_param_type_string, self.for_param_name) = mo.groups()
             else:
-                for_param_type_string = oi.for_phrase
+                for_param_type_string = self.for_phrase
                 self.for_param_name = None
 
             x = {
@@ -3102,35 +3093,33 @@ class Header:
             else:
                 self.for_param_type = parse_type_string(for_param_type_string)
 
-        self.overload_resolver = oi.overload_resolver
-
         self.initial_parameter_types = OrderedDict()
-        for (param_name, param_type_str) in oi.param_tipes.items():
+        for (param_name, param_type_str) in self.param_tipes.items():
             self.initial_parameter_types[param_name] = parse_type_string(param_type_str)
 
         self.parameter_types = self.initial_parameter_types.copy()
 
-        if oi.also is None:
+        if self.also is None:
             self.typed_alsos = {}
         else:
             self.typed_alsos = dict(
                 (pn, parse_type_string(ahat_[(pn, pt)]))
-                for (pn, pt) in oi.also
+                for (pn, pt) in self.also
             )
 
-        if oi.return_tipe_normal == 'TBD' and oi.return_tipe_abrupt == 'TBD':
+        if self.return_tipe_normal == 'TBD' and self.return_tipe_abrupt == 'TBD':
             rt = 'TBD'
-        elif oi.return_tipe_abrupt == 'TBD':
-            rt = oi.return_tipe_normal
-        elif oi.return_tipe_normal == 'TBD':
-            rt = oi.return_tipe_abrupt
+        elif self.return_tipe_abrupt == 'TBD':
+            rt = self.return_tipe_normal
+        elif self.return_tipe_normal == 'TBD':
+            rt = self.return_tipe_abrupt
         else:
-            rt = oi.return_tipe_normal + " | " + oi.return_tipe_abrupt
+            rt = self.return_tipe_normal + " | " + self.return_tipe_abrupt
         self.initial_return_type = parse_type_string(rt)
         self.return_type = self.initial_return_type
 
         self.fake_node_for_ = {}
-        for pname in oi.param_names:
+        for pname in self.param_names:
             self.fake_node_for_[pname] = ANode(None, None, 0, 0)
         self.fake_node_for_['normal'] = ANode(None, None, 0, 0)
         self.fake_node_for_['abrupt'] = ANode(None, None, 0, 0)
@@ -3163,7 +3152,7 @@ class Header:
 
         self.defns = []
 
-        for algo in oi.definitions:
+        for algo in self.definitions:
             discriminator = self.for_param_type
             if algo.element_name == 'emu-alg':
                 self.add_defn(discriminator, algo._syntax_tree)
@@ -5291,20 +5280,19 @@ def print_spec(mode = 'show error messages'):
             print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
 
         for after_thing in line_info.afters:
-            if isinstance(after_thing, OperationInfo):
-                header = after_thing.header
+            if isinstance(after_thing, Header):
                 ind = line_info.indentation
                 if ind == 0:
                     ind = spec.info_for_line_[line_info.line_num-1].indentation
-                for line in header.lines_as_eoh(ind, mode):
+                for line in after_thing.lines_as_eoh(ind, mode):
                     print(line, file=f)
             elif isinstance(after_thing, AnnexForSDOs):
                 print('', file=f)
                 print('<emu-annex id="sec-headers-for-sdos">', file=f)
                 print('  <h1>Headers for Syntax-Directed Operations</h1>', file=f)
                 print('  <p>blah</p>', file=f)
-                for (_, oi) in sorted(spec.oi_for_sdo_.items()):
-                    for line in oi.header.lines_as_eoh(2, mode):
+                for (_, header) in sorted(spec.oi_for_sdo_.items()):
+                    for line in header.lines_as_eoh(2, mode):
                         print(line, file=f)
                 print('</emu-annex>', file=f)
             else:
