@@ -3008,7 +3008,7 @@ class Operation:
         assert len(self.headers) > 0
         if len(self.headers) == 1:
             [header] = self.headers
-            self.parameters = header.parameter_types.items()
+            self.parameters_with_types = header.parameter_types.items()
             self.return_type = header.return_type
 
         elif self.kind in ['CallConstruct_overload', 'function_property_overload']:
@@ -3028,7 +3028,7 @@ class Operation:
                     param_types_[i].add(param_type)
                 return_types.add(header.return_type)
 
-            self.parameters = [
+            self.parameters_with_types = [
                 (
                     '|'.join(sorted(list(param_names_[i])))
                 ,
@@ -10388,7 +10388,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             env0 = env0.ensure_expr_is_of_type(var, union_of_forp_types)
 
-            params = callee_op.parameters
+            params = callee_op.parameters_with_types
             return_type = callee_op.return_type
 
         elif opn_before_paren.prod.rhs_s == r'{NUMERIC_TYPE_INDICATOR}::{low_word}':
@@ -10536,7 +10536,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
                     assert callee_op.kind == 'abstract operation'
-                params = callee_op.parameters
+                params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
 
@@ -13987,7 +13987,7 @@ def exes_in_exlist(exlist):
 def tc_ao_invocation(callee_op_name, args, expr, env0):
     callee_op = operation_named_[callee_op_name]
     assert callee_op.kind == 'abstract operation'
-    params = callee_op.parameters
+    params = callee_op.parameters_with_types
     env1 = tc_args(params, args, env0, expr)
     return_type = callee_op.return_type
     return (return_type, env1)
@@ -13999,7 +13999,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
     env1 = env0.ensure_expr_is_of_type(main_arg, T_Parse_Node)
     # XXX expectation should be specific to what the callee accepts
 
-    env2 = tc_args(op.parameters, other_args, env1, context)
+    env2 = tc_args(op.parameters_with_types, other_args, env1, context)
 
     # seed:
     # if op_name == 'Evaluation': return (T_Tangible_, env0)
