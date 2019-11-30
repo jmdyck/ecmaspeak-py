@@ -84,10 +84,8 @@ def write_spec_with_eoh():
             else:
                 indentation = line_info.indentation
 
-            ind = ' ' * indentation
-
             for after_thing in line_info.afters:
-                for line in after_thing.lines(ind):
+                for line in after_thing.lines(indentation, 'show initial info'):
                     print(line, file=f)
 
     f.close()
@@ -713,7 +711,7 @@ def declare_sdo(op_name, param_dict, also=[]):
 
 class AnnexForSDOs:
 
-    def lines(self, ind):
+    def lines(self, ind, mode):
         # ignore `ind`
         yield ''
         yield '<emu-annex id="sec-headers-for-sdos">'
@@ -721,7 +719,7 @@ class AnnexForSDOs:
         yield '  <p>blah</p>'
         for (_, oi) in sorted(spec.oi_for_sdo_.items()):
             oi.finish_initialization()
-            for line in oi.lines('  '):
+            for line in oi.lines(2, mode):
                 yield line
         yield '</emu-annex>'
 
@@ -3019,47 +3017,6 @@ class Header:
         self.return_tipe_normal = convert_nature_to_tipe(self.returns_normal or 'TBD')
         self.return_tipe_abrupt = convert_nature_to_tipe(self.returns_abrupt or 'TBD')
 
-    def lines(self, ind):
-        lines = []
-        def p(s): lines.append(ind + s)
-
-        p("<emu-operation-header>")
-        p("  op kind: " + self.kind)
-        p("  name: " + self.name)
-
-        if self.for_phrase:
-            p("  for: " + self.for_phrase)
-
-        if self.overload_resolver:
-            p("  overload selected when called with: " + self.overload_resolver)
-
-        assert self.param_tipes is not None
-        if len(self.param_tipes) == 0:
-            p("  parameters: none")
-        else:
-            p("  parameters:")
-
-            maxwidth = max(len(param_name) for param_name in self.param_tipes.keys())
-            for (param_name, param_tipe) in self.param_tipes.items():
-                p("    - " + param_name.ljust(maxwidth) + ' : ' + param_tipe)
-
-        if self.also:
-            p("  also has access to:")
-            maxwidth = max(len(var_name) for (var_name,_) in self.also)
-            for (var_name, expl) in self.also:
-                p("    - %s : %s" % (var_name.ljust(maxwidth), expl))
-
-        p("  returns:")
-        p("    - normal : " + self.return_tipe_normal)
-        p("    - abrupt : " + self.return_tipe_abrupt)
-
-        if self.description:
-            p("  description: " + self.description)
-
-        p("</emu-operation-header>")
-
-        return lines
-
     def prep_for_STA(self):
 
         if self.for_phrase is None:
@@ -3192,33 +3149,32 @@ class Header:
                 # defns: {len(self.defns)}
         """
 
-    def lines_as_eoh(self, indentation, mode):
+    # ------------------------------------------------------
+
+    def lines(self, indentation, mode):
+        assert mode in ['show initial info', 'show error messages', 'apply edits']
+
         ind = ' ' * indentation
-
-        assert mode in ['show error messages', 'apply edits']
-
         lines = []
         def pwi(s): # put-with-indentation
             lines.append(ind + s)
 
-        # Problems:
-        # - To reproduce both files, we need to suppress the lines
-        #   that the eoh is replacing.
+        # ---------------------------------------
 
-        pwi(f'<emu-operation-header>')
-        pwi(f'  op kind: {self.kind}')
-        pwi(f'  name: {self.name}')
+        pwi(f"<emu-operation-header>")
+        pwi(f"  op kind: {self.kind}")
+        pwi(f"  name: {self.name}")
 
         if self.for_phrase:
-            pwi(f'  for: {self.for_phrase}')
+            pwi(f"  for: {self.for_phrase}")
 
         if self.overload_resolver:
-            pwi(f'  overload selected when called with: {self.overload_resolver}')
+            pwi(f"  overload selected when called with: {self.overload_resolver}")
 
         kludge = None
 
         # ---------------------------------------
-        def foo(prefix, ptype):
+        def put_prefix_and_type(prefix, ptype):
             nonlocal kludge
             if ptype == T_0:
                 if mode == 'show error messages':
@@ -3233,79 +3189,99 @@ class Header:
                 kludge = len(s)
         # ---------------------------------------
 
-        if len(self.initial_parameter_types) == 0:
-            pwi(f'  parameters: none')
+        assert self.param_names is not None
+        if len(self.param_names) == 0:
+            pwi(f"  parameters: none")
 
         else:
-            pwi(f'  parameters:')
-
-            if mode == 'show error messages':
-                params = self.initial_parameter_types
-            else:
-                params = self.parameter_types
+            pwi(f"  parameters:")
 
             pn_max_width = max(
-                len(pn)
-                for pn in params.keys()
+                len(param_name)
+                for param_name in self.param_names
             )
-            for (pn, pt) in params.items():
-                foo(pn.ljust(pn_max_width), pt)
 
-                # XXX Cases where operation_headers types the parameter as 'NonNegativeInteger_',
-                # but then that gets translated to 'Integer',
-                # so that's how it appears here.
-                # - ArrayCreate              : _length_
-                # - CodePointAt              : _position_
-                # - GetModifySetValueInBuffer: _byteIndex_
-                # - GetWaiterList            : _i_
-                # - RemoveWaiters            : _c_
-                # - ComposeWriteEventBytes   : _byteIndex_
+            if mode == 'show initial info':
+                for (param_name, param_tipe) in self.param_tipes.items():
+                    prefix = param_name.ljust(pn_max_width)
+                    pwi(f"    - {prefix} : {param_tipe}")
 
+            else:
                 if mode == 'show error messages':
-                    p_node = self.fake_node_for_[pn]
-                    if hasattr(p_node, 'errors'):
-                        for msg in p_node.errors:
-                            lines.append('-' * (indentation + 4 + 2 + pn_max_width + 3) + '^' * kludge)
-                            lines.append('>>> ' + msg)
-                            lines.append('')
+                    params = self.initial_parameter_types
+                else:
+                    params = self.parameter_types
 
-        if self.typed_alsos:
-            pwi(f'  also has access to:')
-            max_width = max(len(vn) for vn in self.typed_alsos)
-            for (vn, vt) in self.typed_alsos.items():
-                pwi(f'    - {vn: <{max_width}} : {vt}')
+                for (pn, pt) in params.items():
+                    put_prefix_and_type(pn.ljust(pn_max_width), pt)
+
+                    # XXX Cases where operation_headers types the parameter as 'NonNegativeInteger_',
+                    # but then that gets translated to 'Integer',
+                    # so that's how it appears here.
+                    # - ArrayCreate              : _length_
+                    # - CodePointAt              : _position_
+                    # - GetModifySetValueInBuffer: _byteIndex_
+                    # - GetWaiterList            : _i_
+                    # - RemoveWaiters            : _c_
+                    # - ComposeWriteEventBytes   : _byteIndex_
+
+                    if mode == 'show error messages':
+                        p_node = self.fake_node_for_[pn]
+                        if hasattr(p_node, 'errors'):
+                            for msg in p_node.errors:
+                                lines.append('-' * (indentation + 4 + 2 + pn_max_width + 3) + '^' * kludge)
+                                lines.append('>>> ' + msg)
+                                lines.append('')
 
         # -------------------------
 
-        pwi(f'  returns:')
-        if mode == 'show error messages':
-            rt = self.initial_return_type
+        if self.also:
+            pwi(f"  also has access to:")
+            max_width = max(len(var_name) for (var_name,_) in self.also)
+
+            if mode == 'show initial info':
+                for (var_name, expl) in self.also:
+                    pwi(f"    - {var_name: <{max_width}} : {expl}")
+            else:
+                for (var_name, vt) in self.typed_alsos.items():
+                    pwi(f"    - {var_name: <{max_width}} : {vt}")
+
+        # -------------------------
+
+        pwi(f"  returns:")
+        if mode == 'show initial info':
+            pwi(f"    - normal : " + self.return_tipe_normal)
+            pwi(f"    - abrupt : " + self.return_tipe_abrupt)
+
         else:
-            rt = self.return_type
+            if mode == 'show error messages':
+                rt = self.initial_return_type
+            else:
+                rt = self.return_type
 
-        if rt == T_TBD:
-            abrupt_part = T_TBD
-            normal_part = T_TBD
-        else:
-            (abrupt_part, normal_part) = rt.split_by(T_Abrupt)
+            if rt == T_TBD:
+                abrupt_part = T_TBD
+                normal_part = T_TBD
+            else:
+                (abrupt_part, normal_part) = rt.split_by(T_Abrupt)
 
-        foo('normal', normal_part)
-        foo('abrupt', abrupt_part)
+            put_prefix_and_type('normal', normal_part)
+            put_prefix_and_type('abrupt', abrupt_part)
 
-        if mode == 'show error messages':
-            p_node = self.fake_node_for_['*return*']
-            if hasattr(p_node, 'errors'):
-                for msg in p_node.errors:
-                    lines.append('-' * (indentation + 4 + 2 + 6 + 3) + '^' * kludge)
-                    lines.append('>>> ' + msg)
-                    lines.append('')
+            if mode == 'show error messages':
+                p_node = self.fake_node_for_['*return*']
+                if hasattr(p_node, 'errors'):
+                    for msg in p_node.errors:
+                        lines.append('-' * (indentation + 4 + 2 + 6 + 3) + '^' * kludge)
+                        lines.append('>>> ' + msg)
+                        lines.append('')
 
         # -------------------------
 
         if self.description:
-            pwi(f'  description: {self.description}')
+            pwi(f"  description: {self.description}")
 
-        pwi(f'</emu-operation-header>')
+        pwi(f"</emu-operation-header>")
 
         return lines
 
@@ -5284,7 +5260,7 @@ def print_spec(mode = 'show error messages'):
                 ind = line_info.indentation
                 if ind == 0:
                     ind = spec.info_for_line_[line_info.line_num-1].indentation
-                for line in after_thing.lines_as_eoh(ind, mode):
+                for line in after_thing.lines(ind, mode):
                     print(line, file=f)
             elif isinstance(after_thing, AnnexForSDOs):
                 print('', file=f)
@@ -5292,7 +5268,7 @@ def print_spec(mode = 'show error messages'):
                 print('  <h1>Headers for Syntax-Directed Operations</h1>', file=f)
                 print('  <p>blah</p>', file=f)
                 for (_, header) in sorted(spec.oi_for_sdo_.items()):
-                    for line in header.lines_as_eoh(2, mode):
+                    for line in header.lines(2, mode):
                         print(line, file=f)
                 print('</emu-annex>', file=f)
             else:
