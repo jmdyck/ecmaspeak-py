@@ -401,7 +401,7 @@ def analyze_other_op_section(section):
         # 13 cases
 
         if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
-            assert section.bcen_str in ['p emu-table', 'emu-operation-header emu-table']
+            assert section.bcen_str in ['p emu-table', 'dl emu-table']
             # The op is defined by a table that splits on argument type.
             # The second cell in each row is a little algorithm,
             # but it's generally not marked as an emu-alg.
@@ -509,7 +509,7 @@ def analyze_other_op_section(section):
         assert n_emu_algs == 2
         assert section.bcen_str in [
             'p emu-alg p emu-alg emu-note',
-            'emu-operation-header emu-alg emu-operation-header emu-alg emu-note'
+            'dl emu-alg dl emu-alg emu-note'
         ]
 
         # The first emu-alg defines the operation.
@@ -741,7 +741,7 @@ def analyze_other_section(section):
 
             preamble = section.block_children[emu_alg_posn-1]
             assert (
-                preamble.element_name == 'emu-operation-header'
+                preamble.element_name == 'dl'
                 or
                 preamble.source_text() == f'<p>The abstract operation <dfn id="sec-{op_name.lower()}" aoid="{op_name}">{op_name}</dfn>(_value_) performs the following steps:</p>'
             )

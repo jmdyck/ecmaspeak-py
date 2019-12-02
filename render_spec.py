@@ -354,7 +354,7 @@ def render_node(node):
         elif node.element_name == 'emu-eqn':
             if node.parent.element_name == 'emu-clause':
                 put('<div>')
-            elif node.parent.element_name in ['p', 'li', 'dfn']:
+            elif node.parent.element_name in ['p', 'li', 'dfn', 'dd']:
                 # (r'<emu-eqn>',    r' <emu-eqn class="inline">'),
                 pass
             else:

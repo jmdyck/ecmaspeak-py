@@ -29,6 +29,7 @@ def main():
     spec.restore()
     add_line_info()
 
+    add_styling()
     make_initial_headers()
     if stop_after_initial_headers: return
 
@@ -67,6 +68,25 @@ class LineInfo:
         self.indentation = indentation
         self.suppress = False
         self.afters = []
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def add_styling():
+    # Hard-coding a line number is brittle,
+    # but it'll probably work for as long as we need it to.
+    spec.info_for_line_[2].afters.append(NewStyling())
+
+class NewStyling:
+    def lines(self, indentation, mode):
+        return [
+            '<style>',
+            '  /* Eventually, styling for dl.header would move to ecmarkup.css. */',
+            '  dl.header {',
+            '    background: #CFC;',
+            '  }',
+            '  dl.header dt { font-weight: bold; }',
+            '</style>',
+        ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -301,7 +321,7 @@ def create_operation_info_for_section(s):
     n_algos = len(algo_child_posns)
     if n_algos == 0:
         # Even though the section has no algos,
-        # we might want to create an <emu-operation-header>.
+        # we might want to create a header.
         if should_create_op_info_for_algoless_section(s):
             pre_algo_spans = [(0, len(s.block_children))]
         else:
@@ -3120,20 +3140,28 @@ class Header:
 
         ind = ' ' * indentation
         lines = []
-        def pwi(s): # put-with-indentation
-            lines.append(ind + s)
+        def pwi(s=''): # put-with-indentation
+            lines.append('' if s == '' else ind + s)
 
         # ---------------------------------------
 
-        pwi(f"<emu-operation-header>")
-        pwi(f"  op kind: {self.kind}")
-        pwi(f"  name: {self.name}")
+        pwi(f"<dl class='header'>")
+        pwi()
+        pwi(f"  <dt>op kind</dt>")
+        pwi(f"  <dd>{self.kind}</dd>")
+        pwi()
+        pwi(f"  <dt>name</dt>")
+        pwi(f"  <dd>{self.name}</dd>")
 
         if self.for_phrase:
-            pwi(f"  for: {self.for_phrase}")
+            pwi()
+            pwi(f"  <dt>for</dt>")
+            pwi(f"  <dd>{self.for_phrase}</dd>")
 
         if self.overload_resolver:
-            pwi(f"  overload selected when called with: {self.overload_resolver}")
+            pwi()
+            pwi(f"  <dt>overload selected when called with</dt>")
+            pwi(f"  <dd>{self.overload_resolver}</dd>")
 
         kludge = None
 
@@ -3142,23 +3170,28 @@ class Header:
             nonlocal kludge
             if ptype == T_0:
                 if mode == 'show error messages':
-                    pwi(f"    - {prefix} : TBD")
+                    pwi(f"      <li>{prefix} : TBD</li>")
                     kludge = 3
                 else:
                     # show nothing
                     pass
             else:
                 s = ptype.unparse()
-                pwi(f"    - {prefix} : {s}")
+                pwi(f"      <li>{prefix} : {s}</li>")
                 kludge = len(s)
         # ---------------------------------------
 
         assert self.param_names is not None
         if len(self.param_names) == 0:
-            pwi(f"  parameters: none")
+            pwi()
+            pwi(f"  <dt>parameters</dt>")
+            pwi(f"  <dd>none</dd>")
 
         else:
-            pwi(f"  parameters:")
+            pwi()
+            pwi(f"  <dt>parameters</dt>")
+            pwi(f"  <dd>")
+            pwi(f"    <ul>")
 
             pn_max_width = max(
                 len(param_name)
@@ -3168,7 +3201,7 @@ class Header:
             if mode == 'show initial info':
                 for (param_name, param_tipe) in self.param_tipes.items():
                     prefix = param_name.ljust(pn_max_width)
-                    pwi(f"    - {prefix} : {param_tipe}")
+                    pwi(f"      <li>{prefix} : {param_tipe}</li>")
 
             else:
                 if mode == 'show error messages':
@@ -3193,29 +3226,43 @@ class Header:
                         p_node = self.fake_node_for_[pn]
                         if hasattr(p_node, 'errors'):
                             for msg in p_node.errors:
-                                lines.append('-' * (indentation + 4 + 2 + pn_max_width + 3) + '^' * kludge)
+                                lines.append('-' * (indentation + 6 + 4 + pn_max_width + 3) + '^' * kludge)
                                 lines.append('>>> ' + msg)
                                 lines.append('')
+
+            pwi(f"    </ul>")
+            pwi(f"  </dd>")
 
         # -------------------------
 
         if self.also:
-            pwi(f"  also has access to:")
+            pwi()
+            pwi(f"  <dt>also has access to</dt>")
+            pwi(f"  <dd>")
+            pwi(f"    <ul>")
+
             max_width = max(len(var_name) for (var_name,_) in self.also)
 
             if mode == 'show initial info':
                 for (var_name, expl) in self.also:
-                    pwi(f"    - {var_name: <{max_width}} : {expl}")
+                    pwi(f"      <li>{var_name: <{max_width}} : {expl}</li>")
             else:
                 for (var_name, vt) in self.typed_alsos.items():
-                    pwi(f"    - {var_name: <{max_width}} : {vt}")
+                    pwi(f"      <li>{var_name: <{max_width}} : {vt}</li>")
+
+            pwi(f"    </ul>")
+            pwi(f"  </dd>")
 
         # -------------------------
 
-        pwi(f"  returns:")
+        pwi()
+        pwi(f"  <dt>returns</dt>")
+        pwi(f"  <dd>")
+        pwi(f"    <ul>")
+
         if mode == 'show initial info':
-            pwi(f"    - normal : " + self.return_tipe_normal)
-            pwi(f"    - abrupt : " + self.return_tipe_abrupt)
+            pwi(f"      <li>normal : {self.return_tipe_normal}</li>")
+            pwi(f"      <li>abrupt : {self.return_tipe_abrupt}</li>")
 
         else:
             if mode == 'show error messages':
@@ -3236,16 +3283,21 @@ class Header:
                 p_node = self.fake_node_for_['*return*']
                 if hasattr(p_node, 'errors'):
                     for msg in p_node.errors:
-                        lines.append('-' * (indentation + 4 + 2 + 6 + 3) + '^' * kludge)
+                        lines.append('-' * (indentation + 6 + 4 + 6 + 3) + '^' * kludge)
                         lines.append('>>> ' + msg)
                         lines.append('')
+
+        pwi(f"    </ul>")
+        pwi(f"  </dd>")
 
         # -------------------------
 
         if self.description:
-            pwi(f"  description: {self.description}")
+            pwi()
+            pwi(f"  <dt>description</dt>")
+            pwi(f"  <dd>{self.description}</dd>")
 
-        pwi(f"</emu-operation-header>")
+        pwi(f"</dl>")
 
         return lines
 

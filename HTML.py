@@ -314,8 +314,8 @@ element_info = {
         # block contains blocks:
         '#DOC'              : ('B', '#DECL;#WS;meta;#WS;((link;|script;|style;)#WS;)+pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
-        'emu-clause'        : ('B', '#WS;h1;#WS;((div;|emu-alg;|emu-import;|emu-operation-header;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
-        'emu-annex'         : ('B', '#WS;h1;#WS;((emu-alg;|emu-grammar;|emu-note;|emu-operation-header;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
+        'emu-clause'        : ('B', '#WS;h1;#WS;((div;|dl;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
+        'emu-annex'         : ('B', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
         'emu-table'         : ('B', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', '#WS;(object;|img;)#WS;'),
         'figure'            : ('B', '#WS;table;#WS;'),
@@ -327,7 +327,6 @@ element_info = {
         'ol'                : ('B', '#WS;(li;#WS;)+'),
         'dl'                : ('B', '#WS;(dt;#WS;dd;#WS;)+'),
         'object'            : ('B', '#WS;img;#WS;'),
-        'dd'                : ('B', '#WS;ul;#WS;'),
 
         # block contains blocks or contains inlines, but not both:
         'emu-integration-plans': ('B', '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
@@ -335,11 +334,11 @@ element_info = {
         'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
         'div'                  : ('B', '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
+        'dd'                   : ('B', '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
 
         # block contains inlines:
         'emu-motivation'       : ('B', '(#TEXT;|a;)+'), # PROPOSALS
         'emu-todo'             : ('B', '(#TEXT;|a;)+'), # PROPOSALS
-        'emu-operation-header' : ('B', '(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'), # my PR
         'emu-alg'              : ('B', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
         'emu-caption'          : ('B', '(#TEXT;|emu-xref;)+'),
         'pre'                  : ('B', '#TEXT;|code;'),
