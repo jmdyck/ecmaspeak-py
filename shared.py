@@ -72,17 +72,33 @@ def convert_HTMLParser_getpos_to_posn(pos_tuple):
     return _newline_posns[line_num-1] + 1 + offset_within_line
 
 def convert_posn_to_linecol(posn):
-    # inefficient, but fast enough
-    for (i, newline_posn) in enumerate(_newline_posns):
-        if newline_posn >= posn:
-            line = i
-            col = posn - _newline_posns[i-1]
-            return (line, col)
-    assert posn > _newline_posns[-1]
-    # assert posn == _newline_posns[-1] + 1 # That's true only if the file ends with a newline.
-    line = i
-    col = posn - _newline_posns[i-1]
-    return (line, col)
+
+    # bisection
+    lo = 0
+    hi = len(_newline_posns) - 1
+    while True:
+        assert lo < hi
+        assert _newline_posns[lo] < posn <= _newline_posns[hi]
+        if lo + 1 == hi:
+            line_num = hi
+            col = posn - _newline_posns[lo]
+            break
+
+        mid = (lo + hi) // 2
+        assert lo < mid < hi
+        mid_posn = _newline_posns[mid]
+        if mid_posn < posn:
+            lo = mid
+        elif posn < mid_posn:
+            hi = mid
+        else:
+            # direct hit
+            assert spec_text[posn] == '\n'
+            # Associate it with the preceding line.
+            lo = mid - 1
+            hi = mid
+
+    return (line_num, col)
 
 def source_line_with_caret_marking_column(posn):
     (line_num, col_num) = convert_posn_to_linecol(posn)
