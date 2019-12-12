@@ -102,6 +102,8 @@ def make_initial_headers():
 
     write_modified_spec('show initial info')
 
+    note_unused_rules()
+
     un_f.close()
     oh_inc_f.close()
 
@@ -236,7 +238,7 @@ def should_create_op_info_for_algoless_section(s):
     print('> Should I create an eoh for this?', s.section_kind, s.section_num, s.section_title)
     return False
 
-# ------------------------------------------------------------------------------
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def create_operation_info_for_section(s):
 
@@ -273,6 +275,16 @@ def create_operation_info_for_section(s):
         # return
 
 
+    if s.section_id in [
+        'sec-regular-expression-patterns-semantics',
+        'sec-initializers-in-forin-statement-heads',
+        'sec-__proto__-property-names-in-object-initializers',
+        'sec-IsHTMLDDA-internal-slot-to-boolean',
+    ]:
+        # Omnibus clauses in Annex B.
+        # For now, skip them because they're too weird.
+        return
+
     # ------------------------------------------------------
 
     if s.section_kind == 'syntax_directed_operation':
@@ -281,9 +293,14 @@ def create_operation_info_for_section(s):
         # we put one at the end, in annex C.
         something_sdo(s)
         return
+    elif s.section_id == 'sec-static-semantic-rules':
+        # It has the default definition for 'Contains',
+        # but that's an SDO, so it only gets a header at the end.
+        # (But we can't call something_sdo(s).)
+        return
 
     elif s.section_num == 'C':
-        (ln, _) = shared.convert_posn_to_linecol(s.end_posn)
+        ln = get_last_ln(s)
 
         spec.info_for_line_[ln].afters.append(AnnexForSDOs())
 
@@ -309,11 +326,15 @@ def create_operation_info_for_section(s):
             )
             or
             (
-                # For most Math functions,
+                # For most Math functions (and many Number methods),
                 # a <ul> plays roughly the role of an <emu-alg>.
-                s.parent.section_title == 'Function Properties of the Math Object'
-                and
                 child.element_name == 'ul'
+                and
+                (
+                    s.parent.section_title == 'Function Properties of the Math Object'
+                    or
+                    s.section_title.startswith('Number::')
+                )
             )
         )
     ]
@@ -373,7 +394,7 @@ def create_operation_info_for_section(s):
             ] # in annex B
         ), s.section_title
 
-    # ----------------------------------------------------------------
+    # ==========================================================================
 
     def isnt_preamble(child):
         if child.element_name == 'emu-note':
@@ -407,6 +428,8 @@ def create_operation_info_for_section(s):
             'Addition is a commutative operation',
             'The `-` operator performs subtraction',                    # 6.1.6.1.8
             # 'The result of `-` operator is then',
+
+            'Apply the algorithm in',
 
             'The implementation of',                        # 15.2.1.17 Runtime Semantics: HostResolveImportedModule
 
@@ -477,16 +500,55 @@ def create_operation_info_for_section(s):
 
         return False
 
+    # ==========================================================================
+
     for (span_start_i, span_end_i) in pre_algo_spans:
-        if s.section_title == 'Date.parse ( _string_ )':
-            # kludge
+
+        if n_algos == 0 or span_end_i == len(s.block_children):
             algo = None
-        elif span_end_i < len(s.block_children):
+        else:
             algo = s.block_children[span_end_i]
             assert algo.element_name in ['emu-alg', 'emu-table', 'ul']
-        else:
-            algo = None
 
+        if (
+            span_start_i == 0 and not (
+                s.section_title.startswith('Properties of the')
+                or
+                s.section_title == 'Array.prototype [ @@unscopables ]'
+            )
+            or
+            s.section_kind == 'syntax_directed_operation'
+        ):
+            # The op is the one indicated by the section heading.
+            # print(s.section_num, s.section_kind, 'is', span_end_i)
+            hoi = get_info_from_heading(s)
+
+        else:
+            # The op is *not* the one indicated by the section heading.
+            # print(s.section_num, s.section_kind, 'isnt', span_end_i)
+            hoi = Header()
+            if s.section_title.startswith('MakeArgGetter'):
+                pass
+            elif s.section_title.startswith('MakeArgSetter'):
+                pass
+            elif s.section_title.startswith('%TypedArray%.prototype.sort'):
+                pass
+            elif s.section_title.startswith('Properties of the'):
+                pass
+            elif s.section_title == 'Array.prototype [ @@unscopables ]':
+                hoi.name = 'initializer for @@unscopables'
+                hoi.kind = 'abstract operation'
+                hoi.param_names = []
+            elif s.section_id in [
+                'sec-regular-expression-patterns-semantics',
+                'sec-initializers-in-forin-statement-heads',
+            ]:
+                # print('347', s.section_num, s.section_title)
+                continue # XXX
+            else:
+                assert 0, s.section_title
+
+        # -----------------------------------
 
         # Within the span, find the preamble, if any.
         p_start_i = span_start_i
@@ -506,136 +568,32 @@ def create_operation_info_for_section(s):
                     p_end_i = i
                     break
 
-        n_children_in_preamble = p_end_i - p_start_i
-        if n_children_in_preamble == 0:
-            # No preamble
-            # So no lines to suppress when writing spec_w_eoh.
-            lns_to_suppress = []
-            (p_end_ln, _) = shared.convert_posn_to_linecol(s.block_children[p_end_i].start_posn)
-            op_info_ln = p_end_ln - 1
-            preamble_text = ''
+        if p_start_i == 0:
+            prev = s.heading_child
         else:
-            preamble_children = s.block_children[p_start_i:p_end_i]
+            prev = s.block_children[p_start_i-1]
+        ln = get_last_ln(prev)
 
-            if False and n_children_in_preamble > 1:
-                print()
-                print('--------', s.section_num, s.section_title)
-                print(f"{n_children_in_preamble} children in preamble:")
-                for c in preamble_children:
-                    print(c.source_text())
-
-
-            r_start_posn = preamble_children[0].start_posn
-            r_end_posn   = preamble_children[-1].end_posn
-            (r_start_ln, _) = shared.convert_posn_to_linecol(r_start_posn)
-            (r_end_ln,   _) = shared.convert_posn_to_linecol(r_end_posn)
-            lns_to_suppress = range(r_start_ln, r_end_ln+1)
-
-            op_info_ln = r_start_ln
-
-            preamble_text = ' '.join(
-                child.inner_source_text()
-                for child in preamble_children
-            )
-
-        if (
-            span_start_i == 0 and not (
-                s.section_title.startswith('Properties of the')
-                or
-                s.section_title == 'Array.prototype [ @@unscopables ]'
-            )
-            or
-            s.section_kind == 'syntax_directed_operation'
-        ):
-            # The op is the one indicated by the section heading.
-            # print(s.section_num, s.section_kind, 'is', span_end_i)
-            hoi = get_info_from_heading(s)
-            op_kind = s.section_kind
+        if p_start_i == p_end_i:
+            # no children in preamble, so no lines to suppress
+            poi = None
         else:
-            # The op is *not* the one indicated by the section heading.
-            # print(s.section_num, s.section_kind, 'isnt', span_end_i)
-            hoi = Header()
-            if s.section_title.startswith('MakeArgGetter'):
-                op_kind = 'anonymous_built_in_function'
-            elif s.section_title.startswith('MakeArgSetter'):
-                op_kind = 'anonymous_built_in_function'
-            elif s.section_title.startswith('%TypedArray%.prototype.sort'):
-                op_kind = 'abstract_operation'
-            elif s.section_title.startswith('Properties of the'):
-                op_kind = 'abstract_operation'
-            elif s.section_title == 'Array.prototype [ @@unscopables ]':
-                op_kind = 'abstract_operation'
-                hoi.name = 'initializer for @@unscopables'
-                hoi.param_names = []
-            elif s.section_id in [
-                'sec-regular-expression-patterns-semantics',
-                'sec-initializers-in-forin-statement-heads',
-            ]:
-                # print('347', op_kind, s.section_num, s.section_title)
-                continue # XXX
-            else:
-                assert 0, s.section_title
+            start_ln = get_first_ln(s.block_children[p_start_i])
+            # end_ln = get_first_ln(s.block_children[p_end_i]) node might not exist
+            end_ln = 1 + get_last_ln(s.block_children[p_end_i-1])
+            for line_info in spec.info_for_line_[start_ln:end_ln]:
+                line_info.suppress = True
 
-        if op_kind == 'abstract_operation':
-            oi = get_info_for_ao(s, hoi, preamble_text)
-        elif op_kind == 'numeric_method': # PR 1515 BigInt
-            oi = get_info_for_nm(s, hoi, preamble_text)
-        elif op_kind.endswith('_rec_method'):
-            oi = get_info_for_cm(s, hoi, preamble_text)
-        elif op_kind == 'internal_method':
-            oi = get_info_for_im(s, hoi, preamble_text)
+            info_holder = extract_info_from_preamble(s.block_children[p_start_i:p_end_i])
+            poi = info_holder.convert_to_header()
 
-        elif op_kind in [
-            'function_property',
-            'function_property_overload',
-            'accessor_property',
-            'CallConstruct',
-            'CallConstruct_overload',
-            'anonymous_built_in_function',
-        ]:
-            oi = get_info_for_builtin_function(s, op_kind, hoi, preamble_text)
+        # -----------------------------------
 
-        elif op_kind == 'syntax_directed_operation':
-            # print('370', op_kind, s.section_num, s.section_title)
-            continue # XXX
-
-        else:
-            # 5 cases
-            # print('374', op_kind, s.section_num, s.section_title)
-            continue
-            # assert 0, op_kind
-
-        # ------------------------------------------------------------------
-        # Okay, so at this point we're finally committed to creating an eoh.
-
-        if algo: oi.definitions.append(algo)
-
-        if 0:
-            def each_piece_of_preamble_thing():
-                if span_start_i == span_end_i:
-                    assert p_start_i == p_end_i
-                    yield '['
-                    yield ']'
-                else:
-                    for i in range(span_start_i, span_end_i):
-                        if i == p_start_i: yield '['
-                        if i == p_end_i: yield ']'
-                        yield s.block_children[i].element_name
-                    if span_end_i == p_end_i: yield ']'
-                if span_end_i == len(s.block_children): yield '.'
-            preamble_thing = ' '.join( x for x in each_piece_of_preamble_thing() )
-
-            if p_start_i != span_start_i or p_end_i != span_end_i:
-                print(preamble_thing.ljust(30), s.section_kind, s.section_num, s.section_title)
-
+        oi = resolve_oi(hoi, poi)
+        oi.apply_ad_hoc_fixes(s)
         oi.finish_initialization()
-
-        for ln in lns_to_suppress:
-            spec.info_for_line_[ln].suppress = True
-
-        spec.info_for_line_[op_info_ln].afters.append(oi)
-
-        oi.line_num = op_info_ln
+        spec.info_for_line_[ln].afters.append(oi)
+        if algo: oi.definitions.append(algo)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -709,243 +667,1018 @@ def declare_sdo(op_name, param_dict, also=[]):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_info_for_im(s, hoi, preamble_text):
-    oi = hoi
-    oi.kind = 'internal method'
+multi_sentence_rules_str = r'''
 
-    pst = s.parent.section_title
-    oi.for_phrase = {
-        'Ordinary Object Internal Methods and Internal Slots' : 'ordinary object',
-        'ECMAScript Function Objects'                         : 'ECMAScript function object',
-        'Built-in Function Objects'                           : 'built-in function object',
-        'Bound Function Exotic Objects'                       : 'bound function exotic object',
-        'Array Exotic Objects'                                : 'Array exotic object',
-        'String Exotic Objects'                               : 'String exotic object',
-        'Arguments Exotic Objects'                            : 'arguments exotic object',
-        'Integer-Indexed Exotic Objects'                      : 'Integer-Indexed exotic object',
-        'Module Namespace Exotic Objects'                     : 'module namespace exotic object',
-        'Immutable Prototype Exotic Objects'                  : 'immutable prototype exotic object',
-        'Proxy Object Internal Methods and Internal Slots'    : 'Proxy exotic object',
-    }[pst]
+        This (?P<kind>function) returns (?P<retn>a String value). The contents of the String (are .+)
+        v=The contents of the returned String \3
 
-    assert preamble_text
+        (`([][@\w.]+)` is an accessor property whose set accessor function is \*undefined\*.) Its get accessor function performs the following steps:
+        name=get \2
+        v= \1
+        # A bit kludgey: Insert a space to prevent later match against /`(?P<name>[\w.]+)` (.+)/
 
-    ptext = preamble_text
+        ((%TypedArray%)`([^`]+)` is an accessor property whose set accessor function is \*undefined\*.) Its get accessor function performs the following steps:
+        name=get \2\3
+        v= \1
+        # Ditto re space
 
-    patterns = [
-        r'the (?P<name>\[\[\w+\]\]) internal method of a (?P<thing>bound function exotic object), (?P<thing_var>_F_),? (?:that|which) was created using the bind function\b',
-        r'The (?P<name>\[\[\w+\]\]) internal method (?:for|of) an (?P<thing>arguments exotic object)\b',
-        r'the (?P<name>\[\[\w+\]\]) internal method of (?P<thing_var>_\w+_)\b',
-        r'[Tt]he (?P<name>\[\[\w+\]\]) internal method (?:for|of) (?:an? )?(?P<thing>[^_]+ object) (?P<thing_var>_\w+_)\b',
-        # r'^the (\[\[\w+\]\]) internal method of an? ([^_]+) (_\w+_)\b',
-    ]
-    for pattern in patterns:
-        mo = re.search(pattern, ptext)
-        if mo:
-            d = mo.groupdict()
+        (.+) In addition to (_x_ and _y_) the algorithm takes (a Boolean flag named _LeftFirst_) as a parameter. The flag is (.+)
+        pl=\2 and \3
+        v=\1 The _LeftFirst_ flag is \4
 
-            assert d['name'] == oi.name
+        # The (?P<ps>optional _reviver_ parameter is a function that takes two parameters, _key_ and _value_). It (can filter .+)
+        # v=The _reviver_ function \2
+'''
 
-            if 'thing' in d:
-                assert d['thing'] == oi.for_phrase
-            else:
-                assert oi.for_phrase == 'ordinary object'
+single_sentence_rules_str = r'''
 
-            if 'thing_var' in d:
-                thing_var = d['thing_var']
-            else:
-                assert d['thing'] == 'arguments exotic object'
-                thing_var = '_args_'
-            oi.for_phrase += ' ' + thing_var
+    # ==========================================================================
+    # Sentences that start with "A" or "An"
+
+        A (?P<name>\w+) with parameters (?P<pl>.+) (is a job that .+)
+        v=A \1 \3
+
+        A (?P<pl>candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
+        v=\2 \3 if this operation \5.
+
+        (?P<retn>A Boolean value) is returned.
+
+        A (?P<name>TopLevelModuleEvaluationJob) (is a job .+)
+        v=!OP \2
+
+        A (?P<name>.+) function is an (?P<kind>anonymous built-in function).
+
+        (An? (?P<name>.+) function) is an (?P<kind>anonymous built-in function) that ((has|is) .+)
+        v=!FUNC \4
+
+        (An (?P<name>.+) function) is an (?P<kind>anonymous built-in function) with (\[\[.+)
+        v=\1 has \4
+
+    # ==========================================================================
+
+        Conversion occurs according to the following algorithm:
+
+        # Each ([A-Z].+) function (has .+)
+        # v=Each function created with this algorithm \2
+
+        For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>abstract operation) (returns \*true\*).
+        v=\2 \3 if this operation \5.
+
+        If _prototype_ is provided it is assumed to already contain, if needed, (a \*"constructor"\* property whose value is _F_).
+        ps=If _prototype_ is present, it is an object with \1.
+
+        # (Input _t_ is nominally a time value but (may be any Number value).)
+        # ps=_t_ \2
+        # v=\1
+
+    # ==========================================================================
+    # Sentences that start with "It"
+
+        It also has access to (?P<also>.+).
+
+        It can take three parameters.
+        # could send to <ps>, but not helpful.
+
+        It has access to (?P<also>.+).
+
+        It performs the following steps:
+
+        Its algorithm is as follows:
+
+    # ==========================================================================
+
+        Such a comparison is performed as follows:
+
+    # ==========================================================================
+    # Sentences that start with "The"
+
+        The (abstract operation) (?P<for>\w+)(?P<name>::\w+) (.+)
+        kind=numeric method
+        v=!OP \4
+
+        The (?P<kind>abstract operation) (?P<name>[\w/]+) (.+)
+        v=!OP \3
+
+        The (?P<kind>abstract operation) (?P<name>\w+), given (?P<pl>.+), (determines .+)
+        v=!OP \4
+
+        # The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (a constructor and a value), (returns a new promise resolved with) that value.
+        # pl=a constructor _C_ and a value _x_
+        # v=!OP \4 _x_.
+        # hack!
+        #
+        The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (?P<pl>.+), (returns .+)
+        v=!OP \4
+
+        The (?P<kind>abstract operation) (?P<name>\w+)\((?P<pl>_V_, _target_)\) (implements .+)
+        v=!OP \4
+
+        The (?P<kind>abstract operation) (?P<name><dfn.+>\w+</dfn>)\((?P<pl>_value_)\) performs the following steps:
+
+        # --------------
+
+        # (?P<ps>The allowed values for .+)
+
+        (?P<ps>The argument _\w+_ is the result of .+)
+
+        (?P<ps>The arguments .+ must be .+)
+
+        The (comparison .+), where (?P<ps>_x_ and _y_ are values), produces (.+)
+        v=!OP performs the \1, returning \3
+
+        The concrete Environment Record method (?P<name>\w+) for (?P<for>.+ Environment Record)s (.+)
+        kind=concrete method
+        v=!CM \3
+
+        The following steps are performed:
+
+        The following steps are taken:
+
+        The (?P<kind>internal comparison abstract operation) (?P<name>\w+)\((?P<pl>_x_, _y_)\), where (?P<ps>.+), produces (?P<retn>.+).
+
+        The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) performs the following steps:
+
+        The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) ((applies|parses,) .+)
+        v=The job \4
+
+        The operation (.+)
+        v=!OP \1
+
+        The (.+ process) is described by the (?P<kind>abstract operation) (?P<name>\w+) taking (?P<pl>.+).
+        v=!OP describes the \1.
+
+        # ---------
+
+        ((?P<ps>The optional _\w+_ value) indicates .+)
+        v=\1
+
+        The (optional argument|optional|argument) (_\w+_) is a List of (the names of additional internal slots that .+)
+        ps=\1 \2 is a List of names of internal slots
+        v=\2 contains \3
+
+        The (optional argument (_\w+_) is a List) containing the (names of ECMAScript Language Types) (that .+)
+        ps=\1 of \3
+        v=\2 contains the \3 \4
+
+        The (optional argument _env_) (can be used to explicitly provide the (Lexical Environment) .+)
+        ps=\1 is a \3
+        v=_env_ \2
+
+        # ---------
+
+        (?P<ps>The pure combining operation _op_ takes two List of byte values arguments and returns a List of byte values.)
+
+        (?P<ps>The value of _\w+_ is .+)
+
+        (?P<ps>The value of _\w+_ may be \*null\*.)
+
+        # Don't match "The value of _separator_ may be a String of any length or it may be ..."
+        # because it belongs in the description, is misleading for parameter-type.
+
+        (The value of the \[\[\w+\]\] attribute is a built-in function) that (requires|takes) (?P<pl>no arguments|an argument _proto_).
+        kind=accessor property
+
+        # ---------
+
+        The (?P<name>\w+) (?P<kind>abstract operation) (.+)
+        v=!OP \3
+
+        The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>a .+) (implements .+)
+        v=!CM \4
+
+            !CM implements the corresponding.* Module Record abstract method.
+
+        The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object) that (?P<desc>is defined once for each realm.)
+
+        The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps:
+
+        The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) (for|of) (?P<for>.+) is called with (?P<pl>.+).
+
+        The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) (for|of) (?P<for>.+) when called with (?P<pl>.+) performs the following steps:
+
+        The (?P<name>\w+) of (?P<pl>a numeric code point value, _cp_), is determined as follows:
+
+        # ------------
+
+        The `(?P<name>[\w.]+)` (?P<kind>function|method) (.+)
+        v=!FUNC \3
+
+        `(?P<name>[\w.]+)` (.+)
+        v=!FUNC \2
+
+            !FUNC is called with (?P<pl>.+).
+
+            !FUNC takes (?P<pl>.+), and performs the following steps:
+
+            !FUNC takes (?P<pl>.+), and (returns .+)
+            v=!FUNC \2
+
+            !FUNC takes (?P<pl>.+).
+
+            !FUNC performs the following steps:
+
+        # ---
+
+        The (_\w+_) argument (is the constructor to use .+)
+        ps=\1 is a constructor
+        v=\1 \2
+
+        # JSON.stringify:
+        # Commenting these out becaue they're inaccurate:
+        # 
+        # (?P<ps>The optional (_\w+_) parameter is a String or Number) that (allows .+)
+        # v=\2 \3
+        #
+        # (The optional (_\w+_) parameter) (is either a function that alters the way objects and arrays are stringified, or (an array of Strings and Numbers) that .+)
+        # ps=\1 is a function or \4
+        # v=\2 \3
+        #
+        # (?P<ps>The _\w+_ parameter is .+)
+
+    # ==========================================================================
+    # Sentences that start with "This"
+
+        # Note that none of these leave anything for the description.
+
+        This (?P<kind>abstract method) performs the following steps \(m(ost of the work is done by .+)\):
+        v=(M\2.)
+
+        This (?P<kind>abstract method) performs the following steps:
+
+        This (?P<kind>abstract operation) performs the following steps:
+
+        This (?P<kind>abstract operation) functions as follows:
+
+        This description applies if and only if the (?P<name>Array) constructor is called with (.+).
+        kind=overloaded constructor
+        overload_resolver=\2
+
+        This description applies only if the (?P<name>Date) constructor is called with (.+).
+        kind=overloaded constructor
+        overload_resolver=\2
+
+        This description applies only if the (?P<name>_TypedArray_) function is called with (.+).
+        kind=overloaded function
+        overload_resolver=\2
+
+        This (?P<kind>function) takes (?P<pl>no arguments).
+
+        This function (.+)
+        v=!FUNC \1
+
+        This operation performs the following steps:
+
+        This operator functions as follows:
+
+    # ==========================================================================
+    # Sentences that start with "When"
+
+        # (Ultimately, almost nothing falls through to the description.)
+
+        # When the ...
+
+        When the (?P<kind>abstract operation) (?P<name>\w+) is called(.+)
+        v=When it is called\3
+
+        When the (?P<kind>abstract operation) (?P<name>\w+) with (?P<pl>argument.+) is called(.+)
+        v=When it is called\4
+
+        When the (?P<name>\w+) (?P<kind>abstract operation) is called(.+)
+        v=When it is called\3
+
+        When the (?P<name>TypedArray SortCompare) (?P<kind>abstract operation) is called(.+)
+        v=When it is called\3
+
+        When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>_\w+_) is called(.+)
+        v=When it is called\4
+
+        When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>an? .+ _\w+_) is called(.+)
+        v=When it is called\4
+
+        When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (a bound function exotic object), _F_(, which| that) was created using the bind function is called(.+)
+        for=\3 _F_
+        v=When it is called\5
+
+        When the `(?P<name>Date)` (function) is called(.+)
+        kind=overloaded constructor
+        v=When it is called\3
+
+        (When the `@@hasInstance` method) of an object _F_ (is called .+)
+        v=\1 \2
+        # convert anomalous syntax into syntax handled by next rule:
+
+        When the `(?P<name>@*[\w.]+)` (?P<kind>function|method) is called(.+)
+        v=When it is called\3
+
+        # -----------------------------------------------------
+
+        # When a|an ...
+
+        When an? (?P<name>.+) function is called(.+)
+        v=When it is called\2
+
+        When an? (?P<name>.+) function that expects (?P<pl>.+) is called it performs the following steps:
+
+        # -----------------------------------------------------
+
+        # When <name> ...
+
+        When `(?P<name>[\w.]+)` is called(.+)
+        v=When it is called\2
+
+        When (?P<name>\w+) is performed with (?P<pl>.+), the following steps are taken:
+
+        When (?P<name>%\w+%) is called it performs the following steps:
+
+        # -----------------------------------------------------
+
+        When it is called with (?P<pl>.+?),? the following steps are (performed|taken):
+
+        When it is called with (?P<pl>.+?),? it performs the following steps:
+
+        When it is called, the following steps are taken:
+
+        When it is called, the following occurs:
+
+        When it is called with (?P<pl>.+?),? it returns (.+)
+        v=It returns \2
+
+        When it is called it returns (.+)
+        v=It returns \1
+
+        When called with (?P<pl>.+), the following steps are taken:
+
+        When called with (?P<pl>.+), it performs the following steps:
+
+        When called, the following steps are performed:
+
+    # ==========================================================================
+    # Sentences that start with the operation/function name:
+
+        (?P<name>\w+) performs the following steps:
+
+        (?P<name>\w+) is performed as follows using (?P<pl>arguments .+).
+
+        (?P<name>_\w+_) called with (?P<pl>.+) performs the following steps:
+
+        (?P<name>\w+) uses the value of (?P<also>_\w+_ that .+).
+
+        # (?P<name>\w+) has access to (?P<also>.+).
+
+        (?P<name>\w+) (tests whether .+)
+        v=!OP \2
+
+        (?P<name>\w+) is an (?P<kind>implementation-defined abstract operation) that (.+)
+        v=!OP \3
+
+        (?P<name>LocalTZA)\( _t_, _isUTC_ \) is an (?P<kind>implementation-defined algorithm) that (returns .+)
+        v=!OP \3
+
+        (?P<name>[A-Z][a-z]+[A-Z]\w+) returns (?P<retn>a built-in function object) created by the following steps:
+        v=!OP creates \2.
+
+    # ==========================================================================
+    # Sentences that (now) start with "!OP":
+
+        # !OP followed by <pl>
+
+        !OP accepts (?P<pl>.+ _adder_ function) to (be invoked, with \w+ as the receiver).
+        v=_adder_ will \2
+
+        !OP called with (?P<pl>.+) ((creates|performs) .+)
+        v=!OP \2
+
+        !OP is called with (?P<pl>.+) as its argument\.
+
+        !OP is called with (?P<pl>.+), as an argument\.
+
+        !OP is called with arguments (?P<pl>.+), and (interprets .+)
+        v=!OP \2
+
+        # Call:
+        !OP is called with (?P<pl>.+) where (_F_ is the function object, _V_ is an ECMAScript language value that .+, and _argumentsList_ is .+)
+        ps=_F_ is a value, _V_ is a value, _argumentsList_ is a List of values
+        v=\2
+
+        # Invoke:
+        !OP is called with (?P<pl>.+) where (_V_ serves as .+), (_P_ is the property key), and (_argumentsList_ is the list of arguments values passed to the method.)
+        ps=_V_ is a value, \3, and _argumentsList_ is a List of values.
+        v=\2. \4
+        # We could push the whole 'where' clause into <ps>,
+        # but that would cause calls to add_to_description.
+
+        !OP is called with (?P<pl>.+) where (?P<ps>.+).
+
+        !OP is called with (?P<pl>.+).
+
+        !OP requires the arguments: (?P<pl>.+)\.
+
+        !OP requires (?P<pl>.+)\.
+
+        # TriggerPromiseReactions
+        !OP takes (a collection of PromiseReactionRecords) and (enqueues a new Job for each record).
+        ps=_reactions_ is \1.
+        v=!OP \2 in _reactions_.
+        # assuming arg name!
+
+        !OP takes (?P<pl>.+) and performs the following steps:
+
+        !OP takes (?P<pl>.+), and performs the following steps in order to return (.+)
+        v=!OP returns \2
+
+        !OP takes (?P<pl>a code unit argument _C_) and represents it (as .+)
+        v=!OP represents _C_ \2
+
+        !OP takes (?P<pl>.*_.*).
+
+        !OP takes (?P<pl>no arguments).
+
+        !OP with (?P<pl>.+) has access to (?P<also>.+).
+
+        !OP with (?P<pl>.+) is defined by the following steps:
+
+        !OP with (?P<pl>.+) is performed as follows:
+
+        !OP with (?P<pl>.+) performs the following steps:
+
+        !OP with (?P<pl>.+) ((allocates|creates|configures|converts|is used|requests|serializes|wraps) .+)
+        v=!OP \2
+
+        !OP with (?P<pl>.+) (returns .+)
+        v=!OP \2
+
+        # ------------------------------------
+
+        (!OP is used to determine the binding of _name_) (passed as a String value).
+        ps=_name_ is \2
+        v=\1.
+
+        !OP is a recursive (?P<kind>abstract operation) that takes (?P<pl>.+).
+
+        (!OP allocates .+ with) (?P<ps>the TypedArray instance _O_).
+        v=\1 _O_.
+
+        (!OP calculates .+) from its (?P<ps>.*arguments?, which .+).
+        v=\1.
+
+        (!OP converts) (?P<pl>a \w+ _x_) (to .+)
+        v=\1 _x_ \3
+
+        (!OP determines if) (String _p_) (is a prefix of) (String _q_).
+        pl=\2 and \4
+        v=\1 _p_ \3 _q_
+
+        (!OP determines if _argument_), which (must be an ECMAScript language value), (is .+)
+        ps=_argument_ \2
+        v=\1 \3
+
+        !OP performs the following steps:
+
+        # ---------
+
+        # !OP (.+)
+        # v=The operation \1
+
+    # ==========================================================================
+    # Sentences that start with a parameter name:
+
+        (?P<ps>_constructor_ is .+)
+
+        (?P<ps>_constructorName_ is required to be the name of a TypedArray constructor in .+)
+
+        (?P<ps>_\w+_ is a Module Record, and _N2_ is .+).
+
+        (?P<ps>_\w+_ is a possibly empty List of ECMAScript language values).
+
+        ((?P<ps>_\w+_ is the Parse Node) corresponding .+)
+        v=\1
+
+        ((?P<ps>_\w+_ is the (Lexical Environment|global lexical environment)) in which .+)
+        v=\1
+
+        ((?P<ps>_\w+_ is the (function object|\|ScriptBody\|)) for which .+)
+        v=\1
+
+    # ==========================================================================
+    # Miscellaneous starts:
+
+        During execution of ECMAScript code, (?P<name>\w+) is performed using the following algorithm:
+
+        Given (?P<pl>zero or more arguments), (calls ToNumber .+)
+        v=!FUNC \2
+
+        If (Boolean argument) _D_ (.+)
+        # ps=\1 _D_
+        v=If _D_ \2
+
+        If (the Boolean argument) _S_ (.+)
+        # ps=\1 _S_
+        v=If _S_ \2
+
+        (.+ of) the Boolean argument _S_.
+        v=\1 _S_.
+
+        (.+ depends upon the value of) the _S_ argument:
+        v=\1 _S_.
+
+        # (Don't extract parameter info ('ps') from env-rec preambles,
+        # because you'll get lots of warnings re mismatches.)
+
+        Specifically, perform the following steps:
+
+        (?P<pl>Two code units, _lead_ and _trail_), (that .+)
+        v=Two code units \2
+
+        These are the steps in stringifying an object:
+
+    # ==========================================================================
+    # Sentences where we don't care how it starts:
+
+        # ----------
+        # produces ...
+
+        (Produces (?P<retn>a String value) .+)
+        v=\1
+
+        (.+ produces (?P<retn>a Number value) .+)
+        v=\1
+
+        (.+ produces (?P<retn>an ECMAScript value).)
+        v=\1
+
+        (.+ produces (?P<retn>an integer value) .+)
+        v=\1
+
+        # ----------
+        # provides ...
+
+        (.+ provides (?P<retn>a String) representation of .+)
+        v=\1
+
+        # ----------
+        # returns ...
+
+        (.+ returning (?P<retn>\*true\*, \*false\*, or \*undefined\*) .+)
+        v=\1
+
+        (.+ returning (?P<retn>\*true\* or \*false\*)\.)
+        v=\1
+
+        (Return (?P<retn>a String) .+)
+        v=\1
+
+        (Returns (a|the) (?P<retn>Number) .+)
+        v=\1
+
+        (Returns a new (?P<retn>_TypedArray_ object) .+)
+        v=\1
+
+        (Returns (?P<retn>an Array object) into .+)
+        v=\1
+
+        (Returns the .+ (?P<retn>Number value) .+)
+        v=\1
+
+        (Returns the integral part of the number .+)
+        retn=integer
+        v=\1
+
+        (.+ returns _argument_ converted to a Number value if .+)
+        retn=a Number value
+        v=\1
+
+        (.+ returns _value_ argument converted to (?P<retn>a non-negative integer) .+)
+        v=\1
+
+        (.+ returns _value_ converted to a numeric value of type (?P<retn>Number or BigInt).)
+        v=\1
+
+        (.+ returns \*true\* if .+ and \*false\* otherwise.)
+        retn=*true* or *false*
+        v=\1
+
+        (.+ returns \*undefined\*.)
+        retn=*undefined*
+        v=\1
+
+        (.+ returns (a|the) BigInt .+)
+        retn=BigInt
+        v=\1
+        # XXX: could reduce the description a bit
+
+        (.+ returns (?P<retn>a Number) .+)
+        v=\1
+
+        (.+ returns (?P<retn>a String) .+)
+        v=\1
+
+        (.+ returns (?P<retn>a new promise) .+)
+        v=\1
+
+        (.+ returns (?P<retn>a promise) .+)
+        v=\1
+
+        (.+ returns a substring .+)
+        retn=String
+        v=\1
+
+        (.+ returns (an Array object) containing .+, (or \*null\*) if _string_ did not match.)
+        retn=\2 \3
+        v=\1
+
+        (.+ returns (?P<retn>an Iterator object) .+)
+        v=\1
+
+        (.+ returns (?P<retn>an array) .+)
+        v=\1
+
+        (.+ returns (?P<retn>an Iterator object) .+)
+        v=\1
+
+        (.+ returns either \*false\* .+ or the IteratorResult object .+)
+        retn=*false* or an IteratorResult object
+        v=\1
+
+        (.+ returns either \*false\* or the end index of a match):
+        retn=a Boolean or a non-negative integer
+        v=\1.
+
+        (.+ returns either a new promise .+ or the argument itself if the argument is a promise .+)
+        retn=a promise
+        v=\1
+
+        (.+ returns the global object .+)
+        retn=an object
+        v=\1
+
+        (.+ returns the local time zone adjustment, .+)
+        retn=a Number
+        v=\1
+
+        (.+ returns the value of the \*"length"\* property of an array-like object.)
+        retn=a non-negative integer
+        v=\1
+
+        (.+ (?P<retn>a new PromiseCapability Record)) which is returned as the value of this abstract operation.
+        v=\1.
+
+        # -----------
+        # throws ...
+
+        (.+ (?P<reta>throws? a \*TypeError\* exception) .+)
+        v=\1
+
+        (.+ (?P<reta>throws? an exception) .+)
+        v=\1
+
+        # -----------
+
+        # (.+ a (?P<kind>static semantic rule) named (?P<name>Contains) which takes (?P<pl>an argument named _symbol_ whose value is a terminal or nonterminal) .+)
+        # v=\1
+
+        (.+ to) (?P<ps>the \|ModuleSpecifier\| String, _specifier_), (occurring .+)
+        v=\1 _specifier_ \3
+
+        (.+ by) (?P<ps>the Script Record or Module Record (_\w+_)).
+        v=\1 \3.
+
+        (.*(?P<ps>_\w+_ may also be \*null\*), if .+)
+        v=\1
+
+        # ----
+
+        (.+ if) (?P<ps>an object (_\w+_)) (inherits .+)
+        v=\1 \3 \4
+
+        (.+ if) +(?P<ps>ECMAScript value (_\w+_)) (is .+)
+        v=\1 \3 \4
+
+        (.+ of) (?P<ps>object (_\w+_)) (either .+)
+        v=\1 \3 \4
+
+        (.+ by) (?P<ps>constructor (_\w+_))\.
+        v=\1 \3.
+
+        (.+ interprets) (?P<ps>(a String|the String value) _string_) (as .+)
+        v=\1 _string_ \4
+
+        (.+) by performing the following steps:
+        v=\1.
+
+        (.+ of) (?P<ps>an array-like object, (_\w+_)).
+        v=\1 \3.
+
+        (.+ from) (?P<ps>the argument object (_\w+_)).
+        v=\1 \3.
+
+        (.+ to) (?P<ps>the object that is _O_)\.
+        v=\1 _O_.
+
+        # (.+) the value of (the Boolean argument) _S_.
+        # ps=\2 _S_
+        # v=\1 the value of _S_.
+        # Better to not try to extract parameter info from env-rec preambles?
+
+        (.+, reading the values from) (?P<ps>the _typedArray_ argument object).
+        v=\1 _typedArray_.
+
+        (.+, reading the values from) the object (?P<ps>_array_).
+        v=\1 _array_.
+        # don't include 'object' in ps because that's misleading
+
+        (.+ for) the (?P<ps>Cyclic Module Record _module_), (.+)
+        v=\1 _module_, \3
+
+        (.+ index (_\w+_).)
+        ps=\2 is a non-negative integer
+        v=\1
+        # iffy
+
+        (.+) as follows:
+        v=\1.
+
+        (.+ determines .+):
+        v=\1.
+
+        (.+ is used to .+):
+        v=\1.
+
+        # (.+):
+        # v=\1.
+
+'''
+
+class ExtractionRules:
+    def __init__(self, rules_str):
+        self.rules = []
+        rules_str = rules_str.strip()
+        if rules_str == '': 
+            return
+
+        for chunk in re.split(r'\n{2,} *', rules_str):
+            lines = [
+                line
+                for line in re.split(r'\n *', chunk)
+                if not line.startswith('#')
+            ]
+            if len(lines) == 0:
+                # A chunk consisting only of comment-lines.
+                continue
+
+            self.rules.append(HeaderConstructionRule(lines))
+
+    def apply(self, orig_subject, info_holder, trace):
+        assert orig_subject != ''
+        have_shown_a_trace_for_this_subject = False
+
+        subject = orig_subject
+
+        for rule in self.rules:
+            mo = rule.reo.fullmatch(subject)
+            if mo is None:
+                continue
+
+            # match!
+            rule.count += 1
+
+            if trace:
+                if not have_shown_a_trace_for_this_subject:
+                    stderr('--------------------------')
+                    stderr(f"subject: {orig_subject}")
+                    stderr()
+                have_shown_a_trace_for_this_subject = True
+                stderr(f"matches: {rule.raw_pattern}")
+
+            for (key, value) in mo.groupdict().items():
+                if trace: stderr(f"inline : {key} = {value}")
+                info_holder.add(key, value)
+
+            for (key, template) in rule.templates.items():
+                value = mo.expand(template)
+                if key == 'v':
+                    # 'v' just because it looks like a down-arrow,
+                    # i.e., this is what gets passed down to the next rule
+                    subject = value
+                else:
+                    if trace: stderr(f"outline: {key} = {value}")
+                    info_holder.add(key, value)
+
+            if trace:
+                stderr(f"leaving: {subject}")
+                stderr()
+
+            if subject == '':
+                # no point trying further rules
+                break
+
+        return subject
+
+class HeaderConstructionRule:
+    def __init__(self, lines):
+        self.raw_pattern = lines.pop(0)
+        self.reo = re.compile(self.raw_pattern)
+        self.templates = {}
+        for line in lines:
+            mo = re.fullmatch(r'([\w ]+)=(.*)', line)
+            if mo is None:
+                stderr(f"bad line: {line}")
+                sys.exit(1)
+            (key, template) = mo.groups()
+            assert key not in self.templates
+            self.templates[key] = template
+        if 'v' not in self.templates:
+            self.templates['v'] = ''
+        self.count = 0
+
+multi_sentence_rules = ExtractionRules(multi_sentence_rules_str)
+single_sentence_rules = ExtractionRules(single_sentence_rules_str)
+
+def extract_info_from_preamble(preamble_nodes):
+    info_holder = PreambleInfoHolder()
+
+    para_texts_remaining = []
+    for preamble_node in preamble_nodes:
+        assert preamble_node.element_name == 'p'
+
+        para_text = preamble_node.inner_source_text().strip()
+        trace = ('xInvoke' in para_text)
+        para_text_remaining = multi_sentence_rules.apply(para_text, info_holder, trace)
+        if para_text_remaining != '':
+            sentences_remaining = []
+            for sentence in re.split('(?<=\.) +', para_text_remaining):
+                sentence_remaining = single_sentence_rules.apply(sentence, info_holder, trace)
+                if sentence_remaining != '':
+                    sentences_remaining.append(sentence_remaining)
+            # if sentences_remaining:
+            para_text_remaining = ' '.join(sentences_remaining)
+            if para_text_remaining != '':
+                info_holder.add('desc', para_text_remaining)
+
+    return info_holder
+
+def note_unused_rules():
+    stderr()
+    stderr("Unused rules in `multi_sentence_rules`:")
+    for rule in multi_sentence_rules.rules:
+        if rule.count == 0:
+            stderr(f"    {rule.raw_pattern}")
+
+    stderr()
+    stderr("Unused rules in `single_sentence_rules`:")
+    for rule in single_sentence_rules.rules:
+        if rule.count == 0:
+            stderr(f"    {rule.raw_pattern}")
+    stderr()
+
+class PreambleInfoHolder:
+    def __init__(self):
+        self.fields = defaultdict(list)
+
+    def add(self, key, value):
+        self.fields[key].append(value)
+
+    def _dedupe(self):
+        for (key, values) in self.fields.items():
+            deduped_values = [
+                v
+                for (i,v) in enumerate(values)
+                if v not in values[0:i]
+            ]
+            self.fields[key] = deduped_values
+
+    def convert_to_header(self):
+        self._dedupe()
+
+        poi = Header()
+
+        def join_field_values(key):
+            values = self.fields[key]
+            if not values: return None
+            return ' & '.join(values)
+
+        def at_most_one_value(key):
+            values = self.fields[key]
+            if not values: return None
+            assert len(values) == 1, values
+            return values[0]
+
+        vs = join_field_values('kind')
+        poi.kind = {
+            'abstract operation'                        : 'abstract operation',
+            'concrete method'                           : 'concrete method',
+            'concrete method & abstract method'         : 'concrete method', # spec bug?
+            'implementation-defined abstract operation' : 'implementation-defined abstract operation',
+            'implementation-defined algorithm'          : 'implementation-defined abstract operation',
+            'internal comparison abstract operation'    : 'abstract operation',
+            'job'                                       : 'abstract operation',
+            'internal method'                           : 'internal method',
+            'numeric method'                            : 'numeric method',
             #
-            ptext = preamble_text[0:mo.start()] + 'OP' + preamble_text[mo.end():]
-            break
-    else:
-        assert 0, ptext
+            'anonymous built-in function object'        : 'anonymous built-in function',
+            'anonymous built-in function'               : 'anonymous built-in function',
+            'accessor property'                         : 'accessor property',
+            'constructor'                               : 'function property',
+            'function'                                  : 'function property',
+            'method'                                    : 'function property',
+            'overloaded constructor'                    : 'function property overload',
+            'overloaded constructor & function'         : 'function property overload',
+            'overloaded function'                       : 'function property overload',
+            None                                        : None,
+        }[vs]
 
-    # -----------
+        poi.name = at_most_one_value('name')
 
-    patterns = [
-        r'^When OP is called, the following steps are taken:$',
-        r'^When OP is called with (?P<pl>.+), the following steps are taken:$',
-        r'^OP when called with (?P<pl>.+) performs the following steps:$',
-        r'^OP is called with parameters (?P<pl>.+)\. The following steps are taken:$',
-        r'^OP is called with parameters (?P<pl>_argumentsList_ and _newTarget_). (?=The steps performed)'
-    ]
-    for pattern in patterns:
-        mo = re.match(pattern, ptext)
-        if mo:
-            d = mo.groupdict()
-            if 'pl' in d:
-                get_im_params(oi, d['pl'])
-            else:
-                assert oi.param_names == []
-            ptext = ptext[0:mo.start()] + ptext[mo.end():]
-            break
+        poi.for_phrase = at_most_one_value('for')
 
-    oi.description = ptext
+        poi.overload_resolver = at_most_one_value('overload_resolver')
 
-    return oi
+        # Have to do this one "out of order"
+        # because of possible calls to add_to_description(). 
+        poi.description = self.fields['desc']
 
-def get_im_params(oi, listing):
-    listing = sub_many(listing, [
-        (r'(_argumentsList_), (a List)', r'\1 \2'),
-        (r'(_argumentsList_) and (_newTarget_)\. _argumentsList_ is (a possibly empty List of ECMAScript language values)', r'\1 which is \3 and \2'),
-    ])
+        pl_values = self.fields['pl']
+        if len(pl_values) == 0:
+            poi.param_names = None
+        elif len(pl_values) == 1:
+            get_info_from_parameter_listing_in_preamble(poi, pl_values[0])
+        else:
+            stderr(f"{poi.name} has multi-pl: {poi.param_names}")
+            assert 0
 
-    assert oi.param_nature_  == {}
+        for ps in self.fields['ps']:
+            get_info_from_parameter_sentence_in_ao_preamble(poi, ps)
 
-    param_names = []
-    for piece in re.split(', and |, | and ', listing):
-        (param_name, param_nature) = im_param_map[piece]
-        param_names.append(param_name)
-        oi.param_nature_[param_name] = param_nature
+        also = at_most_one_value('also')
+        if also is None:
+            poi.also = None
+        else:
+            # move to apply_ad_hoc_fixes ?
+            (varnames, where) = {
+                'the _comparefn_ argument passed to the current invocation of the `sort` method':
+                    (['_comparefn_'], 'from the current invocation of the `sort` method'),
 
-    assert param_names == oi.param_names
+                '_reviver_ that was originally passed to the above parse function':
+                    (['_reviver_'], 'from the above parse function'),
 
-im_param_map = {
-    'ECMAScript language value _Receiver_' : ('_Receiver_',      'Tangible_'),
-    'Property Descriptor _Desc_'           : ('_Desc_',          'Property Descriptor'),
-    '_newTarget_'                          : ('_newTarget_',     'TBD'),
-    '_thisArgument_'                       : ('_thisArgument_',  'TBD'),
-    '_argumentsList_'                      : ('_argumentsList_', 'List of Tangible_'),
-    'a list of arguments _argumentsList_'  : ('_argumentsList_', 'List of Tangible_'),
-    'argument _V_'                         : ('_V_',             'TBD'),
-    'parameters _thisArgument_'            : ('_thisArgument_',  'TBD'),
-    'property key _P_'                     : ('_P_',             'property key'),
-    'a property key _P_'                   : ('_P_',             'property key'),
-    'value _V_'                            : ('_V_',             'Tangible_'),
-    '_argumentsList_ a List of ECMAScript language values' :
-        ('_argumentsList_', 'List of Tangible_'),
-    '_argumentsList_ which is a possibly empty List of ECMAScript language values':
-        ('_argumentsList_', 'List of Tangible_'),
-}
+                '_ReplacerFunction_ from the invocation of the `stringify` method':
+                    (['_ReplacerFunction_'], 'from the invocation of the `stringify` method'),
+
+                'the _stack_, _indent_, _gap_, and _PropertyList_ values of the current invocation of the `stringify` method':
+                    (['_stack_', '_indent_', '_gap_', '_PropertyList_'], 'from the current invocation of the `stringify` method'),
+
+                'the _stack_, _indent_, and _gap_ values of the current invocation of the `stringify` method':
+                    (['_stack_', '_indent_', '_gap_'], 'from the current invocation of the `stringify` method'),
+            }[also]
+            poi.also = [
+                (varname, where)
+                for varname in varnames
+            ]
+
+        # Cheat: Add some 'also' info that doesn't appear in the preamble.
+        # move to apply_ad_hoc_fixes?
+
+        if poi.name in [
+            'WordCharacters',
+            'IsWordChar',
+            'CharacterSetMatcher',
+            'Canonicalize',
+            'RegExpBuiltinExec',
+            'CharacterRangeOrUnion',
+            'BackreferenceMatcher',
+        ]:
+            # 21.2.2.1 Notation says:
+            # "The descriptions below use the following variables:"
+            assert poi.also is None
+            poi.also = regexp_also
+
+        if poi.name == 'TypedArray SortCompare':
+            # "SortCompare has access to the _comparefn_ and _buffer_ values
+            # of the current invocation of the `sort` method."
+            # The sentence appears at the end of the preceding para,
+            # but I don't want to include that whole para in the preamble.
+            assert poi.also is None
+            poi.also = [
+                ('_comparefn_', 'from the `sort` method'),
+                ('_buffer_',    'from the `sort` method'),
+            ]
+
+        poi.returns_normal = join_field_values('retn')
+
+        poi.returns_abrupt = at_most_one_value('reta')
+
+        return poi
+
+# ----------------------------------
+
+def get_first_ln(node):
+    (ln, _) = shared.convert_posn_to_linecol(node.start_posn)
+    return ln
+
+def get_last_ln(node):
+    (ln, _) = shared.convert_posn_to_linecol(node.end_posn)
+    return ln
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def get_info_for_nm(s, hoi, preamble_text):
-    if preamble_text == '':
-        oi = hoi
-        oi.kind = 'numeric_method'
-    else:
-        poi = Header()
-        poi.kind = 'numeric_method'
-
-        if RE.fullmatch(r'The abstract operation (Number|BigInt)(::\w+) (.+)', preamble_text):
-            (poi.for_phrase, poi.name, rest) = RE.groups()
-
-            if RE.fullmatch(r'converts a (Number|BigInt) (_x_) to String format as follows:', rest):
-                poi.param_names = ['_x_']
-                poi.param_nature_['_x_'] = RE.group(1)
-                poi.description = 'converts _x_ to String format'
-
-            elif RE.fullmatch(r"with an argument _x_ of type (BigInt) (returns the one's complement of _x_; that is, -_x_ - 1).", rest):
-                poi.param_names = ['_x_']
-                poi.param_nature_['_x_'] = RE.group(1)
-                poi.description = RE.group(2)
-
-            elif RE.fullmatch(r'with( two)? arguments _x_ and _y_ of type (Number|BigInt) performs the following steps:', rest):
-                poi.param_names = ['_x_', '_y_']
-                poi.param_nature_['_x_'] = RE.group(2)
-                poi.param_nature_['_y_'] = RE.group(2)
-
-            elif RE.fullmatch(r"with two arguments _x_ and _y_ of type (BigInt) (returns (a|the) BigInt (value that represents|representing) .+)\.", rest):
-                poi.param_names = ['_x_', '_y_']
-                poi.param_nature_['_x_'] = RE.group(1)
-                poi.param_nature_['_y_'] = RE.group(1)
-                poi.returns_normal = 'BigInt'
-                poi.description = RE.group(2)
-
-            elif RE.fullmatch(r"with two arguments _x_ and _y_ of type (BigInt) (returns \*true\* .+)\.", rest):
-                poi.param_names = ['_x_', '_y_']
-                poi.param_nature_['_x_'] = RE.group(1)
-                poi.param_nature_['_y_'] = RE.group(1)
-                poi.returns_normal = 'Boolean'
-                poi.description = RE.group(2)
-
-            else:
-                assert 0, rest
-
-        else:
-            poi.description = preamble_text.strip()
-
-        oi = resolve_oi(hoi, poi)
-
-    return oi
-
-# ------------------------------------------------------------------------------
-
-def get_info_for_cm(s, hoi, preamble_text):
-
-    oi = hoi
-    oi.kind = 'concrete method'
-
-    pst = s.parent.section_title
-    if pst.endswith((' Environment Records', ' Scope Records')): # PR 1477 scope-records
-        oi.for_phrase = pst[0].lower() + pst[1:-1]
-    elif pst in ['Source Text Module Records', 'Cyclic Module Records']:
-        oi.for_phrase = pst[0:-1]
-    else:
-        assert 0, pst
-
-    # A CM's preamble needn't be that detailed about its parameters,
-    # because the interface is declared elsewhere.
-    #
-    # While the 'elsewhere' info should properly be extracted from the spec,
-    # I've hardcoded it below.
-
-    # pd = predeclared
-    (pd_param_names, pd_param_nature_, return_type) = predeclared_rec_method_info[oi.name]
-
-    assert oi.param_names == pd_param_names
-    oi.param_nature_ = pd_param_nature_
-
-    for subtype in return_type.split(' | '):
-        if subtype.startswith('throw'):
-            assert oi.returns_abrupt is None
-            oi.returns_abrupt = subtype
-        else:
-            if oi.returns_normal is None:
-                oi.returns_normal = ''
-            else:
-                oi.returns_normal += ' | '
-            oi.returns_normal += subtype
-
-    if preamble_text:
-
-        patterns = [
-            r'^The (\w+) concrete method of a ((?:Cyclic|Source Text) Module Record) ',
-            r'^The concrete Environment Record method (\w+) for (\w+ Environment Record)s ',
-        ]
-        for pattern in patterns:
-            mo = re.search(pattern, preamble_text)
-            if mo:
-                (name, for_phrase) = mo.groups()
-                assert name == oi.name
-                assert for_phrase == oi.for_phrase
-                ptext = re.sub(pattern, '', preamble_text)
-                break
-        else:
-            ptext = preamble_text
-
-        ptext = sub_many(ptext, [
-            (r'(?:the )?Boolean argument (_D_|_S_)', r'\1'),
-            (r'_M_ is a Module Record, and ', r''),
-            (r'^with arguments _exportName_, and _resolveSet_ ', ''),
-            (r'^implements the corresponding (Module Record|Cyclic Module Record) abstract method\. ', ''),
-            (r'^performs the following steps:$', r''),
-            (r'^It performs the following steps.$', ''),
-            (r' ?This abstract method performs the following steps.$', ''),
-            (r' This abstract method performs the following steps \(most of the work (.+)\):$',
-                r' (Most of the work \1.)'),
-            (':$', '.'),
-        ])
-
-        oi.description = ptext
-
-    return oi
-
-# ------------------------------------------------------------------------------
 
 rec_method_declarations = '''
     BindThisValue(V) -> TBD
@@ -957,7 +1690,7 @@ rec_method_declarations = '''
     CreateImportBinding(N, M, N2) -> TBD
     CreateMutableBinding(N, D) -> TBD
     DeleteBinding(N) -> Boolean
-    GetBindingValue(N, S) -> throw_ *ReferenceError*
+    GetBindingValue(N, S) -> Tangible_ | throw_ *ReferenceError*
     GetSuperBase() -> Object | Null | Undefined
     GetThisBinding() -> Tangible_ | throw_ *ReferenceError*
     HasBinding(N) -> Boolean
@@ -967,7 +1700,7 @@ rec_method_declarations = '''
     HasThisBinding() -> Boolean
     HasVarDeclaration(N) -> Boolean
     InitializeBinding(N, V) -> TBD
-    SetMutableBinding(N, V, S) -> throw_ *TypeError*
+    SetMutableBinding(N, V, S) -> Boolean | empty_ | throw_
     WithBaseObject() -> Object | Undefined
     GetExportedNames(exportStarSet) -> List of String
     ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
@@ -1005,453 +1738,73 @@ for line in re.split(r'\n +', rec_method_declarations.strip()):
         (param_name, rec_method_parameter_types[param_name])
         for param_name in param_names
     )
-    predeclared_rec_method_info[name] = (param_names, param_nature_, return_type)
+    if 'throw' in return_type:
+        (return_tipe_normal, return_tipe_abrupt) = re.split(r' \| (?=throw)', return_type)
+    else:
+        (return_tipe_normal, return_tipe_abrupt) = (return_type, 'TBD')
+    predeclared_rec_method_info[name] = (param_names, param_nature_, return_tipe_normal, return_tipe_abrupt)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_info_for_ao(s, hoi, preamble_text):
-    if preamble_text == '':
-        oi = hoi
-        oi.kind = 'abstract operation'
-    else:
-        poi = get_info_from_ao_preamble(preamble_text)
-        oi = resolve_oi(hoi, poi)
-    return oi
-
-# ------------------------------------------------------------------------------
-
-def get_info_from_ao_preamble(preamble_text):
-
-    # if 'thisBooleanValue' in preamble_text: pdb.set_trace()
-
-    oi = Header()
-    oi.kind = 'abstract operation'
-
-    # ----------------------------------------------------------------
-    # Handle the Memory Model abstract operations first,
-    # because they're so different.
-
-    mo = re.fullmatch(r'A candidate execution (_execution_) has (.+) if the following abstract operation returns \*true\*.', preamble_text)
-    if mo:
-        oi.name = mo.group(2)
-        oi.param_names = ['_execution_']
-        oi.param_nature_['_execution_'] = 'a candidate execution'
-        oi.description = preamble_text
-        return oi
-
-    mo = re.fullmatch(r'For an execution (_execution_), two events (_E_) and (_D_) in SharedDataBlockEventSet\(_execution_\) are in a (.+) if the following abstract operation returns \*true\*.', preamble_text)
-    if mo:
-        oi.name = mo.group(4)
-        oi.param_names = ['_execution_', '_E_', '_D_']
-        oi.param_nature_['_execution_'] = 'a candidate execution'
-        oi.param_nature_['_E_'] = 'a Shared Data Block event'
-        oi.param_nature_['_D_'] = 'a Shared Data Block event'
-        oi.description = preamble_text
-        return oi
-
-    # ----------------------------------------------------------------
-
-    mo = re.fullmatch(r'The abstract operation (<dfn [^<>]+>(this\w+Value)</dfn>)\(_value_\) performs the following steps:', preamble_text)
-    if mo:
-        (dfn_element, ao_name) = mo.groups()
-        oi.name = ao_name
-        oi.param_names = ['_value_']
-        oi.description = dfn_element
-        return oi
-
-    # ----------------------------------------------------------------
-    # Ascertain the name of the operation.
-
-    namers = [
-        r'[Tt]he (\w+) abstract operation',
-        r'[Tt]he abstract operation ([\w/:]+)',
-        r'The internal comparison abstract operation (\w+)',
-        r'The job (\w+)',
-        r'^(\w+DeclarationInstantiation)',
-        r'The (UTF16Encoding)',
-        r'A (TopLevelModuleEvaluationJob)',
-        r'(?<=When )(CreateResolvingFunctions)',
-        r'^(Host\w+)',
-        r'^(IsSharedArrayBuffer)\b',
-        r'^(LocalTZA)\([^()]*\)',
-        r'the (TypedArray SortCompare) abstract operation',
-    ]
-    for pattern in namers:
-        mo = re.search(pattern, preamble_text)
-        if mo:
-            oi.name = mo.group(1)
-            ptext = re.sub(pattern, 'OP', preamble_text)
-
-            # occasionally the op_name is repeated later in the preamble:
-            ptext = re.sub(' (?!UTC)' + oi.name + r'\b', ' OP', ptext)
-            # Require the preceding space because:
-            #    when oi.name is 'Call', we don't want to change "[[Call]]";
-            #    ditto 'Construct'
-            # Avoid 'UTC' because it's the name of an op and also
-            # an acronym used in the description of that op.
-
-            break
-    else:
-        ptext = preamble_text
-
-    # ----------------------------------------------------------------
-    # Before we split the preamble into sentences,
-    # deal with some things that wouldn't be handled well by that.
-
-    ptext = sub_many(ptext, [
-
-        # 7.2.11 Abstract Relational Comparison
-        # split a sentence:
-        ('(The comparison .+ or \*undefined\*) \(which (indicates .+)\).',
-            r'\1. Returning *undefined* \2.'),
-
-        # 7.2.11 Abstract Relational Comparison
-        # copy param name from one sentence to the next
-        ('(In addition) to _x_ and _y_ (the algorithm takes a Boolean flag named _LeftFirst_ as a parameter.) The (flag is used to .+)',
-            r'\1 \2 The _LeftFirst_ \3'),
-
-        # 15.2.1.18 HostResolveImportedModule
-        # 15.2.1.19 HostImportModuleDynamically
-        (r'(the Script Record or Module Record) (_referencingScriptOrModule_)\. (\(?\2 may also be \*null\*)',
-            r'\1 or *null* \2. \3'),
-
-    ])
-
-    # ----------------------------------------------------------------
-    # Split the preamble text into sentences.
-    # Attempt to extract different kinds of info from each sentence.
-
-    for sentence in re.split('(?<=\.) ', ptext):
-        # if sentence == 'Otherwise, it returns *undefined*.': pdb.set_trace()
-        s = sentence
-        for extractor in [
-            extract_parameter_info_from_ao_preamble,
-            extract_also_info_from_ao_preamble,
-            extract_returns_info_from_ao_preamble,
-            skip_uninformative_from_ao_preamble,
-        ]:
-            s = extractor(oi, s)
-            if s == '': break
-
-        if s:
-            add_to_description(oi, s)
-
-    # ----------------------------------------------------------------
-    # Cheat: Add some 'also' info that doesn't appear in the preamble.
-
-    if oi.name in [
-        'WordCharacters',
-        'IsWordChar',
-        'CharacterSetMatcher',
-        'Canonicalize',
-        'RegExpBuiltinExec',
-        'CharacterRangeOrUnion',
-        'BackreferenceMatcher',
-    ]:
-        # 21.2.2.1 Notation says:
-        # "The descriptions below use the following variables:"
-        assert oi.also is None
-        oi.also = regexp_also
-
-    if oi.name == 'TypedArray SortCompare':
-        # "SortCompare has access to the _comparefn_ and _buffer_ values
-        # of the current invocation of the `sort` method."
-        # The sentence appears at the end of the preceding para,
-        # but I don't want to include that whole para in the preamble.
-        assert oi.also is None
-        oi.also = [
-            ('_comparefn_', 'from the `sort` method'),
-            ('_buffer_',    'from the `sort` method'),
-        ]
-
-    return oi
-
-# ------------------------------------------------------------------------------
-
-def extract_parameter_info_from_ao_preamble(oi, sentence):
-
-    # First, handle cases where the sentence has both parameter info
-    # and other useful content.
-    # We need to disentangle those, and return the non-parameter info.
-
-    if '_i_ a byte offset' in sentence: stderr('epi', sentence)
-
-    for (pattern, r1, r2) in [
-
-        # 7.1.12.1 NumberToString
-        (r'OP converts (a Number _m_) (to String format as follows:)',
-            r'OP takes \1.',
-            r'OP converts a Number \2'),
-
-        # 7.2.2 IsArray
-        # 21.1.3.17.1 SplitMatch
-        # 21.2.2.5.1 RepeatMatcher
-        (r'(OP takes .+), and (performs.+)',
-            r'\1.',
-            r'OP \2'),
-
-        # 7.2.3 IsCallable
-        # 7.2.4 IsConstructor
-        # 7.2.7 IsPropertyKey
-        ('(OP determines if _argument_), which must be (an ECMAScript language value), (is .+)',
-            r'OP takes \2 _argument_.',
-            r'\1 \3'),
-
-        # 7.2.5 IsExtensible
-        (r'(OP is used to .+ to) the object that is _O_.',
-            r'_O_ is an object.',
-            r'\1 an object.'),
-
-        # 7.2.9 IsStringPrefix
-        (r'OP determines if (String _p_) is a prefix of String _q_.',
-            r'OP is called with String _p_ and String _q_.',
-            r'OP determines if _p_ is a prefix of _q_.'),
-
-        # 7.2.9 SameValue
-        # 7.2.10 SameValueZero
-        # SameValueNonNumber
-        (r'OP\((.+)\), where (.+), (produces .+)',
-            r'OP is called with \1, where \2.',
-            r'OP \3'),
-
-        # 7.2.11 Abstract Relational Comparison
-        # 7.2.12 Abstract Equality Comparison
-        # 7.2.13 Strict Equality Comparison
-        (r'The (comparison _x_ \S+ _y_), (where _x_ and _y_ are values), (produces .+)',
-            r'OP is called with _x_ and _y_, \2.',
-            r'OP implements the \1, and \3'),
-
-        # 7.3.13 Construct
-        (r'((_argumentsList_) and (_newTarget_) are the values to be passed as the corresponding arguments of the internal method.)',
-            r'\2 is a List of values and \3 is a value.',
-            r'\1'),
-
-        # 7.3.17 CreateListFromArrayLike
-        ('(OP is used to .+ of an array-like object), _obj_.',
-            r'OP takes object _obj_.',
-            r'\1.'),
-        (r'((The optional argument _elementTypes_ is a List) containing the names of ECMAScript Language Types that are allowed for element values of the List that is created.)',
-            r'\2 of ECMAScript Language Type names.',
-            r'\1'),
-
-        # 7.3.19 OrdinaryHasInstance
-        (r'(OP implements .+ if an object _O_ inherits from the instance object inheritance path provided by constructor _C_.)',
-            r'OP takes a constructor _C_ and an object _O_.',
-            r'\1'),
-
-        # 7.3.20 SpeciesConstructor
-        (r'(OP is used to .+ from the) argument object _O_\.',
-            r'OP takes an argument object _O_.',
-            r'\1 object _O_.'),
-        (r'(The _defaultConstructor_ argument is the constructor to use .+)',
-            r'_defaultConstructor_ is a constructor.',
-            r'\1'),
-
-        # 8.3.1 ResolveBinding
-        (r'(OP is used to determine the binding of _name_) passed as a String value.',
-            r'_name_ is a String value.',
-            r'\1.'),
-        (r'(The optional argument _env_ can be used to explicitly provide the Lexical Environment .+\.)',
-            r'_env_ is an optional Lexical Environment.',
-            r'\1'),
-
-        # 9.1.13 ObjectCreate
-        # 9.1.14 OrdinaryCreateFromConstructor
-        # 9.3.3 CreateBuiltinFunction
-        # 9.4.5.7 IntegerIndexedObjectCreate
-        (r'(The((?: optional)?)(?: argument)? (_\w+SlotsList_) is a List of the names of additional internal slots that .+)',
-            r'\3 is a\2 List of slot-names.',
-            r'\1'),
-
-        # 9.4.2.2
-
-        # 9.4.4.7.1 MakeArgGetter
-        # 9.4.4.7.2 MakeArgSetter
-        (r'OP (called with String _name_ and Environment Record _env_) (creates .+)',
-            r'OP is \1.',
-            r'OP \2'),
-
-        # 10.1.1
-        (r'OP of a numeric code point value, _cp_, is determined as follows:',
-            r'OP takes a numeric code point value _cp_.',
-            r'_cp_ is a numeric code point value.'),
-
-        # 10.1.2 UTF16Decode
-        (r'(Two code units), (_lead_) and (_trail_), (that form a UTF-16 .+) by performing the following steps:',
-            r'OP takes a code unit \2 and a code unit \3.',
-            r'\1 \4.'),
-
-        # 10.1.3 CodePointAt
-        (r'OP interprets (a String _string_) (as .+ at index _position_)\.',
-            r'OP takes \1 and an index _position_.',
-            r'OP interprets _string_ \2.'),
-
-        # 12.9.4 InstanceofOperator
-        (r'OP\((.+)\) (implements .+ ECMAScript value _V_ .+ object _target_ .+.)',
-            r'OP is called with \1 where _V_ is an ECMAScript value and _target_ is an object.',
-            r'OP \2'),
-
-        # 13.12.9 CaseClauseIsSelected
-        (r'OP, given (.+), (determines .+)',
-            r'OP is called with \1.',
-            r'OP \2'),
-
-        # 15.2.1.16.4.1 InnerModuleInstantiation
-        (r'(OP is used by Instantiate to perform the actual instantiation process for the Source Text Module Record _module_, as well as recursively on all other modules in the dependency graph.)',
-            r'OP is called with Module Record _module_',
-            r'\1'),
-
-        # 15.2.1.18 HostResolveImportedModule
-        # 15.2.1.19 HostImportModuleDynamically
-        (r'(OP is .+ to the \|ModuleSpecifier\| String, _specifier_, .+ by) the (Script Record or Module Record or \*null\*) (_referencingScriptOrModule_)\.',
-            r'OP is called with a \2 \3 and a String _specifier_.',
-            r'\1 \3.'),
-
-        # 18.2.6.1.1 Encode
-        # 18.2.6.1.2 Decode
-        (r'The (.+ process) is described by OP taking (.+)',
-            r'OP takes \2.',
-            r'OP describes the \1.'),
-
-        # 20.3.1.12
-        (r'(OP calculates a number of milliseconds from its four arguments), which must be ECMAScript Number values.',
-            r'OP takes an ECMAScript Number value _hour_, an ECMAScript Number value _min_, an ECMAScript Number value _sec_, and an ECMAScript Number value _ms_.', # assumed param names
-            r'\1.'),
-
-        # 20.3.1.13
-        (r'(OP calculates a number of days from its three arguments), which must be ECMAScript Number values.',
-            r'OP takes an ECMAScript Number value _year_, an ECMAScript Number value _month_, and an ECMAScript Number value _date_.', # assumed param names
-            r'\1.'),
-
-        # 20.3.1.14
-        (r'(OP calculates a number of milliseconds from its two arguments), which must be ECMAScript Number values.',
-            r'OP takes an ECMAScript Number value _day_, and an ECMAScript Number value _time_.', # assumed param names
-            r'\1.'),
-
-        # 20.3.1.15
-        (r'(OP calculates a number of milliseconds from its argument), which must be an ECMAScript Number value.',
-            r'OP takes an ECMAScript Number value _time_.', # assumed param name
-            r'\1.'),
-
-        # 21.1.3.27.1 TrimString
-        (r'(OP is called with arguments .+), and interprets the String value (_string_ as .+)',
-            r'\1, where _string_ is a String value.',
-            r'OP interprets \2'),
-
-        # 24.??? UnicodeEscape
-        (r'(OP takes a code unit argument _C_) and represents it (as a Unicode escape sequence.)',
-            r'\1.',
-            r'OP represents _C_ \2'),
-
-        # 23.4.1.3 GetWaiterList
-
-        # AllocateTypedArrayBuffer
-        (r'OP with arguments _O_ and _length_ (allocates and associates an ArrayBuffer with) the (TypedArray instance) _O_.',
-            r'OP takes a TypedArray instance _O_ and _length_.',
-            r'OP \1 a \2.'),
-
-        # 25.4.1.5 NewPromiseCapability
-        (r'(OP takes a constructor function, and attempts .+)',
-            r'OP takes a constructor function _C_.', # assumed param name
-            r'\1'),
-
-        # 25.4.1.8 TriggerPromiseReactions
-        (r'(OP takes a collection of PromiseReactionRecords) and (enqueues a new Job for each record)\.',
-            r'\1 _reactions_.',
-            r'OP \2 in _reactions_.'),
-
-        # general
-        (r'OP with (.+?) ((allocates|applies|creates|configures|converts|has access to|is a job that|is used|parses,|requests|serializes|wraps) .+)',
-            r'OP takes \1.',
-            r'OP \2'),
-
-        # -------------------------------
-        # concrete methods
-
-        (r'If(?: the)? (Boolean argument) (_\w+_) has (.+)',
-            r'OP takes \1 \2.',
-            r'If \2 has \3'),
-
-        (r'(.+ the value of) the (Boolean argument) (_\w+_)\.',
-            r'OP takes \2 \3.',
-            r'\1 \3.'),
-
-        # (r'(.+ whose name is the value of the argument _N_\.)',
-        #     r'OP takes String _N_.', # a bit klugey
-        #     r'\1'),
-
-    ]:
-        fullmatch_pattern = '^(?:' + pattern + ')$'
-        mo = re.match(fullmatch_pattern, sentence)
-        if mo:
-            s = extract_parameter_info_from_ao_preamble(oi, mo.expand(r1))
-            assert s == '', s
-            return mo.expand(r2)
-
-    # ----------------
-
-    # At this point, we assume that the sentence contains
-    # either *no* parameter info, or *only* parameter info.
-
-    mo = fullmatch_any(sentence, [
-
-        r'OP with (?P<pl>.*arguments.*of type BigInt):', # syntactically odd
-        r'OP called with (?P<pl>.+) performs the following steps:',
-        r'OP is a recursive abstract operation that takes (?P<pl>.+)',
-        r'OP is called with (?P<pl>.+?),? where (?P<ps>.+)',
-        r'OP is called with (?P<pl>.+)',
-        r'OP is performed as follows using arguments (?P<pl>.+)',
-        r'OP requires (?P<pl>.+)',
-        r'OP takes (?P<pl>.+?),? and performs the following steps:',
-        r'OP takes (?P<pl>.+)\.',
-        r'OP accepts (?P<pl>.+), with _target_ as the receiver\.', # AddEntriesFromIterable
-        r'OP with (?P<pl>.+) (performs the following steps|is performed as follows|is defined by the following steps):',
-        r'The operation is called with arguments (?P<pl>.+) where (?P<ps>.+)',
-        r'When OP is called with (?P<pl>.+?),? the following steps are (performed|taken):',
-        r'When OP is called, the following steps are taken:',
-        r'When OP is performed with (?P<pl>.+), the following steps are taken:',
-        r'When OP with (?P<pl>.+) is called, the following (occurs|steps are taken):',
-        r'When called with (?P<pl>.+), the following steps are taken:',
-        r'Conversion occurs according to the following algorithm:',
-        #
-        # r'(?P<ps>If (?!_LeftFirst_)_\w+_ .+)',
-        r'(?P<ps>In addition the algorithm takes .+)',
-        r'(?P<ps>The argument _\w+_ is .+)',
-        r'(?P<ps>The arguments _\w+_ and _\w+_ must be .+)',
-        r'(?P<ps>The optional( argument)? _\w+_ is .+)',
-        r'(?P<ps>The value of _\w+_ .+)',
-        r'(?P<ps>_\w+_ (is|must be) .+)',
-
-    ])
-    if mo:
-        gd = mo.groupdict()
-        get_info_from_parameter_listing_in_preamble(oi, gd.get('pl', ''))
-        get_info_from_parameter_sentence_in_ao_preamble(oi, gd.get('ps', ''))
-        return ''
-    else:
-        return sentence
-
-# ------------------------------------------------------------------------------
-
 def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
     # if '_C_' in parameter_sentence: stderr('gifps', parameter_sentence)
+    # if 'neither' in parameter_sentence: pdb.set_trace()
 
     if parameter_sentence == '': return
 
     if parameter_sentence in [
         'neither _x_ nor _y_ are Number values.',
-        'neither _x_ nor _y_ are numeric type values.',
+        'neither _x_ nor _y_ are numeric type values',
     ]:
-        add_to_description(oi, parameter_sentence)
-        oi.param_nature_['_x_'] = 'a value'
-        oi.param_nature_['_y_'] = 'a value'
+        oi.param_nature_['_x_'] = 'not a numeric value'
+        oi.param_nature_['_y_'] = 'not a numeric value'
         return
+
+    if parameter_sentence == 'optional _reviver_ parameter is a function that takes two parameters, _key_ and _value_':
+        oi.optional_params.add('_reviver_')
+        oi.param_nature_['_reviver_'] = 'a function that takes two parameters, _key_ and _value_'
+        return
+
+    if parameter_sentence == 'If _prototype_ is present, it is an object with a *"constructor"* property whose value is _F_.':
+        oi.optional_params.add('_prototype_')
+        oi.param_nature_['_prototype_'] = 'an object with a *"constructor"* property whose value is _F_'
+        return
+
+    if parameter_sentence == 'The pure combining operation _op_ takes two List of byte values arguments and returns a List of byte values.':
+        oi.param_nature_['_op_'] = 'a pure combining operation that takes two List of byte values arguments and returns a List of byte values'
+        return
+
+    if ', which must be ' in parameter_sentence and 'ECMAScript Number value' in parameter_sentence:
+        assert oi.param_names is None
+        if oi.name == 'MakeTime':
+            assert parameter_sentence.startswith('four arguments')
+            oi.param_names = ['_hour_', '_min_', '_sec_', '_ms_']
+        elif oi.name == 'MakeDay':
+            assert parameter_sentence.startswith('three arguments')
+            oi.param_names = ['_year_', '_month_', '_date_']
+        elif oi.name == 'MakeDate':
+            assert parameter_sentence.startswith('two arguments')
+            oi.param_names = ['_day_', '_time_']
+        elif oi.name == 'TimeClip':
+            assert parameter_sentence.startswith('argument,')
+            oi.param_names = ['_time_']
+        else:
+            assert 0
+        for pn in oi.param_names:
+            oi.param_nature_[pn] = 'Number'
+        return
+
 
     # tweak things that would react poorly to the subsequent split
     param_sentence2 = sub_many(parameter_sentence, [
         # Case where we don't want to split on comma:
+        # (We prevent the split by inserting an extra space, which is a bit subtle.)
         ('present, _F_',
-            'present,  _F_'), # inserting an extra space is a bit subtle
+            'present,  _F_'),
+        ('an array-like object, _obj_',
+            'an array-like object,  _obj_'),
+        ('the \|ModuleSpecifier\| String, _specifier_',
+            'the |ModuleSpecifier| String,  _specifier_'),
 
         # Cases where we don't want to split on "and":
         ('The arguments _tag_ and _attribute_ must be String values',
@@ -1468,7 +1821,10 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
 
     for clause in re.split(r'(?:, and|,| and) (?=_\w+_)', param_sentence2):
         mo = re.search(var_pattern, clause)
-        assert mo, clause
+        # assert mo, clause
+        if mo is None:
+            stderr(f"> {oi.name} has ps={parameter_sentence!r} which fails split+search")
+            continue
         param_name = mo.group(0)
 
         vclause = re.sub(r'\b' + param_name + r'\b', 'VAR', clause)
@@ -1511,8 +1867,6 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
                 'VAR is a |ScriptBody|'),
             (  r'VAR serves as both the lookup point for the property and ',
                 'VAR is a value'),
-            (  r'VAR is required to be the name of a TypedArray constructor in <emu-xref href="#table-[^"]+"></emu-xref>',
-                'VAR is a String'),
 
         ]:
             mo = re.match(pattern, vclause)
@@ -1530,12 +1884,17 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
                     ('^VAR is ', ''),
                     ('^VAR serves as both', 'both'),
                     ('^The value of VAR is ', ''),
+                    ('^argument VAR is ', ''),
+                    (' VAR$', ''),
+                    ('^The allowed values for VAR are ', ''),
                 ])
             else:
                 new_nature = current_nature + '; ' + sub_many(vclause, [
                     ('^The value of VAR may be ', 'or may be '),
+                    ('VAR may also be', 'may also be'),
                 ])
 
+            assert 'VAR' not in new_nature
             oi.param_nature_[param_name] = new_nature
 
         else:
@@ -1545,11 +1904,23 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
             nature = sub_many(vclause, [
                 ('^The argument VAR is ', ''),
                 ('^The optional(?: argument)? VAR is ', ''),
+                ('^The optional VAR parameter is ', ''),
+                ('^The VAR parameter is ', ''),
+                ('^The value of VAR may be ', ''),
+                ('^The optional VAR value$', 'TBD'),
+                ('^the VAR argument object$', 'object'),
+                ('^optional argument VAR is ', ''),
+                ('^optional VAR is ', ''),
                 ('^In addition the algorithm takes (a Boolean flag) named VAR as a parameter', r'\1'),
                 ('^VAR is an? optional ', 'a '),
                 ('^VAR (?:is|must be) ', ''),
+                ('^the (.+) that is VAR$', r'\1'),
                 ('an optional Lexical', 'a Lexical'),
+                (', +VAR$', ''),
+                (' VAR$', ''),
+                ('^VAR$', ''),
             ])
+            assert 'VAR' not in nature, clause
 
             if oi.param_names is None: oi.param_names = []
 
@@ -1558,105 +1929,17 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
 
 # ------------------------------------------------------------------------------
 
-def extract_also_info_from_ao_preamble(oi, sentence):
-    if sentence == 'It also has access to the _comparefn_ argument passed to the current invocation of the `sort` method.':
-        oi.also = [ ('_comparefn_', 'the _comparefn_ argument passed to the current invocation of the `sort` method') ]
-        return ''
-    elif sentence == 'OP uses the value of _reviver_ that was originally passed to the above parse function.':
-        oi.also = [ ('_reviver_', 'the value of _reviver_ that was originally passed to the above parse function') ]
-        return ''
-    elif sentence == 'OP has access to _ReplacerFunction_ from the invocation of the `stringify` method.':
-        oi.also = [ ('_ReplacerFunction_', 'from the invocation of the `stringify` method') ]
-        return ''
-    elif sentence == 'It has access to the _stack_, _indent_, _gap_, and _PropertyList_ values of the current invocation of the `stringify` method.':
-        oi.also = [
-            ('_stack_',        'from the current invocation of the `stringify` method'),
-            ('_indent_',       'from the current invocation of the `stringify` method'),
-            ('_gap_',          'from the current invocation of the `stringify` method'),
-            ('_PropertyList_', 'from the current invocation of the `stringify` method'),
-        ]
-        return ''
-    elif sentence == 'It has access to the _stack_, _indent_, and _gap_ values of the current invocation of the `stringify` method.':
-        oi.also = [
-            ('_stack_',        'from the current invocation of the `stringify` method'),
-            ('_indent_',       'from the current invocation of the `stringify` method'),
-            ('_gap_',          'from the current invocation of the `stringify` method'),
-        ]
-        return ''
-    else:
-        return sentence
-
-# ------------------------------------------------------------------------------
-
-def extract_returns_info_from_ao_preamble(oi, sentence):
-    for (pattern, normal, abrupt, rest) in [
-
-        # sentence only contains info re return.
-        (r'A Boolean value is returned\.',
-            r'a Boolean Value', '', ''),
-        (r'OP produces (.+)\.',
-            r'\1', '', ''),
-
-        # sentence contains info re return and non-return.
-        (r'OP performs the following steps in order to return (either \*false\* or the end index of a match):',
-            r'*false* or an integer index', '', r'OP returns \1.'),
-
-        (r'(OP implements .+), and produces (.+)\.',
-            r'\2', '', r'\1.'),
-        (r'(OP returns a built-in function object created by the following steps:)',
-            r'a function object', '', r'OP creates a built-in function object.'),
-
-        (r'(It throws a \*TypeError\* exception if .+)',
-            '', 'throw *TypeError*', r'\1'),
-        (r'(It throws an exception if .+)',
-            '', 'throw', r'\1'),
-        (r'(.+ in a manner that will throw a \*TypeError\* exception .+)',
-            '', 'throw *TypeError*', r'\1'),
-
-        # 7.4.5 IteratorStep
-        (r'(OP requests .+ and returns either \*false\* indicating .+ or the IteratorResult object if .+\.)',
-            '*false* or an IteratorResult object', '', r'\1'),
-
-        # 25.4.1.5 NewPromiseCapability
-        (r'(The promise plus the resolve and reject functions are used to initialize a new PromiseCapability Record) which is returned as the value of this abstract operation.',
-            'a PromiseCapability Record', '', r'\1.'),
-    ]:
-        fullmatch_pattern = '^(?:' + pattern + ')$'
-        mo = re.match(fullmatch_pattern, sentence)
-        if mo:
-            if normal: oi.returns_normal = mo.expand(normal)
-            if abrupt: oi.returns_abrupt = mo.expand(abrupt)
-            return mo.expand(rest)
-    else:
-        return sentence
-
-# ------------------------------------------------------------------------------
-
-def skip_uninformative_from_ao_preamble(oi, sentence):
-    if sentence in [
-        'During execution of ECMAScript code, OP is performed using the following algorithm:',
-        'It performs the following steps:',
-        'Its algorithm is as follows:',
-        'OP performs the following steps:',
-        'Such a comparison is performed as follows:',
-        'The following steps are performed:',
-        'The following steps are taken:',
-        'This abstract operation functions as follows:',
-        'This abstract operation performs the following steps:',
-        'This operation performs the following steps:',
-        'This operator functions as follows:',
-        'When called, the following steps are performed:',
-    ]:
-        return ''
-    else:
-        return sentence
-
-# ------------------------------------------------------------------------------
-
 def add_to_description(oi, sentence):
+    # This is only called 9 times.
+    # It would be nice to get rid of it,
+    # because it can rearrange the contents of the preamble.
+    # On the other hand, it doesn't do so in the remaining cases.
+
+    # stderr('atd>', oi.name, ':', sentence)
 
     if oi.description is None:
-        oi.description = sub_many(sentence, [
+        oi.description = []
+        desc = sub_many(sentence, [
             ('^OP is an ', 'an '),
             ('^OP,? ', ''),
             ('^It ', ''),
@@ -1667,298 +1950,14 @@ def add_to_description(oi, sentence):
             (':$', '.'),
         ])
     else:
-        oi.description += ' ' + sub_many(sentence, [
+        desc = sub_many(sentence, [
             ('^OP ', 'This operation '),
             (' OP ', ' this operation '),
             (' by performing the following steps:$', '.'),
         ])
+    oi.description.append(desc)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def get_info_for_builtin_function(s, op_kind, hoi, preamble_text):
-
-    if op_kind == 'accessor_property':
-        # For an accessor property, the preamble is unusual,
-        # so don't call 
-        # get_info_from_builtin_function_preamble(s, preamble_text)
-        # (Alternatively, I could modify that function.)
-
-        oi = hoi
-        oi.kind = 'accessor property'
-
-        if preamble_text == 'The value of the [[Get]] attribute is a built-in function that requires no arguments. It performs the following steps:':
-            pass
-        elif preamble_text == 'The value of the [[Set]] attribute is a built-in function that takes an argument _proto_. It performs the following steps:':
-            oi.param_names = ['_proto_']
-            oi.param_nature_['_proto_'] = 'a value'
-        else:
-            mo = re.fullmatch(r'(\S+) is an accessor property whose set accessor function is \*undefined\*. Its get accessor function performs the following steps:', preamble_text)
-            assert mo, repr(preamble_text)
-            op_name_plus_ticks = mo.group(1)
-            assert (
-                re.fullmatch(r'%TypedArray%`[^`]+`', op_name_plus_ticks)
-                or
-                re.fullmatch(r'`[^`]+`', op_name_plus_ticks)
-            )
-            op_name = op_name_plus_ticks.replace('`', '')
-            assert 'get ' + op_name == oi.name.replace(' [ ', '[').replace(' ]', ']')
-
-    # ----------------------------------------------------
-    else:
-
-        poi = get_info_from_builtin_function_preamble(s, op_kind, preamble_text)
-
-        if op_kind.endswith('_overload'):
-
-            if poi.overload_resolver is None:
-                # klugey fix
-                assert hoi.name == '%TypedArray%.prototype.set'
-                emu_alg_text = s.block_children[1].inner_source_text()
-                mo = re.search(r'\s+1. Assert: (.+?)\. ', emu_alg_text)
-                asserted_condition = mo.group(1)
-                if asserted_condition == '_array_ is any ECMAScript language value other than an Object with a [[TypedArrayName]] internal slot':
-                    poi.overload_resolver = asserted_condition.replace('_array_', 'the first argument')
-                    poi.param_nature_['_array_'] = 'a value'
-                elif asserted_condition == '_typedArray_ has a [[TypedArrayName]] internal slot':
-                    poi.overload_resolver = 'the first argument is an Object with a [[TypedArrayName]] internal slot'
-                    poi.param_nature_['_typedArray_'] = 'an Integer-Indexed object'
-                else:
-                    assert 0, asserted_condition
-
-            elif poi.overload_resolver == 'at least one argument and the Type of the first argument is not Object':
-                assert hoi.param_names == ['_length_']
-                poi.param_nature_['_length_'] = 'a primitive value'
-
-            elif poi.overload_resolver == 'at least one argument and the Type of the first argument is Object and that object has a [[TypedArrayName]] internal slot':
-                assert hoi.param_names == ['_typedArray_']
-                poi.param_nature_['_typedArray_'] = 'an Integer-Indexed object'
-
-            elif poi.overload_resolver == 'at least one argument and the Type of the first argument is Object and that object has an [[ArrayBufferData]] internal slot':
-                assert hoi.param_names[0] == '_buffer_'
-                poi.param_nature_['_buffer_'] = 'an ArrayBuffer or SharedArrayBuffer'
-
-            elif poi.overload_resolver == 'at least one argument and the Type of the first argument is Object and that object does not have either a [[TypedArrayName]] or an [[ArrayBufferData]] internal slot':
-                assert hoi.param_names == ['_object_']
-                poi.param_nature_['_object_'] = 'an object'
-
-            elif poi.overload_resolver in [
-                'no arguments',
-                'exactly one argument',
-                'at least two arguments',
-            ]:
-                # doesn't narrow any paramter types
-                pass
-            else:
-                assert 0, poi.overload_resolver
-
-        oi = resolve_oi(hoi, poi)
-
-        if oi.param_names is None:
-            assert oi.name in ['Proxy Revocation', 'ListIteratorNext']
-            oi.param_names = []
-
-        if s.section_title.startswith('Math.'):
-            # "Each of the following `Math` object functions
-            # applies the ToNumber abstract operation
-            # to each of its arguments
-            # (in left-to-right order if there is more than one)."
-            #
-            # So the algorithms are written under the assumption
-            # that the parameters have type 'Number'.
-            default_nature = 'a Number'
-        else:
-            default_nature = 'a value'
-        for name in oi.param_names:
-            if oi.param_nature_.get(name, None) in [None, 'TBD']:
-                oi.param_nature_[name] = default_nature
-
-        if 0:
-            hoi.description = '? '+ preamble_text
-
-    # ----------------------------------------------------
-
-    return oi
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def get_info_from_builtin_function_preamble(s, op_kind, preamble_text):
-    poi = Header()
-    poi.kind = op_kind
-
-    if preamble_text in [
-        '',
-        'The following steps are taken:',
-        'The following steps are performed:',
-    ]:
-        return poi
-
-    mo = re.match(r'^Given zero or more arguments, (calls ToNumber on each of the arguments and returns the \w+est of the resulting values.)$', preamble_text)
-    if mo:
-        poi.returns_normal = 'a Number'
-        poi.description = mo.group(1)
-        return poi
-
-    if preamble_text.startswith('This description applies'):
-        (preamble_text, group_dict) = re_sub_many_etc(preamble_text, [
-            (r'^This description applies( if and)? only if the (Date constructor|Array constructor|_TypedArray_ function) is called with (?P<X>.+?)\. ?', ''),
-        ])
-        poi.overload_resolver = group_dict['X']
-
-    preamble_text = re.sub(' +The following steps are taken:$', '', preamble_text)
-    preamble_text = re.sub(' +It performs the following steps:$', '', preamble_text)
-
-    # Not sure if I should make this change in the spec:
-    # because the preamble has later imperatives.
-    preamble_text = re.sub('^Return ', 'Returns ', preamble_text)
-
-    for (pattern, return_nature) in [
-        (r'^Returns an implementation-dependent approximation to', 'a Number'),
-        (r'^Returns an Array object',                              'an Array object'),
-        (r'^Returns a new _TypedArray_ object',                    'a TypedArray object'),
-        (r'^Returns (a|the) Number value',                         'a Number'),
-        (r'^Returns the (absolute value|smallest|greatest|sign|integral part)', 'a Number'),
-        (r'^Returns a String containing',                          'a String'),
-        (r'^Performs .+ and returns an Array object .+, or \*null\*', 'an Array object or *null*'),
-        (r'^Produces a String value',                                 'a String'),
-    ]:
-        if re.match(pattern, preamble_text):
-            poi.returns_normal = return_nature
-            poi.description = preamble_text
-            return poi
-
-    # simplify subsequent processing:
-    preamble_text = preamble_text.replace('%TypedArray%`.prototype', '`%TypedArray%.prototype')
-
-    for pattern in [
-        r'\bthe `(@@hasInstance)` method of an object _F_',
-        # Theoretically, we'd have to grab the _F_ and put that somewhere in the eoh,
-        # but the algorithm starts with "Let _F_ be the *this* value.",
-        # so it doesn't actually need the 'declaration' of _F_ in the preamble.
-
-        r'^(_TypedArray_)(?= called with)',
-
-        r'^The (%TypedArray%) constructor\b',
-        r'^The (ListIterator `next`) method\b',
-        r'^The <dfn>(%ThrowTypeError%)</dfn> intrinsic\b',
-        #
-        r'^The `([\w.]+)` function\b',
-        r'^The `(\w+)` method\b',
-        r'(?<= )The `([\w.]+)` function\b',
-        r'(?<= )The `(\w+)` method\b',
-        r'(?<=^When )`([\w.]+)`(?= is called)',
-        r'(?<= When )`([\w.]+)`(?= is called)',
-        r'(?<= When )(%ThrowTypeError%)(?= is called)',
-        #
-        r'\ba _NativeError_ function\b',
-        r'\bthe `(\w+)` function\b',
-        r'\bthe `(\w+)` method\b',
-        r'\bthe `(@@\w+)` method\b',
-        r'^`([\w.%]+)`(?= (?:puts|notifies|returns|is)\b)',
-        #
-        r'\b(?:A|a|Each) (`Promise.(all|allSettled)` (resolve|reject) element) function\b',
-        r'\b(?:A|a|An|an|Each) (?!standard|anonymous)([\w -]+?) function\b',
-        #
-        # no name:
-        r'^This function\b',
-    ]:
-        def replfunc(mo):
-            if mo.groups():
-                extracted_name = mo.group(1)
-                if poi.name is None:
-                    poi.name = extracted_name
-                    return 'IT'
-                elif extracted_name == poi.name:
-                    return 'IT'
-                elif extracted_name == 'async iterator value unwrap':
-                    oh_warn(f"'{extracted_name}' != '{poi.name}'")
-                    return 'IT'
-                else:
-                    return mo.group(0)
-            else:
-                return 'IT'
-
-        preamble_text = re.sub(pattern, replfunc, preamble_text)
-
-    if op_kind == 'anonymous_built_in_function':
-        preamble_text = sub_many(preamble_text, [
-            (r'^IT is an anonymous built-in function( object)? that ', 'IT '),
-            (r'^IT is an anonymous function that ', 'IT '),
-            (r'^IT is a standard built-in function object \(.+\) that ', 'IT '),
-            (r'^IT is an anonymous built-in function with ', 'IT has '),
-            (r'^IT is an anonymous built-in function\. ', ''),
-        ])
-
-    if preamble_text in [
-        'When IT is called, the following steps are taken:',
-        'IT performs the following steps:',
-    ]:
-        return poi
-
-    (preamble_text, group_dict) = re_sub_many_etc(preamble_text, [
-        (r' These are the steps in stringifying an object:$', ''),
-        (r'^When called with (?P<PL>.+), it performs the following steps:$', ''),
-        (r' When IT is called with (?P<PL>.+), the following steps are taken:$', ''),
-        (r' When IT is called with (?P<PL>.+) it performs the following steps:$', ''),
-        (r' When IT is called, the following steps are taken:$', ''),
-        (r' When IT is called it performs the following steps:$', ''),
-        (r' When IT that expects (?P<PL>.+) is called it performs the following steps:$', ''),
-        (r'^When IT is called with (?P<PL>.+), the following steps are taken:$', ''),
-        (r'^When IT is called with (?P<PL>.+?),? it performs the following steps:$', ''),
-        (r'^IT takes (?P<PL>.+), and performs the following steps:$', ''),
-        (r'^IT is called with (?P<PL>one or two arguments, _predicate_ and _thisArg_)\.', ''),
-        (r'^IT called with (?P<PL>.+?) performs the following steps:$', ''),
-
-        (r'^When IT is called it returns', 'IT returns'),
-        (r'^When IT is called with (?P<PL>.+), it returns', 'IT returns'),
-        (r'^IT takes (?P<PL>.+?), and returns', 'IT returns'),
-    ])
-    if 'PL' in group_dict:
-        get_info_from_parameter_listing_in_preamble(poi, group_dict['PL'])
-
-    if preamble_text == '': return poi
-
-    if re.match(r'^IT (returns|produces|provides) ', preamble_text):
-        mo = re.match(r'IT (returns|produces|provides) (a Number|a String|a promise|a new promise|a substring|an Iterator object|an array|an implementation-dependent approximation of the square root|an integer|either a new promise)', preamble_text)
-        assert mo, preamble_text
-        r = mo.group(2)
-        poi.returns_normal = {
-            'an implementation-dependent approximation of the square root': 'a Number',
-            'either a new promise': 'a new promise'
-        }.get(r, r)
-
-    if op_kind == 'anonymous_built_in_function':
-        expansion = ' Each function created with this algorithm '
-    else:
-        expansion = ' This function '
-    poi.description = sub_many(preamble_text, [
-        ('^IT ', ''),
-        (' IT ', expansion),
-    ])
-
-    # poi.description = '? ' + preamble_text
-
-    return poi
-
-# ------------------------------------------------------------------------------
-
-def re_sub_many_etc(subject, pattern_repls):
-
-    group_dict = {}
-
-    for (pattern, repl) in pattern_repls:
-
-        def replfunc(mo):
-            for (name, value) in mo.groupdict().items():
-                assert name not in group_dict
-                group_dict[name] = value
-            return repl
-
-        subject = re.sub(pattern, replfunc, subject)
-
-    return (subject, group_dict)
-
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_heading(section):
@@ -1969,6 +1968,14 @@ def get_info_from_heading(section):
         'changes',
     ]:
         return oi
+
+    oi.kind = ( section.section_kind
+        .replace('_', ' ')
+        .replace('built in',                   'built-in')
+        .replace('env rec method',             'concrete method')
+        .replace('module rec method',          'concrete method')
+        .replace('CallConstruct',              'function property')
+    )
 
     if section.section_kind in [
         'abstract_operation',
@@ -1988,6 +1995,11 @@ def get_info_from_heading(section):
         'CallConstruct_overload',
         'anonymous_built_in_function',
     ]:
+        # convert heading-style to elsewhere-style:
+        # oi.name = ( section.ste['prop_path']
+        #     .replace(' [ ', '[')
+        #     .replace(' ]',  ']')
+        # )
         oi.name = section.ste['prop_path']
 
     else:
@@ -2045,6 +2057,13 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         oi.optional_params.add('_thisArg_')
         return
 
+    elif parameter_listing == 'an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_)':
+        oi.param_names = ['_execution_', '_E_', '_D_']
+        oi.param_nature_['_execution_'] = 'an execution'
+        oi.param_nature_['_E_'] = 'an event in SharedDataBlockEventSet(_execution_)'
+        oi.param_nature_['_D_'] = 'an event in SharedDataBlockEventSet(_execution_)'
+        return
+
     elif parameter_listing in [
         'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no &ldquo; _p_ &rdquo; arguments, and where _body_ might also not be provided)',
         'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no &ldquo;_p_&rdquo; arguments, and where _body_ might also not be provided)',
@@ -2071,12 +2090,21 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             assert 0, oi.name
         return
 
-    # --------------------
-
     # InternalizeJSONProperty
-    if parameter_listing == 'two parameters: a _holder_ object and the String _name_ of a property in that object.':
-        parameter_listing = 'an object _holder_ and a String _name_'
-        add_to_description(oi, '_name_ is the name of a property in _holder_.')
+    elif parameter_listing == 'two parameters: a _holder_ object and the String _name_ of a property in that object':
+        oi.param_names = ['_holder_', '_name_']
+        oi.param_nature_['_holder_'] = 'object'
+        oi.param_nature_['_name_'] = 'the String name of a property in _holder_'
+        return
+
+    elif parameter_listing == 'up to three arguments _target_, _start_ and _end_':
+        oi.param_names = ['_target_', '_start_', '_end_']
+        return
+    elif parameter_listing == 'up to three arguments _value_, _start_ and _end_':
+        oi.param_names = ['_value_', '_start_', '_end_']
+        return
+
+    # --------------------
 
     param_listing = sub_many(parameter_listing, [
         (r'\.$', ''),
@@ -2102,9 +2130,11 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         (' and with ', ' and '),
         ('(a Lexical Environment)( as)? argument (_E_)', r'\1 \3'),
         (' as its argument$', ''),
-        ('(a Parse Node), (_templateLiteral_), as an argument$', r'\1 \2'),
+        ('(a Parse Node), (_templateLiteral_)', r'\1 \2'),
         (' as arguments$', ''),
         (r'(a nonnegative), (non-\*NaN\* Number)', r'\1 \2'),
+        (r'(_argumentsList_), (a List of ECMAScript language values)', r'\1 \2'),
+        (r'(a numeric code point value), (_cp_)', r'\1 \2'),
 
         # parameter(s):
         ('^parameters ', ''),
@@ -2145,7 +2175,10 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
     oi.param_names = []
     for param_item in param_items:
         mo = re.search(var_pattern, param_item)
-        assert mo, param_item
+        # assert mo, param_item
+        if mo is None:
+            stderr(f"> {oi.name} param listing fails comma-split: {parameter_listing}")
+            continue
         param_name = mo.group(0)
 
         assert param_name not in oi.param_names, param_name
@@ -2168,6 +2201,8 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             # a few special cases that wouldn't be well-handled by the generic patterns:
             ('^an argument _argumentsList_$', ''), # CreateUnmappedArgumentsObject
             (r'^an _input_ argument$', ''), # ToPrimitive
+            (r'^an _iterable_ of entries$', 'object'), # AddEntriesFromIterable
+            (r'^an _adder_ function$', 'function'), # AddEntriesFromIterable
 
             # We don't need to repeat that this is an argument/parameter.
             (r' argument ', ' '),
@@ -2178,9 +2213,16 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             (r'^VAR which is ', ''),
             (r'^VAR ', ''),
             (r'^VAR$', ''),
-            (r' specified by VAR$', ''),
+            (r'^VAR,$', ''),
+            (r'^a VAR object$', 'an object'),
+            # (r'^an VAR function$', 'a function'),
             (r'^an VAR$', ''),
+            (r'^an VAR of type ', ''),
+            (r'^a List VAR of', 'a List of'),
+            (r' named VAR$', ''),
+            (r' specified by VAR$', ''),
             (r' VAR$', ''),
+            (r' VAR,$', ''),
 
             # Eliminate 'parameter' from "a character parameter" and "an integer parameter",
             # but not from "a parameter list Parse Node".
@@ -2212,9 +2254,20 @@ def resolve_oi(hoi, poi):
     oi = Header()
 
     # kind
-    assert hoi.kind is None
-    assert poi.kind is not None
-    oi.kind = poi.kind
+    if hoi.kind is None and poi.kind is None:
+        assert 0
+    elif hoi.kind is None:
+        oi.kind = poi.kind
+    elif poi.kind is None:
+        oi.kind = hoi.kind
+    else:
+        if hoi.kind == poi.kind:
+            oi.kind = hoi.kind
+        elif hoi.kind == 'abstract operation' and poi.kind == 'implementation-defined abstract operation':
+            oi.kind = poi.kind
+        else:
+            stderr(f"mismatch of 'kind' in heading/preamble for {hoi.name}: {hoi.kind!r} != {poi.kind!r}")
+            assert 0
 
     # name
     if hoi.name is None and poi.name is None:
@@ -2237,6 +2290,8 @@ def resolve_oi(hoi, poi):
             hoi.name.endswith(f'.prototype [ {poi.name} ]')
             or
             hoi.name.lower() == poi.name.lower()
+            or
+            hoi.name.replace(' [ ', '[').replace(' ]', ']') == poi.name
         ):
             pass
         else:
@@ -2318,6 +2373,8 @@ def oh_warn(*args):
 def convert_nature_to_tipe(nature):
     if nature == 'TBD': return 'TBD'
 
+    assert 'VAR' not in nature, nature
+
     t = nature_to_tipe.get(nature, None)
     if t is not None: return t
 
@@ -2338,24 +2395,35 @@ nature_to_tipe = {
         'a Boolean'         : 'Boolean',
         'a Boolean Value'   : 'Boolean',
         'a Boolean flag'    : 'Boolean',
+        'A Boolean value'   : 'Boolean',
         '*true* or *false*' : 'Boolean',
 
         # String
         'String'          : 'String',
         'a String'        : 'String',
         'a String value'  : 'String',
+        'the String value': 'String',
         'a substring'     : 'String',
+        '*"default"*, *"number"*, and *"string"*': 'String',
+        'passed as a String value': 'String',
+        'the String name of a property in _holder_': 'String', # TODO
+        'the |ModuleSpecifier| String': 'String', # TODO
+        "the name of a binding that exists in _M_'s module Environment Record": 'String', # TODO
+        'the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String', # TODO
 
         # Symbol
 
         # Number
         'Number'                     : 'Number',
         'a Number'                   : 'Number',
+        'a Number value'             : 'Number',
+        'Number value'               : 'Number',
         'an ECMAScript Number value' : 'Number',
         'a nonnegative non-*NaN* Number' : 'Number', # XXX loses info
 
         # BigInt
         'BigInt'      : 'BigInt',
+        'a BigInt'    : 'BigInt',
 
         # Object
         'Object'      : 'Object',
@@ -2363,8 +2431,8 @@ nature_to_tipe = {
         'an object'   : 'Object',
         'object'      : 'Object',
         'the object'  : 'Object',
-        'a VAR object': 'Object',
-        'an VAR of entries': 'Object', # this is kludgey: VAR is '_iterable_'
+        'the argument object': 'Object',
+        'an object with a *"constructor"* property whose value is _F_': 'Object', # TODO
 
     # unofficial 'supertypes':
         'a primitive value'             : 'Primitive',
@@ -2378,31 +2446,42 @@ nature_to_tipe = {
         'the value'                     : 'Tangible_',
         'value'                         : 'Tangible_',
         'Tangible_'                     : 'Tangible_',
+        'an ECMAScript value, which is usually an object or array, although it can also be a String, Boolean, Number or *null*': 'Tangible_',
+        'not a numeric value'           : 'Tangible_', # TODO
 
     # unofficial 'subtypes' of the above:
         # function_: an object with a [[Call]] internal method
+        'function'            : 'function_object_',
         'a Function'          : 'function_object_',
         'a function object'   : 'function_object_',
         'function object'     : 'function_object_',
         'the function object' : 'function_object_',
-        'an VAR function to be invoked': 'function_object_',
+        'a built-in function object'   : 'function_object_',
+        'a function that takes two parameters, _key_ and _value_': 'function_object_',
 
         # constructor_: an object with a [[Construct]] internal method
         'a constructor function' : 'constructor_object_',
         'a constructor'          : 'constructor_object_',
+        'constructor'            : 'constructor_object_',
 
         # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
         'an ArrayBuffer' : 'ArrayBuffer_object_',
         'an ArrayBuffer or SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
         'a SharedArrayBuffer' : 'SharedArrayBuffer_object_',
 
-        'a TypedArray instance' : 'TypedArray_object_',
-        'a TypedArray object'   : 'TypedArray_object_',
+        'the TypedArray instance' : 'TypedArray_object_',
+        'a TypedArray instance'   : 'TypedArray_object_',
+        'a TypedArray object'     : 'TypedArray_object_',
+        '_TypedArray_ object'     : 'TypedArray_object_',
 
         # 9.4.2
         'an Array exotic object' : 'Array_object_',
         'an Array object'        : 'Array_object_',
         'an array'               : 'Array_object_',
+
+        'an array-like object': 'Object', # TODO
+
+        #? 'a Proxy exotic object' : 'Proxy_object_',
 
         'a promise' : 'Promise_object_',
         'a new promise': 'Promise_object_',
@@ -2418,10 +2497,12 @@ nature_to_tipe = {
         'an integer length' : 'Integer_',
         'an integer offset' : 'Integer_',
         'an integer'        : 'Integer_',
+        'an integer value'  : 'Integer_',
         'integer'           : 'Integer_',
-        'a numeric code point value'     : 'Integer_',
+        'a numeric code point value'     : 'Integer_', # TODO
         'either 0 or a positive integer' : 'NonNegativeInteger_',
         'a nonnegative integer'          : 'NonNegativeInteger_',
+        'a non-negative integer'         : 'NonNegativeInteger_',
         'nonnegative integer'            : 'NonNegativeInteger_',
         'an index'                       : 'NonNegativeInteger_',
 
@@ -2435,8 +2516,13 @@ nature_to_tipe = {
         # List
         'List' : 'List',
         'a List' : 'List',
-        'List of String': 'List of String',
-        'a List of Unicode code points': 'List of Integer_',
+        'List of String'                       : 'List of String',
+        'a List of Unicode code points'        : 'List of Integer_',
+        'List of Tangible_'                    : 'List of Tangible_',
+        'a List of values'                     : 'List of Tangible_',
+        'a list of arguments'                  : 'List of Tangible_',
+        'a List of ECMAScript language values' : 'List of Tangible_',
+        'a possibly empty List of ECMAScript language values': 'List of Tangible_',
 
         # Completion
 
@@ -2445,8 +2531,10 @@ nature_to_tipe = {
         'a Property Descriptor' : 'Property Descriptor',
 
         # Lexical Environment
+        'the Lexical Environment' : 'Lexical Environment',
         'a Lexical Environment' : 'Lexical Environment',
         'a global lexical environment' : 'Lexical Environment',
+        'the global lexical environment' : 'Lexical Environment',
 
         # Environment Record
         'Environment Record' : 'Environment Record',
@@ -2473,6 +2561,7 @@ nature_to_tipe = {
         # 15.2.1.15 Abstract Module Records: Module Record
         'a Module Record' : 'Module Record',
         'Module Record'   : 'Module Record',
+        'Cyclic Module Record': 'Cyclic Module Record',
 
         # 15.2.1.16 Source Text Module Records:
         # ImportEntry Record
@@ -2495,30 +2584,37 @@ nature_to_tipe = {
         'a WaiterList' : 'WaiterList',
 
         # 27.4 Candidate Executions
+        'candidate execution'  : 'candidate execution',
         'a candidate execution': 'candidate execution',
+        'an execution'         : 'candidate execution', # ???
+
         'a Shared Data Block event': 'Shared Data Block event',
+        'an event in SharedDataBlockEventSet(_execution_)': 'Shared Data Block event',
 
         # 25.4.1.1: PromiseCapability Record 
-        'a PromiseCapability Record': 'PromiseCapability Record',
+        'a PromiseCapability Record'    : 'PromiseCapability Record',
+        'a new PromiseCapability Record': 'PromiseCapability Record',
 
         # 25.4.1.2: PromiseReaction Records
 
         # 27.1 Memory Model Fundamentals
         'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
             'ReadSharedMemory event | ReadModifyWriteSharedMemory event',
-        'a List VAR of WriteSharedMemory or ReadModifyWriteSharedMemory events':
+        'a List of WriteSharedMemory or ReadModifyWriteSharedMemory events':
             'List of (WriteSharedMemory event | ReadModifyWriteSharedMemory event)',
 
     # unofficial 'subtypes' of official spec types:
 
-        'List of Tangible_'                        : 'List of Tangible_',
-        'a List of values'                         : 'List of Tangible_',
-        'a List of slot-names'                     : 'List of SlotName_',
-        'a List of ECMAScript Language Type names' : 'List of LangTypeName_',
-        'a collection of PromiseReactionRecords'   : 'List of PromiseReaction Record',
+        'a List of slot-names'                        : 'List of SlotName_',
+        'a List of names of internal slots'           : 'List of SlotName_',
+        'a List of ECMAScript Language Type names'    : 'List of LangTypeName_',
+        'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
+        'a collection of PromiseReactionRecords'      : 'List of PromiseReaction Record',
 
     # unofficial spec types
 
+        'empty_'      : 'empty_',
+        'code unit'   : 'code_unit_',
         'a code unit' : 'code_unit_',
         'a character' : 'character_',
 
@@ -2529,13 +2625,16 @@ nature_to_tipe = {
         'a semantic function'        : 'bytes_combining_op_',
         # 24.4.1.11 AtomicReadModifyWrite
         'a pure combining operation' : 'bytes_combining_op_',
+        'a pure combining operation that takes two List of byte values arguments and returns a List of byte values': 'bytes_combining_op_', # TODO
 
         'a parameter list Parse Node'    : 'Parse Node',
         'a body Parse Node'              : 'Parse Node',
         'a Parse Node'                   : 'Parse Node',
         'Parse Node'                     : 'Parse Node',
+        'the Parse Node'                 : 'Parse Node',
         'the result of parsing an |AssignmentExpression| or |Initializer|' : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
         'a |ScriptBody|'                 : 'Parse Node for |ScriptBody|',
+        'the |ScriptBody|'               : 'Parse Node for |ScriptBody|',
         '|CaseClause|'                   : 'Parse Node for |CaseClause|',
 
         'one of (~Normal~, ~Method~, ~Arrow~)' : 'FunctionKind1_',
@@ -2557,10 +2656,15 @@ nature_to_tipe = {
 
         'either ~assignment~, ~varBinding~ or ~lexicalBinding~' : 'LhsKind_',
 
-        'throw'             : 'throw_',
-        'throw *TypeError*' : 'throw_ *TypeError*',
-        'throw_ *TypeError*': 'throw_ *TypeError*',
-        'throw_ *ReferenceError*': 'throw_ *ReferenceError*',
+        'throw *RangeError*'             : 'throw_ *RangeError*',
+        'throw *TypeError*'              : 'throw_ *TypeError*',
+        'throw a *TypeError* exception'  : 'throw_ *TypeError*',
+        'throw'                          : 'throw_',
+        'throw_'                         : 'throw_',
+        'throw_ *ReferenceError*'        : 'throw_ *ReferenceError*',
+        'throw_ *TypeError*'             : 'throw_ *TypeError*',
+        'throws a *TypeError* exception' : 'throw_ *TypeError*',
+        'throws an exception'            : 'throw_',
 
         'one of the ECMAScript specification types String or Symbol' : 'LangTypeName_',
 
@@ -2572,12 +2676,18 @@ nature_to_tipe = {
     # -----------------------------
     # union of named types
 
+    'a function or an array of Strings and Numbers'              : 'function_object_ | Array_object_',
     'a BigInt or a Number'                                       : 'BigInt | Number',
+    'Number or BigInt'                                           : 'Number | BigInt',
     'a Number or BigInt'                                         : 'Number | BigInt',
+    'a Number value & *undefined*'                               : 'Number | Undefined',
     'an Array object or *null*'                                  : 'Array_object_ | Null',
+    'a Boolean or a non-negative integer'                        : 'Boolean | Integer_',
     '*false* or an integer index'                                : 'Boolean | Integer_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
     '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
+    'Boolean or Undefined'                                       : 'Boolean | Undefined',
+    'Boolean | empty_'                                           : 'Boolean | empty_',
     'an integer (or &infin;)'                                    : 'Integer_ | Infinity_',
     'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
     'a Lexical Environment or *null*'                            : 'Lexical Environment | Null', # PR 1668
@@ -2587,23 +2697,17 @@ nature_to_tipe = {
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
     'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
+    'the Script Record or Module Record; may also be *null*'     : 'Script Record | Module Record | Null',
+    'a String or Number'                                         : 'String | Number',
     'a String or Symbol'                                         : 'String | Symbol',
     'a String or Symbol or Private Name'                         : 'String | Symbol | Private Name', # PR 1668
     'property key'                                               : 'String | Symbol',
+    'a property key'                                             : 'String | Symbol',
     'the property key'                                           : 'String | Symbol',
 
 }
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def fullmatch_any(subject, patterns):
-    # If any pattern in `patterns` is a fullmatch for `subject`,
-    # return the resulting match-object (of the first such).
-    for pattern in patterns:
-        fullmatch_pattern = '^(?:' + pattern + ')$'
-        mo = re.match(fullmatch_pattern, subject)
-        if mo: return mo
-    return None
 
 def sub_many(subject, pattern_repls):
     # Apply each of `pattern_repls` to `subject`
@@ -2618,6 +2722,7 @@ def sub_many(subject, pattern_repls):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def prep_for_STA():
+    stderr('prep_for_STA ...')
 
     # headers for SDOs:
     for header in spec.oi_for_sdo_.values():
@@ -2911,11 +3016,11 @@ class Operation:
             self.parameters_with_types = header.parameter_types.items()
             self.return_type = header.return_type
 
-        elif self.kind in ['CallConstruct_overload', 'function_property_overload']:
+        elif self.kind in ['CallConstruct_overload', 'function property overload']:
             pass
 
         else:
-            assert self.kind in ['concrete method', 'internal method', 'numeric_method']
+            assert self.kind in ['concrete method', 'internal method', 'numeric method']
             n_params = len(self.headers[0].parameter_types)
             assert all(len(header.parameter_types) == n_params for header in self.headers)
 
@@ -2940,10 +3045,10 @@ class Operation:
 
     def find_dependencies(self, dep_graph):
         if self.kind in [
-            'function_property',
-            'anonymous_built_in_function',
+            'function property',
+            'anonymous built-in function',
             'CallConstruct',
-            'function_property_overload',
+            'function property overload',
             'CallConstruct_overload',
             'accessor property',
         ]:
@@ -2953,7 +3058,16 @@ class Operation:
 
         dep_graph.add_vertex(self.name)
 
-        foo_info = d['Set' if self.name == 'built-in Set' else self.name]
+        if self.name.startswith('<'):
+            mo = re.fullmatch(r'<dfn [^<>]+>([^<>]+)</dfn>', self.name)
+            assert mo
+            name_for_spec_info = mo.group(1)
+        elif self.name == 'built-in Set':
+            name_for_spec_info = 'Set'
+        else:
+            name_for_spec_info = self.name
+
+        foo_info = d[name_for_spec_info]
         for callee in sorted(foo_info.callees):
             if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
             dep_graph.add_arc(self.name, callee)
@@ -2977,8 +3091,165 @@ class Header:
         self.definitions = []
         self.line_num = None
 
+    def apply_ad_hoc_fixes(self, section):
+
+        # ------------------------------------------------------------
+
+        # In addition to the clause-heading and the preamble,
+        # there are other sources of information that can contribute to the header.
+        # One is pre-declared info, like a table of method-signatures.
+        # (Properly, we'd scrape that info from the spec itself.)
+
+        def checked_set(prop_name, new_value):
+            curr_value = getattr(self, prop_name)
+            if curr_value is not None and curr_value != new_value:
+                oh_warn()
+                oh_warn(f"{self.name}, {prop_name}:")
+                oh_warn(f"predeclared nature {new_value!r} overrides extracted nature {curr_value!r}")
+            setattr(self, prop_name, new_value)
+
+        if self.name in predeclared_rec_method_info:
+
+            if section.parent.parent.section_title == 'Environment Records':
+                mo = re.fullmatch(r'(\w+) Environment Records', section.parent.section_title)
+                assert mo
+                f = mo.group(1).lower() + ' Environment Record'
+                if self.for_phrase is None:
+                    self.for_phrase = f
+                else:
+                    assert self.for_phrase == f
+            else:
+                assert self.for_phrase != ''
+
+            (pd_param_names, pd_param_nature_, pd_return_tipe_normal, pd_return_tipe_abrupt) = predeclared_rec_method_info[self.name]
+            assert self.param_names == pd_param_names
+            for param_name in self.param_names:
+                pd_nature = pd_param_nature_[param_name]
+                if param_name in self.param_nature_:
+                    if self.param_nature_[param_name] != pd_nature:
+                        oh_warn()
+                        oh_warn(f"{self.name}, param {param_name}:")
+                        oh_warn(f"predeclared nature {pd_nature!r} != extracted nature {self.param_nature_[param_name]!r}")
+                else:
+                    self.param_nature_[param_name] = pd_nature
+
+            checked_set('returns_normal', pd_return_tipe_normal)
+            checked_set('returns_abrupt', pd_return_tipe_abrupt)
+
+        if self.kind == 'numeric method':
+            assert self.for_phrase  in ['Number', 'BigInt']
+            num_tipe = self.for_phrase
+
+            assert self.param_names
+            for param_name in self.param_names:
+                if param_name in self.param_nature_:
+                    if self.param_nature_[param_name] != num_tipe:
+                        oh_warn()
+                        oh_warn(f"{self.name}, param {param_name}:")
+                        oh_warn(f"predeclared nature {num_tipe!r} != extracted nature {self.param_nature_[param_name]!r}")
+                else:
+                    self.param_nature_[param_name] = num_tipe
+
+            if self.name in ['::equal', '::sameValue', '::sameValueZero']:
+                pd_return_tipe_normal = 'Boolean'
+            elif self.name == '::lessThan':
+                pd_return_tipe_normal = 'Boolean or Undefined'
+            elif self.name == '::toString':
+                pd_return_tipe_normal = 'String'
+            else:
+                pd_return_tipe_normal = num_tipe
+
+            if self.name in ['::exponentiate', '::divide', '::remainder']:
+                pd_return_tipe_abrupt = 'throw *RangeError*'
+            elif self.name == '::unsignedRightShift':
+                pd_return_tipe_abrupt = 'throw *TypeError*'
+            else:
+                pd_return_tipe_abrupt = None
+
+            checked_set('returns_normal', pd_return_tipe_normal)
+            checked_set('returns_abrupt', pd_return_tipe_abrupt)
+
+        # ------------------------------------------------------------
+
+        # For the internal methods of ordinary objects, 
+        # the preambles don't say that they're for ordinary objects.
+        # (Unlike the internal methods of everything else.)
+
+        if self.kind == 'internal method' and section.parent.section_title == 'Ordinary Object Internal Methods and Internal Slots':
+            assert self.for_phrase == '_O_'
+            self.for_phrase = 'ordinary object _O_'
+
+        # ------------------------------------------------------------
+
+        # For the overloads of %TypedArray%.prototype.set,
+        # the preambles don't say how to resolve theoverload.
+        # Instead, that info is given by Asserts in the alg.
+
+        if section.section_title.startswith('%TypedArray%.prototype.set'):
+            assert self.kind == 'function property overload'
+            assert self.overload_resolver is None
+
+            emu_alg_text = section.block_children[1].inner_source_text()
+            mo = re.search(r'\s+1. Assert: (.+?)\. ', emu_alg_text)
+            asserted_condition = mo.group(1)
+            if asserted_condition == '_array_ is any ECMAScript language value other than an Object with a [[TypedArrayName]] internal slot':
+                self.overload_resolver = asserted_condition.replace('_array_', 'the first argument')
+                self.param_nature_['_array_'] = 'a value'
+            elif asserted_condition == '_typedArray_ has a [[TypedArrayName]] internal slot':
+                self.overload_resolver = 'the first argument is an Object with a [[TypedArrayName]] internal slot'
+                self.param_nature_['_typedArray_'] = 'an Integer-Indexed object'
+            else:
+                assert 0, asserted_condition
+
+        # ------------------------------------------------------------
+
+        # For the overloads of _TypedArray_,
+        # the overload_resolver lets you infer a type for the first parameter
+        # (narrower than Tangible_).
+
+        if section.section_title.startswith('_TypedArray_ ('):
+            if self.overload_resolver == 'no arguments':
+                pass
+            else:
+                abbr = self.overload_resolver.replace('at least one argument and the Type of the first argument is ', '')
+                if abbr == 'not Object':
+                    assert self.param_names == ['_length_']
+                    self.param_nature_['_length_'] = 'a primitive value'
+
+                elif abbr == 'Object and that object has a [[TypedArrayName]] internal slot':
+                    assert self.param_names == ['_typedArray_']
+                    self.param_nature_['_typedArray_'] = 'an Integer-Indexed object'
+
+                elif abbr == 'Object and that object has an [[ArrayBufferData]] internal slot':
+                    assert self.param_names[0] == '_buffer_'
+                    self.param_nature_['_buffer_'] = 'an ArrayBuffer or SharedArrayBuffer'
+
+                elif abbr == 'Object and that object does not have either a [[TypedArrayName]] or an [[ArrayBufferData]] internal slot':
+                    assert self.param_names == ['_object_']
+                    self.param_nature_['_object_'] = 'an object'
+
+        # ------------------------------------------------------------
+
+        if section.section_id == 'sec-built-in-function-objects-construct-argumentslist-newtarget':
+            # The clause just says that it's like [[Call]] except for one step,
+            # so it doesn't say anything about the parameters.
+            # Presumably they're the same as for [[Call]].
+            # Rather than fish those out, hard-code this:
+            assert self.param_nature_['_argumentsList_'] == 'TBD'
+            self.param_nature_['_argumentsList_'] = 'List of Tangible_'
+
+    # --------------------------------------------------------------------------
+
     def finish_initialization(self):
         assert len(self.rest_params) in [0,1]
+
+        if self.param_names is None:
+            if self.name == 'Proxy Revocation':
+                # It has no parameters,
+                # but neither the clause-heading nor the preamble say so.
+                self.param_names = []
+            else:
+                assert 0
 
         self.param_tipes = OrderedDict()
         for param_name in self.param_names:
@@ -2991,12 +3262,45 @@ class Header:
                 else:
                     tipe = 'List of Tangible_'
             else:
+                # not a rest parameter
                 nature = self.param_nature_.get(param_name, 'TBD')
+
+                # move to apply_ad_hoc_fixes?
+                if self.kind in ['function property', 'function property overload', 'anonymous built-in function', 'accessor property']:
+                    if self.name.startswith('Math.'):
+                        # "Each of the following `Math` object functions
+                        # applies the ToNumber abstract operation
+                        # to each of its arguments
+                        # (in left-to-right order if there is more than one)."
+                        #
+                        # So the algorithms are written under the assumption
+                        # that the parameters have type 'Number'.
+                        exp_nature = 'Number'
+                    else:
+                        exp_nature = 'a value'
+
+                    if nature == 'TBD':
+                        nature = exp_nature
+                    elif nature == exp_nature:
+                        pass
+                    elif self.kind == 'function property overload':
+                        pass
+                        # because the overload-resolver can cause an overload
+                        # to only get certain types for some parameters
+                    else:
+                        oh_warn()
+                        oh_warn(f"{self.name}: {exp_nature!r} overrides {nature!r}")
+                        nature = exp_nature
+
                 tipe = convert_nature_to_tipe(nature)
 
             param_tipe = optionality + tipe
 
             self.param_tipes[param_name] = param_tipe
+
+        if self.returns_normal is None:
+            if self.name.startswith('Math.'):
+                self.returns_normal = 'Number'
 
         self.return_tipe_normal = convert_nature_to_tipe(self.returns_normal or 'TBD')
         self.return_tipe_abrupt = convert_nature_to_tipe(self.returns_abrupt or 'TBD')
@@ -3013,6 +3317,7 @@ class Header:
             else:
                 for_param_type_string = self.for_phrase
                 self.for_param_name = None
+            for_param_type_string = re.sub(r'^an? ', '', for_param_type_string)
 
             x = {
                 'ECMAScript function object'        : T_function_object_,
@@ -3100,21 +3405,25 @@ class Header:
 
         # -------------------------
 
-        if self.name == 'Set' and self.kind == 'CallConstruct':
-            lookup_name = 'built-in Set'
+        if self.name == 'Set' and self.kind == 'function property':
+            name_for_op_dict = 'built-in Set'
             # so that it doesn't collide with the abstract operation 'Set'
+        elif self.name.startswith('<'):
+            mo = re.fullmatch(r'<dfn [^<>]+>([^<>]+)</dfn>', self.name)
+            assert mo
+            name_for_op_dict = mo.group(1)
         else:
-            lookup_name = self.name
+            name_for_op_dict = self.name
 
-        if lookup_name in operation_named_:
+        if name_for_op_dict in operation_named_:
             # We've already seen a header for an operation with this name.
-            op = operation_named_[lookup_name]
+            op = operation_named_[name_for_op_dict]
             assert self.kind != 'abstract operation'
             assert op.kind == self.kind
         else:
             # First header for an operation with this name.
-            op = Operation(lookup_name, self.kind)
-            operation_named_[lookup_name] = op
+            op = Operation(name_for_op_dict, self.kind)
+            operation_named_[name_for_op_dict] = op
 
         op.headers.append(self)
 
@@ -3295,7 +3604,18 @@ class Header:
         if self.description:
             pwi()
             pwi(f"  <dt>description</dt>")
-            pwi(f"  <dd>{self.description}</dd>")
+            assert isinstance(self.description, list)
+            assert len(self.description) > 0
+            desc = ' '.join(self.description)
+            desc = re.sub(r'^(!OP|!FUNC|!CM) ', '', desc)
+            desc = re.sub(r'^(It|This operation|The job) ', '', desc)
+            desc = (desc
+                .replace('!OP', 'This operation')
+                .replace('!FUNC', 'This function')
+            )
+            pwi(f"  <dd>{desc}</dd>")
+
+            # if len(self.description) > 1: make separate <p> elements?
 
         pwi(f"</dl>")
 
@@ -3312,21 +3632,21 @@ class Header:
                 isinstance(discriminator, ANode)
                     and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
             )
-        elif self.kind in ['concrete method', 'internal method', 'numeric_method']:
+        elif self.kind in ['concrete method', 'internal method', 'numeric method']:
             assert isinstance(discriminator, Type)
         elif self.kind == 'abstract operation':
             assert discriminator is None
         elif self.kind in [
-            'function_property',
-            'function_property_overload',
+            'function property',
+            'function property overload',
             'accessor property',
             'CallConstruct',
             'CallConstruct_overload',
-            'anonymous_built_in_function',
+            'anonymous built-in function',
         ]:
             assert discriminator is None
         else:
-            assert 0
+            assert 0, self.kind
 
         assert isinstance(tree, ANode)
         assert tree.prod.lhs_s in [
@@ -3386,9 +3706,9 @@ class Header:
 
 # "also has access to" type info
 ahat_ = {
-    ('_comparefn_', 'the _comparefn_ argument passed to the current invocation of the `sort` method'):
+    ('_comparefn_', 'from the current invocation of the `sort` method'):
         'Undefined | function_object_',
-    ('_reviver_', 'the value of _reviver_ that was originally passed to the above parse function'):
+    ('_reviver_', 'from the above parse function'):
         'function_object_',
     ('_ReplacerFunction_', 'from the invocation of the `stringify` method'):
         'function_object_ | Undefined',
@@ -3541,6 +3861,7 @@ class Type(tuple):
                                     if isinstance(bwa, ListType):
                                         inside_B.add(bwa)
                                         outside_B.add(ListType(T_other_))
+                                        # pdb.set_trace()
                                     else:
                                         assert 0
                                 else:
@@ -3663,6 +3984,7 @@ class NamedType(Type):
     def __new__(cls, name):
         assert isinstance(name, str)
         assert re.fullmatch(r'[\w -]+', name), name
+        assert not name.startswith('a ')
         return tuple.__new__(cls, ('NamedType', name))
     def __repr__(self): return "%s(%r)" % self
     def __str__(self): return self.name
@@ -3887,6 +4209,7 @@ named_type_hierarchy = {
                         'ReferenceError': {},
                         'SyntaxError': {},
                         'TypeError': {},
+                        'RangeError': {},
                         'other_Error_': {},
                     },
                     # 'Proxy': {},
@@ -4973,7 +5296,7 @@ class Env:
         # Returns a pair of Envs:
         # one in which the the type-test is true, and one in which it's false.
         # i.e.,
-        # - one in which the expr's currrent type is narrowed to be <: target_t; and
+        # - one in which the expr's current type is narrowed to be <: target_t; and
         # - one in which its type is narrowed to have no intersection with target_t
         # (either respectively or anti-respectively, depending on copula.)
 
@@ -4986,6 +5309,15 @@ class Env:
         # has a narrower binding for _R_.
 
         assert target_t != T_TBD
+
+        if asserting and expr_t == T_TBD:
+            assert copula == 'is a'
+            true_env = env1.copy()
+            true_env.vars[expr_text] = target_t
+            false_env = None
+            return (true_env, false_env)
+
+            # pdb.set_trace()
 
         (part_inside_target_t, part_outside_target_t) = expr_t.split_by(target_t)
 
@@ -5318,7 +5650,7 @@ def mytrace(env):
         print("resulting env is None")
     else:
         # print("resulting env:", env)
-        for var_name in ['*return*']:
+        for var_name in ['_argumentList_']:
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
             # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
@@ -5340,7 +5672,7 @@ def tc_operation(op_name):
     global trace_this_op
     trace_this_op = False
     trace_this_op = (op_name in [
-        'xNumber.prototype.toFixed'
+        'xTypedArrayCreate'
     ])
     # and you may want to tweak mytrace just above
 
@@ -5511,6 +5843,8 @@ def tc_header(header):
                     header.name == 'WithBaseObject' and init_t == T_Object | T_Undefined
                     or
                     header.name == 'SameValueNonNumeric' and init_t == T_Tangible_
+                    or
+                    header.name == 'SetMutableBinding' and pn == '*return*'
                 )
                 # This pass just narrowed the type.
                 # ----
@@ -5530,6 +5864,11 @@ def tc_header(header):
                 header.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
                 or
                 header.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_Integer_
+                or
+                header.name == 'RequireInternalSlot' and pn == '*return*' and init_t == T_throw_ and final_t == T_not_returned | ThrowType(T_TypeError)
+                or
+                header.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_Integer_ | ThrowType(T_TypeError)
+
                 # or
                 # header.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
                 # # cheater artifact
@@ -5580,8 +5919,18 @@ def tc_proc(op_name, defns, init_env):
                     t = T_Boolean
                 elif op_name == '::lessThan':
                     t = T_Boolean | T_Undefined
+                elif op_name == '::toString':
+                    t = T_String
                 else:
-                    t = base_type # XXX | ThrowType(?)
+                    t = base_type
+                if op_name in [
+                    '::exponentiate',
+                    '::divide',
+                    '::remainder',
+                ]:
+                    t |= ThrowType(T_RangeError)
+                elif op_name == '::unsignedRightShift':
+                    t |= ThrowType(T_TypeError) 
             else:
                 t = base_type
             final_env.vars[name] = t
@@ -7554,13 +7903,14 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {EX} and {EX} are distinct {TYPE_NAME} or {TYPE_NAME} values':
         # XXX This means that either they're both one, or else they're both the other,
         # but I can't handle co-ordinated types like that.
+        # LATER: Actually, that doesn't appear to be what it means.
         [exa, exb, tnc, tnd] = children
         t = type_for_TYPE_NAME(tnc) | type_for_TYPE_NAME(tnd)
         (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', t, asserting)
         (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', t, asserting)
         return (
-            env_or(a_t_env, b_t_env),
-            env_and(a_f_env, b_f_env)
+            env_and(a_t_env, b_t_env),
+            env_or(a_f_env, b_f_env)
         )
 
     # ---
@@ -7713,10 +8063,6 @@ def tc_cond_(cond, env0, asserting):
         [var, ex] = children
         env0.assert_expr_is_of_type(ex, T_Integer_)
         return env0.with_type_test(var, 'is a', ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List of a single Number":
-        [var] = children
-        return env0.with_type_test(var, 'is a', ListType(T_Number), asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of Source Text Module Records":
         [var] = children
@@ -8021,6 +8367,13 @@ def tc_cond_(cond, env0, asserting):
 
     # ----------------------
     # quasi-type-conditions
+
+    elif p == r"{CONDITION_1} : {var} is a List of a single Number":
+        [var] = children
+        return (
+            env0.with_expr_type_narrowed(var, ListType(T_Number)),
+            env0
+        )
 
     elif p == r"{CONDITION_1} : {var} is a {h_emu_xref} or a {h_emu_xref}":
         [var, xrefa, xrefb] = children
@@ -10414,7 +10767,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             callee_op_name = '::' + low_word.source_text()
             callee_op = operation_named_[callee_op_name]
-            assert callee_op.kind == 'numeric_method'
+            assert callee_op.kind == 'numeric method'
             assert len(callee_op.headers) == 2
 
             for header in callee_op.headers:
@@ -10521,7 +10874,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.kind == 'abstract operation'
+                    assert callee_op.kind in ['abstract operation', 'implementation-defined abstract operation']
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
