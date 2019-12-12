@@ -69,7 +69,7 @@ def establish_section_r(node, section_level, section_num):
         assert node.children[0].is_whitespace()
         h1 = node.children[1]
         assert h1.element_name == 'h1'
-        # node.section_header_element = h1
+        node.heading_child = h1
         check_section_title(h1, node)
         node.section_title = h1.inner_source_text()
 
@@ -313,7 +313,7 @@ def _set_section_kind_for_constructor(section):
     mo = re.fullmatch(r'The (\S+) (Constructors?|Intrinsic Object)', section.section_title)
     assert mo
     thing = mo.group(1)
-    if thing == '_NativeError_': thing = 'NativeError' # Looks like a spec bug.
+    # if thing == '_NativeError_': thing = 'NativeError' # Looks like a spec bug. Fixed in 'preambles' branch
 
     for child in section.section_children: # constructor_alg_children:
         _extract_info_from_section_title( child,
