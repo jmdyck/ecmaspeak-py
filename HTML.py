@@ -314,7 +314,7 @@ element_info = {
         # block contains blocks:
         '#DOC'              : ('B', '#DECL;#WS;meta;#WS;((link;|script;|style;)#WS;)+pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
-        'emu-clause'        : ('B', '#WS;h1;#WS;((div;|dl;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
+        'emu-clause'        : ('B', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
         'emu-table'         : ('B', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', '#WS;(object;|img;)#WS;'),
@@ -331,7 +331,7 @@ element_info = {
         # block contains blocks or contains inlines, but not both:
         'emu-integration-plans': ('B', '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
         'emu-note'             : ('B', '#WS;p;#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|#TEXT;(emu-xref;#TEXT;)?'),
-        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-val;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
+        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
         'div'                  : ('B', '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
         'dd'                   : ('B', '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
@@ -369,6 +369,11 @@ element_info = {
         # was inline-only, but then BTerlson added <a id='table-9'></a>
         # Could change it back if he accepts oldids edit.
 
+        'em'                : ('A', '#TEXT;'),
+        # was inline-only, but then PR #1062 added
+        #    <em>This section is non-normative.</em>
+        # as quasi-paragraph.
+
     # ---------------------------------------------
     # inlines:
 
@@ -377,12 +382,12 @@ element_info = {
         'code'              : ('I', '(#TEXT;|i;|var;)+'),
         'del'               : ('I', '(#TEXT;|emu-xref;)+'), # PROPOSALS
         'dfn'               : ('I', '(#TEXT;|emu-eqn;)'),
-        'em'                : ('I', '#TEXT;'),
         'emu-t'             : ('I', '#TEXT;'),
         'emu-val'           : ('I', '#TEXT;var;#TEXT;'),
         'emu-xref'          : ('I', '(#TEXT;)?'),
         'i'                 : ('I', '#TEXT;(sup;#TEXT;)?'),
         'ins'               : ('I', '#TEXT;((a;|emu-xref;|sub;)#TEXT;)?'), # PROPOSALS?
+        'strong'            : ('I', '(#TEXT;|code;)+'),
         'sub'               : ('I', '#TEXT;|dfn;'), # dfn; for num-ref
         'sup'               : ('I', '(#TEXT;|sub;)+'), # sub; for num-ref
         'var'               : ('I', '#TEXT;'),
