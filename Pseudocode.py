@@ -1869,6 +1869,11 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # "Use of |CoverInitializedName| results in an early Syntax Error in normal contexts..."
         return True
 
+    if lhs_nt == 'OptionalChain' and def_i in [3,7]:
+        # "It is a Syntax Error if any code matches this production."
+        # So no SDO will be invoked on them.
+        return True
+
     # ----------
 
     if (
