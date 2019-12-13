@@ -361,7 +361,7 @@ def check_ids():
                     id_prefix_expectation + kebab(aoid)
                 ]
                 if defid not in possibles:
-                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}" aoid={aoid}">, expected id="{possibles[0]}"')
+                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}" aoid="{aoid}">, expected id="{possibles[0]}"')
 
         if 'oldids' in node.attrs:
             for oldid in node.attrs['oldids'].split(','):
