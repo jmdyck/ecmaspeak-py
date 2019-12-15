@@ -114,7 +114,7 @@ D=_`gcbn` && $EK/static_type_analysis.py -just_initial_headers $D && car -d $D o
 # (~ 2s)
 
 D=_`gcbn` && $EK/static_type_analysis.py $D
-D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh skipped_sections_with_alg deps spec_w_errors spec_w_edits sta_misc
+D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh deps spec_w_errors spec_w_edits sta_misc
 # (~ 23s)
 	# split_types
 

@@ -2812,9 +2812,6 @@ def compute_dependency_levels():
     stderr()
     stderr('analyzing dependencies...')
 
-    global f_skipped
-    f_skipped = shared.open_for_output('skipped_sections_with_alg')
-
     for s in spec.doc_node.each_descendant_that_is_a_section():
 
         # SDO sections need to be handled specially,
@@ -2828,8 +2825,6 @@ def compute_dependency_levels():
             define_ops_from_sdo_section(s)
         else:
             pass
-
-    f_skipped.close()
 
     for op in operation_named_.values():
         op.summarize_headers()
