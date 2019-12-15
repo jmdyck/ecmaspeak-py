@@ -154,9 +154,9 @@
     Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.
     Set all of the bytes of {var} to 0.
     Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
+    Set {DOTTING} as described in {h_emu_xref}.
+    Set {DOTTING} as specified in {h_emu_xref}.
     Set {DOTTING} to the definition specified in {h_emu_xref}.
-    Set {SETTABLE} as described in {h_emu_xref}.
-    Set {SETTABLE} as specified in {h_emu_xref}.
     Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
     Set {SETTABLE} such that when evaluation is resumed with a Completion {var} the following steps will be performed:{IND_COMMANDS}
     Set {SETTABLE} such that when evaluation is resumed with a Completion {var}, the following steps of the algorithm that invoked Await will be performed, with {var} available.
@@ -289,7 +289,6 @@
     # no further validation is required
 
     # PR 1460 explicit-exotics
-    initialize the corresponding internal slot value on {var} to {LITERAL}
     append each of its elements to {var}
 
     # PR 1732 GetSubstitution
@@ -347,9 +346,6 @@
     {var} in {var}, in reverse list order
     {var} that is an element of {var}
     {var} that is an element of {var}, in original insertion order
-
-    # PR 1460 explicit-exotics:
-    internal slot in {var}
 
     # PR 1552 UTF16:
     code point {var} in {NAMED_OPERATION_INVOCATION}
@@ -833,8 +829,8 @@
     # PR 1460 explicit-exotics:
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
+    {var} is a List of internal slot names
     {var} is a bound function exotic object
-    {var} is a bound function exotic object or a {h_emu_xref}
     {var} contains {DSBN}
 
     # PR 1477 scope-records:

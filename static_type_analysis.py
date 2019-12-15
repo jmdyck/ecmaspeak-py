@@ -1911,6 +1911,7 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
                 ('^the VAR argument object$', 'object'),
                 ('^optional argument VAR is ', ''),
                 ('^optional VAR is ', ''),
+                ('^argument VAR is ', ''),
                 ('^In addition the algorithm takes (a Boolean flag) named VAR as a parameter', r'\1'),
                 ('^VAR is an? optional ', 'a '),
                 ('^VAR (?:is|must be) ', ''),
@@ -2692,6 +2693,7 @@ nature_to_tipe = {
     'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
     'a Lexical Environment or *null*'                            : 'Lexical Environment | Null', # PR 1668
     'an object or null'                                          : 'Object | Null',
+    'an object or *null*'                                        : 'Object | Null',
     'Object | Undefined'                                         : 'Object | Undefined',
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
@@ -4225,7 +4227,7 @@ named_type_hierarchy = {
                     'String_exotic_object_': {},
                     'TypedArray_object_': {},
                     'function_object_': {
-                        'constructor_object_': {},
+                        'constructor_object_': {}, # XXX This is actually orthogonal to Proxy/Bound/other
                         'Proxy_exotic_object_': {},
                         'bound_function_exotic_object_': {},
                         'other_function_object_': {},
@@ -5810,7 +5812,7 @@ def tc_header(header):
                     T_continue_.is_a_subtype_of_or_equal_to(final_t)
                 )
                 or
-                header.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ and final_t == T_Proxy_exotic_object_ | T_bound_function_exotic_object_ | T_other_function_object_
+                header.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ 
                 or
                 header.name == 'String.prototype.localeCompare' and pn == '*return*'
                 # The algo is incomplete, so doesn't result in a reasonable return type.
@@ -7103,12 +7105,6 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         result = env1
 
-    elif p == r'{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.':
-        [dotting, emu_xref] = children
-        (t1, env1) = tc_expr(dotting, env0)
-        # should check that the definition in emu_xref has the right signature
-        result = env1
-
     elif p in [
         r"{COMMAND} : Add {EX} as the last element of {var}.",
         r"{COMMAND} : Add {var} as an element of the list {var}.",
@@ -7183,13 +7179,67 @@ def tc_nonvalue(anode, env0):
         result = env0
 
     elif p in [
-        r'{COMMAND} : Set {SETTABLE} as described in {h_emu_xref}.',
-        r'{COMMAND} : Set {SETTABLE} as specified in {h_emu_xref}.',
+        r'{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.',
+        r'{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.',
+        r'{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.',
     ]:
-        [settable, emu_xref] = children
-        (t, env1) = tc_expr(settable, env0); assert env1 is env0
-        # XXX: could check that emu_xref is sensible for t
-        result = env1
+        [dotting, emu_xref] = children
+
+        # (t, env1) = tc_expr(settable, env0); assert env1 is env0
+        # XXX: could check that emu_xref is sensible for t, but not really worth it?
+
+        mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
+        sec_id = mo.group(1)
+        implied_base_t = {
+            # 9.2.*
+            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
+            'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
+
+            # 9.4.1.*
+            'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
+            'sec-bound-function-exotic-objects-construct-argumentslist-newtarget'                    : T_bound_function_exotic_object_,
+
+            # 9.4.2.*
+            'sec-array-exotic-objects-defineownproperty-p-desc'                                      : T_Array_object_,
+
+            # 9.4.3.*
+            'sec-string-exotic-objects-getownproperty-p'                                             : T_String_exotic_object_,
+            'sec-string-exotic-objects-defineownproperty-p-desc'                                     : T_String_exotic_object_,
+            'sec-string-exotic-objects-ownpropertykeys'                                              : T_String_exotic_object_,
+
+            # 9.4.4.*
+            'sec-arguments-exotic-objects-getownproperty-p'                                          : T_Object,
+            'sec-arguments-exotic-objects-defineownproperty-p-desc'                                  : T_Object,
+            'sec-arguments-exotic-objects-get-p-receiver'                                            : T_Object,
+            'sec-arguments-exotic-objects-set-p-v-receiver'                                          : T_Object,
+            'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
+
+            # 9.4.5.*
+            'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
+
+            # 9.5.*
+            'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
+            'sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget' : T_Proxy_exotic_object_,
+
+        }[sec_id]
+
+        assert dotting.prod.rhs_s == '{var}.{DSBN}'
+        [base_var, dsbn] = dotting.children
+
+        (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
+        if curr_base_t == T_Object:
+            result = env1.with_expr_type_narrowed(base_var, implied_base_t)
+        elif curr_base_t == T_bound_function_exotic_object_ | T_Proxy_exotic_object_ | T_other_function_object_ and implied_base_t == T_constructor_object_:
+            result = env1.with_expr_type_replaced(base_var, implied_base_t)
+        elif curr_base_t == implied_base_t:
+            result = env1
+        else:
+            assert 0
 
     elif p == r'{COMMAND} : Leave the critical section for {var}.':
         [var] = children
@@ -8042,6 +8092,10 @@ def tc_cond_(cond, env0, asserting):
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', ListType(T_code_unit_), asserting)
 
+    elif p == r"{CONDITION_1} : {var} is a List of internal slot names":
+        [list_var] = children
+        return env0.with_type_test(list_var, 'is a', ListType(T_SlotName_), asserting)
+
     elif p == r'{CONDITION_1} : {var} is a List of String values':
         [var] = children
         return env0.with_type_test(var, 'is a', ListType(T_String), asserting)
@@ -8377,7 +8431,10 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is a {h_emu_xref} or a {h_emu_xref}":
         [var, xrefa, xrefb] = children
-        assert xrefa.source_text() == '<emu-xref href="#sec-bound-function-exotic-objects">Bound Function exotic object</emu-xref>'
+        assert xrefa.source_text() in [
+            '<emu-xref href="#sec-bound-function-exotic-objects">Bound Function exotic object</emu-xref>',
+            '<emu-xref href="#sec-bound-function-exotic-objects">bound function exotic object</emu-xref>', # PR 1460
+        ]
         assert xrefb.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>'
         return (
             env0.with_expr_type_narrowed(var, T_function_object_),
