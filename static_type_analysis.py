@@ -2812,19 +2812,14 @@ def compute_dependency_levels():
     stderr()
     stderr('analyzing dependencies...')
 
-    for s in spec.doc_node.each_descendant_that_is_a_section():
-
-        # SDO sections need to be handled specially,
-        # because they typically have one eoh followed by multiple grammar+emu-algs pairs.
-        # Everywhere else, you normally get eoh + emu-alg as a pair.
-
-        if s.section_title == 'Headers for Syntax-Directed Operations':
-            # already handled above
-            pass
-        elif s.section_kind == 'syntax_directed_operation':
-            define_ops_from_sdo_section(s)
-        else:
-            pass
+    for (op_name, op_info) in spec.info_for_op_named_.items():
+        # assert isinstance(op_info, Foo)
+        assert op_name == op_info.name
+        if op_info.kind == 'SDO':
+            for (discriminator, anode, in_annex_B) in op_info.definitions:
+                if in_annex_B: continue
+                if discriminator is None: continue # XXX for now
+                operation_named_[op_name].add_defn( discriminator, anode )
 
     for op in operation_named_.values():
         op.summarize_headers()
@@ -2862,134 +2857,6 @@ def compute_dependency_levels():
     return levels
 
 operation_named_ = {}
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def define_ops_from_sdo_section(s):
-    assert s.section_kind == 'syntax_directed_operation'
-
-    if s.section_title == 'Static Semantics: TV and TRV':
-        # defines two sdo's in the same section, hrm
-        op_name = None
-    elif s.section_title == 'Static Semantics: HasCallInTailPosition':
-        # Contains defns only via its child sections, see below.
-        return
-    elif s.section_title in ['Statement Rules', 'Expression Rules']:
-        assert s.parent.section_title == 'Static Semantics: HasCallInTailPosition'
-        op_name = 'HasCallInTailPosition'
-    elif s.parent.section_title == 'Pattern Semantics':
-        op_name = 'regexp-Evaluate'
-    else:
-        mo = re.match(r'^(Static|Runtime) Semantics: (\w+)$', s.section_title)
-        assert mo, s.section_title
-        op_name = mo.group(2)
-
-    add_defns_from_sdo_section(s, op_name)
-
-def add_defns_from_sdo_section(s, op_name):
-    # XXX This should be done in Pseudocode.py?
-
-    # There are 3 ways to contribute to a syntax-directed operation:
-    #
-    # - <emu-grammar> + <emu-alg> pair
-    #   (The most common way)
-    #
-    # - <p> + <emu-alg> pair,
-    #   where the <p> says "The production <emu-grammar>A : B C</emu-grammar>
-    #   evaluates as follows:"
-    #   21.2.2.*
-    #
-    # - <li>:
-    #   E.g., "The Foo of <emu-grammar>A : B C</emu-grammar> is ..."
-    #
-    #  We catch the first 2 by scanning for <emu-alg> elements,
-    #  catch the 3rd by scanning for <ul>.
-
-    # Forms 1-2:
-    for (c,child) in enumerate(s.block_children):
-        if child.element_name == 'emu-alg':
-            prev = s.block_children[c-1]
-            assert prev.element_name in ['emu-grammar', 'p']
-            discriminator = prev
-            if prev.element_name == 'emu-grammar':
-                # form 1
-                pass
-            elif prev.element_name == 'p':
-                # form 2
-                prev_children = prev.children
-                if (
-                    len(prev_children) == 3
-                    and
-                    prev_children[0].source_text() == 'The production '
-                    and
-                    prev_children[1].element_name == 'emu-grammar'
-                    and
-                    prev_children[2].source_text() == ' evaluates as follows:'
-                ):
-                    # form 2 (~52 occurrences)
-                    discriminator = prev_children[1]
-                else:
-                    assert prev.source_text() == '<p>The production <emu-grammar type="example">A : A @ B</emu-grammar>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:</p>'
-                    # ignore it.
-            operation_named_[op_name].add_defn( discriminator, child._syntax_tree )
-            prev._used = True
-            child._used = True
-
-    # form 3:
-    for ul in s.block_children:
-        if ul.element_name == 'ul':
-            if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
-                continue
-
-            for li in ul.children:
-                if li.element_name == '#LITERAL': continue
-                assert li.element_name == 'li'
-                LI = li._syntax_tree
-                assert LI.prod.lhs_s == '{LI}'
-                [ISDO_RULE] = LI.children
-                assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
-
-                rule_op_names = []
-                grammars = []
-                defn_expr = None
-                for gchild in ISDO_RULE.children:
-                    gl = gchild.prod.lhs_s
-                    if gl == '{ISDO_NAME}':
-                        [cap_word] = gchild.children
-                        [rule_op_name] = cap_word.children
-                        assert rule_op_name == op_name or op_name is None
-                        rule_op_names.append(rule_op_name)
-                    elif gl in ['{h_emu_grammar}','{nonterminal}']:
-                        grammars.append(gchild)
-                    elif gl == '{EXPR}':
-                        assert defn_expr is None
-                        defn_expr = gchild
-                    elif gl == '{NAMED_OPERATION_INVOCATION}':
-                        if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
-                            # skip it
-                            pass
-                        else:
-                            assert defn_expr is None
-                            defn_expr = gchild
-                    else:
-                        assert 0, gl
-
-                assert 0 < len(rule_op_names) <= 2
-                assert 0 < len(grammars) <= 5
-                for rule_op_name in rule_op_names:
-                    for grammar in grammars:
-                        operation_named_[rule_op_name].add_defn(grammar, defn_expr)
-
-            ul._used = True
-
-    if 0:
-        for child in s.block_children:
-            if not hasattr(child, '_used'):
-                if child.element_name in ['emu-note', 'emu-see-also-para']:
-                    pass
-                else:
-                    print(s.section_num, s.section_title)
-                    print('    ', repr(child.source_text()[:120]))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -5958,13 +5825,10 @@ def tc_proc(op_name, defns, init_env):
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IAO_BODY}', '{IND_COMMANDS}']:
             # kludge:
             if (
-                discriminator is not None
-                and
                 isinstance(discriminator, HTML.HNode)
                 and
-                discriminator.element_name == 'p'
+                discriminator.source_text() == '<emu-grammar type="example">A : A @ B</emu-grammar>'
             ):
-                assert discriminator.source_text().startswith('<p>The production <emu-grammar type="example">A : A @ B</emu-grammar>, where @ is ')
                 init_env1 = init_env.plus_new_entry('_A_', T_Parse_Node).plus_new_entry('_B_', T_Parse_Node)
             else:
                 init_env1 = init_env
