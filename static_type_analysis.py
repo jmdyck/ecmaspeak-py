@@ -2737,6 +2737,16 @@ def prep_for_STA():
                 after_thing.prep_for_STA()
         line_info.msgs = []
 
+    # SDO defns
+    for (op_name, op_info) in spec.info_for_op_named_.items():
+        # assert isinstance(op_info, Foo)
+        assert op_name == op_info.name
+        if op_info.kind == 'SDO':
+            for (discriminator, anode, in_annex_B) in op_info.definitions:
+                if in_annex_B: continue
+                if discriminator is None: continue # XXX for now
+                operation_named_[op_name].add_defn( discriminator, anode )
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def gather_nonterminals():
@@ -2811,15 +2821,6 @@ built_in_ops = [
 def compute_dependency_levels():
     stderr()
     stderr('analyzing dependencies...')
-
-    for (op_name, op_info) in spec.info_for_op_named_.items():
-        # assert isinstance(op_info, Foo)
-        assert op_name == op_info.name
-        if op_info.kind == 'SDO':
-            for (discriminator, anode, in_annex_B) in op_info.definitions:
-                if in_annex_B: continue
-                if discriminator is None: continue # XXX for now
-                operation_named_[op_name].add_defn( discriminator, anode )
 
     for op in operation_named_.values():
         op.summarize_headers()
