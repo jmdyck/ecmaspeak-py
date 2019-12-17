@@ -2751,7 +2751,11 @@ def prep_for_STA():
             for (discriminator, anode, in_annex_B) in op_info.definitions:
                 if in_annex_B: continue
                 if discriminator is None: continue # XXX for now
-                operation_named_[op_name].add_defn( discriminator, anode )
+                op = operation_named_[op_name]
+                assert len(op.headers) == 1
+                # print(op.name, op.kind, discriminator.source_text().replace('\n', '\\n'))
+                op.headers[0].add_defn(discriminator, anode)
+                # print('>', op.kind, op.name, discriminator.source_text()[0:100].replace('\n', ' '))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2887,12 +2891,6 @@ class Operation:
         self.kind = kind
         self.headers = []
         self.return_type = None
-
-    def add_defn(self, discriminator, tree):
-        assert len(self.headers) == 1
-        # print(self.name, self.kind, discriminator.source_text().replace('\n', '\\n'))
-        self.headers[0].add_defn(discriminator, tree)
-        # print('>', self.kind, self.name, discriminator.source_text()[0:100].replace('\n', ' '))
 
     def summarize_headers(self):
         assert len(self.headers) > 0
