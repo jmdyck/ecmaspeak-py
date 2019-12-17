@@ -2887,6 +2887,7 @@ class Operation:
         assert len(self.headers) == 1
         # print(self.name, self.kind, discriminator.source_text().replace('\n', '\\n'))
         self.headers[0].add_defn(discriminator, tree)
+        # print('>', self.kind, self.name, discriminator.source_text()[0:100].replace('\n', ' '))
 
     def summarize_headers(self):
         assert len(self.headers) > 0
@@ -3277,10 +3278,14 @@ class Header:
 
         self.defns = []
 
+        if self.definitions: assert self.kind != 'syntax-directed operation'
         for algo in self.definitions:
             discriminator = self.for_param_type
             if algo.element_name == 'emu-alg':
                 self.add_defn(discriminator, algo._syntax_tree)
+            else:
+                assert algo.element_name in ['ul', 'emu-table']
+                assert not hasattr(algo, '_syntax_tree')
 
         # -------------------------
 
