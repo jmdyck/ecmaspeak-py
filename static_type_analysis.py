@@ -595,7 +595,7 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
-                oi.definitions.append(algo)
+                oi.definitions.append(algo._syntax_tree)
             else:
                 assert algo.element_name in ['ul', 'emu-table']
                 assert not hasattr(algo, '_syntax_tree')
@@ -3284,10 +3284,9 @@ class Header:
         self.defns = []
 
         if self.definitions: assert self.kind != 'syntax-directed operation'
-        for algo in self.definitions:
+        for anode in self.definitions:
             discriminator = self.for_param_type
-            assert algo.element_name == 'emu-alg'
-            self.add_defn(discriminator, algo._syntax_tree)
+            self.add_defn(discriminator, anode)
 
         # -------------------------
 
