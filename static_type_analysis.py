@@ -595,7 +595,7 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
-                oi.definitions.append( ('?', algo._syntax_tree) )
+                oi.u_defns.append( ('?', algo._syntax_tree) )
             else:
                 assert algo.element_name in ['ul', 'emu-table']
                 assert not hasattr(algo, '_syntax_tree')
@@ -677,7 +677,7 @@ def declare_sdo(op_name, param_dict, also=[]):
         for (discriminator, anode, in_annex_B) in op_info.definitions:
             if in_annex_B: continue
             if discriminator is None: continue # XXX for now
-            oi.definitions.append( (discriminator, anode) )
+            oi.u_defns.append( (discriminator, anode) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2965,7 +2965,7 @@ class Header:
         self.returns_normal = None
         self.returns_abrupt = None
         self.description = None
-        self.definitions = []
+        self.u_defns = []
         self.line_num = None
 
     def apply_ad_hoc_fixes(self, section):
@@ -3273,9 +3273,9 @@ class Header:
 
         # -------------------------
 
-        self.defns = []
+        self.t_defns = []
 
-        for (discriminator, anode) in self.definitions:
+        for (discriminator, anode) in self.u_defns:
             if self.kind == 'syntax-directed operation':
                 assert isinstance(discriminator, HTML.HNode) or isinstance(discriminator, ANode)
             else:
@@ -3319,7 +3319,7 @@ class Header:
                     pn + ' : ' + str(pt)
                     for (pn, pt) in self.parameter_types.items())}
                 returns: {self.return_type}
-                # defns: {len(self.defns)}
+                # defns: {len(self.u_defns)}
         """
 
     # ------------------------------------------------------
@@ -3536,7 +3536,7 @@ class Header:
             '{NAMED_OPERATION_INVOCATION}',
         ], tree.prod.lhs_s
 
-        self.defns.append((discriminator,tree))
+        self.t_defns.append((discriminator,tree))
 
     # ------------------------------------------------------
 
@@ -5580,10 +5580,10 @@ def tc_header(header):
 
     init_env = header.make_env()
 
-    if header.defns == []:
+    if header.t_defns == []:
         return False
 
-    final_env = tc_proc(header.name, header.defns, init_env)
+    final_env = tc_proc(header.name, header.t_defns, init_env)
 
     assert final_env is not None
 
