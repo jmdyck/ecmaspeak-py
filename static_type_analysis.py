@@ -663,6 +663,7 @@ def declare_sdo(op_name, param_dict, also=[]):
         assert pre_oi.param_nature_ == oi.param_nature_
         assert pre_oi.also == oi.also
     else:
+        oi.finish_initialization()
         spec.oi_for_sdo_[op_name] = oi
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -5516,7 +5517,6 @@ class AnnexForSDOs:
         yield '  <h1>Headers for Syntax-Directed Operations</h1>'
         yield '  <p>blah</p>'
         for (_, header) in sorted(spec.oi_for_sdo_.items()):
-            if mode == 'show initial info': header.finish_initialization()
             for line in header.lines(2, mode):
                 yield line
         yield '</emu-annex>'
