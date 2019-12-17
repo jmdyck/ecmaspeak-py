@@ -593,7 +593,12 @@ def create_operation_info_for_section(s):
         oi.apply_ad_hoc_fixes(s)
         oi.finish_initialization()
         spec.info_for_line_[ln].afters.append(oi)
-        if algo: oi.definitions.append(algo)
+        if algo:
+            if algo.element_name == 'emu-alg':
+                oi.definitions.append(algo)
+            else:
+                assert algo.element_name in ['ul', 'emu-table']
+                assert not hasattr(algo, '_syntax_tree')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -3281,11 +3286,8 @@ class Header:
         if self.definitions: assert self.kind != 'syntax-directed operation'
         for algo in self.definitions:
             discriminator = self.for_param_type
-            if algo.element_name == 'emu-alg':
-                self.add_defn(discriminator, algo._syntax_tree)
-            else:
-                assert algo.element_name in ['ul', 'emu-table']
-                assert not hasattr(algo, '_syntax_tree')
+            assert algo.element_name == 'emu-alg'
+            self.add_defn(discriminator, algo._syntax_tree)
 
         # -------------------------
 
