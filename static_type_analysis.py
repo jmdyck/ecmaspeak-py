@@ -2864,6 +2864,19 @@ operation_named_ = {}
 
 class Operation:
     def __init__(self, name, kind):
+        assert kind in [
+            'abstract operation',
+            'concrete method',
+            'implementation-defined abstract operation',
+            'internal method',
+            'numeric method',
+            'syntax-directed operation',
+            #
+            'accessor property',
+            'anonymous built-in function',
+            'function property',
+            'function property overload',
+        ]
         self.name = name
         self.kind = kind
         self.headers = []
