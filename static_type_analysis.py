@@ -671,6 +671,14 @@ def declare_sdo(op_name, param_dict, also=[]):
         oi.finish_initialization()
         spec.oi_for_sdo_[op_name] = oi
 
+        op_info = spec.info_for_op_named_[op_name]
+        assert op_info.name == op_name
+        assert op_info.kind == 'SDO'
+        for (discriminator, anode, in_annex_B) in op_info.definitions:
+            if in_annex_B: continue
+            if discriminator is None: continue # XXX for now
+            oi.definitions.append( (discriminator, anode) )
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 multi_sentence_rules_str = r'''
@@ -2743,20 +2751,6 @@ def prep_for_STA():
                 after_thing.prep_for_STA()
         line_info.msgs = []
 
-    # SDO defns
-    for (op_name, op_info) in spec.info_for_op_named_.items():
-        # assert isinstance(op_info, Foo)
-        assert op_name == op_info.name
-        if op_info.kind == 'SDO':
-            for (discriminator, anode, in_annex_B) in op_info.definitions:
-                if in_annex_B: continue
-                if discriminator is None: continue # XXX for now
-                op = operation_named_[op_name]
-                assert len(op.headers) == 1
-                # print(op.name, op.kind, discriminator.source_text().replace('\n', '\\n'))
-                op.headers[0].add_defn(discriminator, anode)
-                # print('>', op.kind, op.name, discriminator.source_text()[0:100].replace('\n', ' '))
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def gather_nonterminals():
@@ -3281,10 +3275,12 @@ class Header:
 
         self.defns = []
 
-        if self.definitions: assert self.kind != 'syntax-directed operation'
         for (discriminator, anode) in self.definitions:
-            assert discriminator == '?'
-            discriminator = self.for_param_type
+            if self.kind == 'syntax-directed operation':
+                assert isinstance(discriminator, HTML.HNode) or isinstance(discriminator, ANode)
+            else:
+                assert discriminator == '?'
+                discriminator = self.for_param_type
             self.add_defn(discriminator, anode)
 
         # -------------------------
