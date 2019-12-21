@@ -595,6 +595,7 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
+                if algo._syntax_tree is None: stderr(f"warning: no syntax tree for defn of {oi.name}")
                 oi.u_defns.append( ('?', algo._syntax_tree) )
             else:
                 assert algo.element_name in ['ul', 'emu-table']
