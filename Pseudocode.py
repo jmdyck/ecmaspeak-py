@@ -430,17 +430,17 @@ def analyze_other_op_section(section):
 
         elif op_name.startswith('Host') or op_name == 'LocalTZA':
             # These are host-defined ops, so we expect no alg.
-            ensure_foo('abstract_operation', op_name)
+            ensure_foo('op: host-defined', op_name)
             pass
 
         elif section.section_kind == 'numeric_method':
             # A mathematical operation that we merely constrain, via a bullet-list.
-            ensure_foo('numeric_method', op_name)
+            ensure_foo('op: numeric method', op_name)
             pass
 
         elif op_name == 'StringToBigInt':
             # Apply other alg with changes, ick.
-            ensure_foo('abstract_operation', op_name)
+            ensure_foo('op: solo', op_name)
 
         else:
             assert 0, (section.section_num, section.section_title)
@@ -493,12 +493,19 @@ def analyze_other_op_section(section):
                 'Proxy Object Internal Methods and Internal Slots': 'Proxy exotic object',
             }[section.parent.section_title]
 
+            op_kind = {
+                'numeric_method'   : 'op: numeric method',
+                'env_rec_method'   : 'op: concrete method: env rec',
+                'module_rec_method': 'op: concrete method: module rec',
+                'internal_method'  : 'op: internal method',
+            }[section.section_kind]
+
             if op_name == 'DeleteBinding' and discriminator == 'module Environment Record':
                 # "Assert: This method is never invoked"
                 # So type-checking it will not confirm the signature.
                 return
 
-            handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg)
+            handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg)
 
         else:
             assert 0, section.section_kind
@@ -516,7 +523,7 @@ def analyze_other_op_section(section):
         handle_solo_op(op_name, section.block_children[1])
 
         # The second emu-alg is the [[Call]] alg for an anonymous built-in function.
-        handle_function('anonymous_built_in_function', op_name.replace('Make',''), section.block_children[3])
+        handle_function('bif: * per realm', op_name.replace('Make',''), section.block_children[3])
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -530,6 +537,15 @@ def analyze_built_in_section(section):
         assert n_emu_algs == 0
         return
 
+    bif_kind = {
+        'CallConstruct'               : 'bif: value of data property',
+        'CallConstruct_overload'      : 'bif: value of data property: overload',
+        'accessor_property'           : 'bif: accessor function',
+        'anonymous_built_in_function' : 'bif: * per realm',
+        'function_property'           : 'bif: value of data property',
+        'function_property_overload'  : 'bif: value of data property: overload',
+    }[section.section_kind]
+
     if n_emu_algs == 0:
         # Various possibilities:
         # - A Math function that we merely constrain, via a bullet-list.
@@ -538,12 +554,12 @@ def analyze_built_in_section(section):
         if prop_path == '%TypedArray%.prototype.set':
             # 22.2.3.23 contains 2 child clauses that define overloads for this function.
             return
-        handle_function(section.section_kind, prop_path, None)
+        handle_function(bif_kind, prop_path, None)
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        handle_function(section.section_kind, prop_path, emu_alg)
+        handle_function(bif_kind, prop_path, emu_alg)
 
     else:
         assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
@@ -551,7 +567,7 @@ def analyze_built_in_section(section):
         # The first emu-alg is at least the *start* of the full algorithm.
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        handle_function(section.section_kind, prop_path, emu_alg)
+        handle_function(bif_kind, prop_path, emu_alg)
 
         if prop_path == '%TypedArray%.prototype.sort':
             assert n_emu_algs == 2
@@ -707,10 +723,10 @@ def analyze_other_section(section):
 
     if n_emu_algs == 0:
         if section.section_title == 'Mathematical Operations':
-            ensure_foo('abstract_operation', 'abs')
-            ensure_foo('abstract_operation', 'min')
-            ensure_foo('abstract_operation', 'max')
-            ensure_foo('abstract_operation', 'floor')
+            ensure_foo('op: solo', 'abs')
+            ensure_foo('op: solo', 'min')
+            ensure_foo('op: solo', 'max')
+            ensure_foo('op: solo', 'floor')
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
@@ -788,7 +804,7 @@ def handle_solo_op(op_name, emu_alg):
     # "solo" in the sense of having a single definition,
     # in contrast to multiple definitions discriminated by type or syntax
 
-    foo_add_defn('abstract_operation', op_name, None, parse(emu_alg))
+    foo_add_defn('op: solo', op_name, None, parse(emu_alg))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -804,7 +820,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
     x = ' '.join(c.element_name for c in tdb.children)
 
     if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
-        foo_add_defn('abstract_operation', op_name, discriminator, parse(tdb))
+        foo_add_defn('op: solo', op_name, discriminator, parse(tdb))
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
@@ -816,15 +832,15 @@ def handle_tabular_op_defn(op_name, tda, tdb):
     elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
         (_, p, _, emu_alg, _) = tdb.children
         assert p.source_text() == '<p>Apply the following steps:</p>'
-        foo_add_defn('abstract_operation', op_name, discriminator, parse(emu_alg))
+        foo_add_defn('op: solo', op_name, discriminator, parse(emu_alg))
 
     else:
         assert 0, x
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_type_discriminated_op(op_name, section_kind, discriminator, emu_alg):
-    foo_add_defn(section_kind, op_name, discriminator, parse(emu_alg))
+def handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg):
+    foo_add_defn(op_kind, op_name, discriminator, parse(emu_alg))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -840,7 +856,7 @@ def handle_early_error(emu_grammar, ul):
             if tree is None: continue
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            foo_add_defn('early_error', 'Early Errors', emu_grammar, ee_rule)
+            foo_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule)
         else:
             assert 0, li.element_name
 
@@ -899,7 +915,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
 
     # ----------
 
-    foo_add_defn('SDO', sdo_name, emu_grammar, algo)
+    foo_add_defn('op: syntax-directed', sdo_name, emu_grammar, algo)
 
 # ------------------------------------------------------------------------------
 
@@ -971,7 +987,7 @@ def handle_inline_sdo(li, section_sdo_name):
     assert 0 < len(rule_grammars) <= 5
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
-            foo_add_defn('SDO', rule_sdo_name, rule_grammar, rule_expr)
+            foo_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1001,16 +1017,16 @@ def handle_emu_eqn(emu_eqn):
         [op_name, parameter, body] = child.children
         assert op_name.source_text() == aoid
         parameter_name = parameter.source_text()
-        foo_add_defn('abstract_operation', aoid, None, body)
+        foo_add_defn('op: solo', aoid, None, body)
     else:
         assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_function(section_kind, locater, emu_alg):
-    # XXX not using section_kind
+def handle_function(bif_kind, locater, emu_alg):
+
     algo = None if emu_alg is None else parse(emu_alg)
-    foo_add_defn('built-in function', locater, None, algo)
+    foo_add_defn(bif_kind, locater, None, algo)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1275,7 +1291,7 @@ class Foo:
         self.callees = set()
 
 def ensure_foo(foo_kind, foo_name):
-    if foo_kind == 'built-in function':
+    if foo_kind.startswith('bif'):
         iffn = spec.info_for_bif_named_
     else:
         iffn = spec.info_for_op_named_
@@ -1529,7 +1545,7 @@ def check_sdo_coverage():
 
     # collect sdo_coverage_info:
     for (op_name, op_info) in spec.info_for_op_named_.items():
-        if op_info.kind == 'SDO':
+        if op_info.kind == 'op: syntax-directed':
 
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}
