@@ -526,12 +526,18 @@ def analyze_built_in_section(section):
 
     n_emu_algs = section.bcen_list.count('emu-alg')
 
+    if section.section_kind == 'function_property_xref':
+        assert n_emu_algs == 0
+        return
+
     if n_emu_algs == 0:
         # Various possibilities:
         # - A Math function that we merely constrain, via a bullet-list.
         # - "This function is like that function" (except different, maybe).
         # - Other functions that we only define in prose.
-        # - A cross-reference to actual definition
+        if prop_path == '%TypedArray%.prototype.set':
+            # 22.2.3.23 contains 2 child clauses that define overloads for this function.
+            return
         handle_function(section.section_kind, prop_path, None)
 
     elif n_emu_algs == 1:
