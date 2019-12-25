@@ -5,9 +5,9 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
-    {EMU_EQN_BODY}{_eos_}
+    {EMU_EQN_DEF}{_eos_}
 
-{EMU_EQN_BODY} :
+{EMU_EQN_DEF} :
     {CONSTANT_DEF}
     {OPERATION_DEF}
 

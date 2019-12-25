@@ -996,7 +996,7 @@ def handle_emu_eqn(emu_eqn, section):
     tree = parse(emu_eqn)
     if tree is None: return
 
-    assert tree.prod.lhs_s == '{EMU_EQN_BODY}'
+    assert tree.prod.lhs_s == '{EMU_EQN_DEF}'
     [child] = tree.children
     if child.prod.lhs_s == '{CONSTANT_DEF}':
         [constant_name, dec_int_lit] = child.children[0:2]
