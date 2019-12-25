@@ -177,10 +177,6 @@ def analyze_sections():
             stderr(f" {top_level_num}", end='', flush=True)
             prev_top_level_num = top_level_num
 
-        global in_annex_b
-        in_annex_b = (top_level_num == 'B')
-        # This is kludgey, but it works.
-
         # ------------------------------------------------
 
         if section.section_kind == 'early_errors':
@@ -1329,7 +1325,7 @@ def foo_add_defn(foo_kind, foo_name, discriminator, algo, section):
         '{ONE_LINE_ALG}',
     ]
 
-    foo_info.definitions.append( (discriminator, algo, in_annex_b) )
+    foo_info.definitions.append( (discriminator, algo, section) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1543,9 +1539,9 @@ def check_sdo_coverage():
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}
 
-            for (discriminator, emu_alg, in_annex_b) in op_info.definitions:
+            for (discriminator, emu_alg, section) in op_info.definitions:
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
-                if in_annex_b: continue
+                if section.section_num.startswith('B'): continue
 
                 # This will be obsoleted by PR 1301:
                 if isinstance(discriminator, ANode):

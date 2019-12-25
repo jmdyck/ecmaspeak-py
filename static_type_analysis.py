@@ -675,8 +675,8 @@ def declare_sdo(op_name, param_dict, also=[]):
         op_info = spec.info_for_op_named_[op_name]
         assert op_info.name == op_name
         assert op_info.kind == 'op: syntax-directed'
-        for (discriminator, anode, in_annex_B) in op_info.definitions:
-            if in_annex_B: continue
+        for (discriminator, anode, section) in op_info.definitions:
+            if section.section_num.startswith('B'): continue
             if discriminator is None: continue # XXX for now
             oi.u_defns.append( (discriminator, anode) )
 
