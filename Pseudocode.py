@@ -277,7 +277,7 @@ def analyze_early_errors_section(section):
         if child.element_name == 'emu-grammar':
             curr_emu_grammar = child
         elif child.element_name == 'ul':
-            handle_early_error(curr_emu_grammar, child)
+            handle_early_error(curr_emu_grammar, child, section)
         elif child.element_name in ['p', 'emu-note']:
             pass
         else:
@@ -323,7 +323,7 @@ def analyze_sdo_section(section):
         for (i,c) in enumerate(section.block_children):
             if c.element_name == 'emu-grammar':
                 next_c = section.block_children[i+1]
-                handle_composite_sdo(sdo_name, c, next_c)
+                handle_composite_sdo(sdo_name, c, next_c, section)
 
     elif 'ul' in section.bcen_set:
         assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
@@ -345,7 +345,7 @@ def analyze_sdo_section(section):
                 if child.element_name == '#LITERAL':
                     assert child.is_whitespace()
                 elif child.element_name == 'li':
-                    handle_inline_sdo(child, sdo_name)
+                    handle_inline_sdo(child, sdo_name, section)
                 else:
                     assert 0, child.element_name
 
@@ -376,7 +376,7 @@ def analyze_sdo_section(section):
                 ):
                     emu_alg = section.block_children[i+1]
                     assert emu_alg.element_name == 'emu-alg'
-                    handle_composite_sdo(sdo_name, c, emu_alg)
+                    handle_composite_sdo(sdo_name, c, emu_alg, section)
 
                 else:
                     # assert 0, p_text
@@ -418,14 +418,14 @@ def analyze_other_op_section(section):
                     assert b.inner_source_text().strip() == 'Result'
                     continue
 
-                handle_tabular_op_defn(op_name, a, b)
+                handle_tabular_op_defn(op_name, a, b, section)
 
         elif op_name == 'CreateImmutableBinding':
             # This is a bit odd.
             # The clause exists just to say that this definition doesn't exist.
             # discriminator = None # XXX get the discriminator!
             # emu_alg = None ?
-            # handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg)
+            # handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg, section)
             pass
 
         elif op_name.startswith('Host') or op_name == 'LocalTZA':
@@ -454,7 +454,7 @@ def analyze_other_op_section(section):
         # (this definition of) the operation named by the section_title.
 
         if section.section_kind == 'abstract_operation':
-            handle_solo_op(op_name, emu_alg)
+            handle_solo_op(op_name, emu_alg, section)
 
         elif section.section_kind in [
             'numeric_method',
@@ -505,7 +505,7 @@ def analyze_other_op_section(section):
                 # So type-checking it will not confirm the signature.
                 return
 
-            handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg)
+            handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg, section)
 
         else:
             assert 0, section.section_kind
@@ -517,10 +517,10 @@ def analyze_other_op_section(section):
         assert section.bcen_str == 'p emu-alg p emu-alg emu-note'
 
         # The first emu-alg defines the operation.
-        handle_solo_op(op_name, section.block_children[1])
+        handle_solo_op(op_name, section.block_children[1], section)
 
         # The second emu-alg is the [[Call]] alg for an anonymous built-in function.
-        handle_function('bif: * per realm', op_name.replace('Make',''), section.block_children[3])
+        handle_function('bif: * per realm', op_name.replace('Make',''), section.block_children[3], section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -551,12 +551,12 @@ def analyze_built_in_section(section):
         if prop_path == '%TypedArray%.prototype.set':
             # 22.2.3.23 contains 2 child clauses that define overloads for this function.
             return
-        handle_function(bif_kind, prop_path, None)
+        handle_function(bif_kind, prop_path, None, section)
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        handle_function(bif_kind, prop_path, emu_alg)
+        handle_function(bif_kind, prop_path, emu_alg, section)
 
     else:
         assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
@@ -564,14 +564,14 @@ def analyze_built_in_section(section):
         # The first emu-alg is at least the *start* of the full algorithm.
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        handle_function(bif_kind, prop_path, emu_alg)
+        handle_function(bif_kind, prop_path, emu_alg, section)
 
         if prop_path == '%TypedArray%.prototype.sort':
             assert n_emu_algs == 2
             # The second emu-alg defines the TypedArray SortCompare.
             emu_alg_posn = section.bcen_list.index('emu-alg', emu_alg_posn+1)
             emu_alg = section.block_children[emu_alg_posn]
-            handle_solo_op('TypedArray SortCompare', emu_alg)
+            handle_solo_op('TypedArray SortCompare', emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -596,7 +596,7 @@ def analyze_changes_section(section):
 
             emu_alg = section.block_children[i+1]
             assert emu_alg.element_name == 'emu-alg'
-            handle_solo_op(op_name, emu_alg)
+            handle_solo_op(op_name, emu_alg, section)
             # XXX debateable, since it's not a full algorithm
 
     else:
@@ -622,7 +622,7 @@ def analyze_changes_section(section):
             ):
                 emu_grammar = section.block_children[i]; i += 1
                 ul = section.block_children[i]; i += 1
-                handle_early_error(emu_grammar, ul)
+                handle_early_error(emu_grammar, ul, section)
 
             elif re.fullmatch(fr'The semantics of {emu_xref_re} is extended as follows:', p_ist):
                 p2 = section.block_children[i]; i += 1
@@ -649,7 +649,7 @@ def analyze_changes_section(section):
                         [emu_grammar] = [*p2.each_child_named('emu-grammar')]
                         emu_alg = section.block_children[i]; i += 1
                         assert emu_alg.element_name == 'emu-alg'
-                        handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg)
+                        handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg, section)
                     else:
                         i -= 1
                         break
@@ -666,7 +666,7 @@ def analyze_changes_section(section):
 
                     emu_alg = section.block_children[i]; i += 1
                     assert emu_alg.element_name == 'emu-alg'
-                    handle_solo_op('EvalDeclarationInstantiation', emu_alg)
+                    handle_solo_op('EvalDeclarationInstantiation', emu_alg, section)
 
             elif re.fullmatch(fr'The following augments the \|IterationStatement\| production in {emu_xref_re}:', p_ist):
                 emu_grammar = section.block_children[i]; i += 1
@@ -692,7 +692,7 @@ def analyze_changes_section(section):
                     emu_alg = section.block_children[i]; i += 1
                     assert emu_grammar.element_name == 'emu-grammar'
                     assert emu_alg.element_name == 'emu-alg'
-                    handle_composite_sdo(op_name, emu_grammar, emu_alg)
+                    handle_composite_sdo(op_name, emu_grammar, emu_alg, section)
 
                 else:
                     print()
@@ -714,7 +714,7 @@ def analyze_other_section(section):
 
     for child in section.block_children:
         if child.element_name == 'emu-eqn':
-            handle_emu_eqn(child)
+            handle_emu_eqn(child, section)
 
     n_emu_algs = section.bcen_list.count('emu-alg')
 
@@ -740,14 +740,14 @@ def analyze_other_section(section):
             # It's the default definition of Contains
             preamble_text = section.block_children[emu_alg_posn-1].source_text()
             assert preamble_text.endswith('The default definition of Contains is:</p>')
-            handle_composite_sdo('Contains', None, emu_alg)
+            handle_composite_sdo('Contains', None, emu_alg, section)
 
         elif section.section_title == 'Array.prototype [ @@unscopables ]':
             assert n_emu_algs == 1
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
-            handle_solo_op('initializer for @@unscopables', emu_alg)
+            handle_solo_op('initializer for @@unscopables', emu_alg, section)
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
             assert n_emu_algs == 1
@@ -761,7 +761,7 @@ def analyze_other_section(section):
             preamble = section.block_children[emu_alg_posn-1]
             assert preamble.source_text() == f'<p>The abstract operation <dfn id="sec-{op_name.lower()}" aoid="{op_name}">{op_name}</dfn>(_value_) performs the following steps:</p>'
 
-            handle_solo_op(op_name, emu_alg)
+            handle_solo_op(op_name, emu_alg, section)
 
         else:
             assert 0, section.section_title
@@ -793,15 +793,15 @@ def analyze_other_section(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_solo_op(op_name, emu_alg):
+def handle_solo_op(op_name, emu_alg, section):
     # "solo" in the sense of having a single definition,
     # in contrast to multiple definitions discriminated by type or syntax
 
-    foo_add_defn('op: solo', op_name, None, parse(emu_alg))
+    foo_add_defn('op: solo', op_name, None, parse(emu_alg), section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_tabular_op_defn(op_name, tda, tdb):
+def handle_tabular_op_defn(op_name, tda, tdb, section):
     assert tda.element_name == 'td'
     assert tdb.element_name == 'td'
 
@@ -813,7 +813,7 @@ def handle_tabular_op_defn(op_name, tda, tdb):
     x = ' '.join(c.element_name for c in tdb.children)
 
     if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
-        foo_add_defn('op: solo', op_name, discriminator, parse(tdb))
+        foo_add_defn('op: solo', op_name, discriminator, parse(tdb), section)
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
@@ -825,19 +825,19 @@ def handle_tabular_op_defn(op_name, tda, tdb):
     elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
         (_, p, _, emu_alg, _) = tdb.children
         assert p.source_text() == '<p>Apply the following steps:</p>'
-        foo_add_defn('op: solo', op_name, discriminator, parse(emu_alg))
+        foo_add_defn('op: solo', op_name, discriminator, parse(emu_alg), section)
 
     else:
         assert 0, x
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg):
-    foo_add_defn(op_kind, op_name, discriminator, parse(emu_alg))
+def handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg, section):
+    foo_add_defn(op_kind, op_name, discriminator, parse(emu_alg), section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_early_error(emu_grammar, ul):
+def handle_early_error(emu_grammar, ul, section):
     assert emu_grammar.element_name == 'emu-grammar'
     assert ul.element_name == 'ul'
 
@@ -849,13 +849,13 @@ def handle_early_error(emu_grammar, ul):
             if tree is None: continue
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            foo_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule)
+            foo_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
         else:
             assert 0, li.element_name
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
+def handle_composite_sdo(sdo_name, grammar_arg, algo_arg, section):
 
     # ---------------------------
     # grammar_arg -> emu_grammar:
@@ -908,7 +908,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg):
 
     # ----------
 
-    foo_add_defn('op: syntax-directed', sdo_name, emu_grammar, algo)
+    foo_add_defn('op: syntax-directed', sdo_name, emu_grammar, algo, section)
 
 # ------------------------------------------------------------------------------
 
@@ -925,7 +925,7 @@ def extract_grammars(x):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_inline_sdo(li, section_sdo_name):
+def handle_inline_sdo(li, section_sdo_name, section):
     assert li.element_name == 'li'
 
     LI = parse(li, 'inline_sdo')
@@ -980,11 +980,11 @@ def handle_inline_sdo(li, section_sdo_name):
     assert 0 < len(rule_grammars) <= 5
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
-            foo_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr)
+            foo_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_emu_eqn(emu_eqn):
+def handle_emu_eqn(emu_eqn, section):
     assert emu_eqn.element_name == 'emu-eqn'
 
     aoid = emu_eqn.attrs['aoid']
@@ -1005,21 +1005,21 @@ def handle_emu_eqn(emu_eqn):
     if child.prod.lhs_s == '{CONSTANT_DEF}':
         [constant_name, dec_int_lit] = child.children[0:2]
         assert constant_name.source_text() == aoid
-        # XXX foo_add_defn('constant', aoid, None, dec_int_lit)
+        # XXX foo_add_defn('constant', aoid, None, dec_int_lit, section)
     elif child.prod.lhs_s == '{OPERATION_DEF}':
         [op_name, parameter, body] = child.children
         assert op_name.source_text() == aoid
         parameter_name = parameter.source_text()
-        foo_add_defn('op: solo', aoid, None, body)
+        foo_add_defn('op: solo', aoid, None, body, section)
     else:
         assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_function(bif_kind, locater, emu_alg):
+def handle_function(bif_kind, locater, emu_alg, section):
 
     algo = None if emu_alg is None else parse(emu_alg)
-    foo_add_defn(bif_kind, locater, None, algo)
+    foo_add_defn(bif_kind, locater, None, algo, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1301,7 +1301,7 @@ def ensure_foo(foo_kind, foo_name):
 
 # ------------------------------------------------
 
-def foo_add_defn(foo_kind, foo_name, discriminator, algo):
+def foo_add_defn(foo_kind, foo_name, discriminator, algo, section):
     assert type(foo_name) == str
 
     assert (
