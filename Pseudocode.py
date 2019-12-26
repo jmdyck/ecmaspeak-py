@@ -168,6 +168,10 @@ def analyze_sections():
     t_start = time.time()
     prev_top_level_num = ''
 
+    sys.setrecursionlimit(2000)
+    # Adding `self.algo._parent_foodefn = self`
+    # caused spec.save to hit the default recursion limit (1000).
+
     for section in spec.doc_node.each_descendant_that_is_a_section():
         assert hasattr(section, 'ste')
 
@@ -793,7 +797,7 @@ def handle_solo_op(op_name, emu_alg, section):
     # "solo" in the sense of having a single definition,
     # in contrast to multiple definitions discriminated by type or syntax
 
-    foo_add_defn('op: solo', op_name, None, parse(emu_alg), section)
+    foo_add_defn('op: solo', op_name, None, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -809,7 +813,7 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
     x = ' '.join(c.element_name for c in tdb.children)
 
     if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
-        foo_add_defn('op: solo', op_name, discriminator, parse(tdb), section)
+        foo_add_defn('op: solo', op_name, discriminator, tdb, section)
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
@@ -821,7 +825,7 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
     elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
         (_, p, _, emu_alg, _) = tdb.children
         assert p.source_text() == '<p>Apply the following steps:</p>'
-        foo_add_defn('op: solo', op_name, discriminator, parse(emu_alg), section)
+        foo_add_defn('op: solo', op_name, discriminator, emu_alg, section)
 
     else:
         assert 0, x
@@ -829,7 +833,7 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg, section):
-    foo_add_defn(op_kind, op_name, discriminator, parse(emu_alg), section)
+    foo_add_defn(op_kind, op_name, discriminator, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -851,7 +855,7 @@ def handle_early_error(emu_grammar, ul, section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_composite_sdo(sdo_name, grammar_arg, algo_arg, section):
+def handle_composite_sdo(sdo_name, grammar_arg, algo, section):
 
     # ---------------------------
     # grammar_arg -> emu_grammar:
@@ -891,16 +895,6 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo_arg, section):
 
     else:
         assert 0, grammar_arg.element_name
-
-    # -----------------
-    # algo_arg -> algo:
-
-    if algo_arg.element_name == 'emu-alg':
-        algo = parse(algo_arg)
-    elif algo_arg.element_name == 'p':
-        algo = parse(algo_arg)
-    else:
-        assert 0, algo_arg.element_name
 
     # ----------
 
@@ -1014,8 +1008,7 @@ def handle_emu_eqn(emu_eqn, section):
 
 def handle_function(bif_kind, locater, emu_alg, section):
 
-    algo = None if emu_alg is None else parse(emu_alg)
-    foo_add_defn(bif_kind, locater, None, algo, section)
+    foo_add_defn(bif_kind, locater, None, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1297,22 +1290,21 @@ def ensure_foo(foo_kind, foo_name):
 
 # ------------------------------------------------
 
-def foo_add_defn(foo_kind, foo_name, discriminator, algo, section):
+def foo_add_defn(foo_kind, foo_name, discriminator, algo_or_anode, section):
     assert type(foo_name) == str
 
     foo_info = ensure_foo(foo_kind, foo_name)
 
-    if algo is None:
+    if algo_or_anode is None:
         assert discriminator is None
         return
 
-    FooDefn(foo_info, discriminator, algo, section)
+    FooDefn(foo_info, discriminator, algo_or_anode, section)
 
 class FooDefn:
-    def __init__(self, foo_info, discriminator, algo, section):
+    def __init__(self, foo_info, discriminator, algo_or_anode, section):
         self.the_foo_to_which_this_belongs = foo_info
         self.discriminator = discriminator
-        self.anode = algo
         self.section = section
 
         assert (
@@ -1325,8 +1317,21 @@ class FooDefn:
             isinstance(discriminator, str) # type name
         )
 
-        assert isinstance(algo, ANode)
-        assert algo.prod.lhs_s in [
+        if isinstance(algo_or_anode, HNode):
+            self.algo = algo_or_anode
+            assert self.algo.element_name in ['emu-alg', 'td']
+            self.anode = parse(self.algo)
+            assert not hasattr(self.algo, '_parent_foodefn')
+            self.algo._parent_foodefn = self
+
+        elif isinstance(algo_or_anode, ANode):
+            self.algo = None
+            self.anode = algo_or_anode
+
+        else:
+            assert 0
+
+        assert self.anode.prod.lhs_s in [
             '{EXPR}',
             '{NAMED_OPERATION_INVOCATION}',
             '{EMU_ALG_BODY}',
