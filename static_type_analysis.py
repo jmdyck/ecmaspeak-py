@@ -595,11 +595,10 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
-                if algo._syntax_tree is None: stderr(f"warning: no syntax tree for defn of {oi.name}")
-                oi.u_defns.append( ('?', algo._syntax_tree, s) )
+                oi.u_defns.append(algo._parent_foodefn)
             else:
                 assert algo.element_name in ['ul', 'emu-table']
-                assert not hasattr(algo, '_syntax_tree')
+                assert not hasattr(algo, '_parent_foodefn')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -678,7 +677,7 @@ def declare_sdo(op_name, param_dict, also=[]):
         for foo_defn in op_info.definitions:
             if foo_defn.section.section_num.startswith('B'): continue
             if foo_defn.discriminator is None: continue # XXX for now
-            oi.u_defns.append( (foo_defn.discriminator, foo_defn.anode, foo_defn.section) )
+            oi.u_defns.append(foo_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -3276,13 +3275,13 @@ class Header:
 
         self.t_defns = []
 
-        for (discriminator, anode, section) in self.u_defns:
+        for foo_defn in self.u_defns:
             if self.kind == 'syntax-directed operation':
-                assert isinstance(discriminator, HTML.HNode) or isinstance(discriminator, ANode)
+                assert isinstance(foo_defn.discriminator, HTML.HNode) or isinstance(foo_defn.discriminator, ANode)
+                discriminator = foo_defn.discriminator
             else:
-                assert discriminator == '?'
                 discriminator = self.for_param_type
-            self.add_defn(discriminator, anode, section)
+            self.add_defn(discriminator, foo_defn.anode, foo_defn.section)
 
         # -------------------------
 
