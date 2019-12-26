@@ -1300,32 +1300,43 @@ def ensure_foo(foo_kind, foo_name):
 def foo_add_defn(foo_kind, foo_name, discriminator, algo, section):
     assert type(foo_name) == str
 
-    assert (
-        discriminator is None
-        or
-        isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
-        or
-        isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}' and discriminator.source_text() == '|HexDigit|' and foo_name == 'TRV' # This will be obsoleted by PR 1301
-        or
-        isinstance(discriminator, str) # type name
-    )
-
     foo_info = ensure_foo(foo_kind, foo_name)
 
-    if algo is None: return
+    if algo is None:
+        assert discriminator is None
+        return
 
-    assert isinstance(algo, ANode)
-    assert algo.prod.lhs_s in [
-        '{EXPR}',
-        '{NAMED_OPERATION_INVOCATION}',
-        '{EMU_ALG_BODY}',
-        '{SAMEX}',
-        '{EE_RULE}',
-        '{RHSS}',
-        '{ONE_LINE_ALG}',
-    ]
+    FooDefn(foo_info, discriminator, algo, section)
 
-    foo_info.definitions.append( (discriminator, algo, section) )
+class FooDefn:
+    def __init__(self, foo_info, discriminator, algo, section):
+        self.the_foo_to_which_this_belongs = foo_info
+        self.discriminator = discriminator
+        self.algo = algo
+        self.section = section
+
+        assert (
+            discriminator is None
+            or
+            isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
+            or
+            isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}' and discriminator.source_text() == '|HexDigit|' and foo_info.name == 'TRV' # This will be obsoleted by PR 1301
+            or
+            isinstance(discriminator, str) # type name
+        )
+
+        assert isinstance(algo, ANode)
+        assert algo.prod.lhs_s in [
+            '{EXPR}',
+            '{NAMED_OPERATION_INVOCATION}',
+            '{EMU_ALG_BODY}',
+            '{SAMEX}',
+            '{EE_RULE}',
+            '{RHSS}',
+            '{ONE_LINE_ALG}',
+        ]
+
+        foo_info.definitions.append(self)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1356,8 +1367,8 @@ def analyze_static_dependencies():
         +
         sorted(spec.info_for_bif_named_.items())
     ):
-        for (_, algo, _) in foo_info.definitions:
-            recurse(algo)
+        for foo_defn in foo_info.definitions:
+            recurse(foo_defn.algo)
 
         put()
         put(foo_name)
@@ -1539,11 +1550,12 @@ def check_sdo_coverage():
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}
 
-            for (discriminator, emu_alg, section) in op_info.definitions:
+            for foo_defn in op_info.definitions:
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
-                if section.section_num.startswith('B'): continue
+                if foo_defn.section.section_num.startswith('B'): continue
 
                 # This will be obsoleted by PR 1301:
+                discriminator = foo_defn.discriminator
                 if isinstance(discriminator, ANode):
                     assert discriminator.prod.lhs_s == '{nonterminal}'
                     assert discriminator.source_text() == '|HexDigit|'
