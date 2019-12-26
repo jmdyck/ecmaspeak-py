@@ -3277,11 +3277,43 @@ class Header:
 
         for foo_defn in self.u_defns:
             if self.kind == 'syntax-directed operation':
-                assert isinstance(foo_defn.discriminator, HTML.HNode) or isinstance(foo_defn.discriminator, ANode)
                 discriminator = foo_defn.discriminator
             else:
                 discriminator = self.for_param_type
-            self.add_defn(discriminator, foo_defn.anode, foo_defn.section)
+
+            if self.kind == 'syntax-directed operation':
+                assert (
+                    isinstance(discriminator, HTML.HNode)
+                        and discriminator.element_name in ['emu-grammar', 'p']
+                    or
+                    isinstance(discriminator, ANode)
+                        and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
+                )
+            elif self.kind in ['concrete method', 'internal method', 'numeric method']:
+                assert isinstance(discriminator, Type)
+            elif self.kind == 'abstract operation':
+                assert discriminator is None
+            elif self.kind in [
+                'function property',
+                'function property overload',
+                'accessor property',
+                'CallConstruct',
+                'CallConstruct_overload',
+                'anonymous built-in function',
+            ]:
+                assert discriminator is None
+            else:
+                assert 0, self.kind
+
+            assert isinstance(foo_defn.anode, ANode)
+            assert foo_defn.anode.prod.lhs_s in [
+                '{EMU_ALG_BODY}',
+                '{IAO_BODY}',
+                '{EXPR}',
+                '{NAMED_OPERATION_INVOCATION}',
+            ], foo_defn.anode.prod.lhs_s
+
+            self.t_defns.append((discriminator,foo_defn.anode))
 
         # -------------------------
 
@@ -3500,43 +3532,6 @@ class Header:
         pwi(f"</dl>")
 
         return lines
-
-    # ------------------------------------------------------
-
-    def add_defn(self, discriminator, tree, section):
-        if self.kind == 'syntax-directed operation':
-            assert (
-                isinstance(discriminator, HTML.HNode)
-                    and discriminator.element_name in ['emu-grammar', 'p']
-                or
-                isinstance(discriminator, ANode)
-                    and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
-            )
-        elif self.kind in ['concrete method', 'internal method', 'numeric method']:
-            assert isinstance(discriminator, Type)
-        elif self.kind == 'abstract operation':
-            assert discriminator is None
-        elif self.kind in [
-            'function property',
-            'function property overload',
-            'accessor property',
-            'CallConstruct',
-            'CallConstruct_overload',
-            'anonymous built-in function',
-        ]:
-            assert discriminator is None
-        else:
-            assert 0, self.kind
-
-        assert isinstance(tree, ANode)
-        assert tree.prod.lhs_s in [
-            '{EMU_ALG_BODY}',
-            '{IAO_BODY}',
-            '{EXPR}',
-            '{NAMED_OPERATION_INVOCATION}',
-        ], tree.prod.lhs_s
-
-        self.t_defns.append((discriminator,tree))
 
     # ------------------------------------------------------
 
