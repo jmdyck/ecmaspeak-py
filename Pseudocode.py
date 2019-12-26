@@ -1312,7 +1312,7 @@ class FooDefn:
     def __init__(self, foo_info, discriminator, algo, section):
         self.the_foo_to_which_this_belongs = foo_info
         self.discriminator = discriminator
-        self.algo = algo
+        self.anode = algo
         self.section = section
 
         assert (
@@ -1351,8 +1351,8 @@ def analyze_static_dependencies():
 
     # Find and print all the static dependencies:
 
-    def recurse(algo):
-        for d in algo.each_descendant_or_self():
+    def recurse(anode):
+        for d in anode.each_descendant_or_self():
             if hasattr(d, '_op_invocation'):
                 (callee_names, args) = d._op_invocation
                 for callee_name in callee_names:
@@ -1368,7 +1368,7 @@ def analyze_static_dependencies():
         sorted(spec.info_for_bif_named_.items())
     ):
         for foo_defn in foo_info.definitions:
-            recurse(foo_defn.algo)
+            recurse(foo_defn.anode)
 
         put()
         put(foo_name)

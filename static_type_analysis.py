@@ -678,7 +678,7 @@ def declare_sdo(op_name, param_dict, also=[]):
         for foo_defn in op_info.definitions:
             if foo_defn.section.section_num.startswith('B'): continue
             if foo_defn.discriminator is None: continue # XXX for now
-            oi.u_defns.append( (foo_defn.discriminator, foo_defn.algo, foo_defn.section) )
+            oi.u_defns.append( (foo_defn.discriminator, foo_defn.anode, foo_defn.section) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
