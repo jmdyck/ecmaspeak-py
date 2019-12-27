@@ -1356,24 +1356,27 @@ def analyze_static_dependencies():
 
     # Find and print all the static dependencies:
 
-    def recurse(anode):
-        for d in anode.each_descendant_or_self():
-            if hasattr(d, '_op_invocation'):
-                (callee_names, args) = d._op_invocation
-                for callee_name in callee_names:
-                    foo_info.callees.add(callee_name)
-                    if callee_name not in ['[[ReadsBytesFrom]]', '[[ModifyOp]]']:
-                        spec.info_for_op_named_[callee_name].invocations.append(d)
-            elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
-                recurse(d._hnode._syntax_tree)
-
     for (foo_name, foo_info) in (
         sorted(spec.info_for_op_named_.items())
         +
         sorted(spec.info_for_bif_named_.items())
     ):
         for foo_defn in foo_info.definitions:
+            foo_defn.callees = set()
+
+            def recurse(anode):
+                for d in anode.each_descendant_or_self():
+                    if hasattr(d, '_op_invocation'):
+                        (callee_names, args) = d._op_invocation
+                        for callee_name in callee_names:
+                            foo_defn.callees.add(callee_name)
+                            if callee_name not in ['[[ReadsBytesFrom]]', '[[ModifyOp]]']:
+                                spec.info_for_op_named_[callee_name].invocations.append(d)
+                    elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
+                        recurse(d._hnode._syntax_tree)
+
             recurse(foo_defn.anode)
+            foo_info.callees.update(foo_defn.callees)
 
         put()
         put(foo_name)
