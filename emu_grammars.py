@@ -1711,6 +1711,43 @@ class Grammar:
         stderr('    generate_LR0_automaton ...')
 
         n_conflicts = 0
+        max_stacklet_len = 0
+
+        # ------------------------------------------------------------
+
+        def generate_LR0_main():
+            t_start = time.time()
+
+            item0 = LR0_Item(None, (this_grammar.start_symbol,), 0)
+            lr0 = DFA.Automaton(item0, LR0_State)
+
+            t_end = time.time()
+            t_elapsed = t_end - t_start
+            stderr(
+                "    LR0 machine constructed (in %d sec) with %d states and %d conflicts" %
+                (t_elapsed, len(lr0.state_for_kernel_), n_conflicts)
+            )
+
+            stderr("    printing automaton...")
+            filename = '%s_automaton' % this_grammar.name
+            f = shared.open_for_output(filename)
+            lr0.print(f, stringify_rthing)
+            stderr("    done")
+
+            return
+
+            # go to conflicted states and generate a lookahead automaton
+            # (to allow you to decide between conflicting states)
+            for state in lr0.state_for_kernel_.values():
+                if not state.has_conflict: continue
+                stderr("    state #%d has a conflict" % state.number)
+
+                stacklet = (state,)
+                la_item0 = LA_Item(None, stacklet)
+                state.la_automaton = DFA.Automaton(la_item0, LA_State)
+                stderr("    LA automaton has %d states" %
+                    len(state.la_automaton.state_for_kernel_)
+                )
 
         # ------------------------------------------------------------
 
@@ -1868,24 +1905,6 @@ class Grammar:
 
         # ------------------------------------------------------------
 
-        t_start = time.time()
-
-        item0 = LR0_Item(None, (this_grammar.start_symbol,), 0)
-        lr0 = DFA.Automaton(item0, LR0_State)
-
-        t_end = time.time()
-        t_elapsed = t_end - t_start
-        stderr(
-            "    LR0 machine constructed (in %d sec) with %d states and %d conflicts" %
-            (t_elapsed, len(lr0.state_for_kernel_), n_conflicts)
-        )
-
-        stderr("    printing automaton...")
-        filename = '%s_automaton' % this_grammar.name
-        f = shared.open_for_output(filename)
-        lr0.print(f, stringify_rthing)
-        stderr("    done")
-
         # ------------------------------------------------------------
 
         class LA_Item(namedtuple('_LA_Item', 'choice stacklet')):
@@ -1991,21 +2010,7 @@ class Grammar:
 
         # ------------------------------------------------------------
 
-        return
-
-        # go to conflicted states and generate a lookahead automaton
-        # (to allow you to decide between conflicting states)
-        for state in lr0.state_for_kernel_.values():
-            if not state.has_conflict: continue
-            stderr("    state #%d has a conflict" % state.number)
-
-            max_stacklet_len = 0
-            stacklet = (state,)
-            la_item0 = LA_Item(None, stacklet)
-            state.la_automaton = DFA.Automaton(la_item0, LA_State)
-            stderr("    LA automaton has %d states" %
-                len(state.la_automaton.state_for_kernel_)
-            )
+        generate_LR0_main()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
