@@ -36,6 +36,8 @@ class Automaton:
         kernel = tuple(sorted(kernel)) # or frozenset(kernel) ?
         if kernel in self.state_for_kernel_:
             state = self.state_for_kernel_[kernel]
+            assert len(state.eg_accessor) <= len(eg_accessor)
+            # because we're generating states breadth-first?
         else:
             state_number = len(self.state_for_kernel_)
             state = self.State_class(self, kernel, eg_accessor, state_number)
