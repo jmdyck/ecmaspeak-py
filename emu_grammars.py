@@ -1736,18 +1736,8 @@ class Grammar:
 
             return
 
-            # go to conflicted states and generate a lookahead automaton
-            # (to allow you to decide between conflicting states)
             for state in lr0.state_for_kernel_.values():
-                if not state.has_conflict: continue
-                stderr("    state #%d has a conflict" % state.number)
-
-                stacklet = (state,)
-                la_item0 = LA_Item(None, stacklet)
-                state.la_automaton = DFA.Automaton(la_item0, LA_State)
-                stderr("    LA automaton has %d states" %
-                    len(state.la_automaton.state_for_kernel_)
-                )
+                state.resolve_any_conflicts()
 
         # ------------------------------------------------------------
 
@@ -1903,7 +1893,20 @@ class Grammar:
 #                                assert 0
 #                            put('        ', action_str)
 
-        # ------------------------------------------------------------
+            def resolve_any_conflicts(this_lr0_state):
+                if not this_lr0_state.has_conflict: return
+
+                # Generate a lookahead automaton to allow us
+                # to decide between conflicting actions.
+
+                stderr("    state #%d has a conflict" % this_lr0_state.number)
+
+                stacklet = (this_lr0_state,)
+                la_item0 = LA_Item(None, stacklet)
+                this_lr0_state.la_automaton = DFA.Automaton(la_item0, LA_State)
+                stderr("    LA automaton has %d states" %
+                    len(this_lr0_state.la_automaton.state_for_kernel_)
+                )
 
         # ------------------------------------------------------------
 
