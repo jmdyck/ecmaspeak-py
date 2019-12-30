@@ -223,7 +223,7 @@ def parse_emu_grammar(emu_grammar, output_f):
 
 # ------------------------------------------------------------------------------
 
-terminal_types = [T_lit, T_nc, T_u_p, T_u_r, T_named ]
+terminal_types = [T_lit, T_nc, T_u_p, T_named ]
 
 def stringify_rthings(rthings):
     return ' '.join(map(stringify_rthing, rthings))
@@ -288,8 +288,6 @@ def parse_buts(buts_str):
             but = GNT(but_str, (), False)
         elif re.match(r'^`(\S+)`$', but_str):
             but = T_lit(but_str[1:-1])
-        elif but_str == 'U+0000 through U+001F':
-            but = T_u_r('U+0000', 'U+001F')
         else:
             assert 0, but_str
         buts.append(but)
@@ -2151,4 +2149,4 @@ if __name__ == '__main__':
     g.eoi_symbol = T_named('EOI')
     g.generate_LR0_automaton()
 
-# vim: sw=4 ts=4 expandtab columns=85
+# vim: sw=4 ts=4 expandtab

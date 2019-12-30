@@ -1026,9 +1026,6 @@ def expand_symbol(symbol, namespace):
         else:
             return '<emu-gprose>any Unicode code point with the Unicode property “%s”</emu-gprose>' % symbol.p
 
-    elif type(symbol) == emu_grammars.T_u_r:
-        return '<emu-gprose>%s through %s</emu-gprose>' % (symbol.lo, symbol.hi)
-
     elif type(symbol) == emu_grammars.GNT:
         nt_name = symbol.n
         emu_mods_content = ''

@@ -66,7 +66,6 @@ SNT           = mynamedtuple('SNT', 'n')       # simple non-terminal
 T_lit         = mynamedtuple('T_lit', 'c')     # literal characters
 T_nc          = mynamedtuple('T_nc', 'n')      # named character
 T_u_p         = mynamedtuple('T_u_p', 'p')     # Unicode code point with a Unicode property
-T_u_r         = mynamedtuple('T_u_r', 'lo hi') # Unicode code point in a particular (inclusive) range
 T_named       = mynamedtuple('T_named', 'n')   # named terminal
 A_guard       = mynamedtuple('A_guard', 's n')
 A_id          = mynamedtuple('A_id', 'i')
