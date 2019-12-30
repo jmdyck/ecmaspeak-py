@@ -1849,7 +1849,11 @@ class Grammar:
                 this_state.has_conflict = (
                     len(this_state.final_items) > 1
                     or
-                    len(this_state.final_items) > 0 and len(this_state.transitions) > 0
+                    len(this_state.final_items) > 0 and len([
+                            X
+                            for (X, _) in this_state.transitions.items()
+                            if type(X) != SNT
+                        ]) > 0
                 )
                 if this_state.has_conflict:
                     nonlocal n_conflicts
