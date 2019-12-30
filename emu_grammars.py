@@ -1427,6 +1427,7 @@ class Grammar:
 
         stderr('    expand_abbreviations ...')
 
+        # Put the expanded set of productions here:
         this_grammar.exp_prodns = OrderedDict()
 
         this_grammar.start_symbol = SNT('START')
@@ -1452,6 +1453,15 @@ class Grammar:
             else:
                 goal_symbols = [goal_symbol]
 
+            # When there are multiple possible goal symbols,
+            # we could generate a separate parser for each,
+            # but that would be inefficient in time+space+attention,
+            # because they'd be largely identical.
+            # So instead, for each goal_symbol G,
+            # we augment the grammar with a production of the form:
+            #     START -> prep_for_G  G  EOI
+            # where prep_for_G is an ad hoc terminal that we'll feed to the parser
+            # to indicate which goal_symbol we're interested in.
             for goal_symbol in goal_symbols:
                 prep_symbol = T_named('prep_for_' + goal_symbol)
                 this_grammar.add_exp_prod1(
@@ -1474,7 +1484,7 @@ class Grammar:
                         rthing0 = rhs[0]
                         if type(rthing0) == A_guard:
                             if (rthing0.s + rthing0.n) in params_setting:
-                                # The guard succeeds.
+                                # The guard succeeds (in the current `params_setting`).
                                 pass
                             else:
                                 # The guard fails.
@@ -2000,6 +2010,9 @@ class Grammar:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def each_params_setting(params):
+    # `params` is a list of grammatical parameters (i.e., just names).
+    # Each of them can take on a '+' or '~' setting.
+    # Yield every possible combination of settings for these parameters.
     for bools in each_boolean_vector_of_length(len(params)):
         yield [
             ('+' if b else '~') + p
