@@ -1916,18 +1916,21 @@ class Grammar:
 
         class LA_Item(namedtuple('_LA_Item', 'choice stacklet')):
 
-            def each_transition(this_item):
+            def each_transition(this_la_item):
 
                 def each_transition_main():
-                    (choice, stacklet) = this_item
+                    (choice, stacklet) = this_la_item
                     top_lr0_state = stacklet[-1]
                     assert isinstance(top_lr0_state, LR0_State)
+
+                    # reductions
                     for lr0_item in top_lr0_state.final_items:
                         next_choice = ('r',lr0_item) if choice is None else choice
                         for next_stacklet in simulate_reduction(stacklet, lr0_item):
                             next_item = LA_Item(next_choice, next_stacklet)
                             yield (None, next_item)
 
+                    # shifts
                     for (X, next_lr0_state) in sorted(top_lr0_state.transitions.items()):
                         if type(X) == SNT: continue
                         assert type(X) in terminal_types
