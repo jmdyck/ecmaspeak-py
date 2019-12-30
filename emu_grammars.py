@@ -1915,7 +1915,26 @@ class Grammar:
         # ------------------------------------------------------------
 
         class LA_Item(namedtuple('_LA_Item', 'choice stacklet')):
+
             def each_transition(this_item):
+
+                def each_transition_main():
+                    (choice, stacklet) = this_item
+                    top_lr0_state = stacklet[-1]
+                    assert isinstance(top_lr0_state, LR0_State)
+                    for lr0_item in top_lr0_state.final_items:
+                        next_choice = ('r',lr0_item) if choice is None else choice
+                        for next_stacklet in simulate_reduction(stacklet, lr0_item):
+                            next_item = LA_Item(next_choice, next_stacklet)
+                            yield (None, next_item)
+
+                    for (X, next_lr0_state) in sorted(top_lr0_state.transitions.items()):
+                        if type(X) == SNT: continue
+                        assert type(X) in terminal_types
+                        next_choice = ('s',X) if choice is None else choice
+                        next_stacklet = simulate_shift(stacklet, X, next_lr0_state)
+                        next_item = LA_Item(next_choice, next_stacklet)
+                        yield (X, next_item)
 
                 def simulate_reduction(stacklet, lr0_item):
                     if 0:
@@ -1973,22 +1992,9 @@ class Grammar:
                     return new_stacklet
                     # XXX: also stack the symbol?
 
-                (choice, stacklet) = this_item
-                top_lr0_state = stacklet[-1]
-                assert isinstance(top_lr0_state, LR0_State)
-                for lr0_item in top_lr0_state.final_items:
-                    next_choice = ('r',lr0_item) if choice is None else choice
-                    for next_stacklet in simulate_reduction(stacklet, lr0_item):
-                        next_item = LA_Item(next_choice, next_stacklet)
-                        yield (None, next_item)
+                # ----------------------------
 
-                for (X, next_lr0_state) in sorted(top_lr0_state.transitions.items()):
-                    if type(X) == SNT: continue
-                    assert type(X) in terminal_types
-                    next_choice = ('s',X) if choice is None else choice
-                    next_stacklet = simulate_shift(stacklet, X, next_lr0_state)
-                    next_item = LA_Item(next_choice, next_stacklet)
-                    yield (X, next_item)
+                yield from each_transition_main()
 
         class LA_State(DFA.State):
             def should_be_closed(this_state):
