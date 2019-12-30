@@ -1183,9 +1183,9 @@ def generate_es_parsers():
             # An LR approach, which bogged down
             # when I tried to handle lookahead-restrictions:
             g.expand_abbreviations()
+            g.print_exp_prodns()
             g.calc_min_length()
             g.compute_firstk()
-            g.print_exp_prodns()
 
             # Have to exclude lexicalB because it's incomplete.
             # (It doesn't 'duplicate' all prodns that must have 'N' added as grammatical param.)
@@ -1563,6 +1563,26 @@ class Grammar:
 
     # --------------------------------------------------------------------------
 
+    def print_exp_prodns(this_grammar):
+        stderr('    print_exp_prodns ...')
+        filename = '%s_expanded_grammar' % this_grammar.name
+        f = shared.open_for_output(filename)
+
+        i = 0
+        for (exp_lhs, exp_rhss) in this_grammar.exp_prodns.items():
+            for exp_rhs in exp_rhss:
+                # print("%3d: " % i, end=None)
+                print("%61s -> %s" % (
+                        exp_lhs,
+                        stringify_rthings(exp_rhs)
+                    ),
+                    file=f
+                )
+                i += 1
+        f.close()
+
+    # --------------------------------------------------------------------------
+
     def calc_min_length(this_grammar):
         # XXX UNUSED?
         stderr('    calc_min_length ...')
@@ -1683,26 +1703,6 @@ class Grammar:
                 print('  ', k, file=f)
                 for fk in sorted(list(firstk)):
                     print('    [' + ' '.join(map(str, fk)) + ']', file=f)
-        f.close()
-
-    # --------------------------------------------------------------------------
-
-    def print_exp_prodns(this_grammar):
-        stderr('    print_exp_prodns ...')
-        filename = '%s_expanded_grammar' % this_grammar.name
-        f = shared.open_for_output(filename)
-
-        i = 0
-        for (exp_lhs, exp_rhss) in this_grammar.exp_prodns.items():
-            for exp_rhs in exp_rhss:
-                # print("%3d: " % i, end=None)
-                print("%61s -> %s" % (
-                        exp_lhs,
-                        stringify_rthings(exp_rhs)
-                    ),
-                    file=f
-                )
-                i += 1
         f.close()
 
     # --------------------------------------------------------------------------
