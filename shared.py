@@ -111,11 +111,20 @@ def source_line_with_caret_marking_column(posn):
 
     return source_line + '\n' + caret_line
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 g_warnings_f = None
+
+def msg_at_posn_start():
+    global g_warnings_f
+    g_warnings_f = open_for_output('warnings')
 
 def msg_at_posn(posn, msg):
     (line_num, col_num) = convert_posn_to_linecol(posn)
     print("line %5d, col %3d: %s" % (line_num, col_num, msg), file=g_warnings_f)
+
+def msg_at_posn_finish():
+    g_warnings_f.close()
 
 def header(msg):
     print("\n" + msg + "\n", file=g_warnings_f)

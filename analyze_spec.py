@@ -22,8 +22,7 @@ def main():
 
     shared.register_output_dir(outdir)
 
-    # kludgey to assign to another module's global:
-    shared.g_warnings_f = shared.open_for_output('warnings')
+    shared.msg_at_posn_start()
 
     spec.read_source_file(spec_path)
 
@@ -48,6 +47,8 @@ def main():
     emu_grammars.do_stuff_with_grammars()
     
     Pseudocode.do_stuff_with_pseudocode()
+
+    shared.msg_at_posn_finish()
 
     spec.save()
 
@@ -646,4 +647,4 @@ else:
     # sort time
     # stats 10
 
-# vim: sw=4 ts=4 expandtab columns=86
+# vim: sw=4 ts=4 expandtab
