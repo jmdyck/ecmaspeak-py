@@ -1173,11 +1173,11 @@ def generate_es_parsers():
 
         if grammar_name.startswith('lexical'):
             g.explode_multichar_literals()
-            g.distinguish_Token_from_NonToken()
+            # g.distinguish_Token_from_NonToken()
 
         g.save_as_json()
 
-        if 0:
+        if 1:
             # An LR approach, which bogged down
             # when I tried to handle lookahead-restrictions:
             g.expand_abbreviations()
@@ -1732,7 +1732,7 @@ class Grammar:
             lr0.print(f, stringify_rthing)
             stderr("    done")
 
-            return
+            return # XXX for now
 
             for state in lr0.state_for_kernel_.values():
                 state.resolve_any_conflicts()
