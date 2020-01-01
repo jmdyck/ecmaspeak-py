@@ -1321,6 +1321,7 @@ class FooDefn:
             self.algo = algo_or_anode
             assert self.algo.element_name in ['emu-alg', 'td']
             self.anode = parse(self.algo)
+            if self.anode is None: return
             assert not hasattr(self.algo, '_parent_foodefn')
             self.algo._parent_foodefn = self
 
