@@ -6564,6 +6564,7 @@ def tc_nonvalue(anode, env0):
             r"{var} in {var}",
             r"{var} in {var}, in original insertion order",
             r"{var} in {var}, in reverse list order",
+            r"{var} of {var} in List order",
             r"{var} that is an element of {var}",
             r"{var} that is an element of {var}, in original insertion order",
         ]:
@@ -8856,6 +8857,13 @@ def tc_cond_(cond, env0, asserting):
         (cond_t_env, cond_f_env) = tc_cond(cond, env_for_cond)
         return (cond_t_env, env0)
 
+    elif p == r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}":
+        [member_var, list_var, cond] = children
+        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String)) # over-specific
+        env2 = env1.plus_new_entry(member_var, T_String)
+        (t_env, f_env) = tc_cond(cond, env2)
+        return (env1, env1)
+
     elif p in [
         r'{CONDITION_1} : there does not exist a member {var} of set {var} such that {CONDITION_1}',
         r'{CONDITION_1} : there exists a member {var} of set {var} such that {CONDITION_1}',
@@ -10077,6 +10085,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})":
+        [var, emu_xref] = children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
@@ -14853,6 +14867,12 @@ type_of_internal_thing_ = {
     # 9.5 Proxy Object Internal Methods and Internal Slots
     'ProxyHandler' : T_Object | T_Null,
     'ProxyTarget'  : T_Object | T_Null,
+
+    # 18100: Properties of For-In Iterator Instances
+    'Object'          : T_Object,
+    'ObjectWasVisited': T_Boolean,
+    'VisitedKeys'     : ListType(T_String),
+    'RemainingKeys'   : ListType(T_String),
 
     # 27137: Properties of Boolean Instances NO TABLE
     'BooleanData' : T_Boolean,

@@ -344,6 +344,7 @@
     {var} in {var} in List order
     {var} in {var}, in original insertion order
     {var} in {var}, in reverse list order
+    {var} of {var} in List order
     {var} that is an element of {var}
     {var} that is an element of {var}, in original insertion order
 
@@ -511,6 +512,7 @@
     the two most significant bits in {var} are not 10
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist a member {var} of set {var} such that {CONDITION_1}
+    there does not exist an element {var} of {var} such that {CONDITION_1}
     there exists a member {var} of set {var} such that {CONDITION_1}
     there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}
     there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}
@@ -630,6 +632,7 @@
     {var} has a numeric value less than {code_unit_lit}
     {var} has a thisValue component
     {var} has a {DSBN} internal slot. If it does not, the definition in {h_emu_xref} applies
+    {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
     {var} has an? {DSBN} internal method
     {var} has an? {DSBN} internal slot
     {var} has an? {DSBN} internal slot whose value is a PromiseCapability Record
