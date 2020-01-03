@@ -633,7 +633,7 @@ def analyze_changes_section(section):
             elif (
                 re.fullmatch(r'.+ includes the following additional evaluation rules?:', p_ist)
                 or 
-                re.fullmatch(r'.+ The following evaluation rules are also added:', p_ist)
+                re.fullmatch(r'.+ The following evaluation rules(, with parameter _direction_,)? are also added:', p_ist)
                 or
                 re.fullmatch(r'.+ modifies the following evaluation rule:', p_ist)
             ):
