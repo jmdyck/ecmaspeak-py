@@ -441,7 +441,6 @@
     Evaluate has already been invoked on {var} and successfully completed
     GlobalSymbolRegistry does not currently contain an entry for {var}
     In this case, {var} will never be {LITERAL} or {LITERAL}
-    The VariableEnvironment and LexicalEnvironment of {var} are the same
     The calling agent is in the critical section for {var}
     The calling agent is not in the critical section for any WaiterList
     The execution context stack has at least two elements
@@ -589,7 +588,6 @@
     {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)
     {var} and {var} are in a race in {var}
     {var} and {var} are not the same Realm Record
-    {var} and {var} are the same
     {var} and {var} are the same Module Record
     {var} and {var} are the same Number value
     {var} and {var} are the same Object value
@@ -792,6 +790,10 @@
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
     {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
     {var}, {var}, and {var} are integer values &ge; 0
+
+    # obsoleted by the merge of PR #1046
+    # The VariableEnvironment and LexicalEnvironment of {var} are the same
+    # {var} and {var} are the same
 
     # obsoleted by the merge of PR # 1411 (not-present parameters):
     # no arguments were passed to this function invocation

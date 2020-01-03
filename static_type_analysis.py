@@ -9084,7 +9084,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is equal to {EX}",
         r"{CONDITION_1} : {EX} is not equal to {EX}",
         r"{CONDITION_1} : {EX} is the same as {EX}",
-        r"{CONDITION_1} : {var} and {var} are the same",
+        # r"{CONDITION_1} : {var} and {var} are the same", # obsoleted by PR #1046
         r"{CONDITION_1} : {var} is not the same as {var}",
     ]:
         [exa, exb] = children
@@ -9480,10 +9480,11 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(b_ex, ListType(T_String))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : The VariableEnvironment and LexicalEnvironment of {var} are the same":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return (env0, env0)
+# obsoleted by PR #1046:
+#    elif p == r"{CONDITION_1} : The VariableEnvironment and LexicalEnvironment of {var} are the same":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_execution_context)
+#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} does not currently have a property {var}":
         [obj_var, pn_var] = children
