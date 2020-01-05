@@ -12830,6 +12830,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} component of {var}",
+        r"{SETTABLE} : The {EXECUTION_CONTEXT_COMPONENT} of {var}",
         r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}",
         r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}",
         # r"{SETTABLE} : the {var}'s {EXECUTION_CONTEXT_COMPONENT}", # PR 1740 obsoleted

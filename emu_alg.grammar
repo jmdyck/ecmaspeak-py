@@ -1578,6 +1578,7 @@
 # ------------------------------------------------------
 
 {SETTABLE} :
+    The {EXECUTION_CONTEXT_COMPONENT} of {var}
     the Synchronize event in {var}
     the _withEnvironment_ flag of {var}
     the _withEnvironment_ flag of {var}'s EnvironmentRecord
