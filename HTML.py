@@ -9,7 +9,7 @@ from html.parser import HTMLParser
 from collections import OrderedDict
 
 import shared
-from shared import stderr, header, msg_at_posn
+from shared import stderr, header, msg_at_posn, SpecNode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -140,20 +140,16 @@ class MyHTMLParser(HTMLParser):
     def _getposn(self):
         return shared.convert_HTMLParser_getpos_to_posn(self.getpos())
 
-class HNode:
+class HNode(SpecNode):
     def __init__(self, parent, start_posn, element_name, attrs):
+        SpecNode.__init__(self, start_posn, None)
+
         self.parent = parent
-        self.start_posn = start_posn
         self.element_name = element_name
         self.attrs =  OrderedDict(attrs)
         self.children = []
         if self.parent:
             self.parent.children.append(self)
-
-    def _set_end_posn(self, end_posn):
-        self.end_posn = end_posn
-        # print(repr(shared.spec_text[self.start_posn:self.end_posn]))
-        # input()
 
     def _set_inner_start_posn(self, posn):
         self.inner_start_posn = posn
@@ -162,9 +158,6 @@ class HNode:
         self.inner_end_posn = posn
 
     # --------------------------------------------
-
-    def source_text(self):
-        return shared.spec_text[self.start_posn:self.end_posn]
 
     def inner_source_text(self):
         return shared.spec_text[self.inner_start_posn:self.inner_end_posn]

@@ -64,6 +64,27 @@ def install_spec_text(_spec_text):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+class SpecNode:
+    def __init__(self, start_posn, end_posn):
+        assert start_posn is not None
+        # but end_posn might be None
+        self.start_posn = start_posn
+        self.end_posn = end_posn
+        self.children = []
+
+    def _set_end_posn(self, end_posn):
+        assert self.end_posn is None
+        assert end_posn is not None
+        self.end_posn = end_posn
+
+    # ------------------------------------
+
+    def source_text(self):
+        assert self.end_posn is not None
+        return spec_text[self.start_posn:self.end_posn]
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 spec_text = None
 _newline_posns = None
 

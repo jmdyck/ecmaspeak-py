@@ -10,6 +10,7 @@ import sys, collections, pdb, math, functools, os, re
 from LR_Parser import LR_Parser, ParsingError
 # import Earley
 import shared
+from shared import SpecNode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -485,15 +486,18 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class ANode:
+class ANode(SpecNode):
     def __init__(self, prod, children, start_posn, end_posn):
         assert isinstance(prod, Production) or prod is None
         assert isinstance(children, list) or children is None
         # The 'None's come from Header::__init__ in static_type_analysis.py
+        assert isinstance(start_posn, int)
+        assert isinstance(end_posn, int)
+
+        SpecNode.__init__(self, start_posn, end_posn)
+
         self.prod = prod
         self.children = children
-        self.start_posn = int(start_posn)
-        self.end_posn = int(end_posn)
 
     def set_parent_links(self):
         if self.children:
@@ -509,9 +513,6 @@ class ANode:
         else:
             s = t[0:67] + '...'
         return f'ANode(prod="{self.prod}", {len(self.children)} children, source_text={s!r}'
-
-    def source_text(self):
-        return shared.spec_text[self.start_posn:self.end_posn]
 
     def closest_containing(self, lhs_s):
         for ancestor in self.each_ancestor_or_self():
