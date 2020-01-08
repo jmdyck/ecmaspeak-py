@@ -29,9 +29,6 @@ def do_stuff_with_pseudocode():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def create_all_parsers():
-    global samex_parser
-    samex_parser = Pseudocode_Parser('samex')
-
     global one_line_alg_parser
     one_line_alg_parser = Pseudocode_Parser('one_line_alg')
 
@@ -48,7 +45,6 @@ def create_all_parsers():
     emu_alg_parser = Pseudocode_Parser('emu_alg')
 
 def report_all_parsers():
-    samex_parser.report()
     one_line_alg_parser.report()
     emu_eqn_parser.report()
     inline_sdo_parser.report()
@@ -74,10 +70,6 @@ def parse(hnode, what=None):
     elif hnode.element_name == 'td':
         assert what is None
         parser = one_line_alg_parser
-
-    elif hnode.element_name == 'p':
-        assert what is None
-        parser = samex_parser
 
     elif hnode.element_name == 'li':
         if what == 'early_error':
@@ -1336,7 +1328,6 @@ class FooDefn:
             '{EXPR}',
             '{NAMED_OPERATION_INVOCATION}',
             '{EMU_ALG_BODY}',
-            '{SAMEX}',
             '{EE_RULE}',
             '{RHSS}',
             '{ONE_LINE_ALG}',
