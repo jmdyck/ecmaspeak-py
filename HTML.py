@@ -47,7 +47,7 @@ class MyHTMLParser(HTMLParser):
     def finish(self):
         self._end_previous()
         if self.curr_node.element_name == '#DOC':
-            self.curr_node.set_end_pos(self._getposn())
+            self.curr_node._set_end_posn(self._getposn())
         else:
             self._report("at end of file, element still open: " + self.curr_node.element_name)
         return self.curr_node
@@ -88,7 +88,7 @@ class MyHTMLParser(HTMLParser):
                 assert element_name == self.curr_node.element_name
                 self.handle_endtag(self.curr_node.element_name)
         else:
-            self.curr_node.set_inner_end_pos(self._getposn())
+            self.curr_node._set_inner_end_posn(self._getposn())
             self.curr_node = self.curr_node.parent
             # print('self.curr_node is now', self.curr_node.element_name)
 
@@ -129,9 +129,9 @@ class MyHTMLParser(HTMLParser):
     def _end_previous(self):
         if not self.curr_node: return
         if self.curr_node.children:
-            self.curr_node.children[-1].set_end_pos(self._getposn())
+            self.curr_node.children[-1]._set_end_posn(self._getposn())
         else:
-            self.curr_node.set_inner_start_pos(self._getposn())
+            self.curr_node._set_inner_start_posn(self._getposn())
 
     def _report(self, msg):
         posn = self._getposn()
@@ -150,16 +150,18 @@ class HNode:
         if self.parent:
             self.parent.children.append(self)
 
-    def set_end_pos(self, end_posn):
+    def _set_end_posn(self, end_posn):
         self.end_posn = end_posn
         # print(repr(shared.spec_text[self.start_posn:self.end_posn]))
         # input()
 
-    def set_inner_start_pos(self, posn):
+    def _set_inner_start_posn(self, posn):
         self.inner_start_posn = posn
 
-    def set_inner_end_pos(self, posn):
+    def _set_inner_end_posn(self, posn):
         self.inner_end_posn = posn
+
+    # --------------------------------------------
 
     def source_text(self):
         return shared.spec_text[self.start_posn:self.end_posn]
