@@ -89,8 +89,9 @@ def process_defining_emu_grammars(emu_grammars):
         print(file=grammar_f)
         print('#', cc_section.section_num, cc_section.section_title, file=grammar_f)
         print(file=grammar_f)
+        print(decode_entities(trim_newlines(emu_grammar.inner_source_text())), file=grammar_f)
 
-        for (prodn_posn, lhs_symbol, prodn_params, colons, rhss) in parse_emu_grammar(emu_grammar, grammar_f):
+        for (prodn_posn, lhs_symbol, prodn_params, colons, rhss) in parse_emu_grammar(emu_grammar):
 
             if cc_section.section_title == 'URI Syntax and Semantics':
                 lhs_nt_pattern = r'^uri([A-Z][a-z]+)?$'
@@ -130,15 +131,13 @@ def process_defining_emu_grammars(emu_grammars):
 
 # ------------------------------------------------------------------------------
 
-def parse_emu_grammar(emu_grammar, output_f):
+def parse_emu_grammar(emu_grammar):
     assert emu_grammar.element_name == 'emu-grammar'
 
     raw_prodns_text = emu_grammar.inner_source_text()
     prodn_offsets = [0] + [mo.end() for mo in re.finditer(r'\n{2,}', raw_prodns_text)]
 
     prodns_text = decode_entities(trim_newlines(raw_prodns_text))
-
-    if output_f: print(prodns_text, file=output_f)
 
     for (prodn_offset, prodn_text) in zip(prodn_offsets, re.split(r'\n{2,}', prodns_text)):
 
@@ -491,7 +490,7 @@ def check_non_defining_prodns(emu_grammars):
         cc_section = emu_grammar.closest_containing_section()
         arena = get_grammar_arena_for_section(cc_section)
 
-        for (u_posn, lhs_nt, u_prodn_params, u_colons, u_rhss) in parse_emu_grammar(emu_grammar, None):
+        for (u_posn, lhs_nt, u_prodn_params, u_colons, u_rhss) in parse_emu_grammar(emu_grammar):
             if lhs_nt not in info_for_nt_:
                 msg_at_posn(u_posn,
                     "ERROR: lhs symbol in 'use' production does not match any defined nonterminal: " + lhs_nt
@@ -968,7 +967,7 @@ def approximate_annex_A(doc_node):
 
                 for bc in syntax.block_children:
                     if bc.element_name == 'emu-grammar':
-                        for (_, lhs_symbol, _, _, _) in parse_emu_grammar(bc, None):
+                        for (_, lhs_symbol, _, _, _) in parse_emu_grammar(bc):
                             put(f'    <emu-prodref name={lhs_symbol}></emu-prodref>')
 
                         if syntax.title == 'Supplemental Syntax':
