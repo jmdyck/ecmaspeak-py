@@ -5018,6 +5018,7 @@ class Env:
                 '? InnerModuleLinking(_requiredModule_, _stack_, _index_)', # InnerModuleLinking
                 '? IteratorValue(_innerResult_)', # Evaluation of YieldExpression
                 '? IteratorValue(_innerReturnResult_)', # Evaluation of YieldExpression
+                '? ToPropertyKey(_lval_)',
                 'StringValue of |Identifier|',
                 'ToInteger(_P_)', # [[OwnPropertyKeys]]
                 'ToNumber(_x_)', # Abstract Equality Comparison
