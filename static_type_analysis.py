@@ -13758,13 +13758,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_Integer_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty string is returned":
+    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned":
         [list_var, len_var] = children
         env0.assert_expr_is_of_type(len_var, T_Integer_)
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty string is returned":
+    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty String is returned":
         [list_var, list_var2] = children
         assert same_source_text(list_var, list_var2)
         env0.assert_expr_is_of_type(list_var, ListType(T_code_unit_))

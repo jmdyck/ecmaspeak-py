@@ -1113,8 +1113,8 @@
     the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}
     the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
-    the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty string is returned
-    the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty string is returned
+    the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty String is returned
+    the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned
     the String value whose code units are, in order, the elements in {PP_NAMED_OPERATION_INVOCATION}
     the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order
     the String value {SETTABLE}
@@ -1723,11 +1723,13 @@
     *","* (a comma)
     the String {starred_str}
     the empty String
-    the empty String *""*
     the empty String value
-    the empty string
     the single-element String *","*
     {starred_str}
+
+    # obsoleted by PR #1780
+    # the empty String *""*
+    # the empty string
 
 {NUM_LITERAL} :
     #! (2|10)<sup>[0-9]+</sup>
