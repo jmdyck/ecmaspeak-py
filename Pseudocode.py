@@ -867,10 +867,11 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo, section):
         [emu_grammar] = emu_grammars
 
         if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
-            assert emu_grammar.attrs.get('type', 'reference') == 'example'
+            # assert emu_grammar.attrs.get('type', 'reference') == 'example'
+            assert 'type' not in emu_grammar.attrs
             assert emu_grammar.inner_source_text() == 'A : A @ B'
             # It isn't really an example, and yet it isn't a proper production.
-            # Because it's marked as an 'example', it didn't get a 'summary' property
+            # Because it doesn't parse, it didn't get a 'summary' property
             # over in check_non_defining_prodns().
             # Hard-code the summary.
             emu_grammar.summary = [

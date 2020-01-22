@@ -5838,7 +5838,7 @@ def tc_proc(op_name, defns, init_env):
             if (
                 isinstance(discriminator, HTML.HNode)
                 and
-                discriminator.source_text() == '<emu-grammar type="example">A : A @ B</emu-grammar>'
+                discriminator.source_text() == '<emu-grammar>A : A @ B</emu-grammar>'
             ):
                 init_env1 = init_env.plus_new_entry('_A_', T_Parse_Node).plus_new_entry('_B_', T_Parse_Node)
             else:
