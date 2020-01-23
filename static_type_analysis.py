@@ -5689,6 +5689,10 @@ def tc_header(header):
                 or
                 header.name == 'String.prototype.localeCompare' and pn == '*return*'
                 # The algo is incomplete, so doesn't result in a reasonable return type.
+                or
+                header.name == '[[Call]]' and pn == '*return*'
+                or
+                header.name == '[[Construct]]' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
