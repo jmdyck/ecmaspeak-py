@@ -5974,7 +5974,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)",
         r"{COMMAND} : Let {var} be {EXPR}. Remove that record from {var}.",
         r"{COMMAND} : Let {var} be {EXPR}. This variable will be used throughout the algorithms in {h_emu_xref}.",
-        r"{COMMAND} : Let {var} be {EXPR}. {note}",
+        # r"{COMMAND} : Let {var} be {EXPR}. {note}", # obsoleted by PR 1831
         r"{COMMAND} : Let {var} be {EXPR}.",
         r"{COMMAND} : Let {var} be {MULTILINE_EXPR}",
         r"{SMALL_COMMAND} : let {var} be {EXPR}",
@@ -6955,9 +6955,10 @@ def tc_nonvalue(anode, env0):
         [settable, expr] = children
         result = env0.set_A_to_B(settable, expr)
 
-    elif p == r'{COMMAND} : Set {SETTABLE} to {EXPR}. {note}':
-        [settable, expr, note] = children
-        result = env0.set_A_to_B(settable, expr)
+# obsoleted by PR 1831
+#    elif p == r'{COMMAND} : Set {SETTABLE} to {EXPR}. {note}':
+#        [settable, expr, note] = children
+#        result = env0.set_A_to_B(settable, expr)
 
     elif p == r'{COMMAND} : Set all of the bytes of {var} to 0.':
         [var] = children
