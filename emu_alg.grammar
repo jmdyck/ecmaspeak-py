@@ -1321,7 +1321,7 @@
     # PR 1552 UTF16:
     a List consisting of the sequence of code points of {NAMED_OPERATION_INVOCATION}
     a List whose elements are the code points of {var}
-    the ECMAScript code that is the result of parsing {NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref})
+    the ECMAScript code that is the result of parsing {NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
     the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     the result of parsing and evaluating {NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of parsing {NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
