@@ -103,11 +103,11 @@
     No action is required.
     Notify the agent {var}.
     Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
-    Parse {var} interpreted as UTF-16 encoded Unicode points ({h_emu_xref}) as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if {var} is not a valid JSON text as defined in that specification.
-    Parse {var} using the grammars in {h_emu_xref} and interpreting each of its 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
-    Parse {var} using the grammars in {h_emu_xref} and interpreting {var} as UTF-16 encoded Unicode code points ({h_emu_xref}). The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
+    Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
+    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
+    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
     Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.
     Perform an implementation-defined debugging action.
     Perform an implementation-dependent sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
@@ -196,11 +196,6 @@
 
     # PR 1460 explicit-exotics:
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
-
-    # PR 1552 UTF16:
-    Parse {NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
-    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
-    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
@@ -314,7 +309,7 @@
     String {var} that is an element of {EX}
     character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
     child node {var} of this Parse Node
-    code point {var} in {var}
+    code point {var} in {PP_NAMED_OPERATION_INVOCATION}
     element {var} in {var}
     element {var} of {EX}
     element {var} of {var} in List order
@@ -351,9 +346,6 @@
 
     # obsoleted by the merge of PR #1831:
     # {nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})
-
-    # PR 1552 UTF16:
-    code point {var} in {NAMED_OPERATION_INVOCATION}
 
     # PR 1623 index_strings
     own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
@@ -956,10 +948,8 @@
     a Continuation that always returns its State argument as a successful MatchResult
     a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
     a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
-    a List consisting of the sequence of code points of {var} interpreted as a UTF-16 encoded ({h_emu_xref}) Unicode string
+    a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}
     a List consisting of the sequence of code units that are the elements of {var}
-    a List containing in order the code points as defined in {h_emu_xref} of {var}, starting at the first element of {var}
-    a List containing in order the code points of {var} when interpreted as a sequence of UTF-16 encoded code points as described in {h_emu_xref}
     a List containing only {var}
     a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2008 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
@@ -977,9 +967,8 @@
     a List of length {var} of nondeterministically chosen byte values
     a List of {var} containing, in order, the {var} sequence of bytes starting with {EX}
     a List of {var} {LITERAL} values, indexed 1 through {var}
-    a List where the elements are the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
     a List whose elements are the arguments passed to this function
-    a List whose elements are the code points resulting from applying UTF-16 decoding to {var}'s sequence of elements
+    a List whose elements are the code points of {var}
     a List whose elements are the code unit elements of {var}
     a List whose elements are, in left to right order, the arguments that were passed to this function invocation
     a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed
@@ -1064,7 +1053,7 @@
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
-    the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
+    the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {var}
     the Element Type value in {h_emu_xref} for {EX}
@@ -1090,7 +1079,6 @@
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
     the String value consisting of the code units of the digits of the decimal representation of {var}
     the String value consisting of the first 10 code units of {var}
-    the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16Encoding each code point
     the String value consisting of the single code unit {var}
     the String value consisting of {EX}
     the String value consisting solely of {code_unit_lit}
@@ -1201,18 +1189,21 @@
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
     the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
-    the result of parsing and evaluating {var} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
+    the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
+    the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
-    the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
     the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
+    the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of the comparison {EX} == {EX}
+    the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
     the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
     the second element of {var}
     the second to top element of the execution context stack
+    the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the sequence of code units consisting of the code units of {var} followed by the elements of {var}
     the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
     the set containing all characters numbered {var} through {var}, inclusive
@@ -1228,6 +1219,7 @@
     the source text that was recognized as {PROD_REF}
     the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
+    the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order
     the string-concatenation of {EX} and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String
@@ -1317,19 +1309,6 @@
 
     # PR 1547 SourceText:
     the result of applying UTF-16 decoding to {var}
-
-    # PR 1552 UTF16:
-    a List consisting of the sequence of code points of {NAMED_OPERATION_INVOCATION}
-    a List whose elements are the code points of {var}
-    the ECMAScript code that is the result of parsing {NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
-    the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-    the result of parsing and evaluating {NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
-    the result of parsing {NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
-    the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
-    the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
-    the sequence of Unicode code points that results from interpreting {var} as UTF-16 encoded Unicode text as described in {h_emu_xref}
-    the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
-    the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order
 
     # PR 1554 NumericValue:
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
@@ -1440,9 +1419,7 @@
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
     the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
-    the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-    the UTF16Encoding of each code point of {EX}
-    the UTF16Encoding of the code points of {var}
+    the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}

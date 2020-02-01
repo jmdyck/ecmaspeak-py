@@ -919,6 +919,14 @@ single_sentence_rules_str = r'''
 
         This (?P<kind>abstract method) performs the following steps:
 
+        This (?P<kind>abstract operation) accepts (?P<pl>a String value _string_) and (returns the sequence of Unicode code points that results from interpreting) it (as .+)
+        retn=a sequence of Unicode code points
+        v=!OP \3 _string_ \4
+
+        This (?P<kind>abstract operation) converts _text_, (a sequence of Unicode code points), (into a String value, as .+)
+        ps=_text_ is \2
+        v=!OP converts _text_ \3
+
         This (?P<kind>abstract operation) performs the following steps:
 
         This (?P<kind>abstract operation) functions as follows:
@@ -2532,6 +2540,7 @@ nature_to_tipe = {
         'List' : 'List',
         'a List' : 'List',
         'List of String'                       : 'List of String',
+        'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a List of Unicode code points'        : 'List of Integer_',
         'List of Tangible_'                    : 'List of Tangible_',
         'a List of values'                     : 'List of Tangible_',
@@ -4309,6 +4318,8 @@ T_bytes_combining_op_ = ProcType([ListType(T_Integer_), ListType(T_Integer_)], L
 T_captures_entry_ = ListType(T_character_) | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
 
+# T_Unicode_code_points_ = ListType(T_code_point_)
+
 def maybe_NamedType(name):
     if name == 'TBD':
         return T_TBD
@@ -5011,6 +5022,7 @@ class Env:
                 # sys.exit(0)
         else:
             assert expr_text in [
+                '! UTF16DecodeString(_value_)',
                 '? CaseClauseIsSelected(_C_, _input_)', # Evaluation (CaseBlock)
                 '? Get(_obj_, `"length"`)',
                 '? GetValue(_defaultValue_)', # DestructuringAssignmentEvaluation, bleah
@@ -5693,6 +5705,8 @@ def tc_header(header):
                 header.name == '[[Call]]' and pn == '*return*'
                 or
                 header.name == '[[Construct]]' and pn == '*return*'
+                or
+                header.name == 'UTF16DecodeString' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
@@ -6278,15 +6292,16 @@ def tc_nonvalue(anode, env0):
         result = env1.plus_new_entry(result_var1, result_type)
         # but no result variable, hm.
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting each of its 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
-        assert var.children == var2.children
-        assert var.children == var3.children
-        env0.assert_expr_is_of_type(var, T_String)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-        result = env0
-        # but no result variable, hm.
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting each of its 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
+#        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
+#        assert var.children == var2.children
+#        assert var.children == var3.children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        error_type_name = error_type.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
+#        result = env0
+#        # but no result variable, hm.
+# ^ obsoleted by PR 1552
 
     elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
         [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
@@ -6298,16 +6313,17 @@ def tc_nonvalue(anode, env0):
         result = env0
         # but no result variable, hm.
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting {var} as UTF-16 encoded Unicode code points ({h_emu_xref}). The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-        [var, emu_xref, var2, emu_xref2, goal_nont, error_type, var3, var4] = children
-        assert var.children == var2.children
-        assert var.children == var3.children
-        assert var.children == var4.children
-        env0.assert_expr_is_of_type(var, T_String)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-        result = env0
-        # but no result variable, hm.
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting {var} as UTF-16 encoded Unicode code points ({h_emu_xref}). The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
+#        [var, emu_xref, var2, emu_xref2, goal_nont, error_type, var3, var4] = children
+#        assert var.children == var2.children
+#        assert var.children == var3.children
+#        assert var.children == var4.children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        error_type_name = error_type.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
+#        result = env0
+#        # but no result variable, hm.
+# ^ obsoleted by PR 1552
 
     elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
         [var, emu_xref, goal_nont, error_type, var3, var4] = children
@@ -6319,13 +6335,14 @@ def tc_nonvalue(anode, env0):
         result = env0
         # but no result variable, hm.
 
-    elif p == r"{COMMAND} : Parse {var} interpreted as UTF-16 encoded Unicode points ({h_emu_xref}) as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if {var} is not a valid JSON text as defined in that specification.":
-        [svar, emu_xref, error_type, svar2] = children
-        assert same_source_text(svar, svar2)
-        env0.assert_expr_is_of_type(svar, T_String)
-        result = env0
+#    elif p == r"{COMMAND} : Parse {var} interpreted as UTF-16 encoded Unicode points ({h_emu_xref}) as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if {var} is not a valid JSON text as defined in that specification.":
+#        [svar, emu_xref, error_type, svar2] = children
+#        assert same_source_text(svar, svar2)
+#        env0.assert_expr_is_of_type(svar, T_String)
+#        result = env0
+# ^ obsoleted by PR 1552
 
-    elif p == r"{COMMAND} : Parse {NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.":
+    elif p == r"{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.":
         [noi, error_type] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         result = env0
@@ -6658,12 +6675,13 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_String))
             env_for_commands = env1.plus_new_entry(loop_var, T_String)
 
-        elif each_thing.prod.rhs_s == 'code point {var} in {var}':
-            [loop_var, collection_expr] = each_thing.children
-            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_code_point_))
-            env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
+#        elif each_thing.prod.rhs_s == 'code point {var} in {var}':
+#            [loop_var, collection_expr] = each_thing.children
+#            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_code_point_))
+#            env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
+# obsoleted by 1552
 
-        elif each_thing.prod.rhs_s == 'code point {var} in {NAMED_OPERATION_INVOCATION}':
+        elif each_thing.prod.rhs_s == 'code point {var} in {PP_NAMED_OPERATION_INVOCATION}':
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Unicode_code_points_)
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
@@ -11747,8 +11765,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16Encoding each code point":
-        return (T_String, env0)
+#    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16Encoding each code point":
+#        return (T_String, env0)
+# ^ obsoleted by PR 1552
 
     elif p == r"{EXPR} : the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}":
         [var, lita, var2, litb] = children
@@ -12118,10 +12137,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
-    elif p == r"{EXPR} : a List whose elements are the code points resulting from applying UTF-16 decoding to {var}'s sequence of elements":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (ListType(T_code_point_), env0)
+#    elif p == r"{EXPR} : a List whose elements are the code points resulting from applying UTF-16 decoding to {var}'s sequence of elements":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (ListType(T_code_point_), env0)
+# ^ obsoleted by PR 1552
 
     elif p == r"{EXPR} : a List whose elements are the code points of {var}":
         [var] = children
@@ -12388,12 +12408,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(state_var, T_State)
         return (T_captures_entry_, env0)
 
-    elif p == r"{EXPR} : a List consisting of the sequence of code points of {var} interpreted as a UTF-16 encoded ({h_emu_xref}) Unicode string":
-        [var, emu_xref] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (ListType(T_code_point_), env0)
+#    elif p == r"{EXPR} : a List consisting of the sequence of code points of {var} interpreted as a UTF-16 encoded ({h_emu_xref}) Unicode string":
+#        [var, emu_xref] = children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (ListType(T_code_point_), env0)
+# obsoleted by 1552
 
-    elif p == r"{EXPR} : a List consisting of the sequence of code points of {NAMED_OPERATION_INVOCATION}":
+    elif p == r"{EXPR} : a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}":
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return (ListType(T_code_point_), env0)
@@ -12424,48 +12445,42 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
-        [s_var, emu_xref, goal_nont,
+#    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
+#        [s_var, emu_xref, goal_nont,
+#        error_type1,
+#        error_type2, emu_xref4] = children
+#        #
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        error_type_name1 = error_type1.source_text()[1:-1]
+#        error_type_name2 = error_type2.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
+#        return (ptn_type_for(goal_nont), env0)
+# ^ obsoleted by PR 1552
+
+    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
+        [s_noi, goal_nont,
         error_type1,
         error_type2, emu_xref4] = children
         #
-        env0.assert_expr_is_of_type(s_var, T_String)
-        error_type_name1 = error_type1.source_text()[1:-1]
-        error_type_name2 = error_type2.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
-        proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
-        return (ptn_type_for(goal_nont), env0)
-
-    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If {var} is {LITERAL}, additional early error rules from {h_emu_xref} are applied. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error (but see also clause {h_emu_xref}). Parsing and early error detection may be interweaved in an implementation-dependent manner":
-        [s_noi, goal_nont,
-        b1_var, b1_lit, emu_xref1,
-        b2_var, b2_lit, emu_xref2,
-        b3_var, b3_lit, emu_xref3,
-        error_type1,
-        error_type2, error_type3, emu_xref4] = children
-        #
         env0.assert_expr_is_of_type(s_noi, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(b1_var, T_Boolean)
-        env0.assert_expr_is_of_type(b2_var, T_Boolean)
-        env0.assert_expr_is_of_type(b3_var, T_Boolean)
         error_type_name1 = error_type1.source_text()[1:-1]
         error_type_name2 = error_type2.source_text()[1:-1]
-        error_type_name3 = error_type3.source_text()[1:-1]
         proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
         proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
-        proc_add_return(env0, ThrowType(NamedType(error_type_name3)), error_type3)
         return (ptn_type_for(goal_nont), env0)
 
 
-    elif p == r"{EXPR} : the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
-        [var, emu_xref, goal_var, error_type] = children    
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
-        return (T_Parse_Node, env0)
+#    elif p == r"{EXPR} : the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
+#        [var, emu_xref, goal_var, error_type] = children    
+#        env0.assert_expr_is_of_type(var, T_String)
+#        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
+#        error_type_name = error_type.source_text()[1:-1]
+#        proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
+#        return (T_Parse_Node, env0)
+# ^ obsoleted by PR 1552
 
-    elif p == r"{EXPR} : the result of parsing {NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
+    elif p == r"{EXPR} : the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
         [noi, goal_var, error_type] = children    
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
@@ -12918,14 +12933,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
         return (ProcType([T_Number, T_Number], T_Number), env0)
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
-        [source_var, emu_xref, chars_var, nont, f_var] = children
-        env0.assert_expr_is_of_type(source_var, T_String)
-        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
-        env0.assert_expr_is_of_type(f_var, T_String)
-        return (T_RegExpMatcher_, env0)
+#    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+#        [source_var, emu_xref, chars_var, nont, f_var] = children
+#        env0.assert_expr_is_of_type(source_var, T_String)
+#        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
+#        env0.assert_expr_is_of_type(f_var, T_String)
+#        return (T_RegExpMatcher_, env0)
+# ^ obsoleted by PR 1552
 
-    elif p == r"{EXPR} : the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [emu_xref, chars_var, nont, f_var] = children
         env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
         env0.assert_expr_is_of_type(f_var, T_String)
@@ -13805,21 +13821,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(expr, T_Number)
         return (T_Number, env1)
 
-    elif p == r"{EXPR} : a List containing in order the code points as defined in {h_emu_xref} of {var}, starting at the first element of {var}":
-        [emu_xref, s_var, s_var2] = children
-        assert same_source_text(s_var2, s_var)
-        env0.assert_expr_is_of_type(s_var, T_String)
-        return (ListType(T_code_point_), env0)
-
-    elif p == r"{EXPR} : a List containing in order the code points of {var} when interpreted as a sequence of UTF-16 encoded code points as described in {h_emu_xref}":
-        [var, emu_xref] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (ListType(T_code_point_), env0)
-
-    elif p == r"{EXPR} : a List where the elements are the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_code_point_))
-        return (ListType(T_code_point_), env0)
+#    elif p == r"{EXPR} : a List containing in order the code points as defined in {h_emu_xref} of {var}, starting at the first element of {var}":
+#        [emu_xref, s_var, s_var2] = children
+#        assert same_source_text(s_var2, s_var)
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        return (ListType(T_code_point_), env0)
+#
+#    elif p == r"{EXPR} : a List containing in order the code points of {var} when interpreted as a sequence of UTF-16 encoded code points as described in {h_emu_xref}":
+#        [var, emu_xref] = children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (ListType(T_code_point_), env0)
+#
+#    elif p == r"{EXPR} : a List where the elements are the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, ListType(T_code_point_))
+#        return (ListType(T_code_point_), env0)
+# ^ obsoleted by PR 1552
 
     elif p in [
         r"{EX} : the GlobalSymbolRegistry List",
@@ -13946,12 +13963,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_function_object_, env0)
 
-    elif p == r"{EXPR} : the result of parsing and evaluating {var} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
-        [svar, nont, emu_xref] = children
-        env0.assert_expr_is_of_type(svar, T_String)
-        return (T_Tangible_ | T_throw_, env0)
+#    elif p == r"{EXPR} : the result of parsing and evaluating {var} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
+#        [svar, nont, emu_xref] = children
+#        env0.assert_expr_is_of_type(svar, T_String)
+#        return (T_Tangible_ | T_throw_, env0)
+# ^ obsoleted by PR 1552
 
-    elif p == r"{EXPR} : the result of parsing and evaluating {NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
+    elif p == r"{EXPR} : the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
         [noi, nont, emu_xref] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return (T_Tangible_ | T_throw_, env0)

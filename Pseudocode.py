@@ -1140,7 +1140,7 @@ def annotate_algo(algo):
                     'evaluating {LOCAL_REF} with argument {var}'       : 'regexp-Evaluate',
                     'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
-                    "the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
+                    "the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     'the UTF16Encoding of each code point of {EX}'     : 'UTF16Encoding',
                     'the UTF16Encoding of the code points of {var}'    : 'UTF16Encoding',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
@@ -1696,6 +1696,11 @@ def analyze_sdo_coverage_info():
                     # by simply ignoring these cases.
 
                     nts = []
+
+                elif u_lhs == '{h_emu_xref}':
+                    # bug from "the internal procedure that evaluates the above parse"
+                    # hack:
+                    nts = ['Pattern']
 
                 else:
                     assert 0, (u_lhs, opcall.source_text())
