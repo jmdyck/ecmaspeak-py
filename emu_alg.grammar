@@ -161,9 +161,9 @@
     Set {SETTABLE} such that when evaluation is resumed with a Completion {var}, the following steps of the algorithm that invoked Await will be performed, with {var} available.
     Set {SETTABLE} to {EXPR}.
     Set {SETTABLE} to {MULTILINE_EXPR}
-    Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
+    Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
     Suspend the currently running execution context.
     Suspend the running execution context and remove it from the execution context stack.
     Suspend {var} and remove it from the execution context stack.
@@ -180,6 +180,9 @@
     # obsoleted by the merge of PR #1180:
     # Perform an implementation-dependent sequence of calls to the {DSBN} and {DSBN} internal methods of {var}, to the DeletePropertyOrThrow and HasOwnProperty abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
 
+    # obsoleted by the merge of PR #1460:
+    # Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
+
     # obsoleted by the merge of PR #1604:
     # Add 1 to {var}.
     # Subtract {NUM_LITERAL} from {var}.
@@ -193,9 +196,6 @@
     # obsoleted by the merge of PR #1831:
     # Let {var} be {EXPR}. {note}
     # Set {SETTABLE} to {EXPR}. {note}
-
-    # PR 1460 explicit-exotics:
-    Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
@@ -257,6 +257,7 @@
 {SMALL_COMMAND} :
     ReturnIfAbrupt({var})
     add {var} to {var}
+    append each of its elements to {var}
     append {LITERAL} to {var}
     append {code_unit_lit} as the last code unit of {var}
     append {var} to {var}
@@ -284,9 +285,6 @@
 
     # obsoleted by merge of PR #1614:
     # no further validation is required
-
-    # PR 1460 explicit-exotics
-    append each of its elements to {var}
 
     # PR 1732 GetSubstitution
     the replacement is {EXPR}
@@ -483,6 +481,8 @@
     the binding for {var} in {var} is a strict binding
     the binding for {var} in {var} is an uninitialized binding
     the binding for {var} is an indirect binding
+    the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
+    the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
     the character {EX} is one of {nonterminal}
     the code matched by {PROD_REF} is strict mode code
     the code matching the syntactic production that is being evaluated is contained in strict mode code
@@ -599,7 +599,7 @@
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
-    {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}
+    {var} contains {DSBN}
     {var} contains {LITERAL}
     {var} contains {var}
     {var} does not already have a binding for {var}
@@ -642,7 +642,6 @@
     {var} has {DSBN} and {DSBN} internal slots
     {var} has {var} in its range
     {var} imports a specific binding for this export
-    {var} is a Bound Function exotic object
     {var} is a Completion Record
     {var} is a Cyclic Module Record
     {var} is a Data Block
@@ -660,6 +659,7 @@
     {var} is a List of code points
     {var} is a List of code units
     {var} is a List of errors
+    {var} is a List of internal slot names
     {var} is a List of property keys
     {var} is a List that has the same number of elements as the number of parameters required by {var}
     {var} is a List whose elements are all ECMAScript language values
@@ -683,6 +683,7 @@
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a WriteSharedMemory event
     {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    {var} is a bound function exotic object
     {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, the step 4.g above
     {var} is a possibly empty List of Strings
@@ -797,6 +798,10 @@
     # {EX} is not present, or is either {LITERAL} or {LITERAL}
     # {var} is {LITERAL}, {LITERAL} or not supplied
 
+    # obsoleted by the merge of PR #1460
+    # {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}
+    # {var} is a Bound Function exotic object
+
     # obsoleted by the merge of PR #1546:
     # {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
 
@@ -826,13 +831,6 @@
 
     # obsoleted by the merge of PR #1752 (index-checking for IIEOs)
     # {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
-
-    # PR 1460 explicit-exotics:
-    the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
-    the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
-    {var} is a List of internal slot names
-    {var} is a bound function exotic object
-    {var} contains {DSBN}
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
@@ -1009,15 +1007,7 @@
     a new unique Symbol value whose {DSBN} value is {var}
     a new {ENVIRONMENT_RECORD_KIND} Environment Record
     a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
-    a newly created Array exotic object
-    a newly created ECMAScript function object with the internal slots listed in {h_emu_xref}
-    a newly created Integer-Indexed exotic object with an internal slot for each name in {var}
     a newly created Property Descriptor with no fields
-    a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}
-    a newly created String exotic object with a {DSBN} internal slot
-    a newly created arguments exotic object with a {DSBN} internal slot
-    a newly created bound function exotic object with the internal slots listed in {h_emu_xref}
-    a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}
     a newly created object with an internal slot for each name in {var}
     a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined
     a one-element CharSet containing the character {var}
@@ -1153,6 +1143,8 @@
     the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}
     the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}
     the integer that is {EXPR}
+    the internal slots listed in {h_emu_xref}
+    the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the larger of 0 and the result of {var} minus the number of elements of {var}
@@ -1278,6 +1270,16 @@
     # obsoleted by the merge of PR #1376:
     # the intrinsic object {percent_word}
 
+    # obsoleted by the merge of PR #1460:
+    # a newly created Array exotic object
+    # a newly created ECMAScript function object with the internal slots listed in {h_emu_xref}
+    # a newly created Integer-Indexed exotic object with an internal slot for each name in {var}
+    # a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}
+    # a newly created String exotic object with a {DSBN} internal slot
+    # a newly created arguments exotic object with a {DSBN} internal slot
+    # a newly created bound function exotic object with the internal slots listed in {h_emu_xref}
+    # a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}
+
     # obsoleted by the merge of PR #1523:
     # the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     # the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
@@ -1296,10 +1298,6 @@
     # obsoleted by the merge of PR #1734:
     # the Element Size specified in {h_emu_xref} for Element Type {var}
     # the Element Size value in {h_emu_xref} for {var}
-
-    # PR 1460 explicit-exotics:
-    the internal slots listed in {h_emu_xref}
-    the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object

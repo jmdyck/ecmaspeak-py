@@ -7213,10 +7213,11 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(queue_var, T_String)
         result = env0
 
-    elif p == r"{COMMAND} : Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.":
-        [var, dsbn1, dsbn2, emu_xref] = children
-        env0.assert_expr_is_of_type(var, T_Object)
-        result = env0
+#    elif p == r"{COMMAND} : Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.":
+#        [var, dsbn1, dsbn2, emu_xref] = children
+#        env0.assert_expr_is_of_type(var, T_Object)
+#        result = env0
+# ^ obsoleted by PR 1460
 
     elif p == r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, in order, starting at {var}[{var}]":
         [var1, var2, var3, var4] = children
@@ -7887,9 +7888,10 @@ def tc_cond_(cond, env0, asserting):
         [expr] = children
         return env0.with_type_test(expr, 'is a', T_Boolean | T_String | T_Symbol | T_Number, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is a Bound Function exotic object':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_bound_function_exotic_object_, asserting)
+#    elif p == r'{CONDITION_1} : {var} is a Bound Function exotic object':
+#        [var] = children
+#        return env0.with_type_test(var, 'is a', T_bound_function_exotic_object_, asserting)
+# ^ obsoleted by PR 1460
 
     elif p == r'{CONDITION_1} : {var} is a UTF-16 code unit':
         [var] = children
@@ -9034,7 +9036,7 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}",
+        # r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}", # obsoleted by PR 1460
         r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}",
     ]:
         [var, *dsbn_] = children
@@ -12561,13 +12563,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
         return (T_Object, env1)
 
-    elif p == r"{EXPR} : a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}":
-        [emu_xref] = children
-        return (T_Object, env0)
-
-    elif p == r"{EXPR} : a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}":
-        [dsbn1, dsbn2] = children
-        return (T_Object, env0)
+#    elif p == r"{EXPR} : a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}":
+#        [emu_xref] = children
+#        return (T_Object, env0)
+#
+#    elif p == r"{EXPR} : a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}":
+#        [dsbn1, dsbn2] = children
+#        return (T_Object, env0)
+#
+#    elif p == r"{EXPR} : a newly created arguments exotic object with a {DSBN} internal slot":
+#        [dsbn] = children
+#        return (T_Object, env0)
+# ^ obsoleted by PR #1460
 
     elif p == r'{EXPR} : a newly created object':
         [] = children
@@ -12598,10 +12605,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the arguments object":
         [] = children
-        return (T_Object, env0)
-
-    elif p == r"{EXPR} : a newly created arguments exotic object with a {DSBN} internal slot":
-        [dsbn] = children
         return (T_Object, env0)
 
     elif p == r"{EXPR} : {var}'s intrinsic object named {var}":
@@ -12715,9 +12718,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_function_object_
 
-    elif p == r'{EXPR} : a newly created ECMAScript function object with the internal slots listed in {h_emu_xref}':
-        [emu_xref] = children
-        return (T_function_object_, env0)
+#    elif p == r'{EXPR} : a newly created ECMAScript function object with the internal slots listed in {h_emu_xref}':
+#        [emu_xref] = children
+#        return (T_function_object_, env0)
+# ^ obsoleted by PR #1460
 
     elif p == r'{EXPR} : a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}':
         [var1, var2] = children
@@ -13512,27 +13516,29 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_proc_, env0)
 
-    elif p == r"{EXPR} : a newly created Array exotic object":
-        [] = children
-        return (T_Array_object_, env0)
-
-    elif p == r"{EXPR} : a newly created Integer-Indexed exotic object with an internal slot for each name in {var}":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
-        return (T_Integer_Indexed_object_, env1)
+#    elif p == r"{EXPR} : a newly created Array exotic object":
+#        [] = children
+#        return (T_Array_object_, env0)
+#
+#    elif p == r"{EXPR} : a newly created Integer-Indexed exotic object with an internal slot for each name in {var}":
+#        [var] = children
+#        env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
+#        return (T_Integer_Indexed_object_, env1)
+# ^ obsoleted by PR #1460
 
     elif p == r"{EX} : a newly created {ERROR_TYPE} object":
         [error_type] = children
         error_type_name = error_type.source_text()[1:-1]
         return (NamedType(error_type_name), env0)
 
-    elif p == r"{EXPR} : a newly created bound function exotic object with the internal slots listed in {h_emu_xref}":
-        [emu_xref] = children
-        return (T_bound_function_exotic_object_, env0)
+#    elif p == r"{EXPR} : a newly created bound function exotic object with the internal slots listed in {h_emu_xref}":
+#        [emu_xref] = children
+#        return (T_bound_function_exotic_object_, env0)
 
-    elif p == r"{EXPR} : a newly created String exotic object with a {DSBN} internal slot":
-        [dsbn] = children
-        return (T_String_exotic_object_, env0)
+#    elif p == r"{EXPR} : a newly created String exotic object with a {DSBN} internal slot":
+#        [dsbn] = children
+#        return (T_String_exotic_object_, env0)
+# ^ obsoleted by PR #1460
 
     elif p in [
         r"{EXPR} : a copy of {var}",
