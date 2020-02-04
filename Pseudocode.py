@@ -1569,6 +1569,9 @@ def check_sdo_coverage():
                     assert op_name == 'Contains'
                     continue
 
+                if discriminator.summary == []:
+                    stderr(f"! sdo_coverage may be broken because no summary for {discriminator.source_text()}")
+
                 for (lhs_nt, def_i, optionals) in discriminator.summary:
                     if lhs_nt not in spec.sdo_coverage_map[op_name]:
                         spec.sdo_coverage_map[op_name][lhs_nt] = {}
