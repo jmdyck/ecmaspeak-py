@@ -698,8 +698,8 @@
     {var} is an ECMAScript language value
     {var} is an ECMAScript source text (see clause {h_emu_xref})
     {var} is an Environment Record
-    {var} is an IEEE 754-2008 binary32 NaN value
-    {var} is an IEEE 754-2008 binary64 NaN value
+    {var} is an IEEE 754-2019 binary32 NaN value
+    {var} is an IEEE 754-2019 binary64 NaN value
     {var} is an Integer-Indexed exotic object
     {var} is an Object that has a {DSBN} internal slot
     {var} is an Object that has {DSBN} and {DSBN} internal slots
@@ -949,8 +949,8 @@
     a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing only {var}
-    a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2008 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
+    a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
+    a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List containing the arguments passed to this function
     a List containing the elements, in order, of {var} followed by {var}
     a List containing the one element which is {var}
@@ -1110,8 +1110,8 @@
     the binding object for {var}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian 2's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
-    the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2008 binary32 value
-    the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2008 binary64 value
+    the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
+    the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
     the canonical property name of {var} as given in the &ldquo;Canonical property name&rdquo; column of the corresponding row
     the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row
     the character matched by {PROD_REF}
@@ -1176,8 +1176,8 @@
     the result of applying that mapping to {var}
     the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
     the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
-    the result of converting {var} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode
-    the result of converting {var} to a value in IEEE 754-2008 binary64 format
+    the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
+    the result of converting {var} to a value in IEEE 754-2019 binary64 format
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
     the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
@@ -1244,7 +1244,7 @@
     this Date object
     this Source Text Module Record
     {EX}
-    {var} `*` msPerHour `+` {var} `*` msPerMinute `+` {var} `*` msPerSecond `+` {var}, performing the arithmetic according to IEEE 754-2008 rules (that is, as if using the ECMAScript operators `*` and `+`)
+    {var} `*` msPerHour `+` {var} `*` msPerMinute `+` {var} `*` msPerSecond `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
     {var}'s State
     {var}'s _captures_ List
     {var}'s code point value

@@ -8742,12 +8742,12 @@ def tc_cond_(cond, env0, asserting):
         # XXX we could be more specific about the sub-kind of Object
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} is an IEEE 754-2008 binary32 NaN value':
+    elif p == r'{CONDITION_1} : {var} is an IEEE 754-2019 binary32 NaN value':
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_)
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} is an IEEE 754-2008 binary64 NaN value':
+    elif p == r'{CONDITION_1} : {var} is an IEEE 754-2019 binary64 NaN value':
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary64_)
         return (env1, env1)
@@ -11262,7 +11262,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_Integer_, env1)
 
-    elif p == r"{EXPR} : {var} `*` msPerHour `+` {var} `*` msPerMinute `+` {var} `*` msPerSecond `+` {var}, performing the arithmetic according to IEEE 754-2008 rules (that is, as if using the ECMAScript operators `*` and `+`)":
+    elif p == r"{EXPR} : {var} `*` msPerHour `+` {var} `*` msPerMinute `+` {var} `*` msPerSecond `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)":
         for var in children:
             env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
@@ -12177,9 +12177,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ListType(T_Integer_)
 
     elif (
-        p.startswith(r'{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2008 binary32 format')
+        p.startswith(r'{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format')
         or
-        p.startswith(r'{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}.')
+        p.startswith(r'{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}.')
     ):
         var = children[0]
         env1 = env0.ensure_expr_is_of_type(var, T_Number)
@@ -13362,12 +13362,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r'{EXPR} : a new Lexical Environment':
         return (T_Lexical_Environment, env0)
 
-    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2008 binary32 value':
+    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value':
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
         return (T_IEEE_binary32_, env1)
 
-    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2008 binary64 value':
+    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value':
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
         return (T_IEEE_binary64_, env1)
@@ -14071,8 +14071,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String, env0) # XXX: spec should talk about encoding source code in UTF-16?
 
     elif p in [
-        r"{EXPR} : the result of converting {var} to a value in IEEE 754-2008 binary32 format using roundTiesToEven mode",
-        r"{EXPR} : the result of converting {var} to a value in IEEE 754-2008 binary64 format",
+        r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode",
+        r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary64 format",
         r"{EXPR} : the ECMAScript Number value corresponding to {var}",
     ]:
         [var] = children
@@ -14163,8 +14163,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
-    # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2008 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
-    # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2008 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2008 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
+    # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
+    # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : an implementation-dependent String value that represents {var} as a date and time in the current time zone using a convenient, human-readable form":
     # elif p == r"{EXPR} : the CharSet containing the single character that is {EXPR}":
     # elif p == r"{EXPR} : the CharSet containing the single character {var}":
