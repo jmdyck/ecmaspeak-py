@@ -8052,6 +8052,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List | T_WaiterList)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {EX} is a sequence of Unicode code points":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
+        return (env0, env0)
+
     elif p in [
         r'{CONDITION_1} : {var} is a Module Record',
         r"{CONDITION_1} : {var} is an instance of a concrete subclass of Module Record",

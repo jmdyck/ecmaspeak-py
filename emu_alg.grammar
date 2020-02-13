@@ -534,6 +534,7 @@
     {EX} does not contain {starred_str}
     {EX} has the value {LITERAL}
     {EX} is -1
+    {EX} is a sequence of Unicode code points
     {EX} is absent
     {EX} is absent or has the value {LITERAL}
     {EX} is an Object
@@ -850,9 +851,6 @@
     {var} is not an? {ENVIRONMENT_RECORD_KIND} Scope Record
     {var} is not the Scope Record for a |Catch| clause
     {var} must be a Scope Record
-
-    # PR 1547 SourceText:
-    {EX} is a sequence of Unicode code points
 
     # PR 1554 NumericValue:
     {var} contains a {nonterminal}
@@ -1319,9 +1317,6 @@
     a new {ENVIRONMENT_RECORD_KIND} Scope Record
     a new {ENVIRONMENT_RECORD_KIND} Scope Record containing no bindings
     the {ENVIRONMENT_RECORD_KIND} Scope Record for which the method was invoked
-
-    # PR 1547 SourceText:
-    the result of applying UTF-16 decoding to {var}
 
     # PR 1554 NumericValue:
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
