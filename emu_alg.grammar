@@ -782,7 +782,6 @@
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
     {var} is {LITERAL} because formal parameters mapped by argument objects are always writable
-    {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is {nonterminal}
@@ -838,6 +837,9 @@
 
     # obsoleted by the merge of PR #1752 (index-checking for IIEOs)
     # {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
+
+    # obsoleted by the merge of PR #1827
+    # {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
