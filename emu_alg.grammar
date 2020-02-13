@@ -209,6 +209,10 @@
     # PR 1732 GetSubstitution
     The replacement is {EXPR}.
 
+    # PR 1866 ParsePattern
+    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.
+    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.
+
 # ----------------------------------------------
 
 {IF_CLOSED} :
@@ -424,6 +428,9 @@
     {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
+
+    # PR 1866 ParsePattern
+    {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}
 
 
 {CONDITION_1} :
@@ -871,6 +878,12 @@
     {EX} does not contain an entry {var} such that {CONDITION_1}
     {EX} is a Private Name
     {var} is a ClassFieldDefinition Record
+
+    # PR 1866 ParsePattern
+    {var} is a {nonterminal} Parse Node
+    {var} did not conform to the grammar
+    any elements of {var} were not matched by the parse
+    any Early Error conditions exist
 
 {PROPERTY_KIND} :
     accessor
@@ -1320,6 +1333,10 @@
     the longest sequence of consecutive code units from {var} beginning with the code unit at index {var} such that {var} matches the &ldquo;Code units&rdquo; column of a row in {h_emu_xref}
     the result of the &ldquo;Replacement text&rdquo; column of the corresponding row
 
+    # PR 1866 ParsePattern
+    the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
+    the Parse Node resulting from the parse
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
@@ -1440,6 +1457,9 @@
     ## {nonterminal}.\w+() as defined in {h_emu_xref}
     ## {nonterminal}.\w+(); if {nonterminal} is not present, use the numeric value zero
     ## {nonterminal}.\w+({EXLIST_OPT})
+
+    # PR 1866 ParsePattern
+    the internal procedure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
 
 {LOCAL_REF} :
     the parsed code that is {DOTTING}
