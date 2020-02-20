@@ -12074,6 +12074,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the code unit whose value is {SUM}",
         r"{EXPR} : the code unit whose value is {EXPR}",
+        r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}", 
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_Integer_ | T_MathInteger_)
@@ -12296,6 +12297,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # todo: should be "the UTF16Encoding of the code point whose value is ..."
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
+        return (ListType(T_code_unit_), env0)
+
+    elif p == r"{EXPR} : the UTF16Encoding of the single code point matched by this production":
+        [] = children
         return (ListType(T_code_unit_), env0)
 
     elif p in [
@@ -12528,9 +12533,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (ptn_type_for(nont), env0)
 
-    elif p == r"{PROD_REF} : the {nonterminal} that is that {nonterminal}":
-        [a_nont, b_nont] = children
-        return (ptn_type_for(a_nont), env0)
+#    elif p == r"{PROD_REF} : the {nonterminal} that is that {nonterminal}":
+#        [a_nont, b_nont] = children
+#        return (ptn_type_for(a_nont), env0)
+# ^ obsoleted by PR #1301
 
     elif p == r"{EXPR} : an instance of the production {h_emu_grammar}":
         [emu_grammar] = children
@@ -12542,9 +12548,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Parse_Node, env0)
 
-    elif p == r"{PROD_REF} : the {nonterminal} that is that single code point":
-        [nont] = children
-        return (T_Parse_Node, env0)
+#    elif p == r"{PROD_REF} : the {nonterminal} that is that single code point":
+#        [nont] = children
+#        return (T_Parse_Node, env0)
+# ^ obsoleted by PR #1301
 
     elif p == r"{LOCAL_REF} : the parsed code that is {DOTTING}":
         [dotting] = children

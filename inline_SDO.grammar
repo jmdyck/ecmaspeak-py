@@ -12,7 +12,6 @@
 
 {ISDO_RULE} :
     The {ISDO_NAME} and {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
-    The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}, no matter whether white space is present or not.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}. (Note that if {NAMED_OPERATION_INVOCATION} is 0, the negative of this MV is also 0. The rounding rule described below handles the conversion of this signless mathematical zero to a floating-point *+0* or *-0* as appropriate.)
@@ -21,9 +20,13 @@
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
 
+    # obsoleted by the merge of PR 1301:
+    # The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
+
 {EXPR} :
     {FACTOR} (a value so large that it will round to *+&infin;*)
     a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
+    the code unit whose value is {NAMED_OPERATION_INVOCATION}
     the code unit whose value is {SUM}
     the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the empty code unit sequence
@@ -38,11 +41,8 @@
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
     the UTF16Encoding of the code point value of {PROD_REF}
+    the UTF16Encoding of the single code point matched by this production
     the UTF16Encoding of {NAMED_OPERATION_INVOCATION}
-
-    # PR 1651 one-grammar:
-    the code unit whose value is {NAMED_OPERATION_INVOCATION}
-
 
 {CONDITION} :
     either {CONDITION_1} or {CONDITION_1}
@@ -75,12 +75,14 @@
 {PROD_REF} :
     the {ORDINAL} {nonterminal}
     the {nonterminal}
-    the {nonterminal} that is that single code point
-    the {nonterminal} that is that {nonterminal}
     {nonterminal}
 
     # obsoleted by merge of PR #1571
     # the {nonterminal}
+
+    # obsoleted by the merge of PR #1301:
+    # the {nonterminal} that is that single code point
+    # the {nonterminal} that is that {nonterminal}
 
 {ORDINAL} :
     first
