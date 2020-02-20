@@ -55,7 +55,6 @@
     Assert: {CONDITION}.
     Call {PREFIX_PAREN} and let {var} be its result.
     Call {PREFIX_PAREN} and let {var} be the Boolean result.
-    Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.
     Call {PREFIX_PAREN} and let {var} be the resulting CharSet.
     Call {PREFIX_PAREN} and return its Matcher result.
     Call {PREFIX_PAREN} and return its result.
@@ -192,6 +191,9 @@
 
     # obsoleted by the merge of PR #1793:
     # Order the elements of {var} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method were invoked with {var}.
+
+    # obsoleted by the merge of PR #1797:
+    # Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.
 
     # obsoleted by the merge of PR #1831:
     # Let {var} be {EXPR}. {note}
@@ -425,6 +427,7 @@
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1}
+    {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
@@ -944,12 +947,14 @@
 
 {MULTILINE_EXPR} :
     a set of characters containing the sixty-three characters:{nlai}{h_figure}
-    an internal AssertionTester closure that takes a State argument {var} and performs the following steps:{IND_COMMANDS}
     an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}
     an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}
     an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
     the string-concatenation of:{I_BULLETS}
     the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
+
+    # obsoleted by the merge of PR #1797:
+    # an internal AssertionTester closure that takes a State argument {var} and performs the following steps:{IND_COMMANDS}
 
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
@@ -1764,11 +1769,13 @@
     Symbol
     Undefined
     #
-    AssertionTester
     CharSet
     integer
     character
     Matcher
+
+    # obsoleted by the merge of PR #1797:
+    # AssertionTester
 
     # PR 1668 privates:
     Private Name

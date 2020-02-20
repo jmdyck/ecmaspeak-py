@@ -2602,7 +2602,6 @@ nature_to_tipe = {
             'a Continuation' : 'Continuation',
         # Matcher
             'a Matcher'      : 'Matcher',
-        # AssertionTester
 
         # 24.4
         'a WaiterList' : 'WaiterList',
@@ -3918,8 +3917,6 @@ class ProcType(Type):
             return "Continuation"
         elif self == T_Matcher:
             return "Matcher"
-        elif self == T_AssertionTester:
-            return "AssertionTester"
         elif self == T_bytes_combining_op_:
             return "bytes_combining_op_"
         elif self == T_RegExpMatcher_:
@@ -4310,7 +4307,6 @@ T_TBD = TBDType()
 
 T_Continuation    = ProcType([T_State                ], T_MatchResult)
 T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
-T_AssertionTester = ProcType([T_State                ], T_Boolean)
 T_RegExpMatcher_  = ProcType([T_String, T_Integer_   ], T_MatchResult)
 
 T_bytes_combining_op_ = ProcType([ListType(T_Integer_), ListType(T_Integer_)], ListType(T_Integer_))
@@ -4327,8 +4323,6 @@ def maybe_NamedType(name):
         return T_Continuation
     elif name == 'Matcher':
         return T_Matcher
-    elif name == 'AssertionTester':
-        return T_AssertionTester
     elif name == 'RegExpMatcher_':
         return T_RegExpMatcher_
     elif name == 'bytes_combining_op_':
@@ -5056,6 +5050,7 @@ class Env:
                 'the VarDeclaredNames of |Statement|',
                 'the VarScopedDeclarations of |Statement|',
                 'the result of evaluating _body_', # PerformEval
+                'the result of evaluating |Assertion|',
                 'the result of evaluating |AtomEscape|',
                 'the result of evaluating |AtomEscape| with argument _direction_',
                 'the result of evaluating |Atom|',
@@ -6186,7 +6181,6 @@ def tc_nonvalue(anode, env0):
         [prod_ref, res_type_name, res_var] = children
         res_t = {
             'Matcher'         : T_Matcher,
-            'AssertionTester' : T_AssertionTester,
             'CharSet'         : T_CharSet,
             'character'       : T_character_,
             'integer'         : T_Integer_,
@@ -6249,7 +6243,7 @@ def tc_nonvalue(anode, env0):
         result = env1.plus_new_entry(let_var, t)
 
     elif p in [
-        r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.',
+        # r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.', obs by PR 1797
         r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the Boolean result.',
     ]:
         [prefix_paren, let_var] = children
@@ -7683,7 +7677,10 @@ def tc_cond_(cond, env0, asserting):
         logical = ('and', children)
         return tc_logical(logical, env0, asserting)
 
-    elif p == r"{CONDITION} : {CONDITION_1} or {CONDITION_1} and {CONDITION_1}":
+    elif p in [
+        r"{CONDITION} : {CONDITION_1} or {CONDITION_1} and {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
+    ]:
         [conda, condb, condc] = children
         logical = (
             'or',
@@ -10593,6 +10590,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [local_ref] = children
         if local_ref.source_text() in [
+            '|Assertion|',
             '|AtomEscape|',
             '|Atom|',
             '|CharacterClassEscape|',
@@ -12968,19 +12966,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Continuation, env0)
 
     elif p in [
-        r"{MULTILINE_EXPR} : an internal AssertionTester closure that takes a State argument {var} and performs the following steps:{IND_COMMANDS}",
         r"{MULTILINE_EXPR} : an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}",
     ]:
         [state_param, commands] = children
         env_for_commands = env0.plus_new_entry(state_param, T_State)
         defns = [(None, commands)]
         env_after_commands = tc_proc(None, defns, env_for_commands)
-        if 'AssertionTester' in p:
-            closure_t = T_AssertionTester
-        elif 'Continuation' in p:
-            closure_t = T_Continuation
-        else:
-            assert 0
+        closure_t = T_Continuation
         assert env_after_commands.vars['*return*'].is_a_subtype_of_or_equal_to(closure_t.return_type)
         return (closure_t, env0)
 
