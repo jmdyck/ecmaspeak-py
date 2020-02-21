@@ -1790,12 +1790,12 @@ def analyze_sdo_coverage_info():
             nt_info = emu_grammars.info_for_nt_[lhs_nt]
             # assert 'A' in nt_info.def_occs
             if 'A' not in nt_info.def_occs: continue
-            (_, _, def_rhss) = nt_info.def_occs['A']
+            d_production_n = nt_info.def_occs['A']
 
-            for (def_i, def_rhs) in enumerate(def_rhss):
-                GNTs = [r for r in def_rhs if r.T == 'GNT']
-                oGNTs = [gnt for gnt in GNTs if gnt.o]
-                nGNTs = [gnt for gnt in GNTs if not gnt.o]
+            for (def_i, def_rhs_n) in enumerate(d_production_n._rhss):
+                GNTs = [r for r in def_rhs_n._rhs_items if r.kind == 'GNT']
+                oGNTs = [gnt for gnt in GNTs if gnt._is_optional]
+                nGNTs = [gnt for gnt in GNTs if not gnt._is_optional]
 
                 for opt_combo in each_opt_combo(oGNTs):
                     opt_combo_str = ''.join(omreq[0] for (nt, omreq) in opt_combo)
@@ -1809,7 +1809,7 @@ def analyze_sdo_coverage_info():
                         # okay
                         pass
                     else:
-                        nts = [gnt.n for gnt in nGNTs] + required_nts_in(opt_combo)
+                        nts = [gnt._nt_name for gnt in nGNTs] + required_nts_in(opt_combo)
                         if len(nts) == 1:
                             # The rule for chain productions applies.
                             # So recurse on the rhs non-terminal.
@@ -1832,24 +1832,24 @@ def each_opt_combo(oGNTs):
         yield []
     elif N == 1:
         [a] = oGNTs
-        yield [(a.n, 'omitted' )]
-        yield [(a.n, 'required')]
+        yield [(a._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'required')]
     elif N == 2:
         [a, b] = oGNTs
-        yield [(a.n, 'omitted' ), (b.n, 'omitted' )]
-        yield [(a.n, 'omitted' ), (b.n, 'required')]
-        yield [(a.n, 'required'), (b.n, 'omitted' )]
-        yield [(a.n, 'required'), (b.n, 'required')]
+        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'required')]
+        yield [(a._nt_name, 'required'), (b._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'required'), (b._nt_name, 'required')]
     elif N == 3:
         [a, b, c] = oGNTs
-        yield [(a.n, 'omitted' ), (b.n, 'omitted' ), (c.n, 'omitted' )]
-        yield [(a.n, 'omitted' ), (b.n, 'omitted' ), (c.n, 'required')]
-        yield [(a.n, 'omitted' ), (b.n, 'required'), (c.n, 'omitted' )]
-        yield [(a.n, 'omitted' ), (b.n, 'required'), (c.n, 'required')]
-        yield [(a.n, 'required'), (b.n, 'omitted' ), (c.n, 'omitted' )]
-        yield [(a.n, 'required'), (b.n, 'omitted' ), (c.n, 'required')]
-        yield [(a.n, 'required'), (b.n, 'required'), (c.n, 'omitted' )]
-        yield [(a.n, 'required'), (b.n, 'required'), (c.n, 'required')]
+        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'omitted' ), (c._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'omitted' ), (c._nt_name, 'required')]
+        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'required'), (c._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'required'), (c._nt_name, 'required')]
+        yield [(a._nt_name, 'required'), (b._nt_name, 'omitted' ), (c._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'required'), (b._nt_name, 'omitted' ), (c._nt_name, 'required')]
+        yield [(a._nt_name, 'required'), (b._nt_name, 'required'), (c._nt_name, 'omitted' )]
+        yield [(a._nt_name, 'required'), (b._nt_name, 'required'), (c._nt_name, 'required')]
     else:
         assert 0
 

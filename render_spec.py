@@ -504,6 +504,14 @@ def hljs_repl(mo):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def render_emu_alg(emu_alg):
+    emu_grammars_in_this_emu_alg = [
+        child
+        for child in emu_alg.children
+        if child.element_name == 'emu-grammar'
+    ]
+    assert 0 <= len(emu_grammars_in_this_emu_alg) <= 2
+    emu_grammar_i = 0
+
     body = emu_alg.inner_source_text()
 
     body = body.rstrip()
@@ -554,14 +562,13 @@ def render_emu_alg(emu_alg):
         # E.g. within emu-grammar,
         # `foo` should become <emu-t>foo</emu-t>, not <code>foo</code>.
         #
-        step_body = re.sub(
-            r'<emu-grammar>(.+?)</emu-grammar>',
-            lambda mo: (
-                '<emu-grammar>%s</emu-grammar>' %
-                expand_emu_grammar_body(mo.group(1), None, emu_alg)
-            ),
-            step_body
-        )
+        def replfunc(mo):
+            nonlocal emu_grammar_i
+            emu_grammar = emu_grammars_in_this_emu_alg[emu_grammar_i]
+            emu_grammar_i += 1
+            return expand_emu_grammar(emu_grammar)
+
+        step_body = re.sub(r'<emu-grammar>(.+?)</emu-grammar>', replfunc, step_body)
 
         step_body = enhance_text(step_body, emu_alg)
 
@@ -592,6 +599,7 @@ def render_emu_alg(emu_alg):
     listified_text = handle_level(0, len(lines))
     result = '<emu-alg>' + listified_text + '</emu-alg>'
     put(result)
+    assert emu_grammar_i == len(emu_grammars_in_this_emu_alg)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -797,264 +805,280 @@ def render_emu_grammar(emu_grammar):
     # if emu_grammar.parent.element_name == 'p': put(' ')
     # Sometimes inserted, sometimes not -- not sure what the 'rule' is.
 
-    put_range(emu_grammar.start_posn, emu_grammar.inner_start_posn)
-    put(
-        expand_emu_grammar_body(
-            emu_grammar.inner_source_text(),
-            emu_grammar.attrs.get('type', 'use'),
-            emu_grammar.parent
-        )
-    )
-    put('</emu-grammar>')
+    put(expand_emu_grammar(emu_grammar))
 
 # --------------------------------------------------------------------------
 
 _prod1_for_rhs_id_ = {}
 
-def expand_emu_grammar_body(emu_grammar_body, emu_grammar_type, emu_grammar_parent):
+def expand_emu_grammar(emu_grammar):
+    emu_grammar_type = emu_grammar.attrs.get('type', 'use')
 
-    result = ''
-
-    trimmed_body = emu_grammars.trim_newlines(emu_grammar_body)
-
-    namespace = get_grammar_namespace(emu_grammar_parent)
+    namespace = get_grammar_namespace(emu_grammar.parent)
     id_insert = '' if namespace == '' else (namespace + '-')
 
-    for (pi, production) in enumerate(re.split(r'\n{2,}', trimmed_body)):
-        mo = re.fullmatch(r'(?s) *([^:]+?) +(:+)(!?) *(.+)', production)
-        (pre, colons, optbang, post) = mo.groups()
+    ex_start_tag = shared.spec_text[emu_grammar.start_posn:emu_grammar.inner_start_posn]
+    ex_end_tag = '</emu-grammar>'
 
-        mo = re.fullmatch('(\w+)(?:\[([\w, ]+)\])?', pre)
-        (lhs_nt, params) = mo.groups()
+    _emu_rhs_for_label = {} # see under RHS_LINE
 
-        prodn_attrs = OrderedDict()
-        prodn_attrs['name'] = lhs_nt
-        if params:
-            # prodn params appear in 3 places:
-            # attr of the <emu-production>,
-            # attr of the <emu-nt>,
-            # <emu-params> in <emu-mods> in <emu-nt>
-            prodn_attrs['params'] = params
-            opt_lhs_nt_attrs = ' params="%s"' % params
-            opt_mods = '<emu-mods><emu-params>[%s]</emu-params></emu-mods>' % params
-        else:
-            opt_lhs_nt_attrs = ''
-            opt_mods = ''
+    def expand_gnode(gnode):
+        st = gnode.source_text()
+        expanded_children = [expand_gnode(c) for c in gnode.children]
 
-        if len(colons) == 2:
-            prodn_attrs['type'] = 'lexical'
-        elif len(colons) == 3:
-            prodn_attrs['type'] = 'regexp'
+        if gnode.kind == 'BLOCK_PRODUCTIONS':
+            return '\n'.join(expanded_children)
 
-        if post.startswith('one of'):
-            prodn_attrs['oneof'] = ''
-            post = post[6:]
-        elif '\n' not in production:
-            prodn_attrs['collapsed'] = ''
+        elif gnode.kind in ['MULTILINE_PRODUCTION', 'ONELINE_PRODUCTION']:
+            (gnt, colons, rest) = gnode.children
+            (nt, optional_params, _) = gnt.children
+            lhs_nt_name = nt.source_text()
 
-        if (
-            emu_grammar_type
-            and
-            lhs_nt not in _something[namespace]
-        ):
-            # This is the first production for `lhs_nt` in `namespace`.
-            # So it's the one that links should point to.
-            prodn_attrs['id'] = 'prod-%s%s' % (id_insert, lhs_nt)
-            _something[namespace].add(lhs_nt)
+            prodn_attrs = OrderedDict()
 
-        if emu_grammar_parent.element_name in ['p', 'li', 'emu-alg']:
-            prodn_attrs['class'] = ' inline'
+            # name
+            prodn_attrs['name'] = lhs_nt_name
 
+            # params
+            # production params appear in 3 places:
+            #   attr of the <emu-production>,
+            #   attr of the <emu-nt>,
+            #   <emu-params> in <emu-mods> in <emu-nt>
+            if optional_params.kind == 'OMITTED_OPTIONAL':
+                pass
+            else:
+                prodn_attrs['params'] = ', '.join(param.source_text() for param in optional_params.children)
 
-        production_template = (
-            '<emu-production'
-            +
-            ''.join(
-                ' %s="%s"' % (attr_name, attr_val)
-                for (attr_name, attr_val) in prodn_attrs.items()
-            )
-            +
-            '>\n'
-            +
-            '    '
-            +
-            '<emu-nt%s>%s%s</emu-nt>' % (opt_lhs_nt_attrs, maybe_link_to_nt(lhs_nt, namespace), opt_mods)
-            +
-            '<emu-geq>%s</emu-geq>' % colons
-            +
-            optbang
-            +
-            '{RHSS}'
-            +
-            '</emu-production>'
-        )
+            # type
+            n_colons = len(colons.source_text())
+            if n_colons == 2:
+                prodn_attrs['type'] = 'lexical'
+            elif n_colons == 3:
+                prodn_attrs['type'] = 'regexp'
 
-        if 'oneof' in prodn_attrs:
-            rhss = (
-                '<emu-oneof>one of</emu-oneof>'
-                +
-                '<emu-rhs>'
-                +
-                ''.join(
-                    expand_symbol(symbol, namespace)
-                    for line in post.split('\n')
-                    for symbol in emu_grammars.rhs_tokenizer.tokenize(line)
+            # oneof
+            if rest.kind in ['MULTILINE_ONE_OF', 'ONELINE_ONE_OF']:
+                prodn_attrs['oneof'] = ''
+
+            # collapsed
+            elif gnode.kind == 'ONELINE_PRODUCTION':
+                prodn_attrs['collapsed'] = ''
+
+            # id
+            if (
+                emu_grammar_type
+                and
+                lhs_nt_name not in _something[namespace]
+            ):
+                # This is the first production for `lhs_nt_name` in `namespace`.
+                # So it's the one that links should point to.
+                prodn_attrs['id'] = 'prod-%s%s' % (id_insert, lhs_nt_name)
+                _something[namespace].add(lhs_nt_name)
+
+            # class
+            if emu_grammar.parent.element_name in ['p', 'li', 'emu-alg']:
+                prodn_attrs['class'] = ' inline'
+
+            if gnode.kind == 'ONELINE_PRODUCTION' and rest.kind != 'ONELINE_ONE_OF':
+                # sigh
+                [a,b,c] = expanded_children
+                expanded_children = [a, b, f'<emu-rhs>{c}</emu-rhs>']
+
+            emu_prodn_start_tag = (''
+                + '<emu-production'
+                + ''.join(
+                    ' %s="%s"' % (attr_name, attr_val)
+                    for (attr_name, attr_val) in prodn_attrs.items()
                 )
-                +
-                '</emu-rhs>'
+                + '>'
+            )
+            emu_prodn_end_tag = '</emu-production>'
+
+            emu_production = (''
+                + emu_prodn_start_tag
+                + '\n    '
+                + ''.join(expanded_children)
+                + '\n'
+                + emu_prodn_end_tag
             )
 
-        else:
-            rhss = []
-            for rhs in post.split('\n'):
-                if rhs in ['', '!']: continue
-                (rhs_text, rhs_id) = expand_rhs(rhs, namespace)
-                rhss.append(rhs_text)
-                if rhs_id:
-                    _prod1_for_rhs_id_[(lhs_nt, rhs_id)] = production_template.replace('{RHSS}', rhs_text)
+            nonlocal _emu_rhs_for_label
+            for (label, emu_rhs) in _emu_rhs_for_label.items():
+                _prod1_for_rhs_id_[(lhs_nt_name, label)] = (''
+                    + emu_prodn_start_tag
+                    + '\n    '
+                    + ''.join(expanded_children[:-1])
+                    + emu_rhs
+                    + emu_prodn_end_tag
+                )
+            _emu_rhs_for_label = {}
 
-            rhss = '\n    '.join(rhss)
-
-        production_element = production_template.replace('{RHSS}', rhss + '\n')
-
-        if namespace == '' and emu_grammar_type == 'definition':
-            if lhs_nt in _annexA_production_for_:
-                assert lhs_nt == 'DoubleStringCharacter' # in JSON.parse
-                stderr('multiple def prodns:', lhs_nt)
-            else:
-                _annexA_production_for_[lhs_nt] = production_element
-
-        result += (
-            ('\n' if pi > 0 else '')
-            +
-            production_element
-        )
-
-#                (r'\b([A-Z]\w*)\b', r'<emu-nt><a href="#prod-\1">\1</a></emu-nt>'),
-#                (r'`(\w+)`',        r'<emu-t>\1</emu-t>'),
-
-    return result
-
-def expand_rhs(rhs, namespace):
-    rhs = ( rhs
-        .replace('&lt;', '<')
-        .replace('&gt;', '>')
-        .replace('&ldquo;', u'\u201C')
-        .replace('&rdquo;', u'\u201D')
-    )
-
-    rhs_id = None
-    rhs_content = ''
-    rhs_attrs = ''
-    for rthing in emu_grammars.rhs_tokenizer.tokenize(rhs):
-        if type(rthing) == emu_grammars.A_id:
-            # remember it and return it
-            rhs_id = rthing.i
-            continue
-
-        elif type(rthing) == emu_grammars.A_guard:
-            arg = rthing.s + rthing.n
-            rhs_attrs = ' constraints="%s"' % arg
-            x = '<emu-constraints>[%s]</emu-constraints>' % arg
-
-        elif type(rthing) == emu_grammars.A_no_LT:
-            x = '<emu-gann>[no <emu-nt><a href="#prod-LineTerminator">LineTerminator</a></emu-nt> here]</emu-gann>'
-
-        elif type(rthing) == emu_grammars.A_empty:
-            x = '<emu-gann>[empty]</emu-gann>'
-
-        elif type(rthing) == emu_grammars.A_but_only_if:
-            x = '<emu-gmod>but only if %s</emu-gmod>' % rthing.c.replace('>', '&gt;').replace('&le;', '≤')
-            # and expand some emd spans
-
-        elif type(rthing) == emu_grammars.A_but_not:
-            assert len(rthing.b) > 0
-            if len(rthing.b) == 1:
-                [but] = rthing.b
-                s = expand_symbol(but, namespace)
-            else:
-                s = 'one of ' + ' or '.join(
-                        expand_symbol(but, namespace)
-                        for but in rthing.b
-                    )
-
-            x = '<emu-gmod>but not %s</emu-gmod>' % s
-
-        elif type(rthing) == emu_grammars.LAI:
-            x = '<emu-gann>[lookahead = %s]</emu-gann>' % ''.join(
-                expand_symbol(symbol, namespace)
-                for symbol in rthing.ts
-            )
-
-        elif type(rthing) == emu_grammars.LAX:
-            assert len(rthing.ts) > 0
-            if len(rthing.ts) == 1:
-                [symbol] = rthing.ts
-                y = expand_symbol(symbol, namespace)
-                if type(symbol) == emu_grammars.GNT:
-                    operator = '∉'
+            if namespace == '' and emu_grammar_type == 'definition':
+                if lhs_nt_name in _annexA_production_for_:
+                    assert lhs_nt_name == 'DoubleStringCharacter' # in JSON.parse
+                    stderr('multiple def prodns:', lhs_nt_name)
                 else:
-                    operator = '≠'
+                    _annexA_production_for_[lhs_nt_name] = emu_production
+
+                    # ex_body += (
+                    #     ('\n' if pi > 0 else '')
+                    #     +
+                    #     production_element
+                   #  )
+
+            return emu_production
+
+        elif gnode.kind == 'MULTILINE_RHSS':
+            return '\n    '.join(expanded_children)
+
+        elif gnode.kind == 'RHS_ITEMS':
+            if hasattr(gnode, 'parent'): stderr(gnode.parent.kind)
+            return ''.join(expanded_children)
+
+        elif gnode.kind == 'RHS_LINE':
+            (optional_guard, _, optional_label) = gnode.children
+            if optional_guard.kind == 'OMITTED_OPTIONAL':
+                maybe_constraints_attr = ''
             else:
-                operator = '∉'
-                y = '{ %s }' % ', '.join(
-                    expand_symbol(term, namespace)
-                    for term in rthing.ts
-                )
-            x = '<emu-gann>[lookahead %s %s]</emu-gann>' % (operator, y)
+                constraints = ', '.join(param.source_text() for param in optional_guard.children)
+                maybe_constraints_attr = f' constraints="{constraints}"'
 
-        else:
-            x = expand_symbol(rthing, namespace)
+            emu_rhs = (''
+                + f'<emu-rhs{maybe_constraints_attr}>'
+                + ''.join(expanded_children)
+                + '</emu-rhs>'
+            )
 
-        rhs_content += x
+            if optional_label.kind != 'OMITTED_OPTIONAL':
+                label = optional_label.source_text()[1:]
+                assert label not in _emu_rhs_for_label
+                _emu_rhs_for_label[label] = emu_rhs
 
-    return ('<emu-rhs%s>%s</emu-rhs>' % (rhs_attrs, rhs_content), rhs_id)
+            return emu_rhs
 
-def expand_symbol(symbol, namespace):
-    if type(symbol) == emu_grammars.T_lit:
-        if symbol.c == 'async nLTh function':
-            return '<emu-t>async</emu-t><emu-gann>[no <emu-nt><a href="#prod-LineTerminator">LineTerminator</a></emu-nt> here]</emu-gann><emu-t>function</emu-t>'
-        else:
-            return '<emu-t>%s</emu-t>' % symbol.c.replace('>', '&gt;').replace('<', '&lt;')
 
-    elif type(symbol) == emu_grammars.T_nc:
-        return '<emu-gprose>&lt;%s&gt;</emu-gprose>' % symbol.n
+        elif gnode.kind == 'PARAMS':
+            return f'<emu-constraints>{st}</emu-constraints>'
 
-    elif type(symbol) == emu_grammars.T_u_p:
-        if symbol.p is None:
+        elif gnode.kind in ['MULTILINE_ONE_OF', 'ONELINE_ONE_OF']:
+            return '<emu-oneof>one of</emu-oneof><emu-rhs>' + ''.join(expanded_children) + '</emu-rhs>'
+
+        elif gnode.kind in ['LINES_OF_BACKTICKED_THINGS', 'BACKTICKED_THINGS']:
+            return ''.join(expanded_children)
+
+
+        # -----------------------------------------------------------
+
+        elif gnode.kind == 'GNT':
+            (nt, optional_params, optional_opt) = gnode.children
+
+            nt_name = nt.source_text()
+            maybe_link = maybe_link_to_nt(nt_name, namespace)
+
+            emu_mods_content = ''
+
+            if optional_params.kind == 'OMITTED_OPTIONAL':
+                maybe_params_attr = ''
+            else:
+                params = ', '.join(param.source_text() for param in optional_params.children)
+                maybe_params_attr = ' params="%s"' % params
+                emu_mods_content += '<emu-params>[%s]</emu-params>' % params
+
+            if optional_opt.source_text() == '':
+                maybe_optional_attr = ''
+            else:
+                maybe_optional_attr = ' optional=""'
+                emu_mods_content += '<emu-opt>opt</emu-opt>'
+
+            if emu_mods_content:
+                maybe_emu_mods_child = '<emu-mods>' + emu_mods_content + '</emu-mods>'
+            else:
+                maybe_emu_mods_child = ''
+
+            return '<emu-nt%s%s>%s%s</emu-nt>' % (maybe_params_attr, maybe_optional_attr, maybe_link, maybe_emu_mods_child)
+
+        elif gnode.kind == 'NT':
+            nt_name = st
+            maybe_link = maybe_link_to_nt(nt_name, namespace)
+            return f'<emu-nt>{maybe_link}</emu-nt>'
+
+        elif gnode.kind == 'COLONS':
+            return f"<emu-geq>{st}</emu-geq>"
+
+        elif gnode.kind == 'BACKTICKED_THING':
+            return f"<emu-t>{st[1:-1].replace('>','&gt;')}</emu-t>"
+
+        # emu-gann:
+
+        elif gnode.kind == 'EMPTY':
+            return '<emu-gann>[empty]</emu-gann>'
+
+        elif gnode.kind in ['NLTH', 'NLTH_BAR']:
+            return '<emu-gann>[no <emu-nt><a href="#prod-LineTerminator">LineTerminator</a></emu-nt> here]</emu-gann>'
+
+        elif gnode.kind == 'LAC_SET':
+            [exp_operand] = expanded_children
+            return f'<emu-gann>[lookahead ∉ {exp_operand}]</emu-gann>'
+
+        elif gnode.kind == 'LAC_SINGLE':
+            (exp_operator, exp_operand) = expanded_children
+            return f'<emu-gann>[lookahead {exp_operator} {exp_operand}]</emu-gann>'
+
+        elif gnode.kind == 'LAC_SINGLE_OP':
+            return {
+                '==': '=',
+                '!=': '≠',
+            }[st]
+
+        elif gnode.kind == 'SET_OF_TERMINAL_SEQ':
+            return '{ ' + ', '.join(expanded_children) + ' }'
+
+        elif gnode.kind == 'TERMINAL_SEQ':
+            return ''.join(expanded_children)
+
+        # emu-gprose:
+
+        elif gnode.kind == 'U_ANY':
             return '<emu-gprose>any Unicode code point</emu-gprose>'
+
+        elif gnode.kind == 'U_PROP':
+            return f'<emu-gprose>any Unicode code point with the Unicode property “{gnode.groups[0]}”</emu-gprose>'
+
+        elif gnode.kind == 'NAMED_CHAR':
+            return f'<emu-gprose>{st}</emu-gprose>'
+
+        # emu-gmod:
+
+        elif gnode.kind == 'BUT_NOT_SINGLE':
+            [expanded_child] = expanded_children
+            return f'<emu-gmod>but not {expanded_child}</emu-gmod>'
+
+        elif gnode.kind == 'BUT_NOT_MULTIPLE':
+            return f'<emu-gmod>but not one of {"".join(expanded_children)}</emu-gmod>'
+
+        elif gnode.kind == 'BUT_ONLY':
+            return f'<emu-gmod>but only if {gnode.groups[0]}</emu-gmod>'
+
+        # --------
+
+        elif gnode.kind == 'EXCLUDABLES':
+            return ' or '.join(expanded_children)
+
+        elif gnode.kind == 'OMITTED_OPTIONAL':
+            return ''
+
+        elif gnode.kind == 'LABEL':
+            return ''
+
+        elif gnode.kind in ['OPTIONAL_OPT', 'PARAM', 'OPTIONAL_PREFIX', 'PARAM_NAME']:
+            return "[DOESN'T MATTER, ISN'T USED]"
+
         else:
-            return '<emu-gprose>any Unicode code point with the Unicode property “%s”</emu-gprose>' % symbol.p
+            assert 0
 
-    elif type(symbol) == emu_grammars.GNT:
-        nt_name = symbol.n
-        emu_mods_content = ''
+    ex_body = expand_gnode(emu_grammar._gnode)
 
-        if symbol.a:
-            params = ', '.join(arg.s + arg.n for arg in symbol.a)
-            maybe_params = ' params="%s"' % params
-            emu_mods_content += '<emu-params>[%s]</emu-params>' % params
-        else:
-            maybe_params = ''
-
-        maybe_optional = (' optional=""' if symbol.o else '')
-
-        if symbol.o:
-            emu_mods_content += '<emu-opt>opt</emu-opt>'
-
-        maybe_link = maybe_link_to_nt(nt_name, namespace)
-
-        if emu_mods_content:
-            opt_emu_mods = '<emu-mods>' + emu_mods_content + '</emu-mods>'
-        else:
-            opt_emu_mods = ''
-
-        return '<emu-nt%s%s>%s%s</emu-nt>' % (maybe_params, maybe_optional, maybe_link, opt_emu_mods)
-
-    else:
-        assert 0, symbol
-        stderr(symbol)
-        return repr(symbol)
+    return ex_start_tag + ex_body + ex_end_tag
 
 # --------------------------------------------------------------------------
 

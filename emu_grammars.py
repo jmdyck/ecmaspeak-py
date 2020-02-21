@@ -9,10 +9,8 @@ import atexit, subprocess, re, time, sys, pdb
 from collections import namedtuple, defaultdict, OrderedDict
 
 import DFA
-from Tokenizer import Tokenizer, TokenizationError
 import shared
-from shared import stderr, header, msg_at_posn, spec
-from emu_grammar_tokens import * 
+from shared import stderr, header, msg_at_node, msg_at_posn, spec, SpecNode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -25,6 +23,7 @@ def do_stuff_with_grammars():
         'reference' : [],
     }
     for emu_grammar in spec.doc_node.each_descendant_named('emu-grammar'):
+        parse_emu_grammar(emu_grammar)
         t = emu_grammar.attrs.get('type', 'reference')
         emu_grammars_of_type_[t].append(emu_grammar)
 
@@ -33,8 +32,7 @@ def do_stuff_with_grammars():
         stderr('    ', len(emu_grammars), t)
 
     process_defining_emu_grammars(emu_grammars_of_type_['definition'])
-    # check_reachability() not that useful?
-    check_params_within_def_prodns()
+    check_reachability() # not that useful?
 
     check_non_defining_prodns(emu_grammars_of_type_['reference'])
 
@@ -43,16 +41,487 @@ def do_stuff_with_grammars():
 
     check_nonterminal_refs(spec.doc_node)
 
-    # XXX should also check that emu_grammars_of_type_['example'] at least parse.
-
+    make_grammars()
     do_grammar_left_right_stuff()
-    # return
+    # return #XXX
     generate_es_parsers()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def parse_emu_grammar(emu_grammar):
+    assert emu_grammar.element_name == 'emu-grammar'
+
+    if '\n' in emu_grammar.source_text():
+        # one or more productions, indented wrt the <emu-grammar> tag, separated by blank line.
+        goal = 'EMU_GRAMMAR_CONTENT_2'
+        line_start_posn = 1 + shared.spec_text.rfind('\n', 0, emu_grammar.start_posn)
+        emu_grammar_indent = emu_grammar.start_posn - line_start_posn
+        assert emu_grammar_indent in [2, 4, 6, 8]
+
+    else:
+        # a single one-line production (no line-breaks)
+        goal = 'EMU_GRAMMAR_CONTENT_1'
+        emu_grammar_indent = None
+
+    gnode = simple_parse(
+        metagrammar,
+        goal,
+        emu_grammar.inner_start_posn,
+        emu_grammar.inner_end_posn,
+        emu_grammar_indent)
+
+    emu_grammar._gnode = gnode
+
+    if gnode is None:
+        stderr(f"! parse_emu_grammar is returning None for {emu_grammar.source_text()}")
+        return None
+
+    # --------------------------------------------
+    # Perform some checks that could have been expressed in the meta-grammar,
+    # but weren't.
+    # Also, decorate some nodes for ease of subsequent processing
+
+    gnode.preorder_traversal(decorate_misc)
+
+    if gnode.kind == 'BLOCK_PRODUCTIONS':
+        gnode._productions = gnode.children
+    elif gnode.kind == 'ONELINE_PRODUCTION':
+        gnode._productions = [gnode]
+    else:
+        assert 0, gnode.kind
+
+    for production_n in gnode._productions:
+
+        (gnt_n, colons_n, r_n) = production_n.children
+        (_, params_n, opt_n) = gnt_n.children
+
+        # --------------------------------------------
+
+        production_n._lhs_symbol = gnt_n._nt_name
+
+        # --------------------------------------------
+
+        assert params_n.kind in ['OMITTED_OPTIONAL', 'PARAMS']
+
+        # On LHS, prodn params must have no prefix.
+        params_n.preorder_traversal(lambda n: check_param_prefix(n, False))
+
+        # On RHS, prodn params must have a prefix.
+        r_n.preorder_traversal(lambda n: check_param_prefix(n, True))
+
+        production_n._param_names = [
+            param_n.groups[1]
+            for param_n in params_n.children
+        ]
+
+        # --------------------------------------------
+
+        # LHS can't be optional.
+        if opt_n.source_text() != '':
+            msg_at_node(opt_n, "LHS cannot be optional")
+
+        # --------------------------------------------
+
+        production_n._num_colons = len(colons_n.source_text())
+
+        # --------------------------------------------
+
+        rhss = []
+        if production_n.kind == 'MULTILINE_PRODUCTION':
+            if r_n.kind == 'MULTILINE_RHSS':
+                # The standard case: each line is a separate RHS.
+                for rhs_line_n in r_n.children:
+                    assert rhs_line_n.kind == 'RHS_LINE'
+                    rhss.append(rhs_line_n)
+                    # -----
+                    (optional_guard_n, rhs_body_n, optional_label_n) = rhs_line_n.children
+                    items = []
+                    if optional_guard_n.source_text() != '':
+                        items.append(optional_guard_n)
+                    if rhs_body_n.kind == 'EMPTY':
+                        pass
+                    elif rhs_body_n.kind in ['U_PROP', 'U_ANY']:
+                        items.append(rhs_body_n)
+                    elif rhs_body_n.kind == 'RHS_ITEMS':
+                        items.extend(rhs_body_n.children)
+                    else:
+                        assert 0, rhs_body_n.kind
+                    if optional_label_n.source_text() != '':
+                        items.append(optional_label_n)
+                    rhs_line_n._rhs_items = items
+
+            elif r_n.kind == 'MULTILINE_ONE_OF':
+                # Each backticked_thing on each line is a separate RHS.
+                [lines_of_backticked_things_n] = r_n.children
+                assert lines_of_backticked_things_n.kind == 'LINES_OF_BACKTICKED_THINGS'
+                for backticked_things_n in lines_of_backticked_things_n.children:
+                    assert backticked_things_n.kind == 'BACKTICKED_THINGS'
+                    for backticked_thing_n in backticked_things_n.children:
+                        rhss.append(backticked_thing_n)
+                        # -----
+                        backticked_thing_n._rhs_items = [backticked_thing_n]
+
+            else:
+                assert 0
+
+        elif production_n.kind == 'ONELINE_PRODUCTION':
+            if r_n.kind == 'EMPTY':
+                rhss.append(r_n)
+                # -----
+                r_n._rhs_items = []
+
+            elif r_n.kind == 'RHS_ITEMS':
+                rhss.append(r_n)
+                # -----
+                r_n._rhs_items = r_n.children
+
+            elif r_n.kind == 'ONELINE_ONE_OF':
+                [backticked_things_n] = r_n.children
+                for backticked_thing_n in backticked_things_n.children:
+                    rhss.append(backticked_thing_n)
+                    # -----
+                    backticked_thing_n._rhs_items = [backticked_thing_n]
+
+            else:
+                assert 0, r_n.kind
+
+        else:
+            assert 0, production_n.kind
+
+        production_n._rhss = rhss
+
+def decorate_misc(node):
+    if node.kind == 'GNT':
+        (nt_n, params_n, opt_n) = node.children
+        node._nt_name = nt_n.source_text()
+        node._params = [param_n.groups for param_n in params_n.children]
+        node._is_optional = opt_n.source_text() == '?'
+        return 'prune'
+
+    elif node.kind == 'BACKTICKED_THING':
+        node._chars = decode_entities(node.groups[0])
+        return 'prune'
+
+    elif node.kind.startswith('BUT_NOT_'):
+        if node.kind == 'BUT_NOT_SINGLE':
+            node._excludables = node.children
+        elif node.kind == 'BUT_NOT_MULTIPLE':
+            [excludables_n] = node.children
+            node._excludables = excludables_n.children
+        else:
+            assert 0, node.kind
+
+def check_param_prefix(node, must_have_prefix):
+    if node.kind != 'OPTIONAL_PREFIX': return
+    o_p_text = node.source_text()
+    if o_p_text != '' and not must_have_prefix:
+        msg_at_node(node, "On LHS, param must not have a prefix")
+    elif o_p_text == '' and must_have_prefix:
+        msg_at_node(node, "On RHS, param must have a prefix")
+    return 'prune'
+
+    assert optionality.source_text() == ''
+
+# ------------------------------------------------------------------------------
+
+metagrammar = {
+    'EMU_GRAMMAR_CONTENT_1': ('_', '^', 'ONELINE_PRODUCTION', ' ?', 'EOI'), # ' ?' until PR
+    'EMU_GRAMMAR_CONTENT_2': ('_', '^', 'INDENT', 'BLOCK_PRODUCTIONS', 'OUTDENT', r'(\n(?=\n))?', 'NLAI', 'EOI'), # extra newline until
+
+    'BLOCK_PRODUCTIONS'    : ('+', 'n', 'BLOCK_PRODUCTION', r'\n'),
+    'BLOCK_PRODUCTION'     : ('|', '^', 'MULTILINE_PRODUCTION', '_ONELINE_PRODUCTION'),
+
+    'MULTILINE_PRODUCTION' : ('_', 'n', 'NLAI', 'GNT', ' ', 'COLONS', 'MULTILINE_R'),
+    'MULTILINE_R'          : ('|', '^', 'MULTILINE_ONE_OF', 'MULTILINE_RHSS'),
+    'MULTILINE_ONE_OF'     : ('_', 'n', ' one of', 'INDENT', 'NLAI', 'LINES_OF_BACKTICKED_THINGS', 'OUTDENT'),
+    'LINES_OF_BACKTICKED_THINGS': ('+', 'n', 'BACKTICKED_THINGS', 'NLAI'),
+
+    '_ONELINE_PRODUCTION'  : ('_', '^', 'NLAI', 'ONELINE_PRODUCTION'),
+    'ONELINE_PRODUCTION'   : ('_', 'n', 'GNT', ' ', 'COLONS', ' ', 'ONELINE_R'),
+    'ONELINE_R'            : ('|', '^', 'ONELINE_ONE_OF', 'RHS_BODY'),
+    'ONELINE_ONE_OF'       : ('_', 'n', 'one of ', 'BACKTICKED_THINGS'),
+
+    'BACKTICKED_THINGS'    : ('+', 'n', 'BACKTICKED_THING', ' '),
+
+    'MULTILINE_RHSS'       : ('+', 'n', 'RHS_LINE', '', 'INDENT', 'OUTDENT'),
+    'RHS_LINE'             : ('_', 'n', 'NLAI', 'OPTIONAL_GUARD', 'RHS_BODY', 'OPTIONAL_LABEL'),
+    'OPTIONAL_GUARD'       : ('?', '^', 'PARAMS', ' '),
+    'OPTIONAL_LABEL'       : ('?', '^', ' ', 'LABEL'),
+    'RHS_BODY'             : ('|', '^', 'U_PROP', 'U_ANY', 'EMPTY', 'RHS_ITEMS'),
+    'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' *'), # '*' until PR x is merged
+    'RHS_ITEM'             : ('|', '^', 'BUT_NOT', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY'),
+
+    'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS', 'OPTIONAL_OPT'),
+    'OPTIONAL_PARAMS'      : ('?', '^', 'PARAMS'),
+    'PARAMS'               : ('+', 'n', 'PARAM', ', ', r'\[', r'\]'),
+    'OPTIONAL_OPT'         : ('?', 'n', r'\?'),
+
+    'LOOKAHEAD_CONSTRAINT' : ('|', '^', 'LAC_SINGLE', 'LAC_SET'),
+    'LAC_SINGLE'           : ('_', 'n', r'\[lookahead ', 'LAC_SINGLE_OP', ' ', 'TERMINAL_SEQ', r' ?\]'), # ' ?' until PR x is merged
+    'LAC_SINGLE_OP'        : ('/', 'n', '==|!='),
+    'LAC_SET'              : ('_', 'n', r'\[lookahead &lt;! ', 'LAC_SET_OPERAND', r'\]'),
+    'LAC_SET_OPERAND'      : ('|', '^', 'NT', 'SET_OF_TERMINAL_SEQ'),
+    'SET_OF_TERMINAL_SEQ'  : ('+', 'n', 'TERMINAL_SEQ', ', ', '{', '}'),
+    'TERMINAL_SEQ'         : ('+', 'n', 'TERMINAL_ITEM', ' '),
+    'TERMINAL_ITEM'        : ('|', '^', 'BACKTICKED_THING', 'NAMED_CHAR', 'NLTH_BAR'),
+
+    'BUT_NOT'              : ('|', '^', 'BUT_NOT_MULTIPLE', 'BUT_NOT_SINGLE'),
+    'BUT_NOT_MULTIPLE'     : ('_', 'n', r'but not one of ', 'EXCLUDABLES'),
+    'BUT_NOT_SINGLE'       : ('_', 'n', r'but not ', 'EXCLUDABLE'),
+    'EXCLUDABLES'          : ('+', 'n', 'EXCLUDABLE', r' or | '),
+    'EXCLUDABLE'           : ('|', '^', 'GNT', 'BACKTICKED_THING'),
+
+    'BUT_ONLY'             : ('/', 'n', r'\[> but only if ([^][]+)\]'),
+
+    'INDENT'           : ('/', ' ', ''),
+    'OUTDENT'          : ('/', ' ', ''),
+    'EOI'              : ('/', ' ', ''),
+    'NLAI'             : ('/', ' ', r'\n +'),
+
+    'COLONS'           : ('/', 'n', r':+'),
+    'PARAM'            : ('/', 'n', r'([~+?]?)([A-Z][a-z]*)'),
+    'NT'               : ('/', 'n', r'[A-Z]\w*|uri\w*|@'),
+    'LABEL'            : ('/', 'n', r'#\w+'),
+    'EMPTY'            : ('/', 'n', r'\[empty\]'),
+    'NLTH'             : ('/', 'n', r'\[no LineTerminator here\]'),
+    'NLTH_BAR'         : ('/', 'n', r'\[no \|LineTerminator\| here\]'),
+    'U_PROP'           : ('/', 'n', r'&gt; any Unicode code point with the Unicode property &ldquo;(\w+)&rdquo;'),
+    'U_ANY'            : ('/', 'n', r'&gt; any Unicode code point'),
+    'BACKTICKED_THING' : ('/', 'n', r'`([^` ]+|`)`'),
+    'NAMED_CHAR'       : ('/', 'n', r'&lt;([A-Z]+)&gt;'),
+}
+
+# ------------------------------------------------------------------------------
+
+def simple_parse(grammar, goal, start_posn, end_posn, start_indent):
+    max_error_posn = start_posn
+    max_error_expectations = []
+
+    def maybe_log_expectation(posn, expectation):
+        nonlocal max_error_posn, max_error_expectations
+        if posn > max_error_posn:
+            max_error_posn = posn
+            max_error_expectations = [expectation]
+        elif posn == max_error_posn:
+            max_error_expectations.append(expectation)
+
+    t = False # shared.spec_text.startswith('\n        ReservedWord', start_posn)
+
+    def attempt(goal, at_start_posn, at_start_indent, level):
+        # Consider shared.spec_text[at_start_posn:end_posn]
+        # and attempt to match some prefix of it to `goal`.
+        # If it doesn't match, return None.
+        # If it does, return a tuple containing:
+        #   - the posn after the match.
+        #   - the current indent after the match.
+        #   - a GNode representing the match, or None.
+
+        _ind = '  '*level
+        def trace(*args):
+            if not t: return
+            print(_ind, end='')
+            print(*args)
+
+        trace(f"{goal}")
+        trace(f"At {at_start_posn} {shared.spec_text[at_start_posn:at_start_posn+20]!r}")
+
+        if goal in grammar:
+            (pkind, rkind, *args) = grammar[goal]
+        else:
+            assert not re.fullmatch(r'[A-Z_]+', goal), goal
+            pkind = '/'
+            rkind = ' '
+            args = [goal]
+
+        if pkind == '|': # alternatives
+            for alt in args:
+                r = attempt(alt, at_start_posn, at_start_indent, level+1)
+                if r is not None:
+                    assert rkind == '^'
+                    return r
+                    # Note that this doesn't create a GNode corresponding to `goal` itself.
+            return None
+
+        elif pkind == '_': # concatenation
+            posn = at_start_posn
+            indent = at_start_indent
+            children = []
+            for child_goal in args:
+                r = attempt(child_goal, posn, indent, level+1)
+                if r is None: return None
+                (posn, indent, child) = r
+                if child: children.append(child)
+
+            if rkind == 'n':
+                result = GNode(at_start_posn, posn, goal, children)
+            elif rkind == '^':
+                # pass-up
+                assert len(children) == 1
+                [result] = children
+            else:
+                assert 0, rkind
+
+            return (posn, indent, result)
+
+        elif pkind == '?': # optional
+            posn = at_start_posn
+            indent = at_start_indent
+            children = []
+            for child_goal in args:
+                r = attempt(child_goal, posn, indent, level+1)
+                if r is None:
+                    # optional thing has been omitted
+                    if rkind == 'n':
+                        result = GNode(at_start_posn, at_start_posn, goal, [])
+                    elif rkind == '^':
+                        result = GNode(at_start_posn, at_start_posn, 'OMITTED_OPTIONAL', [])
+                    else:
+                        assert 0, rkind
+                    return (posn, indent, result)
+                (posn, indent, child) = r
+                if child: children.append(child)
+            # optional thing is there
+            if rkind == 'n':
+                result = GNode(at_start_posn, posn, goal, children)
+            elif rkind == '^':
+                assert len(children) == 1
+                [result] = children
+            else:
+                assert 0, rkind
+            return (posn, indent, result)
+
+        elif pkind == '+': # list of one or more
+            if len(args) == 2:
+                (element_name, separator) = args
+                left_delim = None; right_delim = None
+            elif len(args) == 4:
+                (element_name, separator, left_delim, right_delim) = args
+            else:
+                assert 0, args
+
+            elements = []
+
+            posn = at_start_posn
+            indent = at_start_indent
+
+            if left_delim:
+                r = attempt(left_delim, posn, indent, level+1)
+                if r is None:
+                    trace("failed at left_delim")
+                    return None
+                (posn, indent, _) = r
+
+            while True:
+
+                r = attempt(element_name, posn, indent, level+1)
+                if r is None:
+                    if elements == []:
+                        # This would have been the first element in the list,
+                        # so a failure to parse it is a syntax error.
+                        trace("failed at first element")
+                        return None
+                    else:
+                        # We've already recognized some elements,
+                        # so failure to parse another isn't necessarily a syntax error,
+                        # it could just be that we should have stopped after the latest element,
+                        # i.e. just before the separator.
+                        posn = latest_sep_start_posn
+                        break
+
+                (posn, indent, element) = r
+                elements.append(element)
+
+                latest_sep_start_posn = posn
+                r = attempt(separator, posn, indent, level+1)
+                if r is None: break
+                (posn, indent, _) = r
+
+            if right_delim:
+                r = attempt(right_delim, posn, indent, level+1)
+                if r is None:
+                    trace("failed at right delim")
+                    return None
+                (posn, indent, _) = r
+
+            node = GNode(at_start_posn, posn, goal, elements)
+            return (posn, indent, node)
+
+        elif pkind == '/': # regular expression
+            [pattern] = args
+
+            mo = re.compile(pattern).match(shared.spec_text, at_start_posn)
+            if mo is None:
+                if goal == pattern:
+                    expectation = repr(pattern)
+                else:
+                    expectation = f"{goal} {pattern!r}"
+                maybe_log_expectation(at_start_posn, expectation)
+                trace("failed to match regex")
+                return None
+
+            assert mo.start() == at_start_posn
+            at_end_posn = mo.end()
+
+            trace(f"{at_start_posn}-{at_end_posn} found {goal!r}: {shared.spec_text[at_start_posn:at_end_posn]!r}")
+
+            indent = at_start_indent
+            if goal == 'INDENT':
+                indent += 2
+                trace(f"indent increased to {indent}")
+            elif goal == 'OUTDENT':
+                indent -= 2
+                trace(f"indent decreased to {indent}")
+            elif goal == 'NLAI':
+                this_indent = at_end_posn - at_start_posn - 1
+                assert this_indent % 2 == 0
+                if this_indent != at_start_indent:
+                    maybe_log_expectation(at_end_posn, f"indent = {at_start_indent}")
+                    trace(f"failed to match indent = {at_start_indent}")
+                    return None
+            elif goal == 'EOI':
+                if at_end_posn < end_posn:
+                    maybe_log_expectation(at_end_posn, "end-of-input")
+                    trace("failed to match eoi")
+                    return None
+
+            if rkind == 'n':
+                result = GNode(mo.start(), mo.end(), goal, [])
+                result.groups = mo.groups()
+            elif rkind == ' ':
+                result = None
+            else:
+                assert 0, rkind
+            return (at_end_posn, indent, result)
+
+        else:
+            assert 0, pkind
+
+    # input('continue? ')
+    r = attempt(goal, start_posn, start_indent, 0)
+    if r is None:
+        msg_at_posn(max_error_posn, f"Syntax error: was expecting: {', '.join(max_error_expectations)}")
+        return None
+    (at_end_posn, at_end_indent, node) = r
+    assert at_end_posn == end_posn
+    assert at_end_indent == start_indent
+    return node
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class GNode(SpecNode):
+    def __init__(self, start_posn, end_posn, kind, children):
+        SpecNode.__init__(self, start_posn, end_posn)
+        self.kind = kind
+        self.children = children
+
+    def __str__(self):
+        st = self.source_text()
+        snippet = st if len(st) <= 50 else (st[0:47] + '...')
+        return f"({self.kind} {snippet!r})"
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 info_for_nt_ = None
-grammar_named_ = None
 
 def process_defining_emu_grammars(emu_grammars):
     stderr('process_defining_emu_grammars...')
@@ -72,264 +541,94 @@ def process_defining_emu_grammars(emu_grammars):
 
         cc_section = emu_grammar.closest_containing_section()
 
-        arena = get_grammar_arena_for_section(cc_section)
-
-        if arena == 'B':
-            # Some are replacements, and some are augments. Need to know which.
-            # Could detect it based on whether the preceding para says
-            #   "The following augments the <Foo> production in <section-num>:"
-            # but easier to hard-code it:
-            augments = (cc_section.section_title in [
-                'FunctionDeclarations in IfStatement Statement Clauses',
-                'Initializers in ForIn Statement Heads',
-            ])
-        else:
-            augments = False
-
         print(file=grammar_f)
         print('#', cc_section.section_num, cc_section.section_title, file=grammar_f)
         print(file=grammar_f)
         print(decode_entities(trim_newlines(emu_grammar.inner_source_text())), file=grammar_f)
 
-        for (prodn_posn, lhs_symbol, prodn_params, colons, rhss) in parse_emu_grammar(emu_grammar):
+        # stderr(cc_section.section_num, cc_section.section_title)
 
-            if cc_section.section_title == 'URI Syntax and Semantics':
-                lhs_nt_pattern = r'^uri([A-Z][a-z]+)?$'
-            else:
-                lhs_nt_pattern = r'^[A-Z][a-zA-Z0-9]+$'
-            assert re.match(lhs_nt_pattern, lhs_symbol), lhs_symbol
+        gnode = emu_grammar._gnode
+        assert gnode.kind == 'BLOCK_PRODUCTIONS'
 
-            info_for_nt_[lhs_symbol].supply(
-                lhs_symbol, arena, prodn_posn, prodn_params, colons, augments, rhss )
+        for production_n in gnode.children:
+            defining_production_check_left(production_n, cc_section)
 
-    global grammar_named_
-    grammar_named_ = keydefaultdict(Grammar)
-    for (lhs_symbol, nt_info) in sorted(info_for_nt_.items()):
+    for emu_grammar in emu_grammars:
+        gnode = emu_grammar._gnode
+        for production_n in gnode.children:
+            defining_production_check_right(production_n)
 
-        # From a parsing point of view, there's really just two grammars,
-        # each with multiple goal symbols.
-        grammar_name = 'syntactic' if nt_info.colons == ':' else 'lexical'
-
-        # See Bug 4088: https://tc39.github.io/archives/bugzilla/4088/
-        if grammar_name == 'lexical' and lhs_symbol in [
-            'ReservedWord',
-            'Keyword',
-            'FutureReservedWord',
-            'NullLiteral',
-            'BooleanLiteral',
-        ]:
-            stderr('Changing from lexical to syntactic:', lhs_symbol)
-            grammar_name = 'syntactic'
-
-        for arena in ['A', 'B']:
-            r = nt_info.get_appropriate_def_occ(arena)
-            if r is None: continue
-            (prodn_posn, params, rhss) = r
-
-            grammar_named_[grammar_name + arena].add_prodn(
-                prodn_posn, lhs_symbol, params, rhss)
-
-# ------------------------------------------------------------------------------
-
-def parse_emu_grammar(emu_grammar):
-    assert emu_grammar.element_name == 'emu-grammar'
-
-    raw_prodns_text = emu_grammar.inner_source_text()
-    prodn_offsets = [0] + [mo.end() for mo in re.finditer(r'\n{2,}', raw_prodns_text)]
-
-    prodns_text = decode_entities(trim_newlines(raw_prodns_text))
-
-    for (prodn_offset, prodn_text) in zip(prodn_offsets, re.split(r'\n{2,}', prodns_text)):
-
-        prodn_posn = emu_grammar.inner_start_posn + prodn_offset
-
-        split_lines = [
-            split_indentation(line)
-            for line in prodn_text.split('\n')
-        ]
-
-        (first_ind, first_line) = split_lines[0]
-        mo = re.match(r'^(\w+)(?:\[(.+)\])? (:+)(.*)', first_line)
-        assert mo, first_line
-        (lhs_symbol, prodn_params_str, colons, first_line_rem) = mo.groups()
-
-        if prodn_params_str is None:
-            prodn_params = []
-        else:
-            # assert re.match(r'^[A-Z][a-z]*(, [A-Z][a-z]*)*$', prodn_params_str), prodn_text
-            prodn_params = prodn_params_str.split(', ')
-            for prodn_param in prodn_params:
-                if not re.match(r'^[A-Z][a-z]*$', prodn_param):
-                    msg_at_posn(prodn_posn, "gp-ERROR-159: ill-formed lhs-param: '%s'" % prodn_param)
-
-        assert colons in [':', '::', ':::']
-        # print(colons, section.section_num, section.section_title)
-
-        def each_rhs():
-            if len(split_lines) == 1:
-                # one-line production
-                if first_line_rem.startswith(' one of '):
-                    # normalize 'one of' production into one with multiple
-                    # right-hand-sides, each of which is only a single symbol:
-                    for rthing in rhs_tokenizer.tokenize(first_line_rem[8:]):
-                        assert type(rthing) == T_lit
-                        yield [rthing]
-                else:
-                    try:
-                        rthings = rhs_tokenizer.tokenize(first_line_rem)
-                        yield rthings
-                    except TokenizationError:
-                        msg_at_posn(prodn_posn, "ERROR: tokenization")
-            else:
-                # multi-line production
-                if first_line_rem not in ['', ' one of', '!']:
-                    msg_at_posn(prodn_posn, "ERROR: Multi-line production's first line ends oddly")
-                else:
-                    for (r_ind, r_line) in split_lines[1:]:
-                        assert r_ind == first_ind + 2, prodn_text
-                        try:
-                            rthings = rhs_tokenizer.tokenize(r_line)
-                        except TokenizationError:
-                            msg_at_posn(prodn_posn, "ERROR: tokenization")
-                            rthings = []
-                        if first_line_rem in ['', '!']:
-                            yield rthings
-                        elif first_line_rem == ' one of':
-                            # normalize 'one of' production
-                            for rthing in rthings:
-                                assert type(rthing) == T_lit
-                                yield [rthing]
-                        else:
-                            assert 0, first_line_rem
-
-        rhss = []
-        for rhs in each_rhs():
-
-            # Eliminate A_empty, it's just a placeholder.
-            if any(type(rthing) == A_empty for rthing in rhs):
-                assert len(rhs) == 1
-                rhs = []
-
-            # Merge adjacent LAX (in NotEscapeSequence RHS #5 + #11)
-            for r in range(len(rhs)-1, 0, -1):
-                if type(rhs[r]) == LAX and r > 0 and type(rhs[r-1]) == LAX:
-                    rhs[r-1] = LAX(ts= (rhs[r-1].ts + rhs[r].ts))
-                    del rhs[r]
-
-            rhss.append(rhs)
-
-        yield (prodn_posn, lhs_symbol, prodn_params, colons, rhss)
-
-# ------------------------------------------------------------------------------
-
-terminal_types = [T_lit, T_nc, T_u_p, T_named ]
-
-def stringify_rthings(rthings):
-    return ' '.join(map(stringify_rthing, rthings))
-
-def stringify_rthing(rthing):
-    if isinstance(rthing, SNT) or isinstance(rthing, T_named):
-        return rthing.n
-    elif isinstance(rthing, T_lit) and rthing.c != '"':
-        return '"' + rthing.c + '"'
-    else:
-        return str(rthing)
-
-rhs_tokenizer = Tokenizer([
-    ('(\w+|@)',                              lambda g: GNT(n=g(1), a=(), o=False)),
-    ('(\w+)\?',                              lambda g: GNT(n=g(1), a=(), o=True)),
-    ('(\w+)\[([+~?]\w+(?:, [+~?]\w+)*)\]',   lambda g: GNT(n=g(1), a=parse_args(g(2)), o=False)),
-    ('(\w+)\[([+~?]\w+(?:, [+~?]\w+)*)\]\?', lambda g: GNT(n=g(1), a=parse_args(g(2)), o=True)),
-
-    ('`(\S+)`',                              lambda g: T_lit(c=g(1))),
-    ('<([A-Z]+)>',                           lambda g: T_nc(n=g(1))),
-    ('> any Unicode code point',             lambda g: T_u_p(p=None)),
-    ('> any Unicode code point with the Unicode property \u201C(\w+)\u201D', lambda g: T_u_p(p=g(1))),
-
-    (' ',                             None),
-    ('\[([+~])([A-Z][a-z]*)\]',       lambda g: A_guard(s=g(1), n=g(2))),
-    ('#(\w+)',                        lambda g: A_id(i=g(1))),
-    ('but not (.+)',                  lambda g: A_but_not(b=parse_buts(g(1)))),
-    ('\[> but only if (.+?)\]',       lambda g: A_but_only_if(c=g(1))),
-    ('\[empty\]',                     lambda g: A_empty()),
-    ('\[no LineTerminator here\]',    lambda g: A_no_LT()),
-    ('\[lookahead == `([^` ]+)`\]',   lambda g: LAI(ts=(T_lit(c=g(1)),))),
-    ('\[lookahead != `([^` ]+)` ?\]', lambda g: LAX(ts=(T_lit(c=g(1)),))),
-    ('\[lookahead != `(let` `\[)`\]', lambda g: LAX(ts=(T_lit(c=g(1)),))), # kludge
-    ('\[lookahead != <([A-Z]+)> \]',  lambda g: LAX(ts=(T_nc(n=g(1)),))),
-    ('\[lookahead <! (\w+)\]',        lambda g: LAX(ts=(GNT(n=g(1), a=(), o=False),))),
-    ('\[lookahead <! {([^}]+)}\]',    lambda g: LAX(ts=parse_terminals(g(1)))),
-])
-atexit.register(rhs_tokenizer.print_unused_paterns)
-
-def parse_args(args_str):
-    args = []
-    for arg_str in args_str.split(', '):
-        if arg_str[0] in ['+', '~', '?']:
-            arg = Arg(s=arg_str[0], n=arg_str[1:])
-        else:
-            arg = Arg(s='', n=arg_str) # '+' ?
-        args.append(arg)
-    return tuple(args)
-
-def parse_buts(buts_str):
-    mo2 = re.match(r'^one of (.+)', buts_str)
-    if mo2:
-        if ' or ' in buts_str:
-            but_strs = mo2.group(1).split(' or ')
-        else:
-            but_strs = mo2.group(1).split(' ')
-    else:
-        but_strs = [buts_str]
-    buts = []
-    for but_str in but_strs:
-        if re.match(r'^\w+$', but_str):
-            but = GNT(but_str, (), False)
-        elif re.match(r'^`(\S+)`$', but_str):
-            but = T_lit(but_str[1:-1])
-        else:
-            assert 0, but_str
-        buts.append(but)
-    return tuple(buts)
-
-def parse_terminals(list_str):
-    ts = []
-    for item in list_str.split(', '):
-        assert item.startswith('`'), list_str
-        assert item.endswith('`')
-        chars = item[1:-1]
-        if chars == 'async` [no |LineTerminator| here] `function':
-            chars = 'async nLTh function'
-        ts.append(T_lit(c=chars))
-    return tuple(ts) # XXX sorted???
+            if production_n._augments:
+                stderr(f"augmenting {production_n._lhs_symbol}")
+                nt_info = info_for_nt_[production_n._lhs_symbol]
+                base_production_n = nt_info.get_appropriate_def_occ('A')
+                production_n._rhss = base_production_n._rhss + production_n._rhss
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def defining_production_check_left(production_n, cc_section):
+    assert production_n.kind == 'MULTILINE_PRODUCTION'
+    assert cc_section.element_name in ['emu-clause', 'emu-annex']
+
+    # ------------------
+
+    production_n._arena = get_grammar_arena_for_section(cc_section)
+
+    if production_n._arena == 'B':
+        # Some are replacements, and some are augments. Need to know which.
+        # Could detect it based on whether the preceding para says
+        #   "The following augments the <Foo> production in <section-num>:"
+        # but easier to hard-code it:
+        production_n._augments = (cc_section.section_title in [
+            'FunctionDeclarations in IfStatement Statement Clauses',
+            'Initializers in ForIn Statement Heads',
+        ])
+    else:
+        production_n._augments = False
+
+    # ------------------
+
+    # This function looks at only the LHS and colons of the production.
+
+    # ------------------
+
+    if cc_section.section_title == 'URI Syntax and Semantics':
+        lhs_nt_pattern = r'^uri([A-Z][a-z]+)?$'
+    else:
+        lhs_nt_pattern = r'^[A-Z][a-zA-Z0-9]+$'
+    assert re.match(lhs_nt_pattern, production_n._lhs_symbol), production_n._lhs_symbol
+
+    # ==============================================
+
+    if production_n._lhs_symbol not in info_for_nt_:
+        nt_info = NonterminalInfo()
+        info_for_nt_[production_n._lhs_symbol] = nt_info
+        # initialize nt_info with this production's data
+        nt_info.num_colons = production_n._num_colons
+        nt_info.level = 'syntactic' if nt_info.num_colons == 1 else 'lexical'
+
+    else:
+        nt_info = info_for_nt_[production_n._lhs_symbol]
+        # check that this production's data agrees with previously-extracted data
+        assert production_n._num_colons == nt_info.num_colons
+        # msg_at_posn(prodn_posn, f"ERROR: colons mismatch for {production_n._lhs_symbol}: was {nt_info.num_columns}, here {production_n._num_colons}")
+        assert production_n._arena not in nt_info.def_occs
+        # msg_at_posn(prodn_posn, f"Additional defining production for: {production_n._lhs_symbol}")
+
+    nt_info.def_occs[production_n._arena] = production_n
+
+# ------------------------------------------------------------------------------
 
 class NonterminalInfo:
     def __init__(self):
         self.def_occs = defaultdict()
 
-    def supply(self, symbol, arena, prodn_posn, params, colons, augments, rhss):
-        if not hasattr(self, 'symbol'):
-            self.symbol = symbol
-            self.colons = colons
-        else:
-            assert symbol == self.symbol
-            if colons != self.colons:
-                msg_at_posn(prodn_posn, 'ERROR: colons mismatch for %s: was %s, here %s' %
-                    (self.symbol, self.colons, colons))
-
-        if arena in self.def_occs:
-            msg_at_posn(prodn_posn, 'Additional defining production for: ' + symbol)
-            return
-
-        if augments:
-            assert arena != 'A'
-            (_, params_from_arena_a, rhss_from_arena_a) = self.def_occs['A']
-            assert params == params_from_arena_a
-            rhss = rhss_from_arena_a + rhss
-
-        self.def_occs[arena] = (prodn_posn, params, rhss)
+#        if augments:
+#            assert arena != 'A'
+#            (_, params_from_arena_a, rhss_from_arena_a) = self.def_occs['A']
+#            assert params == params_from_arena_a
+#            rhss = rhss_from_arena_a + rhss
 
     def get_appropriate_def_occ(self, arena):
         if arena in self.def_occs:
@@ -368,105 +667,127 @@ def check_reachability():
     while queue:
         symbol = queue.pop(0)
         nt_info = info_for_nt_[symbol]
-        (_, _, rhss) = nt_info.def_occs['A']
-        for rhs in rhss:
-            for rthing in rhs:
-                rthing_kind = type(rthing)
-                if rthing_kind == GNT:
-                    reach(rthing.n)
-                elif rthing_kind == A_but_not:
-                    for but in rthing.b:
-                        if type(but) == GNT:
-                            reach(but.n)
+        production_n = nt_info.def_occs['A']
+        for rhs_n in production_n._rhss:
+            for rhs_item_n in rhs_n._rhs_items:
+                rthing_kind = rhs_item_n.kind
+                if rthing_kind == 'GNT':
+                    reach(rhs_item_n._nt_name)
+                elif rthing_kind.startswith('BUT_NOT_'):
+                    for but_n in rhs_item_n._excludables:
+                        if but_n.kind == 'GNT':
+                            reach(but_n._nt_name)
 
     for (nt, nt_info) in sorted(info_for_nt_.items()):
-        if 'A' in nt_info.def_occs and nt_info.colons != ':' and nt not in lexical_symbols:
+        if 'A' in nt_info.def_occs and nt_info.num_colons != 1 and nt not in lexical_symbols:
             print('lexical symbol not reached:', nt)
 
 # ------------------------------------------------------------------------------
 
 # g_current_branch_name = subprocess.check_output('git rev-parse --abbrev-ref HEAD'.split(' ')).rstrip()
 
-def check_params_within_def_prodns():
-    stderr("check_params_within_def_prodns...")
-    header("checking grammatical parameters in defining prodns...")
+def defining_production_check_right(production_n):
 
-    for (nt, nt_info) in sorted(info_for_nt_.items()):
-        # Look at all 'defining occurrences' of nt.
-        # (Usually just 1, might be 2 (Annex B).)
+    for (rhs_i, rhs_n) in enumerate(production_n._rhss):
+        if rhs_n.kind == 'RHS_LINE':
+            (optional_guard_n, rhs_body_n, optional_label_n) = rhs_n.children
 
-        for (arena, (prodn_posn, nt_param_names, rhss)) in sorted(nt_info.def_occs.items()):
-            for (rhs_i, rhs) in enumerate(rhss):
-                rhs_guard_sign = None
-                rhs_guard_param_name = None
-                for rthing in rhs:
-                    rthing_kind = type(rthing)
-                    if rthing_kind == A_guard:
-                        (rhs_guard_sign, rhs_guard_param_name) = (rthing.s, rthing.n)
+            guards = []
+            for param_n in optional_guard_n.children:
+                (prefix, param_name) = param_n.groups
+                assert prefix in ['+', '~']
+                assert param_name in production_n._param_names
+                guards.append( (prefix, param_name) )
+
+            # Could test that optional_label_n is unique within this production,
+            # but they're used so little, it's not really worth the bother?
+
+            if rhs_body_n.kind == 'RHS_ITEMS':
+                for rhs_item_n in rhs_body_n.children:
+
+                    if rhs_item_n.kind != 'GNT':
                         continue
-                    elif rthing_kind != GNT:
-                        continue
 
-                    for r_arg in rthing.a:
-                        if r_arg.s not in ['+', '~', '?']:
-                            msg_at_posn(prodn_posn,
+                    (nt_n, optional_params_n, optional_opt_n) = rhs_item_n.children
+
+                    r_arg_signs = []
+                    r_arg_names = []
+                    for r_arg in optional_params_n.children:
+                        (prefix, arg_name) = r_arg.groups
+                        if prefix not in ['+', '~', '?']:
+                            msg_at_node(r_arg,
                                 "gp-ERROR-447: In rhs #%d, arg is missing +~?: %s" %
-                                    (rhs_i + 1, r_arg.n)
+                                    (rhs_i + 1, r_arg)
                             )
+                        r_arg_signs.append(prefix)
+                        r_arg_names.append(arg_name)
 
-                    if rthing.n not in info_for_nt_:
-                        msg_at_posn(prodn_posn,
+                    r_nt_name = rhs_item_n._nt_name
+
+                    if r_nt_name not in info_for_nt_:
+                        msg_at_node(nt_n,
                             "ERROR: In rhs #%d, refers to undefined nonterminal '%s'" %
-                                (rhs_i + 1, rthing.n)
+                                (rhs_i + 1, r_nt_name)
                         )
                         continue
 
-                    r_param_names = [ r_arg.n for r_arg in rthing.a ]
-                    (_, d_param_names, _) = info_for_nt_[rthing.n].get_appropriate_def_occ(arena)
+                    d_production_n = info_for_nt_[r_nt_name].get_appropriate_def_occ(production_n._arena)
+                    d_param_names = d_production_n._param_names
 
-                    if len(r_param_names) == len(d_param_names):
-                        if r_param_names != d_param_names:
-                            msg_at_posn(prodn_posn,
+                    if len(r_arg_names) == len(d_param_names):
+                        if r_arg_names != d_param_names:
+                            msg_at_node(optional_params_n,
                                 "gp-ERROR-454: In rhs #%d, args are ordered %s but should be %s" %
-                                (rhs_i, r_param_names, d_param_names)
+                                (rhs_i, r_arg_names, d_param_names)
                             )
                     else:
-                        msg_at_posn(prodn_posn,
+                        msg_at_node(optional_params_n,
                             "gp-ERROR-459: %s takes %s but is invoked with %s" %
-                            (rthing.n, d_param_names, r_param_names)
+                            (r_nt_name, d_param_names, r_arg_names)
                         )
 
                     # Look for valid-but-anomalous args...
-                    for r_arg in rthing.a:
-                        if r_arg.n in nt_param_names:
+                    # for (r_arg_sign, r_arg_name) in zip(r_arg_signs, r_arg_names):
+                    for r_arg in optional_params_n.children:
+                        (prefix, arg_name) = r_arg.groups
+
+                        if arg_name in production_n._param_names:
                             # This arg refers to a parameter that appears on the prodn's LHS.
-                            if r_arg.s == '?': 
-                                # Simply 'pass down' the value of that param.
+                            # So normally, we'd expect a '?' prefix.
+                            if prefix == '?': 
+                                # Good.
                                 pass
-                            elif r_arg.n == rhs_guard_param_name and r_arg.s == rhs_guard_sign:
+                            elif (prefix, arg_name) in guards:
+                                # This is equivalent to '?'
                                 pass
                             else:
-                                msg_at_posn(prodn_posn,
+                                msg_at_node(r_arg,
                                     "gp-WARNING-474: %s has %s param, so you'd normally expect [?%s] in its rhss, but rhs #%d has %s[%s%s]" % (
-                                        nt,
-                                        r_arg.n,
-                                        r_arg.n,
+                                        production_n._lhs_symbol,
+                                        arg_name,
+                                        arg_name,
                                         rhs_i + 1,
-                                        rthing.n, r_arg.s, r_arg.n
+                                        r_nt_name, prefix, arg_name
                                     )
                                 )
                         else:
                             # This arg refers to parameter
                             # that does not appear on the prodn's LHS.
-                            # assert r_arg.s != '?', rhs
-                            if r_arg.s == '?':
-                                msg_at_posn(prodn_posn,
+                            # assert prefix != '?', rhs
+                            if prefix == '?':
+                                msg_at_node(production_n,
                                     "gp-ERROR-488: %s does not appear on the prodn's LHS, so cannot be referenced with '?'" %
-                                    r_arg.n 
+                                    arg_name 
                                 )
                             # because you can only use '?' on the RHS
                             # when the parameter is 'declared' on the LHS
 
+        elif rhs_n.kind == 'BACKTICKED_THING':
+            # nothing to check?
+            pass
+
+        else:
+            assert 0, rhs_n.kind
 
 # ------------------------------------------------------------------------------
 
@@ -487,35 +808,62 @@ def check_non_defining_prodns(emu_grammars):
     for emu_grammar in emu_grammars:
         emu_grammar.summary = []
 
-        cc_section = emu_grammar.closest_containing_section()
-        arena = get_grammar_arena_for_section(cc_section)
+        # The production(s) in this emu_grammar are (in some sense)
+        # instances of productions defined elsewhere,
+        # and we'll be comparing the two to determine if these are correct.
+        # To distinguish, we'll use two different prefixes:
+        # 'd_' for the defining production, and
+        # 'u_' for the 'use' production.
+        # (You might expect 'r_' for 'referencing',
+        # but I already use 'r_' for 'right-hand side'.)
 
-        for (u_posn, lhs_nt, u_prodn_params, u_colons, u_rhss) in parse_emu_grammar(emu_grammar):
+        cc_section = emu_grammar.closest_containing_section()
+        u_arena = get_grammar_arena_for_section(cc_section)
+
+        gnode = emu_grammar._gnode
+
+        for u_production_n in gnode._productions:
+            assert u_production_n.kind in ['ONELINE_PRODUCTION', 'MULTILINE_PRODUCTION']
+            (u_gnt_n, u_colons_n, _) = u_production_n.children
+            (u_nt_n, u_params_n, _) = u_gnt_n.children
+
+            # -----------------------
+
+            lhs_nt = u_production_n._lhs_symbol
+
             if lhs_nt not in info_for_nt_:
-                msg_at_posn(u_posn,
+                msg_at_node(u_nt_n,
                     "ERROR: lhs symbol in 'use' production does not match any defined nonterminal: " + lhs_nt
                 )
                 continue
 
             nt_info = info_for_nt_[lhs_nt]
 
-            if u_colons != nt_info.colons:
-                msg_at_posn(u_posn,
+            # -----------------------
+
+            u_num_colons = u_production_n._num_colons
+            if u_num_colons != nt_info.num_colons:
+                msg_at_node(u_colons_n,
                     "ERROR: #colons in use (%d) does not match #colons in defn (%d)" %
-                    (len(u_colons), len(nt_info.colons))
+                    (u_num_colons, nt_info.num_colons)
                 )
 
-            (def_prodn_posn, def_prodn_params, def_rhss) = nt_info.get_appropriate_def_occ(arena)
+            # -----------------------
 
-            if def_prodn_params:
+            u_param_names = u_production_n._param_names
+
+            d_production_n = nt_info.get_appropriate_def_occ(u_arena)
+
+            if d_production_n._param_names:
                 # The 'def' production has parameters.
-                if u_prodn_params:
+                if u_param_names:
+                    # The 'use' production also shows parameters.
                     u_lhs_args_are_suppressed = False
 
-                    if u_prodn_params != def_prodn_params:
-                        msg_at_posn(u_posn,
+                    if u_param_names != d_production_n._param_names:
+                        msg_at_node(u_params_n,
                             "ERROR: params in use (%s) does not match params in defn (%s)" %
-                            (u_prodn_params, def_prodn_params)
+                            (u_param_names, d_production_n._param_names)
                         )
 
                     elif cc_section.attrs['id'] in [
@@ -532,11 +880,9 @@ def check_non_defining_prodns(emu_grammars):
                         pass
 
                     else:
-                        msg_at_posn(u_posn,
-                            f"info: params in a 'use' prodn is unusual: {u_prodn_params}"
+                        msg_at_node(u_params_n,
+                            f"info: params in a 'use' prodn is unusual: {u_param_names}"
                         )
-
-                    # print(lhs_nt, def_prodn_params)
 
                 else:
                     # This is a typical case (~958 occurrences),
@@ -547,7 +893,7 @@ def check_non_defining_prodns(emu_grammars):
                 # The 'def' production doesn't have parameters.
                 # (~430 occurrences)
                 u_lhs_args_are_suppressed = None
-                assert not u_prodn_params
+                assert not u_param_names
 
             # In the use-prodn, we expect rhs-args iff there are lhs-params.
             # u_expect_rhs_args = len(u_prodn_params) > 0
@@ -555,55 +901,62 @@ def check_non_defining_prodns(emu_grammars):
             # --------------------------
             # In 'use' productions, we don't usually have annotations
 
-            for (u_i, u_rhs) in enumerate(u_rhss):
-                annotations = [
-                    item
-                    for item in u_rhs
-                    if item.T not in ['GNT', 'T_lit', 'T_nc']
-                ]
+            u_rhss = u_production_n._rhss
 
-                # For certain productions, allow one annotation:
-                if len(annotations) == 1:
-                    [anno] = annotations
-                    if (
-                        cc_section.section_title == 'Rules of Automatic Semicolon Insertion' and anno.T == 'A_no_LT'
-                        or lhs_nt in [
-                            'DoubleStringCharacter',
-                            'SingleStringCharacter',
-                            'NonEscapeCharacter',
-                            'TemplateCharacter',
-                            'Identifier',
-                            'ClassAtomNoDash',
-                            ]
-                            and anno.T == 'A_but_not'
-                        or lhs_nt == 'NotEscapeSequence' and anno.T == 'LAX'
-                        or lhs_nt == 'CharacterEscape' and anno.T == 'LAX'
-                        or lhs_nt == 'ClassAtomNoDash' and anno.T == 'LAI'
-                        or lhs_nt == 'ExtendedAtom' and anno.T == 'LAI'
-                    ):
-                        continue
+            for u_rhs_n in u_rhss:
 
-                if annotations:
-                    msg_at_posn(u_posn,
-                        f"WARNING: {lhs_nt} RHS#{u_i+1} has {len(annotations)} annotations: {annotations}"
-                    )
+                annotations = []
+                for u_rhs_item_n in u_rhs_n._rhs_items:
+                    if u_rhs_item_n.kind in ['GNT', 'BACKTICKED_THING', 'NAMED_CHAR']:
+                        pass
+                    elif u_rhs_item_n.kind in ['BUT_NOT_SINGLE', 'BUT_NOT_MULTIPLE', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
+                        annotations.append(u_rhs_item_n)
+                    else:
+                        assert 0, u_rhs_item_n.kind
+                        
+
+                for annotation_n in annotations:
+                    if cc_section.section_title == 'Rules of Automatic Semicolon Insertion' and annotation_n.kind == 'NLTH':
+                        # allow it
+                        pass
+                    elif (lhs_nt, annotation_n.kind) in [
+                        ('DoubleStringCharacter', 'BUT_NOT_MULTIPLE'),
+                        ('SingleStringCharacter', 'BUT_NOT_MULTIPLE'),
+                        ('NonEscapeCharacter',    'BUT_NOT_MULTIPLE'),
+                        ('TemplateCharacter',     'BUT_NOT_MULTIPLE'),
+                        ('NotEscapeSequence',     'LAC_SET'),
+                        ('NotEscapeSequence',     'LAC_SINGLE'),
+                        ('Identifier',            'BUT_NOT_SINGLE'),
+                        ('ClassAtomNoDash',       'BUT_NOT_MULTIPLE'),
+                        ('CharacterEscape',       'LAC_SET'),
+                        ('ClassAtomNoDash',       'LAC_SINGLE'),
+                        ('ExtendedAtom',          'LAC_SINGLE'),
+                    ]:
+                        # allow it
+                        pass
+                    else:
+                        msg_at_node(annotation_n,
+                            f"info: unusual to include annotation in 'use' production"
+                        )
 
             # --------------------------
 
-            rmc = RhsMatchesChecker(lhs_nt, u_posn, len(u_rhss))
+            matches = []
 
-            for (u_i, u_rhs) in enumerate(u_rhss):
-                for (def_i, def_rhs) in enumerate(def_rhss):
-                    # Does u_rhs match def_rhs?
+            d_rhss = d_production_n._rhss
 
-                    notes = u_rhs_matches_d_rhs_(u_rhs, def_rhs)
+            for (u_i, u_rhs_n) in enumerate(u_rhss):
+                for (d_i, d_rhs_n) in enumerate(d_rhss):
+                    # Does u_rhs_n match d_rhs_n?
+
+                    notes = u_rhs_matches_d_rhs_(u_rhs_n, d_rhs_n)
                     if notes == False:
-                        # Nope, doesn't match. Try the next def_rhs.
+                        # Nope, doesn't match. Try the next d_rhs_n.
                         continue
 
                     # Yes, it does match...
 
-                    rmc.u_matches_d(u_i, def_i)
+                    matches.append( (u_i, d_i) )
 
                     # ------------------
 
@@ -615,21 +968,21 @@ def check_non_defining_prodns(emu_grammars):
                         notes['nt-args intact'].insert(0, lhs_nt)
 
                     if notes['nt-args suppressed'] and notes['nt-args intact']:
-                        msg_at_posn(u_posn, "gp-ERROR-624?: RHS suppresses args for %s but not for %s" %
+                        msg_at_node(u_production_n, "gp-ERROR-624?: RHS suppresses args for %s but not for %s" %
                             (notes['nt-args suppressed'], notes['nt-args intact'])
                         )
 
                     # ------------------
 
                     if notes['annotations suppressed'] and notes['annotations intact']:
-                        msg_at_posn(u_posn,
+                        msg_at_node(u_production_n,
                             f"WARNING: RHS suppresses some annotations ({notes['annotations suppressed']}) but leaves some intact ({notes['annotations intact']})"
                         )
 
                     # ------------------
 
                     if 0 and notes['optional-GNT']:
-                        print(lhs_nt, def_i, notes['optional-GNT'])
+                        print(lhs_nt, d_i, notes['optional-GNT'])
 
                     # ------------------
 
@@ -642,207 +995,205 @@ def check_non_defining_prodns(emu_grammars):
 
                     # ------------------
 
-                    emu_grammar.summary.append((lhs_nt, def_i, notes['optional-GNT']))
+                    emu_grammar.summary.append((lhs_nt, d_i, notes['optional-GNT']))
 
-            rmc.report()
+            # --------------------------
 
-def u_rhs_matches_d_rhs_(u_rhs, d_rhs):
+            # process matches
+
+            # Each 'use' RHS should match exactly one 'def' RHS.
+            dis_for_ui_ = defaultdict(list)
+            for (u_i, d_i) in matches:
+                dis_for_ui_[u_i].append(d_i)
+            for u_i in range(len(u_rhss)):
+                dis = dis_for_ui_[u_i]
+                u_rhs = u_rhss[u_i]
+                L = len(dis)
+                if L == 0:
+                    msg_at_node(u_rhs,
+                        f"ERROR: RHS#{u_i+1} does not match any defining RHS for {lhs_nt}"
+                    )
+                elif L == 1:
+                    # good
+                    pass
+                else:
+                    msg_at_node(u_rhs,
+                        f"WARNING: RHS#{u_i+1} matches {L} defining RHSs for {lhs_nt} [but probably resolved by guards]"
+                    )
+
+            # As you walk through the 'use' RHSs in order,
+            # the corresponding 'def' RHSs should also be in order
+            # (though with possible 'holes' of course).
+            uis = [u_i for (u_i, d_i) in matches]
+            dis = [d_i for (u_i, d_i) in matches]
+            assert uis == sorted(uis)
+            if dis == sorted(dis):
+                # good
+                pass
+            else:
+                msg_at_posn(self.u_posn,
+                    f"ERROR: 'use' RHSs are out-of-order wrt corresponding def RHSs: {[i+1 for i in all_def_i_s]}"
+                )
+
+            # Each 'def' RHS should match at most one 'use' RHS.
+            # (Actually, it's conceivable that this could happen without being a mistake.
+            # E.g. consider a def RHS that has 2 optional NTs,
+            # and imagine that if both are omitted, then one algorithm applies,
+            # but in any other case, another algorithm applies.
+            # For the latter, you'd need at least two 'use' RHSs to cover the 3 possibilities.
+            # So then a single 'def' RHS would match 2 'use' RHSs.
+            # However, that's pretty unlikely, so I'll deal with it if it ever happens.)
+            uis_for_di_ = defaultdict(list)
+            for (u_i, d_i) in matches:
+                uis_for_di_[d_i].append(u_i)
+            for d_i in range(len(d_rhss)):
+                d_rhs = d_rhss[d_i]
+                uis = uis_for_di_[d_i]
+                L = len(uis)
+                if L in [0, 1]:
+                    # fine
+                    pass
+                else:
+                    # Likely a 'use' RHS has been pasted twice?
+                    u_j_s = [u_i+1 for u_i in u_i_s]
+                    msg_at_posn(self.u_posn,
+                        f"ERROR: RHS#{','.join(u_j_s)} all match def RHS#{d_i+1}"
+                    )
+
+        if emu_grammar.summary == []:
+            stderr(f"! no summary for {emu_grammar.source_text()}")
+
+def u_rhs_matches_d_rhs_(u_rhs_n, d_rhs_n):
     notes = defaultdict(list)
+    u_items = u_rhs_n._rhs_items
+    d_items = d_rhs_n._rhs_items
     u_offset = 0
-    for d_item in d_rhs:
-        if u_offset < len(u_rhs):
-            u_item = u_rhs[u_offset]
-            note = u_item_matches_d_item(u_item, d_item)
+
+    for d_item_n in d_items:
+        if u_offset < len(u_items):
+            u_item_n = u_items[u_offset]
+            note = u_item_matches_d_item(u_item_n, d_item_n)
             if note is not None:
                 # good so far
                 u_offset += 1
                 for (key, val) in note.items(): notes[key].append(val)
                 continue
 
-        note = d_item_doesnt_require_a_matching_u_item(d_item)
+        note = d_item_doesnt_require_a_matching_u_item(d_item_n)
         if note is not None:
-            # Assume that the item was omitted from the u_rhs,
+            # Assume that the item was omitted from the u_rhs_n,
             # and see if we can get a match that way.
             for (key, val) in note.items(): notes[key].append(val)
             continue
 
         return False
 
-    # We've exhausted the d_rhs.
-    # In order to match, we need to have exhausted the u_rhs too.
-    if u_offset != len(u_rhs):
+    # We've exhausted the d_rhs_n.
+    # In order to match, we need to have exhausted the u_rhs_n too.
+    if u_offset != len(u_items):
         return False
 
     return notes
 
-def u_item_matches_d_item(u_item, d_item):
+def u_item_matches_d_item(u_item_n, d_item_n):
     # Returns None if they do not match.
     # Otherwise, returns a dict containing notes about the comparison.
 
-    if u_item.T != d_item.T:
+    if u_item_n.kind != d_item_n.kind:
         # 3058 occurrences
         return None
 
-    # Now we know they have the same type.
+    # Now we know they have the same kind.
 
-    t = u_item.T
+    k = u_item_n.kind
 
     note = {}
 
-    if t == 'GNT':
-        if u_item.n != d_item.n:
+    if k == 'GNT':
+        if u_item_n._nt_name != d_item_n._nt_name:
             # They can't possibly match.
             return None
+
+        nt_name = u_item_n._nt_name
 
         note['L-670'] = 1
         # 2505 occurrences
 
-        if d_item.o:
-            # In the definition, this GNT is optional.
-            if u_item.o:
-                note['optional-GNT'] = (u_item.n, 'either')
+        if d_item_n._is_optional:
+            # In the definition, this GNT has a '?'.
+            # So in the use, the GNT could have a '?' or not
+            # (or the GNT could be absent entirely, but that's handled elsewhere).
+            if u_item_n._is_optional:
+                note['optional-GNT'] = (nt_name, 'either')
                 note['L-678'] = 1
                 # 149 occurrences
             else:
-                note['optional-GNT'] = (u_item.n, 'required')
+                note['optional-GNT'] = (nt_name, 'required')
                 note['L-682'] = 1
                 # 71 occurrences
         else:
-            # In the definition, this GNT is not optional.
-            assert not u_item.o
+            # In the definition, this GNT does not have a '?'
+            # So in the use, it can't have a '?' either.
+            assert not u_item_n._is_optional
             note['L-687'] = 1
             # 2285 occurrences
 
-        if d_item.a:
+        if d_item_n._params:
             # In the definition, this GNT has args.
-            if u_item.a:
-                assert u_item.a == d_item.a
-                note['nt-args intact'] = u_item.n
+            if u_item_n._params:
+                assert u_item_n._params == d_item_n._params
+                note['nt-args intact'] = nt_name
                 note['L-695'] = 1
                 # 23 occurrences
             else:
-                note['nt-args suppressed'] = u_item.n
+                note['nt-args suppressed'] = nt_name
                 note['L-699'] = 1
                 # 1884 occurrences
         else:
             # In the definition, this GNT has no args.
-            assert not u_item.a
+            assert not u_item_n._params
             note['L-703'] = 1
             # 598 occurrences
 
     else:
 
-        if u_item != d_item:
+        if u_item_n.source_text() != d_item_n.source_text():
             return None
 
         note['L-711'] = 1
         # 2523 occurrences
 
-        if t.startswith('A_') or t in ['LAX', 'LAI']:
-            note['annotations intact'] = u_item
+        if k.startswith('NOT_NOT_') or k.startswith('LAC_') or k == 'NLTH':
+            note['annotations intact'] = u_item_n
 
     return note
 
 #    if (
 #        t == A_but_only_if
 #        and
-#        d_item.c == "the integer value of DecimalEscape is 0"
+#        d_item_n.c == "the integer value of DecimalEscape is 0"
 #        and
-#        u_item.c == "&hellip;"
+#        u_item_n.c == "&hellip;"
 #    ):
 #        return 'ellipsify condition in but_only_if'
 #
 #    if (
 #        t == A_but_only_if
 #        and
-#        d_item.c == "the integer value of |DecimalEscape| is 0"
+#        d_item_n.c == "the integer value of |DecimalEscape| is 0"
 #        and
-#        u_item.c == "&hellip;"
+#        u_item_n.c == "&hellip;"
 #    ):
 #        return 'ellipsify condition in but_only_if'
 
-def d_item_doesnt_require_a_matching_u_item(d_item):
-    if type(d_item) in [A_guard, A_id, A_but_only_if, A_but_not, A_no_LT, LAX]:
-        return {'annotations suppressed': d_item}
+def d_item_doesnt_require_a_matching_u_item(d_item_n):
+    if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'BUT_NOT_SINGLE', 'BUT_NOT_MULTIPLE', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
+        return {'annotations suppressed': d_item_n}
 
-    if type(d_item) == GNT and d_item.o:
-        return {'optional-GNT': (d_item.n, 'omitted')}
+    if d_item_n.kind == 'GNT' and d_item_n._is_optional:
+        return {'optional-GNT': (d_item_n._nt_name, 'omitted')}
 
     return None
-
-# ------------------------------------------------------------------------------
-
-class RhsMatchesChecker:
-    def __init__(self, lhs_nt, u_posn, n_u_rhs):
-        self.lhs_nt = lhs_nt
-        self.u_posn = u_posn
-        self.n_u_rhs = n_u_rhs
-        self.def_i_s_for_u_i_ = [
-            [] for i in range(n_u_rhs)
-        ]
-
-    def u_matches_d(self, u_i, def_i):
-        self.def_i_s_for_u_i_[u_i].append(def_i)
-
-    def report(self):
-
-        # Each 'use' RHS should match exactly one 'def' RHS.
-        for (u_i, def_i_s) in enumerate(self.def_i_s_for_u_i_):
-            L = len(def_i_s)
-            if L == 0:
-
-                msg_at_posn(self.u_posn,
-                    f"ERROR: RHS#{u_i+1} does not match any defining RHS for {self.lhs_nt}"
-                )
-            elif L == 1:
-                # good
-                pass
-            else:
-                msg_at_posn(self.u_posn,
-                    f"WARNING: RHS#{u_i+1} matches {L} defining RHSs for {self.lhs_nt} [but probably resolved by guards]"
-                )
-
-        # As you walk through the 'use' RHSs in order,
-        # the corresponding 'def' RHSs should also be in order
-        # (though with possible 'holes' of course).
-        all_def_i_s = []
-        for def_i_s in self.def_i_s_for_u_i_:
-            all_def_i_s.extend(def_i_s)
-        if all_def_i_s == sorted(all_def_i_s):
-            # good
-            pass
-        else:
-            msg_at_posn(self.u_posn,
-                f"ERROR: 'use' RHSs are out-of-order wrt corresponding def RHSs: {[i+1 for i in all_def_i_s]}"
-            )
-
-        # Each 'def' RHS should match at most one 'use' RHS.
-        # (Actually, it's conceivable that this could happen without being a mistake.
-        # E.g. consider a def RHS that has 2 optional NTs,
-        # and imagine that if both are omitted, then one algorithm applies,
-        # but in any other case, another algorithm applies.
-        # For the latter, you'd need at least two 'use' RHSs to cover the 3 possibilities.
-        # So then a single 'def' RHS would match 2 'use' RHSs.
-        # However, that's pretty unlikely, so I'll deal with it if it ever happens.)
-        u_i_s_for_def_i_ = defaultdict(list)
-        for (u_i, def_i_s) in enumerate(self.def_i_s_for_u_i_):
-            for def_i in def_i_s:
-                u_i_s_for_def_i_[def_i].append(u_i)
-        for (def_i, u_i_s) in sorted(u_i_s_for_def_i_.items()):
-            L = len(u_i_s)
-            if L == 0:
-                # can't happen
-                assert 0
-            elif L == 1:
-                # good
-                pass
-            else:
-                # Likely a 'use' RHS has been pasted twice?
-                u_j_s = [u_i+1 for u_i in u_i_s]
-                msg_at_posn(self.u_posn,
-                    f"ERROR: RHS#{','.join(u_j_s)} all match def RHS#{def_i+1}"
-                )
-
 
 # ------------------------------------------------------------------------------
 
@@ -874,7 +1225,8 @@ def check_emu_prodrefs(doc_node):
 
     for (nt_name, nt_info) in info_for_nt_.items():
         if 'A' in nt_info.def_occs:
-            (prodn_posn, _, _) = nt_info.def_occs['A']
+            production_n = nt_info.def_occs['A']
+            prodn_posn = production_n.start_posn
             arena_A_names_with_posn.append((prodn_posn, nt_name))
 
     arena_A_names_with_posn.sort()
@@ -967,7 +1319,15 @@ def approximate_annex_A(doc_node):
 
                 for bc in syntax.block_children:
                     if bc.element_name == 'emu-grammar':
-                        for (_, lhs_symbol, _, _, _) in parse_emu_grammar(bc):
+                        prodns = bc._gnode
+                        assert prodns.kind == 'BLOCK_PRODUCTIONS'
+                        for prodn in prodns.children:
+                            assert prodn.kind == 'MULTILINE_PRODUCTION'
+                            (gnt, _, _) = prodn.children
+                            assert gnt.kind == 'GNT'
+                            (nt, _, _) = gnt.children
+                            assert nt.kind == 'NT'
+                            lhs_symbol = nt.source_text()
                             put(f'    <emu-prodref name={lhs_symbol}></emu-prodref>')
 
                         if syntax.title == 'Supplemental Syntax':
@@ -1140,7 +1500,8 @@ def check_nonterminal_refs(doc_node):
                 param_names_in_args.append(param_name)
 
             arena = 'A' if posn < B_start else 'B' # kludge
-            (_, def_prodn_params, _) = nt_info.get_appropriate_def_occ(arena)
+            def_production_n = nt_info.get_appropriate_def_occ(arena)
+            def_prodn_params = def_production_n._param_names
 
             if param_names_in_args != def_prodn_params:
                 msg_at_posn(posn,
@@ -1151,6 +1512,34 @@ def check_nonterminal_refs(doc_node):
         # XXX: Should check that _opt is compatible with nt's use.
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+grammar_named_ = None
+
+def make_grammars():
+    global grammar_named_
+    grammar_named_ = keydefaultdict(Grammar)
+    for (lhs_symbol, nt_info) in sorted(info_for_nt_.items()):
+
+        # From a parsing point of view, there's really just two grammars,
+        # each with multiple goal symbols.
+        grammar_name = 'syntactic' if nt_info.num_colons == 1 else 'lexical'
+
+        # See Bug 4088: https://tc39.github.io/archives/bugzilla/4088/
+        if grammar_name == 'lexical' and lhs_symbol in [
+            'ReservedWord',
+            'Keyword',
+            'FutureReservedWord',
+            'NullLiteral',
+            'BooleanLiteral',
+        ]:
+            stderr('Changing from lexical to syntactic:', lhs_symbol)
+            grammar_name = 'syntactic'
+
+        for arena in ['A', 'B']:
+            production_n = nt_info.get_appropriate_def_occ(arena)
+            if production_n is None: continue
+
+            grammar_named_[grammar_name + arena].add_prodn(production_n)
 
 def do_grammar_left_right_stuff():
     grammar_lr_f = shared.open_for_output('grammar_lr')
@@ -1176,7 +1565,7 @@ def generate_es_parsers():
 
         g.save_as_json()
 
-        if 1:
+        if 0:
             # An LR approach, which bogged down
             # when I tried to handle lookahead-restrictions:
             g.expand_abbreviations()
@@ -1194,6 +1583,9 @@ def generate_es_parsers():
 
 # ------------------------------------------------------------------------------
 
+# from emu_grammar_tokens import *  # e.g. T_lit, LAX, A_guard
+# terminal_types = [T_lit, T_nc, T_u_p, T_named ]
+
 class Grammar:
     def __init__(this_grammar, name):
         this_grammar.name = name
@@ -1201,9 +1593,10 @@ class Grammar:
 
     # --------------------------------------------------------------------------
 
-    def add_prodn(this_grammar, prodn_posn, lhs_symbol, prodn_params, rhss):
+    def add_prodn(this_grammar, production_n):
+        lhs_symbol = production_n._lhs_symbol
         assert lhs_symbol not in this_grammar.prodn_for_lhs_, lhs_symbol
-        this_grammar.prodn_for_lhs_[lhs_symbol] = (prodn_posn, prodn_params, rhss)
+        this_grammar.prodn_for_lhs_[lhs_symbol] = production_n
 
     # --------------------------------------------------------------------------
 
@@ -1212,19 +1605,14 @@ class Grammar:
         put(this_grammar.name)
         lhs_symbols = set()
         rhs_symbols = set()
-        for (lhs_symbol, (prodn_posn, prodn_params, rhss)) in sorted(this_grammar.prodn_for_lhs_.items()):
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
             lhs_symbols.add(lhs_symbol)
-            for rhs in rhss:
-                for rthing in rhs:
-                    rthing_kind = type(rthing)
-                    if rthing_kind == GNT:
-                        rhs_symbols.add(rthing.n)
-                    elif rthing_kind == A_but_not:
-                        for but in rthing.b:
-                            if type(but) == GNT:
-                                rhs_symbols.add(but.n)
-                    else:
-                        pass
+            for rhs_n in production_n._rhss:
+                def visit(n):
+                    if n.kind == 'GNT':
+                        rhs_symbols.add(n._nt_name)
+                        return 'prune'
+                rhs_n.preorder_traversal(visit)
 
         lhs_not_rhs = lhs_symbols - rhs_symbols
         this_grammar.goal_symbols = sorted(list(lhs_not_rhs))
@@ -1243,44 +1631,42 @@ class Grammar:
         for symbol in this_grammar.named_terminals:
             put('    ', symbol)
 
-        for (lhs_symbol, (prodn_posn, prodn_params, rhss)) in sorted(this_grammar.prodn_for_lhs_.items()):
-            for rhs in rhss:
-                for (r, rthing) in enumerate(rhs):
-                    rthing_kind = type(rthing)
-                    if rthing_kind == GNT and rthing.n in this_grammar.named_terminals:
-                        rhs[r] = T_named(rthing.n)
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
+            for rhs_n in production_n._rhss:
+                def visit(n):
+                    if n.kind == 'GNT' and n._nt_name in this_grammar.named_terminals:
+                        pass
+                        #XXX change n from a 'GNT' node to a 'named terminal' node?
+                rhs_n.preorder_traversal(visit)
 
     # ==========================================================================
 
     def explode_multichar_literals(this_grammar):
         # mcl = "multicharacter literal",
-        #       i.e., a T_lit whose 'c' has more than 1 character.
         #
         #" A <em>lexical grammar</em> for ECMAScript ...
         #" has as its terminal symbols Unicode code points ...
         #
         # So, in the lexical grammar, we explode multicharacter literals.
 
-        def is_mcl(rthing):
-            return type(rthing) == T_lit and len(rthing.c)>1
+        def is_mcl(rhs_item_n):
+            return rhs_item_n.kind == 'BACKTICKED_THING' and len(rhs_item_n._chars)>1
 
-        for (lhs_symbol, (prodn_posn, prodn_params, rhss)) in sorted(this_grammar.prodn_for_lhs_.items()):
-            for rhs in rhss:
-                mcl_posns = [
-                    r
-                    for (r,rthing) in enumerate(rhs)
-                    if is_mcl(rthing)
-                ]
-
-                # Explode them in reverse order
-                for mcl_posn in reversed(mcl_posns):
-                    mcl = rhs[mcl_posn]
-                    assert is_mcl(mcl)
-
-                    rhs[mcl_posn:mcl_posn+1] = [
-                        T_lit(c=char)
-                        for char in mcl.c
-                    ]
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
+            for rhs_n in production_n._rhss:
+                if any(is_mcl(rhs_item_n) for rhs_item_n in rhs_n._rhs_items):
+                    # stderr(f"exploding things in {rhs_n}")
+                    new_rhs_items = []
+                    for rhs_item_n in rhs_n._rhs_items:
+                        if is_mcl(rhs_item_n):
+                            for char in rhs_item_n._chars:
+                                #XXX kludgey
+                                new_node = GNode(0, 0, 'BACKTICKED_THING', [])
+                                new_node._chars = char
+                                new_rhs_items.append(new_node)
+                        else:
+                            new_rhs_items.append(rhs_item_n)
+                    rhs_n._rhs_items = new_rhs_items
 
     # ==========================================================================
 
@@ -1293,21 +1679,21 @@ class Grammar:
             for non_token_name in non_token_names
         ]
 
-        for (lhs_symbol, (prodn_posn, prodn_params, rhss)) in sorted(this_grammar.prodn_for_lhs_.items()):
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
             if lhs_symbol.startswith('InputElement'):
                 ie_rest = lhs_symbol.replace('InputElement', '')
                 # print(lhs_symbol)
-                # print(prodn_params)
-                # print(rhss)
-                assert len(rhss) == 6
-                assert rhss[0:3] == non_token_rhss
-                # del rhss[0:3]
+                # print(production_n._param_names)
+                # print(production_n._rhss)
+                assert len(production_n._rhss) == 6
+                assert production_n._rhss[0:3] == non_token_rhss
+                # del production_n._rhss[0:3]
 
                 this_grammar.prodn_for_lhs_['_Token' + ie_rest] = (
-                    prodn_posn, prodn_params, rhss[3:])
-                del this_grammar.prodn_for_lhs_[lhs_symbol]
+                    production_n._param_names, production_n._rhss[3:]) #!
+                del this_grammar.prodn_for_lhs_[lhs_symbol] 
 
-        this_grammar.prodn_for_lhs_['_NonToken'] = (0, [], non_token_rhss)
+        this_grammar.prodn_for_lhs_['_NonToken'] = (0, [], non_token_rhss) #!
 
     # ==========================================================================
 
@@ -1341,59 +1727,149 @@ class Grammar:
             else:
                 assert 0, x
 
-        all_params = set()
-        all_types = set()
+        def convert_lac(lac_n):
+            if lac_n.kind == 'LAC_SINGLE':
+                [lac_single_op, terminal_seq_n] = lac_n.children
+                T = {
+                    '==': 'LAI',
+                    '!=': 'LAX',
+                }[lac_single_op.source_text()]
+                return {'T': T, 'ts': [convert_terminal_seq_n(terminal_seq_n)]}
+
+            elif lac_n.kind == 'LAC_SET':
+                [lac_set_operand_n] = lac_n.children
+                if lac_set_operand_n.kind == 'NT':
+                    ts = [{'T': 'GNT', 'n': lac_set_operand_n.source_text(), 'a': [], 'o': False}]
+                elif lac_set_operand_n.kind == 'SET_OF_TERMINAL_SEQ':
+                    ts = []
+                    for terminal_seq_n in lac_set_operand_n.children:
+                        ts.append(convert_terminal_seq_n(terminal_seq_n))
+                else:
+                    assert 0
+                return {'T': 'LAX', 'ts': ts}
+            else:
+                assert 0
+
+        def convert_terminal_seq_n(terminal_seq_n):
+            ts = []
+            for terminal_item_n in terminal_seq_n.children:
+                if terminal_item_n.kind == 'BACKTICKED_THING':
+                    t = {'T': 'T_lit', 'c': terminal_item_n._chars}
+                elif terminal_item_n.kind == 'NAMED_CHAR':
+                    t = {'T': 'T_nc', 'n': terminal_item_n.source_text()[4:-4]}
+                elif terminal_item_n.kind == 'NLTH_BAR':
+                    t = {'T': 'A_no_LT'}
+                else:
+                    t = str(terminal_item_n)
+                ts.append(t)
+            return ts
+
+        #XXX This code is just an interim mess that mostly reproduces what the former code did.
+
+        # all_params = set()
+        # all_types = set()
         put('[')
         n_rhss = 0
-        for (lhs_symbol, (prodn_posn, prodn_params, rhss)) in sorted(this_grammar.prodn_for_lhs_.items()):
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
 
-            for param in prodn_params:
-                all_params.add(param)
-            for rhs in rhss:
+            # for param in production_n._param_names: all_params.add(param)
+
+            for rhs_n in production_n._rhss:
                 n_rhss += 1
                 if n_rhss > 1: put(',')
                 put('{')
                 put('  "n": %d,' % n_rhss)
                 put('  "lhs": "%s",' % lhs_symbol)
-                put('  "params": [%s],' % ','.join('"%s"' % param for param in prodn_params))
-                if rhs and type(rhs[0]) == A_guard:
-                    put('  "guard": {"s":"%s", "n":"%s"},' % (rhs[0].s, rhs[0].n))
+                put('  "params": [%s],' % ','.join('"%s"' % param for param in production_n._param_names))
+                if rhs_n._rhs_items and rhs_n._rhs_items[0].kind == 'PARAMS':
+                    p0 = rhs_n._rhs_items[0].children[0]
+                    put('  "guard": {"s":"%s", "n":"%s"},' % p0.groups)
                 else:
                     put('  "guard": null,')
 
                 saved_pre = None
                 runit = None
                 runits = []
-                for (r,rthing) in enumerate(rhs):
-                    all_types.add(rthing.T)
-                    if type(rthing) == A_guard:
+                for (r,rhs_item_n) in enumerate(rhs_n._rhs_items):
+                    K = rhs_item_n.kind
+                    # all_types.add(rhs_item_n.T)
+
+                    if K == 'PARAMS':
                         assert r == 0
                         # already handled above
-                    elif type(rthing) == A_id:
-                        assert r == len(rhs) - 1
+                    elif K == 'LABEL':
+                        assert r == len(rhs_n._rhs_items) - 1
                         # doesn't contribute to parser
 
                     # Things that attach to the following symbol:
                     elif (
-                        (type(rthing) in [LAX,LAI] and r < len(rhs) - 1)
+                        (K.startswith('LAC_') and r < len(rhs_n._rhs_items) - 1)
                     ):
                         assert saved_pre is None
-                        saved_pre = rthing
+                        saved_pre = convert_lac(rhs_item_n)
 
                     # Things that attach to the preceding symbol:
                     elif (
-                        type(rthing) in [A_but_not, A_but_only_if, A_no_LT]
+                        K in ['BUT_NOT_MULTIPLE', 'BUT_NOT_SINGLE', 'BUT_ONLY', 'NLTH']
                         or
-                        (type(rthing) in [LAX,LAI] and r == len(rhs) - 1)
+                        (K.startswith('LAC_') and r == len(rhs_n._rhs_items) - 1)
                     ):
+                        if K == 'NLTH':
+                            post = {'T': 'A_no_LT'}
+                        elif K == 'BUT_ONLY':
+                            post = {'T': 'A_but_only_if', 'c': decode_entities(rhs_item_n.groups[0])}
+                        elif K.startswith('BUT_NOT_'):
+                            b = []
+                            for excludable in rhs_item_n._excludables:
+                                if excludable.kind == 'GNT':
+                                    b.append({'T': 'GNT', 'n': excludable._nt_name, 'a': [], 'o': False})
+                                elif excludable.kind == 'BACKTICKED_THING':
+                                    b.append({'T': 'T_lit', 'c': excludable._chars})
+                                else:
+                                    assert 0
+                            post = {'T': 'A_but_not', 'b': b}
+                        elif K.startswith('LAC_'):
+                            post = convert_lac(rhs_item_n)
+                        else:
+                            post = str(rhs_item_n)
+
                         assert runit is not None
                         assert runit['post'] is None
-                        runit['post'] = rthing
+                        runit['post'] = post
 
                     else:
-                        assert type(rthing) == GNT or type(rthing) in terminal_types
+                        if K == 'GNT':
+                            nt = rhs_item_n._nt_name
+                            if this_grammar.name.startswith('syntactic') and nt in [
+                                'IdentifierName',
+                                'NumericLiteral',
+                                'StringLiteral',
+                                'RegularExpressionLiteral',
+                                'TemplateHead',
+                                'NoSubstitutionTemplate',
+                                'TemplateMiddle',
+                                'TemplateTail'
+                            ]:
+                                rsymbol = {'T': 'T_named', 'n': nt}
+                            else:
+                                a = [
+                                    {'T': 'Arg', 's': sign, 'n': name}
+                                    for (sign, name) in rhs_item_n._params
+                                ]
+                                rsymbol = {'T': 'GNT', 'n': nt, 'a': a, 'o': rhs_item_n._is_optional}
+                        elif K == 'BACKTICKED_THING':
+                            rsymbol = {'T': 'T_lit', 'c': rhs_item_n._chars}
+                        elif K == 'NAMED_CHAR':
+                            rsymbol = {'T': 'T_nc', 'n': rhs_item_n.source_text()[4:-4]}
+                        elif K == 'U_ANY':
+                            rsymbol = {'T': 'T_u_p', 'p': None}
+                        elif K == 'U_PROP':
+                            rsymbol = {'T': 'T_u_p', 'p': rhs_item_n.groups[0]}
+                        else:
+                            assert 0, K
+
                         runit = OrderedDict(
-                            [('pre', saved_pre), ('rsymbol', rthing), ('post', None)]
+                            [('pre', saved_pre), ('rsymbol', rsymbol), ('post', None)]
                         )
                         runits.append(runit)
                         saved_pre = None
@@ -1415,6 +1891,8 @@ class Grammar:
         # print('types:', sorted(list(all_types)))
 
     # ==========================================================================
+
+    #XXX From here down, the code has not been updated to the new GNode representation.
 
     def expand_abbreviations(this_grammar):
         # Expand productions with respect to optionals and parameters.
@@ -1466,57 +1944,57 @@ class Grammar:
                     [prep_symbol, SNT(goal_symbol), this_grammar.eoi_symbol]
                 )
 
-        for (lhs_symbol, (prodn_posn, prodn_params, rhss)) in sorted(this_grammar.prodn_for_lhs_.items()):
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
             if 0:
                 print()
-                print('    ', lhs_symbol, prodn_params)
-                for rhs in rhss:
-                    print('        ', rhs)
+                print('    ', lhs_symbol, production_n._param_names)
+                for rhs_n in production_n._rhss:
+                    print('        ', rhs_n)
 
-            for params_setting in each_params_setting(prodn_params):
+            for params_setting in each_params_setting(production_n._param_names):
                 exp_lhs_symbol = lhs_symbol + ''.join(params_setting)
-                for rhs in rhss:
+                for rhs_n in production_n._rhss:
 
-                    if rhs:
-                        rthing0 = rhs[0]
+                    if rhs_n:
+                        rthing0 = rhs_n[0]
                         if type(rthing0) == A_guard:
                             if (rthing0.s + rthing0.n) in params_setting:
                                 # The guard succeeds (in the current `params_setting`).
                                 pass
                             else:
                                 # The guard fails.
-                                continue # to next rhs
+                                continue # to next rhs_n
 
-                    # count the number of optionals in this rhs
+                    # count the number of optionals in this rhs_n
                     n_optionals = len([
-                        rthing
-                        for rthing in rhs
-                        if type(rthing) == GNT and rthing.o
+                        rhs_item_n
+                        for rhs_item_n in rhs_n._rhs_items
+                        if type(rhs_item_n) == GNT and rhs_item_n._is_optional
                     ])
 
-                    # Generate a different rhs for each combo of optionals
+                    # Generate a different rhs_n for each combo of optionals
                     for include_optional_ in each_boolean_vector_of_length(n_optionals):
 
                         opt_i = 0
                         exp_rhs = []
 
-                        for (i,rthing) in enumerate(rhs):
-                            if type(rthing) == A_guard:
+                        for (i,rhs_item_n) in enumerate(rhs_n._rhs_items):
+                            if type(rhs_item_n) == A_guard:
                                 assert i == 0
                                 # We've already determined that this guard succeeds.
-                                continue # to next rthing
-                            elif type(rthing) == A_id:
-                                assert i == len(rhs)-1
+                                continue # to next rhs_item_n
+                            elif type(rhs_item_n) == A_id:
+                                assert i == len(rhs_n)-1
                                 continue
 
-                            elif type(rthing) in [A_but_only_if, A_but_not, A_no_LT]:
-                                exp_rthing = rthing
+                            elif type(rhs_item_n) in [A_but_only_if, A_but_not, A_no_LT]:
+                                exp_rthing = rhs_item_n
 
-                            elif type(rthing) in [LAX, LAI]:
-                                if type(rthing.ts) in [tuple, list]:
-                                    ts = rthing.ts
+                            elif type(rhs_item_n) in [LAX, LAI]:
+                                if type(rhs_item_n.ts) in [tuple, list]:
+                                    ts = rhs_item_n.ts
                                 else:
-                                    ts = [rthing.ts]
+                                    ts = [rhs_item_n.ts]
 
                                 terminal_sequences = []
                                 for t in ts:
@@ -1528,24 +2006,24 @@ class Grammar:
                                         pass # XXX
                                     else:
                                         assert 0, t
-                                exp_rthing = rthing # XXX something(terminal_sequences)
+                                exp_rthing = rhs_item_n # XXX something(terminal_sequences)
 
-                            elif type(rthing) in terminal_types:
-                                exp_rthing = rthing
+                            elif type(rhs_item_n) in terminal_types:
+                                exp_rthing = rhs_item_n
 
-                            elif type(rthing) == GNT:
-                                exp_rthing = SNT(expand_nt_wrt_params_setting(rthing, params_setting))
-                                if rthing.o:
+                            elif type(rhs_item_n) == GNT:
+                                exp_rthing = SNT(expand_nt_wrt_params_setting(rhs_item_n, params_setting))
+                                if rhs_item_n._is_optional:
                                     include_this_optional = include_optional_[opt_i]
                                     opt_i += 1
                                     if include_this_optional:
                                         pass
                                     else:
                                         # omit the optional
-                                        continue # to next rthing
+                                        continue # to next rhs_item_n
 
                             else:
-                                assert 0, rthing
+                                assert 0, rhs_item_n
 
                             exp_rhs.append(exp_rthing)
 
@@ -1586,23 +2064,23 @@ class Grammar:
 
         this_grammar.min_length_for_nt_named_ = defaultdict(int)
 
-        def min_len(rthing):
-            if type(rthing) == SNT:
-                return this_grammar.min_length_for_nt_named_[rthing.n]
-            elif type(rthing) in terminal_types:
+        def min_len(rhs_item_n):
+            if type(rhs_item_n) == SNT:
+                return this_grammar.min_length_for_nt_named_[rhs_item_n.n]
+            elif type(rhs_item_n) in terminal_types:
                 return 1
-            elif type(rthing) in [LAI, LAX, A_but_not, A_but_only_if, A_no_LT]:
+            elif type(rhs_item_n) in [LAI, LAX, A_but_not, A_but_only_if, A_no_LT]:
                 return 0
             else:
-                assert 0, rthing
+                assert 0, rhs_item_n
 
         while True:
             something_changed = False
             for (exp_lhs, exp_rhss) in this_grammar.exp_prodns.items():
                 new_min_len = min(
                     sum(
-                        min_len(rthing)
-                        for rthing in exp_rhs
+                        min_len(rhs_item_n)
+                        for rhs_item_n in exp_rhs
                     )
                     for exp_rhs in exp_rhss
                 )
@@ -1758,28 +2236,28 @@ class Grammar:
                 assert this_item.dot_posn <= len(this_item.rhs)
 
                 current_lax = None
-                for (rposn, rthing) in enumerate(this_item.rhs):
+                for (rposn, rhs_item_n) in enumerate(this_item.rhs):
                     if rposn < this_item.dot_posn: continue
 
-                    t = type(rthing)
+                    t = type(rhs_item_n)
                     if t in [A_but_only_if, A_but_not, A_no_LT]:
                         pass
 
                     elif t in [LAX,LAI]:
                         assert current_lax is None
-                        current_lax = rthing
+                        current_lax = rhs_item_n
 
                     elif t in terminal_types:
                         if current_lax is not None:
-                            assert this_item.lax_is_satisfied_by_terminal(current_lax, rthing)
+                            assert this_item.lax_is_satisfied_by_terminal(current_lax, rhs_item_n)
                             current_lax = None
 
                         next_item = LR0_Item(this_item.lhs, this_item.rhs, rposn+1)
-                        yield (rthing, next_item)
+                        yield (rhs_item_n, next_item)
                         break # don't look at any further things in the rhs
 
                     elif t == SNT:
-                        nt = rthing
+                        nt = rhs_item_n
                         for derived_rhs in this_grammar.exp_prodns[nt.n]:
                             if current_lax is None:
                                 new_item_rhs = derived_rhs
@@ -1792,11 +2270,11 @@ class Grammar:
                                 yield (None, new_item)
 
                         next_item = LR0_Item(this_item.lhs, this_item.rhs, rposn+1)
-                        yield (rthing, next_item)
+                        yield (rhs_item_n, next_item)
                         break # don't look at any further things in the rhs
 
                     else:
-                        assert 0, rthing
+                        assert 0, rhs_item_n
 
             def lax_is_satisfied_by_terminal(this_item, lax, terminal):
                 return True
@@ -1806,27 +2284,27 @@ class Grammar:
                 assert 0, (lax, terminal)
 
             def lax_plus_rhs(this_item, lax, rhs):
-                rthing = rhs[0]
-                if type(rthing) in terminal_types:
+                rhs_item_n = rhs[0]
+                if type(rhs_item_n) in terminal_types:
                     for lax_thing in lax.ts:
                         assert type(lax_thing) == T_lit
-                        if type(lax_thing) != type(rthing):
+                        if type(lax_thing) != type(rhs_item_n):
                             pass
-                        elif lax_thing == rthing:
+                        elif lax_thing == rhs_item_n:
                             # The LAX prohibits the first symbol of the rhs
                             return None
                         elif ' ' in lax_thing.c:
                             pieces = lax_thing.c.split()
-                            assert pieces[0] != rthing.c
+                            assert pieces[0] != rhs_item_n.c
 
                     # The LAX does not prohibit the first symbol of the rhs.
                     # Therefore, it is redundant.
                     return rhs
-                elif type(rthing) == SNT:
+                elif type(rhs_item_n) == SNT:
                     # Should we determine how lax compares to rhing's language?
                     return [lax] + rhs
                 else:
-                    assert 0, rthing
+                    assert 0, rhs_item_n
                     return [lax] + rhs
                     # --------------------
 
@@ -1944,13 +2422,13 @@ class Grammar:
                         print('    ', lr0_item)
 
                     # assert lr0_item.dot_posn == len(lr0_item.rhs)
-                    # Thats usually true, but not if the last rthing
+                    # Thats usually true, but not if the last rhs_item_n
                     # in the rhs is an annotation.
 
                     n_symbols_in_rhs = sum(
                         1
-                        for rthing in lr0_item.rhs
-                        if type(rthing) == SNT or type(rthing) in terminal_types
+                        for rhs_item_n in lr0_item.rhs
+                        if type(rhs_item_n) == SNT or type(rhs_item_n) in terminal_types
                     )
                     if 0: print('    ', n_symbols_in_rhs)
 
