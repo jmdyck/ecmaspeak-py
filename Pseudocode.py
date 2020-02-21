@@ -1141,6 +1141,7 @@ def annotate_algo(algo):
                     'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
                     "the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
+                    "the internal procedure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     'the UTF16Encoding of each code point of {EX}'     : 'UTF16Encoding',
                     'the UTF16Encoding of the code points of {var}'    : 'UTF16Encoding',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
