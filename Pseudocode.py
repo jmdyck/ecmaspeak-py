@@ -1510,14 +1510,16 @@ def analyze_static_dependencies():
         # ----
 
         put_names(
-            "ops labelled 'Static Semantics' but not reachable from SS starting points",
+            "ops labelled 'Static Semantics' but not reachable from SS starting points [probably okay]",
             op_names_labelled_ss - op_names_reached_from_ss_starting_points
         )
+        # The idea of "SS starting points" is probably not worth much.
 
         put_names(
-            "ops reachable from SS starting points but not labelled 'Static Semantics'",
+            "ops reachable from SS starting points but not labelled 'Static Semantics' [shouldn't happen?]",
             op_names_reached_from_ss_starting_points - op_names_labelled_ss
         )
+        # These should probably be labelled "Static Semantics"?
 
     # ------
 
@@ -1534,12 +1536,12 @@ def analyze_static_dependencies():
                 non_calls_ss.append((op_name, callee_name))
     
     put()
-    put("op labelled 'Static Semantics' calls one that isn't:")
+    put("op labelled 'Static Semantics' calls one that isn't [shouldn't happen?]:")
     for (caller, callee) in ss_calls_non:
         put(f"    {caller} -> {callee}")
 
     put()
-    put("op not labelled 'Static Semantics' calls one that is:")
+    put("op not labelled 'Static Semantics' calls one that is [probably fine]:")
     for (caller, callee) in non_calls_ss:
         put(f"    {caller} -> {callee}")
 
