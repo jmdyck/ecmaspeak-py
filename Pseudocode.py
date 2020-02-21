@@ -1346,6 +1346,15 @@ def analyze_static_dependencies():
     def put(*args):
         print(*args, file=f_deps)
 
+    def put_names(header, names):
+        put()
+        put(header + ':')
+        if names:
+            for name in sorted(names):
+                put(f"    {name}")
+        else:
+            put("    (none)")
+
     # ----------------------------------------------------
 
     # Find and print all the static dependencies:
@@ -1444,10 +1453,10 @@ def analyze_static_dependencies():
     put()
     put('X' * 40)
 
-    put()
-    put('operations referenced but not declared:')
-    for op_name in sorted(op_names_with_no_info):
-        put(f"    {op_name}")
+    put_names(
+        'operations referenced but not declared',
+        op_names_with_no_info
+    )
 
     put()
     put('operations declared but not reached:')
@@ -1500,15 +1509,15 @@ def analyze_static_dependencies():
 
         # ----
 
-        put()
-        put("ops labelled 'Static Semantics' but not reachable from SS starting points:")
-        for op_name in sorted(op_names_labelled_ss - op_names_reached_from_ss_starting_points):
-            put(f"    {op_name}")
+        put_names(
+            "ops labelled 'Static Semantics' but not reachable from SS starting points",
+            op_names_labelled_ss - op_names_reached_from_ss_starting_points
+        )
 
-        put()
-        put("ops reachable from SS starting points but not labelled 'Static Semantics':")
-        for op_name in sorted(op_names_reached_from_ss_starting_points - op_names_labelled_ss):
-            put(f"    {op_name}")
+        put_names(
+            "ops reachable from SS starting points but not labelled 'Static Semantics'",
+            op_names_reached_from_ss_starting_points - op_names_labelled_ss
+        )
 
     # ------
 
