@@ -1520,6 +1520,9 @@ def analyze_static_dependencies():
 
     # ------
 
+    put()
+    put('-' * 40)
+
     if 1:
         op_names_reached_from_ss_starting_points = set()
 
@@ -1565,6 +1568,9 @@ def analyze_static_dependencies():
         # These should probably be labelled "Static Semantics"?
 
     # ------
+
+    put()
+    put('-' * 40)
 
     ss_calls_non = []
     non_calls_ss = []
