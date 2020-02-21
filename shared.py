@@ -83,6 +83,20 @@ class SpecNode:
         assert self.end_posn is not None
         return spec_text[self.start_posn:self.end_posn]
 
+    # ------------------------------------
+
+    def preorder_traversal(self, visit):
+        r = visit(self)
+        if r is None:
+            pass
+        elif r == 'prune':
+            return
+        else:
+            assert 0, r
+
+        for child in self.children:
+            child.preorder_traversal(visit)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 spec_text = None
