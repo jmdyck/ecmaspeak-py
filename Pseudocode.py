@@ -1505,7 +1505,13 @@ def analyze_static_dependencies():
                 ss_reach_op(callee_name, level+1)
 
         ss_reach_op('Early Errors', 0)
+        ss_reach_op('ParseScript', 0)
         ss_reach_op('ParseModule', 0)
+        # ParseModule is unlabelled, suggesting that it's 'Runtime Semantics'
+        # (see https://github.com/tc39/ecma262/pull/1664#issuecomment-522620263 and allemwb's reply)
+        # but if you treat it as such, you get more anomalies.
+        # (And presumably, parsing a module should be Static.)
+        # Ditto ParseScript, except that treating it as Runtime doesn't create more anomalies.
 
         # ----
 
