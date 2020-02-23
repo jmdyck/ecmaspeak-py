@@ -179,6 +179,9 @@ else:
     def header(msg):
         pass
 
+    def msg_at_node(node, msg):
+        msg_at_posn(node.start_posn, msg)
+
     def msg_at_posn(posn, msg):
         (line_num, col_num) = convert_posn_to_linecol(posn)
         msgs_for_line_[line_num].append((col_num, msg))
