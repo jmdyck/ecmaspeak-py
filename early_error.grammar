@@ -14,6 +14,7 @@
 {EE_RULE} :
     <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
+    All Early Error rules for {nonterminal} and its derived productions also apply to the {nonterminal} that is covered by {nonterminal}.
     All Early Error rules for {nonterminal} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}.
     All Early Error rules for {nonterminal} and its derived productions apply to {NAMED_OPERATION_INVOCATION}.
     All early error rules for {nonterminal} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}.
@@ -28,12 +29,8 @@
     It is an early Reference Error if {CONDITION}.
     It is an early Syntax Error if {CONDITION}.
 
-    # PR 1658
-    All Early Error rules for {nonterminal} and its derived productions also apply to the {nonterminal} that is covered by {nonterminal}.
-
 {CONDITION} :
     {CONDITION_1}
-    {CONDITION_1} and if {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or if {CONDITION_1}
@@ -45,6 +42,9 @@
 
     # PR 1668 
     {CONDITION_1}, unless {CONDITION_1}
+
+    # obsoleted by the merge of PR #1658:
+    # {CONDITION_1} and if {CONDITION_1}
 
 {CONDITION_1} :
     any code matches this production
@@ -71,11 +71,8 @@
     {LOCAL_REF} is not covering an? {nonterminal}
     {LOCAL_REF} contains a Unicode escape sequence
     {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same StringValue
-    {LOCAL_REF} derives a phrase that would produce a Syntax Error according to these rules if that phrase were substituted for {PROD_REF}. This rule is recursively applied
     {LOCAL_REF} is an {nonterminal} or an {nonterminal}
     {LOCAL_REF} is contained in strict mode code
-    {LOCAL_REF} is either an {nonterminal} or an {nonterminal}
-    {LOCAL_REF} is neither an {nonterminal} nor an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal} or a {nonterminal}
     {LOCAL_REF} is not present
@@ -103,6 +100,11 @@
     # obsoleted by the merge of PR #1464:
     # {NAMED_OPERATION_INVOCATION} cannot be recognized using the goal symbol {nonterminal} of the ECMAScript RegExp grammar specified in {h_emu_xref}
     # {NAMED_OPERATION_INVOCATION} contains any code points other than `g`, `i`, `m`, `s`, `u`, or `y`, or if it contains the same code point more than once
+
+    # obsoleted by the merge of PR #1658:
+    # {LOCAL_REF} derives a phrase that would produce a Syntax Error according to these rules if that phrase were substituted for {PROD_REF}. This rule is recursively applied
+    # {LOCAL_REF} is either an {nonterminal} or an {nonterminal}
+    # {LOCAL_REF} is neither an {nonterminal} nor an {nonterminal}
 
     # obsoleted by the merge of PR #1724:
     # {NAMED_OPERATION_INVOCATION} contains any code points other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"`, or if it contains the same code point more than once
