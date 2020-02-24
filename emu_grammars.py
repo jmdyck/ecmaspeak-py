@@ -1111,7 +1111,7 @@ def check_nonterminal_refs(doc_node):
     header("checking references to nonterminals (outside of emu-grammar)...")
 
     # kludge:
-    B_start = shared.spec_text.find('namespace=annexB')
+    B_start = shared.spec_text.find('namespace="annexB"')
 
     for mo in re.finditer('\|(\w+?)(?:\[(.*?)\])?(_opt)?\|', shared.spec_text):
         (nt, args, maybe_opt) = mo.groups()
