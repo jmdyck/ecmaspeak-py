@@ -1043,7 +1043,8 @@ single_sentence_rules_str = r'''
 
         (?P<name>_\w+_) called with (?P<pl>.+) performs the following steps:
 
-        (?P<name>\w+) uses the value of (?P<also>_\w+_ that .+).
+        # (?P<name>\w+) uses the value of (?P<also>_\w+_ that .+).
+        # ^ obsoleted by the merge of PR #1879
 
         # (?P<name>\w+) has access to (?P<also>.+).
 
@@ -2114,10 +2115,11 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         return
 
     # InternalizeJSONProperty
-    elif parameter_listing == 'two parameters: a _holder_ object and the String _name_ of a property in that object':
-        oi.param_names = ['_holder_', '_name_']
+    elif parameter_listing == 'three parameters: a _holder_ object, the String _name_ of a property in that object, and a _reviver_ function':
+        oi.param_names = ['_holder_', '_name_', '_reviver_']
         oi.param_nature_['_holder_'] = 'object'
         oi.param_nature_['_name_'] = 'the String name of a property in _holder_'
+        oi.param_nature_['_reviver_'] = 'function'
         return
 
     elif parameter_listing == 'up to three arguments _target_, _start_ and _end_':
