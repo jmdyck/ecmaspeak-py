@@ -716,8 +716,7 @@ def defining_production_check_right(production_n):
                         (prefix, arg_name) = r_arg.groups
                         if prefix not in ['+', '~', '?']:
                             msg_at_node(r_arg,
-                                "gp-ERROR-447: In rhs #%d, arg is missing +~?: %s" %
-                                    (rhs_i + 1, r_arg)
+                                f"ERROR: arg is missing +~?"
                             )
                         r_arg_signs.append(prefix)
                         r_arg_names.append(arg_name)
@@ -726,8 +725,7 @@ def defining_production_check_right(production_n):
 
                     if r_nt_name not in info_for_nt_:
                         msg_at_node(nt_n,
-                            "ERROR: In rhs #%d, refers to undefined nonterminal '%s'" %
-                                (rhs_i + 1, r_nt_name)
+                            f"ERROR: reference to undefined nonterminal 'r_nt_name'"
                         )
                         continue
 
@@ -737,13 +735,11 @@ def defining_production_check_right(production_n):
                     if len(r_arg_names) == len(d_param_names):
                         if r_arg_names != d_param_names:
                             msg_at_node(optional_params_n,
-                                "gp-ERROR-454: In rhs #%d, args are ordered %s but should be %s" %
-                                (rhs_i, r_arg_names, d_param_names)
+                                f"ERROR: args are ordered {r_arg_names} but should be {d_param_names}"
                             )
                     else:
                         msg_at_node(optional_params_n,
-                            "gp-ERROR-459: %s takes %s but is invoked with %s" %
-                            (r_nt_name, d_param_names, r_arg_names)
+                            f"ERROR: {r_nt_name} takes {d_param_names} but is invoked with {r_arg_names}"
                         )
 
                     # Look for valid-but-anomalous args...
@@ -762,13 +758,7 @@ def defining_production_check_right(production_n):
                                 pass
                             else:
                                 msg_at_node(r_arg,
-                                    "gp-WARNING-474: %s has %s param, so you'd normally expect [?%s] in its rhss, but rhs #%d has %s[%s%s]" % (
-                                        production_n._lhs_symbol,
-                                        arg_name,
-                                        arg_name,
-                                        rhs_i + 1,
-                                        r_nt_name, prefix, arg_name
-                                    )
+                                    f"WARNING: {production_n._lhs_symbol} has {arg_name} param, so you'd normally expect [?{arg_name}] in its rhss"
                                 )
                         else:
                             # This arg refers to parameter
@@ -776,8 +766,7 @@ def defining_production_check_right(production_n):
                             # assert prefix != '?', rhs
                             if prefix == '?':
                                 msg_at_node(production_n,
-                                    "gp-ERROR-488: %s does not appear on the prodn's LHS, so cannot be referenced with '?'" %
-                                    arg_name 
+                                    f"ERROR: {arg_name} does not appear on the prodn's LHS, so cannot be referenced with '?'"
                                 )
                             # because you can only use '?' on the RHS
                             # when the parameter is 'declared' on the LHS
@@ -833,7 +822,7 @@ def check_non_defining_prodns(emu_grammars):
 
             if lhs_nt not in info_for_nt_:
                 msg_at_node(u_nt_n,
-                    "ERROR: lhs symbol in 'use' production does not match any defined nonterminal: " + lhs_nt
+                    f"ERROR: lhs symbol {lhs_nt} in 'use' production does not match any defined nonterminal"
                 )
                 continue
 
@@ -844,8 +833,7 @@ def check_non_defining_prodns(emu_grammars):
             u_num_colons = u_production_n._num_colons
             if u_num_colons != nt_info.num_colons:
                 msg_at_node(u_colons_n,
-                    "ERROR: #colons in use (%d) does not match #colons in defn (%d)" %
-                    (u_num_colons, nt_info.num_colons)
+                    f"ERROR: #colons in use ({u_num_colons}) does not match #colons in defn ({nt_info.num_colons})"
                 )
 
             # -----------------------
@@ -862,8 +850,7 @@ def check_non_defining_prodns(emu_grammars):
 
                     if u_param_names != d_production_n._param_names:
                         msg_at_node(u_params_n,
-                            "ERROR: params in use (%s) does not match params in defn (%s)" %
-                            (u_param_names, d_production_n._param_names)
+                            f"ERROR: params in use ({u_param_names}) does not match params in defn ({d_production_n._param_names})"
                         )
 
                     elif cc_section.attrs['id'] in [
@@ -881,7 +868,7 @@ def check_non_defining_prodns(emu_grammars):
 
                     else:
                         msg_at_node(u_params_n,
-                            f"info: params in a 'use' prodn is unusual: {u_param_names}"
+                            f"INFO: params in a 'use' prodn is unusual: {u_param_names}"
                         )
 
                 else:
@@ -936,7 +923,7 @@ def check_non_defining_prodns(emu_grammars):
                         pass
                     else:
                         msg_at_node(annotation_n,
-                            f"info: unusual to include annotation in 'use' production"
+                            f"INFO: unusual to include annotation in 'use' production"
                         )
 
             # --------------------------
@@ -968,7 +955,7 @@ def check_non_defining_prodns(emu_grammars):
                         notes['nt-args intact'].insert(0, lhs_nt)
 
                     if notes['nt-args suppressed'] and notes['nt-args intact']:
-                        msg_at_node(u_production_n, "gp-ERROR-624?: RHS suppresses args for %s but not for %s" %
+                        msg_at_node(u_production_n, "ERROR: RHS suppresses args for %s but not for %s" %
                             (notes['nt-args suppressed'], notes['nt-args intact'])
                         )
 
@@ -1011,14 +998,14 @@ def check_non_defining_prodns(emu_grammars):
                 L = len(dis)
                 if L == 0:
                     msg_at_node(u_rhs,
-                        f"ERROR: RHS#{u_i+1} does not match any defining RHS for {lhs_nt}"
+                        f"ERROR: This RHS does not match any defining RHS for {lhs_nt}"
                     )
                 elif L == 1:
                     # good
                     pass
                 else:
                     msg_at_node(u_rhs,
-                        f"WARNING: RHS#{u_i+1} matches {L} defining RHSs for {lhs_nt} [but probably resolved by guards]"
+                        f"WARNING: This RHS matches {L} defining RHSs for {lhs_nt} [but probably resolved by guards]"
                     )
 
             # As you walk through the 'use' RHSs in order,
@@ -1031,7 +1018,7 @@ def check_non_defining_prodns(emu_grammars):
                 # good
                 pass
             else:
-                msg_at_posn(self.u_posn,
+                msg_at_node(u_rhss[-1],
                     f"ERROR: 'use' RHSs are out-of-order wrt corresponding def RHSs: {[i+1 for i in all_def_i_s]}"
                 )
 
@@ -1056,7 +1043,7 @@ def check_non_defining_prodns(emu_grammars):
                 else:
                     # Likely a 'use' RHS has been pasted twice?
                     u_j_s = [u_i+1 for u_i in u_i_s]
-                    msg_at_posn(self.u_posn,
+                    msg_at_node(u_rhss[-1],
                         f"ERROR: RHS#{','.join(u_j_s)} all match def RHS#{d_i+1}"
                     )
 
@@ -1489,7 +1476,7 @@ def check_nonterminal_refs(doc_node):
                 c = arg[0]
                 if c not in ['?', '+', '~']:
                     msg_at_posn(posn,
-                        "gp-WARNING-753: nonterminal-ref has arg '%s', with no ?+~ prefix" % arg
+                        "WARNING: nonterminal-ref has arg '%s', with no ?+~ prefix" % arg
                     )
                     # Actually, this is okay if it's referring to
                     # an occurrence in the LHS of a use production.
@@ -1505,7 +1492,7 @@ def check_nonterminal_refs(doc_node):
 
             if param_names_in_args != def_prodn_params:
                 msg_at_posn(posn,
-                    "gp-ERROR-770: nonterminal-ref has args '%s', but nonterminal's definition has params '%s'" %
+                    "ERROR: nonterminal-ref has args '%s', but nonterminal's definition has params '%s'" %
                     (args, ', '.join(def_prodn_params))
                 )
 
