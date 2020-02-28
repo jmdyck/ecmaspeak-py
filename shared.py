@@ -148,53 +148,33 @@ def source_line_with_caret_marking_column(posn):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-if 0:
-    # a file containing just messages, with line + column number
+# a file containing a copy of spec.html, with each message under its relevant line
 
-    g_warnings_f = None
+msgs_for_line_ = None
 
-    def msg_at_posn_start():
-        global g_warnings_f
-        g_warnings_f = open_for_output('warnings')
+def msg_at_posn_start():
+    global msgs_for_line_
+    msgs_for_line_ = collections.defaultdict(list)
 
-    def msg_at_posn(posn, msg):
-        (line_num, col_num) = convert_posn_to_linecol(posn)
-        print("line %5d, col %3d: %s" % (line_num, col_num, msg), file=g_warnings_f)
+def header(msg):
+    pass
 
-    def msg_at_posn_finish():
-        g_warnings_f.close()
+def msg_at_node(node, msg):
+    msg_at_posn(node.start_posn, msg)
 
-    def header(msg):
-        print("\n" + msg + "\n", file=g_warnings_f)
+def msg_at_posn(posn, msg):
+    (line_num, col_num) = convert_posn_to_linecol(posn)
+    msgs_for_line_[line_num].append((col_num, msg))
 
-else:
-    # a file containing a copy of spec.html, with each message under its relevant line
-
-    msgs_for_line_ = None
-
-    def msg_at_posn_start():
-        global msgs_for_line_
-        msgs_for_line_ = collections.defaultdict(list)
-
-    def header(msg):
-        pass
-
-    def msg_at_node(node, msg):
-        msg_at_posn(node.start_posn, msg)
-
-    def msg_at_posn(posn, msg):
-        (line_num, col_num) = convert_posn_to_linecol(posn)
-        msgs_for_line_[line_num].append((col_num, msg))
-
-    def msg_at_posn_finish():
-        f = open_for_output('msgs_in_spec.html')
-        for (line_i, line) in enumerate(spec_text.split('\n')):
-            print(line, file=f)
-            line_num = line_i + 1
-            for (col, msg) in sorted(msgs_for_line_[line_num]):
-                print('-' * (col-1) + '^', file=f)
-                print('--', msg, file=f)
-        f.close()
+def msg_at_posn_finish():
+    f = open_for_output('msgs_in_spec.html')
+    for (line_i, line) in enumerate(spec_text.split('\n')):
+        print(line, file=f)
+        line_num = line_i + 1
+        for (col, msg) in sorted(msgs_for_line_[line_num]):
+            print('-' * (col-1) + '^', file=f)
+            print('--', msg, file=f)
+    f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
