@@ -1501,22 +1501,22 @@ def make_grammars():
 
         # From a parsing point of view, there's really just two grammars,
         # each with multiple goal symbols.
-        grammar_name = 'syntactic' if nt_info.num_colons == 1 else 'lexical'
+        grammar_level = 'syntactic' if nt_info.num_colons == 1 else 'lexical'
 
         # See Bug 4088: https://tc39.github.io/archives/bugzilla/4088/
-        if grammar_name == 'lexical' and lhs_symbol in [
+        if grammar_level == 'lexical' and lhs_symbol in [
             'ReservedWord',
             'NullLiteral',
             'BooleanLiteral',
         ]:
             stderr('Changing from lexical to syntactic:', lhs_symbol)
-            grammar_name = 'syntactic'
+            grammar_level = 'syntactic'
 
         for arena in ['A', 'B']:
             production_n = nt_info.get_appropriate_def_occ(arena)
             if production_n is None: continue
 
-            grammar_named_[grammar_name + arena].add_prodn(production_n)
+            grammar_named_[grammar_level + arena].add_prodn(production_n)
 
 def do_grammar_left_right_stuff():
     grammar_lr_f = shared.open_for_output('grammar_lr')
