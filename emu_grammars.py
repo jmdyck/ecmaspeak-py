@@ -1362,15 +1362,7 @@ def approximate_annex_A(doc_node):
                             put(f'    <p>&nbsp;</p>')
                             
                     elif bc.element_name  == 'emu-note':
-                        if 'Use of the following tokens within strict mode code is also reserved.' in bc.source_text():
-                            put('    <p>The following tokens are also considered to be |FutureReservedWord|s when parsing strict mode code:</p>')
-                            put('    <p><emu-t>implements</emu-t> &nbsp;<emu-t>package</emu-t> &nbsp;<emu-t>protected</emu-t><br>')
-                            put('      <emu-t>interface</emu-t> &nbsp;<emu-t>private</emu-t> &nbsp;<emu-t>public</emu-t>')
-                            put('    </p>')
-                            put('    <p>&nbsp;</p>')
-
-                        else:
-                            pass
+                        pass
 
                     else:
                         assert 0
@@ -1514,8 +1506,6 @@ def make_grammars():
         # See Bug 4088: https://tc39.github.io/archives/bugzilla/4088/
         if grammar_name == 'lexical' and lhs_symbol in [
             'ReservedWord',
-            'Keyword',
-            'FutureReservedWord',
             'NullLiteral',
             'BooleanLiteral',
         ]:
