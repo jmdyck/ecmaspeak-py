@@ -44,7 +44,7 @@ def main():
     check_tables()
     check_intrinsics()
     Section.make_and_check_sections()
-    emu_grammars.do_stuff_with_grammars()
+    emu_grammars.do_stuff_with_emu_grammars()
     
     Pseudocode.do_stuff_with_pseudocode()
 

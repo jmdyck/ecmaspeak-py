@@ -14,8 +14,8 @@ from shared import stderr, header, msg_at_node, msg_at_posn, spec, SpecNode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def do_stuff_with_grammars():
-    stderr('do_stuff_with_grammars...')
+def do_stuff_with_emu_grammars():
+    stderr('do_stuff_with_emu_grammars...')
 
     emu_grammars_of_type_ = {
         'definition': [],
