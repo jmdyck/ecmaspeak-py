@@ -73,7 +73,7 @@ def parse_emu_grammar(emu_grammar):
     emu_grammar._gnode = gnode
 
     if gnode is None:
-        stderr(f"! parse_emu_grammar is returning None for {emu_grammar.source_text()}")
+        stderr(f"    parse_emu_grammar is returning None for {emu_grammar.source_text()}")
         return None
 
     # --------------------------------------------
@@ -560,7 +560,7 @@ def process_defining_emu_grammars(emu_grammars):
             defining_production_check_right(production_n)
 
             if production_n._augments:
-                stderr(f"augmenting {production_n._lhs_symbol}")
+                stderr(f"    augmenting {production_n._lhs_symbol}")
                 nt_info = info_for_nt_[production_n._lhs_symbol]
                 base_production_n = nt_info.get_appropriate_def_occ('A')
                 production_n._rhss = base_production_n._rhss + production_n._rhss
@@ -680,7 +680,7 @@ def check_reachability():
 
     for (nt, nt_info) in sorted(info_for_nt_.items()):
         if 'A' in nt_info.def_occs and nt_info.num_colons != 1 and nt not in lexical_symbols:
-            print('lexical symbol not reached:', nt)
+            stderr('    lexical symbol not reached:', nt)
 
 # ------------------------------------------------------------------------------
 
@@ -1048,7 +1048,7 @@ def check_non_defining_prodns(emu_grammars):
                     )
 
         if emu_grammar.summary == []:
-            stderr(f"! no summary for {emu_grammar.source_text()}")
+            stderr(f"    no summary for {emu_grammar.source_text()}")
 
 def u_rhs_matches_d_rhs_(u_rhs_n, d_rhs_n):
     notes = defaultdict(list)
@@ -1509,7 +1509,7 @@ def make_grammars():
             'NullLiteral',
             'BooleanLiteral',
         ]:
-            stderr('Changing from lexical to syntactic:', lhs_symbol)
+            stderr('    Changing from lexical to syntactic:', lhs_symbol)
             grammar_level = 'syntactic'
 
         for arena in ['A', 'B']:
@@ -1534,7 +1534,7 @@ def generate_es_parsers():
     for (grammar_name, g) in sorted(grammar_named_.items()):
         # stderr()
         # stderr('---------------------------')
-        stderr(grammar_name)
+        stderr(f"    {grammar_name}")
 
         if grammar_name.startswith('lexical'):
             g.explode_multichar_literals()
