@@ -722,27 +722,23 @@ def analyze_other_section(section):
         emu_alg = section.block_children[emu_alg_posn]
 
         if section.section_title == 'Algorithm Conventions':
-            assert n_emu_algs == 1
             # It's just the example of algorithm layout.
             # Skip it.
             pass
 
         elif section.section_title == 'Static Semantics' and section.section_num == '5.2.4':
-            assert n_emu_algs == 1
             # It's the default definition of Contains
             preamble_text = section.block_children[emu_alg_posn-1].source_text()
             assert preamble_text.endswith('The default definition of Contains is:</p>')
             handle_composite_sdo('Contains', None, emu_alg, section)
 
         elif section.section_title == 'Array.prototype [ @@unscopables ]':
-            assert n_emu_algs == 1
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
             handle_solo_op('initializer for @@unscopables', emu_alg, section)
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
-            assert n_emu_algs == 1
             # In addition to telling you about the intrinsic object,
             # it also defines an abstract operation that is used
             # by the object's function properties.
