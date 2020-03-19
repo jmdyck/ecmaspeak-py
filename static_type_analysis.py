@@ -9341,7 +9341,7 @@ def tc_cond_(cond, env0, asserting):
         # XXX For String, change spec to "is [not] the empty String" ?
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : We've reached the starting point of an `import *` circularity":
+    elif p == r"{CONDITION_1} : We've reached the starting point of an `export *` circularity":
         [] = children
         return (env0, env0)
 

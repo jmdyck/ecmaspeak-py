@@ -459,7 +459,7 @@
     This is a circular import request
     This is an attempt to change the value of an immutable binding
     This method is never invoked. See {h_emu_xref}
-    We've reached the starting point of an `import *` circularity
+    We've reached the starting point of an `export *` circularity
     When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When {SETTABLE} is instantiated it will have a direct binding for {var}
