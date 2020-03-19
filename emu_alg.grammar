@@ -654,6 +654,7 @@
     {var} has {var} in its range
     {var} imports a specific binding for this export
     {var} is a Completion Record
+    {var} is a Continuation
     {var} is a Cyclic Module Record
     {var} is a Data Block
     {var} is a Lexical Environment
@@ -689,6 +690,7 @@
     {var} is a ResolvedBinding Record
     {var} is a Shared Data Block
     {var} is a State
+    {var} is a String
     {var} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} is a UTF-16 code unit
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
@@ -946,23 +948,43 @@
 # ---------------------------------------------------------------
 
 {MULTILINE_EXPR} :
+    a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following steps when called:{IND_COMMANDS}
     a set of characters containing the sixty-three characters:{nlai}{h_figure}
-    an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}
-    an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}
-    an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
-    the string-concatenation of:{I_BULLETS}
     the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
+    the string-concatenation of:{I_BULLETS}
 
     # obsoleted by the merge of PR #1797:
     # an internal AssertionTester closure that takes a State argument {var} and performs the following steps:{IND_COMMANDS}
 
+    # obsoleted by the merge of PR #1899:
+    # an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}
+    # an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}
+    # an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
+
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
 
+{CLOSURE_KIND} :
+    Continuation
+    Matcher
+    abstract closure
+
+{CLOSURE_PARAMETERS} :
+    parameters ({var})
+    parameters ({var}, {var})
+
+{CLOSURE_CAPTURES} :
+    nothing
+    {var}
+    {var} and {var}
+    {var}, {var}, and {var}
+    {var}, {var}, {var}, and {var}
+    {var}, {var}, {var}, {var}, {var}, and {var}
+    {var}, {var}, {var}, {var}, {var}, {var}, {var}, and {var}
+
+
 {EXPR} :
     Type({var})
-    a Continuation that always returns its State argument as a successful MatchResult
-    a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
     a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
     a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}
     a List consisting of the sequence of code units that are the elements of {var}
@@ -991,12 +1013,11 @@
     a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation
     a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
     a List whose sole item is {var}
-    a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}
     a String according to {h_emu_xref}
     a String containing one instance of each code unit valid in {nonterminal}
     a String containing one instance of each code unit valid in {nonterminal} and {nonterminal} plus {STR_LITERAL}
     a String containing one instance of each code unit valid in {nonterminal} plus {STR_LITERAL}
-    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the internal procedure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the internal procedure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
+    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the abstract closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the abstract closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {DOTTING}
     a copy of {var}
@@ -1317,6 +1338,11 @@
     # the Element Size specified in {h_emu_xref} for Element Type {var}
     # the Element Size value in {h_emu_xref} for {var}
 
+    # obsoleted by the merge of PR #1889:
+    # a Continuation that always returns its State argument as a successful MatchResult
+    # a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
+    # a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}
+
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object
     a new {ENVIRONMENT_RECORD_KIND} Scope Record
@@ -1435,8 +1461,8 @@
     evaluating {LOCAL_REF} with argument {var}
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
+    the abstract closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
-    the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}

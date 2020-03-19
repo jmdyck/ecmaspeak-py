@@ -246,7 +246,11 @@ def create_operation_info_for_section(s):
     # but we don't want to create emu-operation-header elements for any of them,
     # because we can't really apply STA to them.
 
-    if s.section_title in ['Algorithm Conventions', 'Syntax-Directed Operations']:
+    if s.section_title in [
+        'Algorithm Conventions',
+        'Syntax-Directed Operations',
+        'The Abstract Closure Specification Type',
+    ]:
         # Its emu-algs are just examples.
         return
     elif s.section_kind == 'shorthand':
@@ -3842,7 +3846,10 @@ def member_is_a_subtype_or_equal(A, B):
 
     elif isinstance(A, ProcType):
         if isinstance(B, ProcType):
-            assert 0, (A, B)
+            if A.param_types == B.param_types:
+                return A.return_type.is_a_subtype_of_or_equal_to(B.return_type)
+            else:
+                assert 0, (A, B)
         elif isinstance(B, NamedType):
             return (T_proc_.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
@@ -7905,6 +7912,10 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_constructor_object_, asserting)
 
+    elif p == r"{CONDITION_1} : {var} is a Continuation":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Continuation, asserting)
+
     elif p == r"{CONDITION_1} : {var} is a Cyclic Module Record":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Cyclic_Module_Record, asserting)
@@ -8195,9 +8206,14 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_State, asserting)
 
-    elif p == r'{CONDITION_1} : {EX} is a String value':
+    elif p in [
+        r'{CONDITION_1} : {EX} is a String value',
+        r"{CONDITION_1} : {var} is a String",
+    ]:
         [ex] = children
-        if (
+        if ex.prod.lhs_s == '{var}':
+            return env0.with_type_test(ex, 'is a', T_String, asserting)
+        elif (
             ex.prod.rhs_s == '{LOCAL_REF}'
             and
             ex.children[0].prod.rhs_s == '{SETTABLE}'
@@ -12957,7 +12973,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_RegExpMatcher_, env0)
 # ^ obsoleted by PR 1552
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [emu_xref, chars_var, nont, f_var] = children
         env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
         env0.assert_expr_is_of_type(f_var, T_String)
@@ -12967,48 +12983,104 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Continuation, env0)
 
-    elif p == r"{EXPR} : a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}":
-        [state_param, pp] = children
-        env_for_body = env0.plus_new_entry(state_param, T_State)
-        (pp_type, env1) = tc_expr(pp, env_for_body)
-        assert pp_type == T_MatchResult
-        return (T_Continuation, env0)
+#    elif p == r"{EXPR} : a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}":
+#        [state_param, pp] = children
+#        env_for_body = env0.plus_new_entry(state_param, T_State)
+#        (pp_type, env1) = tc_expr(pp, env_for_body)
+#        assert pp_type == T_MatchResult
+#        return (T_Continuation, env0)
+#
+#    elif p in [
+#        r"{MULTILINE_EXPR} : an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}",
+#    ]:
+#        [state_param, commands] = children
+#        env_for_commands = env0.plus_new_entry(state_param, T_State)
+#        defns = [(None, commands)]
+#        env_after_commands = tc_proc(None, defns, env_for_commands)
+#        closure_t = T_Continuation
+#        assert env_after_commands.vars['*return*'].is_a_subtype_of_or_equal_to(closure_t.return_type)
+#        return (closure_t, env0)
+#
+#    elif p == r"{MULTILINE_EXPR} : an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}":
+#        [state_param, cont_param, commands] = children
+#        env_for_commands = env0.plus_new_entry(state_param, T_State).plus_new_entry(cont_param, T_Continuation)
+#        defns = [(None, commands)]
+#        env_after_commands = tc_proc(None, defns, env_for_commands)
+#        # returns from within `commands`
+#        # contribute to the matcher's return type,
+#        # not to the current operation's.
+#        assert env_after_commands.vars['*return*'] == T_MatchResult
+#        return (T_Matcher, env0)
+#
+#    elif p == r"{EXPR} : a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}":
+#        [state_param, cont_param, prefix_paren] = children
+#        env_for_pp = env0.plus_new_entry(state_param, T_State).plus_new_entry(cont_param, T_Continuation)
+#        (t, env1) = tc_expr(prefix_paren, env_for_pp)
+#        assert t == T_MatchResult
+#        return (T_Matcher, env0)
+#
+#    elif p == r"{MULTILINE_EXPR} : an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}":
+#        [s_param, i_param, commands] = children
+#        env_for_commands = env0.plus_new_entry(s_param, T_String).plus_new_entry(i_param, T_Integer_)
+#        defns = [(None, commands)]
+#        env_after_commands = tc_proc(None, defns, env_for_commands)
+#        t  = ProcType([T_String, T_Integer_], T_MatchResult)
+#        return (t, env0)
+# ^ obsoleted by PR #1889
 
-    elif p in [
-        r"{MULTILINE_EXPR} : an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}",
-    ]:
-        [state_param, commands] = children
-        env_for_commands = env0.plus_new_entry(state_param, T_State)
+    elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following steps when called:{IND_COMMANDS}":
+        [clo_kind, clo_parameters, clo_captures, commands] = children
+        clo_kind = clo_kind.source_text()
+
+        #XXX Should assert no intersection between clo_parameters and clo_captures
+
+        # -----
+
+        env_for_commands = Env()
+
+        n_parameters = len(clo_parameters.children)
+        if clo_kind == 'abstract closure':
+            clo_param_types = [T_TBD] * n_parameters
+            alsos = [
+                # See #sec-pattern
+                ('_Unicode_',          T_Boolean),
+                ('_NcapturingParens_', T_Integer_),
+            ]
+        elif clo_kind == 'Continuation':
+            assert n_parameters == 1
+            clo_param_types = [T_State]
+            alsos = [
+                ('_Input_',       ListType(T_character_)),
+            ]
+        elif clo_kind == 'Matcher':
+            assert n_parameters == 2
+            clo_param_types = [T_State, T_Continuation]
+            alsos = [
+                # See BackreferenceMatcher
+                ('_InputLength_', T_Integer_),
+                ('_Input_',       ListType(T_character_)),
+                ('_Multiline_',   T_Boolean),
+            ]
+        else:
+            assert 0, clo_kind
+
+        for (clo_param_var, clo_param_type) in zip(clo_parameters.children, clo_param_types):
+            env_for_commands = env_for_commands.plus_new_entry(clo_param_var, clo_param_type)
+
+        for clo_capture_var in clo_captures.children:
+            clo_capture_type = env0.lookup(clo_capture_var)
+            env_for_commands = env_for_commands.plus_new_entry(clo_capture_var, clo_capture_type)
+
+        for (pn, pt) in alsos:
+            env_for_commands = env_for_commands.plus_new_entry(pn, pt)
+
+        env_for_commands.vars['*return*'] = T_0
+
+        # -----
+
         defns = [(None, commands)]
         env_after_commands = tc_proc(None, defns, env_for_commands)
-        closure_t = T_Continuation
-        assert env_after_commands.vars['*return*'].is_a_subtype_of_or_equal_to(closure_t.return_type)
-        return (closure_t, env0)
-
-    elif p == r"{MULTILINE_EXPR} : an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}":
-        [state_param, cont_param, commands] = children
-        env_for_commands = env0.plus_new_entry(state_param, T_State).plus_new_entry(cont_param, T_Continuation)
-        defns = [(None, commands)]
-        env_after_commands = tc_proc(None, defns, env_for_commands)
-        # returns from within `commands`
-        # contribute to the matcher's return type,
-        # not to the current operation's.
-        assert env_after_commands.vars['*return*'] == T_MatchResult
-        return (T_Matcher, env0)
-
-    elif p == r"{EXPR} : a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}":
-        [state_param, cont_param, prefix_paren] = children
-        env_for_pp = env0.plus_new_entry(state_param, T_State).plus_new_entry(cont_param, T_Continuation)
-        (t, env1) = tc_expr(prefix_paren, env_for_pp)
-        assert t == T_MatchResult
-        return (T_Matcher, env0)
-
-    elif p == r"{MULTILINE_EXPR} : an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}":
-        [s_param, i_param, commands] = children
-        env_for_commands = env0.plus_new_entry(s_param, T_String).plus_new_entry(i_param, T_Integer_)
-        defns = [(None, commands)]
-        env_after_commands = tc_proc(None, defns, env_for_commands)
-        t  = ProcType([T_String, T_Integer_], T_MatchResult)
+        t = ProcType(clo_param_types, env_after_commands.vars['*return*'])
         return (t, env0)
 
     # -------------------------------------------------
@@ -14001,7 +14073,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
         return (var_t, env0)
 
-    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the internal procedure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the internal procedure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
+    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the abstract closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the abstract closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
         # XXX
         return (T_String, env0)
 

@@ -751,6 +751,12 @@ def analyze_other_section(section):
 
             handle_solo_op(op_name, emu_alg, section)
 
+        elif section.section_title == 'The Abstract Closure Specification Type':
+            # The emu-alg is an example showing the definition and use
+            # of an abstract closure.
+            # Skip it.
+            pass
+
         else:
             assert 0, section.section_title
 
@@ -1136,7 +1142,7 @@ def annotate_algo(algo):
                     'evaluating {LOCAL_REF} with argument {var}'       : 'regexp-Evaluate',
                     'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
-                    "the internal procedure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
+                    "the abstract closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     "the internal procedure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     'the UTF16Encoding of each code point of {EX}'     : 'UTF16Encoding',
                     'the UTF16Encoding of the code points of {var}'    : 'UTF16Encoding',
