@@ -26,7 +26,6 @@
     Add the characters in set {var} to set {var}.
     Add {EX} as the last element of {var}.
     Add {var} as an element of the list {var}.
-    Add {var} at the back of the Job Queue named by {var}.
     Add {var} to the end of the list of waiters in {var}.
     Add {var} to the end of {var}.
     Add {var} to {var}.
@@ -75,7 +74,6 @@
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
     IfAbruptRejectPromise({var}, {var}).
-    In an implementation-dependent manner, obtain the ECMAScript source texts (see clause {h_emu_xref}) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {var} and {var}, do{IND_COMMANDS}
     Insert {var} as the first element of {var}.
     Leave the critical section for {var}.
     Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
@@ -93,7 +91,6 @@
     Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-dependent approximation to the mathematical integer value that is represented by {var} in radix-{var} notation.)
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
     Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)
-    Let {var} be {EXPR}. Remove that record from {var}.
     Let {var} be {EXPR}. This variable will be used throughout the algorithms in {h_emu_xref}.
     Let {var} be {MULTILINE_EXPR}
     Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even.
@@ -110,8 +107,6 @@
     Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.
     Perform an implementation-defined debugging action.
     Perform an implementation-dependent sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
-    Perform any implementation or host environment defined job initialization using {var}.
-    Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following substeps in an implementation-dependent order, possibly interleaving parsing and error detection:{IND_COMMANDS}
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
@@ -164,7 +159,6 @@
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
     Suspend the currently running execution context.
-    Suspend the running execution context and remove it from the execution context stack.
     Suspend {var} and remove it from the execution context stack.
     Suspend {var}.
     The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.
@@ -181,6 +175,14 @@
 
     # obsoleted by the merge of PR #1460:
     # Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
+
+    # obsoleted by the merge of PR #1597:
+    # Add {var} at the back of the Job Queue named by {var}.
+    # In an implementation-dependent manner, obtain the ECMAScript source texts (see clause {h_emu_xref}) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {var} and {var}, do{IND_COMMANDS}
+    # Let {var} be {EXPR}. Remove that record from {var}.
+    # Perform any implementation or host environment defined job initialization using {var}.
+    # Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.
+    # Suspend the running execution context and remove it from the execution context stack.
 
     # obsoleted by the merge of PR #1604:
     # Add 1 to {var}.
@@ -440,7 +442,6 @@
     @ is {EX}
     A `default` export was not explicitly defined by this module
     A unique such {nonterminal} is found
-    All dependencies of {var} have been transitively resolved and {var} is ready for evaluation
     All named exports from {var} are resolvable
     Evaluate has already been invoked on {var} and successfully completed
     GlobalSymbolRegistry does not currently contain an entry for {var}
@@ -449,7 +450,6 @@
     The calling agent is not in the critical section for any WaiterList
     The execution context stack has at least two elements
     The execution context stack is not empty
-    The execution context stack is now empty
     The following loop will terminate
     The next step never returns an abrupt completion because {CONDITION_1}
     The value of {SETTABLE} is {LITERAL}
@@ -472,7 +472,6 @@
     for all nonnegative integers {var} less than {var}, {CONDITION_1}
     it must be in the object Environment Record
     its value is either {LITERAL} or {LITERAL}
-    its value is the name of a Job Queue recognized by this implementation
     its value is {LITERAL}
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
@@ -673,7 +672,6 @@
     {var} is a List of errors
     {var} is a List of internal slot names
     {var} is a List of property keys
-    {var} is a List that has the same number of elements as the number of parameters required by {var}
     {var} is a List whose elements are all ECMAScript language values
     {var} is a Module Record
     {var} is a Parse Node
@@ -780,10 +778,7 @@
     {var} is the String value {STR_LITERAL}
     {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
     {var} is the execution context of a generator
-    {var} is the name of a Job
     {var} is the same Number value as {var}
-    {var} is the source code of a module
-    {var} is the source code of a script
     {var} is the value {LITERAL}
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
@@ -823,6 +818,15 @@
     # {CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
     # {CONDITION_1} : {var} is an integer such that {CONDITION_1}
     # {CONDITION_1} : {var} is an integer value &ge; 0
+
+    # obsoleted by the merge of PR #1597:
+    # All dependencies of {var} have been transitively resolved and {var} is ready for evaluation
+    # The execution context stack is now empty
+    # its value is the name of a Job Queue recognized by this implementation
+    # {var} is a List that has the same number of elements as the number of parameters required by {var}
+    # {var} is the name of a Job
+    # {var} is the source code of a module
+    # {var} is the source code of a script
 
     # obsoleted by the merge of PR #1614:
     # the {DSBN} fields of {var} and {var} are the Boolean negation of each other
@@ -966,10 +970,12 @@
 
 {CLOSURE_KIND} :
     Continuation
+    Job abstract closure
     Matcher
     abstract closure
 
 {CLOSURE_PARAMETERS} :
+    no parameters
     parameters ({var})
     parameters ({var}, {var})
 
@@ -1048,7 +1054,6 @@
     a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
     a newly created Property Descriptor with no fields
     a newly created object with an internal slot for each name in {var}
-    a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined
     a one-element CharSet containing the character {var}
     a reference to the list of waiters in {var}
     a value of Number type, whose value is {EXPR}
@@ -1099,7 +1104,6 @@
     the Number value that corresponds to {var}
     the Number value that is the same sign as {var} and whose magnitude is {EX}
     the Number value that results from rounding {EX} as described below
-    the PendingJob record at the front of {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
     the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-dependent, however the algorithm should be a generalization of that specified in {h_emu_xref}
@@ -1323,6 +1327,10 @@
     # the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     # the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
 
+    # obsoleted by the merge of PR #1597:
+    # a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined
+    # the PendingJob record at the front of {var}
+
     # obsoleted by the merge of PR #1602:
     # a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
     # a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
@@ -1371,11 +1379,7 @@
     ({EX})
     *this* value
     NewTarget
-    PromiseReactionJob
-    PromiseResolveThenableJob
-    ScriptEvaluationJob
     The remainder of dividing {EX} by {EX}
-    TopLevelModuleEvaluationJob
     Type({var})::unit
     \u00ab {EXLIST} \u00bb
     a newly created {ERROR_TYPE} object
@@ -1431,6 +1435,12 @@
     {var}'s _endIndex_
     {var}'s _endIndex_ value
 
+    # obsoleted by the merge of PR #1597:
+    # PromiseReactionJob
+    # PromiseResolveThenableJob
+    # ScriptEvaluationJob
+    # TopLevelModuleEvaluationJob
+
     # PR 1668 private fields
     \u00ab \u00bb
 
@@ -1462,7 +1472,6 @@
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
     the abstract closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-    the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}
@@ -1480,6 +1489,9 @@
 
     # obsoleted by the merge of PR #1571:
     # StringValue of the {nonterminal} of {nonterminal} {var}
+
+    # obsoleted by the merge of PR #1597:
+    # the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
 
     ## directed-operations:
     ## {nonterminal}.\w+() as defined in {h_emu_xref}
@@ -1572,7 +1584,6 @@
     AsyncGeneratorRequest
     Chosen Value Record
     Completion
-    PendingJob
     PropertyDescriptor
     ReadModifyWriteSharedMemory
     ReadSharedMemory
@@ -1587,6 +1598,9 @@
     the PromiseReaction
     the PropertyDescriptor
     the Record
+
+    # obsoleted by the merge of PR #1597:
+    # PendingJob
 
     # PR 1477 scope-records:
     Lexical Environment

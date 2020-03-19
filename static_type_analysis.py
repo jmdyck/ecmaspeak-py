@@ -713,16 +713,18 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "A" or "An"
 
-        A (?P<name>\w+) with parameters (?P<pl>.+) (is a job that .+)
-        v=A \1 \3
+        # A (?P<name>\w+) with parameters (?P<pl>.+) (is a job that .+)
+        # v=A \1 \3
+        # ^ obsoleted by the merge of PR #1597
 
         A (?P<pl>candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
         v=\2 \3 if this operation \5.
 
         (?P<retn>A Boolean value) is returned.
 
-        A (?P<name>TopLevelModuleEvaluationJob) (is a job .+)
-        v=!OP \2
+        # A (?P<name>TopLevelModuleEvaluationJob) (is a job .+)
+        # v=!OP \2
+        # ^ obsoleted by the merge of PR #1597
 
         A (?P<name>.+) function is an (?P<kind>anonymous built-in function).
 
@@ -814,10 +816,12 @@ single_sentence_rules_str = r'''
 
         The (?P<kind>internal comparison abstract operation) (?P<name>\w+)\((?P<pl>_x_, _y_)\), where (?P<ps>.+), produces (?P<retn>.+).
 
-        The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) performs the following steps:
+        # The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) performs the following steps:
+        # ^ obsoleted by the merge of PR #1597
 
-        The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) ((applies|parses,) .+)
-        v=The job \4
+        # The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) ((applies|parses,) .+)
+        # v=The job \4
+        # ^ obsoleted by the merge of PR #1597
 
         The operation (.+)
         v=!OP \1
@@ -1112,6 +1116,9 @@ single_sentence_rules_str = r'''
 
         !OP takes (?P<pl>.+), and performs the following steps in order to return (.+)
         v=!OP returns \2
+
+        !OP takes (?P<pl>.+) and (returns .+)
+        v=!OP \2
 
         !OP takes (?P<pl>a code unit argument _C_) and represents it (as .+)
         v=!OP represents _C_ \2
@@ -5089,6 +5096,7 @@ class Env:
                 '_srcBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 '_targetBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 'the result of performing NamedEvaluation for |Initializer| with argument _bindingId_',
+                '_handler_', # NewPromiseReactionJob
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -10961,6 +10969,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype.is_a_subtype_of_or_equal_to(T_Reference):
                         # Completion Record's [[Value]] can be a Reference, despite the definition of CR?
                         result_memtype = memtype
+                    elif memtype == T_Realm_Record:
+                        # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
+                        result_memtype = memtype
                     elif memtype in [T_not_returned, ListType(T_code_unit_), T_Top_]:
                         # hm.
                         result_memtype = memtype
@@ -11073,7 +11084,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # 'GeneratorContext': Generator Instance
 
             if dsbn_name == 'Realm':
-                assert candidate_type_names == ['Cyclic Module Record', 'Module Record', 'PendingJob', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
+                assert candidate_type_names == ['Cyclic Module Record', 'Job_record_', 'Module Record', 'PendingJob', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
                 if lhs_text == '_scriptRecord_':
                     lhs_t = T_Script_Record
                 elif lhs_text == '_module_':
@@ -11146,6 +11157,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         'templateMap_entry_',
                         'methodDef_record_',
                         'CodePointAt_record_',
+                        'Job_record_',
                     ]:
                         pd_fields = fields_for_record_type_named_[record_type_name]
                         if dsbn_name in pd_fields:
@@ -13061,6 +13073,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 ('_Input_',       ListType(T_character_)),
                 ('_Multiline_',   T_Boolean),
             ]
+        elif clo_kind == 'Job abstract closure':
+            assert n_parameters == 0
+            clo_param_types = []
+            alsos = []
         else:
             assert 0, clo_kind
 
@@ -13135,9 +13151,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         [var_name] = var.children
-        assert var_name in env0.vars, var_name # XXX else complain
-        t = env0.vars[var_name]
-        # print("the type of %s is %s" % (var_name, t))
+        if var_name not in env0.vars:
+            add_pass_error(
+                var,
+                "NOT DEFINED"
+            )
+            t = T_TBD
+        else:
+            t = env0.vars[var_name]
+            # print("the type of %s is %s" % (var_name, t))
         return (t, env0)
 
     elif p == r'{EXPR} : the Agent Record of the surrounding agent':
@@ -14833,6 +14855,12 @@ fields_for_record_type_named_ = {
     'ResolvingFunctions_record_': {
         'Resolve' : T_function_object_,
         'Reject'  : T_function_object_,
+    },
+
+    # 39769: NO TABLE, not even mentioned
+    'Job_record_': {
+        'Job'  : ProcType([], T_Tangible_),
+        'Realm': T_Realm_Record,
     },
 
     # 39784: PerformPromiseAll NO TABLE, not even mentioned

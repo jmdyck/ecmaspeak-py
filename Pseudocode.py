@@ -1412,7 +1412,7 @@ def analyze_static_dependencies():
             reach_op(callee_name, level+1)
 
     reach_op('Early Errors', 0)
-    if shared.g_outdir == '_1597_ed':
+    if True: # PR #1597 has been merged
         reach_op('InitializeHostDefinedRealm', 1)
         # ScriptEvaluationJob, 1
         reach_op('ParseScript', 2)
@@ -1423,10 +1423,6 @@ def analyze_static_dependencies():
         reach_op('Evaluate', 2)
     else:
         reach_op('RunJobs', 0)
-
-    # put('PromiseJobs queue')
-    reach_op('PromiseResolveThenableJob', 1)
-    reach_op('PromiseReactionJob', 1)
 
     # The spec doesn't invoke, but the host can:
     reach_op('FinishDynamicImport', 0)
