@@ -4165,6 +4165,7 @@ named_type_hierarchy = {
                 'Parse Node' : {
                     'PTN_ForBinding': {},
                     'PTN_Script': {},
+                    'PTN_Pattern': {},
                 },
                 'Record': {
                     'Agent Record': {},
@@ -6333,6 +6334,13 @@ def tc_nonvalue(anode, env0):
         result = env0
         # but no result variable, hm.
 
+    # for PR 1866:
+    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.":
+        [var, emu_xref, goal_nont, other_nont, goal_nont2] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
+        result = env1
+        # but no result variable, hm.
+
 #    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting {var} as UTF-16 encoded Unicode code points ({h_emu_xref}). The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
 #        [var, emu_xref, var2, emu_xref2, goal_nont, error_type, var3, var4] = children
 #        assert var.children == var2.children
@@ -6388,6 +6396,12 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env0, T_Boolean, lita)
         proc_add_return(env0, T_Boolean, litb)
         result = None
+
+    # for PR 1866:
+    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.":
+        [var, emu_xref, goal_nont] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
+        result = env1
 
     # ----------------------------------
     # IF stuff
@@ -7687,6 +7701,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}",
     ]:
         logical = ('or', children)
         return tc_logical(logical, env0, asserting)
@@ -8143,6 +8158,11 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a Parse Node":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Parse_Node, asserting)
+
+    # for PR 1866:
+    elif p == r"{CONDITION_1} : {var} is a {nonterminal} Parse Node":
+        [var, nont] = children
+        return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
 
     elif p == r'{CONDITION_1} : {var} is the name of a Job':
         [var] = children
@@ -10156,6 +10176,22 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
+    # for PR 1866:
+    elif p == r"{CONDITION_1} : {var} did not conform to the grammar":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        return (env0, env0)
+
+    # for PR 1866:
+    elif p == r"{CONDITION_1} : any elements of {var} were not matched by the parse": 
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        return (env0, env0)
+
+    # for PR 1866:
+    elif p == r"{CONDITION_1} : any Early Error conditions exist":
+        [] = children
+        return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
@@ -13000,6 +13036,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(f_var, T_String)
         return (T_RegExpMatcher_, env0)
 
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+        [p_var, emu_xref, chars_var, nont, f_var] = children
+        env0.assert_expr_is_of_type(p_var, T_PTN_Pattern)
+        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
+        env0.assert_expr_is_of_type(f_var, T_String)
+        return (T_RegExpMatcher_, env0)
+
     elif p == r"{EXPR} : a Continuation that always returns its State argument as a successful MatchResult":
         [] = children
         return (T_Continuation, env0)
@@ -14274,6 +14317,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
+    # for PR 1866:
+    elif p == r"{EXPR} : the Parse Node resulting from the parse":
+        [] = children
+        return (T_Parse_Node, env0)
+
+    elif p == r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Unicode_code_points_, env0)
+    
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : an implementation-dependent String value that represents {var} as a date and time in the current time zone using a convenient, human-readable form":

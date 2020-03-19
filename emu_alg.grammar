@@ -1500,7 +1500,7 @@
     ## {nonterminal}.\w+({EXLIST_OPT})
 
     # PR 1866 ParsePattern
-    the internal procedure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
+    the abstract closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
 
 {LOCAL_REF} :
     the parsed code that is {DOTTING}
