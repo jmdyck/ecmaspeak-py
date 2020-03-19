@@ -113,7 +113,6 @@
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
     Push {var} onto the execution context stack; {var} is now the running execution context.
-    Record that the binding for {var} in {var} has been initialized.
     Remove the binding for {var} from {var}.
     Remove the first element from {var} and let {var} be the value of that element.
     Remove the first element from {var} and let {var} be the value of the element.
@@ -167,6 +166,7 @@
     When the {nonterminal} {var} is evaluated, perform the following steps in place of the {nonterminal} Evaluation algorithm provided in {h_emu_xref}:{IND_COMMANDS}
     {IF_CLOSED}
     {IF_OTHER}
+    {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.
     {note}
     {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
 
@@ -662,7 +662,7 @@
     {var} is a List of Record { {DSBN}, {DSBN} }
     {var} is a List of Source Text Module Records
     {var} is a List of String values
-    {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
+    {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
     {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}
@@ -1155,7 +1155,7 @@
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
-    the canonical property name of {var} as given in the &ldquo;Canonical property name&rdquo; column of the corresponding row
+    the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row
     the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row
     the character matched by {PROD_REF}
     the character represented by {PROD_REF}

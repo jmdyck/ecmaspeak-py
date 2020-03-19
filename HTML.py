@@ -326,7 +326,7 @@ element_info = {
         # block contains blocks or contains inlines, but not both:
         'emu-integration-plans': ('B', '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
         'emu-note'             : ('B', '#WS;p;#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|#TEXT;(emu-xref;#TEXT;)?'),
-        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
+        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
         'div'                  : ('B', '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
         'dd'                   : ('B', '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
@@ -334,7 +334,7 @@ element_info = {
         # block contains inlines:
         'emu-motivation'       : ('B', '(#TEXT;|a;)+'), # PROPOSALS
         'emu-todo'             : ('B', '(#TEXT;|a;)+'), # PROPOSALS
-        'emu-alg'              : ('B', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
+        'emu-alg'              : ('B', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
         'emu-caption'          : ('B', '(#TEXT;|emu-xref;)+'),
         'pre'                  : ('B', '#TEXT;|code;'),
         'style'                : ('B', '#TEXT;'),
@@ -377,6 +377,7 @@ element_info = {
         'code'              : ('I', '(#TEXT;|i;|var;)+'),
         'del'               : ('I', '(#TEXT;|emu-xref;)+'), # PROPOSALS
         'dfn'               : ('I', '(#TEXT;|emu-eqn;)'),
+        'emu-not-ref'       : ('I', '#TEXT;'),
         'emu-t'             : ('I', '#TEXT;'),
         'emu-val'           : ('I', '#TEXT;var;#TEXT;'),
         'emu-xref'          : ('I', '(#TEXT;)?'),

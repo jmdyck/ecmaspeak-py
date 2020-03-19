@@ -7342,8 +7342,8 @@ def tc_nonvalue(anode, env0):
         [dsbn, literal] = children
         result = env0
 
-    elif p == r"{COMMAND} : Record that the binding for {var} in {var} has been initialized.":
-        [key_var, oer_var] = children
+    elif p == r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.":
+        [_, key_var, oer_var] = children
         env0.assert_expr_is_of_type(key_var, T_String)
         env0.assert_expr_is_of_type(oer_var, T_Environment_Record)
         result = env0
@@ -8060,8 +8060,8 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
-        [v, emu_xref1, emu_xref2] = children
+    elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
+        [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_Integer_))
         return (env0, env0)
 
@@ -13728,8 +13728,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(bdotting, T_List)
         return (T_Tangible_ | T_empty_ | T_Abrupt, env0)
 
-    elif p == r"{EXPR} : the canonical property name of {var} as given in the &ldquo;Canonical property name&rdquo; column of the corresponding row":
-        [v] = children
+    elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row":
+        [_, v, _] = children
         env0.assert_expr_is_of_type(v, ListType(T_Integer_))
         return (ListType(T_Integer_), env0)
 

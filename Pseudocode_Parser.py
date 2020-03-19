@@ -121,6 +121,9 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_emu_grammar}  : < emu-grammar > .+? </ emu-grammar >
     {h_emu_xref}     : < emu-xref (\x20 \w+ (= " [^"]+ ")? )* > [^<>]* < / emu-xref >
     {h_emu_alg}      : < emu-alg > (.|\n)+? < / emu-alg >
+    {h_emu_not_ref_Record}        : < emu-not-ref > Record < / emu-not-ref >
+    {h_emu_not_ref_Property_name} : < emu-not-ref > Property \x20 name < / emu-not-ref >
+    {h_emu_not_ref_property_name} : < emu-not-ref > property \x20 name < / emu-not-ref >
     {h_sub_math_r}   : < sub > \u211d < / sub >
     {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
     {h_end_tag}      : </ [\w-]+ >
@@ -450,7 +453,7 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
       \x20
 
     | { [A-Z_][A-Z_0-9]* }
-    | { [a-z_]+ }
+    | { [a-z_][a-z_A-Z]+ }
 
     | < /? (b|br|i|ins|li|p|sub|sup|var)>
 
