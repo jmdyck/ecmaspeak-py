@@ -759,11 +759,13 @@ single_sentence_rules_str = r'''
         It can take three parameters.
         # could send to <ps>, but not helpful.
 
-        It has access to (?P<also>.+).
+        # It has access to (?P<also>.+).
+        # ^ obsoleted by the merge of PR #1890
 
         It performs the following steps:
 
-        Its algorithm is as follows:
+        # Its algorithm is as follows:
+        # ^ obsoleted by the merge of PR #1890
 
     # ==========================================================================
 
@@ -1127,7 +1129,8 @@ single_sentence_rules_str = r'''
 
         !OP takes (?P<pl>no arguments).
 
-        !OP with (?P<pl>.+) has access to (?P<also>.+).
+        # !OP with (?P<pl>.+) has access to (?P<also>.+).
+        # ^ obsoleted by the merge of PR #1890
 
         !OP with (?P<pl>.+) is defined by the following steps:
 
@@ -1651,17 +1654,17 @@ class PreambleInfoHolder:
                 'the _comparefn_ argument passed to the current invocation of the `sort` method':
                     (['_comparefn_'], 'from the current invocation of the `sort` method'),
 
-                '_reviver_ that was originally passed to the above parse function':
-                    (['_reviver_'], 'from the above parse function'),
+                # '_reviver_ that was originally passed to the above parse function':
+                #     (['_reviver_'], 'from the above parse function'),
+                # ^ obsoleted by the merge of PR #1879
 
-                '_ReplacerFunction_ from the invocation of the `stringify` method':
-                    (['_ReplacerFunction_'], 'from the invocation of the `stringify` method'),
-
-                'the _stack_, _indent_, _gap_, and _PropertyList_ values of the current invocation of the `stringify` method':
-                    (['_stack_', '_indent_', '_gap_', '_PropertyList_'], 'from the current invocation of the `stringify` method'),
-
-                'the _stack_, _indent_, and _gap_ values of the current invocation of the `stringify` method':
-                    (['_stack_', '_indent_', '_gap_'], 'from the current invocation of the `stringify` method'),
+                # '_ReplacerFunction_ from the invocation of the `stringify` method':
+                #     (['_ReplacerFunction_'], 'from the invocation of the `stringify` method'),
+                # 'the _stack_, _indent_, _gap_, and _PropertyList_ values of the current invocation of the `stringify` method':
+                #     (['_stack_', '_indent_', '_gap_', '_PropertyList_'], 'from the current invocation of the `stringify` method'),
+                # 'the _stack_, _indent_, and _gap_ values of the current invocation of the `stringify` method':
+                #     (['_stack_', '_indent_', '_gap_'], 'from the current invocation of the `stringify` method'),
+                # ^ obsoleted by the merge of PR #1890
             }[also]
             poi.also = [
                 (varname, where)
@@ -3604,14 +3607,19 @@ class Header:
 ahat_ = {
     ('_comparefn_', 'from the current invocation of the `sort` method'):
         'Undefined | function_object_',
-    ('_reviver_', 'from the above parse function'):
-        'function_object_',
-    ('_ReplacerFunction_', 'from the invocation of the `stringify` method'):
-        'function_object_ | Undefined',
-    ('_stack_'       , 'from the current invocation of the `stringify` method'): 'List of Object',
-    ('_indent_'      , 'from the current invocation of the `stringify` method'): 'String',
-    ('_gap_'         , 'from the current invocation of the `stringify` method'): 'String',
-    ('_PropertyList_', 'from the current invocation of the `stringify` method'): 'Undefined | List',
+
+    # ('_reviver_', 'from the above parse function'):
+    #     'function_object_',
+    # ^ obsoleted by the merge of PR #1879
+
+    # ('_ReplacerFunction_', 'from the invocation of the `stringify` method'):
+    #     'function_object_ | Undefined',
+    # ('_stack_'       , 'from the current invocation of the `stringify` method'): 'List of Object',
+    # ('_indent_'      , 'from the current invocation of the `stringify` method'): 'String',
+    # ('_gap_'         , 'from the current invocation of the `stringify` method'): 'String',
+    # ('_PropertyList_', 'from the current invocation of the `stringify` method'): 'Undefined | List',
+    # ^ obsoleted by the merge of PR #1890
+
     ('_IgnoreCase_', 'Boolean'): 'Boolean',
 
     ('_Input_'           , 'from somewhere'): 'List of character_',
@@ -4177,6 +4185,7 @@ named_type_hierarchy = {
                     'GlobalSymbolRegistry Record': {},
                     'ImportEntry Record': {},
                     'Intrinsics Record': {},
+                    'JSON_Stringify_state_record_': {},
                     'MapData_record_': {},
                     'Module Record': {
                         'Cyclic Module Record': {
@@ -4804,8 +4813,8 @@ class Env:
         return result_env
 
     def ensure_A_can_be_element_of_list_B(self, item_ex, list_ex):
-        (list_type, list_env) = tc_expr(list_ex, self); assert list_env is self
-        (item_type, item_env) = tc_expr(item_ex, self)
+        (list_type, list_env) = tc_expr(list_ex, self)
+        (item_type, item_env) = tc_expr(item_ex, list_env)
 
         if (list_type == T_List or list_type == ListType(T_TBD)) and item_type == T_TBD:
             # shrug
@@ -7432,9 +7441,9 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_Integer_)
         result = env0
 
-    elif p == r"{COMMAND} : Remove the last element of {var}.":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_List)
+    elif p == r"{COMMAND} : Remove the last element of {SETTABLE}.":
+        [settable] = children
+        env0.assert_expr_is_of_type(settable, T_List)
         result = env0
 
     elif p == r"{COMMAND} : Remove this element from {var}.":
@@ -9110,6 +9119,7 @@ def tc_cond_(cond, env0, asserting):
         return (env1, env1)
 
     elif p in [
+        r"{CONDITION_1} : {DOTTING} contains {var}",
         r'{CONDITION_1} : {var} contains {var}',
         r"{CONDITION_1} : {var} does not contain {var}",
     ]:
@@ -11103,7 +11113,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert candidate_type_names == ['PromiseCapability Record', 'ResolvingFunctions_record_']
                 assert lhs_text == '_promiseCapability_'
                 lhs_t = T_PromiseCapability_Record
-                
             else:
                 assert len(candidate_type_names) == 1, (dsbn_name, candidate_type_names)
                 [type_name] = candidate_type_names
@@ -13246,6 +13255,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 record_type_name = 'CodePointAt_record_'
             elif field_names == ['Initializer', 'IsAnonymousFunctionDefinition', 'Name']:
                 record_type_name = 'ClassFieldDefinition Record' # PR 1668
+            elif field_names == ['Gap', 'Indent', 'PropertyList', 'ReplacerFunction', 'Stack']:
+                record_type_name = 'JSON_Stringify_state_record_'
 
             elif field_names == ['Value']:
                 fst = fields.source_text()
@@ -14804,6 +14815,15 @@ fields_for_record_type_named_ = {
     'GlobalSymbolRegistry Record': {
         'Key'   : T_String,
         'Symbol': T_Symbol,
+    },
+
+    # 38121: JSON.stringify: no table, no mention
+    'JSON_Stringify_state_record_': {
+        'ReplacerFunction': T_function_object_ | T_Undefined,
+        'Stack'           : ListType(T_Object),
+        'Indent'          : T_String,
+        'Gap'             : T_String,
+        'PropertyList'    : ListType(T_String) | T_Undefined,
     },
 
     # 38791: Table 57: PromiseCapability Record Fields

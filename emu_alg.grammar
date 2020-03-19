@@ -117,7 +117,7 @@
     Remove the first element from {var} and let {var} be the value of that element.
     Remove the first element from {var} and let {var} be the value of the element.
     Remove the first two code units from {var}.
-    Remove the last element of {var}.
+    Remove the last element of {SETTABLE}.
     Remove the own property with name {var} from {var}.
     Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
     Remove {var} from the execution context stack and restore {var} as the running execution context.
@@ -526,6 +526,7 @@
     this method was called with more than one argument
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
+    {DOTTING} contains {var}
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {EX} and {EX} are both {LITERAL}
