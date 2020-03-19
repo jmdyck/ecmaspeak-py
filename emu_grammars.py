@@ -1265,7 +1265,7 @@ def approximate_annex_A(doc_node):
         elif section.section_title == 'URI Syntax and Semantics':
             caast = 'Universal Resource Identifier Character Classes'
 
-        elif section.section_title == 'Syntax for Patterns':
+        elif section.section_title in ['Patterns', 'Syntax for Patterns']:
             caast = 'Regular Expressions'
         
         else:
@@ -1286,7 +1286,7 @@ def approximate_annex_A(doc_node):
 
         if aa_section_title == 'Lexical Grammar':
             lhs_symbol = 'SourceCharacter'
-            put(f'    <emu-prodref name={lhs_symbol}></emu-prodref>')
+            put(f'    <emu-prodref name="{lhs_symbol}"></emu-prodref>')
 
         for section in grouping_section.each_descendant_that_is_a_section():
             syntaxes = [
@@ -1315,7 +1315,7 @@ def approximate_annex_A(doc_node):
                             (nt, _, _) = gnt.children
                             assert nt.kind == 'NT'
                             lhs_symbol = nt.source_text()
-                            put(f'    <emu-prodref name={lhs_symbol}></emu-prodref>')
+                            put(f'    <emu-prodref name="{lhs_symbol}"></emu-prodref>')
 
                         if syntax.title == 'Supplemental Syntax':
                             put(f'    <p>&nbsp;</p>')
@@ -1327,7 +1327,7 @@ def approximate_annex_A(doc_node):
 
                             ptext = re.sub(r'\s+<br>\s+', ' ', ptext)
 
-                            ptext = re.sub(r'<emu-grammar>(\w+).+?</emu-grammar>', r'<emu-prodref name=\1></emu-prodref>', ptext)
+                            ptext = re.sub(r'<emu-grammar>(\w+).+?</emu-grammar>', r'<emu-prodref name="\1"></emu-prodref>', ptext)
 
                             for (nt, a) in [
                                 ('PrimaryExpression',    'parencover'),
@@ -1336,7 +1336,7 @@ def approximate_annex_A(doc_node):
                                 ('ArrowParameters',      'parencover'),
                                 ('AsyncArrowFunction',   'callcover'),
                             ]:
-                                ptext = ptext.replace(f'name={nt}>', f'name={nt} a={a}>')
+                                ptext = ptext.replace(f'name="{nt}">', f'name="{nt}" a="{a}">')
 
                             if section.section_title == 'Destructuring Assignment':
                                 ptext = ptext.replace('.</p>', ':</p>')
@@ -1419,7 +1419,7 @@ def approximate_annex_A(doc_node):
 
     move('Left-Hand-Side Expressions / Supplemental Syntax',
         # to between:
-        'name=CallExpression>',
+        'name="CallExpression">',
         'SuperCall'
     )
 
