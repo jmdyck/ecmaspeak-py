@@ -2260,6 +2260,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             (r'^a List VAR of', 'a List of'),
             (r' named VAR$', ''),
             (r' specified by VAR$', ''),
+            (r' VAR that is ', ' that is '),
             (r' VAR$', ''),
             (r' VAR,$', ''),
 
@@ -2557,6 +2558,7 @@ nature_to_tipe = {
         'a List' : 'List',
         'List of String'                       : 'List of String',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
+        'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
         'a List of Unicode code points'        : 'List of Integer_',
         'List of Tangible_'                    : 'List of Tangible_',
         'a List of values'                     : 'List of Tangible_',
@@ -14326,7 +14328,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
-    
+
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : an implementation-dependent String value that represents {var} as a date and time in the current time zone using a convenient, human-readable form":
