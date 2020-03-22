@@ -337,7 +337,7 @@ def check_ids():
             }.get(node.element_name, None)
             if id_prefix_expectation:
                 if not defid.startswith(id_prefix_expectation):
-                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}">, expected its id to start with "{id_prefix_expectation}"')
+                    msg_at_posn(node.start_posn, f'Expected the id to start with "{id_prefix_expectation}"')
             else:
                 if (False
                     or defid.startswith('sec-')
@@ -345,7 +345,7 @@ def check_ids():
                     or defid.startswith('figure-')
                     or defid.startswith('table-')
                 ):
-                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}">, did not expect its id to start that way')
+                    msg_at_posn(node.start_posn, f'Did not expect the id to start that way')
 
             # ----------
             # If an element defines an abstract operation,
@@ -362,7 +362,7 @@ def check_ids():
                     id_prefix_expectation + kebab(aoid)
                 ]
                 if defid not in possibles:
-                    msg_at_posn(node.start_posn, f'for <{node.element_name} id="{defid}" aoid="{aoid}">, expected id="{possibles[0]}"')
+                    msg_at_posn(node.start_posn, f'Expected id="{possibles[0]}"')
 
         if 'oldids' in node.attrs:
             for oldid in node.attrs['oldids'].split(','):
