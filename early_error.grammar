@@ -120,6 +120,9 @@
     {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} is not empty
 
+    # PR 1892 import.meta
+    the syntactic goal symbol is not {nonterminal}
+
 {NAMED_OPERATION_INVOCATION} :
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}

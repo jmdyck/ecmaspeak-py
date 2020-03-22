@@ -4187,6 +4187,7 @@ named_type_hierarchy = {
                     'ExportResolveSet_Record_': {},
                     'GlobalSymbolRegistry Record': {},
                     'ImportEntry Record': {},
+                    'ImportMeta_record_': {},
                     'Intrinsics Record': {},
                     'JSON_Stringify_state_record_': {},
                     'MapData_record_': {},
@@ -6669,8 +6670,15 @@ def tc_nonvalue(anode, env0):
             [dsbn1, dsbn2, loop_var, collection_expr] = each_thing.children
             assert dsbn1.source_text() == '[[Key]]'
             assert dsbn2.source_text() == '[[Value]]'
-            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_MapData_record_))
-            env_for_commands = env1.plus_new_entry(loop_var, T_MapData_record_)
+            # hack:
+            if collection_expr.source_text() == '_importMetaValues_':
+                element_type = T_ImportMeta_record_ # PR 1892
+            elif collection_expr.source_text() == '_entries_':
+                element_type = T_MapData_record_
+            else:
+                assert 0, collection_expr
+            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(element_type))
+            env_for_commands = env1.plus_new_entry(loop_var, element_type)
 
         elif each_thing.prod.rhs_s == 'ImportEntry Record {var} in {EX}':
             [loop_var, collection_expr] = each_thing.children
@@ -10981,6 +10989,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # We can't be dealing with a Completion Record
                 break
             if lhs_t in [
+                T_ImportMeta_record_,
                 T_MapData_record_,
                 T_PromiseReaction_Record,
                 T_Property_Descriptor,
@@ -11240,6 +11249,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                             (T_Module_Record,      'DFSIndex')         : T_Integer_ | T_Undefined,
                             (T_Module_Record,      'EvaluationError')  : T_throw_ | T_Undefined,
                         }[(lhs_t, dsbn_name)]
+                        # KeyError here might mean you need to add something to
+                        # fields_for_record_type_named_
 
                 return (field_type, env2)
 
@@ -14774,6 +14785,13 @@ fields_for_record_type_named_ = {
         'IsUnpairedSurrogate': T_Boolean,
     },
 
+    # PR 1892 (add import.meta):
+    # 14234: no table
+    'ImportMeta_record_': {
+        'Key'   : T_String | T_Symbol,
+        'Value' : T_Tangible_,
+    },
+
     # 21275: NO TABLE, no mention
     'methodDef_record_': {
         'Closure' : T_function_object_,
@@ -14833,6 +14851,7 @@ fields_for_record_type_named_ = {
         #
         'Context'              : T_execution_context | T_empty_, # PR 1670
         'ECMAScriptCode'       : T_Parse_Node,
+        'ImportMeta'           : T_Object | T_empty_, # PR 1892
         'ImportEntries'        : ListType(T_ImportEntry_Record),
         'LocalExportEntries'   : ListType(T_ExportEntry_Record),
         'IndirectExportEntries': ListType(T_ExportEntry_Record),

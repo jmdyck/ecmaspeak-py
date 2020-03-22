@@ -895,6 +895,9 @@
     any elements of {var} were not matched by the parse
     any Early Error conditions exist
 
+    # PR 1892 add import.meta
+    {var} is a Source Text Module Record
+
 {PROPERTY_KIND} :
     accessor
     data
