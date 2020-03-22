@@ -1213,13 +1213,13 @@ def check_emu_prodrefs(doc_node):
     for (nt_name, nt_info) in info_for_nt_.items():
         if 'A' in nt_info.def_occs:
             production_n = nt_info.def_occs['A']
-            prodn_posn = production_n.start_posn
-            arena_A_names_with_posn.append((prodn_posn, nt_name))
+            lhs_posn = production_n.children[0].start_posn
+            arena_A_names_with_posn.append((lhs_posn, nt_name))
 
     arena_A_names_with_posn.sort()
-    for (prodn_posn, nt_name) in arena_A_names_with_posn:
+    for (lhs_posn, nt_name) in arena_A_names_with_posn:
         if nt_name not in referenced_names:
-            msg_at_posn(prodn_posn, f"ERROR: Production is not referenced in Annex A: '{nt_name}'")
+            msg_at_posn(lhs_posn, f"ERROR: This production is not referenced in Annex A")
 
     if 0:
         # too many diffs?
