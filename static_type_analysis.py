@@ -10203,6 +10203,10 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent":
+        [] = children
+        return (env0, env0)
+
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
