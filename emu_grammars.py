@@ -1608,7 +1608,7 @@ class Grammar:
     # ==========================================================================
 
     def generate_parser(this_grammar):
-        if this_grammar.name.startswith('lexical'):
+        if this_grammar.level == 'lexical':
             this_grammar.explode_multichar_literals()
             # this_grammar.distinguish_Token_from_NonToken()
 
@@ -1657,7 +1657,7 @@ class Grammar:
     # ==========================================================================
 
     def distinguish_Token_from_NonToken(this_grammar):
-        assert this_grammar.name.startswith('lexical')
+        assert this_grammar.level == 'lexical'
 
         non_token_names = ['WhiteSpace','LineTerminator', 'Comment']
         non_token_rhss = [
@@ -1826,7 +1826,7 @@ class Grammar:
                     else:
                         if K == 'GNT':
                             nt = rhs_item_n._nt_name
-                            if this_grammar.name.startswith('syntactic') and nt in [
+                            if this_grammar.level == 'syntactic' and nt in [
                                 'IdentifierName',
                                 'NumericLiteral',
                                 'StringLiteral',
