@@ -1540,24 +1540,7 @@ def generate_es_parsers():
         # stderr('---------------------------')
         stderr(f"    {g.name}")
 
-        if g.name.startswith('lexical'):
-            g.explode_multichar_literals()
-            # g.distinguish_Token_from_NonToken()
-
-        g.save_as_json()
-
-        if 0:
-            # An LR approach, which bogged down
-            # when I tried to handle lookahead-restrictions:
-            g.expand_abbreviations()
-            g.print_exp_prodns()
-            g.calc_min_length()
-            g.compute_firstk()
-
-            # Have to exclude lexicalB because it's incomplete.
-            # (It doesn't 'duplicate' all prodns that must have 'N' added as grammatical param.)
-            if g.name != 'lexicalB':
-                g.generate_LR0_automaton()
+        g.generate_parser()
 
     stderr()
     stderr('---------------------------')
@@ -1623,6 +1606,26 @@ class Grammar:
                 rhs_n.preorder_traversal(visit)
 
     # ==========================================================================
+
+    def generate_parser(this_grammar):
+        if this_grammar.name.startswith('lexical'):
+            this_grammar.explode_multichar_literals()
+            # this_grammar.distinguish_Token_from_NonToken()
+
+        this_grammar.save_as_json()
+
+        if 0:
+            # An LR approach, which bogged down
+            # when I tried to handle lookahead-restrictions:
+            this_grammar.expand_abbreviations()
+            this_grammar.print_exp_prodns()
+            this_grammar.calc_min_length()
+            this_grammar.compute_firstk()
+
+            # Have to exclude lexicalB because it's incomplete.
+            # (It doesn't 'duplicate' all prodns that must have 'N' added as grammatical param.)
+            if this_grammar.name != 'lexicalB':
+                this_grammar.generate_LR0_automaton()
 
     def explode_multichar_literals(this_grammar):
         # mcl = "multicharacter literal",
