@@ -420,6 +420,7 @@
     {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
+    {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or if {CONDITION_1}
@@ -919,7 +920,9 @@
     Type({TYPE_ARG}) is {TYPE_NAME}
     Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}
     Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
-    Type({TYPE_ARG}) is {var}
+
+    # obsoleted by the merge of PR #1918:
+    # Type({TYPE_ARG}) is {var}
 
 {TYPE_ARG} :
     {var}

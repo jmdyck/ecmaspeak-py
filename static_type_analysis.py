@@ -2697,6 +2697,8 @@ nature_to_tipe = {
 
         'either ~assignment~, ~varBinding~ or ~lexicalBinding~' : 'LhsKind_',
 
+        'one of ~string~ or ~symbol~' : 'PropertyKeyKind_',
+
         'throw *RangeError*'             : 'throw_ *RangeError*',
         'throw *TypeError*'              : 'throw_ *TypeError*',
         'throw a *TypeError* exception'  : 'throw_ *TypeError*',
@@ -4169,6 +4171,7 @@ named_type_hierarchy = {
                     'PTN_Script': {},
                     'PTN_Pattern': {},
                 },
+                'PropertyKeyKind_': {},
                 'Record': {
                     'Agent Record': {},
                     'Agent Events Record': {},
@@ -7745,6 +7748,7 @@ def tc_cond_(cond, env0, asserting):
     # elif p == r"{CONDITION} : {CONDITION_1}, when {CONDITION_1}":
 
     elif p in [
+        r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}",
     ]:
@@ -9496,10 +9500,11 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is {var}":
-        [type_arg, var] = children
-        env0.assert_expr_is_of_type(var, T_LangTypeName_)
-        return (env0, env0)
+#    elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is {var}":
+#        [type_arg, var] = children
+#        env0.assert_expr_is_of_type(var, T_LangTypeName_)
+#        return (env0, env0)
+# ^ obsoleted by the merge of PR #1918
 
     elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}":
         [type_arg, var] = children
@@ -10589,6 +10594,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_integrity_level_, env0)
         elif chars in ['lexical-this', 'non-lexical-this']:
             return (T_this_mode2_, env0)
+        elif chars in ['string', 'symbol']:
+            return (T_PropertyKeyKind_, env0)
         else:
             assert 0, chars
 
