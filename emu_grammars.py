@@ -1492,11 +1492,15 @@ def check_nonterminal_refs(doc_node):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-grammar_named_ = None
+grammar_ = None
 
 def make_grammars():
-    global grammar_named_
-    grammar_named_ = keydefaultdict(Grammar)
+    global grammar_
+    grammar_ = {}
+    for level in ['lexical', 'syntactic']:
+        for arena in ['A', 'B']:
+            grammar_[(level,arena)] = Grammar(level, arena)
+
     for (lhs_symbol, nt_info) in sorted(info_for_nt_.items()):
 
         # From a parsing point of view, there's really just two grammars,
@@ -1516,14 +1520,14 @@ def make_grammars():
             production_n = nt_info.get_appropriate_def_occ(arena)
             if production_n is None: continue
 
-            grammar_named_[grammar_level + arena].add_prodn(production_n)
+            grammar_[(grammar_level, arena)].add_prodn(production_n)
 
 def do_grammar_left_right_stuff():
     grammar_lr_f = shared.open_for_output('grammar_lr')
     def put(*args):
         print(*args, file=grammar_lr_f)
 
-    for (grammar_name, g) in sorted(grammar_named_.items()):
+    for (_, g) in sorted(grammar_.items()):
         g.do_left_right_stuff(put)
 
 # ------------------------------------------------------------------------------
@@ -1531,12 +1535,12 @@ def do_grammar_left_right_stuff():
 def generate_es_parsers():
     stderr("generate_es_parsers...")
 
-    for (grammar_name, g) in sorted(grammar_named_.items()):
+    for (_, g) in sorted(grammar_.items()):
         # stderr()
         # stderr('---------------------------')
-        stderr(f"    {grammar_name}")
+        stderr(f"    {g.name}")
 
-        if grammar_name.startswith('lexical'):
+        if g.name.startswith('lexical'):
             g.explode_multichar_literals()
             # g.distinguish_Token_from_NonToken()
 
@@ -1552,7 +1556,7 @@ def generate_es_parsers():
 
             # Have to exclude lexicalB because it's incomplete.
             # (It doesn't 'duplicate' all prodns that must have 'N' added as grammatical param.)
-            if grammar_name != 'lexicalB':
+            if g.name != 'lexicalB':
                 g.generate_LR0_automaton()
 
     stderr()
@@ -1564,8 +1568,10 @@ def generate_es_parsers():
 # terminal_types = [T_lit, T_nc, T_u_p, T_named ]
 
 class Grammar:
-    def __init__(this_grammar, name):
-        this_grammar.name = name
+    def __init__(this_grammar, level, arena):
+        this_grammar.level = level
+        this_grammar.arena = arena
+        this_grammar.name = level + arena
         this_grammar.prodn_for_lhs_ = {}
 
     # --------------------------------------------------------------------------
@@ -2541,14 +2547,6 @@ def each_boolean_vector_of_length(n):
     else:
         assert 0, n
 
-class keydefaultdict(defaultdict):
-    # http://stackoverflow.com/questions/2912231/
-    def __missing__(self, key):
-        if self.default_factory is None:
-            raise KeyError( key )
-        else:
-            ret = self[key] = self.default_factory(key)
-            return ret
 
 def split_indentation(line):
     # Returns a tuple (i,r)
