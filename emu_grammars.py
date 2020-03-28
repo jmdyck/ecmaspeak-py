@@ -225,8 +225,8 @@ def check_param_prefix(node, must_have_prefix):
 # ------------------------------------------------------------------------------
 
 metagrammar = {
-    'EMU_GRAMMAR_CONTENT_1': ('_', '^', 'ONELINE_PRODUCTION', ' ?', 'EOI'), # ' ?' until PR
-    'EMU_GRAMMAR_CONTENT_2': ('_', '^', 'INDENT', 'BLOCK_PRODUCTIONS', 'OUTDENT', r'(\n(?=\n))?', 'NLAI', 'EOI'), # extra newline until
+    'EMU_GRAMMAR_CONTENT_1': ('_', '^', 'ONELINE_PRODUCTION', 'EOI'),
+    'EMU_GRAMMAR_CONTENT_2': ('_', '^', 'INDENT', 'BLOCK_PRODUCTIONS', 'OUTDENT', 'NLAI', 'EOI'),
 
     'BLOCK_PRODUCTIONS'    : ('+', 'n', 'BLOCK_PRODUCTION', r'\n'),
     'BLOCK_PRODUCTION'     : ('|', '^', 'MULTILINE_PRODUCTION', '_ONELINE_PRODUCTION'),
@@ -248,7 +248,7 @@ metagrammar = {
     'OPTIONAL_GUARD'       : ('?', '^', 'PARAMS', ' '),
     'OPTIONAL_LABEL'       : ('?', '^', ' ', 'LABEL'),
     'RHS_BODY'             : ('|', '^', 'U_PROP', 'U_ANY', 'EMPTY', 'RHS_ITEMS'),
-    'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' *'), # '*' until PR x is merged
+    'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' '),
     'RHS_ITEM'             : ('|', '^', 'BUT_NOT', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY'),
 
     'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS', 'OPTIONAL_OPT'),
@@ -257,7 +257,7 @@ metagrammar = {
     'OPTIONAL_OPT'         : ('?', 'n', r'\?'),
 
     'LOOKAHEAD_CONSTRAINT' : ('|', '^', 'LAC_SINGLE', 'LAC_SET'),
-    'LAC_SINGLE'           : ('_', 'n', r'\[lookahead ', 'LAC_SINGLE_OP', ' ', 'TERMINAL_SEQ', r' ?\]'), # ' ?' until PR x is merged
+    'LAC_SINGLE'           : ('_', 'n', r'\[lookahead ', 'LAC_SINGLE_OP', ' ', 'TERMINAL_SEQ', r'\]'),
     'LAC_SINGLE_OP'        : ('/', 'n', '==|!='),
     'LAC_SET'              : ('_', 'n', r'\[lookahead &lt;! ', 'LAC_SET_OPERAND', r'\]'),
     'LAC_SET_OPERAND'      : ('|', '^', 'NT', 'SET_OF_TERMINAL_SEQ'),
