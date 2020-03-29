@@ -1150,7 +1150,7 @@ def u_item_matches_d_item(u_item_n, d_item_n):
         note['L-711'] = 1
         # 2523 occurrences
 
-        if k.startswith('NOT_NOT_') or k.startswith('LAC_') or k == 'NLTH':
+        if k.startswith('BUT_NOT_') or k.startswith('LAC_') or k == 'NLTH':
             note['annotations intact'] = u_item_n
 
     return note
