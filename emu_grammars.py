@@ -894,27 +894,20 @@ def check_non_defining_prodns(emu_grammars):
 
                 annotations = []
                 for u_rhs_item_n in u_rhs_n._rhs_items:
-                    if u_rhs_item_n.kind in ['GNT', 'BACKTICKED_THING', 'NAMED_CHAR']:
+                    if u_rhs_item_n.kind in ['GNT', 'BUT_NOT_SINGLE', 'BUT_NOT_MULTIPLE', 'BACKTICKED_THING', 'NAMED_CHAR']:
                         pass
-                    elif u_rhs_item_n.kind in ['BUT_NOT_SINGLE', 'BUT_NOT_MULTIPLE', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
+                    elif u_rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET', 'NLTH']:
                         annotations.append(u_rhs_item_n)
                     else:
                         assert 0, u_rhs_item_n.kind
-                        
 
                 for annotation_n in annotations:
                     if cc_section.section_title == 'Rules of Automatic Semicolon Insertion' and annotation_n.kind == 'NLTH':
                         # allow it
                         pass
                     elif (lhs_nt, annotation_n.kind) in [
-                        ('DoubleStringCharacter', 'BUT_NOT_MULTIPLE'),
-                        ('SingleStringCharacter', 'BUT_NOT_MULTIPLE'),
-                        ('NonEscapeCharacter',    'BUT_NOT_MULTIPLE'),
-                        ('TemplateCharacter',     'BUT_NOT_MULTIPLE'),
                         ('NotEscapeSequence',     'LAC_SET'),
                         ('NotEscapeSequence',     'LAC_SINGLE'),
-                        ('Identifier',            'BUT_NOT_SINGLE'),
-                        ('ClassAtomNoDash',       'BUT_NOT_MULTIPLE'),
                         ('CharacterEscape',       'LAC_SET'),
                         ('ClassAtomNoDash',       'LAC_SINGLE'),
                         ('ExtendedAtom',          'LAC_SINGLE'),
@@ -1150,7 +1143,7 @@ def u_item_matches_d_item(u_item_n, d_item_n):
         note['L-711'] = 1
         # 2523 occurrences
 
-        if k.startswith('BUT_NOT_') or k.startswith('LAC_') or k == 'NLTH':
+        if k.startswith('LAC_') or k == 'NLTH':
             note['annotations intact'] = u_item_n
 
     return note
@@ -1174,7 +1167,7 @@ def u_item_matches_d_item(u_item_n, d_item_n):
 #        return 'ellipsify condition in but_only_if'
 
 def d_item_doesnt_require_a_matching_u_item(d_item_n):
-    if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'BUT_NOT_SINGLE', 'BUT_NOT_MULTIPLE', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
+    if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
         return {'annotations suppressed': d_item_n}
 
     if d_item_n.kind == 'GNT' and d_item_n._is_optional:
