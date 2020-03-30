@@ -1743,6 +1743,22 @@ class Grammar:
                 ts.append(t)
             return ts
 
+        # These are symbols that appear in both the syntactic and lexical grammars.
+        # In the lexical, they're nonterminals, but in the syntactic, they're terminals.
+        # (So the 'nt' in 'bilevel_nt_names' is a misnomer,
+        # but the metagrammar identifies them as non-terminals anyway...)
+        # XXX This should be deduced rather than hardcoded.
+        bilevel_nt_names = [
+            'IdentifierName',
+            'NumericLiteral',
+            'StringLiteral',
+            'RegularExpressionLiteral',
+            'TemplateHead',
+            'NoSubstitutionTemplate',
+            'TemplateMiddle',
+            'TemplateTail'
+        ]
+
         #XXX This code is just an interim mess that mostly reproduces what the former code did.
 
         # all_params = set()
@@ -1819,16 +1835,7 @@ class Grammar:
                     else:
                         if K == 'GNT':
                             nt = rhs_item_n._nt_name
-                            if this_grammar.level == 'syntactic' and nt in [
-                                'IdentifierName',
-                                'NumericLiteral',
-                                'StringLiteral',
-                                'RegularExpressionLiteral',
-                                'TemplateHead',
-                                'NoSubstitutionTemplate',
-                                'TemplateMiddle',
-                                'TemplateTail'
-                            ]:
+                            if this_grammar.level == 'syntactic' and nt in bilevel_nt_names:
                                 rsymbol = {'T': 'T_named', 'n': nt}
                             else:
                                 a = [
