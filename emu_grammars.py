@@ -1759,6 +1759,18 @@ class Grammar:
             'TemplateTail'
         ]
 
+        def convert_nt(nt_n):
+            nt_name = nt_n._nt_name
+            assert nt_n.kind == 'GNT'
+            if this_grammar.level == 'syntactic' and nt_name in bilevel_nt_names:
+                return {'T': 'T_named', 'n': nt_name}
+            else:
+                a = [
+                    {'T': 'Arg', 's': sign, 'n': name}
+                    for (sign, name) in nt_n._params
+                ]
+                return {'T': 'GNT', 'n': nt_name, 'a': a, 'o': nt_n._is_optional}
+
         #XXX This code is just an interim mess that mostly reproduces what the former code did.
 
         # all_params = set()
@@ -1834,15 +1846,7 @@ class Grammar:
 
                     else:
                         if K == 'GNT':
-                            nt = rhs_item_n._nt_name
-                            if this_grammar.level == 'syntactic' and nt in bilevel_nt_names:
-                                rsymbol = {'T': 'T_named', 'n': nt}
-                            else:
-                                a = [
-                                    {'T': 'Arg', 's': sign, 'n': name}
-                                    for (sign, name) in rhs_item_n._params
-                                ]
-                                rsymbol = {'T': 'GNT', 'n': nt, 'a': a, 'o': rhs_item_n._is_optional}
+                            rsymbol = convert_nt(rhs_item_n)
                         elif K == 'BACKTICKED_THING':
                             rsymbol = {'T': 'T_lit', 'c': rhs_item_n._chars}
                         elif K == 'NAMED_CHAR':
