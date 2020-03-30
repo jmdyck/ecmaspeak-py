@@ -1791,7 +1791,7 @@ def analyze_sdo_coverage_info():
             d_production_n = nt_info.def_occs['A']
 
             for (def_i, def_rhs_n) in enumerate(d_production_n._rhss):
-                GNTs = [r for r in def_rhs_n._rhs_items if r.kind == 'GNT']
+                GNTs = [r for r in def_rhs_n._rhs_items if r.kind in ['GNT', 'NT_BUT_NOT']]
                 oGNTs = [gnt for gnt in GNTs if gnt._is_optional]
                 nGNTs = [gnt for gnt in GNTs if not gnt._is_optional]
 

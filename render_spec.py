@@ -997,6 +997,14 @@ def expand_emu_grammar(emu_grammar):
 
             return '<emu-nt%s%s>%s%s</emu-nt>' % (maybe_params_attr, maybe_optional_attr, maybe_link, maybe_emu_mods_child)
 
+        elif gnode.kind == 'NT_BUT_NOT':
+            [ex_base, ex_exclusion] = expanded_children
+
+            if ' or ' in ex_exclusion:
+                return f'{ex_base}<emu-gmod>but not one of {ex_exclusion}</emu-gmod>'
+            else:
+                return f'{ex_base}<emu-gmod>but not {ex_exclusion}</emu-gmod>'
+
         elif gnode.kind == 'NT':
             nt_name = st
             maybe_link = maybe_link_to_nt(nt_name, namespace)
@@ -1048,13 +1056,6 @@ def expand_emu_grammar(emu_grammar):
             return f'<emu-gprose>{st}</emu-gprose>'
 
         # emu-gmod:
-
-        elif gnode.kind == 'BUT_NOT_SINGLE':
-            [expanded_child] = expanded_children
-            return f'<emu-gmod>but not {expanded_child}</emu-gmod>'
-
-        elif gnode.kind == 'BUT_NOT_MULTIPLE':
-            return f'<emu-gmod>but not one of {"".join(expanded_children)}</emu-gmod>'
 
         elif gnode.kind == 'BUT_ONLY':
             return f'<emu-gmod>but only if {gnode.groups[0]}</emu-gmod>'

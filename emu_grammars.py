@@ -140,7 +140,7 @@ def parse_emu_grammar(emu_grammar):
                         items.append(optional_guard_n)
                     if rhs_body_n.kind == 'EMPTY':
                         pass
-                    elif rhs_body_n.kind in ['U_PROP', 'U_ANY']:
+                    elif rhs_body_n.kind in ['U_PROP', 'U_ANY', 'NT_BUT_NOT']:
                         items.append(rhs_body_n)
                     elif rhs_body_n.kind == 'RHS_ITEMS':
                         items.extend(rhs_body_n.children)
@@ -175,6 +175,11 @@ def parse_emu_grammar(emu_grammar):
                 # -----
                 r_n._rhs_items = r_n.children
 
+            elif r_n.kind == 'NT_BUT_NOT':
+                rhss.append(r_n)
+                # -----
+                r_n._rhs_items = [r_n]
+
             elif r_n.kind == 'ONELINE_ONE_OF':
                 [backticked_things_n] = r_n.children
                 for backticked_thing_n in backticked_things_n.children:
@@ -198,18 +203,25 @@ def decorate_misc(node):
         node._is_optional = opt_n.source_text() == '?'
         return 'prune'
 
+    elif node.kind == 'NT_BUT_NOT':
+        (nt_n, exclusion_n) = node.children
+        nt_n._nt_name = nt_n.source_text()
+        if exclusion_n.kind == 'EXCLUDABLES':
+            exclusion_n._excludables = exclusion_n.children
+            assert len(exclusion_n._excludables) > 1
+        else:
+            exclusion_n._excludables = [exclusion_n]
+        # may have to treat `node` like a GNT:
+        node._nt_name = nt_n._nt_name
+        node._params = []
+        node._is_optional = False
+
+    elif node.kind == 'NT':
+        node._nt_name = node.source_text()
+
     elif node.kind == 'BACKTICKED_THING':
         node._chars = decode_entities(node.groups[0])
         return 'prune'
-
-    elif node.kind.startswith('BUT_NOT_'):
-        if node.kind == 'BUT_NOT_SINGLE':
-            node._excludables = node.children
-        elif node.kind == 'BUT_NOT_MULTIPLE':
-            [excludables_n] = node.children
-            node._excludables = excludables_n.children
-        else:
-            assert 0, node.kind
 
 def check_param_prefix(node, must_have_prefix):
     if node.kind != 'OPTIONAL_PREFIX': return
@@ -247,9 +259,15 @@ metagrammar = {
     'RHS_LINE'             : ('_', 'n', 'NLAI', 'OPTIONAL_GUARD', 'RHS_BODY', 'OPTIONAL_LABEL'),
     'OPTIONAL_GUARD'       : ('?', '^', 'PARAMS', ' '),
     'OPTIONAL_LABEL'       : ('?', '^', ' ', 'LABEL'),
-    'RHS_BODY'             : ('|', '^', 'U_PROP', 'U_ANY', 'EMPTY', 'RHS_ITEMS'),
+    'RHS_BODY'             : ('|', '^', 'U_PROP', 'U_ANY', 'EMPTY', 'NT_BUT_NOT', 'RHS_ITEMS'),
+
+    'NT_BUT_NOT'           : ('_', 'n', 'NT', ' but not ', 'EXCLUSION'),
+    'EXCLUSION'            : ('|', '^', 'EXCLUDABLES', 'EXCLUDABLE'),
+    'EXCLUDABLES'          : ('+', 'n', 'EXCLUDABLE', ' or | ', 'one of ', ''),
+    'EXCLUDABLE'           : ('|', '^', 'NT', 'BACKTICKED_THING'),
+
     'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' '),
-    'RHS_ITEM'             : ('|', '^', 'BUT_NOT', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY'),
+    'RHS_ITEM'             : ('|', '^', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY'),
 
     'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS', 'OPTIONAL_OPT'),
     'OPTIONAL_PARAMS'      : ('?', '^', 'PARAMS'),
@@ -264,12 +282,6 @@ metagrammar = {
     'SET_OF_TERMINAL_SEQ'  : ('+', 'n', 'TERMINAL_SEQ', ', ', '{', '}'),
     'TERMINAL_SEQ'         : ('+', 'n', 'TERMINAL_ITEM', ' '),
     'TERMINAL_ITEM'        : ('|', '^', 'BACKTICKED_THING', 'NAMED_CHAR', 'NLTH_BAR'),
-
-    'BUT_NOT'              : ('|', '^', 'BUT_NOT_MULTIPLE', 'BUT_NOT_SINGLE'),
-    'BUT_NOT_MULTIPLE'     : ('_', 'n', r'but not one of ', 'EXCLUDABLES'),
-    'BUT_NOT_SINGLE'       : ('_', 'n', r'but not ', 'EXCLUDABLE'),
-    'EXCLUDABLES'          : ('+', 'n', 'EXCLUDABLE', r' or | '),
-    'EXCLUDABLE'           : ('|', '^', 'GNT', 'BACKTICKED_THING'),
 
     'BUT_ONLY'             : ('/', 'n', r'\[> but only if ([^][]+)\]'),
 
@@ -671,11 +683,13 @@ def check_reachability():
         for rhs_n in production_n._rhss:
             for rhs_item_n in rhs_n._rhs_items:
                 rthing_kind = rhs_item_n.kind
-                if rthing_kind == 'GNT':
+                if rthing_kind in ['GNT', 'NT']:
                     reach(rhs_item_n._nt_name)
-                elif rthing_kind.startswith('BUT_NOT_'):
-                    for but_n in rhs_item_n._excludables:
-                        if but_n.kind == 'GNT':
+                elif rthing_kind == 'NT_BUT_NOT':
+                    (nt_n, exclusion_n) = rhs_item_n.children
+                    reach(nt_n._nt_name)
+                    for but_n in exclusion_n._excludables:
+                        if but_n.kind == 'NT':
                             reach(but_n._nt_name)
 
     for (nt, nt_info) in sorted(info_for_nt_.items()):
@@ -894,7 +908,7 @@ def check_non_defining_prodns(emu_grammars):
 
                 annotations = []
                 for u_rhs_item_n in u_rhs_n._rhs_items:
-                    if u_rhs_item_n.kind in ['GNT', 'BUT_NOT_SINGLE', 'BUT_NOT_MULTIPLE', 'BACKTICKED_THING', 'NAMED_CHAR']:
+                    if u_rhs_item_n.kind in ['GNT', 'NT_BUT_NOT', 'BACKTICKED_THING', 'NAMED_CHAR']:
                         pass
                     elif u_rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET', 'NLTH']:
                         annotations.append(u_rhs_item_n)
@@ -1571,6 +1585,8 @@ class Grammar:
                     if n.kind == 'GNT':
                         rhs_symbols.add(n._nt_name)
                         return 'prune'
+                    elif n.kind == 'NT':
+                        rhs_symbols.add(n._nt_name)
                 rhs_n.preorder_traversal(visit)
 
         lhs_not_rhs = lhs_symbols - rhs_symbols
@@ -1761,15 +1777,25 @@ class Grammar:
 
         def convert_nt(nt_n):
             nt_name = nt_n._nt_name
-            assert nt_n.kind == 'GNT'
+            if nt_n.kind == 'GNT':
+                args = nt_n._params
+                is_optional = nt_n._is_optional
+            elif nt_n.kind == 'NT':
+                args = []
+                is_optional = False
+            else:
+                assert 0
+            #
             if this_grammar.level == 'syntactic' and nt_name in bilevel_nt_names:
+                assert args == []
+                assert is_optional == False
                 return {'T': 'T_named', 'n': nt_name}
             else:
                 a = [
                     {'T': 'Arg', 's': sign, 'n': name}
-                    for (sign, name) in nt_n._params
+                    for (sign, name) in args
                 ]
-                return {'T': 'GNT', 'n': nt_name, 'a': a, 'o': nt_n._is_optional}
+                return {'T': 'GNT', 'n': nt_name, 'a': a, 'o': is_optional}
 
         #XXX This code is just an interim mess that mostly reproduces what the former code did.
 
@@ -1817,7 +1843,7 @@ class Grammar:
 
                     # Things that attach to the preceding symbol:
                     elif (
-                        K in ['BUT_NOT_MULTIPLE', 'BUT_NOT_SINGLE', 'BUT_ONLY', 'NLTH']
+                        K in ['BUT_ONLY', 'NLTH']
                         or
                         (K.startswith('LAC_') and r == len(rhs_n._rhs_items) - 1)
                     ):
@@ -1825,16 +1851,6 @@ class Grammar:
                             post = {'T': 'A_no_LT'}
                         elif K == 'BUT_ONLY':
                             post = {'T': 'A_but_only_if', 'c': decode_entities(rhs_item_n.groups[0])}
-                        elif K.startswith('BUT_NOT_'):
-                            b = []
-                            for excludable in rhs_item_n._excludables:
-                                if excludable.kind == 'GNT':
-                                    b.append({'T': 'GNT', 'n': excludable._nt_name, 'a': [], 'o': False})
-                                elif excludable.kind == 'BACKTICKED_THING':
-                                    b.append({'T': 'T_lit', 'c': excludable._chars})
-                                else:
-                                    assert 0
-                            post = {'T': 'A_but_not', 'b': b}
                         elif K.startswith('LAC_'):
                             post = convert_lac(rhs_item_n)
                         else:
@@ -1843,6 +1859,25 @@ class Grammar:
                         assert runit is not None
                         assert runit['post'] is None
                         runit['post'] = post
+
+                    elif K == 'NT_BUT_NOT':
+                        (nt_n, exclusion_n) = rhs_item_n.children
+
+                        b = []
+                        for excludable_n in exclusion_n._excludables:
+                            if excludable_n.kind == 'NT':
+                                ex_symbol = convert_nt(excludable_n)
+                            elif excludable_n.kind == 'BACKTICKED_THING':
+                                ex_symbol = {'T': 'T_lit', 'c': excludable_n._chars}
+                            else:
+                                assert 0
+                            b.append(ex_symbol)
+                        post = {'T': 'A_but_not', 'b': b}
+
+                        runit = OrderedDict(
+                            [('pre', None), ('rsymbol', convert_nt(nt_n)), ('post', post)]
+                        )
+                        runits.append(runit)
 
                     else:
                         if K == 'GNT':
