@@ -16,6 +16,7 @@ def make_and_check_sections():
     _establish_sections(spec.doc_node)
     _infer_section_kinds(spec.doc_node)
     _print_section_kinds(spec.doc_node)
+    _check_aoids(spec.doc_node)
     _check_section_order(spec.doc_node)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -490,6 +491,59 @@ def _print_section_kinds(section):
 
     for child in section.section_children:
         _print_section_kinds(child)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _check_aoids(section):
+    if section.element_name == '#DOC':
+        stderr("_check_aoids...")
+
+    else:
+        aoid = section.attrs.get('aoid', None)
+        op_name = section.ste.get('op_name', None)
+
+        if section.section_kind == 'shorthand':
+            assert op_name is None
+            # aoid might or might not be None
+
+        else:
+
+            if section.section_kind == 'catchall':
+                assert op_name is None
+
+                if section.parent.section_title == 'Relations of Candidate Executions':
+                    # Should we have a 'relation' kind?
+                    # (The Memory Model clauses are weird.)
+                    expected_aoid = section.section_title
+                else:
+                    expected_aoid = None
+
+            elif section.section_kind == 'abstract_operation':
+                if (
+                    section.parent.section_title == 'Properties of Valid Executions'
+                    or
+                    section.parent.section_title == 'Memory Model'
+                ):
+                    # This isn't an abstract operation in the usual sense.
+                    # (The Memory Model clauses are weird.)
+                    expected_aoid = None
+                else:
+                    expected_aoid = op_name
+            else:
+                expected_aoid = None
+
+            if aoid != expected_aoid:
+                if aoid is None:
+                    msg = f'Should this clause have aoid="{expected_aoid}"?'
+                elif expected_aoid is None:
+                    msg = f"Didn't expect this clause to have an aoid"
+                else:
+                    msg = f'Expected aoid="{expected_aoid}"'
+
+                msg_at_posn(section.start_posn, msg)
+
+    for child in section.section_children:
+        _check_aoids(child)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
