@@ -6749,18 +6749,19 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(lo_var, T_Number)
             env_for_commands = env0.plus_new_entry(loop_var, T_String)
 
-        elif each_thing.prod.rhs_s in [
-            r"own property key {var} of {var} that is an array index, in ascending numeric index order",
-            r"own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation",
-        ]:
-            [loop_var, obj_var] = each_thing.children
-            env0.assert_expr_is_of_type(obj_var, T_Object)
-            env_for_commands = env0.plus_new_entry(loop_var, T_String)
-
-        elif each_thing.prod.rhs_s == r"own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation":
-            [loop_var, obj_var] = each_thing.children
-            env0.assert_expr_is_of_type(obj_var, T_Object)
-            env_for_commands = env0.plus_new_entry(loop_var, T_Symbol)
+#         elif each_thing.prod.rhs_s in [
+#             r"own property key {var} of {var} that is an array index, in ascending numeric index order",
+#             r"own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation",
+#         ]:
+#             [loop_var, obj_var] = each_thing.children
+#             env0.assert_expr_is_of_type(obj_var, T_Object)
+#             env_for_commands = env0.plus_new_entry(loop_var, T_String)
+# 
+#         elif each_thing.prod.rhs_s == r"own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation":
+#             [loop_var, obj_var] = each_thing.children
+#             env0.assert_expr_is_of_type(obj_var, T_Object)
+#             env_for_commands = env0.plus_new_entry(loop_var, T_Symbol)
+# ^ obsoleted by the merge of PR #1923
 
         elif each_thing.prod.rhs_s in [
             r"own property key {var} of {var} such that {CONDITION}, in ascending numeric index order",
@@ -8259,7 +8260,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r'{CONDITION_1} : {EX} is a String value',
-        r"{CONDITION_1} : {var} is a String",
+        # r"{CONDITION_1} : {var} is a String", # obsoleted by PR #1923
     ]:
         [ex] = children
         if ex.prod.lhs_s == '{var}':
