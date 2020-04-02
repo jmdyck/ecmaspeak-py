@@ -88,7 +88,7 @@
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
     {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of a code point matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of either &lt;ZWNJ&gt; or &lt;ZWJ&gt;, or the UTF16Encoding of a Unicode code point that would be matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of either {named_char} or {named_char}, or the UTF16Encoding of a Unicode code point that would be matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not {LITERAL}
     {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
     {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`
