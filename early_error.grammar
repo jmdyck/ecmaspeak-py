@@ -65,6 +65,7 @@
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
     the source code matching {PROD_REF} is not strict mode code
     the source code matching {PROD_REF} is strict mode code
+    the syntactic goal symbol is not {nonterminal}
     this production has an? <sub>[{cap_word}]</sub> parameter
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
@@ -119,9 +120,6 @@
     the name is used once for a getter and once for a setter and in no other entries
     {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} is not empty
-
-    # PR 1892 import.meta
-    the syntactic goal symbol is not {nonterminal}
 
 {NAMED_OPERATION_INVOCATION} :
     {cap_word} of {LOCAL_REF}
