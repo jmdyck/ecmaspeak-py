@@ -140,7 +140,7 @@ def parse_emu_grammar(emu_grammar):
                         items.append(optional_guard_n)
                     if rhs_body_n.kind == 'EMPTY':
                         pass
-                    elif rhs_body_n.kind in ['U_PROP', 'U_ANY', 'NT_BUT_NOT']:
+                    elif rhs_body_n.kind in ['U_RANGE', 'U_PROP', 'U_ANY', 'NT_BUT_NOT']:
                         items.append(rhs_body_n)
                     elif rhs_body_n.kind == 'RHS_ITEMS':
                         items.extend(rhs_body_n.children)
@@ -259,7 +259,7 @@ metagrammar = {
     'RHS_LINE'             : ('_', 'n', 'NLAI', 'OPTIONAL_GUARD', 'RHS_BODY', 'OPTIONAL_LABEL'),
     'OPTIONAL_GUARD'       : ('?', '^', 'PARAMS', ' '),
     'OPTIONAL_LABEL'       : ('?', '^', ' ', 'LABEL'),
-    'RHS_BODY'             : ('|', '^', 'U_PROP', 'U_ANY', 'EMPTY', 'NT_BUT_NOT', 'RHS_ITEMS'),
+    'RHS_BODY'             : ('|', '^', 'U_RANGE', 'U_PROP', 'U_ANY', 'EMPTY', 'NT_BUT_NOT', 'RHS_ITEMS'),
 
     'NT_BUT_NOT'           : ('_', 'n', 'NT', ' but not ', 'EXCLUSION'),
     'EXCLUSION'            : ('|', '^', 'EXCLUDABLES', 'EXCLUDABLE'),
@@ -297,6 +297,7 @@ metagrammar = {
     'EMPTY'            : ('/', 'n', r'\[empty\]'),
     'NLTH'             : ('/', 'n', r'\[no LineTerminator here\]'),
     'NLTH_BAR'         : ('/', 'n', r'\[no \|LineTerminator\| here\]'),
+    'U_RANGE'          : ('/', 'n', r'&gt; any Unicode code point in the inclusive range (0x[0-9A-F]+) to (0x[0-9A-F]+)'),
     'U_PROP'           : ('/', 'n', r'&gt; any Unicode code point with the Unicode property &ldquo;(\w+)&rdquo;'),
     'U_ANY'            : ('/', 'n', r'&gt; any Unicode code point'),
     'BACKTICKED_THING' : ('/', 'n', r'`([^` ]+|`)`'),
@@ -1905,6 +1906,8 @@ class Grammar:
                             rsymbol = {'T': 'T_u_p', 'p': None}
                         elif K == 'U_PROP':
                             rsymbol = {'T': 'T_u_p', 'p': rhs_item_n.groups[0]}
+                        elif K == 'U_RANGE':
+                            rsymbol = {'T': 'T_u_r', 'rlo': rhs_item_n.groups[0], 'rhi': rhs_item_n.groups[1]}
                         else:
                             assert 0, K
 

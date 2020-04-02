@@ -1148,6 +1148,7 @@ def annotate_algo(algo):
                     'the UTF16Encoding of the code points of {var}'    : 'UTF16Encoding',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
+                    'the result of performing UTF16DecodeSurrogatePair on the two code points matched by {nonterminal} and {nonterminal} respectively' : 'UTF16DecodeSurrogatePair',
                 }[rhs]
                 op_names = [callee_name]
                 args = d.children # XXX incorrect for a few cases

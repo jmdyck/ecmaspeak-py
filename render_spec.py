@@ -1052,6 +1052,9 @@ def expand_emu_grammar(emu_grammar):
         elif gnode.kind == 'U_PROP':
             return f'<emu-gprose>any Unicode code point with the Unicode property “{gnode.groups[0]}”</emu-gprose>'
 
+        elif gnode.kind == 'U_RANGE':
+            return f'<emu-gprose>any Unicode code point in the inclusive range {gnode.groups[0]} to {gnode.groups[1]}</emu-gprose>'
+
         elif gnode.kind == 'NAMED_CHAR':
             return f'<emu-gprose>{st}</emu-gprose>'
 
