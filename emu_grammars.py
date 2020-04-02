@@ -894,7 +894,10 @@ def check_non_defining_prodns(emu_grammars):
                 # The 'def' production doesn't have parameters.
                 # (~430 occurrences)
                 u_lhs_args_are_suppressed = None
-                assert not u_param_names
+                if u_param_names:
+                    msg_at_node(u_params_n,
+                        f"ERROR: 'use' prodn has lhs-parameters but def prodn does not"
+                    )
 
             # In the use-prodn, we expect rhs-args iff there are lhs-params.
             # u_expect_rhs_args = len(u_prodn_params) > 0
@@ -1135,7 +1138,14 @@ def u_item_matches_d_item(u_item_n, d_item_n):
         if d_item_n._params:
             # In the definition, this GNT has args.
             if u_item_n._params:
-                assert u_item_n._params == d_item_n._params
+                # assert u_item_n._params == d_item_n._params
+                if u_item_n._params != d_item_n._params:
+                    msg_at_node(u_item_n.children[1],
+                        f"ERROR: use says {u_item_n._params} but def says {d_item_n._params}"
+                    )
+                # XXX Shouldn't generate an error yet,
+                # because the matching might fail later.
+                # (But the assert was similarly problematic.)
                 note['nt-args intact'] = nt_name
                 note['L-695'] = 1
                 # 23 occurrences
@@ -1145,7 +1155,12 @@ def u_item_matches_d_item(u_item_n, d_item_n):
                 # 1884 occurrences
         else:
             # In the definition, this GNT has no args.
-            assert not u_item_n._params
+            # assert not u_item_n._params
+            if u_item_n._params:
+                msg_at_node(u_item_n.children[1],
+                    f"ERROR: use has params where def has none"
+                )
+            # XXX Shouldn't generate an error yet, etc.
             note['L-703'] = 1
             # 598 occurrences
 
