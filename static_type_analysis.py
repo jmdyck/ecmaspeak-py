@@ -6503,7 +6503,7 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Return {EXPR} (see {h_emu_xref}).",
-        r"{COMMAND} : Return {EXPR}. This call will always return *true*.",
+        # r"{COMMAND} : Return {EXPR}. This call will always return *true*.", # PR #1924
         r"{COMMAND} : Return {EXPR}.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
         r"{MULTILINE_SMALL_COMMAND} : return {MULTILINE_EXPR}",
@@ -7375,9 +7375,10 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
 
-    elif p == r"{COMMAND} : Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.":
-        [dsbn, literal] = children
-        result = env0
+#    elif p == r"{COMMAND} : Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.":
+#        [dsbn, literal] = children
+#        result = env0
+# ^ obsoleted by PR 1924
 
     elif p == r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.":
         [_, key_var, oer_var] = children
@@ -8334,9 +8335,10 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Tangible_, asserting)
 
-    elif p == r"{CONDITION_1} : {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured":
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Undefined, asserting)
+#    elif p == r"{CONDITION_1} : {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured":
+#        [var] = children
+#        return env0.with_type_test(var, 'isnt a', T_Undefined, asserting)
+# ^ obsoleted by PR 1924
 
     elif p in [
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are AsyncFunctionAwait or, if the async function doesn't await anything, the step 3.g above",

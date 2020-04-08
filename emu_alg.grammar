@@ -95,7 +95,6 @@
     Let {var} be {MULTILINE_EXPR}
     Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even.
     Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
-    Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.
     No action is required.
     Notify the agent {var}.
     Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
@@ -136,7 +135,6 @@
     Resume the suspended evaluation of {var}. Let {var} be the value returned by the resumed computation.
     Return {EXPR} (see {h_emu_xref}).
     Return {EXPR}.
-    Return {EXPR}. This call will always return *true*.
     Return {MULTILINE_EXPR}
     Return {var} as the Completion Record of this abstract operation.
     Return.
@@ -200,6 +198,10 @@
     # obsoleted by the merge of PR #1831:
     # Let {var} be {EXPR}. {note}
     # Set {SETTABLE} to {EXPR}. {note}
+
+    # obsoleted by the merge of PR #1924:
+    # Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.
+    # Return {EXPR}. This call will always return *true*.
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
@@ -798,7 +800,6 @@
     {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
-    {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
     {var}, {var}, and {var} are integer values &ge; 0
 
     # obsoleted by the merge of PR #1046
@@ -859,6 +860,9 @@
 
     # obsoleted by the merge of PR #1923
     # {var} is a String
+
+    # obsoleted by the merge of PR #1924:
+    # {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
