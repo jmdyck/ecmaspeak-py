@@ -9,6 +9,7 @@ import re, atexit, time, sys, pdb
 from operator import itemgetter
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest
+from pprint import pprint
 
 import shared, HTML
 from shared import stderr, spec, RE
@@ -720,8 +721,6 @@ single_sentence_rules_str = r'''
         A (?P<pl>candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
         v=\2 \3 if this operation \5.
 
-        (?P<retn>A Boolean value) is returned.
-
         # A (?P<name>TopLevelModuleEvaluationJob) (is a job .+)
         # v=!OP \2
         # ^ obsoleted by the merge of PR #1597
@@ -736,16 +735,11 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
 
-        Conversion occurs according to the following algorithm:
-
         # Each ([A-Z].+) function (has .+)
         # v=Each function created with this algorithm \2
 
         For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>abstract operation) (returns \*true\*).
         v=\2 \3 if this operation \5.
-
-        If _prototype_ is provided it is assumed to already contain, if needed, (a \*"constructor"\* property whose value is _F_).
-        ps=If _prototype_ is present, it is an object with \1.
 
         # (Input _t_ is nominally a time value but (may be any Number value).)
         # ps=_t_ \2
@@ -762,7 +756,15 @@ single_sentence_rules_str = r'''
         # It has access to (?P<also>.+).
         # ^ obsoleted by the merge of PR #1890
 
-        It performs the following steps:
+        It performs the following steps when called:
+
+        (It returns the sequence of Unicode code points that results from .+)
+        retn=a sequence of Unicode code points
+        v=\1
+
+        (It returns either \*false\* or the end index of a match.)
+        retn=a Boolean or a non-negative integer
+        v=\1
 
         # Its algorithm is as follows:
         # ^ obsoleted by the merge of PR #1890
@@ -781,29 +783,17 @@ single_sentence_rules_str = r'''
         The (?P<kind>abstract operation) (?P<name>[\w/]+) (.+)
         v=!OP \3
 
-        The (?P<kind>abstract operation) (?P<name>\w+), given (?P<pl>.+), (determines .+)
-        v=!OP \4
-
         # The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (a constructor and a value), (returns a new promise resolved with) that value.
         # pl=a constructor _C_ and a value _x_
         # v=!OP \4 _x_.
         # hack!
         #
-        The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (?P<pl>.+), (returns .+)
-        v=!OP \4
 
-        The (?P<kind>abstract operation) (?P<name>\w+)\((?P<pl>_V_, _target_)\) (implements .+)
-        v=!OP \4
-
-        The (?P<kind>abstract operation) (?P<name><dfn.+>\w+</dfn>)\((?P<pl>_value_)\) performs the following steps:
+        The (?P<kind>abstract operation) (?P<name><dfn.+>\w+</dfn>) takes argument (?P<pl>_value_)\.
 
         # --------------
 
         # (?P<ps>The allowed values for .+)
-
-        (?P<ps>The argument _\w+_ is the result of .+)
-
-        (?P<ps>The arguments .+ must be .+)
 
         The (comparison .+), where (?P<ps>_x_ and _y_ are values), produces (.+)
         v=!OP performs the \1, returning \3
@@ -816,8 +806,6 @@ single_sentence_rules_str = r'''
 
         The following steps are taken:
 
-        The (?P<kind>internal comparison abstract operation) (?P<name>\w+)\((?P<pl>_x_, _y_)\), where (?P<ps>.+), produces (?P<retn>.+).
-
         # The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) performs the following steps:
         # ^ obsoleted by the merge of PR #1597
 
@@ -825,36 +813,12 @@ single_sentence_rules_str = r'''
         # v=The job \4
         # ^ obsoleted by the merge of PR #1597
 
-        The operation (.+)
-        v=!OP \1
-
-        The (.+ process) is described by the (?P<kind>abstract operation) (?P<name>\w+) taking (?P<pl>.+).
-        v=!OP describes the \1.
-
         # ---------
 
         ((?P<ps>The optional _\w+_ value) indicates .+)
         v=\1
 
-        The (optional argument|optional|argument) (_\w+_) is a List of (the names of additional internal slots that .+)
-        ps=\1 \2 is a List of names of internal slots
-        v=\2 contains \3
-
-        The (optional argument (_\w+_) is a List) containing the (names of ECMAScript Language Types) (that .+)
-        ps=\1 of \3
-        v=\2 contains the \3 \4
-
-        The (optional argument _env_) (can be used to explicitly provide the (Lexical Environment) .+)
-        ps=\1 is a \3
-        v=_env_ \2
-
         # ---------
-
-        (?P<ps>The pure combining operation _op_ takes two List of byte values arguments and returns a List of byte values.)
-
-        (?P<ps>The value of _\w+_ is .+)
-
-        (?P<ps>The value of _\w+_ may be \*null\*.)
 
         # Don't match "The value of _separator_ may be a String of any length or it may be ..."
         # because it belongs in the description, is misleading for parameter-type.
@@ -880,8 +844,6 @@ single_sentence_rules_str = r'''
 
         The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) (for|of) (?P<for>.+) when called with (?P<pl>.+) performs the following steps:
 
-        The (?P<name>\w+) of (?P<pl>a numeric code point value, _cp_), is determined as follows:
-
         # ------------
 
         The `(?P<name>[\w.]+)` (?P<kind>function|method) (.+)
@@ -902,10 +864,6 @@ single_sentence_rules_str = r'''
             !FUNC performs the following steps:
 
         # ---
-
-        The (_\w+_) argument (is the constructor to use .+)
-        ps=\1 is a constructor
-        v=\1 \2
 
         # JSON.stringify:
         # Commenting these out becaue they're inaccurate:
@@ -929,18 +887,6 @@ single_sentence_rules_str = r'''
 
         This (?P<kind>abstract method) performs the following steps:
 
-        This (?P<kind>abstract operation) accepts (?P<pl>a String value _string_) and (returns the sequence of Unicode code points that results from interpreting) it (as .+)
-        retn=a sequence of Unicode code points
-        v=!OP \3 _string_ \4
-
-        This (?P<kind>abstract operation) converts _text_, (a sequence of Unicode code points), (into a String value, as .+)
-        ps=_text_ is \2
-        v=!OP converts _text_ \3
-
-        This (?P<kind>abstract operation) performs the following steps:
-
-        This (?P<kind>abstract operation) functions as follows:
-
         This description applies if and only if the (?P<name>Array) constructor is called with (.+).
         kind=overloaded constructor
         overload_resolver=\2
@@ -958,25 +904,12 @@ single_sentence_rules_str = r'''
         This function (.+)
         v=!FUNC \1
 
-        This operation performs the following steps:
-
-        This operator functions as follows:
-
     # ==========================================================================
     # Sentences that start with "When"
 
         # (Ultimately, almost nothing falls through to the description.)
 
         # When the ...
-
-        When the (?P<kind>abstract operation) (?P<name>\w+) is called(.+)
-        v=When it is called\3
-
-        When the (?P<kind>abstract operation) (?P<name>\w+) with (?P<pl>argument.+) is called(.+)
-        v=When it is called\4
-
-        When the (?P<name>\w+) (?P<kind>abstract operation) is called(.+)
-        v=When it is called\3
 
         When the (?P<name>TypedArray SortCompare) (?P<kind>abstract operation) is called(.+)
         v=When it is called\3
@@ -1018,8 +951,6 @@ single_sentence_rules_str = r'''
         When `(?P<name>[\w.]+)` is called(.+)
         v=When it is called\2
 
-        When (?P<name>\w+) is performed with (?P<pl>.+), the following steps are taken:
-
         When (?P<name>%\w+%) is called it performs the following steps:
 
         # -----------------------------------------------------
@@ -1030,26 +961,16 @@ single_sentence_rules_str = r'''
 
         When it is called, the following steps are taken:
 
-        When it is called, the following occurs:
-
         When it is called with (?P<pl>.+?),? it returns (.+)
         v=It returns \2
 
         When it is called it returns (.+)
         v=It returns \1
 
-        When called with (?P<pl>.+), the following steps are taken:
-
         When called with (?P<pl>.+), it performs the following steps:
-
-        When called, the following steps are performed:
 
     # ==========================================================================
     # Sentences that start with the operation/function name:
-
-        (?P<name>\w+) performs the following steps:
-
-        (?P<name>\w+) is performed as follows using (?P<pl>arguments .+).
 
         (?P<name>_\w+_) called with (?P<pl>.+) performs the following steps:
 
@@ -1058,72 +979,21 @@ single_sentence_rules_str = r'''
 
         # (?P<name>\w+) has access to (?P<also>.+).
 
-        (?P<name>\w+) (tests whether .+)
-        v=!OP \2
-
         (?P<name>\w+) is an (?P<kind>implementation-defined abstract operation) that (.+)
         v=!OP \3
 
         (?P<name>LocalTZA)\( _t_, _isUTC_ \) is an (?P<kind>implementation-defined algorithm) that (returns .+)
         v=!OP \3
 
-        (?P<name>[A-Z][a-z]+[A-Z]\w+) returns (?P<retn>a built-in function object) created by the following steps:
-        v=!OP creates \2.
-
     # ==========================================================================
     # Sentences that (now) start with "!OP":
 
         # !OP followed by <pl>
 
-        !OP accepts (?P<pl>.+ _adder_ function) to (be invoked, with \w+ as the receiver).
-        v=_adder_ will \2
-
-        !OP called with (?P<pl>.+) ((creates|performs) .+)
-        v=!OP \2
-
-        !OP is called with (?P<pl>.+) as its argument\.
-
-        !OP is called with (?P<pl>.+), as an argument\.
-
-        !OP is called with arguments (?P<pl>.+), and (interprets .+)
-        v=!OP \2
-
-        # Call:
-        !OP is called with (?P<pl>.+) where (_F_ is the function object, _V_ is an ECMAScript language value that .+, and _argumentsList_ is .+)
-        ps=_F_ is a value, _V_ is a value, _argumentsList_ is a List of values
-        v=\2
-
-        # Invoke:
-        !OP is called with (?P<pl>.+) where (_V_ serves as .+), (_P_ is the property key), and (_argumentsList_ is the list of arguments values passed to the method.)
-        ps=_V_ is a value, \3, and _argumentsList_ is a List of values.
-        v=\2. \4
-        # We could push the whole 'where' clause into <ps>,
-        # but that would cause calls to add_to_description.
-
-        !OP is called with (?P<pl>.+) where (?P<ps>.+).
-
         !OP is called with (?P<pl>.+).
-
-        !OP requires the arguments: (?P<pl>.+)\.
-
-        !OP requires (?P<pl>.+)\.
-
-        # TriggerPromiseReactions
-        !OP takes (a collection of PromiseReactionRecords) and (enqueues a new Job for each record).
-        ps=_reactions_ is \1.
-        v=!OP \2 in _reactions_.
-        # assuming arg name!
-
-        !OP takes (?P<pl>.+) and performs the following steps:
-
-        !OP takes (?P<pl>.+), and performs the following steps in order to return (.+)
-        v=!OP returns \2
 
         !OP takes (?P<pl>.+) and (returns .+)
         v=!OP \2
-
-        !OP takes (?P<pl>a code unit argument _C_) and represents it (as .+)
-        v=!OP represents _C_ \2
 
         !OP takes (?P<pl>.*_.*).
 
@@ -1132,44 +1002,19 @@ single_sentence_rules_str = r'''
         # !OP with (?P<pl>.+) has access to (?P<also>.+).
         # ^ obsoleted by the merge of PR #1890
 
-        !OP with (?P<pl>.+) is defined by the following steps:
-
-        !OP with (?P<pl>.+) is performed as follows:
-
         !OP with (?P<pl>.+) performs the following steps:
-
-        !OP with (?P<pl>.+) ((allocates|creates|configures|converts|is used|requests|serializes|wraps) .+)
-        v=!OP \2
 
         !OP with (?P<pl>.+) (returns .+)
         v=!OP \2
 
         # ------------------------------------
 
-        (!OP is used to determine the binding of _name_) (passed as a String value).
-        ps=_name_ is \2
-        v=\1.
-
-        !OP is a recursive (?P<kind>abstract operation) that takes (?P<pl>.+).
-
-        (!OP allocates .+ with) (?P<ps>the TypedArray instance _O_).
-        v=\1 _O_.
-
-        (!OP calculates .+) from its (?P<ps>.*arguments?, which .+).
-        v=\1.
-
         (!OP converts) (?P<pl>a \w+ _x_) (to .+)
         v=\1 _x_ \3
 
-        (!OP determines if) (String _p_) (is a prefix of) (String _q_).
-        pl=\2 and \4
-        v=\1 _p_ \3 _q_
+        !OP returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is (?P<retn>a Boolean).
 
-        (!OP determines if _argument_), which (must be an ECMAScript language value), (is .+)
-        ps=_argument_ \2
-        v=\1 \3
-
-        !OP performs the following steps:
+        !OP returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is (?P<retn>a Boolean).
 
         # ---------
 
@@ -1178,10 +1023,6 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
     # Sentences that start with a parameter name:
-
-        (?P<ps>_constructor_ is .+)
-
-        (?P<ps>_constructorName_ is required to be the name of a TypedArray constructor in .+)
 
         (?P<ps>_\w+_ is a Module Record, and _N2_ is .+).
 
@@ -1198,8 +1039,6 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
     # Miscellaneous starts:
-
-        During execution of ECMAScript code, (?P<name>\w+) is performed using the following algorithm:
 
         Given (?P<pl>zero or more arguments), (calls ToNumber .+)
         v=!FUNC \2
@@ -1222,9 +1061,6 @@ single_sentence_rules_str = r'''
         # because you'll get lots of warnings re mismatches.)
 
         Specifically, perform the following steps:
-
-        (?P<pl>Two code units, _lead_ and _trail_), (that .+)
-        v=Two code units \2
 
         These are the steps in stringifying an object:
 
@@ -1336,10 +1172,6 @@ single_sentence_rules_str = r'''
         retn=*false* or an IteratorResult object
         v=\1
 
-        (.+ returns either \*false\* or the end index of a match):
-        retn=a Boolean or a non-negative integer
-        v=\1.
-
         (.+ returns either a new promise .+ or the argument itself if the argument is a promise .+)
         retn=a promise
         v=\1
@@ -1355,9 +1187,6 @@ single_sentence_rules_str = r'''
         (.+ returns the value of the \*"length"\* property of an array-like object.)
         retn=a non-negative integer
         v=\1
-
-        (.+ (?P<retn>a new PromiseCapability Record)) which is returned as the value of this abstract operation.
-        v=\1.
 
         # -----------
         # throws ...
@@ -1384,33 +1213,6 @@ single_sentence_rules_str = r'''
 
         # ----
 
-        (.+ if) (?P<ps>an object (_\w+_)) (inherits .+)
-        v=\1 \3 \4
-
-        (.+ if) +(?P<ps>ECMAScript value (_\w+_)) (is .+)
-        v=\1 \3 \4
-
-        (.+ of) (?P<ps>object (_\w+_)) (either .+)
-        v=\1 \3 \4
-
-        (.+ by) (?P<ps>constructor (_\w+_))\.
-        v=\1 \3.
-
-        (.+ interprets) (?P<ps>(a String|the String value) _string_) (as .+)
-        v=\1 _string_ \4
-
-        (.+) by performing the following steps:
-        v=\1.
-
-        (.+ of) (?P<ps>an array-like object, (_\w+_)).
-        v=\1 \3.
-
-        (.+ from) (?P<ps>the argument object (_\w+_)).
-        v=\1 \3.
-
-        (.+ to) (?P<ps>the object that is _O_)\.
-        v=\1 _O_.
-
         # (.+) the value of (the Boolean argument) _S_.
         # ps=\2 _S_
         # v=\1 the value of _S_.
@@ -1423,9 +1225,6 @@ single_sentence_rules_str = r'''
         v=\1 _array_.
         # don't include 'object' in ps because that's misleading
 
-        (.+ for) the (?P<ps>Cyclic Module Record _module_), (.+)
-        v=\1 _module_, \3
-
         (.+ index (_\w+_).)
         ps=\2 is a non-negative integer
         v=\1
@@ -1435,9 +1234,6 @@ single_sentence_rules_str = r'''
         v=\1.
 
         (.+ determines .+):
-        v=\1.
-
-        (.+ is used to .+):
         v=\1.
 
         # (.+):
@@ -1787,178 +1583,49 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
     # if '_C_' in parameter_sentence: stderr('gifps', parameter_sentence)
     # if 'neither' in parameter_sentence: pdb.set_trace()
 
-    if parameter_sentence == '': return
-
-    if parameter_sentence in [
-        'neither _x_ nor _y_ are Number values.',
-        'neither _x_ nor _y_ are numeric type values',
+    if oi.name in [
+        'FunctionDeclarationInstantiation',
+        'CodePointAt',
+        'BlockDeclarationInstantiation',
+        'GlobalDeclarationInstantiation',
+        'CreateDynamicFunction',
     ]:
-        oi.param_nature_['_x_'] = 'not a numeric value'
-        oi.param_nature_['_y_'] = 'not a numeric value'
         return
 
-    if parameter_sentence == 'optional _reviver_ parameter is a function that takes two parameters, _key_ and _value_':
-        oi.optional_params.add('_reviver_')
-        oi.param_nature_['_reviver_'] = 'a function that takes two parameters, _key_ and _value_'
-        return
+    foo = {
+        '_x_ and _y_ are values':
+            [('_x_', 'an ECMAScript language value'), ('_y_', 'an ECMAScript language value')],
+        "_M_ is a Module Record, and _N2_ is the name of a binding that exists in _M_'s module Environment Record":
+            [('_M_', 'a Module Record'), ('_N2_', 'String')],
+        "_argumentsList_ is a possibly empty List of ECMAScript language values":
+            [('_argumentsList_', 'a List of ECMAScript language values')],
+        "the |ModuleSpecifier| String, _specifier_":
+            [('_specifier_', 'String')],
+        "the Script Record or Module Record _referencingScriptOrModule_":
+            [('_referencingScriptOrModule_', 'a Script Record or Module Record')],
+        "_array_":
+            [('_array_', 'TBD')],
+        "The optional _offset_ value":
+            [('_offset_', 'TBD')],
+        "the _typedArray_ argument object":
+            [('_typedArray_', 'TBD')],
+        '_referencingScriptOrModule_ may also be *null*':
+            [('_referencingScriptOrModule_', 'Null')]
+    }[parameter_sentence]
 
-    if parameter_sentence == 'If _prototype_ is present, it is an object with a *"constructor"* property whose value is _F_.':
-        oi.optional_params.add('_prototype_')
-        oi.param_nature_['_prototype_'] = 'an object with a *"constructor"* property whose value is _F_'
-        return
-
-    if parameter_sentence == 'The pure combining operation _op_ takes two List of byte values arguments and returns a List of byte values.':
-        oi.param_nature_['_op_'] = 'a pure combining operation that takes two List of byte values arguments and returns a List of byte values'
-        return
-
-    if ', which must be ' in parameter_sentence and 'ECMAScript Number value' in parameter_sentence:
-        assert oi.param_names is None
-        if oi.name == 'MakeTime':
-            assert parameter_sentence.startswith('four arguments')
-            oi.param_names = ['_hour_', '_min_', '_sec_', '_ms_']
-        elif oi.name == 'MakeDay':
-            assert parameter_sentence.startswith('three arguments')
-            oi.param_names = ['_year_', '_month_', '_date_']
-        elif oi.name == 'MakeDate':
-            assert parameter_sentence.startswith('two arguments')
-            oi.param_names = ['_day_', '_time_']
-        elif oi.name == 'TimeClip':
-            assert parameter_sentence.startswith('argument,')
-            oi.param_names = ['_time_']
-        else:
-            assert 0
-        for pn in oi.param_names:
-            oi.param_nature_[pn] = 'Number'
-        return
-
-
-    # tweak things that would react poorly to the subsequent split
-    param_sentence2 = sub_many(parameter_sentence, [
-        # Case where we don't want to split on comma:
-        # (We prevent the split by inserting an extra space, which is a bit subtle.)
-        ('present, _F_',
-            'present,  _F_'),
-        ('an array-like object, _obj_',
-            'an array-like object,  _obj_'),
-        ('the \|ModuleSpecifier\| String, _specifier_',
-            'the |ModuleSpecifier| String,  _specifier_'),
-
-        # Cases where we don't want to split on "and":
-        ('The arguments _tag_ and _attribute_ must be String values',
-            '_tag_ is a String value and _attribute_ is a String value'),
-        ('_x_ and _y_ are values',
-            r'_x_ is a value and _y_ is a value'),
-        ('_x_ and _y_ are (ECMAScript language value)s',
-            r'_x_ is an \1 and _y_ is an \1'),
-
-        (r'\.$', ''),
-    ])
-
-    var_pattern = r'\b_\w+_\b'
-
-    for clause in re.split(r'(?:, and|,| and) (?=_\w+_)', param_sentence2):
-        mo = re.search(var_pattern, clause)
-        # assert mo, clause
-        if mo is None:
-            stderr(f"> {oi.name} has ps={parameter_sentence!r} which fails split+search")
-            continue
-        param_name = mo.group(0)
-
-        vclause = re.sub(r'\b' + param_name + r'\b', 'VAR', clause)
-
-        if 'optional' in vclause:
-            oi.optional_params.add(param_name)
-            # vclause = re.sub(' optional ', ' ', vclause)
-
-        for (pattern, param_nature_clause) in [
-
-            (  r'VAR is a List containing the actual argument values that ',
-                'VAR is a List of values'),
-            (  r'VAR is an ECMAScript language value that ',
-                'VAR is an ECMAScript language value'),
-            (  r'VAR is the Lexical Environment in which ',
-                'VAR is a Lexical Environment'),
-            (  r'VAR is the Property Descriptor for ',
-                'VAR is a Property Descriptor'),
-            (  r'VAR is the constructor function that ',
-                'VAR is a constructor'),
-            (  r'VAR is the constructor that ',
-                'VAR is a constructor'),
-            (  r'VAR is the function object for which ',
-                'VAR is a function object'),
-            (  r'VAR is the global lexical environment in which ',
-                'VAR is a global lexical environment'),
-            (  r'VAR is the Parse Node corresponding to ',
-                'VAR is a Parse Node'),
-            (  r'VAR is the list of arguments values passed to ',
-                'VAR is a List of values'),
-            (  r'VAR is the new value for the property',
-                'VAR is a value'),
-            (  r'VAR is the value for the property',
-                'VAR is a value'),
-            (  r'VAR is the value passed to the corresponding argument of the internal method',
-                'VAR is a List of values'), # Call()
-            (  r'VAR is the value to be passed as ',
-                'VAR is a value'),
-            (  r'VAR is the \|ScriptBody\| for which the execution context is being established',
-                'VAR is a |ScriptBody|'),
-            (  r'VAR serves as both the lookup point for the property and ',
-                'VAR is a value'),
-
-        ]:
-            mo = re.match(pattern, vclause)
-            if mo:
-                add_to_description(oi, clause + '.')
-                vclause = param_nature_clause
-                break
-
+    for (param_name, nature) in foo:
         if oi.param_names and param_name in oi.param_names:
             # The preamble has previously 'declared' this parameter.
             current_nature = oi.param_nature_[param_name]
             if current_nature == 'TBD':
-                new_nature = sub_many(vclause, [
-                    ('^VAR is required to be ', ''),
-                    ('^VAR is ', ''),
-                    ('^VAR serves as both', 'both'),
-                    ('^The value of VAR is ', ''),
-                    ('^argument VAR is ', ''),
-                    (' VAR$', ''),
-                    ('^The allowed values for VAR are ', ''),
-                ])
+                new_nature = nature
             else:
-                new_nature = current_nature + '; ' + sub_many(vclause, [
-                    ('^The value of VAR may be ', 'or may be '),
-                    ('VAR may also be', 'may also be'),
-                ])
-
-            assert 'VAR' not in new_nature
+                new_nature = current_nature + '; may also be ' + nature
             oi.param_nature_[param_name] = new_nature
-
         else:
             # The preamble has not previously 'declared' this parameter,
             # and yet it now mentions it in a way
             # that is normally only used when we've already declared it.
-            nature = sub_many(vclause, [
-                ('^The argument VAR is ', ''),
-                ('^The optional(?: argument)? VAR is ', ''),
-                ('^The optional VAR parameter is ', ''),
-                ('^The VAR parameter is ', ''),
-                ('^The value of VAR may be ', ''),
-                ('^The optional VAR value$', 'TBD'),
-                ('^the VAR argument object$', 'object'),
-                ('^optional argument VAR is ', ''),
-                ('^optional VAR is ', ''),
-                ('^argument VAR is ', ''),
-                ('^In addition the algorithm takes (a Boolean flag) named VAR as a parameter', r'\1'),
-                ('^VAR is an? optional ', 'a '),
-                ('^VAR (?:is|must be) ', ''),
-                ('^the (.+) that is VAR$', r'\1'),
-                ('an optional Lexical', 'a Lexical'),
-                (', +VAR$', ''),
-                (' VAR$', ''),
-                ('^VAR$', ''),
-            ])
-            assert 'VAR' not in nature, clause
 
             if oi.param_names is None: oi.param_names = []
 
@@ -2071,12 +1738,16 @@ def get_info_from_heading(section):
 
 def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
+    assert oi.param_names is None, oi.name
+
     # if '_C_' in parameter_listing: stderr('gifpl', parameter_listing)
 
     if parameter_listing == '':
+        assert 0
         return
 
     if parameter_listing == 'no arguments':
+        # 27 cases
         oi.param_names = []
         return
 
@@ -2087,15 +1758,18 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         'one or two arguments',
         'zero or one arguments',
     ]:
+        # 24 cases
         # XXX not sure what to do
         return
 
     if parameter_listing == 'one or two arguments, _predicate_ and _thisArg_':
+        # 1 case
         oi.param_names = ['_predicate_', '_thisArg_']
         oi.optional_params.add('_thisArg_')
         return
 
     elif parameter_listing == 'an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_)':
+        # 2 cases
         oi.param_names = ['_execution_', '_E_', '_D_']
         oi.param_nature_['_execution_'] = 'an execution'
         oi.param_nature_['_E_'] = 'an event in SharedDataBlockEventSet(_execution_)'
@@ -2108,6 +1782,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no "_p_" arguments, and where _body_ might also not be provided)',
         'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no _p_ arguments, and where _body_ might also not be provided)',
     ]:
+        # 4 cases
         oi.param_names = ['_args_', '_body_']
         oi.param_nature_['_args_'] = 'list of values'
         oi.param_nature_['_body_'] = 'a value'
@@ -2115,6 +1790,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         return
 
     elif parameter_listing  == 'at least one argument _buffer_':
+        # 2 cases
         # kludgey
         if oi.name == '_TypedArray_':
             oi.param_names = ['_buffer_', '_byteOffset_', '_length_']
@@ -2128,161 +1804,107 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             assert 0, oi.name
         return
 
-    # InternalizeJSONProperty
-    elif parameter_listing == 'three parameters: a _holder_ object, the String _name_ of a property in that object, and a _reviver_ function':
-        oi.param_names = ['_holder_', '_name_', '_reviver_']
-        oi.param_nature_['_holder_'] = 'object'
-        oi.param_nature_['_name_'] = 'the String name of a property in _holder_'
-        oi.param_nature_['_reviver_'] = 'function'
-        return
-
     elif parameter_listing == 'up to three arguments _target_, _start_ and _end_':
+        # 1 case
         oi.param_names = ['_target_', '_start_', '_end_']
         return
     elif parameter_listing == 'up to three arguments _value_, _start_ and _end_':
+        # 1 case
         oi.param_names = ['_value_', '_start_', '_end_']
+        return
+
+    elif re.fullmatch(r'(two )?arguments _x_ and _y_ of type BigInt', parameter_listing):
+        oi.param_names = ['_x_', '_y_']
+        oi.param_nature_['_x_'] = 'a BigInt'
+        oi.param_nature_['_y_'] = 'a BigInt'
         return
 
     # --------------------
 
-    param_listing = sub_many(parameter_listing, [
-        (r'\.$', ''),
+    # 'Hide' commas within parentheses, so they don't mess up splits:
+    def hide_commas(mo):
+        return mo.group(0).replace(',', '<COMMA>')
+    param_listing = re.sub(r'\(.*?\)', hide_commas, parameter_listing)
+    # The commas will be unhidden later.
 
-        ( r'^\((.+)\)$', r'\1' ),
-        ( r'&lt;|===|==', 'and' ),
+    # Also here:
+    param_listing = re.sub(r'(_argumentsList_), (a List of ECMAScript language values)', r'\1<COMMA> \2', param_listing)
 
-        # pre-handle cases that would give bad results when we split on comma and 'and'...
-
-        # un-elide
-        ('(two )?arguments _x_ and _y_ of type BigInt', r'BigInt _x_ and BigInt _y_'),
-        ('(argument _obj_) and (optional argument)s (_hint_) and (_method_)', r'\1 and \2 \3 and \2 \4'),
-        ('(optionally) (_argumentsList_), and (_newTarget_)', r'\1 \2 and \1 \3'),
-        ('(optionally), (a Boolean _writablePrototype_) and (an object _prototype_)', r'\1 \2 and \1 \3'),
-        ('Two code units, _lead_ and _trail_', 'code unit _lead_ and code unit _trail_'),
-        (', and (Property Descriptor)s (_Desc_), and (_[Cc]urrent_)', r', \1 \2, and \1 \3'),
-        ('two (CharSet) parameters (_A_) and (_B_)', r'\1 \2 and \1 \3'),
-        (r'two (String) arguments (_string_) and (_\w+_)', r'\1 \2 and \1 \3'),
-        (r'two parameters (_p_) and (_v_), each of which is (a List of Unicode code points)', r'\3 \1 and \3 \2'),
-        (r'(optional argument)s (_mapfn_) and (_thisArg_)', r'\1 \2 and \1 \3'), # Array.from
-
-        ('optionally, ', 'optionally '),
-        (' and with ', ' and '),
-        ('(a Lexical Environment)( as)? argument (_E_)', r'\1 \3'),
-        (' as its argument$', ''),
-        ('(a Parse Node), (_templateLiteral_)', r'\1 \2'),
-        (' as arguments$', ''),
-        (r'(a nonnegative), (non-\*NaN\* Number)', r'\1 \2'),
-        (r'(_argumentsList_), (a List of ECMAScript language values)', r'\1 \2'),
-        (r'(a numeric code point value), (_cp_)', r'\1 \2'),
-
-        # parameter(s):
-        ('^parameters ', ''),
-        ('^(three|four|five|six|seven|eight) parameters, ', ''),
-        ('^two parameters: ', ''),
-        # argument(s):
-        ('^argument ', ''),
-        ('^one argument,? ', ''),
-        ('^arguments ', ''),
-        ('^as arguments ', ''),
-        ('^the arguments: ', ''),
-        ('^the argument ', ''),
-        ('^two arguments,? ', ''),
-        ('^the two arguments ', ''),
-        ('^the three arguments ', ''),
-        ('^three arguments[:,] ', ''),
-        ('^four arguments, ', ''),
-
-        ('which is one of \(`"normal"`, .+?\)', 'which is a String'),
-
-        ('one of \(~key~, ~value~, ~key\+value~\)',  'one_of_key_value_key+value'),
-        ('one of \(~SeqCst~, ~Unordered~\)',         'one_of_SeqCst_Unordered'),
-        ('one of \(~SeqCst~, ~Unordered~, ~Init~\)', 'one_of_SeqCst_Unordered_Init'),
-
-        (r'\(Normal, ', '(Normal<comma> '),
-        (r'Method, Arrow\)', 'Method<comma> Arrow)'),
-        (r'\(~Normal~, ', '(~Normal~<comma> '),
-        (r'~Method~, ~Arrow~\)', '~Method~<comma> ~Arrow~)'),
-        # (The commas will be reinstated below.)
-    ])
-
-    param_items = re.split(', and |, | and ', param_listing)
-
-    var_pattern = r'\b_\w+_\b'
-
-    assert oi.param_names is None, oi.name
+    # ---------------------
 
     oi.param_names = []
-    for param_item in param_items:
-        mo = re.search(var_pattern, param_item)
-        # assert mo, param_item
-        if mo is None:
-            stderr(f"> {oi.name} param listing fails comma-split: {parameter_listing}")
-            continue
-        param_name = mo.group(0)
 
-        assert param_name not in oi.param_names, param_name
-        oi.param_names.append(param_name)
-
-        if param_item == 'zero or more _args_':
-            # XXX how to represent 'zero or more'?
-            continue
-
-        (param_item2, n) = re.subn(r'\b(optionally|(an )?optional( argument)?) ', '', param_item)
-        if n == 0:
-            # no mention of optionality
-            pass
+    # Split the listing into the 'required' and 'optional' parts:
+    parts = []
+    if 'optional' in param_listing:
+        if RE.fullmatch(r'optional (argument.+)', param_listing):
+            parts.append(('optional', RE.group(1)))
+        elif RE.fullmatch(r'(.+?),? and optional (argument.+)', param_listing):
+            parts.append(('required', RE.group(1)))
+            parts.append(('optional', RE.group(2)))
         else:
-            assert n == 1
-            oi.optional_params.add(param_name)
+            assert 0, param_listing
+    else:
+        parts.append(('required', param_listing))
 
-        nature = sub_many(param_item2, [
-
-            # a few special cases that wouldn't be well-handled by the generic patterns:
-            ('^an argument _argumentsList_$', ''), # CreateUnmappedArgumentsObject
-            (r'^an _input_ argument$', ''), # ToPrimitive
-            (r'^an _iterable_ of entries$', 'object'), # AddEntriesFromIterable
-            (r'^an _adder_ function$', 'function'), # AddEntriesFromIterable
-
-            # We don't need to repeat that this is an argument/parameter.
-            (r' argument ', ' '),
-
-            # We don't need to repeat the variable name:
-            (r'\b' + param_name + r'\b', 'VAR'),
-            (r'^a parameter VAR that is ', ''),
-            (r'^VAR which is ', ''),
-            (r'^VAR ', ''),
-            (r'^VAR$', ''),
-            (r'^VAR,$', ''),
-            (r'^a VAR object$', 'an object'),
-            # (r'^an VAR function$', 'a function'),
-            (r'^an VAR$', ''),
-            (r'^an VAR of type ', ''),
-            (r'^a List VAR of', 'a List of'),
-            (r' named VAR$', ''),
-            (r' specified by VAR$', ''),
-            (r' VAR that is ', ' that is '),
-            (r' VAR$', ''),
-            (r' VAR,$', ''),
-
-            # Eliminate 'parameter' from "a character parameter" and "an integer parameter",
-            # but not from "a parameter list Parse Node".
-            (r' parameter$', ''),
-
-            # Undo the comma-protecting hack above:
-            (r'<comma>', ','),
-
-            # If what remains is parenthesized, drop the parentheses:
-            (r'^\((.+)\)$', r'\1'),
-
-            # Prepend "a" or "an" as appropriate:
-            # ('(?i)^(?!an? |one |the |either )(?=[aeiou])', r'an '),
-            # ('(?i)^(?!an? |one |the |either )(?=[^aeiou])', r'a '),
-
-            # If the remainder is empty, use "TBD".
-            ('^$', 'TBD'),
+    for (optionality, part) in parts:
+        part = sub_many(part, [
+            ('^parameters ', ''),
+            ('^argument ', ''),
+            ('^one argument,? ', ''),
+            ('^an argument ', ''),
+            ('^arguments ', ''),
+            ('^two arguments,? ', ''),
         ])
 
-        oi.param_nature_[param_name] = nature
+        param_items = re.split(', and |, | and ', part)
+
+        var_pattern = r'\b_\w+_\b'
+
+        for param_item in param_items:
+
+            # unhide_commas:
+            param_item = param_item.replace('<COMMA>', ',')
+
+            parameter_names = re.findall(var_pattern, param_item)
+            if len(parameter_names) != 1:
+                stderr(f"> {oi.name}: param listing {parameter_listing!r} contains item {param_item!r} with {len(parameter_names)} parameter names")
+                continue
+
+            [param_name] = parameter_names
+
+            assert param_name not in oi.param_names, param_name
+            oi.param_names.append(param_name)
+
+            if optionality == 'optional':
+                oi.optional_params.add(param_name)
+
+            if param_item == 'zero or more _args_':
+                # XXX how to represent 'zero or more'?
+                continue
+
+            r_param_item = re.sub(var_pattern, 'VAR', param_item)
+
+            for (pat, nat) in [
+                (r'VAR, (a List of ECMAScript language values)', r'\1'),
+                (r'VAR which is (a possibly empty List of ECMAScript language values)', r'\1'),
+                (r'VAR of type BigInt', 'a BigInt'),
+                (r'VAR \((.+)\)', r'\1'),
+                (r'VAR',          'TBD'),
+
+                (r'a Boolean flag named VAR', 'a Boolean'),
+                (r'(an? .+) VAR', r'\1'),
+                (r'(.+) VAR',     r'\1'), # XXX prefix with "a"/"an"?
+            ]:
+                mo = re.fullmatch(pat, r_param_item)
+                if mo:
+                    nature = mo.expand(nat)
+                    break
+            else:
+                print(f"?   {r_param_item}")
+                assert 0
+
+            oi.param_nature_[param_name] = nature
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2450,6 +2072,7 @@ nature_to_tipe = {
         'the |ModuleSpecifier| String': 'String', # TODO
         "the name of a binding that exists in _M_'s module Environment Record": 'String', # TODO
         'the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String', # TODO
+        'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
 
         # Symbol
 
@@ -2506,8 +2129,10 @@ nature_to_tipe = {
 
         # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
         'an ArrayBuffer' : 'ArrayBuffer_object_',
+        'an ArrayBuffer object' : 'ArrayBuffer_object_',
         'an ArrayBuffer or SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
         'a SharedArrayBuffer' : 'SharedArrayBuffer_object_',
+        'a SharedArrayBuffer object' : 'SharedArrayBuffer_object_',
 
         'the TypedArray instance' : 'TypedArray_object_',
         'a TypedArray instance'   : 'TypedArray_object_',
@@ -2557,6 +2182,7 @@ nature_to_tipe = {
         'List' : 'List',
         'a List' : 'List',
         'List of String'                       : 'List of String',
+        'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
         'a List of Unicode code points'        : 'List of Integer_',
@@ -2565,6 +2191,7 @@ nature_to_tipe = {
         'a list of arguments'                  : 'List of Tangible_',
         'a List of ECMAScript language values' : 'List of Tangible_',
         'a possibly empty List of ECMAScript language values': 'List of Tangible_',
+        'a List of ImportEntry Records (see <emu-xref href="#table-39"></emu-xref>)': 'List of ImportEntry Record',
 
         # Completion
 
@@ -2580,6 +2207,7 @@ nature_to_tipe = {
 
         # Environment Record
         'Environment Record' : 'Environment Record',
+        'an Environment Record' : 'Environment Record',
         'Scope Record' : 'Scope Record', # PR 1477 scope-records
 
         # Data Block
@@ -2594,9 +2222,11 @@ nature_to_tipe = {
 
         # 8.2 Realms: Realm Record
         'Realm Record' : 'Realm Record',
+        'a Realm Record' : 'Realm Record',
 
         # 8.3 Execution Contexts
         'execution context' : 'execution context',
+        'an execution context' : 'execution context',
 
         # 15.1.8 Script Records: Script Record
 
@@ -2604,8 +2234,10 @@ nature_to_tipe = {
         'a Module Record' : 'Module Record',
         'Module Record'   : 'Module Record',
         'Cyclic Module Record': 'Cyclic Module Record',
+        'a Cyclic Module Record': 'Cyclic Module Record',
 
         # 15.2.1.16 Source Text Module Records:
+        'a Source Text Module Record': 'Source Text Module Record',
         # ImportEntry Record
         # ExportEntry Record
 
@@ -2651,6 +2283,7 @@ nature_to_tipe = {
         'a List of ECMAScript Language Type names'    : 'List of LangTypeName_',
         'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
         'a collection of PromiseReactionRecords'      : 'List of PromiseReaction Record',
+        'a collection of PromiseReaction Records'     : 'List of PromiseReaction Record',
 
     # unofficial spec types
 
@@ -2674,9 +2307,14 @@ nature_to_tipe = {
         'Parse Node'                     : 'Parse Node',
         'the Parse Node'                 : 'Parse Node',
         'the result of parsing an |AssignmentExpression| or |Initializer|' : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
+        'a Parse Node for |AssignmentExpression| or a Parse Node for |Initializer|': 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
+        'a Parse Node for |CaseClause|'  : 'Parse Node for |CaseClause|',
         'a |ScriptBody|'                 : 'Parse Node for |ScriptBody|',
         'the |ScriptBody|'               : 'Parse Node for |ScriptBody|',
+        'a Parse Node for |ScriptBody|'  : 'Parse Node for |ScriptBody|',
         '|CaseClause|'                   : 'Parse Node for |CaseClause|',
+
+
 
         'one of (~Normal~, ~Method~, ~Arrow~)' : 'FunctionKind1_',
         'one of (~Normal~, ~Method~)'          : 'FunctionKind1_',
@@ -2698,6 +2336,7 @@ nature_to_tipe = {
         'either ~assignment~, ~varBinding~ or ~lexicalBinding~' : 'LhsKind_',
 
         'one of ~string~ or ~symbol~' : 'PropertyKeyKind_',
+        'either ~string~ or ~symbol~' : 'PropertyKeyKind_',
 
         'throw *RangeError*'             : 'throw_ *RangeError*',
         'throw *TypeError*'              : 'throw_ *TypeError*',
@@ -2714,7 +2353,10 @@ nature_to_tipe = {
         'a TypedArray element type'     : 'TypedArray_element_type_',
         'one_of_SeqCst_Unordered'       : 'SharedMemory_ordering_',
         'one_of_SeqCst_Unordered_Init'  : 'SharedMemory_ordering_',
+        'either ~SeqCst~ or ~Unordered~': 'SharedMemory_ordering_',
+        'one of ~SeqCst~, ~Unordered~, or ~Init~': 'SharedMemory_ordering_',
         'one_of_key_value_key+value'    : 'iteration_result_kind_',
+        'one of ~key~, ~value~, or ~key+value~': 'iteration_result_kind_',
 
     # -----------------------------
     # union of named types
@@ -2723,6 +2365,7 @@ nature_to_tipe = {
     'a BigInt or a Number'                                       : 'BigInt | Number',
     'Number or BigInt'                                           : 'Number | BigInt',
     'a Number or BigInt'                                         : 'Number | BigInt',
+    'a Number or a BigInt'                                       : 'Number | BigInt',
     'a Number value & *undefined*'                               : 'Number | Undefined',
     'an Array object or *null*'                                  : 'Array_object_ | Null',
     'a Boolean or a non-negative integer'                        : 'Boolean | Integer_',
@@ -2732,16 +2375,21 @@ nature_to_tipe = {
     'Boolean or Undefined'                                       : 'Boolean | Undefined',
     'Boolean | empty_'                                           : 'Boolean | empty_',
     'an integer (or &infin;)'                                    : 'Integer_ | Infinity_',
+    'an integer or &infin;'                                      : 'Integer_ | Infinity_',
     'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
     'a Lexical Environment or *null*'                            : 'Lexical Environment | Null', # PR 1668
     'an object or null'                                          : 'Object | Null',
     'an object or *null*'                                        : 'Object | Null',
+    'an Object or *null*'                                        : 'Object | Null',
+    'an Object or *undefined*'                                   : 'Object | Undefined',
     'Object | Undefined'                                         : 'Object | Undefined',
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
+    'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
     'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
     'the Script Record or Module Record; may also be *null*'     : 'Script Record | Module Record | Null',
+    'a Script Record or Module Record; may also be Null'         : 'Script Record | Module Record | Null',
     'a String or Number'                                         : 'String | Number',
     'a String or Symbol'                                         : 'String | Symbol',
     'a String or Symbol or Private Name'                         : 'String | Symbol | Private Name', # PR 1668
@@ -5227,11 +4875,14 @@ class Env:
         assert target_t != T_TBD
 
         if asserting and expr_t == T_TBD:
-            assert copula == 'is a'
-            true_env = env1.copy()
-            true_env.vars[expr_text] = target_t
-            false_env = None
-            return (true_env, false_env)
+            if copula == 'is a':
+                true_env = env1.copy()
+                true_env.vars[expr_text] = target_t
+                false_env = None
+                return (true_env, false_env)
+            else:
+                # XXX wah
+                return (env1, env1)
 
             # pdb.set_trace()
 
@@ -11172,6 +10823,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 lhs_t = T_iterator_record_
             elif dsbn_name in ['Reject', 'Resolve']:
                 assert candidate_type_names == ['PromiseCapability Record', 'ResolvingFunctions_record_']
+                assert lhs_text == '_promiseCapability_'
+                lhs_t = T_PromiseCapability_Record
+            elif dsbn_name == 'Promise':
+                assert candidate_type_names == ['PromiseCapability Record', 'Object']
                 assert lhs_text == '_promiseCapability_'
                 lhs_t = T_PromiseCapability_Record
             else:
