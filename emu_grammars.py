@@ -1198,10 +1198,10 @@ def u_item_matches_d_item(u_item_n, d_item_n):
 
 def d_item_doesnt_require_a_matching_u_item(d_item_n):
     if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
-        return {'annotations suppressed': d_item_n}
+        return {'annotations suppressed': d_item_n, 'L-900': 1}
 
     if d_item_n.kind == 'GNT' and d_item_n._is_optional:
-        return {'optional-GNT': (d_item_n._nt_name, 'omitted')}
+        return {'optional-GNT': (d_item_n._nt_name, 'omitted'), 'L-903': 1}
 
     return None
 
