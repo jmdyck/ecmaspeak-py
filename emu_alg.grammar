@@ -902,7 +902,7 @@
     {var} is a ClassFieldDefinition Record
 
     # PR 1866 ParsePattern
-    {var} is a {nonterminal} Parse Node
+    {var} is a List of {ERROR_TYPE} objects
     {var} did not conform to the grammar
     any elements of {var} were not matched by the parse
     any Early Error conditions exist
@@ -1385,8 +1385,9 @@
     the result of the &ldquo;Replacement text&rdquo; column of the corresponding row
 
     # PR 1866 ParsePattern
-    the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
+    a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
     the Parse Node resulting from the parse
+    the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
 
 {EX} :
     &laquo; &raquo;
