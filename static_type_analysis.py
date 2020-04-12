@@ -758,14 +758,6 @@ single_sentence_rules_str = r'''
 
         It performs the following steps when called:
 
-        (It returns the sequence of Unicode code points that results from .+)
-        retn=a sequence of Unicode code points
-        v=\1
-
-        (It returns either \*false\* or the end index of a match.)
-        retn=a Boolean or a non-negative integer
-        v=\1
-
         # Its algorithm is as follows:
         # ^ obsoleted by the merge of PR #1890
 
@@ -780,16 +772,11 @@ single_sentence_rules_str = r'''
         kind=numeric method
         v=!OP \4
 
-        The (?P<kind>abstract operation) (?P<name>[\w/]+) (.+)
-        v=!OP \3
-
         # The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (a constructor and a value), (returns a new promise resolved with) that value.
         # pl=a constructor _C_ and a value _x_
         # v=!OP \4 _x_.
         # hack!
         #
-
-        The (?P<kind>abstract operation) (?P<name><dfn.+>\w+</dfn>) takes argument (?P<pl>_value_)\.
 
         # --------------
 
@@ -992,13 +979,6 @@ single_sentence_rules_str = r'''
 
         !OP is called with (?P<pl>.+).
 
-        !OP takes (?P<pl>.+) and (returns .+)
-        v=!OP \2
-
-        !OP takes (?P<pl>.*_.*).
-
-        !OP takes (?P<pl>no arguments).
-
         # !OP with (?P<pl>.+) has access to (?P<also>.+).
         # ^ obsoleted by the merge of PR #1890
 
@@ -1012,10 +992,6 @@ single_sentence_rules_str = r'''
         (!OP converts) (?P<pl>a \w+ _x_) (to .+)
         v=\1 _x_ \3
 
-        !OP returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is (?P<retn>a Boolean).
-
-        !OP returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is (?P<retn>a Boolean).
-
         # ---------
 
         # !OP (.+)
@@ -1027,15 +1003,6 @@ single_sentence_rules_str = r'''
         (?P<ps>_\w+_ is a Module Record, and _N2_ is .+).
 
         (?P<ps>_\w+_ is a possibly empty List of ECMAScript language values).
-
-        ((?P<ps>_\w+_ is the Parse Node) corresponding .+)
-        v=\1
-
-        ((?P<ps>_\w+_ is the (Lexical Environment|global lexical environment)) in which .+)
-        v=\1
-
-        ((?P<ps>_\w+_ is the (function object|\|ScriptBody\|)) for which .+)
-        v=\1
 
     # ==========================================================================
     # Miscellaneous starts:
@@ -1116,22 +1083,8 @@ single_sentence_rules_str = r'''
         retn=integer
         v=\1
 
-        (.+ returns _argument_ converted to a Number value if .+)
-        retn=a Number value
-        v=\1
-
-        (.+ returns _value_ argument converted to (?P<retn>a non-negative integer) .+)
-        v=\1
-
-        (.+ returns _value_ converted to a numeric value of type (?P<retn>Number or BigInt).)
-        v=\1
-
         (.+ returns \*true\* if .+ and \*false\* otherwise.)
         retn=*true* or *false*
-        v=\1
-
-        (.+ returns \*undefined\*.)
-        retn=*undefined*
         v=\1
 
         (.+ returns (a|the) BigInt .+)
@@ -1168,33 +1121,12 @@ single_sentence_rules_str = r'''
         (.+ returns (?P<retn>an Iterator object) .+)
         v=\1
 
-        (.+ returns either \*false\* .+ or the IteratorResult object .+)
-        retn=*false* or an IteratorResult object
-        v=\1
-
         (.+ returns either a new promise .+ or the argument itself if the argument is a promise .+)
         retn=a promise
         v=\1
 
-        (.+ returns the global object .+)
-        retn=an object
-        v=\1
-
         (.+ returns the local time zone adjustment, .+)
         retn=a Number
-        v=\1
-
-        (.+ returns the value of the \*"length"\* property of an array-like object.)
-        retn=a non-negative integer
-        v=\1
-
-        # -----------
-        # throws ...
-
-        (.+ (?P<reta>throws? a \*TypeError\* exception) .+)
-        v=\1
-
-        (.+ (?P<reta>throws? an exception) .+)
         v=\1
 
         # -----------
@@ -1224,11 +1156,6 @@ single_sentence_rules_str = r'''
         (.+, reading the values from) the object (?P<ps>_array_).
         v=\1 _array_.
         # don't include 'object' in ps because that's misleading
-
-        (.+ index (_\w+_).)
-        ps=\2 is a non-negative integer
-        v=\1
-        # iffy
 
         (.+) as follows:
         v=\1.
@@ -1327,6 +1254,24 @@ multi_sentence_rules = ExtractionRules(multi_sentence_rules_str)
 single_sentence_rules = ExtractionRules(single_sentence_rules_str)
 
 def extract_info_from_preamble(preamble_nodes):
+    # PR #1914 established a consistent format for abstract operation preambles
+    def looks_like_a_standard_ao_preamble(preamble_text):
+        return (
+            preamble_text.startswith('The abstract operation')
+            # and
+            # 'takes' in preamble_text
+        )
+    tao_nodes = [
+        preamble_node
+        for preamble_node in preamble_nodes
+        if looks_like_a_standard_ao_preamble(preamble_node.inner_source_text().strip())
+    ]
+    if tao_nodes:
+        assert len(tao_nodes) == 1
+        assert len(preamble_nodes) == 1
+        ih = extract_info_from_standard_ao_preamble(preamble_nodes[0])
+        if ih: return ih
+
     info_holder = PreambleInfoHolder()
 
     para_texts_remaining = []
@@ -1384,10 +1329,10 @@ class PreambleInfoHolder:
 
         poi = Header()
 
-        def join_field_values(key):
+        def join_field_values(key, joiner = ' & '):
             values = self.fields[key]
             if not values: return None
-            return ' & '.join(values)
+            return joiner.join(values)
 
         def at_most_one_value(key):
             values = self.fields[key]
@@ -1495,7 +1440,7 @@ class PreambleInfoHolder:
                 ('_buffer_',    'from the `sort` method'),
             ]
 
-        poi.returns_normal = join_field_values('retn')
+        poi.returns_normal = join_field_values('retn', ' or ')
 
         poi.returns_abrupt = at_most_one_value('reta')
 
@@ -1576,6 +1521,90 @@ for line in re.split(r'\n +', rec_method_declarations.strip()):
     else:
         (return_tipe_normal, return_tipe_abrupt) = (return_type, 'TBD')
     predeclared_rec_method_info[name] = (param_names, param_nature_, return_tipe_normal, return_tipe_abrupt)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def extract_info_from_standard_ao_preamble(preamble_node):
+    preamble_text = preamble_node.inner_source_text().strip()
+
+    sentences = re.split('(?<=\.) +', preamble_text)
+
+    sentence0 = sentences.pop(0)
+
+    info_holder = PreambleInfoHolder()
+
+    # -----------------------------------
+    # The first sentence in the preamble:
+
+    for pattern in [
+        r'The abstract operation (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
+        r'The abstract operation (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
+        r'The abstract operation (?P<name><dfn id="sec-\w+" aoid="\w+">\w+</dfn>) takes (?P<pl>.+)\.',
+    ]:
+        mo = re.fullmatch(pattern, sentence0)
+        if mo:
+            info_holder.add('kind', 'abstract operation')
+            for (key, value) in mo.groupdict().items():
+                info_holder.add(key, value)
+            break
+    else:
+        oh_warn()
+        oh_warn("Starts like std preamble but isn't:")
+        oh_warn(preamble_text)
+        return None
+
+    # ----------------------------------
+    # The last sentence of the preamble:
+
+    if sentences[-1] == 'It performs the following steps when called:':
+        del sentences[-1]
+
+    # ----------------------------------------
+    # Any remaining sentences are description:
+    
+    if sentences:
+        description = ' '.join(sentences)
+        info_holder.add('desc', description)
+
+    # -------------------------------------
+    # But some of those sentences may give (additional) info about what's returned.
+
+    for sentence in sentences:
+        if sentence.startswith('It returns '):
+            for (pattern, nature) in [
+                ('It returns _argument_ converted to a Number value .+.', 'a Number'),
+                ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
+                ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
+                ('It returns a new Job abstract closure .+', 'an abstract closure'),
+                ('It returns a new promise resolved with _x_.', 'a promise'),
+                ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
+                ('It returns the global object used by the currently running execution context.', 'an object'),
+                ('It returns the sequence of Unicode code points that .+', 'a sequence of Unicode code points'),
+                ('It returns the value of the \*"length"\* property of an array-like object.', 'a non-negative integer'),
+                ('It returns the loaded value.', 'TBD'),
+            ]:
+                if re.fullmatch(pattern, sentence):
+                    info_holder.add('retn', nature)
+                    break
+            else:
+                assert 0, sentence
+
+        elif sentence == 'Otherwise, it returns *undefined*.':
+            info_holder.add('retn', '*undefined*'),
+
+        elif sentence.startswith('It throws'):
+            for (pattern, nature) in [
+                ('It throws an error .+',     'throws an exception'),
+                ('It throws an exception .+', 'throws an exception'),
+                ('It throws a \*TypeError\* exception .+', 'throws a *TypeError* exception'),
+            ]:
+                if re.fullmatch(pattern, sentence):
+                    info_holder.add('reta', nature)
+                    break
+            else:
+                assert 0, sentence
+
+    return info_holder
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1868,7 +1897,10 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
             parameter_names = re.findall(var_pattern, param_item)
             if len(parameter_names) != 1:
-                stderr(f"> {oi.name}: param listing {parameter_listing!r} contains item {param_item!r} with {len(parameter_names)} parameter names")
+                stderr()
+                stderr(f"> {oi.name}: param listing")
+                stderr(f"    {parameter_listing!r}")
+                stderr(f"  contains item {param_item!r} with {len(parameter_names)} parameter names")
                 continue
 
             [param_name] = parameter_names
@@ -2059,6 +2091,8 @@ nature_to_tipe = {
         'a Boolean flag'    : 'Boolean',
         'A Boolean value'   : 'Boolean',
         '*true* or *false*' : 'Boolean',
+        'a completion record which, if its [[Type]] is ~normal~, has a [[Value]] which is a Boolean': 'Boolean',
+        'a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean':            'Boolean',
 
         # String
         'String'          : 'String',
@@ -2367,9 +2401,11 @@ nature_to_tipe = {
     'a Number or BigInt'                                         : 'Number | BigInt',
     'a Number or a BigInt'                                       : 'Number | BigInt',
     'a Number value & *undefined*'                               : 'Number | Undefined',
+    'a Number or *undefined*'                                    : 'Number | Undefined',
     'an Array object or *null*'                                  : 'Array_object_ | Null',
     'a Boolean or a non-negative integer'                        : 'Boolean | Integer_',
     '*false* or an integer index'                                : 'Boolean | Integer_',
+    '*false* or a non-negative integer'                          : 'Boolean | Integer_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
     '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
     'Boolean or Undefined'                                       : 'Boolean | Undefined',
