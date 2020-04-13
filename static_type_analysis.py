@@ -1575,7 +1575,7 @@ def extract_info_from_standard_ao_preamble(preamble_node):
                 ('It returns _argument_ converted to a Number value .+.', 'a Number'),
                 ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
-                ('It returns a new Job abstract closure .+', 'an abstract closure'),
+                ('It returns a new Job abstract closure .+', 'a Job abstract closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
                 ('It returns the global object used by the currently running execution context.', 'an object'),
@@ -2261,6 +2261,9 @@ nature_to_tipe = {
         # 8.3 Execution Contexts
         'execution context' : 'execution context',
         'an execution context' : 'execution context',
+
+        # 8.4 Jobs etc
+        'a Job abstract closure' : 'Job abstract closure',
 
         # 15.1.8 Script Records: Script Record
 
@@ -4024,6 +4027,7 @@ T_TBD = TBDType()
 T_Continuation    = ProcType([T_State                ], T_MatchResult)
 T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
 T_RegExpMatcher_  = ProcType([T_String, T_Integer_   ], T_MatchResult)
+T_Job             = ProcType([                       ], T_Undefined)
 
 T_bytes_combining_op_ = ProcType([ListType(T_Integer_), ListType(T_Integer_)], ListType(T_Integer_))
 
@@ -4041,6 +4045,8 @@ def maybe_NamedType(name):
         return T_Matcher
     elif name == 'RegExpMatcher_':
         return T_RegExpMatcher_
+    elif name == 'Job abstract closure':
+        return T_Job
     elif name == 'bytes_combining_op_':
         return T_bytes_combining_op_
     elif name == 'NonNegativeInteger_':
@@ -5476,6 +5482,9 @@ def tc_header(header):
                 header.name == 'RequireInternalSlot' and pn == '*return*' and init_t == T_throw_ and final_t == T_not_returned | ThrowType(T_TypeError)
                 or
                 header.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_Integer_ | ThrowType(T_TypeError)
+                or
+                header.name == 'NewPromiseReactionJob' and pn == '*return*' and init_t == T_Job and final_t == T_Record
+                # eoh is just wrong, because preamble is misleading
 
                 # or
                 # header.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
@@ -14658,7 +14667,7 @@ fields_for_record_type_named_ = {
 
     # 39769: NO TABLE, not even mentioned
     'Job_record_': {
-        'Job'  : ProcType([], T_Tangible_),
+        'Job'  : T_Job,
         'Realm': T_Realm_Record,
     },
 
