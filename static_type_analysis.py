@@ -7779,6 +7779,12 @@ def tc_cond_(cond, env0, asserting):
         assert dsbn2.source_text() == '[[ExportName]]'
         return env0.with_type_test(var, 'is a', ListType(T_ExportResolveSet_Record_), asserting)
 
+    # for PR 1866:
+    elif p == r"{CONDITION_1} : {var} is a List of {ERROR_TYPE} objects":
+        [var, error_type] = children
+        error_type_name = error_type.source_text()[1:-1]
+        return env0.with_type_test(var, 'is a', ListType(NamedType(error_type_name)), asserting)
+
     elif p == r"{CONDITION_1} : {var} is a List containing only String and Symbol values":
         [var] = children
         env0.assert_expr_is_of_type(var, ListType(T_String | T_Symbol))
@@ -12766,10 +12772,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [p_var, emu_xref, chars_var, nont, f_var] = children
-        env0.assert_expr_is_of_type(p_var, T_PTN_Pattern)
-        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
-        env0.assert_expr_is_of_type(f_var, T_String)
-        return (T_RegExpMatcher_, env0)
+        env1 = env0.ensure_expr_is_of_type(p_var, T_PTN_Pattern)
+        env1.assert_expr_is_of_type(chars_var, ListType(T_character_))
+        env1.assert_expr_is_of_type(f_var, T_String)
+        return (T_RegExpMatcher_, env1)
 
     elif p == r"{EXPR} : a Continuation that always returns its State argument as a successful MatchResult":
         [] = children
@@ -14054,6 +14060,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
+
+    elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors":
+        [error_type] = children
+        error_type_name = error_type.source_text()[1:-1]
+        return (ListType(NamedType(error_type_name)), env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
