@@ -2417,6 +2417,7 @@ nature_to_tipe = {
     'an integer or &infin;'                                      : 'Integer_ | Infinity_',
     'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
     'a Lexical Environment or *null*'                            : 'Lexical Environment | Null', # PR 1668
+    'an Environment Record or *null*'                            : 'Environment Record | Null', # PR 1697
     'an object or null'                                          : 'Object | Null',
     'an object or *null*'                                        : 'Object | Null',
     'an Object or *null*'                                        : 'Object | Null',
@@ -2702,7 +2703,7 @@ class Header:
 
         if self.name in predeclared_rec_method_info:
 
-            if section.parent.parent.section_title == 'Environment Records':
+            if section.parent.parent.section_title in ['Environment Records', 'The Environment Record Type Hierarchy']:
                 mo = re.fullmatch(r'(\w+) Environment Records', section.parent.section_title)
                 assert mo
                 f = mo.group(1).lower() + ' Environment Record'
