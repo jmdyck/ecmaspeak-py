@@ -1440,9 +1440,9 @@ class PreambleInfoHolder:
                 ('_buffer_',    'from the `sort` method'),
             ]
 
-        poi.returns_normal = join_field_values('retn', ' or ')
+        poi.return_nature_normal = join_field_values('retn', ' or ')
 
-        poi.returns_abrupt = at_most_one_value('reta')
+        poi.return_nature_abrupt = at_most_one_value('reta')
 
         return poi
 
@@ -2070,11 +2070,11 @@ def resolve_oi(hoi, poi):
     assert hoi.also is None
     oi.also = poi.also
 
-    assert hoi.returns_normal is None
-    oi.returns_normal = poi.returns_normal
+    assert hoi.return_nature_normal is None
+    oi.return_nature_normal = poi.return_nature_normal
 
-    assert hoi.returns_abrupt is None
-    oi.returns_abrupt = poi.returns_abrupt
+    assert hoi.return_nature_abrupt is None
+    oi.return_nature_abrupt = poi.return_nature_abrupt
 
     assert hoi.description is None
     oi.description = poi.description
@@ -2700,8 +2700,8 @@ class Header:
         self.rest_params = set()
         self.param_nature_ = {}
         self.also = None
-        self.returns_normal = None
-        self.returns_abrupt = None
+        self.return_nature_normal = None
+        self.return_nature_abrupt = None
         self.description = None
         self.u_defns = []
         self.line_num = None
@@ -2748,8 +2748,8 @@ class Header:
                 else:
                     self.param_nature_[param_name] = pd_nature
 
-            checked_set('returns_normal', pd_return_tipe_normal)
-            checked_set('returns_abrupt', pd_return_tipe_abrupt)
+            checked_set('return_nature_normal', pd_return_tipe_normal)
+            checked_set('return_nature_abrupt', pd_return_tipe_abrupt)
 
         if self.kind == 'numeric method':
             assert self.for_phrase  in ['Number', 'BigInt']
@@ -2781,8 +2781,8 @@ class Header:
             else:
                 pd_return_tipe_abrupt = None
 
-            checked_set('returns_normal', pd_return_tipe_normal)
-            checked_set('returns_abrupt', pd_return_tipe_abrupt)
+            checked_set('return_nature_normal', pd_return_tipe_normal)
+            checked_set('return_nature_abrupt', pd_return_tipe_abrupt)
 
         # ------------------------------------------------------------
 
@@ -2913,12 +2913,12 @@ class Header:
 
             self.param_tipes[param_name] = param_tipe
 
-        if self.returns_normal is None:
+        if self.return_nature_normal is None:
             if self.name.startswith('Math.'):
-                self.returns_normal = 'Number'
+                self.return_nature_normal = 'Number'
 
-        self.return_tipe_normal = convert_nature_to_tipe(self.returns_normal or 'TBD')
-        self.return_tipe_abrupt = convert_nature_to_tipe(self.returns_abrupt or 'TBD')
+        self.return_tipe_normal = convert_nature_to_tipe(self.return_nature_normal or 'TBD')
+        self.return_tipe_abrupt = convert_nature_to_tipe(self.return_nature_abrupt or 'TBD')
 
     def prep_for_STA(self):
 
