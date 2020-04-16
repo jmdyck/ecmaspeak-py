@@ -1459,6 +1459,8 @@ def get_last_ln(node):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 rec_method_declarations = '''
+
+    # Table 16: Abstract Methods of Environment Records
     HasBinding(N) -> Boolean
     CreateMutableBinding(N, D) -> TBD
     CreateImmutableBinding(N, S) -> TBD
@@ -1469,9 +1471,14 @@ rec_method_declarations = '''
     HasThisBinding() -> Boolean
     HasSuperBinding() -> Boolean
     WithBaseObject() -> Object | Undefined
+
+    # Table 18: Additional Methods of Function Environment Records
     BindThisValue(V) -> TBD
     GetThisBinding() -> Tangible_ | throw_ *ReferenceError*
     GetSuperBase() -> Object | Null | Undefined
+
+    # Table 20: Additional Methods of Global Environment Records
+    # GetThisBinding()                   -> Tangible_ | throw_ *ReferenceError*
     HasVarDeclaration(N) -> Boolean
     HasLexicalDeclaration(N) -> Boolean
     HasRestrictedGlobalProperty(N) -> Boolean
@@ -1479,11 +1486,18 @@ rec_method_declarations = '''
     CanDeclareGlobalFunction(N) -> Boolean
     CreateGlobalVarBinding(N, D) -> TBD
     CreateGlobalFunctionBinding(N, V, D) -> TBD
+
+    # Table 21: Additional Methods of Module Environment Records
     CreateImportBinding(N, M, N2) -> TBD
+    # GetThisBinding()            -> Tangible_ | throw_ *ReferenceError*
+
+    # Table 39: Abstract Methods of Module Records
     GetExportedNames(exportStarSet) -> List of String
     ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
     Link() -> TBD
     Evaluate() -> TBD
+
+    # Table 41: Additional Abstract Methods of Cyclic Module Record
     InitializeEnvironment() -> TBD
     ExecuteModule() -> TBD
 '''
@@ -1501,7 +1515,15 @@ rec_method_parameter_types = {
 }
 
 predeclared_rec_method_info = {}
-for line in re.split(r'\n +', rec_method_declarations.strip()):
+for line in rec_method_declarations.split('\n'):
+    line = line.strip()
+    if line == '':
+        # blank line
+        continue
+    if line.startswith('#'):
+        # comment
+        continue
+    
     mo = re.match(r'^(\w+)\(([^()]*)\) -> (.+)$', line)
     assert mo, line
     (name, params_str, return_type) = (mo.groups())
