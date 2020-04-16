@@ -1502,7 +1502,7 @@ rec_method_declarations = '''
     ExecuteModule()         -> TBD
 '''
 
-rec_method_parameter_types = {
+rec_method_param_nature_ = {
     '_D_' : 'Boolean',
     '_M_' : 'Module Record',
     '_N_' : 'String',
@@ -1526,7 +1526,7 @@ for line in rec_method_declarations.split('\n'):
     
     mo = re.fullmatch(r'(\w+)\(([^()]*)\) +-> (.+)', line)
     assert mo, line
-    (name, params_str, return_type) = (mo.groups())
+    (name, params_str, return_nature) = (mo.groups())
     if params_str == '':
         param_names = []
     else:
@@ -1535,14 +1535,14 @@ for line in rec_method_declarations.split('\n'):
             for name in params_str.split(', ')
         ]
     param_nature_ = dict(
-        (param_name, rec_method_parameter_types[param_name])
+        (param_name, rec_method_param_nature_[param_name])
         for param_name in param_names
     )
-    if 'throw' in return_type:
-        (return_tipe_normal, return_tipe_abrupt) = re.split(r' \| (?=throw)', return_type)
+    if 'throw' in return_nature:
+        (return_nature_normal, return_nature_abrupt) = re.split(r' \| (?=throw)', return_nature)
     else:
-        (return_tipe_normal, return_tipe_abrupt) = (return_type, 'TBD')
-    predeclared_rec_method_info[name] = (param_names, param_nature_, return_tipe_normal, return_tipe_abrupt)
+        (return_nature_normal, return_nature_abrupt) = (return_nature, 'TBD')
+    predeclared_rec_method_info[name] = (param_names, param_nature_, return_nature_normal, return_nature_abrupt)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2736,7 +2736,7 @@ class Header:
             else:
                 assert self.for_phrase != ''
 
-            (pd_param_names, pd_param_nature_, pd_return_tipe_normal, pd_return_tipe_abrupt) = predeclared_rec_method_info[self.name]
+            (pd_param_names, pd_param_nature_, pd_return_nature_normal, pd_return_nature_abrupt) = predeclared_rec_method_info[self.name]
             assert self.param_names == pd_param_names
             for param_name in self.param_names:
                 pd_nature = pd_param_nature_[param_name]
@@ -2748,41 +2748,41 @@ class Header:
                 else:
                     self.param_nature_[param_name] = pd_nature
 
-            checked_set('return_nature_normal', pd_return_tipe_normal)
-            checked_set('return_nature_abrupt', pd_return_tipe_abrupt)
+            checked_set('return_nature_normal', pd_return_nature_normal)
+            checked_set('return_nature_abrupt', pd_return_nature_abrupt)
 
         if self.kind == 'numeric method':
             assert self.for_phrase  in ['Number', 'BigInt']
-            num_tipe = self.for_phrase
+            numeric_nature = self.for_phrase
 
             assert self.param_names
             for param_name in self.param_names:
                 if param_name in self.param_nature_:
-                    if self.param_nature_[param_name] != num_tipe:
+                    if self.param_nature_[param_name] != numeric_nature:
                         oh_warn()
                         oh_warn(f"{self.name}, param {param_name}:")
-                        oh_warn(f"predeclared nature {num_tipe!r} != extracted nature {self.param_nature_[param_name]!r}")
+                        oh_warn(f"predeclared nature {numeric_nature!r} != extracted nature {self.param_nature_[param_name]!r}")
                 else:
-                    self.param_nature_[param_name] = num_tipe
+                    self.param_nature_[param_name] = numeric_nature
 
             if self.name in ['::equal', '::sameValue', '::sameValueZero']:
-                pd_return_tipe_normal = 'Boolean'
+                pd_return_nature_normal = 'Boolean'
             elif self.name == '::lessThan':
-                pd_return_tipe_normal = 'Boolean or Undefined'
+                pd_return_nature_normal = 'Boolean or Undefined'
             elif self.name == '::toString':
-                pd_return_tipe_normal = 'String'
+                pd_return_nature_normal = 'String'
             else:
-                pd_return_tipe_normal = num_tipe
+                pd_return_nature_normal = numeric_nature
 
             if self.name in ['::exponentiate', '::divide', '::remainder']:
-                pd_return_tipe_abrupt = 'throw *RangeError*'
+                pd_return_nature_abrupt = 'throw *RangeError*'
             elif self.name == '::unsignedRightShift':
-                pd_return_tipe_abrupt = 'throw *TypeError*'
+                pd_return_nature_abrupt = 'throw *TypeError*'
             else:
-                pd_return_tipe_abrupt = None
+                pd_return_nature_abrupt = None
 
-            checked_set('return_nature_normal', pd_return_tipe_normal)
-            checked_set('return_nature_abrupt', pd_return_tipe_abrupt)
+            checked_set('return_nature_normal', pd_return_nature_normal)
+            checked_set('return_nature_abrupt', pd_return_nature_abrupt)
 
         # ------------------------------------------------------------
 
