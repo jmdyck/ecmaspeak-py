@@ -1461,30 +1461,30 @@ def get_last_ln(node):
 rec_method_declarations = '''
 
     # Table 16: Abstract Methods of Environment Records
-    HasBinding(N) -> Boolean
-    CreateMutableBinding(N, D) -> TBD
+    HasBinding(N)                -> Boolean
+    CreateMutableBinding(N, D)   -> TBD
     CreateImmutableBinding(N, S) -> TBD
-    InitializeBinding(N, V) -> TBD
-    SetMutableBinding(N, V, S) -> Boolean | empty_ | throw_
-    GetBindingValue(N, S) -> Tangible_ | throw_ *ReferenceError*
-    DeleteBinding(N) -> Boolean
-    HasThisBinding() -> Boolean
-    HasSuperBinding() -> Boolean
-    WithBaseObject() -> Object | Undefined
+    InitializeBinding(N, V)      -> TBD
+    SetMutableBinding(N, V, S)   -> Boolean | empty_ | throw_
+    GetBindingValue(N, S)        -> Tangible_ | throw_ *ReferenceError*
+    DeleteBinding(N)             -> Boolean
+    HasThisBinding()             -> Boolean
+    HasSuperBinding()            -> Boolean
+    WithBaseObject()             -> Object | Undefined
 
     # Table 18: Additional Methods of Function Environment Records
     BindThisValue(V) -> TBD
     GetThisBinding() -> Tangible_ | throw_ *ReferenceError*
-    GetSuperBase() -> Object | Null | Undefined
+    GetSuperBase()   -> Object | Null | Undefined
 
     # Table 20: Additional Methods of Global Environment Records
     # GetThisBinding()                   -> Tangible_ | throw_ *ReferenceError*
-    HasVarDeclaration(N) -> Boolean
-    HasLexicalDeclaration(N) -> Boolean
-    HasRestrictedGlobalProperty(N) -> Boolean
-    CanDeclareGlobalVar(N) -> Boolean
-    CanDeclareGlobalFunction(N) -> Boolean
-    CreateGlobalVarBinding(N, D) -> TBD
+    HasVarDeclaration(N)                 -> Boolean
+    HasLexicalDeclaration(N)             -> Boolean
+    HasRestrictedGlobalProperty(N)       -> Boolean
+    CanDeclareGlobalVar(N)               -> Boolean
+    CanDeclareGlobalFunction(N)          -> Boolean
+    CreateGlobalVarBinding(N, D)         -> TBD
     CreateGlobalFunctionBinding(N, V, D) -> TBD
 
     # Table 21: Additional Methods of Module Environment Records
@@ -1492,14 +1492,14 @@ rec_method_declarations = '''
     # GetThisBinding()            -> Tangible_ | throw_ *ReferenceError*
 
     # Table 39: Abstract Methods of Module Records
-    GetExportedNames(exportStarSet) -> List of String
+    GetExportedNames(exportStarSet)       -> List of String
     ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
-    Link() -> TBD
-    Evaluate() -> TBD
+    Link()                                -> TBD
+    Evaluate()                            -> TBD
 
     # Table 41: Additional Abstract Methods of Cyclic Module Record
     InitializeEnvironment() -> TBD
-    ExecuteModule() -> TBD
+    ExecuteModule()         -> TBD
 '''
 
 rec_method_parameter_types = {
@@ -1524,7 +1524,7 @@ for line in rec_method_declarations.split('\n'):
         # comment
         continue
     
-    mo = re.match(r'^(\w+)\(([^()]*)\) -> (.+)$', line)
+    mo = re.fullmatch(r'(\w+)\(([^()]*)\) +-> (.+)', line)
     assert mo, line
     (name, params_str, return_type) = (mo.groups())
     if params_str == '':
