@@ -1459,27 +1459,27 @@ def get_last_ln(node):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 rec_method_declarations = '''
-    BindThisValue(V) -> TBD
-    CanDeclareGlobalFunction(N) -> Boolean
-    CanDeclareGlobalVar(N) -> Boolean
-    CreateGlobalFunctionBinding(N, V, D) -> TBD
-    CreateGlobalVarBinding(N, D) -> TBD
-    CreateImmutableBinding(N, S) -> TBD
-    CreateImportBinding(N, M, N2) -> TBD
-    CreateMutableBinding(N, D) -> TBD
-    DeleteBinding(N) -> Boolean
-    GetBindingValue(N, S) -> Tangible_ | throw_ *ReferenceError*
-    GetSuperBase() -> Object | Null | Undefined
-    GetThisBinding() -> Tangible_ | throw_ *ReferenceError*
     HasBinding(N) -> Boolean
-    HasLexicalDeclaration(N) -> Boolean
-    HasRestrictedGlobalProperty(N) -> Boolean
-    HasSuperBinding() -> Boolean
-    HasThisBinding() -> Boolean
-    HasVarDeclaration(N) -> Boolean
+    CreateMutableBinding(N, D) -> TBD
+    CreateImmutableBinding(N, S) -> TBD
     InitializeBinding(N, V) -> TBD
     SetMutableBinding(N, V, S) -> Boolean | empty_ | throw_
+    GetBindingValue(N, S) -> Tangible_ | throw_ *ReferenceError*
+    DeleteBinding(N) -> Boolean
+    HasThisBinding() -> Boolean
+    HasSuperBinding() -> Boolean
     WithBaseObject() -> Object | Undefined
+    BindThisValue(V) -> TBD
+    GetThisBinding() -> Tangible_ | throw_ *ReferenceError*
+    GetSuperBase() -> Object | Null | Undefined
+    HasVarDeclaration(N) -> Boolean
+    HasLexicalDeclaration(N) -> Boolean
+    HasRestrictedGlobalProperty(N) -> Boolean
+    CanDeclareGlobalVar(N) -> Boolean
+    CanDeclareGlobalFunction(N) -> Boolean
+    CreateGlobalVarBinding(N, D) -> TBD
+    CreateGlobalFunctionBinding(N, V, D) -> TBD
+    CreateImportBinding(N, M, N2) -> TBD
     GetExportedNames(exportStarSet) -> List of String
     ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
     Link() -> TBD
