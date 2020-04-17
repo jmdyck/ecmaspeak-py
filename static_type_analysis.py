@@ -1368,6 +1368,15 @@ class PreambleInfoHolder:
 
         poi.for_phrase = at_most_one_value('for')
 
+        if poi.name and RE.fullmatch('(.+)(::.+)', poi.name):
+            assert poi.for_phrase is None
+            poi.for_phrase = RE.group(1)
+
+            poi.name = RE.group(2)
+
+            assert poi.kind == 'abstract operation'
+            poi.kind = 'numeric method'
+
         poi.overload_resolver = at_most_one_value('overload_resolver')
 
         # Have to do this one "out of order"
@@ -1394,6 +1403,10 @@ class PreambleInfoHolder:
             (varnames, where) = {
                 'the _comparefn_ argument passed to the current invocation of the `sort` method':
                     (['_comparefn_'], 'from the current invocation of the `sort` method'),
+
+                # 'preambles' PR:
+                'the _comparefn_ and _buffer_ values of the current invocation of the `sort` method':
+                    (['_comparefn_', '_buffer_'], 'from the `sort` method'),
 
                 # '_reviver_ that was originally passed to the above parse function':
                 #     (['_reviver_'], 'from the above parse function'),
@@ -1576,6 +1589,13 @@ def extract_info_from_standard_ao_preamble(preamble_node):
         return None
 
     # ----------------------------------
+    # also
+
+    if RE.fullmatch('It also has access to (.+)\.', sentences[0]):
+        info_holder.add('also', RE.group(1))
+        del sentences[0]
+
+    # ----------------------------------
     # The last sentence of the preamble:
 
     if sentences[-1] == 'It performs the following steps when called:':
@@ -1594,16 +1614,19 @@ def extract_info_from_standard_ao_preamble(preamble_node):
     for sentence in sentences:
         if sentence.startswith('It returns '):
             for (pattern, nature) in [
+                ("It returns the one's complement of _x_.+", 'TBD'),
+                ('It returns \*true\* if .+ and \*false\* otherwise.', 'a Boolean'),
                 ('It returns _argument_ converted to a Number value .+.', 'a Number'),
                 ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
                 ('It returns a new Job abstract closure .+', 'a Job abstract closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
+                ('It returns the BigInt value that .+', 'a BigInt'),
                 ('It returns the global object used by the currently running execution context.', 'an object'),
+                ('It returns the loaded value.', 'TBD'),
                 ('It returns the sequence of Unicode code points that .+', 'a sequence of Unicode code points'),
                 ('It returns the value of the \*"length"\* property of an array-like object.', 'a non-negative integer'),
-                ('It returns the loaded value.', 'TBD'),
             ]:
                 if re.fullmatch(pattern, sentence):
                     info_holder.add('retn', nature)
@@ -1981,6 +2004,8 @@ def resolve_oi(hoi, poi):
             oi.kind = hoi.kind
         elif hoi.kind == 'abstract operation' and poi.kind == 'implementation-defined abstract operation':
             oi.kind = poi.kind
+        elif hoi.kind == 'numeric method' and poi.kind == 'abstract operation':
+            oi.kind = hoi.kind
         else:
             stderr(f"mismatch of 'kind' in heading/preamble for {hoi.name}: {hoi.kind!r} != {poi.kind!r}")
             assert 0
