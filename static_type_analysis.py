@@ -1088,7 +1088,7 @@ single_sentence_rules_str = r'''
         v=\1
 
         (.+ returns (a|the) BigInt .+)
-        retn=BigInt
+        retn=a BigInt
         v=\1
         # XXX: could reduce the description a bit
 
@@ -1461,39 +1461,39 @@ def get_last_ln(node):
 rec_method_declarations = '''
 
     # Table 16: Abstract Methods of Environment Records
-    HasBinding(N)                -> Boolean
+    HasBinding(N)                -> a Boolean
     CreateMutableBinding(N, D)   -> TBD
     CreateImmutableBinding(N, S) -> TBD
     InitializeBinding(N, V)      -> TBD
-    SetMutableBinding(N, V, S)   -> Boolean | empty_ | throw_
-    GetBindingValue(N, S)        -> Tangible_ | throw_ *ReferenceError*
-    DeleteBinding(N)             -> Boolean
-    HasThisBinding()             -> Boolean
-    HasSuperBinding()            -> Boolean
-    WithBaseObject()             -> Object | Undefined
+    SetMutableBinding(N, V, S)   -> a Boolean or *empty* | throw_
+    GetBindingValue(N, S)        -> an ECMAScript language value | throw_ *ReferenceError*
+    DeleteBinding(N)             -> a Boolean
+    HasThisBinding()             -> a Boolean
+    HasSuperBinding()            -> a Boolean
+    WithBaseObject()             -> an Object or *undefined*
 
     # Table 18: Additional Methods of Function Environment Records
     BindThisValue(V) -> TBD
-    GetThisBinding() -> Tangible_ | throw_ *ReferenceError*
-    GetSuperBase()   -> Object | Null | Undefined
+    GetThisBinding() -> an ECMAScript language value | throw_ *ReferenceError*
+    GetSuperBase()   -> an Object or *null* or *undefined*
 
     # Table 20: Additional Methods of Global Environment Records
-    # GetThisBinding()                   -> Tangible_ | throw_ *ReferenceError*
-    HasVarDeclaration(N)                 -> Boolean
-    HasLexicalDeclaration(N)             -> Boolean
-    HasRestrictedGlobalProperty(N)       -> Boolean
-    CanDeclareGlobalVar(N)               -> Boolean
-    CanDeclareGlobalFunction(N)          -> Boolean
+    # GetThisBinding()                   -> an ECMAScript language value | throw_ *ReferenceError*
+    HasVarDeclaration(N)                 -> a Boolean
+    HasLexicalDeclaration(N)             -> a Boolean
+    HasRestrictedGlobalProperty(N)       -> a Boolean
+    CanDeclareGlobalVar(N)               -> a Boolean
+    CanDeclareGlobalFunction(N)          -> a Boolean
     CreateGlobalVarBinding(N, D)         -> TBD
     CreateGlobalFunctionBinding(N, V, D) -> TBD
 
     # Table 21: Additional Methods of Module Environment Records
     CreateImportBinding(N, M, N2) -> TBD
-    # GetThisBinding()            -> Tangible_ | throw_ *ReferenceError*
+    # GetThisBinding()            -> an ECMAScript language value | throw_ *ReferenceError*
 
     # Table 39: Abstract Methods of Module Records
-    GetExportedNames(exportStarSet)       -> List of String
-    ResolveExport(exportName, resolveSet) -> ResolvedBinding Record | Null | String
+    GetExportedNames(exportStarSet)       -> a List of String
+    ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or a String
     Link()                                -> TBD
     Evaluate()                            -> TBD
 
@@ -1503,14 +1503,14 @@ rec_method_declarations = '''
 '''
 
 rec_method_param_nature_ = {
-    '_D_' : 'Boolean',
-    '_M_' : 'Module Record',
-    '_N_' : 'String',
-    '_N2_': 'String',
-    '_S_' : 'Boolean',
-    '_V_' : 'Tangible_',
+    '_D_' : 'a Boolean',
+    '_M_' : 'a Module Record',
+    '_N_' : 'a String',
+    '_N2_': 'a String',
+    '_S_' : 'a Boolean',
+    '_V_' : 'an ECMAScript language value',
     '_exportStarSet_' : 'TBD',
-    '_exportName_'    : 'String',
+    '_exportName_'    : 'a String',
     '_resolveSet_'    : 'TBD',
 }
 
@@ -1647,11 +1647,11 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
         '_x_ and _y_ are values':
             [('_x_', 'an ECMAScript language value'), ('_y_', 'an ECMAScript language value')],
         "_M_ is a Module Record, and _N2_ is the name of a binding that exists in _M_'s module Environment Record":
-            [('_M_', 'a Module Record'), ('_N2_', 'String')],
+            [('_M_', 'a Module Record'), ('_N2_', 'a String')],
         "_argumentsList_ is a possibly empty List of ECMAScript language values":
             [('_argumentsList_', 'a List of ECMAScript language values')],
         "the |ModuleSpecifier| String, _specifier_":
-            [('_specifier_', 'String')],
+            [('_specifier_', 'a String')],
         "the Script Record or Module Record _referencingScriptOrModule_":
             [('_referencingScriptOrModule_', 'a Script Record or Module Record')],
         "_array_":
@@ -2238,6 +2238,7 @@ nature_to_tipe = {
         'List' : 'List',
         'a List' : 'List',
         'List of String'                       : 'List of String',
+        'a List of String'                     : 'List of String',
         'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
@@ -2434,7 +2435,9 @@ nature_to_tipe = {
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
     '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
     'Boolean or Undefined'                                       : 'Boolean | Undefined',
+    'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
     'Boolean | empty_'                                           : 'Boolean | empty_',
+    'a Boolean or *empty*'                                       : 'Boolean | empty_',
     'an integer (or &infin;)'                                    : 'Integer_ | Infinity_',
     'an integer or &infin;'                                      : 'Integer_ | Infinity_',
     'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
@@ -2446,9 +2449,11 @@ nature_to_tipe = {
     'an Object or *undefined*'                                   : 'Object | Undefined',
     'Object | Undefined'                                         : 'Object | Undefined',
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
+    'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
     'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
+    'a ResolvedBinding Record or *null* or a String'             : 'ResolvedBinding Record | Null | String',
     'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
     'the Script Record or Module Record; may also be *null*'     : 'Script Record | Module Record | Null',
     'a Script Record or Module Record; may also be Null'         : 'Script Record | Module Record | Null',
@@ -2753,7 +2758,7 @@ class Header:
 
         if self.kind == 'numeric method':
             assert self.for_phrase  in ['Number', 'BigInt']
-            numeric_nature = self.for_phrase
+            numeric_nature = f"a {self.for_phrase}"
 
             assert self.param_names
             for param_name in self.param_names:
@@ -2766,11 +2771,11 @@ class Header:
                     self.param_nature_[param_name] = numeric_nature
 
             if self.name in ['::equal', '::sameValue', '::sameValueZero']:
-                pd_return_nature_normal = 'Boolean'
+                pd_return_nature_normal = 'a Boolean'
             elif self.name == '::lessThan':
-                pd_return_nature_normal = 'Boolean or Undefined'
+                pd_return_nature_normal = 'a Boolean or *undefined*'
             elif self.name == '::toString':
-                pd_return_nature_normal = 'String'
+                pd_return_nature_normal = 'a String'
             else:
                 pd_return_nature_normal = numeric_nature
 
