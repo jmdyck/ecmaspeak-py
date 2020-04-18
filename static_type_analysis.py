@@ -3885,6 +3885,7 @@ named_type_hierarchy = {
             'Intangible_': {
                 'AssignmentTargetType_': {},
                 'CharSet': {},
+                'ClassElementKind_': {},
                 'Data Block': {},
                 'FunctionKind1_': {},
                 'FunctionKind2_': {},
@@ -10354,6 +10355,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_this_mode2_, env0)
         elif chars in ['string', 'symbol']:
             return (T_PropertyKeyKind_, env0)
+        elif chars in ['ConstructorMethod', 'NonConstructorMethod']:
+            return (T_ClassElementKind_, env0)
         else:
             assert 0, chars
 
