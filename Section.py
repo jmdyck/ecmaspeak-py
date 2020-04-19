@@ -264,8 +264,8 @@ def _infer_section_kinds(section):
                     mo = re.match(r'^<p>With parameters? (.+)\.</p>$', p_text)
                     assert mo
                     params_s = mo.group(1)
-                    if params_s == '_object_ and optional parameters _name_ and _functionPrototype_':
-                        # kludge for PR 1490 set "name" for anonymous funcs
+                    if params_s == '_object_ and optional parameters _functionPrototype_ and _name_':
+                        # kludge for my 'SetFunctionName' branch
                         parameters['_object_'] = ''
                         parameters['_name_'] = '[]'
                         parameters['_functionPrototype_'] = '[]'
