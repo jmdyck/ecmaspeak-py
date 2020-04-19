@@ -5117,7 +5117,11 @@ def envs_or(envs):
 
 def do_static_type_analysis(levels):
 
-    atexit.register(write_modified_spec)
+    # atexit.register(write_modified_spec)
+    # This was useful when I was gradually building up the set of STA rules,
+    # because even if the STA-run ended in an exception (which was usual),
+    # I would still get a spec_w_errors written, which might show a little more progress.
+    # Now, if STA ends in an exception, spec_w_errors would probably be of no use.
 
     global split_types_f
     split_types_f = shared.open_for_output('split_types')
@@ -5178,6 +5182,7 @@ def do_static_type_analysis(levels):
     print("Finished static analysis!")
     print()
 
+    write_modified_spec(mode = 'show error messages')
     write_modified_spec(mode = 'apply edits')
 
     # Type-check loops better.
