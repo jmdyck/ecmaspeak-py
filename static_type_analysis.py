@@ -5180,16 +5180,6 @@ def do_static_type_analysis(levels):
 
     write_modified_spec(mode = 'apply edits')
 
-    # Analysis skips the following operations:
-    #   SymbolDescriptiveString
-    #   ToDateString
-    #   GetSubstitution
-    #   EscapeRegExpPattern
-    # because each of them neither calls nor is called by
-    # any other operation, so they don't particpate in any dependency arcs,
-    # so they don't appear in the dependency graph.
-    # (They're only called by built-ins.)
-
     # Type-check loops better.
 
     # Drop the warning for when 'Set' changes the type?
