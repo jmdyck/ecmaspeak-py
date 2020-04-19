@@ -101,7 +101,7 @@ def make_initial_headers():
     for s in spec.doc_node.each_descendant_that_is_a_section():
         create_operation_info_for_section(s)
 
-    write_modified_spec('show initial info')
+    write_modified_spec('dls w initial info')
 
     note_unused_rules()
 
@@ -3125,7 +3125,7 @@ class Header:
     # ------------------------------------------------------
 
     def lines(self, indentation, mode):
-        assert mode in ['show initial info', 'show error messages', 'apply edits']
+        assert mode in ['dls w initial info', 'messages in algs and dls', 'dls w revised info']
 
         ind = ' ' * indentation
         lines = []
@@ -3158,7 +3158,7 @@ class Header:
         def put_prefix_and_type(prefix, ptype):
             nonlocal kludge
             if ptype == T_0:
-                if mode == 'show error messages':
+                if mode == 'messages in algs and dls':
                     pwi(f"      <li>{prefix} : TBD</li>")
                     kludge = 3
                 else:
@@ -3187,13 +3187,13 @@ class Header:
                 for param_name in self.param_names
             )
 
-            if mode == 'show initial info':
+            if mode == 'dls w initial info':
                 for (param_name, param_tipe) in self.param_tipes.items():
                     prefix = param_name.ljust(pn_max_width)
                     pwi(f"      <li>{prefix} : {param_tipe}</li>")
 
             else:
-                if mode == 'show error messages':
+                if mode == 'messages in algs and dls':
                     params = self.initial_parameter_types
                 else:
                     params = self.parameter_types
@@ -3211,7 +3211,7 @@ class Header:
                     # - RemoveWaiters            : _c_
                     # - ComposeWriteEventBytes   : _byteIndex_
 
-                    if mode == 'show error messages':
+                    if mode == 'messages in algs and dls':
                         p_node = self.fake_node_for_[pn]
                         if hasattr(p_node, 'errors'):
                             for msg in p_node.errors:
@@ -3232,7 +3232,7 @@ class Header:
 
             max_width = max(len(var_name) for (var_name,_) in self.also)
 
-            if mode == 'show initial info':
+            if mode == 'dls w initial info':
                 for (var_name, expl) in self.also:
                     pwi(f"      <li>{var_name: <{max_width}} : {expl}</li>")
             else:
@@ -3249,12 +3249,12 @@ class Header:
         pwi(f"  <dd>")
         pwi(f"    <ul>")
 
-        if mode == 'show initial info':
+        if mode == 'dls w initial info':
             pwi(f"      <li>normal : {self.return_tipe_normal}</li>")
             pwi(f"      <li>abrupt : {self.return_tipe_abrupt}</li>")
 
         else:
-            if mode == 'show error messages':
+            if mode == 'messages in algs and dls':
                 rt = self.initial_return_type
             else:
                 rt = self.return_type
@@ -3268,7 +3268,7 @@ class Header:
             put_prefix_and_type('normal', normal_part)
             put_prefix_and_type('abrupt', abrupt_part)
 
-            if mode == 'show error messages':
+            if mode == 'messages in algs and dls':
                 p_node = self.fake_node_for_['*return*']
                 if hasattr(p_node, 'errors'):
                     for msg in p_node.errors:
@@ -5182,8 +5182,8 @@ def do_static_type_analysis(levels):
     print("Finished static analysis!")
     print()
 
-    write_modified_spec(mode = 'show error messages')
-    write_modified_spec(mode = 'apply edits')
+    write_modified_spec(mode = 'messages in algs and dls')
+    write_modified_spec(mode = 'dls w revised info')
 
     # Type-check loops better.
 
@@ -5246,12 +5246,12 @@ def install_error(anode, msg):
 
 # ------------------------------------------------------------------------------
 
-def write_modified_spec(mode = 'show error messages'):
-    assert mode in ['show initial info', 'show error messages', 'apply edits']
+def write_modified_spec(mode = 'messages in algs and dls'):
+    assert mode in ['dls w initial info', 'messages in algs and dls', 'dls w revised info']
 
-    if mode == 'show initial info':
+    if mode == 'dls w initial info':
         filename = 'spec_w_eoh'
-    elif mode == 'show error messages':
+    elif mode == 'messages in algs and dls':
         filename = 'spec_w_errors'
     else:
         filename = 'spec_w_edits'
@@ -5274,7 +5274,7 @@ def write_modified_spec(mode = 'show error messages'):
                 for line in after_thing.lines(indentation, mode):
                     print(line, file=f)
 
-        if mode == 'show error messages':
+        if mode == 'messages in algs and dls':
             # For each anode that ends on this line,
             # show any messages relating to that anode.
 
