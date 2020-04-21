@@ -580,6 +580,7 @@
     {LOCAL_REF} is either an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}
+    {LOCAL_REF} is {backticked_oth}
     {LOCAL_REF} is {h_emu_grammar} 
     {NUM_COMPARISON}
     {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
@@ -591,7 +592,6 @@
     {PROD_REF} is contained in strict mode code
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
-    {PROD_REF} is {backticked_oth}
     {SETTABLE} has an? {DSBN} field
     {SETTABLE} is not equal to {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
     {TYPE_TEST}
@@ -906,6 +906,9 @@
     {var} did not conform to the grammar
     any elements of {var} were not matched by the parse
     any Early Error conditions exist
+
+    # PR #1961 compound_assignment
+    Execution cannot reach this step
 
 {PROPERTY_KIND} :
     accessor
@@ -1389,6 +1392,9 @@
     the Parse Node resulting from the parse
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
 
+    # PR #1961 compound_assignment
+    the result of removing the final {backticked_oth} from {var}
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
@@ -1459,6 +1465,9 @@
 
     # PR 1668 private fields
     \u00ab \u00bb
+
+    # PR #1961 compound_assignment
+    @
 
 {ENVIRONMENT_RECORD_KIND} :
     declarative
