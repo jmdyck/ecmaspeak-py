@@ -479,6 +479,8 @@ def check_ids():
 
         msg_at_posn(defnode.start_posn, f"id declared but not referenced: '{id}'")
 
+    spec.node_with_id_ = node_with_id_
+
 def kebab(id):
     def replfunc(mo):
         low = mo.group(0).lower()

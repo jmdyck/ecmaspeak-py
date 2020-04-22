@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import sys, re, time, math, pdb
+import sys, re, time, math, pdb, string, pprint
 from collections import defaultdict
 
 from HTML import HNode
@@ -17,6 +17,8 @@ from shared import spec, stderr
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def do_stuff_with_pseudocode():
+    check_step_references()
+
     create_all_parsers()
     analyze_sections()
     check_emu_alg_coverage()
@@ -26,6 +28,275 @@ def do_stuff_with_pseudocode():
     analyze_static_dependencies()
     check_sdo_coverage()
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_step_references():
+    # This deals with the pseudocode in <emu-alg> elements,
+    # though in a fairly superficial way.
+    # (I.e., we don't need to have it parsed according to the emu-alg grammar.)
+
+    f_step_refs = shared.open_for_output('step_refs')
+    def put(*args): print(*args, file=f_step_refs)
+
+    curr_referring_section = None
+    for (referring_section, referring_line, step_ref, refd_line) in each_step_ref():
+        if referring_section != curr_referring_section:
+            put()
+            put('-' * 40)
+            put(referring_section.section_num)
+            put(referring_section.section_title)
+            curr_referring_section = referring_section
+            curr_referring_line = None
+
+        if referring_line != curr_referring_line:
+            # This does the 'wrong' thing in EvalDeclarationInstantiation,
+            # where there are two distinct referring lines with the exact same text
+            put()
+            put('    ' + referring_line)
+            curr_referring_line = referring_line
+
+        put()
+        put(f"        step {step_ref}:")
+        put(f"        {refd_line}")
+
+    f_step_refs.close()
+
+# ------------------------------------------------------------------------------
+
+def each_step_ref():
+    for mo in re.finditer(r'(?i)\bsteps* [0-9]', spec.text):
+        st = mo.start()
+
+        referring_line = spec.text[spec.text.rindex('\n', 0, st)+1:spec.text.index('\n', st)].strip()
+
+        text_n = find_deepest_node_covering_posn(st)
+        assert text_n.parent.element_name in ['p', 'li', 'emu-alg']
+
+        referring_section = text_n.closest_containing_section()
+
+        patterns = [
+            r'steps (\d), (\d), and (\d)\b',
+            r'steps (\d)-(\d)\b',
+            r'steps ([\w.]+) and ([\w.]+)\b',
+            r'step ([\w.]+)\b',
+        ]
+        for pattern in patterns:
+            mo = re.compile(pattern, re.IGNORECASE).match(spec.text, st)
+            if mo:
+                break
+        else:
+            assert 0, spec.text[st:st+100].replace('\n', '\\n')
+
+        step_nums = mo.groups()
+        ref_start_posn = mo.start()
+        ref_end_posn = mo.end()
+
+        def ref_is_preceded_by(s):
+            return spec.text[ref_start_posn-len(s) : ref_start_posn] == s
+
+        def ref_is_followed_by(s):
+            return spec.text[ref_end_posn : ref_end_posn+len(s)] == s
+
+        # -------------
+
+        # Pin down which emu-alg is being referenced:
+
+        if ref_is_followed_by(' in previous editions of this specification'):
+            for step_num in step_nums:
+                step_ref = step_num + ' in previous editions'
+                refd_line = 'SKIP'
+                yield (referring_section, referring_line, step_ref, refd_line)
+            continue
+
+        elif ref_is_followed_by(' of the <emu-xref href="#sec-abstract-equality-comparison">Abstract Equality Comparison</emu-xref> algorithm'):
+            refd_alg_name = 'Abstract Equality Comparison'
+            refd_section_id = 'sec-abstract-equality-comparison'
+        elif ref_is_followed_by(' of the Abstract Relational Comparison algorithm'):
+            refd_alg_name = 'Abstract Relational Comparison'
+            refd_section_id = 'sec-abstract-relational-comparison'
+        elif ref_is_followed_by(' in the algorithm for the addition operator `+`'):
+            refd_alg_name = 'evaluation of the `+` operator'
+            refd_section_id = 'sec-addition-operator-plus-runtime-semantics-evaluation'
+        elif ref_is_followed_by(' in the algorithm that handles the addition operator `+`'): # compound_assignment branch
+            refd_alg_name = 'ApplyNumericBinaryOperator'
+            refd_section_id = 'sec-applynumericbinaryoperator'
+        elif ref_is_preceded_by('the same as [[Call]] (see <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>) except that '):
+            refd_alg_name = '[[Call]] for built-in functions'
+            refd_section_id = 'sec-built-in-function-objects-call-thisargument-argumentslist'
+        elif ref_is_preceded_by('During FunctionDeclarationInstantiation the following steps are performed in place of '):
+            refd_alg_name = 'FunctionDeclarationInstantiation'
+            refd_section_id = 'sec-functiondeclarationinstantiation'
+        elif ref_is_preceded_by('During GlobalDeclarationInstantiation the following steps are performed in place of '):
+            refd_alg_name = 'GlobalDeclarationInstantiation'
+            refd_section_id = 'sec-globaldeclarationinstantiation'
+        elif ref_is_preceded_by('During EvalDeclarationInstantiation the following steps are performed in place of '):
+            refd_alg_name = 'EvalDeclarationInstantiation'
+            refd_section_id = 'sec-evaldeclarationinstantiation'
+        elif ref_is_preceded_by('During BlockDeclarationInstantiation the following steps are performed in place of '):
+            refd_alg_name = 'BlockDeclarationInstantiation'
+            refd_section_id = 'sec-blockdeclarationinstantiation'
+        elif referring_section.section_id == 'sec-variablestatements-in-catch-blocks':
+            assert len(step_nums) == 1
+            if step_nums[0].startswith('5.'):
+                refd_alg_name = 'EvalDeclarationInstantiation'
+                refd_section_id = 'sec-evaldeclarationinstantiation'
+            elif step_nums[0].startswith('9.'):
+                # super-kludge:
+                # See https://github.com/tc39/ecma262/pull/1697#discussion_r411874379
+                refd_alg_name = 'EvalDeclarationInstantiation as modified in B.3.3.3'
+                refd_section_id = 'sec-web-compat-evaldeclarationinstantiation'
+                step_nums = [step_nums[0].replace('9.', '1.', 1)]
+            else:
+                assert 0
+        else:
+            refd_alg_name = None
+            refd_section_id = referring_section.section_id
+
+        refd_section = spec.node_with_id_[refd_section_id]
+
+        refd_section_algs = [
+            node
+            for node in refd_section.block_children
+            if node.element_name == 'emu-alg'
+        ]
+
+        if len(refd_section_algs) == 0:
+            assert 0
+        elif len(refd_section_algs) == 1:
+            [refd_alg] = refd_section_algs
+        else:
+            # somewhat kludgey:
+            # (It would be more robust to know where the step-ref occurs
+            # with respect to the algs, and then usually pick the preceding alg.)
+            if refd_section.section_id == 'sec-algorithm-conventions-syntax-directed-operations':
+                assert len(refd_section_algs) == 2
+                refd_alg = refd_section_algs[0]
+            elif refd_section.section_id == 'sec-function-calls-runtime-semantics-evaluation':
+                assert len(refd_section_algs) == 2
+                refd_alg = refd_section_algs[0]
+            elif refd_section.section_id == 'sec-assignment-operators-runtime-semantics-evaluation':
+                assert len(refd_section_algs) == 2
+                if ref_is_followed_by(' of the first algorithm'):
+                    refd_alg_name = "the first algorithm"
+                    refd_alg = refd_section_algs[0]
+                elif ref_is_followed_by(' of the second algorithm'):
+                    refd_alg_name = "the second algorithm"
+                    refd_alg = refd_section_algs[1]
+                else:
+                    assert 0
+            elif refd_section.section_id == 'sec-variable-statement-runtime-semantics-evaluation':
+                assert len(refd_section_algs) == 5
+                refd_alg = refd_section_algs[3]
+            else:
+                # Will create an error message in the step_refs file
+                refd_alg = None
+
+        # -------------
+
+        for step_num in step_nums:
+            extra = f" in {refd_alg_name}" if refd_alg_name else ''
+
+            step_ref = step_num + extra
+            if refd_alg is None:
+                refd_line = 'XXX: what should refd_alg be?'
+            else:
+                refd_line = get_step_line(refd_alg, step_num)
+            yield (referring_section, referring_line, step_ref, refd_line)
+
+# ------------------------------------------------------------------------------
+
+def find_deepest_node_covering_posn(posn):
+    def recurse(node):
+        assert node.start_posn <= posn <= node.end_posn
+        if node.children:
+            for child in node.children:
+                if child.start_posn <= posn <= child.end_posn:
+                    return recurse(child)
+            else:
+                assert 0
+        else:
+            return node
+
+    return recurse(spec.doc_node)
+
+# ------------------------------------------------------------------------------
+
+def get_step_line(emu_alg_n, path_to_step):
+    level_formats = ['1', 'a', 'i', '1', 'a', 'i', 'i']
+    path_pieces = path_to_step.split('.')
+    assert len(path_pieces) <= len(level_formats), path_to_step
+
+    path_indexes = []
+    for (path_piece, level_format) in zip(path_pieces, level_formats):
+        if level_format == '1': # arabic numerals
+            index = int(path_piece) - 1
+        elif level_format == 'a': # lower-case alpha
+            index = string.ascii_lowercase.index(path_piece)
+        elif level_format == 'i': # lower-case roman
+            index = ['i', 'ii', 'iii', 'iv', 'v', 'vi'].index(path_piece)
+        else:
+            assert 0, (path_piece, level_format)
+        path_indexes.append(index)
+
+    # --------
+
+    ist = emu_alg_n.inner_source_text().rstrip()
+    alg_lines = [
+        ( len(mo.group(1)), mo.group(2) )
+        for mo in re.compile(r'\n( *)(.+)').finditer(ist)
+    ]
+    # pprint.pprint(alg_lines, stream=sys.stderr)
+
+    def nestify(start_i, end_i):
+        # Return a structure that captures the hierarchy
+        # of alg_lines[start_i:end_i]
+
+        if start_i == end_i: return []
+
+        (indent_for_this_level, _) = alg_lines[start_i]
+        i_of_lines_at_this_level = [
+            i
+            for i in range(start_i, end_i)
+            if alg_lines[i][0] == indent_for_this_level
+        ]
+        assert i_of_lines_at_this_level[0] == start_i
+
+        tups = []
+        for (i, j) in zip(
+            i_of_lines_at_this_level,
+            i_of_lines_at_this_level[1:] + [end_i]
+        ):
+            # The lines that are subordinate to line `i`
+            # run from `i+1` up to (but not including) line `j`.
+            tup = (
+                alg_lines[i][1],
+                nestify(i+1, j)
+            )
+            tups.append(tup)
+
+        return tups
+
+    alg_tups = nestify(0, len(alg_lines))
+    # pprint.pprint(tups, stream=sys.stderr)
+
+    # ----------
+
+    tups = alg_tups
+
+    for (level, index) in enumerate(path_indexes):
+
+        if index >= len(tups):
+            return f"XXX index error: step {'.'.join(path_pieces[0:level+1])} does not exist"
+
+        (line_body, sub_tups) = tups[index]
+
+        if level == len(path_indexes) - 1:
+            return line_body
+
+        # Need to go deeper.
+        tups = sub_tups
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def create_all_parsers():
