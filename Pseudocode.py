@@ -834,7 +834,7 @@ def analyze_built_in_section(section):
             # The second emu-alg defines the TypedArray SortCompare.
             emu_alg_posn = section.bcen_list.index('emu-alg', emu_alg_posn+1)
             emu_alg = section.block_children[emu_alg_posn]
-            handle_solo_op('TypedArray SortCompare', emu_alg, section)
+            handle_solo_op('TypedArraySortCompare', emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

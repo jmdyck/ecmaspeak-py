@@ -748,8 +748,6 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "It"
 
-        It also has access to (?P<also>.+).
-
         It can take three parameters.
         # could send to <ps>, but not helpful.
 
@@ -767,10 +765,6 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
     # Sentences that start with "The"
-
-        The (abstract operation) (?P<for>\w+)(?P<name>::\w+) (.+)
-        kind=numeric method
-        v=!OP \4
 
         # The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (a constructor and a value), (returns a new promise resolved with) that value.
         # pl=a constructor _C_ and a value _x_
@@ -814,9 +808,6 @@ single_sentence_rules_str = r'''
         kind=accessor property
 
         # ---------
-
-        The (?P<name>\w+) (?P<kind>abstract operation) (.+)
-        v=!OP \3
 
         The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>a .+) (implements .+)
         v=!CM \4
@@ -898,9 +889,6 @@ single_sentence_rules_str = r'''
 
         # When the ...
 
-        When the (?P<name>TypedArray SortCompare) (?P<kind>abstract operation) is called(.+)
-        v=When it is called\3
-
         When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>_\w+_) is called(.+)
         v=When it is called\4
 
@@ -977,20 +965,10 @@ single_sentence_rules_str = r'''
 
         # !OP followed by <pl>
 
-        !OP is called with (?P<pl>.+).
-
         # !OP with (?P<pl>.+) has access to (?P<also>.+).
         # ^ obsoleted by the merge of PR #1890
 
-        !OP with (?P<pl>.+) performs the following steps:
-
-        !OP with (?P<pl>.+) (returns .+)
-        v=!OP \2
-
         # ------------------------------------
-
-        (!OP converts) (?P<pl>a \w+ _x_) (to .+)
-        v=\1 _x_ \3
 
         # ---------
 
@@ -1082,15 +1060,6 @@ single_sentence_rules_str = r'''
         (Returns the integral part of the number .+)
         retn=integer
         v=\1
-
-        (.+ returns \*true\* if .+ and \*false\* otherwise.)
-        retn=*true* or *false*
-        v=\1
-
-        (.+ returns (a|the) BigInt .+)
-        retn=a BigInt
-        v=\1
-        # XXX: could reduce the description a bit
 
         (.+ returns (?P<retn>a Number) .+)
         v=\1
@@ -1441,17 +1410,6 @@ class PreambleInfoHolder:
             # "The descriptions below use the following variables:"
             assert poi.also is None
             poi.also = regexp_also
-
-        if poi.name == 'TypedArray SortCompare':
-            # "SortCompare has access to the _comparefn_ and _buffer_ values
-            # of the current invocation of the `sort` method."
-            # The sentence appears at the end of the preceding para,
-            # but I don't want to include that whole para in the preamble.
-            assert poi.also is None
-            poi.also = [
-                ('_comparefn_', 'from the `sort` method'),
-                ('_buffer_',    'from the `sort` method'),
-            ]
 
         poi.return_nature_normal = join_field_values('retn', ' or ')
 
