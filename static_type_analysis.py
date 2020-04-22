@@ -704,9 +704,6 @@ multi_sentence_rules_str = r'''
         (.+) In addition to (_x_ and _y_) the algorithm takes (a Boolean flag named _LeftFirst_) as a parameter. The flag is (.+)
         pl=\2 and \3
         v=\1 The _LeftFirst_ flag is \4
-
-        # The (?P<ps>optional _reviver_ parameter is a function that takes two parameters, _key_ and _value_). It (can filter .+)
-        # v=The _reviver_ function \2
 '''
 
 single_sentence_rules_str = r'''
@@ -714,16 +711,8 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "A" or "An"
 
-        # A (?P<name>\w+) with parameters (?P<pl>.+) (is a job that .+)
-        # v=A \1 \3
-        # ^ obsoleted by the merge of PR #1597
-
         A (?P<pl>candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
         v=\2 \3 if this operation \5.
-
-        # A (?P<name>TopLevelModuleEvaluationJob) (is a job .+)
-        # v=!OP \2
-        # ^ obsoleted by the merge of PR #1597
 
         A (?P<name>.+) function is an (?P<kind>anonymous built-in function).
 
@@ -735,15 +724,8 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
 
-        # Each ([A-Z].+) function (has .+)
-        # v=Each function created with this algorithm \2
-
         For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>abstract operation) (returns \*true\*).
         v=\2 \3 if this operation \5.
-
-        # (Input _t_ is nominally a time value but (may be any Number value).)
-        # ps=_t_ \2
-        # v=\1
 
     # ==========================================================================
     # Sentences that start with "It"
@@ -751,13 +733,7 @@ single_sentence_rules_str = r'''
         It can take three parameters.
         # could send to <ps>, but not helpful.
 
-        # It has access to (?P<also>.+).
-        # ^ obsoleted by the merge of PR #1890
-
         It performs the following steps when called:
-
-        # Its algorithm is as follows:
-        # ^ obsoleted by the merge of PR #1890
 
     # ==========================================================================
 
@@ -766,15 +742,7 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "The"
 
-        # The (?P<kind>abstract operation) (?P<name>PromiseResolve), given (a constructor and a value), (returns a new promise resolved with) that value.
-        # pl=a constructor _C_ and a value _x_
-        # v=!OP \4 _x_.
-        # hack!
-        #
-
         # --------------
-
-        # (?P<ps>The allowed values for .+)
 
         The (comparison .+), where (?P<ps>_x_ and _y_ are values), produces (.+)
         v=!OP performs the \1, returning \3
@@ -786,13 +754,6 @@ single_sentence_rules_str = r'''
         The following steps are performed:
 
         The following steps are taken:
-
-        # The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) performs the following steps:
-        # ^ obsoleted by the merge of PR #1597
-
-        # The (?P<kind>job) (?P<name>\w+) with (?P<pl>.+) ((applies|parses,) .+)
-        # v=The job \4
-        # ^ obsoleted by the merge of PR #1597
 
         # ---------
 
@@ -840,20 +801,6 @@ single_sentence_rules_str = r'''
             !FUNC takes (?P<pl>.+).
 
             !FUNC performs the following steps:
-
-        # ---
-
-        # JSON.stringify:
-        # Commenting these out becaue they're inaccurate:
-        # 
-        # (?P<ps>The optional (_\w+_) parameter is a String or Number) that (allows .+)
-        # v=\2 \3
-        #
-        # (The optional (_\w+_) parameter) (is either a function that alters the way objects and arrays are stringified, or (an array of Strings and Numbers) that .+)
-        # ps=\1 is a function or \4
-        # v=\2 \3
-        #
-        # (?P<ps>The _\w+_ parameter is .+)
 
     # ==========================================================================
     # Sentences that start with "This"
@@ -949,11 +896,6 @@ single_sentence_rules_str = r'''
 
         (?P<name>_\w+_) called with (?P<pl>.+) performs the following steps:
 
-        # (?P<name>\w+) uses the value of (?P<also>_\w+_ that .+).
-        # ^ obsoleted by the merge of PR #1879
-
-        # (?P<name>\w+) has access to (?P<also>.+).
-
         (?P<name>\w+) is an (?P<kind>implementation-defined abstract operation) that (.+)
         v=!OP \3
 
@@ -962,15 +904,6 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
     # Sentences that (now) start with "!OP":
-
-        # !OP followed by <pl>
-
-        # !OP with (?P<pl>.+) has access to (?P<also>.+).
-        # ^ obsoleted by the merge of PR #1890
-
-        # ------------------------------------
-
-        # ---------
 
         # !OP (.+)
         # v=The operation \1
@@ -1100,9 +1033,6 @@ single_sentence_rules_str = r'''
 
         # -----------
 
-        # (.+ a (?P<kind>static semantic rule) named (?P<name>Contains) which takes (?P<pl>an argument named _symbol_ whose value is a terminal or nonterminal) .+)
-        # v=\1
-
         (.+ to) (?P<ps>the \|ModuleSpecifier\| String, _specifier_), (occurring .+)
         v=\1 _specifier_ \3
 
@@ -1131,9 +1061,6 @@ single_sentence_rules_str = r'''
 
         (.+ determines .+):
         v=\1.
-
-        # (.+):
-        # v=\1.
 
 '''
 
