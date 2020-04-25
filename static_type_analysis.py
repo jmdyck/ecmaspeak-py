@@ -13967,14 +13967,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ListType(NamedType(error_type_name)), env0)
 
     # for PR #1961 compound_assignment
-    elif p == r"{EX} : @":
-        [] = children
-        return (T_Unicode_code_points_, env0)
-
-    elif p == r"{EXPR} : the result of removing the final {backticked_oth} from {var}":
-        [backticked_oth, var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (T_Unicode_code_points_, env0)
+    elif p == r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}":
+        [table_result_type, var, h_figure] = children
+        table_result_type_str = table_result_type.source_text()
+        if table_result_type_str == 'sequence of Unicode code points':
+            result_type = T_Unicode_code_points_
+        elif table_result_type_str == 'abstract operation':
+            # result_type = (
+            #     ProcType([T_Number, T_Number], T_Number | T_throw_) 
+            #     |
+            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_) 
+            # )
+            result_type = ProcType([T_Number|T_BigInt, T_Number|T_BigInt], T_Number|T_BigInt | T_throw_)
+        else:
+            assert 0, table_result_type_str
+        return (result_type, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":

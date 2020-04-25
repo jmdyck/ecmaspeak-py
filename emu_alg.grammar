@@ -909,9 +909,6 @@
     any elements of {var} were not matched by the parse
     any Early Error conditions exist
 
-    # PR #1961 compound_assignment
-    Execution cannot reach this step
-
 {PROPERTY_KIND} :
     accessor
     data
@@ -987,6 +984,13 @@
 
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
+
+    # PR #1961 compound_assignment
+    the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
+
+{TABLE_RESULT_TYPE} :
+    sequence of Unicode code points
+    abstract operation
 
 {CLOSURE_KIND} :
     Continuation
@@ -1396,9 +1400,6 @@
     the Parse Node resulting from the parse
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
 
-    # PR #1961 compound_assignment
-    the result of removing the final {backticked_oth} from {var}
-
     # PR 1965 quick fixes
     the fully populated data property descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
 
@@ -1472,9 +1473,6 @@
 
     # PR 1668 private fields
     \u00ab \u00bb
-
-    # PR #1961 compound_assignment
-    @
 
 {ENVIRONMENT_RECORD_KIND} :
     declarative
