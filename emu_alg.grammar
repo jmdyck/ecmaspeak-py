@@ -664,7 +664,6 @@
     {var} is a Continuation
     {var} is a Cyclic Module Record
     {var} is a Data Block
-    {var} is a Lexical Environment
     {var} is a List
     {var} is a List containing only String and Symbol values
     {var} is a List of Record { {DSBN}, {DSBN} }
@@ -757,7 +756,7 @@
     {var} is not a {nonterminal}
     {var} is not already suspended
     {var} is not an abrupt completion
-    {var} is not an abrupt completion because of validation preceding step 12
+    {var} is not an abrupt completion because of validation preceding step {dec_int_lit}
     {var} is not an array index
     {var} is not an empty List
     {var} is not an integer index
@@ -848,6 +847,9 @@
 
     # obsoleted by the merge of PR #1692
     # {var} is a Synchronize event
+
+    # obsoleted by the merge of PR #1697:
+    # {var} is a Lexical Environment
 
     # obsoleted by the merge of PR #1302
     # {var} is an extensible object that does not have a {backticked_word} own property
@@ -1051,7 +1053,6 @@
     a new (possibly empty) List consisting of all of the argument values provided after {var} in order
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
-    a new Lexical Environment
     a new List containing the same values as the list {var} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using *undefined* as {var}
     a new List containing {EXPR}
     a new List of {var} with {LITERAL} appended
@@ -1357,6 +1358,9 @@
     # an empty sequence of algorithm steps
     # the algorithm steps specified in {h_emu_xref} for the {percent_word} function
 
+    # obsoleted by the merge of PR #1697:
+    # a new Lexical Environment
+
     # obsoleted by the merge of PR #1725:
     # the String value of the Element Type value in {h_emu_xref} for {EX}
 
@@ -1647,7 +1651,6 @@
     The {EXECUTION_CONTEXT_COMPONENT} of {var}
     the Synchronize event in {var}
     the _withEnvironment_ flag of {var}
-    the _withEnvironment_ flag of {var}'s EnvironmentRecord
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the {DSBN} field of the calling surrounding's Agent Record
@@ -1657,15 +1660,18 @@
     the {EXECUTION_CONTEXT_COMPONENT} component of {var}
     the {EXECUTION_CONTEXT_COMPONENT} of the running execution context
     the {EXECUTION_CONTEXT_COMPONENT} of {var}
-    the {LEXICAL_ENVIRONMENT_COMPONENT} component of {var}
-    the {LEXICAL_ENVIRONMENT_COMPONENT} of {var}
     {DOTTING}
     {DOTTING}[{EX}]
     {var}
     {var}'s {DSBN} attribute
     {var}'s {EXECUTION_CONTEXT_COMPONENT}
-    {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}
     {var}[{EX}]
+
+    # obsoleted by the merge of PR #1697:
+    # the _withEnvironment_ flag of {var}'s EnvironmentRecord
+    # the {LEXICAL_ENVIRONMENT_COMPONENT} component of {var}
+    # the {LEXICAL_ENVIRONMENT_COMPONENT} of {var}
+    # {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}
 
     # obsoleted by the merge of PR #1740:
     # the {var}'s {EXECUTION_CONTEXT_COMPONENT}
@@ -1688,10 +1694,11 @@
     # PR 1668 private fields:
     PrivateEnvironment
 
-{LEXICAL_ENVIRONMENT_COMPONENT} :
-    EnvironmentRecord
-    outer lexical environment reference
-    outer environment reference
+# obsoleted by the merge of PR #1697:
+# {LEXICAL_ENVIRONMENT_COMPONENT} :
+#     EnvironmentRecord
+#     outer lexical environment reference
+#     outer environment reference
 
 # --------------------------------
 

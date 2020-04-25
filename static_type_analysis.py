@@ -2166,12 +2166,6 @@ nature_to_tipe = {
         'Property Descriptor'   : 'Property Descriptor',
         'a Property Descriptor' : 'Property Descriptor',
 
-        # Lexical Environment
-        'the Lexical Environment' : 'Lexical Environment',
-        'a Lexical Environment' : 'Lexical Environment',
-        'a global lexical environment' : 'Lexical Environment',
-        'the global lexical environment' : 'Lexical Environment',
-
         # Environment Record
         'Environment Record' : 'Environment Record',
         'an Environment Record' : 'Environment Record',
@@ -2350,9 +2344,7 @@ nature_to_tipe = {
     'a Boolean or *empty*'                                       : 'Boolean | empty_',
     'an integer (or &infin;)'                                    : 'Integer_ | Infinity_',
     'an integer or &infin;'                                      : 'Integer_ | Infinity_',
-    'a Lexical Environment; or may be *null*'                    : 'Lexical Environment | Null',
-    'a Lexical Environment or *null*'                            : 'Lexical Environment | Null', # PR 1668
-    'an Environment Record or *null*'                            : 'Environment Record | Null', # PR 1697
+    'an Environment Record or *null*'                            : 'Environment Record | Null',
     'an object or null'                                          : 'Object | Null',
     'an object or *null*'                                        : 'Object | Null',
     'an Object or *null*'                                        : 'Object | Null',
@@ -3781,7 +3773,6 @@ named_type_hierarchy = {
                 'IterationKind_': {},
                 'IteratorKind_': {},
                 'LangTypeName_': {},
-                'Lexical Environment': {},
                 'LhsKind_': {},
                 'List': {},
                 'MatchResult': {
@@ -4585,7 +4576,7 @@ class Env:
                 old_t == T_Boolean | T_Environment_Record | T_Number | T_Object | T_String | T_Symbol | T_Undefined and new_t == T_Object
                 # GetValue. (Fix by replacing T_Reference with ReferenceType(base_type)?)
                 or
-                old_t == T_Abrupt | T_Boolean | T_Intangible_ | T_Null | T_Number | T_Object | T_String | T_Symbol and new_t == T_Lexical_Environment
+                old_t == T_Abrupt | T_Boolean | T_Intangible_ | T_Null | T_Number | T_Object | T_String | T_Symbol and new_t == T_Environment_Record
                 # InitializeBoundName
                 or
                 old_t == T_Normal and new_t == T_Tangible_
@@ -4603,7 +4594,7 @@ class Env:
                 or
                 expr_text in ['_test_', '_increment_'] and new_t == T_Parse_Node
                 or
-                old_t == T_Lexical_Environment | T_Undefined and new_t == T_Lexical_Environment
+                old_t == T_Environment_Record | T_Undefined and new_t == T_Environment_Record
                 # IteratorBindingInitialization
                 or
                 old_t == T_String | T_Symbol | T_Undefined and new_t == T_String | T_Symbol
@@ -5393,6 +5384,8 @@ def tc_header(header):
                     header.name == 'SameValueNonNumeric' and init_t == T_Tangible_
                     or
                     header.name == 'SetMutableBinding' and pn == '*return*'
+                    or
+                    header.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
                 )
                 # This pass just narrowed the type.
                 # ----
@@ -7551,9 +7544,12 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {var} is never an abrupt completion",
         r"{CONDITION_1} : {var} is not an abrupt completion",
-        r"{CONDITION_1} : {var} is not an abrupt completion because of validation preceding step 12",
     ]:
         [var] = children
+        return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is not an abrupt completion because of validation preceding step {dec_int_lit}":
+        [var, dec_int_lit] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
     elif p == r"{CONDITION_1} : {var} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification":
@@ -7655,10 +7651,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is an Integer-Indexed exotic object":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Integer_Indexed_object_, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a Lexical Environment":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Lexical_Environment, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List":
         [list_var] = children
@@ -8542,7 +8534,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{CONDITION_1} : When {SETTABLE} is instantiated it will have a direct binding for {var}':
         [settable, var] = children
-        env0.assert_expr_is_of_type(settable, T_Lexical_Environment | T_Undefined)
+        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_Undefined)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
@@ -8832,7 +8824,7 @@ def tc_cond_(cond, env0, asserting):
             env1 = env0
         elif exa_type == T_TBD:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
-        elif exa_type == T_Lexical_Environment | T_Undefined and exb_type == T_Lexical_Environment:
+        elif exa_type == T_Environment_Record | T_Undefined and exb_type == T_Environment_Record:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exa_type == T_Integer_ and exb_type == T_Number:
             # XXX could be more specific
@@ -8840,7 +8832,7 @@ def tc_cond_(cond, env0, asserting):
         elif exa_type == T_Number and exb_type == T_Number | T_BigInt:
             env1 = env0
         else:
-            assert 0
+            assert 0, (exa_type, exb_type)
         return (env1, env1)
 
     elif p == r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)':
@@ -12647,44 +12639,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             'ScriptOrModule': T_Module_Record | T_Script_Record,
 
             # 7159: Table 23: Additional State Components for ECMAScript Code Execution Contexts
-            'LexicalEnvironment' : T_Lexical_Environment,
-            'VariableEnvironment': T_Lexical_Environment,
+            'LexicalEnvironment' : T_Environment_Record,
+            'VariableEnvironment': T_Environment_Record,
             # PR 1668 privates:
-            'PrivateEnvironment' : T_Lexical_Environment,
+            'PrivateEnvironment' : T_Environment_Record,
 
             # 7191: Table 24: Additional State Components for Generator Execution Contexts
             'Generator' : T_Object,
         }[component_name]
 
-        return (result_type, env2)
-
-    # ----
-    # return component of T_Lexical_Environment
-
-    elif p in [
-        r"{SETTABLE} : the {LEXICAL_ENVIRONMENT_COMPONENT} component of {var}",
-        r"{SETTABLE} : the {LEXICAL_ENVIRONMENT_COMPONENT} of {var}",
-        r"{SETTABLE} : {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}",
-    ]:
-        if p.endswith(" of {var}"):
-            [component_name, var] = children
-        else:
-            [var, component_name] = children
-
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-
-        # env1 = env0.ensure_expr_is_of_type(var, T_Lexical_Environment)
-        if t == T_TBD:
-            t = T_Lexical_Environment
-            env2 = env1.with_expr_type_replaced(var, t)
-        else:
-            env2 = env1
-
-        result_type = {
-            'EnvironmentRecord': T_Environment_Record,
-            'outer environment reference': T_Null | T_Lexical_Environment,
-            'outer lexical environment reference': T_Null | T_Lexical_Environment,
-        }[component_name.source_text()]
         return (result_type, env2)
 
     # -------------------------------------------------
@@ -13183,14 +13146,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [component_name] = children
         t = {
-            'LexicalEnvironment' : T_Lexical_Environment,
-            'VariableEnvironment': T_Lexical_Environment,
-            'PrivateEnvironment' : T_Lexical_Environment, # PR 1668 privates
+            'LexicalEnvironment' : T_Environment_Record,
+            'VariableEnvironment': T_Environment_Record,
+            'PrivateEnvironment' : T_Environment_Record, # PR 1668 privates
         }[component_name.source_text()]
         return (t, env0)
-
-    elif p == r'{EXPR} : a new Lexical Environment':
-        return (T_Lexical_Environment, env0)
 
     elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value':
         [var] = children
@@ -13273,11 +13233,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{SETTABLE} : the _withEnvironment_ flag of {var}":
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_object_Environment_Record)
-        return (T_Boolean, env1)
-
-    elif p == r"{SETTABLE} : the _withEnvironment_ flag of {var}'s EnvironmentRecord":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Lexical_Environment)
         return (T_Boolean, env1)
 
     elif p == r"{EXPR} : {var}'s _captures_ List":
@@ -14372,9 +14327,6 @@ fields_for_record_type_named_ = {
     #?     'Target' : T_String | T_empty_,
     #? },
 
-    'Environment Record': {
-    },
-
     # PR 1668 privates:
     # Table 9:
     'PrivateField' : {
@@ -14397,8 +14349,21 @@ fields_for_record_type_named_ = {
         'Set'        : T_function_object_,
     },
 
+    'Environment Record': {
+        'OuterEnv'         : T_Environment_Record,
+    },
+
+    'declarative Environment Record': {
+        'OuterEnv' : T_Environment_Record,
+    },
+
+    'object Environment Record': {
+        'OuterEnv'         : T_Environment_Record,
+    },
+
     # 5731: Table 16: Additional Fields of Function Environment Records
     'function Environment Record': {
+        'OuterEnv'         : T_Environment_Record,
         'ThisValue'        : T_Tangible_,
         'ThisBindingStatus': T_this_binding_status_, # T_String, # enumeration
         'FunctionObject'   : T_function_object_,
@@ -14408,17 +14373,22 @@ fields_for_record_type_named_ = {
 
     # 5907: Table 18: Additional Fields of Global Environment Records
     'global Environment Record': {
+        'OuterEnv'         : T_Environment_Record,
         'ObjectRecord'     : T_object_Environment_Record,
         'GlobalThisValue'  : T_Object,
         'DeclarativeRecord': T_declarative_Environment_Record,
         'VarNames'         : ListType(T_String),
     },
 
+    'module Environment Record': {
+        'OuterEnv'         : T_Environment_Record,
+    },
+
     # 6561: Table 21: Realm Record Fields
     'Realm Record': {
         'Intrinsics'  : T_Intrinsics_Record,
         'GlobalObject': T_Object,
-        'GlobalEnv'   : T_Lexical_Environment,
+        'GlobalEnv'   : T_Environment_Record,
         'TemplateMap' : ListType(T_templateMap_entry_),
         'HostDefined' : T_host_defined_ | T_Undefined,
     },
@@ -14479,7 +14449,7 @@ fields_for_record_type_named_ = {
     # 21832: Script Record Fields
     'Script Record': {
         'Realm'         : T_Realm_Record | T_Undefined,
-        'Environment'   : T_Lexical_Environment | T_Undefined,
+        'Environment'   : T_Environment_Record | T_Undefined,
         'ECMAScriptCode': T_PTN_Script,
         'HostDefined'   : T_host_defined_ | T_Undefined,
     },
@@ -14487,7 +14457,7 @@ fields_for_record_type_named_ = {
     # 22437: Table 36: Module Record Fields
     'Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Lexical_Environment | T_Undefined,
+        'Environment'     : T_Environment_Record | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         'Status'          : T_module_record_status_, # T_String, # see Issue 1455
@@ -14495,7 +14465,7 @@ fields_for_record_type_named_ = {
 
     'other Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Lexical_Environment | T_Undefined,
+        'Environment'     : T_Environment_Record | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
     },
@@ -14503,7 +14473,7 @@ fields_for_record_type_named_ = {
     # 
     'Cyclic Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Lexical_Environment | T_Undefined,
+        'Environment'     : T_Environment_Record | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
@@ -14517,7 +14487,7 @@ fields_for_record_type_named_ = {
     # 23406: Table 38: Additional Fields of Source Text Module Records
     'Source Text Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Lexical_Environment | T_Undefined,
+        'Environment'     : T_Environment_Record | T_Undefined,
         'Namespace'       : T_Object | T_Undefined,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
@@ -14731,8 +14701,8 @@ type_of_internal_thing_ = {
     'ListNextIndex'         : T_Integer_,
 
     # 8329: Table 30: Internal Slots of ECMAScript Function Objects
-    'Environment'      : T_Lexical_Environment,
-    'PrivateEnvironment' : T_Lexical_Environment, # PR 1668 privates
+    'Environment'      : T_Environment_Record,
+    'PrivateEnvironment' : T_Environment_Record, # PR 1668 privates
     'FormalParameters' : T_Parse_Node,
     'FunctionKind'     : T_FunctionKind2_, # T_String, # could be more specific
     'IsClassConstructor': T_Boolean, # PR 15xx re FunctionKind

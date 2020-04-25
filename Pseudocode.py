@@ -137,17 +137,17 @@ def each_step_ref():
             refd_section_id = 'sec-blockdeclarationinstantiation'
         elif referring_section.section_id == 'sec-variablestatements-in-catch-blocks':
             assert len(step_nums) == 1
-            if step_nums[0].startswith('5.'):
+            if step_nums[0].startswith('3.'):
                 refd_alg_name = 'EvalDeclarationInstantiation'
                 refd_section_id = 'sec-evaldeclarationinstantiation'
-            elif step_nums[0].startswith('9.'):
+            elif step_nums[0].startswith('7.'):
                 # super-kludge:
                 # See https://github.com/tc39/ecma262/pull/1697#discussion_r411874379
                 refd_alg_name = 'EvalDeclarationInstantiation as modified in B.3.3.3'
                 refd_section_id = 'sec-web-compat-evaldeclarationinstantiation'
-                step_nums = [step_nums[0].replace('9.', '1.', 1)]
+                step_nums = [step_nums[0].replace('7.', '1.', 1)]
             else:
-                assert 0
+                assert 0, step_nums
         else:
             refd_alg_name = None
             refd_section_id = referring_section.section_id
