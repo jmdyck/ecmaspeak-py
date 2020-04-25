@@ -1399,6 +1399,9 @@
     # PR #1961 compound_assignment
     the result of removing the final {backticked_oth} from {var}
 
+    # PR 1965 quick fixes
+    the fully populated data property descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
