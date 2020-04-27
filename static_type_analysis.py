@@ -1498,6 +1498,7 @@ def extract_info_from_standard_ao_preamble(preamble_node):
 
     for sentence in sentences:
         if sentence.startswith('It returns '):
+            # Maybe if it's a numeric method, we shouldn't bother?
             for (pattern, nature) in [
                 ("It returns the one's complement of _x_.+", 'TBD'),
                 ('It returns \*true\* if .+ and \*false\* otherwise.', 'a Boolean'),
@@ -1506,6 +1507,7 @@ def extract_info_from_standard_ao_preamble(preamble_node):
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
                 ('It returns a new Job abstract closure .+', 'a Job abstract closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
+                ('It returns an implementation-dependent approximation to .+', 'a Number'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
                 ('It returns the BigInt value that .+', 'a BigInt'),
                 ('It returns the global object used by the currently running execution context.', 'an object'),
