@@ -5642,7 +5642,7 @@ def tc_nonvalue(anode, env0):
     elif p in [
         r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)",
         r"{COMMAND} : Let {var} be {EXPR}. Remove that record from {var}.",
-        r"{COMMAND} : Let {var} be {EXPR}. This variable will be used throughout the algorithms in {h_emu_xref}.",
+        r"{COMMAND} : Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.",
         # r"{COMMAND} : Let {var} be {EXPR}. {note}", # obsoleted by PR 1831
         r"{COMMAND} : Let {var} be {EXPR}.",
         r"{COMMAND} : Let {var} be {MULTILINE_EXPR}",
