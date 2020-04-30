@@ -4681,6 +4681,7 @@ class Env:
                 '? ToPrimitive(_x_)', # Abstract Equality Comparison
                 '? ToPrimitive(_y_)', # Abstract Equality Comparison
                 '? ToPropertyKey(_lval_)',
+                'Call(_return_, _iterator_)', # AsyncIteratorClose
                 'StringValue of |Identifier|',
                 'ToInteger(_P_)', # [[OwnPropertyKeys]]
                 'ToNumber(_x_)', # Abstract Equality Comparison
