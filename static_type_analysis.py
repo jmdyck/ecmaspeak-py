@@ -13029,15 +13029,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r'{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below':
         [emu_xref, var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        return (T_iterator_record_, env1)
-        # XXX see issue #1022, spec bug:
-        # It *says* Iterator object, but it has to be an iterator record.
-        # The only place this occurs is in EnumerateObjectProperties,
-        # and the only place EnumerateObjectProperties is called is in ForIn/OfHeadEvaluation,
-        # where its return value becomes the return value of ForIn/OfHeadEvaluation,
-        # which gets passed to the _iteratorRecord_ param of ForIn/OfBodyEvaluation,
-        # which is definitely an iterator record
-        # (with [[NextMethod]] and [[Iterator]] fields).
+        return (T_Iterator_object_, env1)
 
     elif p == r'{EX} : the base value component of {var}':
         [var] = children
