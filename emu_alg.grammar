@@ -994,9 +994,9 @@
 
 {CLOSURE_KIND} :
     Continuation
-    Job abstract closure
+    Job Abstract Closure
     Matcher
-    abstract closure
+    Abstract Closure
 
 {CLOSURE_PARAMETERS} :
     no parameters
@@ -1047,7 +1047,7 @@
     a String containing one instance of each code unit valid in {nonterminal}
     a String containing one instance of each code unit valid in {nonterminal} and {nonterminal} plus {STR_LITERAL}
     a String containing one instance of each code unit valid in {nonterminal} plus {STR_LITERAL}
-    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the abstract closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the abstract closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
+    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {DOTTING}
     a copy of {var}
@@ -1501,7 +1501,7 @@
     evaluating {LOCAL_REF} with argument {var}
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
-    the abstract closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
+    the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}
@@ -1529,7 +1529,7 @@
     ## {nonterminal}.\w+({EXLIST_OPT})
 
     # PR 1866 ParsePattern
-    the abstract closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
+    the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
 
 {LOCAL_REF} :
     the parsed code that is {DOTTING}

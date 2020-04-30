@@ -1505,7 +1505,7 @@ def extract_info_from_standard_ao_preamble(preamble_node):
                 ('It returns _argument_ converted to a Number value .+.', 'a Number'),
                 ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
-                ('It returns a new Job abstract closure .+', 'a Job abstract closure'),
+                ('It returns a new Job Abstract Closure .+', 'a Job Abstract Closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
                 ('It returns an implementation-dependent approximation to .+', 'a Number'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
@@ -2192,7 +2192,7 @@ nature_to_tipe = {
         'an execution context' : 'execution context',
 
         # 8.4 Jobs etc
-        'a Job abstract closure' : 'Job abstract closure',
+        'a Job Abstract Closure' : 'Job Abstract Closure',
 
         # 15.1.8 Script Records: Script Record
 
@@ -3977,7 +3977,7 @@ def maybe_NamedType(name):
         return T_Matcher
     elif name == 'RegExpMatcher_':
         return T_RegExpMatcher_
-    elif name == 'Job abstract closure':
+    elif name == 'Job Abstract Closure':
         return T_Job
     elif name == 'bytes_combining_op_':
         return T_bytes_combining_op_
@@ -12673,13 +12673,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_RegExpMatcher_, env0)
 # ^ obsoleted by PR 1552
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [emu_xref, chars_var, nont, f_var] = children
         env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
         env0.assert_expr_is_of_type(f_var, T_String)
         return (T_RegExpMatcher_, env0)
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [p_var, emu_xref, chars_var, nont, f_var] = children
         env1 = env0.ensure_expr_is_of_type(p_var, T_PTN_Pattern)
         env1.assert_expr_is_of_type(chars_var, ListType(T_character_))
@@ -12746,7 +12746,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env_for_commands = Env()
 
         n_parameters = len(clo_parameters.children)
-        if clo_kind == 'abstract closure':
+        if clo_kind == 'Abstract Closure':
             clo_param_types = [T_TBD] * n_parameters
             alsos = [
                 # See #sec-pattern
@@ -12768,7 +12768,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 ('_Input_',       ListType(T_character_)),
                 ('_Multiline_',   T_Boolean),
             ]
-        elif clo_kind == 'Job abstract closure':
+        elif clo_kind == 'Job Abstract Closure':
             assert n_parameters == 0
             clo_param_types = []
             alsos = []
@@ -13787,7 +13787,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
         return (var_t, env0)
 
-    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the abstract closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the abstract closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
+    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
         # XXX
         return (T_String, env0)
 
