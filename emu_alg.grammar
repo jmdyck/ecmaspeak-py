@@ -445,7 +445,6 @@
 
 
 {CONDITION_1} :
-    @ is {EX}
     A `default` export was not explicitly defined by this module
     A unique such {nonterminal} is found
     All named exports from {var} are resolvable
@@ -866,6 +865,9 @@
     # obsoleted by the merge of PR #1924:
     # {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
 
+    # obsoleted by the merge of PR #1961:
+    # @ is {EX}
+
     # PR 1477 scope-records:
     it must be in the object Scope Record
     the base of {var} is a Scope Record
@@ -973,6 +975,7 @@
     a set of characters containing the sixty-three characters:{nlai}{h_figure}
     the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
     the string-concatenation of:{I_BULLETS}
+    the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
 
     # obsoleted by the merge of PR #1797:
     # an internal AssertionTester closure that takes a State argument {var} and performs the following steps:{IND_COMMANDS}
@@ -984,13 +987,6 @@
 
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
-
-    # PR #1961 compound_assignment
-    the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
-
-{TABLE_RESULT_TYPE} :
-    sequence of Unicode code points
-    abstract operation
 
 {CLOSURE_KIND} :
     Continuation
@@ -1012,6 +1008,11 @@
     {var}, {var}, {var}, {var}, {var}, and {var}
     {var}, {var}, {var}, {var}, {var}, {var}, {var}, and {var}
 
+{TABLE_RESULT_TYPE} :
+    sequence of Unicode code points
+    abstract operation
+
+# ---------------------------------------------------------------
 
 {EXPR} :
     Type({var})
@@ -1167,7 +1168,6 @@
     the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair ({var}, {var})
-    the `@` where |AssignmentOperator| is `@=`
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
     the active function object
     the actual number of arguments passed to this function
@@ -1241,7 +1241,6 @@
     the result of applying bitwise complement to {var}. The result is a signed 32-bit integer
     the result of applying that mapping to {var}
     the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
-    the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
     the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
@@ -1376,6 +1375,10 @@
     # a Continuation that always returns its State argument as a successful MatchResult
     # a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
     # a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}
+
+    # obsoleted by the merge of PR #1961:
+    # the `@` where |AssignmentOperator| is `@=`
+    # the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object

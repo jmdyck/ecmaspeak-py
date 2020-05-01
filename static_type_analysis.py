@@ -9796,10 +9796,11 @@ def tc_cond_(cond, env0, asserting):
         [prod_ref, oth] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : @ is {EX}":
-        [ex] = children
-        env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : @ is {EX}":
+#        [ex] = children
+#        env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
+#        return (env0, env0)
+# ^ obsoleted by PR 1961
 
     elif p == r"{CONDITION_1} : {var} has a Synchronize event":
         [var] = children
@@ -12582,15 +12583,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return (T_Tangible_, env0)
 
-    elif p == r"{EXPR} : the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}":
-        [op_var, avar, bvar, avar2, op_var2, bvar2] = children
-        assert op_var.children == op_var2.children
-        assert avar.children == avar2.children
-        assert bvar.children == bvar2.children
-        env0.assert_expr_is_of_type(op_var, T_proc_)
-        env1 = env0.ensure_expr_is_of_type(avar, T_Tangible_)
-        env2 = env1.ensure_expr_is_of_type(bvar, T_Tangible_)
-        return (T_Tangible_, env2)
+#    elif p == r"{EXPR} : the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}":
+#        [op_var, avar, bvar, avar2, op_var2, bvar2] = children
+#        assert op_var.children == op_var2.children
+#        assert avar.children == avar2.children
+#        assert bvar.children == bvar2.children
+#        env0.assert_expr_is_of_type(op_var, T_proc_)
+#        env1 = env0.ensure_expr_is_of_type(avar, T_Tangible_)
+#        env2 = env1.ensure_expr_is_of_type(bvar, T_Tangible_)
+#        return (T_Tangible_, env2)
+# ^ obsoleted by PR 1961
 
     elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*":
         [avar, bvar, cvar, dvar] = children
@@ -12663,8 +12665,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
         return (ProcType([T_Tangible_], T_Integer_), env1)
 
-    elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
-        return (ProcType([T_Number, T_Number], T_Number), env0)
+#    elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
+#        return (ProcType([T_Number, T_Number], T_Number), env0)
+# ^ obsoleted by PR 1961
 
 #    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
 #        [source_var, emu_xref, chars_var, nont, f_var] = children

@@ -118,8 +118,8 @@ def each_step_ref():
             refd_alg_name = 'evaluation of the `+` operator'
             refd_section_id = 'sec-addition-operator-plus-runtime-semantics-evaluation'
         elif ref_is_followed_by(' in the algorithm that handles the addition operator `+`'): # compound_assignment branch
-            refd_alg_name = 'ApplyNumericBinaryOperator'
-            refd_section_id = 'sec-applynumericbinaryoperator'
+            refd_alg_name = 'ApplyStringOrNumericBinaryOperator'
+            refd_section_id = 'sec-applystringornumericbinaryoperator'
         elif ref_is_preceded_by('the same as [[Call]] (see <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>) except that '):
             refd_alg_name = '[[Call]] for built-in functions'
             refd_section_id = 'sec-built-in-function-objects-call-thisargument-argumentslist'
@@ -1449,6 +1449,23 @@ def annotate_algo(algo):
                         'ToUint32',
                         'ToBigInt64',
                         'ToBigUint64',
+                    ]
+                elif opn_before_paren.source_text() == '_operation_':
+                    assert d.source_text() == '_operation_(_lnum_, _rnum_)'
+                    # ApplyStringOrNumericBinaryOperator
+                    op_names = [
+                        '::exponentiate',
+                        '::multiply',
+                        '::divide',
+                        '::remainder',
+                        '::add',
+                        '::subtract',
+                        '::leftShift',
+                        '::signedRightShift',
+                        '::unsignedRightShift',
+                        '::bitwiseAND',
+                        '::bitwiseXOR',
+                        '::bitwiseOR',
                     ]
                 else:
                     # mostly closures created+invoked in RegExp semantics
