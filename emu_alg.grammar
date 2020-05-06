@@ -780,7 +780,6 @@
     {var} is on the list of waiters in {var}
     {var} is one of the code units in {STR_LITERAL}
     {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}
-    {var} is present as a parameter
     {var} is the String value {STR_LITERAL}
     {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
     {var} is the execution context of a generator
@@ -867,6 +866,9 @@
 
     # obsoleted by the merge of PR #1961:
     # @ is {EX}
+
+    # obsoleted by the merge of PR #1965:
+    # {var} is present as a parameter
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
@@ -1203,7 +1205,7 @@
     the first agent in {var}
     the first element of {var}
     the first waiter in {var}
-    the fully populated data property descriptor for the property containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
+    the fully populated data property descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
     the grammar symbol {nonterminal}
     the index into {var} of the character that was obtained from element {var} of {var}
     the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}
@@ -1402,9 +1404,6 @@
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
     the Parse Node resulting from the parse
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
-
-    # PR 1965 quick fixes
-    the fully populated data property descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
 
 {EX} :
     &laquo; &raquo;

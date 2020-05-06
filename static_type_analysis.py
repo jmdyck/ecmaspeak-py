@@ -7755,11 +7755,12 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Module_Record, asserting)
 
-    elif p in [
-        r"{CONDITION_1} : {var} is present as a parameter",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_not_passed, asserting)
+#    elif p in [
+#        r"{CONDITION_1} : {var} is present as a parameter",
+#    ]:
+#        [var] = children
+#        return env0.with_type_test(var, 'isnt a', T_not_passed, asserting)
+# ^ obsoleted by PR 1965
 
     elif p in [
         r'{CONDITION_1} : {EX} is present',
@@ -13251,10 +13252,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Property_Descriptor, env0)
 
-    elif p in [
-        r"{EXPR} : the fully populated data property descriptor for the property containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}",
-        r"{EXPR} : the fully populated data property descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}", # PR 1965 quick fixes
-    ]:
+    elif p == r"{EXPR} : the fully populated data property descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}":
         [emu_xref1, emu_xref2, emu_xref3, dsbn, var] = children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (T_Property_Descriptor, env0)
