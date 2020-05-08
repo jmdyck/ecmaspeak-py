@@ -125,7 +125,6 @@
     Remove {var} from {var}.
     Repeat, until {CONDITION},{IND_COMMANDS}
     Repeat, while {CONDITION},{IND_COMMANDS}
-    Repeat, while {CONDITION}{IND_COMMANDS}
     Repeat,{IND_COMMANDS}
     Replace the element of {var} whose value is {var} with an element whose value is {LITERAL}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
@@ -202,6 +201,9 @@
     # obsoleted by the merge of PR #1924:
     # Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.
     # Return {EXPR}. This call will always return *true*.
+
+    # obsoleted by the merge of PR #1985:
+    # Repeat, while {CONDITION}{IND_COMMANDS}
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.

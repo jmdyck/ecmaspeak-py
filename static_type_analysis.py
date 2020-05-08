@@ -6208,7 +6208,6 @@ def tc_nonvalue(anode, env0):
 
 
     elif p in [
-        r'{COMMAND} : Repeat, while {CONDITION}{IND_COMMANDS}',
         r'{COMMAND} : Repeat, while {CONDITION},{IND_COMMANDS}',
         r"{COMMAND} : Repeat, until {CONDITION},{IND_COMMANDS}",
     ]:
