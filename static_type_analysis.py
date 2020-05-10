@@ -2219,6 +2219,9 @@ nature_to_tipe = {
         # Matcher
             'a Matcher'      : 'Matcher',
 
+        # 24.1.1 [ArrayBuffer Objects] Notation
+        'a read-modify-write modification function': 'ReadModifyWrite_modification_closure',
+
         # 24.4
         'a WaiterList' : 'WaiterList',
 
@@ -2244,6 +2247,7 @@ nature_to_tipe = {
 
     # unofficial 'subtypes' of official spec types:
 
+        'a List of byte values'                       : 'List of Integer_',
         'a List of slot-names'                        : 'List of SlotName_',
         'a List of names of internal slots'           : 'List of SlotName_',
         'a List of ECMAScript Language Type names'    : 'List of LangTypeName_',
@@ -2260,12 +2264,6 @@ nature_to_tipe = {
 
         # 8.7.1 AgentSignifier
         'an agent signifier' : 'agent_signifier_',
-
-        # 24.1.1.9 GetModifySetValueInBuffer
-        'a semantic function'        : 'bytes_combining_op_',
-        # 24.4.1.11 AtomicReadModifyWrite
-        'a pure combining operation' : 'bytes_combining_op_',
-        'a pure combining operation that takes two List of byte values arguments and returns a List of byte values': 'bytes_combining_op_', # TODO
 
         'a parameter list Parse Node'    : 'Parse Node',
         'a body Parse Node'              : 'Parse Node',
@@ -3564,8 +3562,8 @@ class ProcType(Type):
             return "Continuation"
         elif self == T_Matcher:
             return "Matcher"
-        elif self == T_bytes_combining_op_:
-            return "bytes_combining_op_"
+        elif self == T_ReadModifyWrite_modification_closure:
+            return "ReadModifyWrite_modification_closure"
         elif self == T_RegExpMatcher_:
             return "RegExpMatcher_"
         else:
@@ -3961,7 +3959,7 @@ T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
 T_RegExpMatcher_  = ProcType([T_String, T_Integer_   ], T_MatchResult)
 T_Job             = ProcType([                       ], T_Undefined)
 
-T_bytes_combining_op_ = ProcType([ListType(T_Integer_), ListType(T_Integer_)], ListType(T_Integer_))
+T_ReadModifyWrite_modification_closure = ProcType([ListType(T_Integer_), ListType(T_Integer_)], ListType(T_Integer_))
 
 T_captures_entry_ = ListType(T_character_) | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
@@ -3979,8 +3977,8 @@ def maybe_NamedType(name):
         return T_RegExpMatcher_
     elif name == 'Job Abstract Closure':
         return T_Job
-    elif name == 'bytes_combining_op_':
-        return T_bytes_combining_op_
+    elif name == 'ReadModifyWrite_modification_closure':
+        return T_ReadModifyWrite_modification_closure
     elif name == 'NonNegativeInteger_':
         # There are 5 places where structify yields this parameter type.
         # But as far as STA is concerned, it's just an alias for Integer_.
@@ -7179,10 +7177,11 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_String)
         result = env0
 
-    elif p == r"{COMMAND} : Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_Integer_))
-        result = env0
+#    elif p == r"{COMMAND} : Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, ListType(T_Integer_))
+#        result = env0
+# ^ obsoleted by PR 1907
 
     elif p == r"{COMMAND} : Remove {var} from the front of {var}.":
         [el_var, list_var] = children
@@ -9856,6 +9855,25 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {var} and {var} have the same number of elements":
+        [vara, varb] = children
+        env0.assert_expr_is_of_type(vara, T_List)
+        env0.assert_expr_is_of_type(varb, T_List)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} and {var} do not have the same number of elements":
+        [vara, varb] = children
+        env0.assert_expr_is_of_type(vara, T_List)
+        env0.assert_expr_is_of_type(varb, T_List)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var}, {var}, and {var} have the same number of elements":
+        [vara, varb, varc] = children
+        env0.assert_expr_is_of_type(vara, T_List)
+        env0.assert_expr_is_of_type(varb, T_List)
+        env0.assert_expr_is_of_type(varc, T_List)
+        return (env0, env0)
+
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
@@ -11086,6 +11104,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(x, T_Integer_)
         env0.assert_expr_is_of_type(y, T_Integer_)
         return (T_Number, env0)
+
+    elif p == r"{EXPR} : the result of applying the bitwise operator {var} to {var} and {var}":
+        [operator, x, y] = children
+        env0.assert_expr_is_of_type(operator, T_ReadModifyWrite_modification_closure) # XXX This is weird though.
+        env0.assert_expr_is_of_type(x, T_Integer_)
+        env0.assert_expr_is_of_type(y, T_Integer_)
+        return (T_Integer_, env0)
 
     # --------------------------------------------------------
     # return T_MathInteger_
@@ -12739,8 +12764,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (t, env0)
 # ^ obsoleted by PR #1889
 
-    elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following steps when called:{IND_COMMANDS}":
-        [clo_kind, clo_parameters, clo_captures, commands] = children
+    elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}":
+        [clo_kind, clo_parameters, clo_captures, _, commands] = children
         clo_kind = clo_kind.source_text()
 
         #XXX Should assert no intersection between clo_parameters and clo_captures
@@ -12775,6 +12800,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         elif clo_kind == 'Job Abstract Closure':
             assert n_parameters == 0
             clo_param_types = []
+            alsos = []
+        elif clo_kind == 'read-modify-write modification function':
+            assert n_parameters == 2
+            clo_param_types = [ListType(T_Integer_), ListType(T_Integer_)]
             alsos = []
         else:
             assert 0, clo_kind
@@ -13688,7 +13717,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [backticked_word] = children
         word = backticked_word.source_text()[1:-1]
         if word in ['add', 'and', 'second', 'or', 'subtract', 'xor', 'compareExchange']:
-            return (T_bytes_combining_op_, env0)
+            return (T_ReadModifyWrite_modification_closure, env0)
         elif word == 'General_Category':
             return (T_Unicode_code_points_, env0)
         else:
@@ -14651,7 +14680,7 @@ fields_for_record_type_named_ = {
         'ByteIndex'   : T_Integer_,
         'ElementSize' : T_Integer_,
         'Payload'     : ListType(T_Integer_),
-        'ModifyOp'    : T_bytes_combining_op_,
+        'ModifyOp'    : T_ReadModifyWrite_modification_closure,
     },
 
     # 40224: Chosen Value Record Fields

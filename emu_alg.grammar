@@ -76,7 +76,6 @@
     IfAbruptRejectPromise({var}, {var}).
     Insert {var} as the first element of {var}.
     Leave the critical section for {var}.
-    Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
     Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.
     Let {var} and {var} be the indirection values provided when this binding for {var} was created.
     Let {var} and {var} be {LITERAL}.
@@ -204,6 +203,9 @@
 
     # obsoleted by the merge of PR #1985:
     # Repeat, while {CONDITION}{IND_COMMANDS}
+
+    # obsoleted by the merge of PR #1907:
+    # Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
@@ -607,9 +609,11 @@
     {var} and {var} are the same Number value
     {var} and {var} are the same Object value
     {var} and {var} do not have disjoint ranges
+    {var} and {var} do not have the same number of elements
     {var} and {var} each contain exactly one character
     {var} and {var} have equal ranges
     {var} and {var} have overlapping ranges
+    {var} and {var} have the same number of elements
     {var} binds a single name
     {var} can be the string-concatenation of {var} and some other String {var}
     {var} contains a code unit that is not a radix-{var} digit
@@ -800,6 +804,7 @@
     {var} provides the direct binding for this export
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
     {var}, {var}, and {var} are integer values &ge; 0
+    {var}, {var}, and {var} have the same number of elements
 
     # obsoleted by the merge of PR #1046
     # The VariableEnvironment and LexicalEnvironment of {var} are the same
@@ -975,7 +980,7 @@
 # ---------------------------------------------------------------
 
 {MULTILINE_EXPR} :
-    a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following steps when called:{IND_COMMANDS}
+    a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
     a set of characters containing the sixty-three characters:{nlai}{h_figure}
     the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
     the string-concatenation of:{I_BULLETS}
@@ -997,6 +1002,7 @@
     Job Abstract Closure
     Matcher
     Abstract Closure
+    read-modify-write modification function
 
 {CLOSURE_PARAMETERS} :
     no parameters
@@ -1011,6 +1017,10 @@
     {var}, {var}, {var}, and {var}
     {var}, {var}, {var}, {var}, {var}, and {var}
     {var}, {var}, {var}, {var}, {var}, {var}, {var}, and {var}
+
+{CLOSURE_STEPS} :
+    steps
+    steps atomically
 
 {TABLE_RESULT_TYPE} :
     sequence of Unicode code points
@@ -1244,6 +1254,7 @@
     the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
     the result of applying bitwise complement to {var}. The result is a signed 32-bit integer
     the result of applying that mapping to {var}
+    the result of applying the bitwise operator {var} to {var} and {var}
     the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
     the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
