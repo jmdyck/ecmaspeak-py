@@ -7708,7 +7708,7 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(var, 'is a', ListType(T_ExportResolveSet_Record_), asserting)
 
     # for PR 1866:
-    elif p == r"{CONDITION_1} : {var} is a List of {ERROR_TYPE} objects":
+    elif p == r"{CONDITION_1} : {var} is a non-empty List of {ERROR_TYPE} objects":
         [var, error_type] = children
         error_type_name = error_type.source_text()[1:-1]
         return env0.with_type_test(var, 'is a', ListType(NamedType(error_type_name)), asserting)
@@ -7808,7 +7808,7 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(var, 'is a', T_Parse_Node, asserting)
 
     # for PR 1866:
-    elif p == r"{CONDITION_1} : {var} is a {nonterminal} Parse Node":
+    elif p == r"{CONDITION_1} : {var} is a Parse Node for {nonterminal}":
         [var, nont] = children
         return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
 

@@ -915,7 +915,8 @@
     {var} is a ClassFieldDefinition Record
 
     # PR 1866 ParsePattern
-    {var} is a List of {ERROR_TYPE} objects
+    {var} is a Parse Node for {nonterminal}
+    {var} is a non-empty List of {ERROR_TYPE} objects
     {var} did not conform to the grammar
     any elements of {var} were not matched by the parse
     any Early Error conditions exist
