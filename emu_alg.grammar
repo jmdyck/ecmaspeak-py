@@ -574,6 +574,7 @@
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
+    {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}
     {EX} is {var}
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}

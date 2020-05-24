@@ -8337,6 +8337,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}",
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
@@ -11107,7 +11108,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the result of applying the bitwise operator {var} to {var} and {var}":
         [operator, x, y] = children
-        env0.assert_expr_is_of_type(operator, T_ReadModifyWrite_modification_closure) # XXX This is weird though.
+        env0.assert_expr_is_of_type(operator, T_Unicode_code_points_)
         env0.assert_expr_is_of_type(x, T_Integer_)
         env0.assert_expr_is_of_type(y, T_Integer_)
         return (T_Integer_, env0)
@@ -13960,6 +13961,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EX} : {backticked_oth}":
         [_] = children
+        return (T_Unicode_code_points_, env0)
+
+    elif p == r"{backticked_oth} : ` [^`]+ `":
         return (T_Unicode_code_points_, env0)
 
     elif p == r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}":
