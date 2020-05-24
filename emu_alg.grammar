@@ -1043,7 +1043,7 @@
     a List containing the elements, in order, of {var} followed by {var}
     a List containing the one element which is {var}
     a List containing the single element, {var}
-    a List containing the {var}-byte binary 2's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
+    a List containing the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List containing the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List containing {PP_NAMED_OPERATION_INVOCATION}
     a List containing {PROD_REF}
@@ -1192,7 +1192,7 @@
     the algorithm steps defined in {h_emu_xref}
     the arguments object
     the binding object for {var}
-    the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian 2's complement number of bit length {PRODUCT}
+    the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value

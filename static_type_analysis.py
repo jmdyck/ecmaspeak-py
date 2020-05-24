@@ -11385,7 +11385,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
         return (T_Integer_, env1)
 
-    elif p == r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian 2's complement number of bit length {PRODUCT}":
+    elif p == r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}":
         [var, product] = children
         env1 = env0.ensure_expr_is_of_type(product, T_Integer_ | T_Number); assert env1 is env0
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
@@ -11978,7 +11978,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r'{EXPR} : a List containing the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order',
-        r"{EXPR} : a List containing the {var}-byte binary 2's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order",
+        r"{EXPR} : a List containing the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order",
     ]:
         [n_var, v_var, i_var, literal] = children
         env0.assert_expr_is_of_type(n_var, T_Number)
