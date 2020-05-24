@@ -5615,6 +5615,11 @@ def tc_nonvalue(anode, env0):
         [child] = children
         result = tc_nonvalue(child, env0)
 
+    elif p == r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}":
+        [cond, comm] = children
+        (t_env, f_env) = tc_cond(cond, env0, asserting=True)
+        result = tc_nonvalue(comm, t_env)
+
     elif p == r'{EMU_ALG_BODY} : {IND_COMMANDS}{nlai}':
         [ind_commands] = children
         env1 = tc_nonvalue(ind_commands, env0)
@@ -10997,9 +11002,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EX} : the Number value for {EX}":
         [var] = children
-        (var_t, env1) = tc_expr(var, env0); assert env1 is env0
-        result_t = T_Integer_ if var_t.is_a_subtype_of_or_equal_to(T_MathInteger_) else T_Number
-        return (result_t, env0)
+        env0.assert_expr_is_of_type(var, T_MathReal_)
+        return (T_Number, env0)
 
     elif p in [
         r"{EXPR} : the number value that is the same sign as {var} and whose magnitude is {EX}",
@@ -11099,20 +11103,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
 
-    elif p == r"{EXPR} : the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer":
-        [operator, x, y] = children
-        env0.assert_expr_is_of_type(operator, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(x, T_Integer_)
-        env0.assert_expr_is_of_type(y, T_Integer_)
-        return (T_Number, env0)
-
-    elif p == r"{EXPR} : the result of applying the bitwise operator {var} to {var} and {var}":
-        [operator, x, y] = children
-        env0.assert_expr_is_of_type(operator, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(x, T_Integer_)
-        env0.assert_expr_is_of_type(y, T_Integer_)
-        return (T_Integer_, env0)
-
     # --------------------------------------------------------
     # return T_MathInteger_
 
@@ -11181,6 +11171,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{BASE} : 10{h_sub_math_r}":
         [_] = children
+        return (T_MathInteger_, env0)
+
+    elif p == r"{EX} : the integer represented by the 32-bit two's complement bit string {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Integer_) # bit string
         return (T_MathInteger_, env0)
 
     elif p == r"{EX} : the mathematical value of {var}":
@@ -11436,6 +11431,23 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, ListType(T_Integer_))
         return (T_Integer_, env0)
+
+    # ----
+
+    elif p in [
+        r"{EXPR} : the result of applying the bitwise AND operation to {var} and {var}",
+        r"{EXPR} : the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}",
+        r"{EXPR} : the result of applying the bitwise inclusive OR operation to {var} and {var}",
+    ]:
+        [x, y] = children
+        env0.assert_expr_is_of_type(x, T_Integer_) # "bit string"
+        env0.assert_expr_is_of_type(y, T_Integer_) # "bit string"
+        return (T_Integer_, env0) # "bit string"
+
+    elif p == r"{EXPR} : the 32-bit two's complement bit string representing the mathematical value of {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Integer_, env0) # bit string
 
     # -------------------------------------------------
     # return MathReal_ or MathInteger_ or Number or Integer_ (arithmetic)

@@ -259,6 +259,7 @@
     Otherwise, if {CONDITION}, {MULTILINE_SMALL_COMMAND}
 
 {ELSE_PART} :
+    Else, {CONDITION_1}. {COMMAND}
     Else, {SMALL_COMMAND}.
     Else,{IND_COMMANDS}
     Otherwise, {SMALL_COMMAND}.
@@ -1109,6 +1110,7 @@
     an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}
     an instance of the production {h_emu_grammar}
     such an object created in an implementation-defined manner
+    the 32-bit two's complement bit string representing the mathematical value of {var}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
@@ -1256,8 +1258,9 @@
     the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
     the result of applying bitwise complement to {var}. The result is a signed 32-bit integer
     the result of applying that mapping to {var}
-    the result of applying the bitwise operator {var} to {var} and {var}
-    the result of applying the bitwise operator {var} to {var} and {var}. The result is a signed 32-bit integer
+    the result of applying the bitwise AND operation to {var} and {var}
+    the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
+    the result of applying the bitwise inclusive OR operation to {var} and {var}
     the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
@@ -1449,6 +1452,7 @@
     the first code unit of {var}
     the first {SUM} code units of {var}
     the first {var} code units of {var}
+    the integer represented by the 32-bit two's complement bit string {var}
     the mathematical value of negating {var}
     the mathematical value of {var}
     the mathematical value of {var} divided by {var}
