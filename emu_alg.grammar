@@ -923,6 +923,10 @@
     any elements of {var} were not matched by the parse
     any Early Error conditions exist
 
+    # PR 2009
+    {EX} is not -1
+    there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
+
 {PROPERTY_KIND} :
     accessor
     data
@@ -1422,6 +1426,9 @@
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
     the Parse Node resulting from the parse
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
+
+    # PR 2009
+    the smallest (closest to *-&infin;*) such integer
 
 {EX} :
     &laquo; &raquo;

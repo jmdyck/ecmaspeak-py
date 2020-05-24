@@ -8627,6 +8627,13 @@ def tc_cond_(cond, env0, asserting):
         (bt_env, bf_env) = tc_cond(condb, env_for_cond)
         return (env_and(at_env, bt_env), env_or(af_env, bf_env))
 
+    elif p == r"{CONDITION_1} : there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}":
+        [i_var, conda, condb] = children
+        env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
+        (at_env, af_env) = tc_cond(conda, env_for_cond)
+        (bt_env, bf_env) = tc_cond(condb, env_for_cond)
+        return (env_and(at_env, bt_env), env_or(af_env, bf_env))
+
     elif p == r"{CONDITION_1} : for all nonnegative integers {var} less than {var}, {CONDITION_1}":
         [loop_var, min_var, cond] = children
         env0.assert_expr_is_of_type(min_var, T_Integer_)
@@ -9050,7 +9057,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is -1":
+    elif p in [
+        r"{CONDITION_1} : {EX} is -1",
+        r"{CONDITION_1} : {EX} is not -1",
+    ]:
         [ex] = children
         env0.assert_expr_is_of_type(ex, T_Integer_)
         return (env0, env0)
@@ -10302,6 +10312,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env_for_cond = env0.plus_new_entry(let_var, T_Integer_)
         (t_env, f_env) = tc_cond(cond, env_for_cond)
         return (T_Integer_, t_env)
+
+    elif p == r"{EXPR} : the smallest (closest to *-&infin;*) such integer":
+        [] = children
+        return (T_Integer_, env0)
 
     # --------------------------------------------------------
     # invocation of named operation:
