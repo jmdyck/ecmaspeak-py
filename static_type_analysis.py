@@ -5961,17 +5961,17 @@ def tc_nonvalue(anode, env0):
 #        # but no result variable, hm.
 # ^ obsoleted by PR 1552
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
-        assert var.children == var2.children
-        assert var.children == var3.children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-        result = env0
-        # but no result variable, hm.
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
+#        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
+#        assert var.children == var2.children
+#        assert var.children == var3.children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        error_type_name = error_type.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
+#        result = env0
+#        # but no result variable, hm.
+# ^ obsoleted by PR 1866
 
-    # for PR 1866:
     elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.":
         [var, emu_xref, goal_nont, other_nont, goal_nont2] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
@@ -5990,15 +5990,16 @@ def tc_nonvalue(anode, env0):
 #        # but no result variable, hm.
 # ^ obsoleted by PR 1552
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-        [var, emu_xref, goal_nont, error_type, var3, var4] = children
-        assert var.children == var3.children
-        assert var.children == var4.children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-        result = env0
-        # but no result variable, hm.
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
+#        [var, emu_xref, goal_nont, error_type, var3, var4] = children
+#        assert var.children == var3.children
+#        assert var.children == var4.children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        error_type_name = error_type.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
+#        result = env0
+#        # but no result variable, hm.
+# ^ obsoleted by PR 1866
 
 #    elif p == r"{COMMAND} : Parse {var} interpreted as UTF-16 encoded Unicode points ({h_emu_xref}) as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if {var} is not a valid JSON text as defined in that specification.":
 #        [svar, emu_xref, error_type, svar2] = children
@@ -6012,29 +6013,30 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         result = env0
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
-        [var, emu_xref, goal_nont, contained_nont, foal_nont2, var2, var3, lita, litb] = children
-        assert var.children == var2.children
-        assert var.children == var3.children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(lita, T_Boolean)
-        env0.assert_expr_is_of_type(litb, T_Boolean)
-        proc_add_return(env0, T_Boolean, lita)
-        proc_add_return(env0, T_Boolean, litb)
-        result = None
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
+#        [var, emu_xref, goal_nont, contained_nont, foal_nont2, var2, var3, lita, litb] = children
+#        assert var.children == var2.children
+#        assert var.children == var3.children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        env0.assert_expr_is_of_type(lita, T_Boolean)
+#        env0.assert_expr_is_of_type(litb, T_Boolean)
+#        proc_add_return(env0, T_Boolean, lita)
+#        proc_add_return(env0, T_Boolean, litb)
+#        result = None
+# ^ obsoleted by PR 1866
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
-        [var, emu_xref, goal_nont, var2, var3, lita, litb] = children
-        assert var.children == var2.children
-        assert var.children == var3.children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(lita, T_Boolean)
-        env0.assert_expr_is_of_type(litb, T_Boolean)
-        proc_add_return(env0, T_Boolean, lita)
-        proc_add_return(env0, T_Boolean, litb)
-        result = None
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
+#        [var, emu_xref, goal_nont, var2, var3, lita, litb] = children
+#        assert var.children == var2.children
+#        assert var.children == var3.children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        env0.assert_expr_is_of_type(lita, T_Boolean)
+#        env0.assert_expr_is_of_type(litb, T_Boolean)
+#        proc_add_return(env0, T_Boolean, lita)
+#        proc_add_return(env0, T_Boolean, litb)
+#        result = None
+# ^ obsoleted by PR 1866
 
-    # for PR 1866:
     elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.":
         [var, emu_xref, goal_nont] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
@@ -7712,7 +7714,6 @@ def tc_cond_(cond, env0, asserting):
         assert dsbn2.source_text() == '[[ExportName]]'
         return env0.with_type_test(var, 'is a', ListType(T_ExportResolveSet_Record_), asserting)
 
-    # for PR 1866:
     elif p == r"{CONDITION_1} : {var} is a non-empty List of {ERROR_TYPE} objects":
         [var, error_type] = children
         error_type_name = error_type.source_text()[1:-1]
@@ -7812,7 +7813,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Parse_Node, asserting)
 
-    # for PR 1866:
     elif p == r"{CONDITION_1} : {var} is a Parse Node for {nonterminal}":
         [var, nont] = children
         return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
@@ -9850,19 +9850,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    # for PR 1866:
     elif p == r"{CONDITION_1} : {var} did not conform to the grammar":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (env0, env0)
 
-    # for PR 1866:
     elif p == r"{CONDITION_1} : any elements of {var} were not matched by the parse": 
         [var] = children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (env0, env0)
 
-    # for PR 1866:
     elif p == r"{CONDITION_1} : any Early Error conditions exist":
         [] = children
         return (env0, env0)
@@ -12729,11 +12726,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_RegExpMatcher_, env0)
 # ^ obsoleted by PR 1552
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
-        [emu_xref, chars_var, nont, f_var] = children
-        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
-        env0.assert_expr_is_of_type(f_var, T_String)
-        return (T_RegExpMatcher_, env0)
+#    elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
+#        [emu_xref, chars_var, nont, f_var] = children
+#        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
+#        env0.assert_expr_is_of_type(f_var, T_String)
+#        return (T_RegExpMatcher_, env0)
+# ^ obsoleted by PR 1866
 
     elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [p_var, emu_xref, chars_var, nont, f_var] = children
@@ -14007,7 +14005,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
-    # for PR 1866:
     elif p == r"{EXPR} : the Parse Node resulting from the parse":
         [] = children
         return (T_Parse_Node, env0)
