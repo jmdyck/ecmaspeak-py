@@ -1423,6 +1423,9 @@
     # PR 2009
     the smallest (closest to *-&infin;*) such integer
 
+    # PR 2018
+    the string-concatenation of the Strings that are the UTF16Encoding of each code point in {var}, in order
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;

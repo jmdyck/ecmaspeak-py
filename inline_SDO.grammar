@@ -44,6 +44,12 @@
     the UTF16Encoding of the single code point matched by this production
     the UTF16Encoding of {NAMED_OPERATION_INVOCATION}
 
+    # PR 2018
+    the String value consisting of {EXPR}
+    the string-concatenation of {EX} and {EX}
+    the string-concatenation of {EX}, {EX}, and {EX}
+    the string-concatenation of {EX}, {EX}, {EX}, and {EX}
+
 {CONDITION} :
     either {CONDITION_1} or {CONDITION_1}
 
@@ -61,6 +67,7 @@
     {NUM_LITERAL}
     {PRODUCT}
     {SUM}
+    {STR_LITERAL}
     {U_LITERAL}
     {code_unit_lit}
     {var}
@@ -130,6 +137,9 @@
 
     # PR 1651 one-grammar:
     64{h_sub_math_r} (that is, 8<sup>2</sup>)
+
+{STR_LITERAL} :
+    the empty String
 
 {BASE} :
     #pre-1135: 10

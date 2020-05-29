@@ -5356,6 +5356,8 @@ def tc_header(header):
                 header.name == '[[Construct]]' and pn == '*return*'
                 or
                 header.name == 'UTF16DecodeString' and pn == '*return*'
+                or
+                header.name == 'UTF16Encoding' and pn == '_cp_'
             ):
                 # -------------------------
                 # Don't change header types
@@ -10069,6 +10071,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : {RECORD_CONSTRUCTOR}",
         r"{EX} : {SUM}",
         r"{EX} : {U_LITERAL}",
+        r"{EX} : {STR_LITERAL}",
         r"{FACTOR} : ({NUM_EXPR})",
         r"{FACTOR} : ({SUM})",
         r"{FACTOR} : {NAMED_OPERATION_INVOCATION}",
@@ -11723,6 +11726,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String, env1)
 
     elif p in [
+        r"{EXPR} : the String value consisting of {EXPR}",
         r"{EXPR} : the String value consisting of the code units of {var}",
         r"{EXPR} : the String value consisting of {EX}",
         r"{EXPR} : the String value consisting of {NAMED_OPERATION_INVOCATION}",
@@ -11731,7 +11735,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the string consisting of the code units of {var}",
     ]:
         [ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, ListType(T_code_unit_))
+        env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
     elif p == r"{EXPR} : the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}":
@@ -11803,7 +11807,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # env0.assert_expr_is_of_type(vc, T_String) repeats the var-being-defined
         return (T_String | T_throw_, env0)
 
-    elif p == r"{EXPR} : the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order":
+    elif p in [
+        r"{EXPR} : the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order",
+        r"{EXPR} : the string-concatenation of the Strings that are the UTF16Encoding of each code point in {var}, in order",
+    ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (T_String, env0)
@@ -12089,17 +12096,23 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the UTF16Encoding of the code point value of {PROD_REF}":
         [nonterminal] = children
         # Should look up the return type of UTF16Encoding
-        return (ListType(T_code_unit_), env0)
+        t = ListType(T_code_unit_)
+        #PR2018 t = T_String
+        return (t, env0)
 
     elif p == r"{EXPR} : the UTF16Encoding of {NAMED_OPERATION_INVOCATION}":
         # todo: should be "the UTF16Encoding of the code point whose value is ..."
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
-        return (ListType(T_code_unit_), env0)
+        t = ListType(T_code_unit_)
+        #PR2018 t = T_String
+        return (t, env0)
 
     elif p == r"{EXPR} : the UTF16Encoding of the single code point matched by this production":
         [] = children
-        return (ListType(T_code_unit_), env0)
+        t = ListType(T_code_unit_)
+        #PR2018 t = T_String
+        return (t, env0)
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of each code point of {NAMED_OPERATION_INVOCATION}",
@@ -12124,9 +12137,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : a List containing {var} followed by the elements, in order, of {var}":
         # once, in TemplateStrings
+        # This is over-specific to that case.
         [item_var, list_var] = children
         env1 = env0.ensure_expr_is_of_type(item_var, ListType(T_code_unit_))
         env2 = env1.ensure_expr_is_of_type(list_var, ListType(T_String))
+        #PR2018 env1 = env0.ensure_expr_is_of_type(item_var, T_String | T_Undefined)
+        #PR2018 env2 = env1.ensure_expr_is_of_type(list_var, ListType(T_String | T_Undefined))
         return (ListType(T_String), env2)
 
     # ---------------
