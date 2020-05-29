@@ -1425,7 +1425,7 @@ def annotate_algo(algo):
                 args = d.children # XXX incorrect for a few cases
 
         elif d.prod.lhs_s == '{PREFIX_PAREN}':
-            [opn_before_paren, arg_list] = d.children
+            [opn_before_paren, arg_list] = d.children[0:2]
             assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
 
             if opn_before_paren.prod.rhs_s == '{DOTTING}':

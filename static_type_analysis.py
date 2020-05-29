@@ -5932,8 +5932,8 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env0, T_String, s_var3)
         result = env0.plus_new_entry(leta_var, T_Integer_).plus_new_entry(letb_var, T_String)
 
-    elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} (see {h_emu_xref}) to obtain a code unit {var}.":
-        [noi, _, v] = children
+    elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.":
+        [noi, v] = children
         env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
         result = env0.plus_new_entry(v, T_code_unit_)
 
@@ -6135,7 +6135,6 @@ def tc_nonvalue(anode, env0):
     # Returning (normally or abruptly)
 
     elif p in [
-        r"{COMMAND} : Return {EXPR} (see {h_emu_xref}).",
         # r"{COMMAND} : Return {EXPR}. This call will always return *true*.", # PR #1924
         r"{COMMAND} : Return {EXPR}.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
@@ -6143,7 +6142,7 @@ def tc_nonvalue(anode, env0):
         r"{IAO_BODY} : Returns {EXPR}.",
         r"{SMALL_COMMAND} : return {EXPR}",
     ]:
-        expr = children[0]
+        [expr] = children
         (t1, env1) = tc_expr(expr, env0)
         # assert env1 is env0
         if False and trace_this_op:
@@ -10416,9 +10415,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})',
+        r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT}) (see {h_emu_xref})',
         r"{EXPR} : {OPN_BEFORE_PAREN}({V})",
     ]:
-        [opn_before_paren, arglist] = children
+        [opn_before_paren, arglist] = children[0:2]
         if arglist.prod.lhs_s == '{EXLIST_OPT}':
             args = exes_in_exlist_opt(arglist)
         else:
@@ -13171,8 +13171,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env2 = env1
         if str(noi.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
             [pp] = noi.children
-            assert str(pp.prod) == r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})'
-            [opn_before_paren, exlist_opt] = pp.children
+            assert str(pp.prod).startswith(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
+            [opn_before_paren, exlist_opt] = pp.children[0:2]
             if opn_before_paren.source_text() == 'RequireInternalSlot':
                 # This amounts to a type-test.
                 # I.e., in the not-returning-early env resulting from this NAMED_OPERATION_INVOCATION,

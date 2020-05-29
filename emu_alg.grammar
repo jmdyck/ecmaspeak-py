@@ -63,7 +63,7 @@
     Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.
     Create any implementation-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
-    Evaluate {PP_NAMED_OPERATION_INVOCATION} (see {h_emu_xref}) to obtain a code unit {var}.
+    Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.
     Evaluate {PROD_REF} to obtain the three results: an integer {var}, an integer (or &infin;) {var}, and Boolean {var}.
@@ -129,7 +129,6 @@
     Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.
     Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.
     Resume the suspended evaluation of {var}. Let {var} be the value returned by the resumed computation.
-    Return {EXPR} (see {h_emu_xref}).
     Return {EXPR}.
     Return {MULTILINE_EXPR}
     Return {var} as the Completion Record of this abstract operation.
@@ -1592,6 +1591,7 @@
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}({EXLIST_OPT})
+    {OPN_BEFORE_PAREN}({EXLIST_OPT}) (see {h_emu_xref})
 
 {OPN_BEFORE_PAREN} :
     ForIn/OfBodyEvaluation
