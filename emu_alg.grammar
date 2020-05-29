@@ -1819,13 +1819,15 @@
     *","* (a comma)
     the String {starred_str}
     the empty String
-    the empty String value
     the single-element String *","*
     {starred_str}
 
     # obsoleted by PR #1780
     # the empty String *""*
     # the empty string
+
+    # obsoleted by the merge of PR #2017:
+    # the empty String value
 
 {NUM_LITERAL} :
     #! (2|10)<sup>[0-9]+</sup>
