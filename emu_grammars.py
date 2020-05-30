@@ -1348,8 +1348,6 @@ def approximate_annex_A(doc_node):
                         if syntax.title == 'Supplemental Syntax':
                             ptext = bc.source_text()
 
-                            ptext = re.sub(r'\s+<br>\s+', ' ', ptext)
-
                             ptext = re.sub(r'<emu-grammar>(\w+).+?</emu-grammar>', r'<emu-prodref name="\1"></emu-prodref>', ptext)
 
                             for (nt, a) in [
@@ -1361,13 +1359,7 @@ def approximate_annex_A(doc_node):
                             ]:
                                 ptext = ptext.replace(f'name="{nt}">', f'name="{nt}" a="{a}">')
 
-                            if section.section_title == 'Destructuring Assignment':
-                                ptext = ptext.replace('.</p>', ':</p>')
-                            elif section.section_title == 'Async Arrow Function Definitions':
-                                ptext = re.sub(
-                                    r'When processing an instance of (the production .+) (the interpretation of .+) is refined using the following grammar:',
-                                    r'When \1 is recognized the following grammar is used to refine \2:',
-                                    ptext)
+                            ptext = re.sub(r'\n +', r'\n      ', ptext)
 
                             put(f'    {ptext}')
 
