@@ -36,6 +36,7 @@ def main():
     # i.e. run the markup checks before indentation checks.
     # (Not sure about characters.)
     check_indentation()
+    check_for_extra_blank_lines()
     check_trailing_whitespace()
     check_characters()
 
@@ -267,6 +268,17 @@ def check_indentation():
     check_indentation_for_node(spec.doc_node, None)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_for_extra_blank_lines():
+    stderr("checking for extra blank lines...")
+    header("checking for extra blank lines...")
+    for mo in re.finditer(r'\n( *\n){2,}', spec.text):
+        posn = mo.end() - 1
+        msg_at_posn(posn, "2 or more adjacent blank lines")
+
+    for mo in re.finditer(r'\n( *\n *</emu-clause>)', spec.text):
+        posn = mo.start(1)
+        msg_at_posn(posn, "blank line before end-clause tag")
 
 def check_trailing_whitespace():
     stderr("checking trailing whitespace...")
