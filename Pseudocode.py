@@ -2019,6 +2019,9 @@ def analyze_sdo_coverage_info():
                     if u_rhs == 'the {nonterminal} of {var}':
                         nonterminal = uprimary.children[0]
                         nts = [nonterminal.source_text()[1:-1]]
+                    elif u_rhs == 'the {nonterminal} whose evaluation is the direct eval': # PR 1739
+                        nonterminal = uprimary.children[0]
+                        nts = [nonterminal.source_text()[1:-1]]
                     elif u_st == 'the parsed code that is _F_.[[ECMAScriptCode]]':
                         nts = [
                             'FunctionBody',
@@ -2247,6 +2250,11 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         def_i == 1
     ):
         # "Use of |CoverInitializedName| results in an early Syntax Error in normal contexts..."
+        return True
+
+    if sdo_name in ['HasSourceTextAvailable', 'PresentInStackTraces'] and lhs_nt == 'CallExpression' and def_i != 0:
+        # When invoked on a CallExpression, can only be one whose evaluation is a direct eval,
+        # which can only be an instance of CallExpression : CoverCallExpressionAndAsyncArrowHead
         return True
 
     if lhs_nt == 'OptionalChain' and def_i in [3,7]:

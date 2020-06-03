@@ -918,6 +918,14 @@
     {EX} is a Private Name
     {var} is a ClassFieldDefinition Record
 
+    # PR 1739:
+    the Directive Prologue of {PROD_REF} contains a Sensitive Directive
+    the Directive Prologue of {PROD_REF} contains a Sensitive Directive or a Hidden Implementation Directive
+    the source text matched by {nonterminal} is eval code resulting from a direct eval
+    {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive
+    {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive or a Hidden Implementation Directive
+    {var} has a {DSBN} internal slot with the value {LITERAL}
+
     # PR 2009
     {EX} is not -1
     there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
@@ -1560,6 +1568,9 @@
     the {nonterminal} of {var}
     {PROD_REF}
     {SETTABLE}
+
+    # PR 1739:
+    the {nonterminal} whose evaluation is the direct eval
 
 {PROD_REF} :
     the {nonterminal}
