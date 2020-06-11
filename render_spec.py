@@ -140,10 +140,12 @@ def prep_autolinking():
                 plain_words.append(term2)
 
         elif re.fullmatch(r'%(\w+(\.\w+)*)%', term):
-            # link references to the section
+            # Occurrences of this term should be linked to the section
+            assert not dfn.attrs
             fragid = cc_section.section_id
             percent_words.append(term[1:-1])
         else:
+            assert not dfn.attrs
             assert term == '[[IsHTMLDDA]] internal slot'
             fragid = cc_section.section_id
             odd_ones.append(term)
