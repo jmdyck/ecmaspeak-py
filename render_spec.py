@@ -144,6 +144,10 @@ def prep_autolinking():
             assert not dfn.attrs
             fragid = cc_section.section_id
             percent_words.append(term[1:-1])
+        elif re.fullmatch(r'@@\w+', term):
+            assert not dfn.attrs
+            fragid = cc_section.section_id
+            #XXX something.append(term)
         else:
             assert not dfn.attrs
             assert term == '[[IsHTMLDDA]] internal slot'
