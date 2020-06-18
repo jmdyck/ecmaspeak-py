@@ -570,7 +570,6 @@
     {EX} is present, and is neither {LITERAL} nor {LITERAL}
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
-    {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
@@ -880,6 +879,9 @@
 
     # obsoleted by the merge of PR #1965:
     # {var} is present as a parameter
+
+    # obsoleted by the merge of PR #2022:
+    # {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}
 
     # PR 1477 scope-records:
     it must be in the object Scope Record

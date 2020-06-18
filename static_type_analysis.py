@@ -8489,12 +8489,13 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(var, T_grammar_symbol_)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}":
-        [ex, noi] = children
-        assert ex.source_text() == 'StringValue of _symbol_'
-        assert noi.source_text() == 'the StringValue of |IdentifierName|'
-        # For now, just return the env unchanged.
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}":
+#        [ex, noi] = children
+#        assert ex.source_text() == 'StringValue of _symbol_'
+#        assert noi.source_text() == 'the StringValue of |IdentifierName|'
+#        # For now, just return the env unchanged.
+#        return (env0, env0)
+# ^ obsoleted by PR 1519 + PR 2022
 
     elif p in [
         r"{CONDITION_1} : {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super` or `this`",
