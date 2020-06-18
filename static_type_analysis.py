@@ -7979,8 +7979,7 @@ def tc_cond_(cond, env0, asserting):
 # ^ obsoleted by PR 1924
 
     elif p in [
-        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are AsyncFunctionAwait or, if the async function doesn't await anything, the step 3.g above",
-        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, the step 4.g above",
+        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step 4.g above",
     ]:
         [var, literal] = children
         env0.assert_expr_is_of_type(literal, T_Undefined)

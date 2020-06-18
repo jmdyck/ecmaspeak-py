@@ -712,7 +712,7 @@
     {var} is a bound function exotic object
     {var} is a non-empty List of {ERROR_TYPE} objects
     {var} is a normal completion
-    {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, the step 4.g above
+    {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step 4.g above
     {var} is a possibly empty List of Strings
     {var} is a {h_emu_xref}
     {var} is a {h_emu_xref} or a {h_emu_xref}
