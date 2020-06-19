@@ -73,8 +73,15 @@ class SpecNode:
         self.children = []
 
     def _set_end_posn(self, end_posn):
-        assert self.end_posn is None
         assert end_posn is not None
+        # assert self.end_posn is None
+        if self.end_posn is not None:
+            stderr("----------------------")
+            stderr("_set_end_posn error...")
+            stderr("    self.start_posn:", convert_posn_to_linecol(self.start_posn))
+            stderr("    self.end_posn  :", convert_posn_to_linecol(self.end_posn))
+            stderr("    new  end_posn  :", convert_posn_to_linecol(end_posn))
+            assert 0
         self.end_posn = end_posn
 
     # ------------------------------------
