@@ -68,6 +68,11 @@ def prep_xrefs():
             term = dfn.inner_source_text()
             _default_xref_text_for_fragid_[fragid] = term
 
+    for emu_alg in spec.doc_node.each_descendant_named('emu-alg'):
+        for mo in re.compile(r'\[id="([^"]+)"\]').finditer(emu_alg.source_text()):
+            fragid = mo.group(1)
+            _default_xref_text_for_fragid_[fragid] = '{STEP-PATH}' # XXX
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def prep_autolinking():

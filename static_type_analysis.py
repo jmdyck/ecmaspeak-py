@@ -7559,8 +7559,8 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is not an abrupt completion because of validation preceding step {dec_int_lit}":
-        [var, dec_int_lit] = children
+    elif p == r"{CONDITION_1} : {var} is not an abrupt completion because of validation preceding step {h_emu_xref}":
+        [var, _] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
     elif p == r"{CONDITION_1} : {var} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification":
@@ -7979,9 +7979,9 @@ def tc_cond_(cond, env0, asserting):
 # ^ obsoleted by PR 1924
 
     elif p in [
-        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step 4.g above",
+        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
     ]:
-        [var, literal] = children
+        [var, literal, _] = children
         env0.assert_expr_is_of_type(literal, T_Undefined)
         return env0.with_type_test(var, 'is a', T_Undefined, asserting)
 

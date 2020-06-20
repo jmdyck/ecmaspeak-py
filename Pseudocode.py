@@ -64,7 +64,7 @@ def check_step_references():
 # ------------------------------------------------------------------------------
 
 def each_step_ref():
-    for mo in re.finditer(r'(?i)\bsteps* [0-9]', spec.text):
+    for mo in re.finditer(r'(?i)\bsteps* [0-9<]', spec.text):
         st = mo.start()
 
         referring_line = spec.text[spec.text.rindex('\n', 0, st)+1:spec.text.index('\n', st)].strip()
@@ -74,20 +74,21 @@ def each_step_ref():
 
         referring_section = text_n.closest_containing_section()
 
+        x = '<emu-xref href="#([-a-z0-9]+)"></emu-xref>'
         patterns = [
-            r'steps (\d), (\d), and (\d)\b',
-            r'steps (\d)-(\d)\b',
-            r'steps ([\w.]+) and ([\w.]+)\b',
-            r'step ([\w.]+)\b',
+            fr'steps {x}, {x}, and {x}',
+            fr'steps {x}-{x}',
+            fr'steps {x} and {x}',
+            fr'step {x}',
         ]
         for pattern in patterns:
             mo = re.compile(pattern, re.IGNORECASE).match(spec.text, st)
             if mo:
                 break
         else:
-            assert 0, spec.text[st:st+100].replace('\n', '\\n')
+            assert 0, spec.text[st:st+200].replace('\n', '\\n')
 
-        step_nums = mo.groups()
+        step_ids = mo.groups()
         ref_start_posn = mo.start()
         ref_end_posn = mo.end()
 
@@ -102,8 +103,8 @@ def each_step_ref():
         # Pin down which emu-alg is being referenced:
 
         if ref_is_followed_by(' in previous editions of this specification'):
-            for step_num in step_nums:
-                step_ref = step_num + ' in previous editions'
+            for step_id in step_ids:
+                step_ref = step_id + ' in previous editions'
                 refd_line = 'SKIP'
                 yield (referring_section, referring_line, step_ref, refd_line)
             continue
@@ -136,18 +137,19 @@ def each_step_ref():
             refd_alg_name = 'BlockDeclarationInstantiation'
             refd_section_id = 'sec-blockdeclarationinstantiation'
         elif referring_section.section_id == 'sec-variablestatements-in-catch-blocks':
-            assert len(step_nums) == 1
-            if step_nums[0].startswith('3.'):
+            assert len(step_ids) == 1
+            [step_id] = step_ids
+            if 'throw' in step_id:
                 refd_alg_name = 'EvalDeclarationInstantiation'
                 refd_section_id = 'sec-evaldeclarationinstantiation'
-            elif step_nums[0].startswith('7.'):
+            elif 'web-compat-bindingexists' in step_id:
                 # super-kludge:
                 # See https://github.com/tc39/ecma262/pull/1697#discussion_r411874379
                 refd_alg_name = 'EvalDeclarationInstantiation as modified in B.3.3.3'
                 refd_section_id = 'sec-web-compat-evaldeclarationinstantiation'
-                step_nums = [step_nums[0].replace('7.', '1.', 1)]
+                # step_ids = [step_ids[0].replace('7.', '1.', 1)]
             else:
-                assert 0, step_nums
+                assert 0, step_ids
         else:
             refd_alg_name = None
             refd_section_id = referring_section.section_id
@@ -193,14 +195,17 @@ def each_step_ref():
 
         # -------------
 
-        for step_num in step_nums:
-            extra = f" in {refd_alg_name}" if refd_alg_name else ''
+        for step_id in step_ids:
 
-            step_ref = step_num + extra
             if refd_alg is None:
+                step_path = '???'
                 refd_line = 'XXX: what should refd_alg be?'
             else:
-                refd_line = get_step_line(refd_alg, step_num)
+                (step_path, refd_line) = get_step_line(refd_alg, step_id)
+
+            extra = f" in {refd_alg_name}" if refd_alg_name else ''
+            step_ref = step_path + extra
+
             yield (referring_section, referring_line, step_ref, refd_line)
 
 # ------------------------------------------------------------------------------
@@ -221,22 +226,7 @@ def find_deepest_node_covering_posn(posn):
 
 # ------------------------------------------------------------------------------
 
-def get_step_line(emu_alg_n, path_to_step):
-    level_formats = ['1', 'a', 'i', '1', 'a', 'i', 'i']
-    path_pieces = path_to_step.split('.')
-    assert len(path_pieces) <= len(level_formats), path_to_step
-
-    path_indexes = []
-    for (path_piece, level_format) in zip(path_pieces, level_formats):
-        if level_format == '1': # arabic numerals
-            index = int(path_piece) - 1
-        elif level_format == 'a': # lower-case alpha
-            index = string.ascii_lowercase.index(path_piece)
-        elif level_format == 'i': # lower-case roman
-            index = ['i', 'ii', 'iii', 'iv', 'v', 'vi'].index(path_piece)
-        else:
-            assert 0, (path_piece, level_format)
-        path_indexes.append(index)
+def get_step_line(emu_alg_n, step_id):
 
     # --------
 
@@ -277,24 +267,52 @@ def get_step_line(emu_alg_n, path_to_step):
         return tups
 
     alg_tups = nestify(0, len(alg_lines))
-    # pprint.pprint(tups, stream=sys.stderr)
+    # pprint.pprint(alg_tups, stream=sys.stderr)
 
     # ----------
 
-    tups = alg_tups
+    level_formats = ['1', 'a', 'i', '1', 'a', 'i', 'i', 'i', 'i']
 
-    for (level, index) in enumerate(path_indexes):
+    level_formatters = {
+        # arabic numerals:
+        '1': lambda i: str(i+1),
 
-        if index >= len(tups):
-            return f"XXX index error: step {'.'.join(path_pieces[0:level+1])} does not exist"
+        # lower-case alpha:
+        'a': lambda i: string.ascii_lowercase[i],
 
-        (line_body, sub_tups) = tups[index]
+        # lower-case roman:
+        'i': lambda i: ['i', 'ii', 'iii', 'iv', 'v', 'vi'][i],
+    }
 
-        if level == len(path_indexes) - 1:
-            return line_body
+    labelled_steps = {}
 
-        # Need to go deeper.
-        tups = sub_tups
+    def extract_labelled_steps(tups, path_to_parent):
+        level = len(path_to_parent)
+        level_format = level_formats[level]
+        level_formatter = level_formatters[level_format]
+
+        for (i, (line, subtups)) in enumerate(tups):
+            path_piece = level_formatter(i)
+            path_to_this_step = path_to_parent + [path_piece]
+            mo = re.fullmatch(r'\d+\. \[id="([^"]+)"\] (.+)', line)
+            if mo:
+                (step_id, rest_of_line) = mo.groups()
+                assert step_id not in labelled_steps
+                labelled_steps[step_id] = (path_to_this_step, rest_of_line)
+
+            extract_labelled_steps(subtups, path_to_this_step)
+
+    extract_labelled_steps(alg_tups, [])
+
+    # print(labelled_steps)
+
+    # ----------
+
+    if step_id not in labelled_steps:
+        return f"XXX index error: step_id {step_id} does not exist in this alg"
+
+    (path_to_step, step_line) = labelled_steps[step_id]
+    return ('.'.join(path_to_step), '1. ' + step_line)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -498,7 +516,7 @@ def analyze_sections():
                         # so it's not meant to be parsable.
 
                         '\n            5. Otherwise, let ', # PR 1515 BigInt obsoleted
-                        '\n              5. Otherwise, let ',
+                        '\n              1. Otherwise, let ',
                         # 7.1.12.1 NumberToString
                         # The is unparsable because the grammar doesn't
                         # allow an "Otherwise" without a preceding "If",
@@ -851,8 +869,8 @@ def analyze_changes_section(section):
             assert any(
                 re.fullmatch(pattern, p_ist)
                 for pattern in [
-                    f"During {op_name} the following steps are performed in place of step [\w.]+:",
-                    f"The following steps are inserted after step 3 of the .+{op_name}.+ algorithm:",
+                    f"During {op_name} the following steps are performed in place of step <emu-xref .+:",
+                    f"The following steps are inserted after step <emu-xref.+ of the .+{op_name}.+ algorithm:",
                     f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
                 ]
             ), p_ist
@@ -925,7 +943,7 @@ def analyze_changes_section(section):
                     p2 = section.block_children[i]; i += 1
                     assert p2.element_name == 'p'
                     p2_ist = p2.inner_source_text()
-                    assert re.fullmatch(r'Step [\w.]+ is replaced by:', p2_ist)
+                    assert re.fullmatch(r'Step <emu-xref.+></emu-xref> is replaced by:', p2_ist)
 
                     emu_alg = section.block_children[i]; i += 1
                     assert emu_alg.element_name == 'emu-alg'

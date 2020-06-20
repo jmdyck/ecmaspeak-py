@@ -19,6 +19,7 @@
 
 {_NL_N} :
     {nlai}{dec_int_lit}.
+    {nlai}{dec_int_lit}. {step_label}
 
 {COMMAND} :
     ? OperationName().
@@ -711,7 +712,7 @@
     {var} is a bound function exotic object
     {var} is a non-empty List of {ERROR_TYPE} objects
     {var} is a normal completion
-    {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step 4.g above
+    {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is a possibly empty List of Strings
     {var} is a {h_emu_xref}
     {var} is a {h_emu_xref} or a {h_emu_xref}
@@ -764,7 +765,7 @@
     {var} is not a {nonterminal}
     {var} is not already suspended
     {var} is not an abrupt completion
-    {var} is not an abrupt completion because of validation preceding step {dec_int_lit}
+    {var} is not an abrupt completion because of validation preceding step {h_emu_xref}
     {var} is not an array index
     {var} is not an empty List
     {var} is not an integer index

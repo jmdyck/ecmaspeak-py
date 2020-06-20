@@ -376,6 +376,26 @@ def check_ids():
                 if defid not in possibles:
                     msg_at_posn(node.start_posn, f'Expected id="{possibles[0]}"')
 
+        if node.element_name == 'emu-alg':
+            for mo in re.finditer(r' \[(\w+)="([^"]+)"\]', node.inner_source_text()):
+                assert mo.group(1) == 'id'
+                defid = mo.group(2)
+
+                # ----------
+                # no duplicate ids
+
+                if defid in node_with_id_:
+                    msg_at_posn(node.start_posn, f"duplicate id: '{defid}'")
+
+                node_with_id_[defid] = node
+                # XXX Should really be the node that will later be constructed
+                # for the step in which this step_label occurs.
+
+                # ----------
+                # id should begin with "step-"
+
+                assert defid.startswith('step-')
+
         if 'oldids' in node.attrs:
             for oldid in node.attrs['oldids'].split(','):
                 assert oldid not in all_oldids
@@ -417,7 +437,7 @@ def check_ids():
             if refid in node_with_id_:
 
                 defnode = node_with_id_[refid]
-                if defnode.element_name in ['emu-clause', 'emu-annex', 'emu-table']:
+                if defnode.element_name in ['emu-clause', 'emu-annex', 'emu-table', 'emu-alg']:
                     pass
                 elif defnode.element_name == 'dfn':
                     deftext = defnode.inner_source_text()
