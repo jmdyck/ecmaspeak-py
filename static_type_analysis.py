@@ -6061,14 +6061,15 @@ def tc_nonvalue(anode, env0):
         f_benv = tc_nonvalue(f_command, f_env)
         result = env_or(t_benv, f_benv)
 
-    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.":
-        [cond, t_command, cond2, f_command] = children
-        assert cond2.source_text() == 'there is no such integer _k_'
-        # so "but if {CONDITION}" = "else"
-        (t_env, f_env) = tc_cond(cond, env0)
-        t_benv = tc_nonvalue(t_command, t_env)
-        f_benv = tc_nonvalue(f_command, f_env)
-        result = env_or(t_benv, f_benv)
+#    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.":
+#        [cond, t_command, cond2, f_command] = children
+#        assert cond2.source_text() == 'there is no such integer _k_'
+#        # so "but if {CONDITION}" = "else"
+#        (t_env, f_env) = tc_cond(cond, env0)
+#        t_benv = tc_nonvalue(t_command, t_env)
+#        f_benv = tc_nonvalue(f_command, f_env)
+#        result = env_or(t_benv, f_benv)
+# ^ obsoleted by PR #2009
 
     elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.":
         [cond, t_command, f_command, _, _, _] = children
@@ -8620,13 +8621,14 @@ def tc_cond_(cond, env0, asserting):
         env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}":
-        [i_var, min_var, conda, condb] = children
-        env0.assert_expr_is_of_type(min_var, T_Integer_)
-        env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
-        (at_env, af_env) = tc_cond(conda, env_for_cond)
-        (bt_env, bf_env) = tc_cond(condb, env_for_cond)
-        return (env_and(at_env, bt_env), env_or(af_env, bf_env))
+#    elif p == r"{CONDITION_1} : there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}":
+#        [i_var, min_var, conda, condb] = children
+#        env0.assert_expr_is_of_type(min_var, T_Integer_)
+#        env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
+#        (at_env, af_env) = tc_cond(conda, env_for_cond)
+#        (bt_env, bf_env) = tc_cond(condb, env_for_cond)
+#        return (env_and(at_env, bt_env), env_or(af_env, bf_env))
+# ^ obsoleted by PR #2009
 
     elif p == r"{CONDITION_1} : there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}":
         [i_var, conda, condb] = children
@@ -10302,7 +10304,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the largest possible nonnegative integer {var} not larger than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}",
-        r"{EXPR} : the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}",
+        # r"{EXPR} : the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}", # obsoleted by PR 2009
     ]:
         [let_var, limit_var, cond, let_var2, default] = children
         assert same_source_text(let_var2, let_var)

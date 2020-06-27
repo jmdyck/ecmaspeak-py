@@ -228,7 +228,6 @@
 {IF_CLOSED} :
     If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
     If {CONDITION}&mdash;note that these mathematical values are both finite and not both zero&mdash;{SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
-    If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.
@@ -238,6 +237,9 @@
 
     # obsoleted by the merge of #1596:
     # If {CONDITION}, {SMALL_COMMAND}; else, {SMALL_COMMAND}.
+
+    # obsoleted by the merge of #2009:
+    # If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.
 
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
@@ -530,10 +532,9 @@
     there does not exist an element {var} of {var} such that {CONDITION_1}
     there exists a member {var} of set {var} such that {CONDITION_1}
     there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}
-    there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}
+    there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
     there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}
     there is an event {var} such that {CONDITION}
-    there is no such integer {var}
     this method was called with more than one argument
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
@@ -561,6 +562,7 @@
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
     {EX} is neither {LITERAL} nor the active function
     {EX} is neither {LITERAL} nor {LITERAL}
+    {EX} is not -1
     {EX} is not an element of {var}
     {EX} is not equal to {EX}
     {EX} is not present
@@ -881,6 +883,10 @@
     # obsoleted by the merge of PR #1965:
     # {var} is present as a parameter
 
+    # obsoleted by the merge of PR #2009:
+    # there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}
+    # there is no such integer {var}
+
     # obsoleted by the merge of PR #2022:
     # {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}
 
@@ -928,10 +934,6 @@
     {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive
     {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive or a Hidden Implementation Directive
     {var} has a {DSBN} internal slot with the value {LITERAL}
-
-    # PR 2009
-    {EX} is not -1
-    there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
 
 {PROPERTY_KIND} :
     accessor
@@ -1302,7 +1304,7 @@
     the set of all characters not included in the set returned by {h_emu_grammar} 
     the set of all characters returned by {PREFIX_PAREN}
     the set of characters containing the characters that are on the right-hand side of the {nonterminal} or {nonterminal} productions
-    the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
+    the smallest (closest to *-&infin;*) such integer
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
     the source text matched by {PROD_REF}
@@ -1413,6 +1415,9 @@
     # the `@` where |AssignmentOperator| is `@=`
     # the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
 
+    # obsoleted by the merge of PR #2009:
+    # the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
+
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object
     a new {ENVIRONMENT_RECORD_KIND} Scope Record
@@ -1430,9 +1435,6 @@
     the String value whose code units are the code units of {var}
     the longest sequence of consecutive code units from {var} beginning with the code unit at index {var} such that {var} matches the &ldquo;Code units&rdquo; column of a row in {h_emu_xref}
     the result of the &ldquo;Replacement text&rdquo; column of the corresponding row
-
-    # PR 2009
-    the smallest (closest to *-&infin;*) such integer
 
     # PR 2018
     the string-concatenation of the Strings that are the UTF16Encoding of each code point in {var}, in order
