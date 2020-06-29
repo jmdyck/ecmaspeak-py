@@ -8697,6 +8697,8 @@ def tc_cond_(cond, env0, asserting):
             env2 = env0
         elif a_t == T_code_unit_ and b_t == T_Integer_:
             env2 = env0
+        elif a_t == T_BigInt and b_t == T_Integer_:
+            env2 = env0
         else:
             env1 = env0.ensure_expr_is_of_type(a, T_Number)
             env2 = env1.ensure_expr_is_of_type(b, T_Number)
@@ -8850,6 +8852,9 @@ def tc_cond_(cond, env0, asserting):
             # XXX could be more specific
             env1 = env0
         elif exa_type == T_Number and exb_type == T_Number | T_BigInt:
+            env1 = env0
+        elif exa_type == T_BigInt | T_Integer_ and exb_type == T_BigInt | T_Number:
+            # Atomics.wait
             env1 = env0
         else:
             assert 0, (exa_type, exb_type)
@@ -11495,6 +11500,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             env0.assert_expr_is_of_type(a, T_Number)
             env0.assert_expr_is_of_type(b, T_Number)
             return (T_Number, env0)
+
+        elif a_t == T_BigInt and b_t == T_BigInt:
+            return (T_BigInt, env0)
+
+        elif a_t == T_BigInt and b_t == T_Integer_:
+            return (T_BigInt, env0)
 
         elif a_t == T_Integer_ or b_t == T_Integer_:
             env1 = env0.ensure_expr_is_of_type(a, T_Integer_)
