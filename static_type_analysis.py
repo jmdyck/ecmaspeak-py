@@ -75,7 +75,7 @@ class LineInfo:
 def add_styling():
     # Hard-coding a line number is brittle,
     # but it'll probably work for as long as we need it to.
-    spec.info_for_line_[2].afters.append(NewStyling())
+    spec.info_for_line_[4].afters.append(NewStyling())
 
 class NewStyling:
     def lines(self, indentation, mode):
@@ -98,7 +98,7 @@ def make_initial_headers():
     oh_inc_f = shared.open_for_output('oh_warnings')
 
     stderr("collecting info...")
-    for s in spec.doc_node.each_descendant_that_is_a_section():
+    for s in spec.root_section.each_descendant_that_is_a_section():
         create_operation_info_for_section(s)
 
     write_modified_spec('dls w initial info')

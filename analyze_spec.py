@@ -179,7 +179,12 @@ def check_indentation():
         else:
             # So recurse to its children.
 
-            if node.element_name in ['thead', 'tbody']:
+            if node.element_name in ['html', 'head', 'body']:
+                # PR #2067 added <html>, <head> and <body> tags
+                # and (reasonably) didn't re-indent everything else.
+                child_expected_indent = start_tag_indent
+
+            elif node.element_name in ['thead', 'tbody']:
                 # For obscure reasons, <tr> tags in spec.html
                 # generally have the same indentation as
                 # the surrounding <thead> and <tbody> tags.

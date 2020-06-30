@@ -37,7 +37,7 @@ def do_stuff_with_emu_grammars():
     check_non_defining_prodns(emu_grammars_of_type_['reference'])
 
     check_emu_prodrefs(spec.doc_node)
-    approximate_annex_A(spec.doc_node)
+    approximate_annex_A()
 
     check_nonterminal_refs(spec.doc_node)
 
@@ -1259,7 +1259,8 @@ def check_emu_prodrefs(doc_node):
 
 # ------------------------------------------------------------------------------
 
-def approximate_annex_A(doc_node):
+def approximate_annex_A():
+    stderr("approximate_annex_A...")
 
     lines = []
     def put(line=''):
@@ -1267,7 +1268,7 @@ def approximate_annex_A(doc_node):
 
     # sections in the main body of the text that correspond to sections in Annex A:
     grouping_sections = []
-    for section in doc_node.each_descendant_that_is_a_section():
+    for section in spec.root_section.each_descendant_that_is_a_section():
         # caast = corresponding_annex_a_section_title
         mo = re.fullmatch(r'ECMAScript Language: (.+)', section.section_title)
         if mo:

@@ -453,7 +453,7 @@ def analyze_sections():
     # Adding `self.algo._parent_foodefn = self`
     # caused spec.save to hit the default recursion limit (1000).
 
-    for section in spec.doc_node.each_descendant_that_is_a_section():
+    for section in spec.root_section.each_descendant_that_is_a_section():
         assert hasattr(section, 'ste')
 
         # "progress bar"
@@ -1779,7 +1779,7 @@ def analyze_static_dependencies():
     op_names_labelled_ss = set()
     op_names_labelled_rs = set()
     op_names_not_labelled = set()
-    for section in spec.doc_node.each_descendant_that_is_a_section():
+    for section in spec.root_section.each_descendant_that_is_a_section():
         if 'op_name' not in section.ste: continue
         op_name = section.ste['op_name']
 

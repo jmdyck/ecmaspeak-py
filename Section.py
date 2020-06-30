@@ -13,38 +13,47 @@ from shared import stderr, header, msg_at_posn, spec
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def make_and_check_sections():
-    _establish_sections(spec.doc_node)
-    _infer_section_kinds(spec.doc_node)
-    _print_section_kinds(spec.doc_node)
-    _check_aoids(spec.doc_node)
-    _check_section_order(spec.doc_node)
+    spec.root_section = _establish_sections(spec.doc_node)
+    _infer_section_kinds(spec.root_section)
+    _print_section_kinds(spec.root_section)
+    _check_aoids(spec.root_section)
+    _check_section_order(spec.root_section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _establish_sections(doc_node):
     stderr("_establish_sections...")
     header("checking clause titles...")
-    establish_section_r(doc_node, 0, None)
+    return establish_section_r(doc_node, 0, None)
 
 def establish_section_r(node, section_level, section_num):
     node.section_level = section_level
     node.section_num = section_num
 
     if node.element_name == '#DOC':
-        node.section_id = None
-        node.section_title = None
-        node.section_kind = 'root'
-        node.block_children = []
-        node.numless_children = []
-        node.section_children = [
+        [html_node] = [
             child
             for child in node.children
+            if child.element_name == 'html'
+        ]
+        [body_node] = [
+            child
+            for child in html_node.children
+            if child.element_name == 'body'
+        ]
+        body_node.section_id = None
+        body_node.section_title = None
+        body_node.block_children = []
+        body_node.numless_children = []
+        body_node.section_children = [
+            child
+            for child in body_node.children
             if child.is_a_section()
         ]
 
         clause_counter = 0
         annex_counter = 0
-        for child in node.section_children:
+        for child in body_node.section_children:
             if child.element_name == 'emu-intro':
                 sn = '0'
             elif child.element_name == 'emu-clause':
@@ -56,6 +65,8 @@ def establish_section_r(node, section_level, section_num):
             else:
                 assert 0, child.element_name
             establish_section_r(child, section_level+1, sn)
+
+        return body_node
 
     elif node.is_a_section():
         assert not node.inline_child_element_names
@@ -161,7 +172,7 @@ def check_section_title(h1, node):
 def _infer_section_kinds(section):
     # We infer a section's kind almost entirely based on its title.
 
-    if section.element_name == '#DOC':
+    if section.section_title is None:
         stderr("_infer_section_kinds...")
         for child in section.section_children:
             _infer_section_kinds(child)
@@ -476,7 +487,7 @@ def _extract_info_from_section_title(section, pattern_results):
 
 def _print_section_kinds(section):
     global g_sections_f
-    if section.element_name == '#DOC':
+    if section.section_title is None:
         g_sections_f = shared.open_for_output('sections')
     else:
         if not(hasattr(section, 'section_kind')): section.section_kind = 'UNSET!'
@@ -495,7 +506,7 @@ def _print_section_kinds(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _check_aoids(section):
-    if section.element_name == '#DOC':
+    if section.section_title is None:
         stderr("_check_aoids...")
 
     else:
@@ -550,7 +561,7 @@ def _check_aoids(section):
 def _check_section_order(section):
     # In some sections, the subsections should be in "alphabetical order".
 
-    if section.element_name == '#DOC':
+    if section.section_title is None:
         stderr("_check_section_order...")
     else:
 

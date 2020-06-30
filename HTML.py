@@ -307,7 +307,10 @@ element_info = {
     # Block-level
 
         # block contains blocks:
-        '#DOC'              : ('B', '#DECL;#WS;meta;#WS;((link;|script;|style;)#WS;)+pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
+        '#DOC'              : ('B', '#DECL;#WS;html;#WS;'),
+        'html'              : ('B', '#WS;head;#WS;body;#WS;'),
+        'head'              : ('B', '#WS;meta;#WS;((link;|script;|style;)#WS;)+'),
+        'body'              : ('B', '#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
         'emu-clause'        : ('B', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
