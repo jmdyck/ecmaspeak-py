@@ -1665,7 +1665,7 @@
     WriteSharedMemory
     the ExportEntry Record
     the ImportEntry Record
-    the PromiseCapability
+    the PromiseCapability Record
     the PromiseReaction
     the PropertyDescriptor
     the Record
