@@ -666,12 +666,17 @@ def check_intrinsics():
                 for (table_start, table_end) in well_known_intrinsics_table_spans 
             )
 
-            status = well_known_intrinsics.get(itext, "doesn't exist")
+            base_intrinsic = re.sub(r'\.[^%]+', '', itext)
+
+            status = well_known_intrinsics.get(base_intrinsic, "doesn't exist")
             if status == "doesn't exist":
-                msg_at_posn(itext_start, f"Intrinsic doesn't exist: {itext}")
+                msg_at_posn(itext_start, f"Intrinsic doesn't exist: {base_intrinsic}")
             elif status.startswith("old name"):
                 if not is_in_table:
                     msg_at_posn(itext_start, f"Using {status}")
+
+             # XXX We should also check that any ".foo.bar" appended to the base intrinsic
+             # also makes sense, but we don't have the necessary info readily available.
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
