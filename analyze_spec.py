@@ -303,6 +303,8 @@ def check_characters():
         if character == '\u211d':
             # PR 1135 introduced tons of these
             continue
+        elif character in ['\u2124', '\U0001d53d']:
+            continue
 
         if character in ascii_replacement:
             suggestion = ": maybe change to %s" % ascii_replacement[character]

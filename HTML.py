@@ -397,7 +397,7 @@ element_info = {
         'emu-integration-plans': ('B', '',          '',           '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
         'emu-note'             : ('B', '',          '',           '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|emu-xref;)+'),
         'li'                   : ('B', '',          'oldids',     '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
-        'td'                   : ('B', '',          'colspan',    '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
+        'td'                   : ('B', '',          'colspan',    '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sub;|sup;)+'),
         'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
         'dd'                   : ('B', '',          '',           '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
 

@@ -129,7 +129,7 @@ def prep_autolinking():
             term = 'LocalTZA'
 
         # Different kinds of terms will be detected (for auto-linking) in different ways...
-        if re.fullmatch(r'\w[-\w ]*\w', term) or term in ['\u211d', '\U0001d53d']:
+        if re.fullmatch(r'\w[-\w ]*\w', term) or term in ['\u211d', '\u2124', '\U0001d53d']:
             if 'id' in dfn.attrs:
                 # Occurrences of this term should be linked to the dfn itself.
                 fragid = dfn.attrs['id']

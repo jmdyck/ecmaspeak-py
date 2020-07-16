@@ -966,9 +966,6 @@ single_sentence_rules_str = r'''
         (.+ produces (?P<retn>an ECMAScript value).)
         v=\1
 
-        (.+ produces (?P<retn>an integer value) .+)
-        v=\1
-
         # ----------
         # provides ...
 
@@ -1000,7 +997,7 @@ single_sentence_rules_str = r'''
         v=\1
 
         (Returns the integral part of the number .+)
-        retn=integer
+        retn=an integral Number
         v=\1
 
         (.+ returns (?P<retn>a Number) .+)
@@ -1036,7 +1033,7 @@ single_sentence_rules_str = r'''
         retn=a promise
         v=\1
 
-        (.+ returns the local time zone adjustment, .+)
+        (.+ returns an integral Number representing the local time zone adjustment, .+)
         retn=a Number
         v=\1
 
@@ -1519,15 +1516,18 @@ def extract_info_from_standard_ao_preamble(preamble_node):
                 ('It returns _argument_ converted to a Number value .+.', 'a Number'),
                 ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
+                ('It returns _value_ converted to a Number or a BigInt.', 'a Number or a BigInt'),
                 ('It returns a new Job Abstract Closure .+', 'a Job Abstract Closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
                 ('It returns an implementation-approximated value .+', 'a Number'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
+                ('It returns either ~not-matched~ or the end index of a match.', '~not-matched~ or a non-negative integer'),
                 ('It returns the BigInt value that .+', 'a BigInt'),
                 ('It returns the global object used by the currently running execution context.', 'an object'),
                 ('It returns the loaded value.', 'TBD'),
                 ('It returns the sequence of Unicode code points that .+', 'a sequence of Unicode code points'),
                 ('It returns the value of the \*"length"\* property of an array-like object.', 'a non-negative integer'),
+                ('It returns the value of the \*"length"\* property of an array-like object \(as a non-negative integer\).', 'a non-negative integer'),
             ]:
                 if re.fullmatch(pattern, sentence):
                     info_holder.add('retn', nature)
@@ -2068,8 +2068,9 @@ nature_to_tipe = {
         'a Number'                   : 'Number',
         'a Number value'             : 'Number',
         'Number value'               : 'Number',
-        'an ECMAScript Number value' : 'Number',
-        'a nonnegative non-*NaN* Number' : 'Number', # XXX loses info
+        'an integral Number or &infin;' : 'Number',
+        'an ECMAScript Number value'    : 'Number',
+        'a nonnegative non-*NaN* Number': 'Number', # XXX loses info
 
         # BigInt
         'BigInt'      : 'BigInt',
@@ -2100,6 +2101,10 @@ nature_to_tipe = {
         'not a numeric value'           : 'Tangible_', # TODO
 
     # unofficial 'subtypes' of the above:
+
+        'an integral Number'            : 'IntegralNumber_',
+        'a non-negative integral Number': 'IntegralNumber_',
+
         # function_: an object with a [[Call]] internal method
         'function'            : 'function_object_',
         'a Function'          : 'function_object_',
@@ -2145,19 +2150,17 @@ nature_to_tipe = {
 
         'an Iterator object': 'Iterator_object_',
 
-        # it's unclear whether 'integer' is a subtype of 'Number',
-        # or is mathematical integers
-        'an integer length' : 'Integer_',
-        'an integer offset' : 'Integer_',
-        'an integer'        : 'Integer_',
-        'an integer value'  : 'Integer_',
-        'integer'           : 'Integer_',
-        'a numeric code point value'     : 'Integer_', # TODO
-        'either 0 or a positive integer' : 'NonNegativeInteger_',
-        'a nonnegative integer'          : 'NonNegativeInteger_',
-        'a non-negative integer'         : 'NonNegativeInteger_',
-        'nonnegative integer'            : 'NonNegativeInteger_',
-        'an index'                       : 'NonNegativeInteger_',
+        'an integer length'         : 'MathInteger_',
+        'an integer offset'         : 'MathInteger_',
+        'an integer'                : 'MathInteger_',
+        'an integer value'          : 'MathInteger_',
+        'integer'                   : 'MathInteger_',
+        '1 or -1'                   : 'MathInteger_',
+        'a Unicode code point'      : 'code_point_',
+        'a numeric code point value': 'MathInteger_', # TODO
+        'a non-negative integer'    : 'MathNonNegativeInteger_', # currently mapped to MathInteger_
+        'a nonnegative integer'     : 'MathNonNegativeInteger_',
+        'a positive integer'        : 'MathNonNegativeInteger_',
 
     # ------------------------------
     # ECMAScript specification types
@@ -2174,7 +2177,7 @@ nature_to_tipe = {
         'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
-        'a List of Unicode code points'        : 'List of Integer_',
+        'a List of Unicode code points'        : 'List of MathInteger_',
         'List of Tangible_'                    : 'List of Tangible_',
         'a List of values'                     : 'List of Tangible_',
         'a list of arguments'                  : 'List of Tangible_',
@@ -2278,7 +2281,7 @@ nature_to_tipe = {
 
     # unofficial 'subtypes' of official spec types:
 
-        'a List of byte values'                       : 'List of Integer_',
+        'a List of byte values'                       : 'List of MathInteger_',
         'a List of slot-names'                        : 'List of SlotName_',
         'a List of names of internal slots'           : 'List of SlotName_',
         'a List of internal slot names'               : 'List of SlotName_',
@@ -2292,7 +2295,6 @@ nature_to_tipe = {
         'empty_'      : 'empty_',
         'code unit'   : 'code_unit_',
         'a code unit' : 'code_unit_',
-        'a character' : 'character_',
 
         # 8.7.1 AgentSignifier
         'an agent signifier' : 'agent_signifier_',
@@ -2357,6 +2359,7 @@ nature_to_tipe = {
     # -----------------------------
     # union of named types
 
+    'a character'                                                : 'code_unit_ | code_point_', 
     'a function or an array of Strings and Numbers'              : 'function_object_ | Array_object_',
     'a BigInt or a Number'                                       : 'BigInt | Number',
     'Number or BigInt'                                           : 'Number | BigInt',
@@ -2365,17 +2368,14 @@ nature_to_tipe = {
     'a Number value & *undefined*'                               : 'Number | Undefined',
     'a Number or *undefined*'                                    : 'Number | Undefined',
     'an Array object or *null*'                                  : 'Array_object_ | Null',
-    'a Boolean or a non-negative integer'                        : 'Boolean | Integer_',
-    '*false* or an integer index'                                : 'Boolean | Integer_',
-    '*false* or a non-negative integer'                          : 'Boolean | Integer_',
+    '*false* or a non-negative integer'                          : 'Boolean | MathInteger_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
     '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
     'Boolean or Undefined'                                       : 'Boolean | Undefined',
     'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
     'Boolean | empty_'                                           : 'Boolean | empty_',
     'a Boolean or *empty*'                                       : 'Boolean | empty_',
-    'an integer (or &infin;)'                                    : 'Integer_ | Infinity_',
-    'an integer or &infin;'                                      : 'Integer_ | Infinity_',
+    'a non-negative integer or +&infin;'                          : 'MathNonNegativeInteger_ | MathPosInfinity_',
     'an Environment Record or *null*'                            : 'Environment Record | Null',
     'an object or null'                                          : 'Object | Null',
     'an object or *null*'                                        : 'Object | Null',
@@ -2398,6 +2398,7 @@ nature_to_tipe = {
     'property key'                                               : 'String | Symbol',
     'a property key'                                             : 'String | Symbol',
     'the property key'                                           : 'String | Symbol',
+    '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
 
 }
 
@@ -3112,7 +3113,7 @@ class Header:
                 for (pn, pt) in params.items():
                     put_prefix_and_type(pn.ljust(pn_max_width), pt)
 
-                    # XXX Cases where operation_headers types the parameter as 'NonNegativeInteger_',
+                    # XXX Cases where operation_headers types the parameter as 'MathNonNegativeInteger_',
                     # but then that gets translated to 'Integer',
                     # so that's how it appears here.
                     # - ArrayCreate              : _length_
@@ -3278,8 +3279,8 @@ ahat_ = {
     ('_IgnoreCase_', 'Boolean'): 'Boolean',
 
     ('_Input_'           , 'from somewhere'): 'List of character_',
-    ('_InputLength_'     , 'from somewhere'): 'Integer_',
-    ('_NcapturingParens_', 'from somewhere'): 'Integer_',
+    ('_InputLength_'     , 'from somewhere'): 'MathInteger_',
+    ('_NcapturingParens_', 'from somewhere'): 'MathInteger_',
     ('_DotAll_'          , 'from somewhere'): 'Boolean',
     ('_IgnoreCase_'      , 'from somewhere'): 'Boolean',
     ('_Multiline_'       , 'from somewhere'): 'Boolean',
@@ -3759,9 +3760,12 @@ named_type_hierarchy = {
                     'String': {},
                     'Symbol': {},
                     'Number': {
-                        'Integer_': {},
-                        #? 'NonNegativeInteger_': {}
-                        'OtherNumber_': {},
+                        'FiniteNumber_' : {
+                            'IntegralNumber_': {},
+                            'NonIntegralFiniteNumber_' : {}
+                        },
+                        'InfiniteNumber_': {},
+                        'NaN_Number_': {},
                     },
                     'BigInt': {},
                 },
@@ -3809,7 +3813,6 @@ named_type_hierarchy = {
                 'event_pair_': {},
                 'IEEE_binary32_': {},
                 'IEEE_binary64_': {},
-                'Infinity_': {},
                 'IterationKind_': {},
                 'IteratorKind_': {},
                 'LangTypeName_': {},
@@ -3819,10 +3822,19 @@ named_type_hierarchy = {
                     'State': {},
                     'match_failure_': {},
                 },
-                'MathReal_': {
-                    'MathInteger_': {},
-                    'MathOther_': {},
+                'ExtendedMathReal_': {
+                    'MathReal_': {
+                        'MathInteger_': {
+                            'code_unit_' : {},
+                            'code_point_': {},
+                            'MathIntegerOther_' : {},
+                        },
+                        'MathOther_': {},
+                    },
+                    'MathPosInfinity_': {},
+                    'MathNegInfinity_': {},
                 },
+                'NotMatched_' : {},
                 'Parse Node' : {
                     'PTN_ForBinding': {},
                     'PTN_Script': {},
@@ -3903,10 +3915,10 @@ named_type_hierarchy = {
                 'WaiterList' : {},
                 'agent_signifier_' : {},
                 'alg_steps': {},
-                'character_': {
-                    'code_unit_': {},
-                    'code_point_': {},
-                },
+                # 'character_': {
+                #     # 'code_unit_': {},
+                #     'code_point_': {},
+                # },
                 'completion_kind_': {},
                 'constructor_kind_': {},
                 'empty_': {},
@@ -3997,12 +4009,16 @@ ensure_tnode_for( ThrowType(T_other_) )
 
 T_TBD = TBDType()
 
+T_character_ = T_code_unit_ | T_code_point_
+
+T_MathNonNegativeInteger_ = T_MathInteger_ # for now
+
 T_Continuation    = ProcType([T_State                ], T_MatchResult)
 T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
-T_RegExpMatcher_  = ProcType([T_String, T_Integer_   ], T_MatchResult)
+T_RegExpMatcher_  = ProcType([T_String, T_MathNonNegativeInteger_], T_MatchResult)
 T_Job             = ProcType([                       ], T_Undefined)
 
-T_ReadModifyWrite_modification_closure = ProcType([ListType(T_Integer_), ListType(T_Integer_)], ListType(T_Integer_))
+T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), ListType(T_MathInteger_)], ListType(T_MathInteger_))
 
 T_captures_entry_ = ListType(T_character_) | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
@@ -4022,10 +4038,10 @@ def maybe_NamedType(name):
         return T_Job
     elif name == 'ReadModifyWrite_modification_closure':
         return T_ReadModifyWrite_modification_closure
-    elif name == 'NonNegativeInteger_':
-        # There are 5 places where structify yields this parameter type.
-        # But as far as STA is concerned, it's just an alias for Integer_.
-        return T_Integer_
+    elif name == 'MathNonNegativeInteger_':
+        return T_MathNonNegativeInteger_
+    elif name == 'character_':
+        return T_character_
     else:
         return NamedType(name)
 
@@ -4429,7 +4445,7 @@ class Env:
     def assert_expr_is_of_type(self, expr, expected_t):
         assert expected_t != T_TBD
 
-        (expr_t, expr_env) = tc_expr(expr, self); assert expr_env is self
+        (expr_t, expr_env) = tc_expr(expr, self)
 
         if expr_t == T_TBD:
             add_pass_error(
@@ -4438,10 +4454,10 @@ class Env:
                 % (expr.source_text(), expected_t)
             )
         elif expr_t.is_a_subtype_of_or_equal_to(expected_t):
-            return expr_t
+            pass
         elif expected_t == T_not_returned and expr_t in [T_Undefined, T_empty_]:
             # todo: why does EnqueueJob return ~empty~ ?
-            return expr_t
+            pass
         else:
             stderr()
             stderr("assert_expr_is_of_type()")
@@ -4450,6 +4466,8 @@ class Env:
             stderr("expected_t:", expected_t)
             assert 0
             sys.exit(0)
+
+        return expr_t
 
     # --------
 
@@ -4475,7 +4493,7 @@ class Env:
             if expr_text == '*null*':
                 # Don't try to change the type of *null*!
                 result_env = expr_env
-            elif expr_text == '_len_' and expr_type == T_Integer_ and expected_t == T_Tangible_:
+            elif expr_text == '_len_' and expr_type == T_MathInteger_ and expected_t == T_Tangible_:
                 # skip this for now
                 result_env = expr_env
             else:
@@ -4541,8 +4559,7 @@ class Env:
         elif list_type.is_a_subtype_of_or_equal_to(T_List):
             # use list_type to check type of item_ex
             element_type = list_type.element_type
-            assert item_type.is_a_subtype_of_or_equal_to(element_type)
-            result = item_env
+            result = item_env.ensure_expr_is_of_type(item_ex, element_type)
 
         else:
             add_pass_error(
@@ -4596,7 +4613,7 @@ class Env:
                         # SetValueInBuffer, ditto
                 )
                 or
-                old_t == T_Number and new_t == T_Integer_
+                old_t == T_Number and new_t == T_MathInteger_
                     # e.g. ReadModifyWriteSharedMemory{ ... [[ElementSize]]: _elementSize_. ...}
                     # in GetModifySetValueInBuffer
                 or
@@ -4675,7 +4692,7 @@ class Env:
                 old_t == ListType(T_code_unit_) | T_Reference | T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
                 # DefineMethod
                 or
-                old_t == T_Integer_ | T_Tangible_ | T_code_unit_ and new_t == T_Integer_ | T_Number | T_code_unit_
+                old_t == T_MathInteger_ | T_Tangible_ | T_code_unit_ and new_t == T_MathInteger_ | T_Number | T_code_unit_
                 # [[DefineOwnProperty]]
                 or
                 old_t == T_Tangible_ | T_code_unit_ and new_t == T_Number | T_code_unit_
@@ -4792,6 +4809,17 @@ class Env:
                 '? Yield(IteratorValue(_innerResult_))', # Evaluation
                 '? Yield(IteratorValue(_innerReturnResult_))', # Evaluation
                 '_list_[_index_]', # CreateListIteratorRecord
+                '\u211d(_tv_)', # TimeString
+                'abs(_offset_)', # TimeZoneString
+                '1<sub>\U0001d53d</sub>', # MakeDay
+                '\u211d(_m_)', # MakeDay
+                'WeekDay(_tv_)', # Date.prototype.toUTCString
+                'MonthFromTime(_tv_)',
+                'abs(\u211d(_yv_))',
+                '\u211d(_n_)', # unescape
+                '\u211d(_lastIndex_)', # RegExpBuiltinExec
+                '\u211d(_ny_)', # Math.atan2
+                '\u211d(_nx_)', # Math.atan2
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -4803,7 +4831,7 @@ class Env:
         (expr_type,     env2) = tc_expr(expr,     env1)
 
         if settable_type == T_TBD and expr_type == T_TBD:
-            assert 0
+            return env2
 
         elif settable_type == T_TBD:
             # flow type info from expr to settable
@@ -4864,6 +4892,11 @@ class Env:
         assert isinstance(narrower_t, Type)
         (expr_t, env1) = tc_expr(expr, self)
 
+        # super-kludge:
+        if expr.source_text() in ['_highest_', '_lowest_'] and expr_t == T_InfiniteNumber_:
+            # Math.max, Math.min
+            expr_t = T_Number
+
         if expr_t.is_a_subtype_of_or_equal_to(narrower_t):
             # expr is already narrower than required.
             return env1
@@ -4872,9 +4905,6 @@ class Env:
         if expr_t == T_TBD:
             pass
         elif narrower_t.is_a_subtype_of_or_equal_to(expr_t):
-            pass
-        elif expr_t == T_Number and narrower_t == T_Integer_:
-            # `DateFromTime(_t_) is 1`
             pass
         else:
             stderr("expr %r of type %s cannot be narrowed to %s" % (expr.source_text(), expr_t, narrower_t))
@@ -5052,7 +5082,7 @@ def envs_or(envs):
 
 def do_static_type_analysis(levels):
 
-    # atexit.register(write_modified_spec)
+    atexit.register(write_modified_spec)
     # This was useful when I was gradually building up the set of STA rules,
     # because even if the STA-run ended in an exception (which was usual),
     # I would still get a spec_w_errors written, which might show a little more progress.
@@ -5242,7 +5272,7 @@ def mytrace(env):
         print("resulting env is None")
     else:
         # print("resulting env:", env)
-        for var_name in ['_list_']:
+        for var_name in ['_number_']:
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
             # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
@@ -5264,7 +5294,7 @@ def tc_operation(op_name):
     global trace_this_op
     trace_this_op = False
     trace_this_op = (op_name in [
-        'xCreateListIteratorRecord'
+        'xToIntegerOrInfinity'
     ])
     # and you may want to tweak mytrace just above
 
@@ -5366,14 +5396,14 @@ def tc_header(header):
                 or
                 header.name == 'ResolveBinding' and pn == '_env_'
                 or
-                header.name == 'ToLength' and pn == '*return*' and init_t == T_Integer_ | ThrowType(T_TypeError)
+                header.name == 'ToLength' and pn == '*return*' and init_t == T_IntegralNumber_ | ThrowType(T_TypeError)
                 # STA isn't smart enough to detect that the normal return is always integer,
                 # wants to change it to Number
                 or
                 header.name == 'PerformPromiseThen' and pn == '_resultCapability_'
                 # STA wants to add T_Undefined, which is in the body type, but not the param type
                 or
-                header.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_Integer_ | T_throw_ and final_t == T_throw_
+                header.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_MathInteger_ | T_throw_ and final_t == T_throw_
                 # not sure why STA isn't picking up Integer
                 or
                 # PR 1668
@@ -5414,6 +5444,30 @@ def tc_header(header):
                 header.name == 'StringToCodePoints' and pn == '*return*'
                 or
                 header.name == 'CodePointToUTF16CodeUnits' and pn == '_cp_'
+                or
+                header.name == 'UTF16Encoding' and pn == '_cp_'
+                or
+                header.name == 'BigIntBitwiseOp' and pn in ['_x_', '_y_']
+                # algo just overwrites them with different types
+                or
+                header.name == 'LocalTime' and pn == '*return*' and init_t == T_MathInteger_ and  final_t == T_Number
+                # mess
+                or
+                header.name == 'ToInteger'
+                or
+                header.name == 'Math.fround' and pn == '_x_'
+                or
+                header.name == 'Number.isFinite' and pn == '_number_'
+                or
+                header.name == 'IsIntegralNumber' and pn == '_argument_'
+                or
+                header.name == 'AdvanceStringIndex' and pn == '_index_'
+                or
+                header.name == 'ArrayAccumulation' and pn == '_nextIndex_'
+                or
+                header.name == 'BigInt.asIntN' and pn == '_bits_'
+                or
+                header.name == 'BigInt.asUintN' and pn == '_bits_'
             ):
                 # -------------------------
                 # Don't change header types
@@ -5465,17 +5519,26 @@ def tc_header(header):
                 or
                 header.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
                 or
-                header.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_Integer_
+                header.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_MathInteger_
                 or
                 header.name == 'RequireInternalSlot' and pn == '*return*' and init_t == T_throw_ and final_t == T_not_returned | ThrowType(T_TypeError)
                 or
-                header.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_Integer_ | ThrowType(T_TypeError)
+                header.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_ | ThrowType(T_TypeError)
                 or
                 header.name == 'NewPromiseReactionJob' and pn == '*return*' and init_t == T_Job and final_t == T_Record
                 or
                 header.name == 'CodePointsToString' and pn == '_text_' and init_t == T_Unicode_code_points_ and final_t == ListType(T_code_point_)
 
                 # eoh is just wrong, because preamble is misleading
+                or
+                header.name == 'Math.imul' and pn == '*return*'
+                or
+                header.name == 'parseFloat' and pn == '*return*'
+                or
+                header.name == 'Math.sign' and pn == '*return*'
+                or
+                header.name == 'ObjectDefineProperties' and pn == '_O_'
+
 
                 # or
                 # header.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
@@ -5494,6 +5557,10 @@ def tc_header(header):
             else:
                 assert 0, (header.name, pn, str(init_t), str(final_t))
                 # We should deal with this case above.
+
+            if trace_this_op:
+                print(f"About to change the declared_type of {pn} to {final_t}")
+                input('hit return to continue ')
 
             header.change_declared_type(pn, final_t)
 
@@ -5605,8 +5672,11 @@ def tc_proc(op_name, defns, init_env):
 def proc_add_return(env_at_return_point, type_of_returned_value, node):
     if trace_this_op:
         print("Type of returned value:", type_of_returned_value)
+        input('hit return to continue ')
         if T_Abrupt.is_a_subtype_of_or_equal_to(type_of_returned_value):
             input('hit return to continue ')
+        # if T_throw_.is_a_subtype_of_or_equal_to(type_of_returned_value):
+        #     input('hit return to continue ')
 
     # (or intersect Absent with type_of_returned_value)
 #    rt_memtypes = type_of_returned_value.set_of_types()
@@ -5779,7 +5849,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(rvar, T_Tangible_)
         result = env0.plus_new_entry(let_var, T_function_object_)
 
-    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the mathematical integer value that is represented by {var} in radix-{var} notation.)":
+    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the integer value that is represented by {var} in radix-{var} notation.)":
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = children
         assert same_source_text(let_var, let_var2)
         assert same_source_text(rvar, rvar2)
@@ -5797,16 +5867,16 @@ def tc_nonvalue(anode, env0):
 
 #    elif p == r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}.":
 #        [var, cond] = children
-#        env_for_cond = env0.plus_new_entry(var, T_Integer_)
+#        env_for_cond = env0.plus_new_entry(var, T_MathNonNegativeInteger_)
 #        (t_env, f_env) = tc_cond(cond, env_for_cond); assert t_env.equals(env_for_cond); assert f_env.equals(env_for_cond)
 #        result = t_env
 # ^ obsoleted by PR 2029
 
     elif p in [
-        r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)",
+        r"{COMMAND} : Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)",
     ]:
         [let_var, cond] = children[0:2]
-        env_for_cond = env0.plus_new_entry(let_var, T_Integer_)
+        env_for_cond = env0.plus_new_entry(let_var, T_MathInteger_)
         (t_env, f_env) = tc_cond(cond, env_for_cond)
         result = t_env
 
@@ -5814,7 +5884,7 @@ def tc_nonvalue(anode, env0):
         [let_var, num_expr, var2, var3] = children
         assert same_source_text(var2, let_var)
         assert same_source_text(var3, let_var)
-        new_env = env0.plus_new_entry(let_var, T_Integer_)
+        new_env = env0.plus_new_entry(let_var, T_MathInteger_)
         new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
         result = new_env
 
@@ -5847,11 +5917,20 @@ def tc_nonvalue(anode, env0):
         assert same_source_text(e_var3, e_var)
         assert same_source_text(n_var2, n_var)
         assert same_source_text(n_var3, n_var)
-        new_env = env0.plus_new_entry(e_var, T_Integer_).plus_new_entry(n_var, T_Integer_)
+        new_env = env0.plus_new_entry(e_var, T_MathInteger_).plus_new_entry(n_var, T_MathInteger_)
         (t_env, f_env) = tc_cond(cond, new_env)
         t_env.assert_expr_is_of_type(num_expr, T_MathReal_)
         t_env.assert_expr_is_of_type(product, T_MathReal_)
         result = t_env
+
+    elif p == "{COMMAND} : Let {var} be the largest possible non-negative integer not larger than {var} such that {CONDITION}; but if there is no such integer, let {var} be {EXPR}.":
+        [let_var, limit_var, cond, let_var2, default_expr] = children
+        assert let_var.source_text() == let_var2.source_text()
+        env0.assert_expr_is_of_type(limit_var, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(default_expr, T_MathInteger_)
+        env_for_cond = env0.plus_new_entry(let_var, T_MathNonNegativeInteger_)
+        (t_env, f_env) = tc_cond(cond, env_for_cond)
+        result = env0.plus_new_entry(let_var, T_MathInteger_)
 
     elif p in [
         r"{SMALL_COMMAND} : let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria",
@@ -5859,9 +5938,9 @@ def tc_nonvalue(anode, env0):
     ]:
         [vara, varb, varc, cond] = children[0:4]
         env_for_cond = (
-            env0.plus_new_entry(vara, T_Integer_)
-                .plus_new_entry(varb, T_Integer_)
-                .plus_new_entry(varc, T_Integer_)
+            env0.plus_new_entry(vara, T_MathInteger_)
+                .plus_new_entry(varb, T_MathInteger_)
+                .plus_new_entry(varc, T_MathInteger_)
         )
         (t_env, f_env) = tc_cond(cond, env_for_cond)
         result = env_for_cond
@@ -5905,7 +5984,7 @@ def tc_nonvalue(anode, env0):
         # i.e., of the internal closure returned by the algorithm
         # associated with <emu-grammar>Pattern :: Disjunction</emu-grammar>)
         # todo: move this step to that closure.
-        result = env0.plus_new_entry('_eUTF_', T_Integer_)
+        result = env0.plus_new_entry('_eUTF_', T_MathInteger_)
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.":
         [prod_ref, res_type_name, res_var] = children
@@ -5913,23 +5992,23 @@ def tc_nonvalue(anode, env0):
             'Matcher'         : T_Matcher,
             'CharSet'         : T_CharSet,
             'character'       : T_character_,
-            'integer'         : T_Integer_,
+            'integer'         : T_MathInteger_,
         }[res_type_name.source_text()]
         result = env0.plus_new_entry(res_var, res_t)
 
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the three results: an integer {var}, an integer (or &infin;) {var}, and Boolean {var}.":
+    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.":
         [prod_ref, i_var, ii_var, b_var] = children
         result = (env0
-            .plus_new_entry(i_var, T_Integer_)
-            .plus_new_entry(ii_var, T_Integer_)
+            .plus_new_entry(i_var, T_MathInteger_)
+            .plus_new_entry(ii_var, T_MathInteger_)
             .plus_new_entry(b_var, T_Boolean)
         )
 
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the two results: an integer {var} and an integer (or &infin;) {var}.":
+    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the two results: an integer {var} and an integer (or +&infin;) {var}.":
         [prod_ref, i_var, ii_var] = children
         result = (env0
-            .plus_new_entry(i_var, T_Integer_)
-            .plus_new_entry(ii_var, T_Integer_)
+            .plus_new_entry(i_var, T_MathInteger_)
+            .plus_new_entry(ii_var, T_MathInteger_)
         )
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.":
@@ -5940,10 +6019,10 @@ def tc_nonvalue(anode, env0):
             .plus_new_entry(b_var, T_Boolean)
         )
 
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} with {PRODUCT} as its {var} argument to obtain an? {TYPE_NAME} {var}.":
-        [prod_ref, product, p, r_type, r_var] = children
+    elif p == r"{COMMAND} : Evaluate {PROD_REF} with {EX} as its {var} argument to obtain an? {TYPE_NAME} {var}.":
+        [prod_ref, arg, p, r_type, r_var] = children
         assert p.source_text() == '_direction_'
-        env0.assert_expr_is_of_type(product, T_Integer_)
+        env0.assert_expr_is_of_type(arg, T_MathInteger_)
         result = (
             env0
             .plus_new_entry(r_var, parse_type_string(r_type.source_text()))
@@ -5952,17 +6031,17 @@ def tc_nonvalue(anode, env0):
     elif p == r"{COMMAND} : Evaluate {PROD_REF} with argument {var} to obtain an? {TYPE_NAME} {var}.":
         [prod_ref, arg, r_type, r_var] = children
         assert arg.source_text() == '_direction_'
-        env0.assert_expr_is_of_type(arg, T_Integer_)
+        env0.assert_expr_is_of_type(arg, T_MathInteger_)
         result = (
             env0
             .plus_new_entry(r_var, parse_type_string(r_type.source_text()))
         )
 
-    elif p == r"{COMMAND} : Find a value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
+    elif p == r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
         [var, cond, literal] = children
         # once, in MakeDay
         env0.assert_expr_is_of_type(literal, T_Number)
-        env1 = env0.plus_new_entry(var, T_Number)
+        env1 = env0.plus_new_entry(var, T_FiniteNumber_)
         (t_env, f_env) = tc_cond(cond, env1)
         proc_add_return(env1, T_Number, literal)
         result = env1
@@ -5997,7 +6076,7 @@ def tc_nonvalue(anode, env0):
 #        env0.assert_expr_is_of_type(s_var, T_String)
 #        env0.assert_expr_is_of_type(needle, T_String)
 #        proc_add_return(env0, T_String, s_var3)
-#        result = env0.plus_new_entry(leta_var, T_Integer_).plus_new_entry(letb_var, T_String)
+#        result = env0.plus_new_entry(leta_var, T_MathInteger_).plus_new_entry(letb_var, T_String)
 # ^ obsoleted by PR 2021
 
     elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.":
@@ -6114,18 +6193,26 @@ def tc_nonvalue(anode, env0):
     # IF stuff
 
     elif p in [
+        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.',
+        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.',
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.',
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.',
-        r"{IF_CLOSED} : If {CONDITION}&mdash;note that these mathematical values are both finite and not both zero&mdash;{SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.",
     ]:
         [cond, t_command, f_command] = children
         (t_env, f_env) = tc_cond(cond, env0)
         t_benv = tc_nonvalue(t_command, t_env)
         f_benv = tc_nonvalue(f_command, f_env)
         result = env_or(t_benv, f_benv)
+
+    elif p == r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.':
+        [cond_a, command_a, cond_b, command_b, command_c] = children
+        (a_t_env, a_f_env) = tc_cond(cond_a, env0)
+        a_benv = tc_nonvalue(command_a, a_t_env)
+        (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
+        b_benv = tc_nonvalue(command_b, b_t_env)
+        c_benv = tc_nonvalue(command_c, b_f_env)
+        result = envs_or([a_benv, b_benv, c_benv])
 
 #    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.":
 #        [cond, t_command, cond2, f_command] = children
@@ -6489,7 +6576,7 @@ def tc_nonvalue(anode, env0):
         elif each_thing.prod.rhs_s == r"index {var} of {var}":
             [loop_var, collection_var] = each_thing.children
             env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
-            env_for_commands = env0.plus_new_entry(loop_var, T_Integer_)
+            env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
 
         elif each_thing.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event {var} of SharedDataBlockEventSet({var})":
             [loop_var, collection_var] = each_thing.children
@@ -6518,13 +6605,19 @@ def tc_nonvalue(anode, env0):
             r"integer {var} such that {CONDITION}",
         ]:
             [loop_var, condition] = each_thing.children
-            env1 = env0.plus_new_entry(loop_var, T_Integer_)
+            env1 = env0.plus_new_entry(loop_var, T_MathInteger_)
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
         elif each_thing.prod.rhs_s == r"integer {var} starting with 0 such that {CONDITION}, in ascending order":
             [loop_var, condition] = each_thing.children
-            env1 = env0.plus_new_entry(loop_var, T_Integer_)
+            env1 = env0.plus_new_entry(loop_var, T_MathInteger_)
+            (tenv, fenv) = tc_cond(condition, env1)
+            env_for_commands = tenv
+
+        elif each_thing.prod.rhs_s == r"non-negative integer {var} starting with 0 such that {CONDITION}, in ascending order":
+            [loop_var, condition] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_MathNonNegativeInteger_)
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
@@ -6946,7 +7039,7 @@ def tc_nonvalue(anode, env0):
 
 #    elif p == r"{COMMAND} : Increment {var}.":
 #        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_MathInteger_)
 #        result = env0
 #
 #    elif p in [
@@ -6957,13 +7050,13 @@ def tc_nonvalue(anode, env0):
 #        r"{SMALL_COMMAND} : increase {var} by {NUM_LITERAL}",
 #    ]:
 #        [var, num_literal] = children
-#        env0.assert_expr_is_of_type(num_literal, T_Integer_)
-#        result = env0.ensure_expr_is_of_type(var, T_Integer_)
+#        env0.assert_expr_is_of_type(num_literal, T_MathInteger_)
+#        result = env0.ensure_expr_is_of_type(var, T_MathInteger_)
 #
 #    elif p == r'{COMMAND} : Increment {var} and {var} each by {NUM_LITERAL}.':
 #        [vara, varb, num_literal] = children
-#        env0.assert_expr_is_of_type(num_literal, T_Integer_)
-#        result = env0.ensure_expr_is_of_type(vara, T_Integer_).ensure_expr_is_of_type(varb, T_Integer_)
+#        env0.assert_expr_is_of_type(num_literal, T_MathInteger_)
+#        result = env0.ensure_expr_is_of_type(vara, T_MathInteger_).ensure_expr_is_of_type(varb, T_MathInteger_)
 
     elif p == r'{COMMAND} : {note}':
         result = env0
@@ -7006,17 +7099,17 @@ def tc_nonvalue(anode, env0):
 
     ]:
         [var1, var2, var3, var4] = children
-        env0.assert_expr_is_of_type(var1, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(var1, ListType(T_MathInteger_))
         env1 = env0.ensure_expr_is_of_type(var2, T_Data_Block)
         assert var3.children == var2.children
-        env0.assert_expr_is_of_type(var4, T_Integer_)
+        env0.assert_expr_is_of_type(var4, T_MathInteger_)
         result = env1
 
     elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.":
         [noi, w_var, t_var, *blah] = children
         env0.assert_expr_is_of_type(noi, T_not_returned)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(t_var, T_Number)
+        env0.assert_expr_is_of_type(t_var, T_MathNonNegativeInteger_)
         result = env0
 
     elif p in [
@@ -7171,7 +7264,7 @@ def tc_nonvalue(anode, env0):
         [item_var, list_var, index_ex] = children
         list_type = env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
-        env0.assert_expr_is_of_type(index_ex, T_Integer_)
+        env0.assert_expr_is_of_type(index_ex, T_MathInteger_)
         result = env0
 
     elif p in [
@@ -7206,7 +7299,7 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Add 1 to {var}.":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         result = env0
 
     elif p == r"{COMMAND} : Remove the last element of {SETTABLE}.":
@@ -7260,8 +7353,8 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Subtract {NUM_LITERAL} from {var}.":
         [lit, var] = children
-        env0.assert_expr_is_of_type(lit, T_Integer_)
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(lit, T_MathInteger_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         result = env0
 
     elif p == r"{COMMAND} : Notify the agent {var}.":
@@ -7299,7 +7392,7 @@ def tc_nonvalue(anode, env0):
 
 #    elif p == r"{COMMAND} : Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.":
 #        [var] = children
-#        env0.assert_expr_is_of_type(var, ListType(T_Integer_))
+#        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
 #        result = env0
 # ^ obsoleted by PR 1907
 
@@ -7338,11 +7431,9 @@ def tc_nonvalue(anode, env0):
 
         # so this is fine:
         env0.assert_expr_is_of_type(svar, T_String)
-        # but this is not:
-        env0.assert_expr_is_of_type(pvar, T_Integer_)
+        env0.assert_expr_is_of_type(pvar, T_IntegralNumber_)
 
-        # so generalize the list type:
-        result = env0.with_expr_type_replaced(list_var, ListType(T_Tangible_))
+        result = env0.with_expr_type_replaced(list_var, ListType(T_String | T_IntegralNumber_))
 
     elif p == r"{COMMAND} : No action is required.":
         [] = children
@@ -7784,11 +7875,11 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_function_object_, asserting)
 
-    elif p == r'{CONDITION_1} : {var}, {var}, and {var} are integer values &ge; 0':
+    elif p == r'{CONDITION_1} : {var}, {var}, and {var} are non-negative integers':
         [vara, varb, varc] = children
-        (a_t_env, a_f_env) = env0.with_type_test(vara, 'is a', T_Integer_, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(varb, 'is a', T_Integer_, asserting)
-        (c_t_env, c_f_env) = env0.with_type_test(varc, 'is a', T_Integer_, asserting)
+        (a_t_env, a_f_env) = env0.with_type_test(vara, 'is a', T_MathInteger_, asserting)
+        (b_t_env, b_f_env) = env0.with_type_test(varb, 'is a', T_MathInteger_, asserting)
+        (c_t_env, c_f_env) = env0.with_type_test(varc, 'is a', T_MathInteger_, asserting)
         return (
             envs_and([a_t_env, b_t_env, c_t_env]),
             envs_or([a_f_env, b_f_env, c_f_env])
@@ -7838,7 +7929,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{CONDITION_1} : {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}':
         [var, ex] = children
-        env0.assert_expr_is_of_type(ex, T_Integer_)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return env0.with_type_test(var, 'is a', ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event), asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of Source Text Module Records":
@@ -7876,7 +7967,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is not an empty List":
@@ -7929,15 +8020,15 @@ def tc_cond_(cond, env0, asserting):
 # PR 1567 obsoleted:
 #    elif p == r'{CONDITION_1} : {var} is an integer value &ge; 0':
 #        [var] = children
-#        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+#        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
 #
 #    elif p == r"{CONDITION_1} : {var} is an integer Number &ge; 0":
 #        [var] = children
-#        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+#        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
 #
 #    elif p == r"{CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}":
 #        [var, lita, litb] = children
-#        return env0.with_type_test(var, 'is a', T_Integer_, asserting)
+#        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
 
     elif p in [
         r'{CONDITION_1} : {EXPR} is an object',
@@ -8084,23 +8175,10 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{TYPE_TEST} : Both Type({var}) and Type({var}) are Number or both are BigInt":
         [vara, varb] = children
-        (a_t, env1) = tc_expr(vara, env0); assert env1 is env0
-        (b_t, env1) = tc_expr(varb, env0); assert env1 is env0
-        # XXX clean this up
         assert asserting
-        if (
-            a_t == T_Number and b_t == T_Number
-            or
-            a_t == T_BigInt and b_t == T_BigInt
-        ):
-            # assertion succeeded
-            pass
-        else:
-            add_pass_error(
-                cond,
-                "STA can't confirm assertion blah"
-            )
-        return (env0, env0)
+        env1 = env0.ensure_expr_is_of_type(vara, T_Number | T_BigInt)
+        env2 = env1.ensure_expr_is_of_type(varb, T_Number | T_BigInt)
+        return (env2, env2)
 
 #    elif p == r"{CONDITION_1} : {var} is a String exotic object":
 #        [var] = children
@@ -8243,6 +8321,20 @@ def tc_cond_(cond, env0, asserting):
             env0
         )
 
+    elif p == r"{CONDITION_1} : {var} is a non-negative integer":
+        [var] = children
+        return (
+            env0.with_expr_type_narrowed(var, T_MathInteger_),
+            env0
+        )
+
+    elif p == r"{CONDITION_1} : {var} is a non-negative integral Number":
+        [var] = children
+        return (
+            env0.with_expr_type_narrowed(var, T_IntegralNumber_),
+            env0
+        )
+
     elif p in [
         r"{CONDITION_1} : {var} is an integer index",
         r"{CONDITION_1} : {var} is an array index",
@@ -8320,10 +8412,10 @@ def tc_cond_(cond, env0, asserting):
                 t = T_constructor_object_
             elif callee_op_name == 'IsPropertyKey':
                 t = T_String | T_Symbol
-            elif callee_op_name == 'IsInteger':
-                t = T_Integer_
+            elif callee_op_name == 'IsIntegralNumber':
+                t = T_IntegralNumber_
             elif callee_op_name == 'IsNonNegativeInteger':
-                t = T_Integer_
+                t = T_IntegralNumber_
             else:
                 t = None
             #
@@ -8355,8 +8447,8 @@ def tc_cond_(cond, env0, asserting):
         (lit_type, lit_env) = tc_expr(literal, env0)
         assert lit_env is env0
 
-        if lit_type in [T_Undefined, T_Null, T_empty_, T_not_in_node, T_match_failure_, T_Infinity_]:
-            # i.e., the literal is *undefined* or *null* or ~empty~ or ~[empty]~ or ~failure~ or &infin;
+        if lit_type in [T_Undefined, T_Null, T_empty_, T_not_in_node, T_match_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_]:
+            # i.e., the literal is *undefined* or *null* or ~empty~ or ~[empty]~ or ~failure~ or *NaN* or +&infin; or -&infin;
             # Because the type has only one value,
             # a value-comparison is equivalent to a type-comparison.
             return env0.with_type_test(ex, copula, lit_type, asserting)
@@ -8430,8 +8522,11 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(ex, T_Boolean | T_Undefined)
             return (env0, env0)
 
+        elif lita_type == T_NaN_Number_ and litb_type == T_InfiniteNumber_:
+            return (env0, env0) #XXX
+
         else:
-            assert 0
+            assert 0, (lita_type, litb_type)
 
 # 1411 obsoleted:
 #    elif p == r"{CONDITION_1} : {EX} is either not present or {LITERAL}":
@@ -8461,9 +8556,9 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}':
         [exa, exb, lit] = children
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
-        if lit_type == T_Undefined:
-            (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', T_Undefined, asserting)
-            (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', T_Undefined, asserting)
+        if lit_type in [T_Undefined, T_NaN_Number_]:
+            (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', lit_type, asserting)
+            (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', lit_type, asserting)
             return (
                 env_and(a_t_env, b_t_env),
                 env_or(a_f_env, b_f_env)
@@ -8472,6 +8567,26 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(exa, lit_type)
             env0.assert_expr_is_of_type(exb, lit_type)
             return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is finite":
+        [var] = children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number):
+            return env1.with_type_test(var, 'is a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'is a', T_MathReal_, asserting)
+        else:
+            assert 0
+
+    elif p == r"{CONDITION_1} : {var} is not finite":
+        [var] = children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number):
+            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
+        else:
+            assert 0
 
     elif p == r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events":
         # XXX spec is ambiguous: "each is A or B" vs "either both A or both B"
@@ -8489,7 +8604,10 @@ def tc_cond_(cond, env0, asserting):
         assert litb.source_text().startswith('*+&infin;*')
         assert litc.source_text().startswith('*-&infin;*')
         env0.assert_expr_is_of_type(var, T_Number)
-        return (env0, env0)
+        return (
+            env0.with_expr_type_narrowed(var, T_NaN_Number_ | T_InfiniteNumber_ | T_IntegralNumber_),
+            env0.with_expr_type_narrowed(var, T_NonIntegralFiniteNumber_)
+        )
 
     elif p in [
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, or {LITERAL}",
@@ -8501,7 +8619,6 @@ def tc_cond_(cond, env0, asserting):
         # r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}", # PR 1546 obsoleted
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {var} is not {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
     ]:
         [var, *lit_] = children
         assert len(lit_) in [3,4,5,6]
@@ -8511,8 +8628,7 @@ def tc_cond_(cond, env0, asserting):
             # assert envi is env0
             lit_types.append(ti)
         lt = union_of_types(lit_types)
-        env1 = env0.ensure_expr_is_of_type(var, lt)
-        return (env1, env1)
+        return env0.with_type_test(var, 'is a', lt, asserting)
 
     elif p == r"{CONDITION_1} : {var} is either {LITERAL} or an? {nonterminal}":
         # Once, in EvaluateNew
@@ -8532,14 +8648,14 @@ def tc_cond_(cond, env0, asserting):
 #        [var, cond] = children
 #        (t_env, f_env) = tc_cond(cond, env0)
 #        return (
-#            t_env.with_expr_type_narrowed(var, T_Integer_),
+#            t_env.with_expr_type_narrowed(var, T_MathInteger_),
 #            t_env
 #        )
 #
 #    elif p == r"{CONDITION_1} : {var} is a nonnegative integer":
 #        [var] = children
 #        return (
-#            env0.with_expr_type_narrowed(var, T_Integer_),
+#            env0.with_expr_type_narrowed(var, T_MathInteger_),
 #            env0
 #        )
 
@@ -8774,14 +8890,14 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}":
         [i_var, m_var, cond] = children
-        env0.assert_expr_is_of_type(m_var, T_Integer_)
-        env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
+        env0.assert_expr_is_of_type(m_var, T_MathInteger_)
+        env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(cond, env_for_cond)
 
 #    elif p == r"{CONDITION_1} : there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}":
 #        [i_var, min_var, conda, condb] = children
-#        env0.assert_expr_is_of_type(min_var, T_Integer_)
-#        env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
+#        env0.assert_expr_is_of_type(min_var, T_MathInteger_)
+#        env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
 #        (at_env, af_env) = tc_cond(conda, env_for_cond)
 #        (bt_env, bf_env) = tc_cond(condb, env_for_cond)
 #        return (env_and(at_env, bt_env), env_or(af_env, bf_env))
@@ -8789,20 +8905,20 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}":
         [i_var, conda, condb] = children
-        env_for_cond = env0.plus_new_entry(i_var, T_Integer_)
+        env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         (at_env, af_env) = tc_cond(conda, env_for_cond)
         (bt_env, bf_env) = tc_cond(condb, env_for_cond)
         return (env_and(at_env, bt_env), env_or(af_env, bf_env))
 
-    elif p == r"{CONDITION_1} : for all nonnegative integers {var} less than {var}, {CONDITION_1}":
-        [loop_var, min_var, cond] = children
-        env0.assert_expr_is_of_type(min_var, T_Integer_)
-        env_for_cond = env0.plus_new_entry(loop_var, T_Integer_)
-        return tc_cond(cond, env_for_cond)
+    elif p == r"{CONDITION_1} : for all non-negative integers {var} such that {CONDITION_1}, {CONDITION_1}":
+        [loop_var, conda, condb] = children
+        env_for_conda = env0.plus_new_entry(loop_var, T_MathInteger_)
+        (env_for_condb, _) = tc_cond(conda, env_for_conda)
+        return tc_cond(condb, env_for_condb)
 
     elif p == r"{CONDITION_1} : there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}":
         [let_var, i, cond] = children
-        env0.assert_expr_is_of_type(i, T_Integer_)
+        env0.assert_expr_is_of_type(i, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
         return tc_cond(cond, env_for_cond)
 
@@ -8811,13 +8927,13 @@ def tc_cond_(cond, env0, asserting):
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : {SETTABLE} is not equal to {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive":
+    elif p == r"{CONDITION_1} : {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive":
         [seta, setb, let_var, lo, hi] = children
-        env0.assert_expr_is_of_type(lo, T_Integer_)
-        env0.assert_expr_is_of_type(hi, T_Integer_)
-        env_for_settables = env0.plus_new_entry(let_var, T_Integer_)
-        env_for_settables.assert_expr_is_of_type(seta, T_Integer_)
-        env_for_settables.assert_expr_is_of_type(setb, T_Integer_)
+        env0.assert_expr_is_of_type(lo, T_MathInteger_)
+        env0.assert_expr_is_of_type(hi, T_MathInteger_)
+        env_for_settables = env0.plus_new_entry(let_var, T_MathInteger_)
+        env_for_settables.assert_expr_is_of_type(seta, T_MathInteger_)
+        env_for_settables.assert_expr_is_of_type(setb, T_MathInteger_)
         return (env0, env0)
 
     # --------------------------------------------------
@@ -8831,18 +8947,57 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}':
         [a, _, b, _, c] = children
-        env0.assert_expr_is_of_type(a, T_Integer_)
-        env0.ensure_expr_is_of_type(b, T_Number)
-        env0.assert_expr_is_of_type(c, T_Integer_)
-        return (env0, env0)
+        env0.assert_expr_is_of_type(a, T_MathInteger_)
+        env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
+        env0.assert_expr_is_of_type(c, T_MathInteger_)
+        env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
+        return (env2, env2)
 
     elif p in [
         r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}",
         r'{NUM_COMPARISON} : {var} (is less than) {FACTOR}',
     ]:
-        [a, _, b] = children
+        [a, op, b] = children
         (a_t, env1) = tc_expr(a, env0); assert env1 is env0
         (b_t, env1) = tc_expr(b, env0); assert env1 is env0
+
+        if a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) and b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            # great!
+
+            # XXX: `_x_ &lt; Y` excludes _x_ being +&infin;
+            # kludge:
+            if op.source_text() in ['&lt;', 'is less than', '&le;'] and b.source_text() == '0':
+                (is_t,   _) = a_t.split_by(T_MathReal_ | T_MathNegInfinity_)
+                (isnt_t, _) = a_t.split_by(T_MathReal_ | T_MathPosInfinity_)
+                return (
+                    env0.with_expr_type_narrowed(a, is_t),
+                    env0.with_expr_type_narrowed(a, isnt_t)
+                )
+        elif (a_t.is_a_subtype_of_or_equal_to(T_Number) and b_t.is_a_subtype_of_or_equal_to(T_Number)):
+            # Probably good, except for NaN
+
+            if (
+                T_NaN_Number_.is_a_subtype_of_or_equal_to(a_t)
+                or
+                T_NaN_Number_.is_a_subtype_of_or_equal_to(b_t)
+            ):
+                add_pass_error(
+                    cond,
+                    "possible comparison involving NaN"
+                )
+
+            if op.source_text() in ['=', '&ne;']:
+                add_pass_error(
+                    cond,
+                    "We avoid Number comparisons involving = or &ne;"
+                )
+
+        else:
+            add_pass_error(
+                cond,
+                f"comparison has incompatible types: {a_t} vs. {b_t}"
+            )
+        return (env0, env0)
 
         if (
             a_t.is_a_subtype_of_or_equal_to(T_MathReal_)
@@ -8852,14 +9007,14 @@ def tc_cond_(cond, env0, asserting):
             assert a_t == T_MathInteger_
             assert b_t == T_MathInteger_
             env2 = env0
-        elif a_t == T_code_unit_ and b_t == T_Integer_:
+        elif a_t == T_code_unit_ and b_t == T_MathInteger_:
             env2 = env0
-        elif a_t == T_BigInt and b_t == T_Integer_:
+        elif a_t == T_BigInt and b_t == T_MathInteger_:
             env2 = env0
         else:
             env1 = env0.ensure_expr_is_of_type(a, T_Number)
             env2 = env1.ensure_expr_is_of_type(b, T_Number)
-            # It's almost always T_Integer_ for both.
+            # It's almost always T_MathInteger_ for both.
 
         return (env2, env2)
 
@@ -8868,9 +9023,9 @@ def tc_cond_(cond, env0, asserting):
         r'{NUM_COMPARISON} : {NUM_COMPARAND} is less than {NUM_LITERAL} or greater than {NUM_LITERAL}',
     ]:
         [a,b,c] = children
-        env0.assert_expr_is_of_type(a, T_Integer_)
-        env0.assert_expr_is_of_type(b, T_Integer_)
-        env0.assert_expr_is_of_type(c, T_Integer_)
+        env0.assert_expr_is_of_type(a, T_MathInteger_)
+        env0.assert_expr_is_of_type(b, T_MathInteger_)
+        env0.assert_expr_is_of_type(c, T_MathInteger_)
         return (env0, env0)
 
     elif p == r'{CONDITION_1} : the file CaseFolding.txt of the Unicode Character Database provides a simple or common case folding mapping for {var}':
@@ -8990,10 +9145,10 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {EX} is different from {EX}",
         r"{CONDITION_1} : {EX} is equal to {EX}",
-        r"{CONDITION_1} : {EX} is not equal to {EX}",
         r"{CONDITION_1} : {EX} is the same as {EX}",
         # r"{CONDITION_1} : {var} and {var} are the same", # obsoleted by PR #1046
         r"{CONDITION_1} : {var} is not the same as {var}",
+        r"{CONDITION_1} : {var} is not the same value as {var}",
     ]:
         [exa, exb] = children
         (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
@@ -9007,13 +9162,7 @@ def tc_cond_(cond, env0, asserting):
             env1 = env0.with_expr_type_replaced(exb, exa_type)
         elif exa_type == T_Environment_Record | T_Undefined and exb_type == T_Environment_Record:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
-        elif exa_type == T_Integer_ and exb_type == T_Number:
-            # XXX could be more specific
-            env1 = env0
-        elif exa_type == T_Number and exb_type == T_Number | T_BigInt:
-            env1 = env0
-        elif exa_type == T_BigInt | T_Integer_ and exb_type == T_BigInt | T_Number:
-            # Atomics.wait
+        elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
             env1 = env0
         else:
             assert 0, (exa_type, exb_type)
@@ -9092,7 +9241,7 @@ def tc_cond_(cond, env0, asserting):
         assert a_t != T_TBD
         if b_t == T_TBD:
             env1 = env0.with_expr_type_replaced(b_ex, a_t)
-        elif a_t == T_Number and b_t == T_Integer_:
+        elif a_t == T_Number and b_t == T_MathInteger_:
             env1 = env0
         elif a_t == T_throw_ | T_Undefined and b_t == T_throw_:
             # Evaluate()
@@ -9108,7 +9257,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} has {var} in its range':
         [sdbe_var, loc_var] = children
         env1 = env0.ensure_expr_is_of_type(sdbe_var, T_Shared_Data_Block_event)
-        env2 = env1.ensure_expr_is_of_type(loc_var, T_Integer_)
+        env2 = env1.ensure_expr_is_of_type(loc_var, T_MathInteger_)
         return (env2, env2)
 
     elif p in [
@@ -9148,7 +9297,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}':
         [ab_var, st_var, t_var] = children
         env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-        env0.assert_expr_is_of_type(st_var, T_Integer_)
+        env0.assert_expr_is_of_type(st_var, T_MathInteger_)
         env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type_)
         return (env0, env0)
 
@@ -9180,12 +9329,12 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{CONDITION_1} : {var} is as small as possible':
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
 
     elif p == r'{CONDITION_1} : {var} is odd':
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
 
     elif p == r'{CONDITION_1} : {PROD_REF} is `export` {nonterminal}':
@@ -9228,15 +9377,9 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {EX} is -1",
         r"{CONDITION_1} : {EX} is not -1",
-        r"{CONDITION_1} : {EX} is +1",
     ]:
         [ex] = children
-        env0.ensure_expr_is_of_type(ex, T_Integer_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is not finite":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}":
@@ -9293,12 +9436,6 @@ def tc_cond_(cond, env0, asserting):
         [a_var, b_var] = children
         env0.assert_expr_is_of_type(a_var, T_String)
         env0.assert_expr_is_of_type(b_var, T_String)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : the mathematical value of {var} is less than the mathematical value of {var}":
-        [a_var, b_var] = children
-        env0.assert_expr_is_of_type(a_var, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(b_var, T_Number|T_BigInt)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {EX} is absent or has the value {LITERAL}":
@@ -9513,16 +9650,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    elif p == r'''{CONDITION_1} : The value of {var}'s {starred_str} property is {EX}''':
+    elif p == r'''{CONDITION_1} : The mathematical value of {var}'s {starred_str} property is {EX}''':
         [var, prop_name, ex] = children
         env0.assert_expr_is_of_type(var, T_Object)
-        env0.assert_expr_is_of_type(ex, T_Integer_)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (env0, env0)
 
     elif p == r"{NUM_COMPARISON} : {var} is finite and less than {var}":
         [avar, bvar] = children
-        env0.assert_expr_is_of_type(avar, T_Integer_) # XXX or infinity
-        env0.assert_expr_is_of_type(bvar, T_Integer_)
+        env0.assert_expr_is_of_type(avar, T_MathInteger_) # XXX or infinity
+        env0.assert_expr_is_of_type(bvar, T_MathInteger_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : the character {EX} is one of {nonterminal}":
@@ -9535,11 +9672,6 @@ def tc_cond_(cond, env0, asserting):
         [anoi, bnoi] = children
         env0.assert_expr_is_of_type(anoi, T_character_)
         env0.assert_expr_is_of_type(bnoi, T_character_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is finite":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}":
@@ -9577,25 +9709,25 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits":
         [posa, posb, var] = children
-        env0.assert_expr_is_of_type(posa, T_Integer_)
-        env0.assert_expr_is_of_type(posb, T_Integer_)
+        env0.assert_expr_is_of_type(posa, T_MathInteger_)
+        env0.assert_expr_is_of_type(posb, T_MathInteger_)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
 #    elif p == r"{CONDITION_1} : the most significant bit in {var} is {NUM_LITERAL}":
 #        [var, lit] = children
-#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
 #        return (env0, env0)
 #
 #    elif p == r"{CONDITION_1} : the two most significant bits in {var} are not 10":
 #        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
 #        return (env0, env0)
 # ^ obsoleted by PR 2029
 
     elif p == r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point":
         [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {U_LITERAL}":
@@ -9625,7 +9757,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}":
         [ivar, rvar, nonterminal] = children
-        env0.assert_expr_is_of_type(ivar, T_Integer_)
+        env0.assert_expr_is_of_type(ivar, T_MathInteger_)
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
@@ -9635,28 +9767,28 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [va, vb, emu_xref1, emu_xref2] = children
-        env0.assert_expr_is_of_type(va, ListType(T_Integer_))
-        env0.assert_expr_is_of_type(vb, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(va, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(vb, ListType(T_MathInteger_))
         return (env0, env0)
     
     elif p == r"{CONDITION_1} : {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}":
         [noi, emu_xref] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(noi, ListType(T_MathInteger_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} does not have a Generator component":
@@ -9672,7 +9804,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {EX} is listed in the Code Unit Value column of {h_emu_xref}":
         [ex, emu_xref] = children
         assert emu_xref.source_text() == '<emu-xref href="#table-json-single-character-escapes"></emu-xref>'
-        env0.assert_expr_is_of_type(ex, T_Integer_)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (env0, env0)
 
     # ----
@@ -9690,15 +9822,15 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {EX} and {EX} are valid byte offsets within the memory of {var}":
         [offset1, offset2, sdb] = children
-        env1 = env0.ensure_expr_is_of_type(offset1, T_Integer_)
-        env1.assert_expr_is_of_type(offset2, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(offset1, T_MathInteger_)
+        env1.assert_expr_is_of_type(offset2, T_MathInteger_)
         env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         return (env1, env1)
 
     elif p == r"{CONDITION_1} : {var} is divisible by {NUM_LITERAL}":
         [var, lit] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        env0.assert_expr_is_of_type(lit, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        env0.assert_expr_is_of_type(lit, T_MathInteger_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}":
@@ -9729,16 +9861,16 @@ def tc_cond_(cond, env0, asserting):
 #    elif p == r"{CONDITION_1} : the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits":
 #        [e1, e2, e3, e4, var] = children
 #        env0.assert_expr_is_of_type(var, T_String)
-#        env0.assert_expr_is_of_type(e1, T_Integer_)
-#        env0.assert_expr_is_of_type(e2, T_Integer_)
-#        env0.assert_expr_is_of_type(e3, T_Integer_)
-#        env0.assert_expr_is_of_type(e4, T_Integer_)
+#        env0.assert_expr_is_of_type(e1, T_MathInteger_)
+#        env0.assert_expr_is_of_type(e2, T_MathInteger_)
+#        env0.assert_expr_is_of_type(e3, T_MathInteger_)
+#        env0.assert_expr_is_of_type(e4, T_MathInteger_)
 #        return (env0, env0)
 #
 #    elif p == r"{CONDITION_1} : the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits":
 #        [i1, i2, var] = children
-#        env0.assert_expr_is_of_type(i1, T_Integer_)
-#        env0.assert_expr_is_of_type(i2, T_Integer_)
+#        env0.assert_expr_is_of_type(i1, T_MathInteger_)
+#        env0.assert_expr_is_of_type(i2, T_MathInteger_)
 #        env0.assert_expr_is_of_type(var, T_String)
 #        return (env0, env0)
 # ^ obsoleted by PR 2021
@@ -9758,7 +9890,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit":
         [svar, rvar] = children
         env0.assert_expr_is_of_type(svar, T_String)
-        env0.assert_expr_is_of_type(rvar, T_Integer_)
+        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} does not have all of the internal slots of an? {TYPE_NAME} Iterator Instance ({h_emu_xref})":
@@ -9792,10 +9924,13 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an integer index &le; {var}":
+    elif p in [
+        r"{CONDITION_1} : {var} is a non-negative integer &le; {var}",
+        r"{CONDITION_1} : {var} is a non-negative integer which is &le; {EXPR}",
+    ]:
         [a, b] = children
-        env0.assert_expr_is_of_type(b, T_Integer_)
-        env1 = env0.ensure_expr_is_of_type(a, T_Integer_)
+        env0.assert_expr_is_of_type(b, T_MathInteger_)
+        env1 = env0.ensure_expr_is_of_type(a, T_MathInteger_)
         return (env1, env1)
 
 #    elif p == r"{CONDITION_1} : {var} is added as a single item rather than spread":
@@ -9812,15 +9947,15 @@ def tc_cond_(cond, env0, asserting):
 
 #    elif p == r"{CONDITION_1} : the number of actual arguments is {NUM_LITERAL}":
 #        [lit] = children
-#        env0.assert_expr_is_of_type(lit, T_Integer_)
+#        env0.assert_expr_is_of_type(lit, T_MathNonNegativeInteger_)
 #        return (env0, env0)
 # ^ obsoleted by PR 2139
 
 #    elif p == r"{CONDITION_1} : the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}":
 #        [sa, k, n, sb] = children
 #        env0.assert_expr_is_of_type(sa, T_String)
-#        env0.assert_expr_is_of_type(k, T_Integer_)
-#        env0.assert_expr_is_of_type(n, T_Integer_)
+#        env0.assert_expr_is_of_type(k, T_MathInteger_)
+#        env0.assert_expr_is_of_type(n, T_MathInteger_)
 #        env0.assert_expr_is_of_type(sb, T_String)
 #        return (env0, env0)
 # ^ obsoleted by PR 2021
@@ -9832,7 +9967,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{NUM_COMPARISON} : {NUM_COMPARAND} is 10 or less":
         [x] = children
-        env0.assert_expr_is_of_type(x, T_Integer_)
+        env0.assert_expr_is_of_type(x, T_MathInteger_)
         return (env0, env0)
 
 # 1411 obsoleted:
@@ -9852,7 +9987,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : The value of {var}'s `length` property is {var}":
         [ovar, ivar] = children
         env0.assert_expr_is_of_type(ovar, T_Object)
-        env0.assert_expr_is_of_type(ivar, T_Integer_)
+        env0.assert_expr_is_of_type(ivar, T_MathInteger_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context":
@@ -10076,10 +10211,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(varc, T_List)
         return (env0, env0)
 
+    elif p == r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}":
+        [a, b] = children
+        env0.assert_expr_is_of_type(a, T_agent_signifier_)
+        env0.assert_expr_is_of_type(b, T_agent_signifier_)
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : The length of {var} is {var}":
         [list_var, len_var] = children
         env0.assert_expr_is_of_type(list_var, T_List)
-        env0.assert_expr_is_of_type(len_var, T_Number)
+        env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is an integral Number":
@@ -10282,6 +10423,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{LOCAL_REF} : {PROD_REF}",
         r"{LOCAL_REF} : {SETTABLE}",
         r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}",
+        r"{NUM_COMPARAND} : {BIT_EX}",
         r"{NUM_COMPARAND} : {FACTOR}",
         r"{NUM_COMPARAND} : {NUM_LITERAL}",
         r"{NUM_COMPARAND} : {PREFIX_PAREN}",
@@ -10331,8 +10473,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LITERAL} : {atat_word}":
         return (T_Symbol, env0)    
 
-    elif p == r"{NUM_LITERAL} : &infin;":
-        return (T_Infinity_, env0)
+    elif p == r"{NUM_LITERAL} : +&infin;":
+        return (T_MathPosInfinity_, env0)
+
+    elif p == r"{NUM_LITERAL} : -&infin;":
+        return (T_MathNegInfinity_, env0)
 
     elif p == r"{LITERAL} : {TYPE_NAME}":
         [type_name] = children
@@ -10497,6 +10642,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_ClassElementKind_, env0)
         elif chars in ['number']:
             return (T_PreferredTypeHint_, env0)
+        elif chars == 'not-matched':
+            return (T_NotMatched_, env0)
         else:
             assert 0, chars
 
@@ -10525,21 +10672,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (ex3_type, ex3_env) = tc_expr(ex3, env2); assert ex3_env is env2
         return (ex3_type, ex3_env)
 
-    elif p in [
-        r"{EXPR} : the largest possible nonnegative integer {var} not larger than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}",
-        # r"{EXPR} : the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}", # obsoleted by PR 2009
-    ]:
-        [let_var, limit_var, cond, let_var2, default] = children
-        assert same_source_text(let_var2, let_var)
-        env0.assert_expr_is_of_type(limit_var, T_Integer_)
-        env0.assert_expr_is_of_type(default, T_Integer_)
-        env_for_cond = env0.plus_new_entry(let_var, T_Integer_)
-        (t_env, f_env) = tc_cond(cond, env_for_cond)
-        return (T_Integer_, t_env)
-
-    elif p == r"{EXPR} : the smallest (closest to *-&infin;*) such integer":
+    elif p == r"{EXPR} : the smallest (closest to -&infin;) such integer":
         [] = children
-        return (T_Integer_, env0)
+        return (T_MathInteger_, env0)
 
     # --------------------------------------------------------
     # invocation of named operation:
@@ -10783,25 +10918,96 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 env0.assert_expr_is_of_type(arg, T_Tangible_|T_empty_)
                 return (T_Tangible_|T_empty_|T_return_|T_throw_, env0)
 
-            elif callee_op_name in ['floor', 'abs']:
+            elif callee_op_name == 'abs':
                 assert len(args) == 1
                 [arg] = args
                 (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                assert arg_type.is_a_subtype_of_or_equal_to(T_Number)
-                if callee_op_name == 'floor':
-                    return_type = T_Integer_
-                elif callee_op_name == 'abs':
-                    return_type = arg_type
+                if arg_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
+                    return (T_MathInteger_, env0)
+                elif arg_type.is_a_subtype_of_or_equal_to(T_MathReal_):
+                    return (T_MathReal_, env0)
                 else:
-                    assert 0
-                return (return_type, env0)
+                    add_pass_error(
+                        arg,
+                        f"expected a MathReal, got {arg_type}"
+                    )
+                    return (T_MathReal_, env0)
+
+            elif callee_op_name == 'floor':
+                assert len(args) == 1
+                [arg] = args
+                env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
+                return (T_MathInteger_, env1)
+
+            elif callee_op_name == '\u211d': # DOUBLE-STRUCK CAPITAL R (fancy_r)
+                assert len(args) == 1
+                [arg] = args
+                (arg_type, arg_env) = tc_expr(arg, env0)
+                if arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_IntegralNumber_):
+                    return (T_MathInteger_, arg_env)
+                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
+                    return (T_MathReal_, env0)
+                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_):
+                    return (T_ExtendedMathReal_, env0)
+                else:
+                    add_pass_error(
+                        arg,
+                        f"expected a BigInt or a non-NaN Number, got {arg_type}"
+                    )
+                    return (T_ExtendedMathReal_, env0)
+
+            elif callee_op_name == '\u2124': # DOUBLE-STRUCK CAPITAL Z (fancy_z)
+                assert len(args) == 1
+                [arg] = args
+                env0.assert_expr_is_of_type(arg, T_MathInteger_)
+                return (T_BigInt, env0)
+
+            elif callee_op_name == '\U0001d53d': # MATHEMATICAL DOUBLE-STRUCK CAPITAL F (fancy_f)
+                assert len(args) == 1
+                [arg] = args
+                (t, env1) = tc_expr(arg, env0)
+                if t.is_a_subtype_of_or_equal_to(T_MathInteger_):
+                    result_type = T_IntegralNumber_
+                elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
+                    result_type = T_IntegralNumber_ | T_InfiniteNumber_
+                elif t.is_a_subtype_of_or_equal_to(T_MathReal_):
+                    result_type = T_Number
+                elif t == T_TBD:
+                    result_type = T_IntegralNumber_ # hm
+                else:
+                    assert 0, t
+                return (result_type, env1)
 
             elif callee_op_name in ['min', 'max']:
                 assert len(args) == 2
                 env1 = env0
+                argtypes = []
                 for arg in args:
-                    env1 = env1.ensure_expr_is_of_type(arg, T_Number)
-                return (T_Integer_, env1)
+                    (t, env1) = tc_expr(arg, env1)
+                    if not t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+                        add_pass_error(arg,
+                            f"arg is of type {t} but param requires ExtendedMathReal"
+                        )
+                        if t == T_MathInteger_ | T_Undefined:
+                            # InnerModuleEvaluation
+                            t = T_MathInteger_
+                    argtypes.append(t)
+
+                if callee_op_name == 'min':
+                    # We allow an arg to be +infinity, but that won't be the result.
+                    # (As long as both args aren't +infinity.)
+                    add_type = T_MathPosInfinity_
+                else:
+                    add_type = T_MathNegInfinity_
+
+                for math_type in [T_MathInteger_, T_MathReal_, T_ExtendedMathReal_]:
+                    if all(
+                        t.is_a_subtype_of_or_equal_to(math_type | add_type)
+                        for t in argtypes
+                    ):
+                        return (math_type, env1)
+                assert 0
+                return (T_ExtendedMathReal_, env1)
 
             elif callee_op_name in [
                 # 30232 Day Number and Time within Day
@@ -10817,9 +11023,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # 30305 Week Day
                 'WeekDay',
 
-                # 30424 Year Number
-                'YearFromTime',
-
                 # 30376 Hours, Minutes, Second, and Milliseconds
                 'HourFromTime',
                 'MinFromTime',
@@ -10830,9 +11033,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             ]:
                 assert len(args) == 1
                 [arg] = args
-                env0.ensure_expr_is_of_type(arg, T_Number)
-                return_type = T_Integer_
-                return (return_type, env0)
+                env1 = env0.ensure_expr_is_of_type(arg, T_FiniteNumber_)
+                return (T_FiniteNumber_, env1)
+
+            # 30424 Year Number
+            elif callee_op_name == 'YearFromTime':
+                assert len(args) == 1
+                [arg] = args
+                env1 = env0.ensure_expr_is_of_type(arg, T_Number)
+                return (T_IntegralNumber_, env1)
+
 
             # ---------------
 
@@ -11180,8 +11390,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
                         field_type = {
                             (T_Environment_Record, 'NewTarget')        : T_Object | T_Undefined,
-                            (T_Module_Record,      'DFSAncestorIndex') : T_Integer_,
-                            (T_Module_Record,      'DFSIndex')         : T_Integer_ | T_Undefined,
+                            (T_Module_Record,      'DFSAncestorIndex') : T_MathInteger_,
+                            (T_Module_Record,      'DFSIndex')         : T_MathInteger_ | T_Undefined,
                             (T_Module_Record,      'EvaluationError')  : T_throw_ | T_Undefined,
                         }[(lhs_t, dsbn_name)]
                         # KeyError here might mean you need to add something to
@@ -11221,6 +11431,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{NUM_LITERAL} : {starred_bigint_lit}":
         return (T_BigInt, env0)
 
+    elif p == r"{NUM_LITERAL} : {starred_int_lit}{h_sub_fancy_z}":
+        [_, _] = children
+        return (T_BigInt, env0)
+
     elif p == r"{EXPR} : the BigInt value that represents {EX}":
         [ex] = children
         env0.assert_expr_is_of_type(ex, T_MathReal_|T_BigInt)
@@ -11228,32 +11442,65 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the BigInt value that corresponds to {var}":
         [var] = children    
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_BigInt, env0)
+
+    elif p == r"{EX} : the BigInt value for {EX}":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_BigInt, env0)
 
     # -------------------------------------------------
     # return T_Number
 
-    elif p == r"{NUM_LITERAL} : {starred_int_lit}":
-        return (T_Integer_, env0)
+    elif p == r"{NUM_LITERAL} : {starred_infinite_lit}{h_sub_fancy_f}":
+        return (T_InfiniteNumber_, env0)
 
     elif p in [
-        r"{NUM_LITERAL} : {starred_nonfinite_lit}",
+        r"{NUM_LITERAL} : {starred_nan_lit}",
         r'{NUM_LITERAL} : the *NaN* Number value',
-        r"{NUM_LITERAL} : 8.64",
-        r"{NUM_LITERAL} : 0.5",
     ]:
+        return (T_NaN_Number_, env0)
+
+    elif p in [
+        r"{NUM_LITERAL} : *0.5*{h_sub_fancy_f}",
+        r"{NUM_LITERAL} : *-0.5*{h_sub_fancy_f}",
+    ]:
+        return (T_NonIntegralFiniteNumber_, env0)
+
+    elif p == r"{NUM_LITERAL} : {starred_int_lit}{h_sub_fancy_f}":
+        [_, _] = children
+        return (T_IntegralNumber_, env0)
+
+    elif p == r"{NUM_LITERAL} : {dec_int_lit}{h_sub_fancy_f}":
+        [_, _] = children
+        add_pass_error(
+            expr,
+            "int lit should be starred?"
+        )
         return (T_Number, env0)
 
     elif p == r'{EXPR} : the Number value that corresponds to {var}':
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_MathInteger_)
         return (T_Number, env1)
 
     elif p == r"{EX} : the Number value for {EX}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_MathReal_)
-        return (T_Number, env0)
+        [ex] = children
+        (ex_type, env1) = tc_expr(ex, env0)
+        # env1 = env0.ensure_expr_is_of_type(ex, T_MathReal_)
+        if ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
+            return (T_IntegralNumber_, env1)
+        elif ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
+            return (T_IntegralNumber_ | T_InfiniteNumber_, env1)
+        elif ex_type.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return (T_Number, env1)
+        else:
+            add_pass_error(
+                ex,
+                f"expected MathReal, got {ex_type}"
+            )
+            return (T_Number, env1)
 
     elif p in [
         r"{EXPR} : the number value that is the same sign as {var} and whose magnitude is {EX}",
@@ -11261,7 +11508,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var, ex] = children
         env0.assert_expr_is_of_type(var, T_Number)
-        env0.assert_expr_is_of_type(ex, T_Number)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_Number, env0)
 
     elif p in [
@@ -11273,7 +11520,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref, var] = children
         assert var.source_text() in ['_type_', '_srcType_']
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
-        return (T_Integer_, env1)
+        return (T_MathInteger_, env1)
 
     elif p in [
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
@@ -11285,7 +11532,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert var.source_text() in ['_constructorName_', '_srcName_', '_arrayTypeName_', '_targetName_', '_typedArrayName_', '_srcType_']
         # print(p, var.source_text(), file=sta_misc_f)
         env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_Integer_, env1)
+        return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)":
         for var in children:
@@ -11310,7 +11557,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign",
-        r"{EXPR} : the result of applying bitwise complement to {var}. The result is a signed 32-bit integer",
+        r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
@@ -11338,14 +11585,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Number, env0)
 
     elif p in [
-        r"{EXPR} : the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer",
-        r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer",
-        r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer",
+        r"{EXPR} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
+        r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
+        r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string",
         r"{EXPR} : the result of applying the bitwise operator @ to {var} and {var}. The result is a signed 32-bit integer",
     ]:
         [avar, bvar] = children
-        env0.assert_expr_is_of_type(avar, T_Integer_)
-        env0.assert_expr_is_of_type(bvar, T_Integer_)
+        env0.assert_expr_is_of_type(avar, T_MathInteger_)
+        env0.assert_expr_is_of_type(bvar, T_MathInteger_)
         return (T_Number, env0)
 
     elif p == r"{EXPR} : the Number value that results from rounding {EX} as described below":
@@ -11354,75 +11601,82 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Number, env0)
 
     elif p in [
-        r"{EXPR} : the smallest (closest to *-&infin;*) integral Number value that is not less than {var}",
-        r"{EXPR} : the greatest (closest to *+&infin;*) integral Number value that is not greater than {var}",
-        r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to *+&infin;* in the case of a tie",
-        r"{EXPR} : the integral Number nearest {var} in the direction of *+0*",
+        r"{EXPR} : the smallest (closest to -&infin;) integral Number value that is not less than {var}",
+        r"{EXPR} : the greatest (closest to +&infin;) integral Number value that is not greater than {var}",
+        r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +&infin; in the case of a tie",
     ]:
         [var] = children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Number, env0)
+
+    elif p == r"{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}":
+        [var, _] = children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
     # --------------------------------------------------------
     # return T_MathInteger_
 
-    elif p == r"{EXPR} : {FACTOR} (a value so large that it will round to *+&infin;*)":
-        [factor] = children
+    elif p == r"{NUM_LITERAL} : {starred_int_lit}":
+        return (T_MathInteger_, env0)
+
+    elif p == r"{EXPR} : {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})":
+        [factor, _] = children
         return (T_MathInteger_, env0)
 
     elif p in [
-        u"{EX} : \\d+{h_sub_math_r}",
-        u"{FACTOR} : \\d+{h_sub_math_r}",
-        u"{BASE} : 10{h_sub_math_r}",
-        u"{FACTOR} : 0x[0-9A-F]+{h_sub_math_r}",
+        u"{EX} : \\d+{h_sub_fancy_r}",
+        u"{FACTOR} : \\d+{h_sub_fancy_r}",
+        u"{BASE} : 10{h_sub_fancy_r}",
+        u"{FACTOR} : 0x[0-9A-F]+{h_sub_fancy_r}",
     ]:
         [_] = children
         return (T_MathInteger_, env0)
 
     elif p in [
-        "{FACTOR} : {math_r}({var})",
-        "{NUM_EXPR} : {math_r}({var})",
+        "{FACTOR} : {fancy_r}({var})",
+        "{NUM_EXPR} : {fancy_r}({var})",
     ]:
         [_, var] = children
         (var_t, env1) = tc_expr(var, env0); assert env1 is env0
-        if var_t.is_a_subtype_of_or_equal_to(T_Integer_):
+        if var_t.is_a_subtype_of_or_equal_to(T_MathInteger_):
             return (T_MathInteger_, env0)
         elif var_t.is_a_subtype_of_or_equal_to(T_Number):
             return (T_MathReal_, env0)
         else:
             assert 0, var_t
 
-    elif p == r"{PRODUCT} : -{h_sub_math_r}{var}":
+    elif p == r"{PRODUCT} : -{h_sub_fancy_r}{var}":
         [_, var] = children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_MathInteger_, env0)
 
     elif p in [
-        r"{EXPR} : the mathematical integer number of code points in {PROD_REF}",
+        r"{EXPR} : the number of code points in {PROD_REF}",
         # r"{EX} : the mathematical integer number of code points in {PROD_REF}", # PR 2151
         r"{EX} : the mathematical value of the number of code points in {PROD_REF}",
     ]:
         [prod_ref] = children
-        return (T_MathInteger_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
-        r"{EXPR} : the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
-        r"{EX} : the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
-        r"{EX} : the mathematical value of the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
+        r"{EXPR} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
+        r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
+        r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
     ]:
         [prod_ref, nont] = children
-        return (T_MathInteger_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EX} : {var} rounded towards 0 to the next integral value":
         [var] = children    
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EX} : the mathematical value of {var} raised to the power {var}":
+    elif p == r"{NUM_EXPR} : {EX} raised to the power {EX}":
         [a, b] = children
-        env0.assert_expr_is_of_type(a, T_BigInt)
-        env0.assert_expr_is_of_type(b, T_BigInt)
-        return (T_MathInteger_, env0)
+        env0.assert_expr_is_of_type(a, T_MathInteger_)
+        env0.assert_expr_is_of_type(b, T_MathInteger_)
+        return (T_MathInteger_, env0) # unless exponent is negative
 
     elif p == r"{PRODUCT} : {FACTOR} &divide; {FACTOR}, rounding down to the nearest integer, including for negative numbers":
         [a, b] = children
@@ -11431,44 +11685,38 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathInteger_, env0)
 
     elif p in [
-        r"{NUM_LITERAL} : {dec_int_lit}{h_sub_math_r}",
-        r"{NUM_LITERAL} : {hex_int_lit}{h_sub_math_r}",
+        r"{NUM_LITERAL} : {dec_int_lit}{h_sub_fancy_r}",
+        r"{NUM_LITERAL} : {hex_int_lit}{h_sub_fancy_r}",
     ]:
         [int_lit, _] = children
         return (T_MathInteger_, env0)
 
-    elif p == r"{BASE} : 10{h_sub_math_r}":
+    elif p == r"{BASE} : 10{h_sub_fancy_r}":
         [_] = children
         return (T_MathInteger_, env0)
 
     elif p == r"{EX} : the integer represented by the 32-bit two's complement bit string {var}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_) # bit string
+        env0.assert_expr_is_of_type(var, T_MathInteger_) # bit string
         return (T_MathInteger_, env0)
-
-    elif p == r"{EX} : the mathematical value of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Number|T_BigInt)
-        return (T_MathReal_, env0)
 
     # --------------------------------------------------------
     # return T_MathReal_
 
     elif p in [
-        u"{PRODUCT} : {FACTOR} &times;{h_sub_math_r} {FACTOR}",
-        u"{SUM} : {var}-{h_sub_math_r}{var}",
-        u"{SUM} : {TERM} -{h_sub_math_r} {TERM}",
+        r"{NUM_LITERAL} : 8.64",
+        r"{NUM_LITERAL} : 0.5",
+    ]:
+        return (T_MathReal_, env0)
+
+    elif p in [
+        u"{PRODUCT} : {FACTOR} &times;{h_sub_fancy_r} {FACTOR}",
+        u"{SUM} : {var}-{h_sub_fancy_r}{var}",
+        u"{SUM} : {TERM} -{h_sub_fancy_r} {TERM}",
     ]:
         [left, _, right] = children
         env0.assert_expr_is_of_type(left, T_MathReal_)
         env0.assert_expr_is_of_type(right, T_MathReal_)
-        return (T_MathReal_, env0)
-
-    # BigInt
-    elif p == r"{EX} : the mathematical value of {var} divided by {var}":
-        [left, right] = children
-        env0.assert_expr_is_of_type(left, T_BigInt)
-        env0.assert_expr_is_of_type(right, T_BigInt)
         return (T_MathReal_, env0)
 
     elif p in [
@@ -11479,17 +11727,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert ex_t == T_TBD or ex_t == T_MathInteger_
         return (ex_t, env0)
 
-    elif p == r"{PRODUCT} : the quotient {var} / {var}":
+    elif p == r"{PRODUCT} : the quotient {FACTOR} / {FACTOR}":
         [vara, varb] = children
-        env0.assert_expr_is_of_type(vara, T_Number)
-        env0.assert_expr_is_of_type(varb, T_Number)
-        return (T_MathReal_, env0)
+        env1 = env0.ensure_expr_is_of_type(vara, T_MathReal_)
+        env2 = env1.ensure_expr_is_of_type(varb, T_MathReal_)
+        return (T_MathReal_, env2)
 
     elif p in [
-        "{NUM_EXPR} : +&pi; / 2",
-        "{NUM_EXPR} : +&pi; / 4",
-        "{NUM_EXPR} : +&pi;",
-        "{NUM_EXPR} : +3&pi; / 4",
+        "{NUM_EXPR} : &pi; / 2",
+        "{NUM_EXPR} : &pi; / 4",
+        "{NUM_EXPR} : &pi;",
+        "{NUM_EXPR} : 3&pi; / 4",
         "{NUM_EXPR} : -&pi; / 2",
         "{NUM_EXPR} : -&pi; / 4",
         "{NUM_EXPR} : -&pi;",
@@ -11499,18 +11747,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathReal_, env0)
 
     # --------------------------------------------------------
-    # return T_Integer_: The size of some collection:
+    # return T_MathInteger_: The size of some collection:
 
     elif p in [
         r"{NUM_COMPARAND} : the length of {var}",
         r"{EXPR} : the length of {var}",
-        r"{EXPR} : the number of code units in {var}",
+        r"{EX} : the number of code units in {var}",
         # r"{TERM} : the number of code units in {var}", # PR 2021
         r"{EXPR} : the number of code unit elements in {var}",
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
         r"{EXPR} : the number of characters contained in {var}",
@@ -11520,12 +11768,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
-        return (T_Integer_, env1)
+        return (T_MathNonNegativeInteger_, env1)
 
     elif p == r"{EXPR} : the number of elements in {var}'s _captures_ List":
         [var] = children
         env0.assert_expr_is_of_type(var, T_State)
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
         r'{EX} : the number of code points in {PROD_REF}',
@@ -11533,26 +11781,26 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [prod_ref] = children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : the number of bytes in {var}":
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Data_Block | T_Shared_Data_Block)
-        return (T_Integer_, env1)
+        return (T_MathNonNegativeInteger_, env1)
 
     elif p == r"{EXPR} : the array size":
         # only once, in Encode()
         [] = children
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     # ----
-    # return T_Integer_: arithmetic:
+    # return T_MathInteger_: arithmetic:
 
 #    elif p == r"{EXPR} : the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}":
 #        [var, var2, _] = children
 #        assert var.children == var2.children
-#        env0.assert_expr_is_of_type(var, T_Integer_)
-#        return (T_Integer_, env0)
+#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
+#        return (T_MathNonNegativeInteger_, env0)
 # ^ obsoleted by PR 2029
 
     elif p in [
@@ -11569,7 +11817,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{BASE} : 2",
     ]:
         # [] = children
-        return (T_Integer_, env0)
+        return (T_MathInteger_, env0)
 
 #    elif p == r'{FACTOR} : 10<sup>{EX}</sup>':
 #        [ex] = children
@@ -11577,8 +11825,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        if t == T_TBD:
 #            pass
 #        else:
-#            assert t.is_a_subtype_of_or_equal_to(T_Integer_)
-#        return (T_Integer_, env0) # unless EX is negative!
+#            assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
+#        return (T_MathInteger_, env0) # unless EX is negative!
 
     elif p in [
         r"{FACTOR} : {BASE}<sup>{NUM_LITERAL}</sup>",
@@ -11588,49 +11836,42 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [base, exponent] = children
         (base_t, env1) = tc_expr(base, env0); assert env1 is env0
-        if base_t == T_Integer_:
-            env0.assert_expr_is_of_type(exponent, T_Number)
-        elif base_t == T_MathInteger_:
-            env0.assert_expr_is_of_type(exponent, T_MathReal_)
+        if base_t == T_MathInteger_:
+            env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_)
         else:
             assert 0, base_t
-        return (base_t, env0) # XXX unless exponent is negative
+        return (base_t, env1) # XXX unless exponent is negative
 
     elif p == r"{EX} : the remainder of dividing {EX} by {EX}":
         [aex, bex] = children
-        env0.assert_expr_is_of_type(aex, T_Integer_)
-        env0.assert_expr_is_of_type(bex, T_Integer_)
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(aex, T_MathInteger_)
+        env0.assert_expr_is_of_type(bex, T_MathInteger_)
+        return (T_MathInteger_, env0)
 
 #    elif  p == r"{BIT_EX} : {FACTOR} {BIT_OPERATOR} {FACTOR}":
 #        [numa, op, numb] = children
-#        env0.assert_expr_is_of_type(numa, T_Integer_)
-#        env0.assert_expr_is_of_type(numb, T_Integer_)
-#        return (T_Integer_, env0)
+#        env0.assert_expr_is_of_type(numa, T_MathNonNegativeInteger_)
+#        env0.assert_expr_is_of_type(numb, T_MathNonNegativeInteger_)
+#        return (T_MathNonNegativeInteger_, env0)
 # ^ obsoleted by PR 2029
 
-    elif p == r"{EXPR} : the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))":
-        [var1, var2] = children
-        assert var1.children == var2.children
-        env0.assert_expr_is_of_type(var1, T_Number)
-        return (T_Integer_, env0)
+    elif p == r"{EXPR} : the mathematical value that is the same sign as {var} and whose magnitude is {EX}":
+        [var, ex] = children
+        env0.assert_expr_is_of_type(var, T_Number)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
+        return (T_MathInteger_, env0)
 
     elif p == r"{PRODUCT} : {FACTOR} modulo {FACTOR}":
         [factor1, factor2] = children
         #
-        env0.assert_expr_is_of_type(factor2, T_Integer_)
+        env0.assert_expr_is_of_type(factor2, T_MathInteger_)
         #
-        (factor1_t, env1) = tc_expr(factor1, env0); assert env1 is env0
-        if factor1_t.is_a_subtype_of_or_equal_to(T_Number):
-            return (T_Integer_, env0)
-        elif factor1_t == T_BigInt:
-            return (T_BigInt, env0)
-        else:
-            assert 0, factor1_t
+        env1 = env0.ensure_expr_is_of_type(factor1, T_MathInteger_)
+        return (T_MathInteger_, env1)
 
     elif p == r"{NUM_LITERAL} : (2|10)<sup>[0-9]+</sup>":
         [_] = children
-        return (T_Integer_, env0)
+        return (T_MathInteger_, env0)
 
     # ----
 
@@ -11640,12 +11881,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
-        return (T_Integer_, env1)
+        return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the integer that is {EXPR}":
         [ex] = children
-        env0.assert_expr_is_of_type(ex, T_Integer_)
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
+        return (T_MathInteger_, env0)
 
     # ----
 
@@ -11655,12 +11896,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_character_)
-        return (T_Integer_, env0)
+        return (T_MathInteger_, env0)
 
     elif p == r"{EX} : the code point value of {nonterminal}":
         [nont] = children
         assert nont.source_text() == '|SourceCharacter|'
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
         r"{EXPR} : the code point value of {code_point_lit}",
@@ -11670,43 +11911,44 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [x] = children
         env1 = env0.ensure_expr_is_of_type(x, T_code_point_)
-        return (T_Integer_, env1)
+        return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the code point value according to {h_emu_xref}":
-        return (T_Integer_, env0)
+        return (T_MathInteger_, env0)
 
     elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number':
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
-        return (T_Integer_, env1)
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}":
         [var, product] = children
-        env1 = env0.ensure_expr_is_of_type(product, T_Integer_ | T_Number); assert env1 is env0
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
-        return (T_Integer_, env1)
+        env1 = env0.ensure_expr_is_of_type(product, T_MathInteger_ | T_Number); assert env1 is env0
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_MathInteger_, env1)
 
     elif p in [
         r"{EX} : {var}'s _endIndex_",
         r"{EX} : {var}'s _endIndex_ value",
+        r"{NUM_COMPARAND} : {var}'s _endIndex_",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_State)
-        return (T_Integer_, env1)
+        return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the value at index {var} within {var}":
         # only once, in Encode()
         [index_var, list_var] = children
-        env0.assert_expr_is_of_type(list_var, ListType(T_Integer_))
-        env0.assert_expr_is_of_type(index_var, T_Integer_)
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(list_var, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(index_var, T_MathInteger_)
+        return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the index into {var} of the character that was obtained from element {var} of {var}":
+    elif p == r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}":
         [list_var, index_var, str_var] = children
         env0.assert_expr_is_of_type(list_var, T_List)
-        env0.assert_expr_is_of_type(index_var, T_Integer_)
+        env0.assert_expr_is_of_type(index_var, T_MathInteger_)
         env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
-        return (T_Integer_, env0)
+        return (T_MathInteger_, env0)
 
     elif p in [
         r"{EXPR} : the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}",
@@ -11715,18 +11957,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [prod_ref, emu_grammar, prod_ref2] = children[0:3]
         assert same_source_text(prod_ref, prod_ref2)
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}":
         [posa, posb] = children
-        env0.assert_expr_is_of_type(posa, T_Integer_)
-        env0.assert_expr_is_of_type(posb, T_Integer_)
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(posa, T_MathInteger_)
+        env0.assert_expr_is_of_type(posb, T_MathInteger_)
+        return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the value obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value":
+    elif p == r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value":
         [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_Integer_))
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_code_point_, env0)
 
     # ----
 
@@ -11736,14 +11978,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the result of applying the bitwise inclusive OR operation to {var} and {var}",
     ]:
         [x, y] = children
-        env0.assert_expr_is_of_type(x, T_Integer_) # "bit string"
-        env0.assert_expr_is_of_type(y, T_Integer_) # "bit string"
-        return (T_Integer_, env0) # "bit string"
+        env0.assert_expr_is_of_type(x, T_MathInteger_) # "bit string"
+        env0.assert_expr_is_of_type(y, T_MathInteger_) # "bit string"
+        return (T_MathInteger_, env0) # "bit string"
 
-    elif p == r"{EXPR} : the 32-bit two's complement bit string representing the mathematical value of {var}":
+    elif p == r"{EXPR} : the 32-bit two's complement bit string representing {EX}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Integer_, env0) # bit string
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_MathInteger_, env0) # bit string
 
     # -------------------------------------------------
     # return MathReal_ or MathInteger_ or Number or Integer_ (arithmetic)
@@ -11754,38 +11996,106 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r'{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}',
     ]:
         [a, op, b] = children
-        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
-        (b_t, env1) = tc_expr(b, env0); assert env1 is env0
+        (a_t, env1) = tc_expr(a, env0)
+        (b_t, env2) = tc_expr(b, env1)
 
-        if a_t == T_MathReal_ or b_t == T_MathReal_:
-            env0.assert_expr_is_of_type(a, T_MathReal_)
-            env0.assert_expr_is_of_type(b, T_MathReal_)
-            return (T_MathReal_, env0)
+        if a_t == T_TBD:
+            return (b_t, env2)
+        elif b_t == T_TBD:
+            return (a_t, env2)
 
-        elif a_t == T_MathInteger_ or b_t == T_MathInteger_:
-            env1 = env0.ensure_expr_is_of_type(a, T_MathInteger_)
-            env2 = env1.ensure_expr_is_of_type(b, T_MathInteger_)
-            return (T_MathInteger_, env2)
+        elif (
+            a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_)
+            and 
+            b_t.is_a_subtype_of_or_equal_to(T_Number)
+        ):
+            add_pass_error(expr,
+                "MathReal and Number are incompatible types for arithmetic"
+            )
+            # But what's the result type? Flip a coin?
+            return (T_TBD, env2)
 
-        elif a_t == T_code_unit_ and b_t == T_Integer_:
-            assert op.source_text() == '-'
-            return (T_Integer_, env0)
+        elif (
+            a_t.is_a_subtype_of_or_equal_to(T_Number)
+            and 
+            b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_)
+        ):
+            add_pass_error(expr,
+                "Number and MathReal are incompatible types for arithmetic"
+            )
+            return (T_TBD, env2)
 
-        elif a_t == T_Number or b_t == T_Number:
-            env0.assert_expr_is_of_type(a, T_Number)
-            env0.assert_expr_is_of_type(b, T_Number)
-            return (T_Number, env0)
+        elif a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) or b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
 
-        elif a_t == T_BigInt and b_t == T_BigInt:
-            return (T_BigInt, env0)
+            if (
+                T_MathPosInfinity_.is_a_subtype_of_or_equal_to(a_t)
+                or
+                T_MathNegInfinity_.is_a_subtype_of_or_equal_to(a_t)
+            ):
+                add_pass_error(a,
+                    "ST includes Math-infinity, which you can't do arithmetic on"
+                )
+                return (T_MathReal_, env2)
 
-        elif a_t == T_BigInt and b_t == T_Integer_:
-            return (T_BigInt, env0)
+            if (
+                T_MathPosInfinity_.is_a_subtype_of_or_equal_to(b_t)
+                or
+                T_MathNegInfinity_.is_a_subtype_of_or_equal_to(b_t)
+            ):
+                add_pass_error(b,
+                    "ST includes Math-infinity, which you can't do arithmetic on"
+                )
+                return (T_MathReal_, env2)
 
-        elif a_t == T_Integer_ or b_t == T_Integer_:
-            env1 = env0.ensure_expr_is_of_type(a, T_Integer_)
-            env2 = env1.ensure_expr_is_of_type(b, T_Integer_)
-            return (T_Integer_, env2)
+            if (
+                a_t.is_a_subtype_of_or_equal_to(T_MathInteger_)
+                and
+                b_t.is_a_subtype_of_or_equal_to(T_MathInteger_)
+                and
+                op.source_text() not in ['&divide;', 'divided by', '/']
+            ):
+                return (T_MathInteger_, env2)
+            else:
+                return (T_MathReal_, env2)
+                
+
+        elif a_t.is_a_subtype_of_or_equal_to(T_Number) and b_t.is_a_subtype_of_or_equal_to(T_Number):
+
+            for (x, x_t) in [(a, a_t), (b, b_t)]:
+                if T_NaN_Number_.is_a_subtype_of_or_equal_to(x_t):
+                    add_pass_error(x,
+                        "ST includes NaN, which you can't do arithmetic on"
+                    )
+                #if T_InfiniteNumber_.is_a_subtype_of_or_equal_to(x_t):
+                #    add_pass_error(x,
+                #        "ST includes Number-infinities, which you can't do arithmetic on"
+                #    )
+
+            if (
+                a_t.is_a_subtype_of_or_equal_to(T_IntegralNumber_)
+                and
+                b_t.is_a_subtype_of_or_equal_to(T_IntegralNumber_)
+            ):
+                return (T_IntegralNumber_, env2) # XXX except for division
+
+            elif (
+                a_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_)
+                and
+                b_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_)
+            ):
+                return (T_FiniteNumber_, env2) # unless the operands are finite-but-really-big, so their product is infinity?
+
+            elif (
+                a_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_)
+                and
+                b_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_)
+            ):
+                return (T_FiniteNumber_ | T_InfiniteNumber_, env2)
+
+            else:
+                return (T_Number, env2)
+
+            assert 0, (a_t, b_t)
 
         else:
             assert 0, (a_t, b_t)
@@ -11796,12 +12106,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_EXPR} : -{FACTOR}",
     ]:
         ex = children[-1]
-        # almost: env1 = env0.ensure_expr_is_of_type(ex, T_Integer_)
+        (t, env1) = tc_expr(ex, env0); assert env1 is env0
+        assert t.is_a_subtype_of_or_equal_to(T_MathReal_) or t.is_a_subtype_of_or_equal_to(T_Number)
+        return (t, env1)
+
+        # almost: env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
         # but's a vaguer type-requirement, and we need the actual type out.
 
-        (t, env1) = tc_expr(ex, env0); assert env1 is env0
         if t == T_TBD:
-            t = T_Integer_ # maybe
+            t = T_MathInteger_ # maybe
             env2 = env1.with_expr_type_replaced(ex, t)
         else:
             assert t.is_a_subtype_of_or_equal_to(T_Number), t
@@ -11848,7 +12161,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EXPR} : the string result of converting {EX} to a String of four lowercase hexadecimal digits':
         [ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
         return (T_String, env1)
 
     elif p in [
@@ -11900,7 +12213,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
 #    elif p == r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String":
 #        p_var = children[3]
-#        env0.assert_expr_is_of_type(p_var, T_Integer_)
+#        env0.assert_expr_is_of_type(p_var, T_MathInteger_)
 #        env1 = env0
 #        for ex in children[0:3]:
 #            env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
@@ -11909,7 +12222,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EX} : the two uppercase hexadecimal digits encoding {var}':
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env0)
 
     elif p in [
@@ -11918,7 +12231,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : the code units of the most significant digit of the decimal representation of {var}",
     ]:
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env0)
 
     elif p in [
@@ -11929,19 +12242,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     ]:
         [nd_var, num_var] = children
-        env0.assert_expr_is_of_type(nd_var, T_Integer_)
-        env0.assert_expr_is_of_type(num_var, T_Integer_)
+        env0.assert_expr_is_of_type(nd_var, T_MathInteger_)
+        env0.assert_expr_is_of_type(num_var, T_MathInteger_)
         return (T_String, env0)
 
     elif p == r"{EX} : {EX} occurrences of {code_unit_lit}":
         [ex, cu_lit] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
         env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
         return (ListType(T_code_unit_), env1)
 
     elif p == r"{EX} : {code_unit_lit} or {code_unit_lit} according to whether {var}-1 is positive or negative":
         [lit1, lit2, var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env0)
 
 #    elif p in [
@@ -11951,15 +12264,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #    ]:
 #        [s_var, start_var, end_var] = children
 #        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(start_var, T_Integer_)
-#        env0.assert_expr_is_of_type(end_var, T_Integer_)
+#        env0.assert_expr_is_of_type(start_var, T_MathInteger_)
+#        env0.assert_expr_is_of_type(end_var, T_MathInteger_)
 #        return (T_String, env0)
 #
 #    elif p == r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up through the final code unit of {var} (inclusive)":
 #        [s_var, start_var, s_var2] = children
 #        assert same_source_text(s_var, s_var2)
 #        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(start_var, T_Integer_)
+#        env0.assert_expr_is_of_type(start_var, T_MathInteger_)
 #        return (T_String, env0)
 # ^ obsoleted by PR 2021
 
@@ -11982,11 +12295,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the String value of length 1, containing one code unit from {var}, namely the code unit at index {var}",
-        r"{EXPR} : the String value of length 1, containing one code unit from {var}, specifically the code unit at index {var}",
+        r"{EXPR} : the String value of length 1, containing one code unit from {var}, specifically the code unit at index {EX}",
     ]:
         [s_var, i_var] = children
         env0.assert_expr_is_of_type(s_var, T_String)
-        env1 = env0.ensure_expr_is_of_type(i_var, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(i_var, T_MathInteger_)
         return (T_String, env1)
 
     elif p in [
@@ -12066,16 +12379,20 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}":
         [emu_xref, noi] = children
-        env0.assert_expr_is_of_type(noi, T_Number)
-        return (T_String, env0)
+        env1 = env0.ensure_expr_is_of_type(noi, T_IntegralNumber_)
+        return (T_String, env1)
 
     elif p in [
         r"{EXPR} : the String representation of {EX}, formatted as a decimal number",
-        r"{EXPR} : the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary",
     ]:
         [ex] = children
-        env0.assert_expr_is_of_type(ex, T_Number)
-        return (T_String, env0)
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
+        return (T_String, env1)
+
+    elif p == r"{EXPR} : the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with {code_unit_lit} if necessary":
+        [ex, code_unit_lit] = children
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
+        return (T_String, env1)
 
     elif p == r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}":
         [exa, exb] = children
@@ -12101,14 +12418,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EX} : the substring of {var} from {EX} to {EX}":
         [s_var, start_var, end_var] = children
         env0.assert_expr_is_of_type(s_var, T_String)
-        env0.ensure_expr_is_of_type(start_var, T_Integer_)
-        env0.assert_expr_is_of_type(end_var, T_Integer_)
-        return (T_String, env0)
+        env1 = env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
+        env2 = env1.ensure_expr_is_of_type(end_var, T_MathNonNegativeInteger_)
+        return (T_String, env2)
 
     elif p == r"{EX} : the substring of {var} from {EX}":
         [s_var, start_var] = children
         env0.assert_expr_is_of_type(s_var, T_String)
-        env0.ensure_expr_is_of_type(start_var, T_Integer_)
+        env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
         return (T_String, env0)
 
     # ----------------------------------------------------------
@@ -12124,13 +12441,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the character whose character value is {var}":
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         return (T_character_, env1)
 
     elif p == r"{EXPR} : the character whose code is {EXPR}":
         # todo: I think "code" means "code unit" and/or "value"?
         [ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, ListType(T_code_unit_) | T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(ex, ListType(T_code_unit_) | T_MathInteger_)
         return (T_character_, env1)
 
     elif p == r'{EXPR} : the result of applying that mapping to {var}':
@@ -12178,12 +12495,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}", 
     ]:
         [ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Integer_ | T_MathInteger_)
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
         return (T_code_unit_, env0)
 
 #    elif p == r"{EX} : the code unit {var}":
 #        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_MathInteger_)
 #        return (T_code_unit_, env0)
 
     elif p == r"{EX} : the code unit that is {PP_NAMED_OPERATION_INVOCATION}":
@@ -12201,12 +12518,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EX} : the code unit at index {EX} within {EX}":
         [index_ex, str_ex] = children
         env0.assert_expr_is_of_type(str_ex, T_String)
-        env1 = env0.ensure_expr_is_of_type(index_ex, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(index_ex, T_MathInteger_)
         return (T_code_unit_, env1)
 
     elif p == r"{EXPR} : the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}":
         [ivar, svar] = children
-        env0.assert_expr_is_of_type(ivar, T_Integer_)
+        env0.assert_expr_is_of_type(ivar, T_MathInteger_)
         env0.assert_expr_is_of_type(svar, T_String)
         return (T_code_unit_, env0)
 
@@ -12216,7 +12533,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the code point {var}":
         # This means "the code point whose numeric value is {var}"
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_code_point_, env0)
 
     elif p == r"{EXPR} : the code point whose numeric value is that of {var}":
@@ -12288,7 +12605,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # return ListType
 
     # --------------------
-    # ListType(T_Integer_)
+    # ListType(T_MathInteger_)
 
     elif (
         p.startswith(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format')
@@ -12297,47 +12614,47 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ):
         var = children[0]
         env1 = env0.ensure_expr_is_of_type(var, T_Number)
-        return (ListType(T_Integer_), env1)
+        return (ListType(T_MathInteger_), env1)
 
     elif p in [
         r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order',
         r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order",
     ]:
         [n_var, v_var, i_var, literal] = children
-        env0.assert_expr_is_of_type(n_var, T_Number)
-        env0.assert_expr_is_of_type(v_var, T_MathInteger_)
+        env0.assert_expr_is_of_type(n_var, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(v_var, T_MathNonNegativeInteger_)
         env0.assert_expr_is_of_type(i_var, T_Boolean)
         env0.assert_expr_is_of_type(literal, T_Boolean)
-        return (ListType(T_Integer_), env0)
+        return (ListType(T_MathInteger_), env0)
 
 #    elif p == r"{EXPR} : a List of length 1 that contains a nondeterministically chosen byte value":
 #        [] = children
-#        return (ListType(T_Integer_), env0)
+#        return (ListType(T_MathInteger_), env0)
 # ^ obsoleted by PR 2201
 
     elif p == r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (ListType(T_Integer_), env0)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (ListType(T_MathInteger_), env0)
 
     elif p == r"{EXPR} : a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]":
         [var1, var2, var3, var4] = children
         assert var1.children == var2.children
-        env0.assert_expr_is_of_type(var1, T_Integer_)
+        env0.assert_expr_is_of_type(var1, T_MathInteger_)
         env1 = env0.ensure_expr_is_of_type(var3, T_Data_Block | T_Shared_Data_Block)
-        env0.assert_expr_is_of_type(var4, T_Integer_)
-        return (ListType(T_Integer_), env1)
+        env0.assert_expr_is_of_type(var4, T_MathInteger_)
+        return (ListType(T_MathInteger_), env1)
 
 #    elif p == r"{EXPR} : a List of 8-bit integers of size {var}":
 #        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Integer_)
-#        return (ListType(T_Integer_), env0)
+#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
+#        return (ListType(T_MathNonNegativeInteger_), env0)
 # ^ obsoleted by PR 2029
 
     elif p == r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}":
         [dotting] = children
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
-        return (ListType(T_Integer_), env1)
+        return (ListType(T_MathInteger_), env1)
 
     # ----------------------
     # ListType(T_code_unit_)
@@ -12396,8 +12713,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the code unit sequence consisting of {var} followed by {var}":
         [var1, var2] = children
-        env0.assert_expr_is_of_type(var1, T_Integer_)
-        env0.assert_expr_is_of_type(var2, T_Integer_)
+        env0.assert_expr_is_of_type(var1, T_MathInteger_)
+        env0.assert_expr_is_of_type(var2, T_MathInteger_)
         return (ListType(T_code_unit_), env0)
 
     elif p == r"{EXPR} : a List whose elements are the code units that are the elements of {var}":
@@ -12504,7 +12821,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List":
         [n_var, state_var] = children
-        env0.assert_expr_is_of_type(n_var, T_Integer_)
+        env0.assert_expr_is_of_type(n_var, T_MathInteger_)
         env0.assert_expr_is_of_type(state_var, T_State)
         return (T_captures_entry_, env0)
 
@@ -12522,23 +12839,23 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : a List of {var} {LITERAL} values, indexed 1 through {var}":
         [var, literal, var2] = children
         assert var.children == var2.children
-        env0.assert_expr_is_of_type(var, T_Integer_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
 
     elif p == r"{EXPR} : a List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)":
         [list_var, s_var, e_var] = children
         env0.assert_expr_is_of_type(list_var, ListType(T_character_))
-        env0.assert_expr_is_of_type(s_var, T_Integer_)
-        env0.assert_expr_is_of_type(e_var, T_Integer_)
+        env0.assert_expr_is_of_type(s_var, T_MathInteger_)
+        env0.assert_expr_is_of_type(e_var, T_MathInteger_)
         return (ListType(T_character_), env0)
 
     elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)":
         [data_var, lo_var, hi_ex] = children
         env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
-        env1.assert_expr_is_of_type(lo_var, T_Integer_)
-        env1.assert_expr_is_of_type(hi_ex, T_Integer_)
-        return (ListType(T_Integer_), env1)
+        env1.assert_expr_is_of_type(lo_var, T_MathNonNegativeInteger_)
+        env1.assert_expr_is_of_type(hi_ex, T_MathNonNegativeInteger_)
+        return (ListType(T_MathNonNegativeInteger_), env1)
 
     # --------------------------------------------------------
     # return T_Parse_Node
@@ -12725,8 +13042,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}':
         [var1, var2] = children
-        env1 = env0.ensure_expr_is_of_type(var1, T_Integer_)
-        env2 = env0.ensure_expr_is_of_type(var2, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(var1, T_MathInteger_)
+        env2 = env0.ensure_expr_is_of_type(var2, T_MathInteger_)
         assert env1 is env0
         assert env2 is env0
         return (T_CharSet, env0)
@@ -12805,18 +13122,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}":
         [va, vb] = children
-        env0.assert_expr_is_of_type(va, ListType(T_Integer_))
-        env0.assert_expr_is_of_type(vb, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(va, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(vb, ListType(T_MathInteger_))
         return (T_CharSet, env0)
 
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
         return (T_CharSet, env0)
 
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
         return (T_CharSet, env0)
 
     elif p in [
@@ -13015,7 +13332,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}':
         [emu_xref, var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
-        return (ProcType([T_Tangible_], T_Integer_), env1)
+        return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
 
 #    elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
 #        return (ProcType([T_Number, T_Number], T_Number), env0)
@@ -13085,10 +13402,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #
 #    elif p == r"{MULTILINE_EXPR} : an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}":
 #        [s_param, i_param, commands] = children
-#        env_for_commands = env0.plus_new_entry(s_param, T_String).plus_new_entry(i_param, T_Integer_)
+#        env_for_commands = env0.plus_new_entry(s_param, T_String).plus_new_entry(i_param, T_MathInteger_)
 #        defns = [(None, commands)]
 #        env_after_commands = tc_proc(None, defns, env_for_commands)
-#        t  = ProcType([T_String, T_Integer_], T_MatchResult)
+#        t  = ProcType([T_String, T_MathInteger_], T_MatchResult)
 #        return (t, env0)
 # ^ obsoleted by PR #1889
 
@@ -13108,7 +13425,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             alsos = [
                 # See #sec-pattern
                 ('_Unicode_',          T_Boolean),
-                ('_NcapturingParens_', T_Integer_),
+                ('_NcapturingParens_', T_MathInteger_),
             ]
         elif clo_kind == 'Continuation':
             assert n_parameters == 1
@@ -13121,7 +13438,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             clo_param_types = [T_State, T_Continuation]
             alsos = [
                 # See BackreferenceMatcher
-                ('_InputLength_', T_Integer_),
+                ('_InputLength_', T_MathInteger_),
                 ('_Input_',       ListType(T_character_)),
                 ('_Multiline_',   T_Boolean),
             ]
@@ -13131,7 +13448,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             alsos = []
         elif clo_kind == 'read-modify-write modification function':
             assert n_parameters == 2
-            clo_param_types = [ListType(T_Integer_), ListType(T_Integer_)]
+            clo_param_types = [ListType(T_MathInteger_), ListType(T_MathInteger_)]
             alsos = []
         else:
             assert 0, clo_kind
@@ -13229,7 +13546,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var, error_type] = children
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_Integer_)
+        assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
         error_type_name = error_type.source_text()[1:-1]
         proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
         return (T_Data_Block, env1)
@@ -13238,7 +13555,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var, error_type] = children
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_Integer_)
+        assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
         error_type_name = error_type.source_text()[1:-1]
         proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
         return (T_Shared_Data_Block, env1)
@@ -13516,12 +13833,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value':
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_IEEE_binary32_, env1)
 
     elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value':
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Integer_))
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_IEEE_binary64_, env1)
 
     elif p == r"{EXPR} : a copy of {var}'s _captures_ List":
@@ -13535,27 +13852,27 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [seq_ex, subscript_var] = children
         (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
-        env2 = env0.ensure_expr_is_of_type(subscript_var, T_Integer_); assert env2 is env0
+        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
         if isinstance(seq_type, ListType):
             item_type = seq_type.element_type
         elif seq_type == T_List:
             item_type = T_TBD
         elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block):
-            item_type = T_Integer_
+            item_type = T_MathInteger_
         elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block | T_Null):
             add_pass_error(
                 expr,
                 "STA fails to confirm that %s isnt Null" %
                 (seq_ex.source_text())
             )
-            item_type = T_Integer_
+            item_type = T_MathInteger_
         else:
             assert 0, seq_type
         return (item_type, env0)
 
     elif p == r"{EXPR} : the State ({EX}, {var})":
         [ex, var] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Integer_); assert env1 is env0
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
         env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
         return (T_State, env0)
 
@@ -13779,37 +14096,38 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row":
         [_, v, _] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
-        return (ListType(T_Integer_), env0)
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        return (ListType(T_MathInteger_), env0)
 
     elif p == r"{EXPR} : the List of Unicode code points of {var}":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
-        return (ListType(T_Integer_), env0)
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        return (ListType(T_MathInteger_), env0)
 
     elif p == r"{EXPR} : the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_Integer_))
-        return (ListType(T_Integer_), env0)
+        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        return (ListType(T_MathInteger_), env0)
 
     elif p == r"{EXPR} : the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}":
         [prod_ref] = children
-        return (ListType(T_Integer_), env0)
+        return (ListType(T_MathInteger_), env0)
 
     # ----
 
     elif p == r"{EXPR} : the WaiterList that is referenced by the pair ({var}, {var})":
         [sdb, i] = children
         env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
-        env0.assert_expr_is_of_type(i, T_Integer_)
+        env0.assert_expr_is_of_type(i, T_MathInteger_)
         return (T_WaiterList, env0)
 
     elif p in [
+        r"{EX} : msPerDay",
         r"{FACTOR} : msPerDay",
         r"{FACTOR} : msPerMinute",
     ]:
         [] = children
-        return (T_Integer_, env0)
+        return (T_IntegralNumber_, env0)
 
     elif p == r"{EXPR} : a reference to the list of waiters in {var}":
         [wl] = children
@@ -13849,7 +14167,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the number of arguments passed to this function call",
     ]:
         [] = children
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}":
         [s_var, nf_var, h_a] = children
@@ -13886,19 +14204,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
 #    elif p == r"{EXPR} : the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}":
 #        [e1, e2, e3, e4, var] = children
-#        env0.assert_expr_is_of_type(e1, T_Integer_)
-#        env0.assert_expr_is_of_type(e2, T_Integer_)
-#        env0.assert_expr_is_of_type(e3, T_Integer_)
-#        env0.assert_expr_is_of_type(e4, T_Integer_)
+#        env0.assert_expr_is_of_type(e1, T_MathInteger_)
+#        env0.assert_expr_is_of_type(e2, T_MathInteger_)
+#        env0.assert_expr_is_of_type(e3, T_MathInteger_)
+#        env0.assert_expr_is_of_type(e4, T_MathInteger_)
 #        env0.assert_expr_is_of_type(var, T_String)
-#        return (T_Integer_, env0)
+#        return (T_MathInteger_, env0)
 #
 #    elif p == r"{EXPR} : the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}":
 #        [i1, i2, var] = children
-#        env0.assert_expr_is_of_type(i1, T_Integer_)
-#        env0.assert_expr_is_of_type(i2, T_Integer_)
+#        env0.assert_expr_is_of_type(i1, T_MathInteger_)
+#        env0.assert_expr_is_of_type(i2, T_MathInteger_)
 #        env0.assert_expr_is_of_type(var, T_String)
-#        return (T_Integer_, env0)
+#        return (T_MathInteger_, env0)
 # ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : this Date object":
@@ -13911,17 +14229,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         dotting_type.is_a_subtype_of_or_equal_to(T_List)
         return (dotting_type, env0)
 
-    elif p in [
-        r"{EXPR} : the number of leading 1 bits in {var}",
-        r"{EXPR} : the number of leading zero bits in the 32-bit binary representation of {var}",
-    ]:
+    elif p == r"{EXPR} : the number of leading 1 bits in {var}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
+        return (T_MathNonNegativeInteger_, env0)
+
+    elif p == r"{EXPR} : the number of leading zero bits in the unsigned 32-bit binary representation of {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_IntegralNumber_)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (ListType(T_code_unit_), env0)
 
     elif p in [
@@ -13930,18 +14250,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [ex, var] = children
         env0.assert_expr_is_of_type(var, T_String)
-        env1 = env0.ensure_expr_is_of_type(ex, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
         return (T_String, env1)
 
     elif p == r"{EX} : the first {SUM} code units of {var}":
         [summ, var] = children
         env0.assert_expr_is_of_type(var, T_String)
-        env1 = env0.ensure_expr_is_of_type(summ, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(summ, T_MathInteger_)
         return (T_String, env1)
 
     elif p == r"{EXPR} : the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}":
         [var, emu_xref] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env1)
 
     elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned":
@@ -13959,7 +14279,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the String value that is made from {var} copies of {var} appended together":
         [n_var, s_var] = children
         env0.assert_expr_is_of_type(s_var, T_String)
-        env1 = env0.ensure_expr_is_of_type(n_var, T_Integer_)
+        env1 = env0.ensure_expr_is_of_type(n_var, T_MathInteger_)
         return (T_String, env1)
 
 #    elif p in [
@@ -13968,23 +14288,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #    ]:
 #        [len_expr, s_var, k_var] = children
 #        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(len_expr, T_Integer_)
-#        env1 = env0.ensure_expr_is_of_type(k_var, T_Integer_)
+#        env0.assert_expr_is_of_type(len_expr, T_MathInteger_)
+#        env1 = env0.ensure_expr_is_of_type(k_var, T_MathInteger_)
 #        return (T_String, env1)
 #
 #    elif p == r"{EXPR} : the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order":
 #        [len_ex, s_var, start_var, end_var] = children
 #        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(start_var, T_Integer_)
-#        env0.assert_expr_is_of_type(end_var, T_Integer_)
-#        env0.assert_expr_is_of_type(len_ex, T_Integer_)
+#        env0.assert_expr_is_of_type(start_var, T_MathInteger_)
+#        env0.assert_expr_is_of_type(end_var, T_MathInteger_)
+#        env0.assert_expr_is_of_type(len_ex, T_MathInteger_)
 #        return (T_String, env0)
 # ^ obsoleted by PR 2021
-
-    elif p == r"{EXPR} : a value of Number type, whose value is {EXPR}":
-        [expr] = children
-        env1 = env0.ensure_expr_is_of_type(expr, T_Number)
-        return (T_Number, env1)
 
 #    elif p == r"{EXPR} : a List containing in order the code points as defined in {h_emu_xref} of {var}, starting at the first element of {var}":
 #        [emu_xref, s_var, s_var2] = children
@@ -14042,17 +14357,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_String, env0)
 # ^ obsoleted by PR 2021
 
-    elif p == r"{EXPR} : the mathematical integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35":
+    elif p == r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35":
         [zvar, rvar] = children
         env0.assert_expr_is_of_type(zvar, T_String)
-        env0.assert_expr_is_of_type(rvar, T_Integer_)
+        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
         return (T_MathInteger_, env0)
 
     elif p == r"{EXPR} : the String value consisting of repeated concatenations of {EX} truncated to length {var}":
         [ex, var] = children
         env0.assert_expr_is_of_type(ex, T_String)
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (T_String, env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
+        return (T_String, env1)
 
     elif p == r"{EXPR} : the first agent in {var}":
         [var] = children
@@ -14075,7 +14390,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
-        return (T_Integer_, env1)
+        return (T_MathNonNegativeInteger_, env1)
 
     elif p == r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}":
         [dsbna, dsbnb, ex] = children
@@ -14090,21 +14405,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
 #    elif p == r"{EX} : the first {var} code units of {var}":
 #        [n, s] = children
-#        env0.assert_expr_is_of_type(n, T_Integer_)
+#        env0.assert_expr_is_of_type(n, T_MathInteger_)
 #        env0.assert_expr_is_of_type(s, T_String)
 #        return (ListType(T_code_unit_), env0)
 #
 #    elif p == r"{EX} : the trailing substring of {var} starting at index {var}":
 #        [s, n] = children
 #        env0.assert_expr_is_of_type(s, T_String)
-#        env0.assert_expr_is_of_type(n, T_Integer_)
+#        env0.assert_expr_is_of_type(n, T_MathInteger_)
 #        return (T_String, env0)
 #
 #    elif p == r"{EXPR} : the String value equal to the substring of {var} consisting of the code units at indices {var} (inclusive) through {var} (exclusive)":
 #        [s, start, end] = children
 #        env0.assert_expr_is_of_type(s, T_String)
-#        env0.assert_expr_is_of_type(start, T_Integer_)
-#        env0.assert_expr_is_of_type(end, T_Integer_)
+#        env0.assert_expr_is_of_type(start, T_MathInteger_)
+#        env0.assert_expr_is_of_type(end, T_MathInteger_)
 #        return (T_String, env0)
 # ^ obsoleted by PR 2021
 
@@ -14135,13 +14450,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the index within {var} of the first such code unit":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
 #    elif p == r"{EXPR} : the larger of 0 and the result of {var} minus the number of elements of {var}":
 #        [num_var, list_var] = children
 #        env0.assert_expr_is_of_type(list_var, T_List)
-#        env1 = env0.ensure_expr_is_of_type(num_var, T_Integer_)
-#        return (T_Integer_, env1)
+#        env1 = env0.ensure_expr_is_of_type(num_var, T_MathNonNegativeInteger_)
+#        return (T_MathNonNegativeInteger_, env1)
 # ^ obsoleted by PR 2146
 
     elif p == r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}":
@@ -14211,7 +14526,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})":
         [var, emu_xref] = children
         env0.assert_expr_is_of_type(var, T_String)
-        return (T_Integer_, env0)
+        return (T_Number, env0)
 
     elif p == r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor":
         [emu_xref] = children
@@ -14263,9 +14578,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EX} : The remainder of dividing {EX} by {EX}":
         [a, b] = children
-        env0.assert_expr_is_of_type(a, T_Integer_)
-        env0.assert_expr_is_of_type(b, T_Integer_)
-        return (T_Integer_, env0)
+        env0.assert_expr_is_of_type(a, T_MathInteger_)
+        env0.assert_expr_is_of_type(b, T_MathInteger_)
+        return (T_MathInteger_, env0)
 
     elif p == r"{PAIR} : ({EX}, {EX})":
         [a, b] = children
@@ -14317,7 +14632,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # PR 1515 BigInt:
     elif p == r"{EX} : {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number":
         [ex] = children
-        env0.assert_expr_is_of_type(ex, T_BigInt | T_Integer_)
+        env0.assert_expr_is_of_type(ex, T_BigInt | T_MathInteger_)
         return (T_MathInteger_, env0)
 
     elif p == r"{EXPR} : Type({var})":
@@ -14382,7 +14697,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the number of parameters taken by {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, ProcType)
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : an implementation-approximated value representing {EXPR}":
         [ex] = children
@@ -14391,22 +14706,31 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the result of the {MATH_FUNC} of {EX}":
         [math_func, ex] = children
-        env0.assert_expr_is_of_type(ex, T_Number | T_MathReal_)
-        return (T_MathReal_, env0)
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
+        return (T_MathReal_, env1)
 
-    elif p == r"{EXPR} : the result of subtracting 1 from the exponential function of {var}":
+    elif p == r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (T_MathReal_, env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
+        return (T_MathReal_, env1)
 
-    elif p == r"{EXPR} : the square root of the sum of squares of the elements of {var}":
+    elif p == r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_List)
         return (T_MathReal_, env0)
 
     elif p == r"{EX} : a nondeterministically chosen byte value":
         [] = children
-        return (T_Integer_, env0)
+        return (T_MathNonNegativeInteger_, env0)
+
+    elif p == r"{EXPR} : the result of clamping {var} between 0 and {EX}":
+        [var, upper_ex] = children
+        env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
+        (var_t, env1) = tc_expr(var, env0)
+        if var_t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
+            return (T_MathNonNegativeInteger_, env0)
+        else:
+            return (T_MathReal_, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
@@ -14873,7 +15197,7 @@ fields_for_record_type_named_ = {
     # 11933: NO TABLE, no mention
     'CodePointAt_record_': {
         'CodePoint'          : T_code_point_,
-        'CodeUnitCount'      : T_Integer_,
+        'CodeUnitCount'      : T_MathInteger_,
         'IsUnpairedSurrogate': T_Boolean,
     },
 
@@ -14923,8 +15247,8 @@ fields_for_record_type_named_ = {
         #
         'Status'          : T_module_record_status_, # T_String,
         'EvaluationError'  : T_throw_ | T_Undefined,
-        'DFSIndex'         : T_Integer_ | T_Undefined,
-        'DFSAncestorIndex' : T_Integer_ | T_Undefined,
+        'DFSIndex'         : T_MathInteger_ | T_Undefined,
+        'DFSAncestorIndex' : T_MathInteger_ | T_Undefined,
         'RequestedModules' : ListType(T_String),
     },
 
@@ -14937,8 +15261,8 @@ fields_for_record_type_named_ = {
         #
         'Status'          : T_module_record_status_, # T_String,
         'EvaluationError'  : T_throw_ | T_Undefined,
-        'DFSIndex'         : T_Integer_ | T_Undefined,
-        'DFSAncestorIndex' : T_Integer_ | T_Undefined,
+        'DFSIndex'         : T_MathInteger_ | T_Undefined,
+        'DFSAncestorIndex' : T_MathInteger_ | T_Undefined,
         'RequestedModules' : ListType(T_String),
         #
         'Context'              : T_execution_context | T_empty_, # PR 1670
@@ -15058,7 +15382,7 @@ fields_for_record_type_named_ = {
 
     # 39784: PerformPromiseAll NO TABLE, not even mentioned
     'integer_value_record_': {
-        'Value' : T_Integer_,
+        'Value' : T_MathInteger_,
     },
 
     # 40060 ...
@@ -15066,8 +15390,8 @@ fields_for_record_type_named_ = {
         'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_Integer_,
-        'ElementSize' : T_Integer_,
+        'ByteIndex'   : T_MathInteger_,
+        'ElementSize' : T_MathInteger_,
     },
 
     # repetitive, but easier than factoring out...
@@ -15075,33 +15399,33 @@ fields_for_record_type_named_ = {
         'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_Integer_,
-        'ElementSize' : T_Integer_,
+        'ByteIndex'   : T_MathInteger_,
+        'ElementSize' : T_MathInteger_,
     },
 
     'WriteSharedMemory event': {
         'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_Integer_,
-        'ElementSize' : T_Integer_,
-        'Payload'     : ListType(T_Integer_),
+        'ByteIndex'   : T_MathInteger_,
+        'ElementSize' : T_MathInteger_,
+        'Payload'     : ListType(T_MathInteger_),
     },
 
     'ReadModifyWriteSharedMemory event': {
         'Order'       : T_SharedMemory_ordering_, # T_String,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_Integer_,
-        'ElementSize' : T_Integer_,
-        'Payload'     : ListType(T_Integer_),
+        'ByteIndex'   : T_MathInteger_,
+        'ElementSize' : T_MathInteger_,
+        'Payload'     : ListType(T_MathInteger_),
         'ModifyOp'    : T_ReadModifyWrite_modification_closure,
     },
 
     # 40224: Chosen Value Record Fields
     'Chosen Value Record': {
         'Event'       : T_Shared_Data_Block_event,
-        'ChosenValue' : ListType(T_Integer_),
+        'ChosenValue' : ListType(T_MathInteger_),
     },
     # 41899: AsyncGeneratorRequest Record Fields
     'AsyncGeneratorRequest Record': {
@@ -15149,7 +15473,7 @@ type_of_internal_thing_ = {
 
     # 5253: NO TABLE, no mention
     'IteratedList'          : ListType(T_Tangible_),
-    'ListNextIndex'         : T_Integer_,
+    'ListNextIndex'         : T_MathInteger_,
 
     # 8329: Table 30: Internal Slots of ECMAScript Function Objects
     'Environment'      : T_Environment_Record,
@@ -15189,8 +15513,8 @@ type_of_internal_thing_ = {
 
     # 9806: Integer Indexed Exotic Objects NO TABLE
     'ViewedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_, #?
-    'ArrayLength'       : T_Integer_,
-    'ByteOffset'        : T_Integer_,
+    'ArrayLength'       : T_MathInteger_,
+    'ByteOffset'        : T_MathInteger_,
     'ContentType'       : T_numeric_primitive_type_, # T_String,
     'TypedArrayName'    : T_String,
 
@@ -15212,33 +15536,33 @@ type_of_internal_thing_ = {
     'BooleanData' : T_Boolean,
 
     # 30688
-    'DateValue': T_Number,
+    'DateValue': T_FiniteNumber_ | T_NaN_Number_,
 
     # 30738: Table 46: Internal Slots of String Iterator Instances
     'IteratedString' : T_String,
-    'StringNextIndex': T_Integer_,
+    'StringNextIndex': T_MathInteger_,
 
     # 32711: Properties of RegExp Instances NO TABLE
-    'RegExpMatcher'  : ProcType([T_String, T_Integer_], T_MatchResult),
+    'RegExpMatcher'  : T_RegExpMatcher_,
     'OriginalSource' : T_String,
     'OriginalFlags'  : T_String,
 
     # 34123: Table 48: Internal Slots of Array Iterator Instances
     'IteratedArrayLike'      : T_Object,
-    'ArrayLikeNextIndex'     : T_Integer_,
+    'ArrayLikeNextIndex'     : T_MathInteger_,
     'ArrayLikeIterationKind' : T_iteration_result_kind_, # T_String,
 
     # 35373 + 37350 NO TABLE
-    'ByteLength' : T_Integer_,
+    'ByteLength' : T_MathInteger_,
 
     # 35719: Table 50: Internal Slots of Map Iterator Instances
     'IteratedMap'      : T_Object,
-    'MapNextIndex'     : T_Integer_,
+    'MapNextIndex'     : T_MathInteger_,
     'MapIterationKind' : T_iteration_result_kind_, # T_String,
 
     # 36073: Table 51: Internal Slots of Set Iterator Instances
     'IteratedSet'      : T_Object,
-    'SetNextIndex'     : T_Integer_,
+    'SetNextIndex'     : T_MathInteger_,
     'SetIterationKind' : T_iteration_result_kind_, # T_String,
 
     # 36630: Table 58: Internal Slots of RegExp String Iterator Instances
@@ -15253,7 +15577,7 @@ type_of_internal_thing_ = {
     # NO TABLE
     'ArrayBufferData': T_Data_Block | T_Shared_Data_Block | T_Null,
         # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
-    'ArrayBufferByteLength' : T_Integer_,
+    'ArrayBufferByteLength' : T_MathInteger_,
     'ArrayBufferDetachKey'  : T_Tangible_, # could be anything, really
 
     # 38581: Table 56: Internal Slots of Generator Instances
@@ -15292,7 +15616,7 @@ type_of_internal_thing_ = {
     'AsyncContext' : T_execution_context,
 
     # 39817 `Promise.all` Resolve Element Functions
-    'Index'             : T_Integer_,
+    'Index'             : T_MathInteger_,
     'Values'            : ListType(T_Tangible_),
     'Capability'        : T_PromiseCapability_Record,
     'RemainingElements' : T_integer_value_record_,

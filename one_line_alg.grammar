@@ -30,7 +30,6 @@
     {var}
 
 {PP_NAMED_OPERATION_INVOCATION} :
-    {NAMED_OPERATION_INVOCATION}
     ! {NAMED_OPERATION_INVOCATION}
 
 {NAMED_OPERATION_INVOCATION} :
@@ -40,7 +39,6 @@
     {OPN_BEFORE_PAREN}({EXLIST_OPT})
 
 {OPN_BEFORE_PAREN} :
-    {cap_word}
     {NUMERIC_TYPE_INDICATOR}::{low_word}
 
 {NUMERIC_TYPE_INDICATOR} :
@@ -57,10 +55,9 @@
     {STR_LITERAL}
 
 {NUM_LITERAL} :
-    1
-    {starred_bigint_lit}
-    {starred_int_lit}
-    {starred_nonfinite_lit}
+    {starred_int_lit}{h_sub_fancy_f}
+    {starred_int_lit}{h_sub_fancy_z}
+    {starred_nan_lit}
 
 {STR_LITERAL} :
     {starred_str}

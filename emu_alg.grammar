@@ -61,11 +61,11 @@
     Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.
-    Evaluate {PROD_REF} to obtain the three results: an integer {var}, an integer (or &infin;) {var}, and Boolean {var}.
-    Evaluate {PROD_REF} to obtain the two results: an integer {var} and an integer (or &infin;) {var}.
+    Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.
+    Evaluate {PROD_REF} to obtain the two results: an integer {var} and an integer (or +&infin;) {var}.
     Evaluate {PROD_REF} with argument {var} to obtain an? {TYPE_NAME} {var}.
-    Evaluate {PROD_REF} with {PRODUCT} as its {var} argument to obtain an? {TYPE_NAME} {var}.
-    Find a value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
+    Evaluate {PROD_REF} with {EX} as its {var} argument to obtain an? {TYPE_NAME} {var}.
+    Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
     IfAbruptRejectPromise({var}, {var}).
@@ -78,14 +78,15 @@
     Let {var} be equivalent to a function that returns {var}.
     Let {var} be equivalent to a function that throws {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
-    Let {var} be the smallest nonnegative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
+    Let {var} be the largest possible non-negative integer not larger than {var} such that {CONDITION}; but if there is no such integer, let {var} be {EXPR}.
+    Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
     Let {var} be {EXPR}.
-    Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the mathematical integer value that is represented by {var} in radix-{var} notation.)
+    Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the integer value that is represented by {var} in radix-{var} notation.)
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
     Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)
     Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.
     Let {var} be {MULTILINE_EXPR}
-    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even.
+    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
     Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     No action is required.
     Notify the agent {var}.
@@ -250,7 +251,7 @@
 
 {IF_CLOSED} :
     If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
-    If {CONDITION}&mdash;note that these mathematical values are both finite and not both zero&mdash;{SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
+    If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.
@@ -368,6 +369,7 @@
     integer {var} starting with 0 such that {CONDITION}, in ascending order
     integer {var} such that {CONDITION}
     integer {var} that satisfies {CONDITION}
+    non-negative integer {var} starting with 0 such that {CONDITION}, in ascending order
     own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
@@ -443,8 +445,8 @@
     {B} If an abrupt completion is returned from any of these operations, it is immediately returned as the value of this function.
     {B} If {var} is not sparse then DeletePropertyOrThrow must not be called.
     {B} The `Throw` argument for every call to {h_emu_xref} is {LITERAL}.
-    {B} The arguments for calls to SortCompare are values returned by a previous call to the {cap_word} abstract operation, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
-    {B} The property key argument for each call to {cap_word}, {h_emu_xref}, {cap_word}, or {cap_word} is the string representation of a nonnegative integer less than {var}.
+    {B} The arguments for calls to SortCompare are values returned by a previous call to the {cap_word} abstract operation, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent, use {NUM_LITERAL}. If only the second prospective argument is non-existent, use {NUM_LITERAL}.
+    {B} The property key argument for each call to {cap_word}, {h_emu_xref}, {cap_word}, or {cap_word} is the string representation of a non-negative integer less than {var}.
 
     {B} the String representation of {EX}, formatted as a four-digit lowercase hexadecimal number, padded to the left with zeroes if necessary
     {B} the String representation of {EX}, formatted as a four-digit uppercase hexadecimal number, padded to the left with zeroes if necessary
@@ -526,9 +528,9 @@
     The execution context stack is not empty
     The following loop will terminate
     The length of {var} is {var}
+    The mathematical value of {var}'s {starred_str} property is {EX}
     The next step never returns an abrupt completion because {CONDITION_1}
     The value of {SETTABLE} is {LITERAL}
-    The value of {var}'s {starred_str} property is {EX}
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
     There is more than one `*` import that includes the requested name
     This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent
@@ -547,7 +549,7 @@
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
     every field in {var} is absent
-    for all nonnegative integers {var} less than {var}, {CONDITION_1}
+    for all non-negative integers {var} such that {CONDITION_1}, {CONDITION_1}
     it must be in the object Environment Record
     its value is {LITERAL}
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
@@ -579,7 +581,6 @@
     the generator either threw an exception or performed either an implicit or explicit return
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
-    the mathematical value of {var} is less than the mathematical value of {var}
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the source code matching {PROD_REF} is strict mode code
@@ -605,7 +606,6 @@
     {EX} and {EX} are valid byte offsets within the memory of {var}
     {EX} does not contain {starred_str}
     {EX} has the value {LITERAL}
-    {EX} is +1
     {EX} is -1
     {EX} is a sequence of Unicode code points
     {EX} is absent
@@ -615,14 +615,12 @@
     {EX} is different from {EX}
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is equal to {EX}
     {EX} is in {EX}
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
     {EX} is neither {LITERAL} nor the active function
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not -1
     {EX} is not an element of {var}
-    {EX} is not equal to {EX}
     {EX} is not present
     {EX} is not {LITERAL}
     {EX} is not {LITERAL} or {LITERAL}
@@ -635,6 +633,7 @@
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}
+    {EX} is {PREFIX_PAREN}
     {EX} is {var}
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
@@ -657,13 +656,14 @@
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} has an? {DSBN} field
-    {SETTABLE} is not equal to {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
+    {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
     {TYPE_TEST}
     {var} also has a {DSBN} internal slot
     {var} and {DOTTING} are the same Module Record
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both the same Symbol value
     {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)
+    {var} and {var} are finite and non-zero
     {var} and {var} are in a race in {var}
     {var} and {var} are not the same Realm Record
     {var} and {var} are the same Module Record
@@ -772,6 +772,10 @@
     {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a bound function exotic object
     {var} is a non-empty List of {ERROR_TYPE} objects
+    {var} is a non-negative integer
+    {var} is a non-negative integer &le; {var}
+    {var} is a non-negative integer which is &le; {EXPR}
+    {var} is a non-negative integral Number
     {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is a possibly empty List of Strings
@@ -803,7 +807,6 @@
     {var} is an instance of a nonterminal
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
-    {var} is an integer index &le; {var}
     {var} is an integral Number
     {var} is an ordinary, extensible object with no non-configurable properties
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
@@ -844,6 +847,7 @@
     {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super`, or `this`
     {var} is not the Environment Record for a |Catch| clause
     {var} is not the same as {var}
+    {var} is not the same value as {var}
     {var} is not {var}
     {var} is now an empty List
     {var} is now the running execution context
@@ -868,7 +872,6 @@
     {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
-    {var}, {var}, and {var} are integer values &ge; 0
     {var}, {var}, and {var} have the same number of elements
 
     # obsoleted by the merge of PR #1046
@@ -1054,13 +1057,15 @@
     {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
     {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
     {NUM_COMPARAND} is 10 or less
+    {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}
 
 {NUM_COMPARAND} :
     the length of {var}
     the numeric value of {var}
+    {FACTOR}
     {PRODUCT}
     {SUM}
-    {FACTOR}
+    {var}'s _endIndex_
 
     # PR 2045:
     the number of elements of {var}
@@ -1072,13 +1077,7 @@
     &lt;
     &ne;
     =
-    equals
     is at least
-    is greater than or equal to
-    is less than
-    is less than or equal to
-    is not greater than
-    is not less than
 
     # obsoleted by the merge of PR #2029:
     # is greater than
@@ -1189,7 +1188,6 @@
     a newly created object with an internal slot for each name in {var}
     a one-element CharSet containing the character {var}
     a reference to the list of waiters in {var}
-    a value of Number type, whose value is {EXPR}
     a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
     a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
@@ -1201,7 +1199,7 @@
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
     such an object created in a host-defined manner
-    the 32-bit two's complement bit string representing the mathematical value of {var}
+    the 32-bit two's complement bit string representing {EX}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
@@ -1235,16 +1233,14 @@
     the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}
     the Matcher that is {EXPR}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
-    the Number that is the time value (UTC) identifying the current time
     the Number value that corresponds to {var}
-    the Number value that is the same sign as {var} and whose magnitude is {EX}
     the Number value that results from rounding {EX} as described below
     the Parse Node resulting from the parse
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
     the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}
     the String representation of {EX}, formatted as a decimal number
-    the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary
+    the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with {code_unit_lit} if necessary
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
     the String value consisting of the code units of the digits of the decimal representation of {var}
     the String value consisting of {EX}
@@ -1257,7 +1253,7 @@
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String
     the String value of length 1, containing one code unit from {var}, namely the code unit at index {var}
-    the String value of length 1, containing one code unit from {var}, specifically the code unit at index {var}
+    the String value of length 1, containing one code unit from {var}, specifically the code unit at index {EX}
     the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor
     the String value of the property name
     the String value of {DOTTING}
@@ -1291,6 +1287,7 @@
     the character whose character value is {var}
     the character {SETTABLE}
     the code point matched by {PROD_REF}
+    the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the code point value according to {h_emu_xref}
     the code point value of {code_point_lit}
     the code point value of {var}
@@ -1310,33 +1307,32 @@
     the first waiter in {var}
     the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
     the grammar symbol {nonterminal}
-    the greatest (closest to *+&infin;*) integral Number value that is not greater than {var}
-    the index into {var} of the character that was obtained from element {var} of {var}
+    the greatest (closest to +&infin;) integral Number value that is not greater than {var}
+    the index into {var} of the character that was obtained from element {EX} of {var}
     the index within {var} of the first such code unit
     the integer that is {EXPR}
-    the integral Number closest to {var}, preferring the Number closer to *+&infin;* in the case of a tie
-    the integral Number nearest {var} in the direction of *+0*
+    the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
+    the integral Number closest to {var}, preferring the Number closer to +&infin; in the case of a tie
+    the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the internal slots listed in {h_emu_xref}
     the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
-    the largest possible nonnegative integer {var} not larger than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
     the last element in {var}
     the length of {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
-    the mathematical integer number of code points in {PROD_REF}
-    the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
-    the mathematical integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
+    the mathematical value that is the same sign as {var} and whose magnitude is {EX}
     the number of arguments passed to this function call
     the number of bytes in {var}
     the number of characters contained in {var}
+    the number of code points in {PROD_REF}
+    the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the number of code unit elements in {var}
-    the number of code units in {var}
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
     the number of elements of {var}
     the number of leading 1 bits in {var}
-    the number of leading zero bits in the 32-bit binary representation of {var}
+    the number of leading zero bits in the unsigned 32-bit binary representation of {var}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
@@ -1345,24 +1341,24 @@
     the parse of some source text
     the prefix associated with {var} in {h_emu_xref}
     the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
-    the result of applying bitwise complement to {var}. The result is a signed 32-bit integer
+    the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of applying that mapping to {var}
     the result of applying the bitwise AND operation to {var} and {var}
     the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
     the result of applying the bitwise inclusive OR operation to {var} and {var}
+    the result of clamping {var} between 0 and {EX}
     the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
-    the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
     the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
-    the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The result is a signed 32-bit integer
-    the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
+    the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
+    the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
-    the result of subtracting 1 from the exponential function of {var}
+    the result of subtracting 1 from the exponential function of {EX}
     the result of the comparison {EX} == {EX}
     the result of the {MATH_FUNC} of {EX}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
@@ -1374,13 +1370,13 @@
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the sequence of code units consisting of the code units of {var} followed by the elements of {var}
     the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
-    the smallest (closest to *-&infin;*) integral Number value that is not less than {var}
-    the smallest (closest to *-&infin;*) such integer
+    the smallest (closest to -&infin;) integral Number value that is not less than {var}
+    the smallest (closest to -&infin;) such integer
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
     the source text matched by {PROD_REF}
     the source text that was recognized as {PROD_REF}
-    the square root of the sum of squares of the elements of {var}
+    the square root of the sum of squares of the mathematical values of the elements of {var}
     the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
     the string-concatenation of {EX} and {EX}
@@ -1402,7 +1398,6 @@
     the union of CharSets {var}, {var} and {var}
     the union of {var} and {var}
     the value currently bound to {var} in {var}
-    the value obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the value of the first element of {var}
     the value of the thisValue component of the reference {var}
     the value that {var} corresponds to in {h_emu_xref}
@@ -1609,6 +1604,7 @@
     a nondeterministically chosen byte value
     an implementation-defined timezone name
     the *this* value
+    the BigInt value for {EX}
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {EX}
@@ -1623,15 +1619,13 @@
     the first code unit of {var}
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
-    the mathematical value of negating {var}
-    the mathematical value of {var}
-    the mathematical value of {var} divided by {var}
-    the mathematical value of {var} raised to the power {var}
+    the number of code units in {var}
     the number of elements in {var}
     the numeric value of {EX}
     the referenced name component of {var}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
+    the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the strict reference flag of {var}
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
@@ -1645,12 +1639,11 @@
     {NUM_EXPR}
     {PAIR}
     {PP_NAMED_OPERATION_INVOCATION}
-    {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number
     {RECORD_CONSTRUCTOR}
     {backticked_oth}
     {backticked_word}
     {h_code_quote}
-    {var} rounded towards 0 to the next integral value
+    {var} rounded towards 0 to the next integer value
     {var}'s _endIndex_
     {var}'s _endIndex_ value
 
@@ -1818,6 +1811,9 @@
     {DOTTING}
     {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}
+    {fancy_f}
+    {fancy_r}
+    {fancy_z}
     {var}
     {var}.{cap_word}
 
@@ -1935,17 +1931,19 @@
 
 {NUM_EXPR} :
     #pre-1135: the exact mathematical value of {SUM}
-    +&pi;
-    +&pi; / 2
-    +&pi; / 4
-    +3&pi; / 4
+    &pi;
+    &pi; / 2
+    &pi; / 4
+    3&pi; / 4
     -&pi;
     -&pi; / 2
     -&pi; / 4
     -3&pi; / 4
     {PRODUCT}
     {SUM}
-    {math_r}({var})
+    {EX} raised to the power {EX}
+# Note that this is not trying to capture every expression that has a numeric result,
+# merely those that involve mathematical operators/forms.
 
     # obsoleted by the merge of PR #2029:
     # {BIT_EX}
@@ -1964,7 +1962,7 @@
 {SUM_OPERATOR} :
     +
     -
-    #? -{h_sub_math_r}
+    #? -{h_sub_fancy_r}
     plus
 
 {TERM} :
@@ -1975,37 +1973,31 @@
     # the number of code units in {var}
 
 {PRODUCT} :
+    the negation of {EX}
     {UNARY_OPERATOR}{FACTOR}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
     {FACTOR} modulo {FACTOR}
-    the quotient {var} / {var}
+    the quotient {FACTOR} / {FACTOR}
 
 {UNARY_OPERATOR} :
-    +
     -
 
 {PRODUCT_OPERATOR} :
     &divide;
-    #? &divide;{h_sub_math_r}
     &times;
-    &times;{h_sub_math_r}
     /
 
 {FACTOR} :
     ({NUM_EXPR})
-    msPerDay
     msPerMinute
-    {BASE}<sup>{NUM_EXPR}</sup>
-    {BASE}<sup>{NUM_LITERAL}</sup>
-    {BASE}<sup>{var}</sup>
+    msPerDay
+    {BASE}<sup>{EX}</sup>
     {NUM_LITERAL}
     {PP_NAMED_OPERATION_INVOCATION}
     {SETTABLE}
-    {math_r}({var})
 
 {BASE} :
     10
-    10{h_sub_math_r}
     2
 
 # --------------------------------
@@ -2052,17 +2044,19 @@
 
 {NUM_LITERAL} :
     #! (2|10)<sup>[0-9]+</sup>
-    &infin;
+    +&infin;
+    -&infin;
+    *0.5*{h_sub_fancy_f}
+    *-0.5*{h_sub_fancy_f}
     0.5
     8.64
     the *NaN* Number value
-    zero
     {dec_int_lit}
-    {dec_int_lit}{h_sub_math_r}
     {hex_int_lit}
-    {starred_bigint_lit}
-    {starred_int_lit}
-    {starred_nonfinite_lit}
+    {starred_int_lit}{h_sub_fancy_f}
+    {starred_int_lit}{h_sub_fancy_z}
+    {starred_infinite_lit}{h_sub_fancy_f}
+    {starred_nan_lit}
 
 {ERROR_TYPE} :
     *TypeError*

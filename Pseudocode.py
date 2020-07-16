@@ -1006,6 +1006,9 @@ def analyze_other_section(section):
             ensure_foo('op: solo', 'min')
             ensure_foo('op: solo', 'max')
             ensure_foo('op: solo', 'floor')
+            ensure_foo('op: solo', '\U0001d53d')
+            ensure_foo('op: solo', '\u211d')
+            ensure_foo('op: solo', '\u2124')
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
@@ -1096,7 +1099,12 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
 
     x = ' '.join(c.element_name for c in tdb.children)
 
-    if x in ['#LITERAL', '#LITERAL emu-xref #LITERAL']:
+    if x in [
+        '#LITERAL',
+        '#LITERAL emu-xref #LITERAL',
+        '#LITERAL sub #LITERAL',
+        '#LITERAL sub #LITERAL sub #LITERAL',
+    ]:
         foo_add_defn('op: solo', op_name, discriminator, tdb, section)
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
@@ -1241,7 +1249,7 @@ def handle_inline_sdo(li, section_sdo_name, section):
         elif cl == '{EXPR}':
             assert rule_expr is None
             rule_expr = child
-        elif cl == '{NAMED_OPERATION_INVOCATION}':
+        elif cl in ['{NAMED_OPERATION_INVOCATION}', '{h_sub_fancy_f}']:
             if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
                 # skip it
                 pass

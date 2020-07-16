@@ -125,16 +125,18 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_emu_not_ref_Property_name} : < emu-not-ref > Property \x20 name < / emu-not-ref >
     {h_emu_not_ref_property_name} : < emu-not-ref > property \x20 name < / emu-not-ref >
     {h_emu_not_ref_substring}     : < emu-not-ref > substring < / emu-not-ref >
-    {h_sub_math_r}   : < sub > \u211d < / sub >
+    {h_sub_fancy_f}   : < sub > \U0001d53d < / sub >
+    {h_sub_fancy_r}   : < sub > \u211d < / sub >
+    {h_sub_fancy_z}   : < sub > \u2124 < / sub >
     {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
     {h_end_tag}      : </ [\w-]+ >
 
     # tokens that begin with '*':
     {starred_int_lit}       : \* [+-] 0 \*
-    {starred_int_lit}       : \* [+-]? 1 \*
+    {starred_int_lit}       : \* [+-]? \d+ \*
     {starred_bigint_lit}    : \* [01] n \*
-    {starred_nonfinite_lit} : \* [+-]? &infin; \*
-    {starred_nonfinite_lit} : \* NaN \*
+    {starred_infinite_lit}  : \* [+-]? &infin; \*
+    {starred_nan_lit}       : \* NaN \*
     {starred_word}          : \* [A-Za-z]+ \*
     {starred_str}           : \* " ( [^"*] | \\ \* )* " \*
 
@@ -192,7 +194,9 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {cap_word}       : \b [A-Z][A-Za-z0-9]* \b
     {low_word}       : \b [a-z][A-Za-z0-9]* \b
 
-    {math_r}         : \u211d
+    {fancy_f}        : \U0001d53d
+    {fancy_r}        : \u211d
+    {fancy_z}        : \u2124
 
 ''')
 

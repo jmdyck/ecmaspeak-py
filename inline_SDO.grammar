@@ -14,7 +14,7 @@
     The {ISDO_NAME} and {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}, no matter whether white space is present or not.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
-    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}. (Note that if {NAMED_OPERATION_INVOCATION} is 0, the negative of this MV is also 0. The rounding rule described below handles the conversion of this signless mathematical zero to a floating-point *+0* or *-0* as appropriate.)
+    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}. (Note that if {NAMED_OPERATION_INVOCATION} is 0, the negative of this MV is also 0. The rounding rule described below handles the conversion of this signless mathematical zero to a floating-point *+0*{h_sub_fancy_f} or *-0*{h_sub_fancy_f} as appropriate.)
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
@@ -24,7 +24,7 @@
     # The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
 
 {EXPR} :
-    {FACTOR} (a value so large that it will round to *+&infin;*)
+    {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})
     a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
     the code unit whose value is {NAMED_OPERATION_INVOCATION}
     the code unit whose value is {SUM}
@@ -59,9 +59,8 @@
     a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
     the code point value of {nonterminal}
     the code units of {NAMED_OPERATION_INVOCATION}
-    the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
-    the mathematical value of the number of code points in {PROD_REF}
-    the mathematical value of the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
+    the number of code points in {PROD_REF}
+    the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the single code point matched by this production
     {NAMED_OPERATION_INVOCATION}
     {NUM_LITERAL}
@@ -113,7 +112,7 @@
 
 {SUM_OPERATOR} :
     #pre-1135: -
-    -{h_sub_math_r}
+    -
     plus
 
 {TERM} :
@@ -122,7 +121,7 @@
 
 {PRODUCT} :
     #pre-1135: -{var}
-    -{h_sub_math_r}{var}
+    -{var}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
 
 {PRODUCT_OPERATOR} :
@@ -139,15 +138,15 @@
 {NUM_LITERAL} :
     #pre-1135: {dec_int_lit}
     #pre-1135: {hex_int_lit}
-    {dec_int_lit}{h_sub_math_r}
-    {hex_int_lit}{h_sub_math_r}
+    {dec_int_lit}
+    {hex_int_lit}
 
     # PR 1651 one-grammar:
-    64{h_sub_math_r} (that is, 8<sup>2</sup>)
+    64{h_sub_fancy_r} (that is, 8<sup>2</sup>)
 
 {STR_LITERAL} :
     the empty String
 
 {BASE} :
     #pre-1135: 10
-    10{h_sub_math_r}
+    10

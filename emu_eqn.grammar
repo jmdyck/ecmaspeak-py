@@ -15,7 +15,8 @@
 
 {CONSTANT_DEF} :
     {CONSTANT_NAME} = {dec_int_lit}
-    {CONSTANT_NAME} = {dec_int_lit} = {EXPR}
+    {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f}
+    {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f} = {EXPR}
 
 # --------------------------
 
@@ -43,7 +44,7 @@
 # ------
 
 {EXPR} :
-    the largest integer {var} (closest to positive infinity) such that {CONDITION}
+    the largest integral Number {var} (closest to +&infin;) such that {CONDITION}
     {SUM}
 
 {SUM} :
@@ -65,6 +66,7 @@
     {CONSTANT_NAME}
     {PREFIX_PAREN}
     {dec_int_lit}
+    {starred_int_lit}{h_sub_fancy_f}
     {var}
 
 {PREFIX_PAREN} :
@@ -72,6 +74,8 @@
 
 {OPN_BEFORE_PAREN} :
     {OP_NAME}
+    {fancy_f}
+    {fancy_r}
     floor
 
 {CONSTANT_NAME} :
