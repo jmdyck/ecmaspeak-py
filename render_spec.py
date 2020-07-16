@@ -62,6 +62,13 @@ def prep_xrefs():
             assert 0
         _default_xref_text_for_fragid_[fragid] = 'Table %d' % table_i
 
+    figure_i = 0
+    for emu_figure in spec.doc_node.each_descendant_named('emu-figure'):
+        figure_i += 1
+        assert 'id' in emu_figure.attrs
+        fragid = emu_figure.attrs['id']
+        _default_xref_text_for_fragid_[fragid] = 'Figure %d' % figure_i
+
     for dfn in spec.doc_node.each_descendant_named('dfn'):
         if 'id' in dfn.attrs:
             fragid = dfn.attrs['id']
