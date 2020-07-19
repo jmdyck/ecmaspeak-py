@@ -28,136 +28,148 @@ def parse_and_validate():
 def _parse():
     stderr("parsing spec...")
     header("parsing markup...")
-    parser = MyHTMLParser()
-    parser.feed(shared.spec_text)
-    parser.close()
-    return parser.finish()
 
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        # self.k = 0
-        HTMLParser.__init__(self)
-        # self.curr_node is the deepest node that is currently under construction.
-        # That is, of the unfinished/unclosed nodes, it's the most recently started/opened.
-        self.curr_node = None
-        self.curr_node = self._add_node('#DOC', [])
-        # self.reo_only_whitespace = re.compile(r'^\s+$')
-        self.START_IS_ALSO_END =  ['meta', 'link', 'br', 'img']
+    doc_node = HNode(0, len(shared.spec_text), '#DOC', [])
+    doc_node.parent = None
+    current_open_node = doc_node
 
-    def finish(self):
-        self._end_previous()
-        if self.curr_node.element_name == '#DOC':
-            self.curr_node._set_end_posn(self._getposn())
-        else:
-            self._report("at end of file, element still open: " + self.curr_node.element_name)
-        return self.curr_node
-
-    # ---------------------------
-
-    def handle_starttag(self, element_name, attrs):
-        # print('  '*self.k + "<" + element_name); self.k += 1
-        new_node = self._add_node( element_name, attrs)
-        if element_name in self.START_IS_ALSO_END:
-            # self.curr_node doesn't change
+    def add_child(child):
+        nonlocal current_open_node
+        current_open_node.children.append(child)
+        child.parent = current_open_node
+        if child.element_name.startswith('#') or child.element_name in ['meta', 'link', 'img', 'br']:
+            # This is a complete child
             pass
         else:
-            self.curr_node = new_node
-            # print('self.curr_node is now', self.curr_node.element_name)
+            # This is an incomplete ("open") element.
+            # (It should be closed eventually by a corresponding end-tag.)
+            current_open_node = child
 
-    def handle_startendtag(self, element_name, attrs):
-        # print('  '*self.k + "=" + element_name)
-        self._report("Self-closing tag")
-        new_node = self._add_node( element_name, attrs)
-        assert element_name in self.START_IS_ALSO_END
-        # self.curr_node doesn't change
+    def close_open_child(end_tag_start_posn, end_tag_end_posn, element_name):
+        nonlocal current_open_node
+        if element_name != current_open_node.element_name:
+            msg_at_posn(
+                end_tag_start_posn,
+                f"ERROR: The currently-open element is a {current_open_node.element_name!r}, but this is an end-tag for {element_name!r}.\nSkipping the end-tag, to see if that helps."
 
-    def handle_endtag(self, element_name):
-        # (Note that HTMLParser has converted element_name to lower case,
-        # so it's not possible to detect case anomalies.)
-        # self.k -= 1; print('  '*self.k + "</" + element_name)
-        self._end_previous()
-        if element_name != self.curr_node.element_name:
-            self._report( "Well-formedness error: got </%s> when the open element is %s" % (element_name, self.curr_node.element_name))
-            if self.curr_node.parent is None:
-                self._report("self.curr_node.parent is None")
-            elif element_name == self.curr_node.parent.element_name:
-                self._report("Assuming that </%s> is missing" % self.curr_node.element_name)
-                # Pretend that we got the missing endtag:
-                self.handle_endtag(self.curr_node.element_name)
-                # That will change self.curr_node.
-                assert element_name == self.curr_node.element_name
-                self.handle_endtag(self.curr_node.element_name)
+            )
+            # This old code might be useful to adapt:
+            # if current_open_node.parent is None:
+            #     self._report("current_open_node.parent is None")
+            # elif element_name == current_open_node.parent.element_name:
+            #     self._report("Assuming that </%s> is missing" % current_open_node.element_name)
+            #     # Pretend that we got the missing endtag:
+            #     self.handle_endtag(current_open_node.element_name)
+            #     # That will change current_open_node.
+            #     assert element_name == current_open_node.element_name
+            #     self.handle_endtag(current_open_node.element_name)
+            return
+
+        current_open_node.inner_start_posn = current_open_node.end_posn
+        current_open_node.inner_end_posn   = end_tag_start_posn
+        current_open_node.end_posn         = end_tag_end_posn
+        current_open_node = current_open_node.parent
+
+    # ---------------------------------------------
+
+    pattern_funcs = []
+    def for_pattern(pattern):
+        reo = re.compile(pattern)
+        def wrapper(f):
+            pattern_funcs.append( (reo, f) )
+            return None
+        return wrapper
+
+    # ---------------------------------------------
+
+    # non-markup text:
+    @for_pattern(r'[^<]+')
+    def _(start_posn, end_posn, _):
+        add_child(HNode(start_posn, end_posn, '#LITERAL', []))
+        return end_posn
+
+    # start-tag:
+    @for_pattern(r'<([a-z][-a-z0-9]*)\b')
+    def _(tag_start_posn, end_name_posn, groups):
+        [element_name] = groups
+        attrs = OrderedDict()
+        posn = end_name_posn
+        while True:
+            if shared.spec_text[posn] == '>':
+                tag_end_posn = posn + 1
+                break
+            mo = re.compile(r' ([a-z][-a-z0-9]*)(?:="([^"]*)")?').match(shared.spec_text, posn)
+            if mo:
+                (attr_name, attr_value) = mo.groups()
+                assert attr_name not in attrs
+                attrs[attr_name] = attr_value
+                posn = mo.end()
+                continue
+
+            fatal_lex_erroror(posn)
+
+        add_child(HNode(tag_start_posn, tag_end_posn, element_name, attrs))
+        return tag_end_posn
+
+    # end-tag:
+    @for_pattern(r'</([a-z][-a-z0-9]*)>')
+    def _(start_posn, end_posn, groups):
+        [element_name] = groups
+        close_open_child(start_posn, end_posn, element_name)
+        return end_posn
+
+    # comment:
+    @for_pattern(r'(?s)<!--.*?-->')
+    def _(start_posn, end_posn, _):
+        add_child(HNode(start_posn, end_posn, '#COMMENT', []))
+        return end_posn
+
+    # doctype-decl:
+    @for_pattern(r'<!DOCTYPE html>')
+    def _(start_posn, end_posn, _):
+        add_child(HNode(start_posn, end_posn, '#DECL', []))
+        return end_posn
+
+    # ---------------------------------------------
+
+    def fatal_lex_erroror(posn):
+        (line_num, col_num) = shared.convert_posn_to_linecol(posn)
+        stderr()
+        stderr("********************************************")
+        stderr(f"line {line_num}, col {col_num}:")
+        stderr(repr(shared.spec_text[posn:posn+30] + '...'))
+        stderr("lexing error")
+        stderr("********************************************")
+        sys.exit(1)
+
+    # ---------------------------------------------
+
+    posn = 0
+    while posn < len(shared.spec_text):
+        for (reo, func) in pattern_funcs:
+            mo = reo.match(shared.spec_text, posn)
+            if mo:
+                posn = func(mo.start(), mo.end(), mo.groups())
+                break
         else:
-            self.curr_node._set_inner_end_posn(self._getposn())
-            self.curr_node = self.curr_node.parent
-            # print('self.curr_node is now', self.curr_node.element_name)
+            fatal_lex_erroror(posn)
 
-    def handle_data(self, data):
-        self._add_node( '#LITERAL', [])
-        #
-        # Sometime between python 3.2? and 3.5.3, HTMLParser changed:
-        # `data` now has entity-references decoded?
-        # So if it says '&lt;' in the source doc, we get '<' here.
-        # So there's no point complaining about '<'.
-        if False and '<' in data:
-            pdb.set_trace()
-            self._report("maybe change < to &lt;")
+    if current_open_node.element_name != '#DOC':
+        msg_at_posn(
+            current_open_node.start_posn,
+            "ERROR: At end of file, this element is still open"
+        )
 
-    def handle_entityref(self, name):
-        self._add_node( '#ENTITYREF', [])
+    return doc_node
 
-    def handle_charref(self, name):
-        self._add_node( '#CHARREF', [])
-
-    def handle_comment(self, data):
-        self._add_node( '#COMMENT', [])
-
-    def handle_decl(self, decl):
-        self._add_node( '#DECL', [])
-
-    def handle_pi(self, data):
-        assert 0
-    def handle_unknown_decl(self, data):
-        assert 0
-
-    # ---------------------------
-
-    def _add_node(self, node_name, attrs):
-        self._end_previous()
-        return HNode(self.curr_node, self._getposn(), node_name, attrs)
-
-    def _end_previous(self):
-        if not self.curr_node: return
-        if self.curr_node.children:
-            self.curr_node.children[-1]._set_end_posn(self._getposn())
-        else:
-            self.curr_node._set_inner_start_posn(self._getposn())
-
-    def _report(self, msg):
-        posn = self._getposn()
-        msg_at_posn(posn, msg)
-
-    def _getposn(self):
-        return shared.convert_HTMLParser_getpos_to_posn(self.getpos())
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class HNode(SpecNode):
-    def __init__(self, parent, start_posn, element_name, attrs):
-        SpecNode.__init__(self, start_posn, None)
-
-        self.parent = parent
+    def __init__(self, start_posn, end_posn, element_name, attrs):
+        # stderr(start_posn, end_posn, element_name, attrs)
+        SpecNode.__init__(self, start_posn, end_posn)
         self.element_name = element_name
-        self.attrs =  OrderedDict(attrs)
-        self.children = []
-        if self.parent:
-            self.parent.children.append(self)
-
-    def _set_inner_start_posn(self, posn):
-        self.inner_start_posn = posn
-
-    def _set_inner_end_posn(self, posn):
-        self.inner_end_posn = posn
-
-    # --------------------------------------------
+        self.attrs = attrs
 
     def inner_source_text(self):
         return shared.spec_text[self.inner_start_posn:self.inner_end_posn]
@@ -166,18 +178,16 @@ class HNode(SpecNode):
         return not self.element_name.startswith('#')
 
     def is_textual(self):
-        return (self.element_name in ['#LITERAL', '#ENTITYREF', '#CHARREF'])
+        return (self.element_name == '#LITERAL')
 
     def is_whitespace(self):
         return self.element_name == '#LITERAL' and string_is_whitespace(self.source_text())
 
     def is_nonwhite_text(self):
         return (
-            self.element_name == '#LITERAL' and not string_is_whitespace(self.source_text())
-            or
-            self.element_name == '#ENTITYREF'
-            or
-            self.element_name == '#CHARREF'
+            self.element_name == '#LITERAL'
+            and
+            not string_is_whitespace(self.source_text())
         )
 
     def is_a_section(self):
@@ -234,7 +244,7 @@ def _validate(node):
         stderr("validating markup...")
         header("validating markup...")
 
-    if node.element_name in ['#LITERAL', '#CHARREF', '#ENTITYREF']: return
+    if node.element_name == '#LITERAL': return
 
     # First do a pass to figure whether the content of this node
     # is block items or inline items or (anomalously) both.
@@ -243,8 +253,6 @@ def _validate(node):
     for child in node.children:
         if child.element_name == '#COMMENT':
             continue
-        elif child.element_name in ['#CHARREF', '#ENTITYREF']:
-            node.inline_child_element_names.add(child.element_name)
         elif child.element_name == '#LITERAL':
             if not child.is_whitespace():
                 node.inline_child_element_names.add(child.element_name)
@@ -269,9 +277,7 @@ def _validate(node):
 
     children_names = []
     for child in node.children:
-        if child.element_name in ['#CHARREF', '#ENTITYREF']:
-            x = '#TEXT;'
-        elif child.element_name == '#LITERAL':
+        if child.element_name == '#LITERAL':
             if node.inline_child_element_names:
                 x = '#TEXT;'
             else:
@@ -282,7 +288,6 @@ def _validate(node):
         children_names.append(x)
 
     children_names = ''.join(children_names)
-    children_names = re.sub('(#TEXT;)+', '#TEXT;', children_names)
     children_names = re.sub('#WS;#COMMENT;#WS;', '#WS;', children_names)
 
     if node.element_name not in content_model_:
