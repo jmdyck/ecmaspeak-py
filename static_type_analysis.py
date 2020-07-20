@@ -896,7 +896,7 @@ single_sentence_rules_str = r'''
 
         (?P<name>_\w+_) called with (?P<pl>.+) performs the following steps:
 
-        (?P<name>\w+) is an (?P<kind>implementation-defined abstract operation) that (.+)
+        (?P<name>\w+) is a (?P<kind>host-defined abstract operation) that (.+)
         v=!OP \3
 
         (?P<name>LocalTZA)\( _t_, _isUTC_ \) is an (?P<kind>implementation-defined algorithm) that (returns .+)
@@ -1241,8 +1241,8 @@ class PreambleInfoHolder:
             'abstract operation'                        : 'abstract operation',
             'concrete method'                           : 'concrete method',
             'concrete method & abstract method'         : 'concrete method', # spec bug?
-            'implementation-defined abstract operation' : 'implementation-defined abstract operation',
-            'implementation-defined algorithm'          : 'implementation-defined abstract operation',
+            'host-defined abstract operation'           : 'host-defined abstract operation',
+            'implementation-defined algorithm'          : 'host-defined abstract operation',
             'internal comparison abstract operation'    : 'abstract operation',
             'job'                                       : 'abstract operation',
             'internal method'                           : 'internal method',
@@ -1507,7 +1507,7 @@ def extract_info_from_standard_ao_preamble(preamble_node):
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
                 ('It returns a new Job Abstract Closure .+', 'a Job Abstract Closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
-                ('It returns an implementation-dependent approximation of .+', 'a Number'),
+                ('It returns an implementation-approximated value .+', 'a Number'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
                 ('It returns the BigInt value that .+', 'a BigInt'),
                 ('It returns the global object used by the currently running execution context.', 'an object'),
@@ -1889,7 +1889,7 @@ def resolve_oi(hoi, poi):
     else:
         if hoi.kind == poi.kind:
             oi.kind = hoi.kind
-        elif hoi.kind == 'abstract operation' and poi.kind == 'implementation-defined abstract operation':
+        elif hoi.kind == 'abstract operation' and poi.kind == 'host-defined abstract operation':
             oi.kind = poi.kind
         elif hoi.kind == 'numeric method' and poi.kind == 'abstract operation':
             oi.kind = hoi.kind
@@ -2516,7 +2516,7 @@ class Operation:
         assert kind in [
             'abstract operation',
             'concrete method',
-            'implementation-defined abstract operation',
+            'host-defined abstract operation',
             'internal method',
             'numeric method',
             'syntax-directed operation',
@@ -5612,7 +5612,7 @@ def tc_nonvalue(anode, env0):
         r'{ELSE_PART} : Else, {SMALL_COMMAND}.',
         r'{ELSE_PART} : Else,{IND_COMMANDS}',
         r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.',
-        r"{COMMAND} : Perform the following substeps in an implementation-dependent order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
+        r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
@@ -5718,7 +5718,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(rvar, T_Tangible_)
         result = env0.plus_new_entry(let_var, T_function_object_)
 
-    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-dependent approximation to the mathematical integer value that is represented by {var} in radix-{var} notation.)":
+    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the mathematical integer value that is represented by {var} in radix-{var} notation.)":
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = children
         assert same_source_text(let_var, let_var2)
         assert same_source_text(rvar, rvar2)
@@ -5942,7 +5942,7 @@ def tc_nonvalue(anode, env0):
     # ---
     # parse
 
-    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.':
+    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.':
         [source_var, nonterminal, result_var1, result_var2, error_type1] = children
         env1 = env0.ensure_expr_is_of_type(source_var, T_Unicode_code_points_)
         assert env1 is env0
@@ -7119,7 +7119,7 @@ def tc_nonvalue(anode, env0):
         [nont1, nont2, nont3, nont4, prod_ref] = children
         result = env0
 
-    elif p == r"{COMMAND} : Create any implementation-defined global object properties on {var}.":
+    elif p == r"{COMMAND} : Create any host-defined global object properties on {var}.":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
@@ -10628,7 +10628,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.kind in ['abstract operation', 'implementation-defined abstract operation']
+                    assert callee_op.kind in ['abstract operation', 'host-defined abstract operation']
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
@@ -11805,7 +11805,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(exb, T_String)
         return (T_String, env0)
 
-    elif p == r"{EX} : an implementation-dependent timezone name":
+    elif p == r"{EX} : an implementation-defined timezone name":
         [] = children
         return (T_String, env0)
 
@@ -13477,7 +13477,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Intrinsics_Record, env0)
 
-    elif p == r"{EXPR} : such an object created in an implementation-defined manner":
+    elif p == r"{EXPR} : such an object created in a host-defined manner":
         [] = children
         return (T_Object, env0)
 
@@ -13649,7 +13649,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(summ, T_Integer_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-dependent, however the algorithm should be a generalization of that specified in {h_emu_xref}":
+    elif p == r"{EXPR} : the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}":
         [var, emu_xref] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Integer_)
         return (T_String, env1)
@@ -13961,12 +13961,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_event_)
         return (T_event_pair_, env0)
 
-    elif p == "{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}":
+    elif p == "{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}":
         var = children[0]
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}":
+    elif p == r"{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}":
         [var, nont] = children
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)

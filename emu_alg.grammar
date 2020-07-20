@@ -62,7 +62,7 @@
     Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
     Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.
     Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.
-    Create any implementation-defined global object properties on {var}.
+    Create any host-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
     Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
@@ -88,7 +88,7 @@
     Let {var} be the smallest nonnegative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
     Let {var} be {EXPR}, and let {var} be {EXPR}.
     Let {var} be {EXPR}.
-    Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-dependent approximation to the mathematical integer value that is represented by {var} in radix-{var} notation.)
+    Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the mathematical integer value that is represented by {var} in radix-{var} notation.)
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
     Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)
     Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.
@@ -101,11 +101,11 @@
     Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.
-    Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-dependent manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-dependent, but at least one must be present.
+    Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.
     Perform an implementation-defined debugging action.
-    Perform an implementation-dependent sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
+    Perform an implementation-defined sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
     Perform any necessary implementation-defined initialization of {var}.
-    Perform the following substeps in an implementation-dependent order, possibly interleaving parsing and error detection:{IND_COMMANDS}
+    Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
@@ -1119,10 +1119,10 @@
     an empty set
     an implementation-defined Completion value
     an implementation-defined string that is either {EX} or {EXPR}
-    an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}
-    an implementation-dependent String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}
+    an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
+    an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}
     an instance of the production {h_emu_grammar}
-    such an object created in an implementation-defined manner
+    such an object created in a host-defined manner
     the 32-bit two's complement bit string representing the mathematical value of {var}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
@@ -1162,7 +1162,7 @@
     the Parse Node resulting from the parse
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
-    the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-dependent, however the algorithm should be a generalization of that specified in {h_emu_xref}
+    the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
@@ -1449,7 +1449,7 @@
     Type({var})::unit
     \u00ab {EXLIST} \u00bb
     a newly created {ERROR_TYPE} object
-    an implementation-dependent timezone name
+    an implementation-defined timezone name
     hint Number
     hint String
     the *this* value
