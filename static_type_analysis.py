@@ -1459,7 +1459,7 @@ def extract_info_from_standard_ao_preamble(preamble_node):
     for pattern in [
         r'The abstract operation (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
         r'The abstract operation (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
-        r'The abstract operation (?P<name><dfn id="sec-\w+" aoid="\w+">\w+</dfn>) takes (?P<pl>.+)\.',
+        r'The abstract operation (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
     ]:
         mo = re.fullmatch(pattern, sentence0)
         if mo:

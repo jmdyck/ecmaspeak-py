@@ -1036,7 +1036,7 @@ def analyze_other_section(section):
             op_name = f"this{'Time' if which == 'Date' else which}Value"
 
             preamble = section.block_children[emu_alg_posn-1]
-            assert preamble.source_text() == f'<p>The abstract operation <dfn id="sec-{op_name.lower()}" aoid="{op_name}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
+            assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
 
             handle_solo_op(op_name, emu_alg, section)
 

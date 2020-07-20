@@ -372,7 +372,7 @@ def check_ids():
                 aoid = node.attrs['aoid']
                 assert node.element_name in ['emu-clause', 'emu-annex', 'emu-eqn', 'dfn']
                 if id_prefix_expectation is None:
-                    id_prefix_expectation = 'sec-' # for thisFooValue
+                    id_prefix_expectation = '' # for thisFooValue, was 'sec-' until PR 2103
                 possibles = [
                     id_prefix_expectation + aoid.lower().replace(' ', '-').replace('::', '-'),
                     id_prefix_expectation + aoid,
