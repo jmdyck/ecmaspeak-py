@@ -1868,6 +1868,7 @@
     *RangeError*
     *ReferenceError*
     *URIError*
+    `AggregateError`
 
 {TYPE_NAME} :
     Array

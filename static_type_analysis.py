@@ -3732,6 +3732,7 @@ named_type_hierarchy = {
                 },
                 'Object': {
                     'Error': {
+                        'AggregateError': {},
                         'ReferenceError': {},
                         'SyntaxError': {},
                         'TypeError': {},
@@ -14936,6 +14937,9 @@ type_of_internal_thing_ = {
 
     # 40254:
     'WeakSetData' : ListType(T_Tangible_ | T_empty_),
+
+    # 40578: NO TABLE
+    'Errors' : ListType(T_Tangible_),
 
     # 41310: Table N: Internal Slots of Async-from-Sync Iterator Instances
     'SyncIteratorRecord' : T_iterator_record_,
