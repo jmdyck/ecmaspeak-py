@@ -935,6 +935,10 @@
     {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive or a Hidden Implementation Directive
     {var} has a {DSBN} internal slot with the value {LITERAL}
 
+    # PR 2109:
+    {var} is an Abstract Closure
+    {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification
+
 {PROPERTY_KIND} :
     accessor
     data
@@ -1438,6 +1442,9 @@
 
     # PR 2018
     the string-concatenation of the Strings that are the UTF16Encoding of each code point in {var}, in order
+
+    # PR 2109:
+    the number of parameters taken by {var}
 
 {EX} :
     &laquo; &raquo;
