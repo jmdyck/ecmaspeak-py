@@ -1915,6 +1915,91 @@ def analyze_static_dependencies():
 
     # ===================================================================
 
+    # "runtimey" ops
+    # (Does non-runtimey-ness approximate Static Semantics?
+    # Doesn't seem so.)
+
+    def looks_runtimey(anode):
+        return (
+            any(
+                phrase in anode.prod.rhs_s
+                for phrase in [
+                    'execution context',
+                    '{EXECUTION_CONTEXT_COMPONENT}',
+
+                    'a newly created object',
+                    'a new built-in function object',
+                    'an ECMAScript function object',
+                    'an Iterator object',
+                    'internal slot',
+                    'own property',
+                    'the property named',
+
+                    'Data Block',
+                    'Environment Record',
+                    'Realm Record',
+                    'the thisValue component',
+                    'Throw a',
+                ]
+            )
+            or
+            any(
+                phrase in anode.source_text()
+                for phrase in [
+                    '[[Prototype]]',
+                    '[[Extensible]]',
+                ]
+            )
+        )
+
+    # First, find the ops that directly look runtimey.
+    ops_that_look_runtimey = set()
+    for (op_name, op_info) in sorted(spec.info_for_op_named_.items()):
+        for op_defn in op_info.definitions:
+            def recurse(anode):
+                for d in anode.each_descendant_or_self():
+                    if looks_runtimey(d):
+                        ops_that_look_runtimey.add(op_name)
+                        break
+                    if hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
+                        assert op_name == 'Early Errors'
+                        recurse(d._hnode._syntax_tree)
+            recurse(op_defn.anode)
+
+    # Then propagate to callers.
+    while True:
+        next_ops_that_look_runtimey = ops_that_look_runtimey.copy()
+        for op_name in ops_that_look_runtimey:
+            op_info = spec.info_for_op_named_[op_name]
+            for caller in op_info.callers:
+                if caller in spec.info_for_op_named_:
+                    next_ops_that_look_runtimey.add(caller)
+        if next_ops_that_look_runtimey == ops_that_look_runtimey:
+            # fixed point
+            break
+        ops_that_look_runtimey = next_ops_that_look_runtimey
+
+    ops_that_dont_look_runtimey = (
+        set(spec.info_for_op_named_.keys())
+        -
+        ops_that_look_runtimey
+    )
+
+    put()
+    put('-' * 40)
+
+    put_names(
+        "ops labelled 'Static Semantics' but that look runtimey [shouldn't happen?]",
+        op_names_labelled_ss - ops_that_dont_look_runtimey
+    )
+
+    put_names(
+        "ops that don't look runtimey, but aren't labelled 'Static Semantics' [okay, but should be relabelled?]",
+        ops_that_dont_look_runtimey - op_names_labelled_ss
+    )
+
+    # ===================================================================
+
     f_deps.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
