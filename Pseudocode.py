@@ -1694,6 +1694,8 @@ def analyze_static_dependencies():
                             foo_defn.callees.add(callee_name)
                             spec.info_for_op_named_[callee_name].invocations.append(d)
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
+                        assert foo_name == 'Early Errors'
+                        # "... and the following algorithm evaluates to *true*: ..."
                         recurse(d._hnode._syntax_tree)
 
             recurse(foo_defn.anode)
