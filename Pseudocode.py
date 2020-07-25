@@ -1450,7 +1450,15 @@ def annotate_algo(algo):
             if opn_before_paren.prod.rhs_s == '{DOTTING}':
                 [dotting] = opn_before_paren.children
                 [lhs, dsbn] = dotting.children
-                op_names = [dsbn.source_text()]
+                op_name = dsbn.source_text()
+                # Usually, we are invoking an object's internal method.
+                # But the memory model has 2 record-fields that are invocable
+                # but not actually defined. (It's just weird.)
+                # It's simpler if we skip those cases.
+                if op_name in ['[[ModifyOp]]', '[[ReadsBytesFrom]]']:
+                    op_names = []
+                else:
+                    op_names = [op_name]
             elif opn_before_paren.prod.rhs_s == '{var}.{cap_word}':
                 [var, cap_word] = opn_before_paren.children
                 op_names = [cap_word.source_text()]
@@ -1683,8 +1691,7 @@ def analyze_static_dependencies():
                         (callee_names, args) = d._op_invocation
                         for callee_name in callee_names:
                             foo_defn.callees.add(callee_name)
-                            if callee_name not in ['[[ReadsBytesFrom]]', '[[ModifyOp]]']:
-                                spec.info_for_op_named_[callee_name].invocations.append(d)
+                            spec.info_for_op_named_[callee_name].invocations.append(d)
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         recurse(d._hnode._syntax_tree)
 
