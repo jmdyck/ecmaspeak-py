@@ -1583,6 +1583,7 @@ class Foo:
         self.definitions = []
         self.invocations = []
         self.callees = set()
+        self.callers = set()
 
 def ensure_foo(foo_kind, foo_name):
     if foo_kind.startswith('bif'):
@@ -1703,6 +1704,9 @@ def analyze_static_dependencies():
         put(f"[{foo_info.kind}, {len(foo_info.definitions)} definitions]")
         for callee in sorted(foo_info.callees):
             put('  ', callee)
+
+        for callee_name in foo_info.callees:
+            spec.info_for_op_named_[callee_name].callers.add(foo_name)
 
     # ----------------------------------------------------
 
