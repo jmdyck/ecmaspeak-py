@@ -471,6 +471,7 @@ def check_ids():
                     'prod-annexB-LegacyOctalEscapeSequence',
                     'prod-annexB-LegacyOctalIntegerLiteral',
                     'prod-annexB-NonOctalDecimalIntegerLiteral',
+                    'prod-annexB-NonOctalDecimalEscapeSequence',
                 ]:
                     # These don't exist in the source file,
                     # but are generated during the rendering process?
