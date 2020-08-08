@@ -447,7 +447,6 @@
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or if {CONDITION_1}
     {CONDITION_1} or {CONDITION_1}
-    {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
@@ -458,6 +457,8 @@
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
 
+    # obsoleted by PR #2111: 
+    # {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
