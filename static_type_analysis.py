@@ -2431,7 +2431,7 @@ def gather_nonterminals():
 #            print(anode.source_text())
         if anode.prod.lhs_s == '{nonterminal}':
             [nonterminal_name] = anode.children
-            if '[' in nonterminal_name: # or '_opt' in nonterminal_name:
+            if '[' in nonterminal_name or '?' in nonterminal_name: # or '_opt' in nonterminal_name:
                 return
             nonterminals.add(nonterminal_name)
         else:
@@ -5633,6 +5633,8 @@ def tc_nonvalue(anode, env0):
         r'{ELSE_PART} : Else,{IND_COMMANDS}',
         r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.',
         r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
+
+        r"{COMMAND} : Optionally, {SMALL_COMMAND}.",
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
@@ -6984,7 +6986,6 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.",
         r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}",
         r"{COMMAND} : Call {PREFIX_PAREN}.",
-        r"{COMMAND} : Optionally, perform {PP_NAMED_OPERATION_INVOCATION}.",
     ]:
         [noi] = children
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
@@ -8204,20 +8205,25 @@ def tc_cond_(cond, env0, asserting):
 
         # copula = 'isnt a' if 'not' in p else 'is a'
 
-        assert emu_xref.source_text() in [
+        if emu_xref.source_text() in [
             '<emu-xref href="#leading-surrogate"></emu-xref>',
             '<emu-xref href="#trailing-surrogate"></emu-xref>',
-        ]
+        ]:
+            t = T_code_unit_
+        elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
+            t = T_function_object_
+        else:
+            assert 0
 
         if 'is a' in p:
             return (
-                env0.with_expr_type_narrowed(var, T_code_unit_),
+                env0.with_expr_type_narrowed(var, t),
                 env0
             )
         else:
             return (
                 env0,
-                env0.with_expr_type_narrowed(var, T_code_unit_)
+                env0.with_expr_type_narrowed(var, t)
             )
 
     elif p in [
@@ -12648,8 +12654,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_function_object_, env0)
 # ^ obsoleted by PR #1460
 
-    elif p == r'{EXPR} : a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}':
-        [var1, var2] = children
+    elif p == r'{EXPR} : a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot':
+        [var1, var2, dsbn] = children
         env1 = env0.ensure_expr_is_of_type(var1, T_alg_steps)
         # env1 = env0.ensure_expr_is_of_type(var2, )
         return (T_function_object_, env1)
@@ -14054,7 +14060,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(b, T_event_)
         return (T_event_pair_, env0)
 
-    elif p == "{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}":
+    elif p == "{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}":
         var = children[0]
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
@@ -14910,6 +14916,9 @@ type_of_internal_thing_ = {
     'Fields'           : ListType(T_ClassFieldDefinition_Record), # PR 1668 privates
     'ClassFieldInitializer': T_Boolean, # PR 1668
     'PrivateBrand'     : T_Object, # PR 1668: XXX not in table 
+
+    # 8860: 
+    'InitialName' : T_Null | T_String,
 
     # 9078: Table 28: Internal Slots of Exotic Bound Function Objects
     'BoundTargetFunction': T_function_object_,

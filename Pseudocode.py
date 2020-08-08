@@ -1048,7 +1048,7 @@ def analyze_other_section(section):
             pass
 
         else:
-            assert 0, section.section_title
+            assert 0, (section.section_num, section.section_title)
 
     else:
 

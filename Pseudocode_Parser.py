@@ -159,7 +159,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {char_ref}       : & [a-z]+ ;
     {atat_word}      : @@ \w+ \b
     {percent_word}   : % \w+ (\. \w+)* %
-    {nonterminal}    : \| [A-Za-z][A-Za-z0-9]* (_opt)? (\[ .+? \])? \|
+    {nonterminal}    : \| [A-Za-z][A-Za-z0-9]* (_opt|\?)? (\[ .+? \])? \|
     {var}            : \b _ [A-Za-z][A-Za-z0-9]* _ \b
 
     {var} : \b _i_th \b

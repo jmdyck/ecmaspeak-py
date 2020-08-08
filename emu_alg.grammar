@@ -99,7 +99,7 @@
     No action is required.
     Notify the agent {var}.
     Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
-    Optionally, perform {PP_NAMED_OPERATION_INVOCATION}.
+    Optionally, {SMALL_COMMAND}.
     Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.
     Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.
@@ -1113,7 +1113,7 @@
     a new Record
     a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
     a new Synchronize event
-    a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}
+    a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
     a new empty List
     a new execution context
     a new list containing the same values as the list {var} in the same order followed by the same values as the list {var} in the same order
@@ -1135,7 +1135,7 @@
     an implementation-defined Completion value
     an implementation-defined string that is either {EX} or {EXPR}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
-    an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} is a {h_emu_xref} and is not identified as an anonymous function, the portion of the returned String that would be matched by {nonterminal} must be the initial value of the {starred_str} property of {var}
+    an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
     an instance of the production {h_emu_grammar}
     such an object created in a host-defined manner
     the 32-bit two's complement bit string representing the mathematical value of {var}
