@@ -2225,6 +2225,12 @@ nature_to_tipe = {
         # 24.4
         'a WaiterList' : 'WaiterList',
 
+        # 25.1
+        'a WeakRef': 'WeakRef_object_',
+
+        # 25.2
+        'a FinalizationRegistry' : 'FinalizationRegistry_object_',
+
         # 27.4 Candidate Executions
         'candidate execution'  : 'candidate execution',
         'a candidate execution': 'candidate execution',
@@ -3744,6 +3750,7 @@ named_type_hierarchy = {
                     'ArrayBuffer_object_': {},
                     'Array_object_': {},
                     'AsyncGenerator_object_': {},
+                    'FinalizationRegistry_object_': {},
                     'Integer_Indexed_object_': {},
                     'Iterator_object_': {},
                     'IteratorResult_object_': {},
@@ -3751,6 +3758,9 @@ named_type_hierarchy = {
                     'SharedArrayBuffer_object_': {},
                     'String_exotic_object_': {},
                     'TypedArray_object_': {},
+                    'WeakMap_object_': {},
+                    'WeakRef_object_': {},
+                    'WeakSet_object_': {},
                     'function_object_': {
                         'constructor_object_': {}, # XXX This is actually orthogonal to Proxy/Bound/other
                         'Proxy_exotic_object_': {},
@@ -3806,6 +3816,7 @@ named_type_hierarchy = {
                     },
                     'ExportEntry Record': {},
                     'ExportResolveSet_Record_': {},
+                    'FinalizationRegistryCellRecord_': {},
                     'GlobalSymbolRegistry Record': {},
                     'ImportEntry Record': {},
                     'ImportMeta_record_': {},
@@ -4496,12 +4507,19 @@ class Env:
             # but STA can't see that.
             result = item_env
 
-        else:
+        elif list_type.is_a_subtype_of_or_equal_to(T_List):
             # use list_type to check type of item_ex
-            assert list_type.is_a_subtype_of_or_equal_to(T_List)
             element_type = list_type.element_type
             assert item_type.is_a_subtype_of_or_equal_to(element_type)
             result = item_env
+
+        else:
+            add_pass_error(
+                list_ex,
+                f"context wants a List type, but got {list_type}"
+            )
+            result = item_env
+
         return result
 
     def with_expr_type_replaced(self, expr, new_t):
@@ -4737,6 +4755,7 @@ class Env:
                 '_targetBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 'the result of performing NamedEvaluation for |Initializer| with argument _bindingId_',
                 '_handler_', # NewPromiseReactionJob
+                '_r_.[[Value]]',
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -6242,6 +6261,13 @@ def tc_nonvalue(anode, env0):
             # just from the last iteration to after.)
             result = result.plus_new_entry('_r_', T_State)
 
+    elif p == r"{COMMAND} : While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}":
+        [cond, commands] = children
+        (t_env, f_env) = tc_cond(cond, env0)
+        bottom_env = tc_nonvalue(commands, t_env)
+        reduced_bottom_env = bottom_env.reduce(t_env.vars.keys())
+        result = f_env
+
     elif p in [
         r'{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}',
         r'{COMMAND} : For each {EACH_THING}, {SMALL_COMMAND}.',
@@ -6261,6 +6287,7 @@ def tc_nonvalue(anode, env0):
             r"{var} in {var}",
             r"{var} in {var}, in original insertion order",
             r"{var} in {var}, in reverse list order",
+            r"{var} of {var}",
             r"{var} of {var} in List order",
             r"{var} that is an element of {var}",
             r"{var} that is an element of {var}, in original insertion order",
@@ -6270,6 +6297,8 @@ def tc_nonvalue(anode, env0):
             if list_type == T_List:
                 # want to assert that this doesn't happen,
                 # but _kept_ in %TypedArray%.prototype.filter
+                element_type = T_TBD
+            elif list_type == T_TBD:
                 element_type = T_TBD
             else:
                 assert isinstance(list_type, ListType), list_type
@@ -6315,6 +6344,15 @@ def tc_nonvalue(anode, env0):
                 element_type = T_MapData_record_
             else:
                 assert 0, collection_expr
+            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(element_type))
+            env_for_commands = env1.plus_new_entry(loop_var, element_type)
+
+        elif each_thing.prod.rhs_s == r"Record { {DSBN}, {DSBN}, {DSBN} } {var} that is an element of {DOTTING}":
+            [dsbn1, dsbn2, dsbn3, loop_var, collection_expr] = each_thing.children
+            assert dsbn1.source_text() == '[[WeakRefTarget]]'
+            assert dsbn2.source_text() == '[[HeldValue]]'
+            assert dsbn3.source_text() == '[[UnregisterToken]]'
+            element_type = T_FinalizationRegistryCellRecord_
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(element_type))
             env_for_commands = env1.plus_new_entry(loop_var, element_type)
 
@@ -6469,6 +6507,30 @@ def tc_nonvalue(anode, env0):
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
+        elif each_thing.prod.rhs_s == r"FinalizationRegistry {var} such that {CONDITION}":
+            [loop_var, condition] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_FinalizationRegistry_object_)
+            (tenv, fenv) = tc_cond(condition, env1)
+            env_for_commands = tenv
+
+        elif each_thing.prod.rhs_s == r"WeakMap {var} such that {CONDITION}":
+            [loop_var, condition] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_WeakMap_object_)
+            (tenv, fenv) = tc_cond(condition, env1)
+            env_for_commands = tenv
+
+        elif each_thing.prod.rhs_s == r"WeakRef {var} such that {CONDITION}":
+            [loop_var, condition] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_WeakRef_object_)
+            (tenv, fenv) = tc_cond(condition, env1)
+            env_for_commands = tenv
+
+        elif each_thing.prod.rhs_s == r"WeakSet {var} such that {CONDITION}":
+            [loop_var, condition] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_WeakSet_object_)
+            (tenv, fenv) = tc_cond(condition, env1)
+            env_for_commands = tenv
+
         elif each_thing.prod.rhs_s == r"character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}":
             [loop_var, charset_var, noi, charset_var2] = each_thing.children
             assert charset_var.children == charset_var2.children
@@ -6476,6 +6538,7 @@ def tc_nonvalue(anode, env0):
             env1 = env0.plus_new_entry(loop_var, T_character_)
             env1.assert_expr_is_of_type(noi, T_character_)
             env_for_commands = env1
+
 
         # elif each_thing.prod.rhs_s == r"WriteSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})":
         # elif each_thing.prod.rhs_s == r"child node {var} of this Parse Node":
@@ -6921,6 +6984,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.",
         r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}",
         r"{COMMAND} : Call {PREFIX_PAREN}.",
+        r"{COMMAND} : Optionally, perform {PP_NAMED_OPERATION_INVOCATION}.",
     ]:
         [noi] = children
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
@@ -7074,9 +7138,10 @@ def tc_nonvalue(anode, env0):
     elif p in [
         r"{COMMAND} : Remove all occurrences of {var} from {var}.",
         r"{COMMAND} : Remove {var} from {var}.",
+        r"{COMMAND} : Remove {var} from {DOTTING}.",
     ]:
-        [item_var, list_var] = children
-        list_type = env0.assert_expr_is_of_type(list_var, T_List)
+        [item_var, list_ex] = children
+        list_type = env0.assert_expr_is_of_type(list_ex, T_List)
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         result = env0
 
@@ -7164,9 +7229,9 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_agent_signifier_)
         result = env0
 
-    elif p == r"{COMMAND} : Replace the element of {var} whose value is {var} with an element whose value is {LITERAL}.":
-        [list_var, elem_var, lit] = children
-        env1 = env0.ensure_A_can_be_element_of_list_B(elem_var, list_var)
+    elif p == r"{COMMAND} : Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.":
+        [list_var, elem_ex, lit] = children
+        env1 = env0.ensure_A_can_be_element_of_list_B(elem_ex, list_var)
         env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
         result = env2
 
@@ -7262,6 +7327,10 @@ def tc_nonvalue(anode, env0):
         [var, lit] = children
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
+
+    elif p == r"{COMMAND} : Choose any such {var}.":
+        [var] = children
+        result = env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
 
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
@@ -8595,6 +8664,13 @@ def tc_cond_(cond, env0, asserting):
         [ex, var, cond] = children
         env0.assert_expr_is_of_type(ex, ListType(T_String))
         env_for_cond = env0.plus_new_entry(var, T_Private_Name) # XXX!
+        (cond_t_env, cond_f_env) = tc_cond(cond, env_for_cond)
+        return (cond_t_env, env0)
+
+    elif p == r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}":
+        [ex, var, cond] = children
+        env0.assert_expr_is_of_type(ex, ListType(T_Record))
+        env_for_cond = env0.plus_new_entry(var, T_Record)
         (cond_t_env, cond_f_env) = tc_cond(cond, env_for_cond)
         return (cond_t_env, env0)
 
@@ -10666,10 +10742,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{SETTABLE} : the {DSBN} field of {EXPR}":
         [dsbn, ex] = children
         dsbn_name = dsbn.source_text()[2:-2]
-        # over-specific:
-        assert dsbn_name == 'EventList'
-        env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
-        return (ListType(T_event_), env0)
+        if dsbn_name == 'EventList':
+            env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
+            return (ListType(T_event_), env0)
+        elif dsbn_name == 'CandidateExecution':
+            env0.assert_expr_is_of_type(ex, T_Agent_Record)
+            return (T_candidate_execution, env0)
+        elif dsbn_name == 'LittleEndian':
+            env0.assert_expr_is_of_type(ex, T_Agent_Record)
+            return (T_Boolean, env0)
+        else:
+            assert 0, expr
 
     elif p in [
         r'{DOTTING} : {var}.{DSBN}',
@@ -10737,6 +10820,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         result_memtype = memtype
                     elif memtype.is_a_subtype_of_or_equal_to(T_Private_Name):
                         result_memtype = T_function_object_
+                    elif memtype == T_Record:
+                        # All we know is that it's a Record with a [[Value]] field.
+                        result_memtype = T_TBD
                     else:
                         assert 0, memtype
 
@@ -10921,6 +11007,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         'methodDef_record_',
                         'CodePointAt_record_',
                         'Job_record_',
+                        'FinalizationRegistryCellRecord_',
                     ]:
                         pd_fields = fields_for_record_type_named_[record_type_name]
                         if dsbn_name in pd_fields:
@@ -12945,7 +13032,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             # print("the type of %s is %s" % (var_name, t))
         return (t, env0)
 
-    elif p == r'{EXPR} : the Agent Record of the surrounding agent':
+    elif p in [
+        r'{EXPR} : the Agent Record of the surrounding agent',
+        r"{EXPR} : the surrounding agent's Agent Record",
+    ]:
         [] = children
         return (T_Agent_Record, env0)
 
@@ -13031,6 +13121,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 record_type_name = 'ClassFieldDefinition Record' # PR 1668
             elif field_names == ['Gap', 'Indent', 'PropertyList', 'ReplacerFunction', 'Stack']:
                 record_type_name = 'JSON_Stringify_state_record_'
+            elif field_names == ['HeldValue', 'UnregisterToken', 'WeakRefTarget']:
+                record_type_name = 'FinalizationRegistryCellRecord_'
 
             elif field_names == ['Value']:
                 fst = fields.source_text()
@@ -14501,6 +14593,7 @@ fields_for_record_type_named_ = {
         'IsLockFree2' : T_Boolean,
         'IsLockFree8' : T_Boolean,
         'CandidateExecution': T_candidate_execution,
+        'KeptAlive'   : ListType(T_Object),
     },
 
     # 7343: Table 25: PendingJob Record Fields
@@ -14632,7 +14725,7 @@ fields_for_record_type_named_ = {
         'Symbol': T_Symbol,
     },
 
-    # 38121: JSON.stringify: no table, no mention
+    # 38121 24.5.2: JSON.stringify: no table, no mention
     'JSON_Stringify_state_record_': {
         'ReplacerFunction': T_function_object_ | T_Undefined,
         'Stack'           : ListType(T_Object),
@@ -14641,14 +14734,21 @@ fields_for_record_type_named_ = {
         'PropertyList'    : ListType(T_String) | T_Undefined,
     },
 
-    # 38791: Table 57: PromiseCapability Record Fields
+    # 25.2.3.2 FinalizationRegistry.prototype.register
+    'FinalizationRegistryCellRecord_': {
+        'WeakRefTarget'  : T_Object,
+        'HeldValue'      : T_Tangible_,
+        'UnregisterToken': T_Object | T_empty_,
+    },
+
+    # 26.6.1.1 PromiseCapability Record Fields
     'PromiseCapability Record': {
         'Promise' : T_Object | T_Undefined,
         'Resolve' : T_function_object_ | T_Undefined,
         'Reject'  : T_function_object_ | T_Undefined,
     },
 
-    # 38864: Table 58: PromiseReaction Record Fields
+    # 26.6.1.2 PromiseReaction Record Fields
     'PromiseReaction Record': {
         'Capability' : T_PromiseCapability_Record | T_Undefined,
         'Type'       : T_settlement_type_, # T_String,
@@ -14661,7 +14761,7 @@ fields_for_record_type_named_ = {
         'Value' : T_Tangible_ | T_empty_,
     },
 
-    # 39328: Agent Events Record Fields
+    # 39328: 28.2 Agent Events Record Fields
     'Agent Events Record' : {
         'AgentSignifier'       : T_agent_signifier_,
         'EventList'            : ListType(T_event_),
@@ -14898,6 +14998,13 @@ type_of_internal_thing_ = {
     # 38581: Table 56: Internal Slots of Generator Instances
     'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
     'GeneratorContext': T_execution_context,
+
+    # 25.1.1.1 WeakRef ( _target_ ) NO TABLE
+    'WeakRefTarget' : T_Object,
+
+    # 25.2.1.1 FinalizationRegistry ( cleanupCallback ) NO TABLE
+    'CleanupCallback' : T_function_object_,
+    'Cells'           : ListType(T_FinalizationRegistryCellRecord_),
 
     # 38914: 25.4.1.3.1 ish, NO TABLE
     'Promise'        : T_Object,

@@ -220,6 +220,7 @@ def _infer_section_kinds(section):
 
             (r'(?P<op_name>(Valid Chosen|Coherent|Tear Free) Reads)',                   'abstract_operation'),
             (r'(?P<op_name>Races|Data Races)',                                          'abstract_operation'),
+            (r'Execution',                                                              'abstract_operation'), # odd case
 
             (r'Static Semantics: (?P<op_name>TV and TRV)', 'syntax_directed_operation'),
             (r'Static Semantics: (?P<op_name>\w+)',        'syntax_directed_operation'),
@@ -306,6 +307,13 @@ def _infer_section_kinds(section):
         assert 'op_name' not in section.ste
         section.ste['op_name'] = 'regexp-Evaluate'
         section.ste['parameters'] = OrderedDict()
+
+    elif section.section_title == 'Execution':
+        assert section.section_kind == 'abstract_operation'
+        assert section.section_id == 'sec-weakref-execution'
+        assert 'op_name' not in section.ste
+        section.ste['op_name'] = 'WeakRef emptying thing'
+        section.ste['parameters'] = OrderedDict([('_S_', '')])
 
     # ======================================================
 
