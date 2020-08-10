@@ -3780,6 +3780,7 @@ named_type_hierarchy = {
             },
             'Intangible_': {
                 'AssignmentTargetType_': {},
+                'Abstract Closure': {}, # hm
                 'CharSet': {},
                 'ClassElementKind_': {},
                 'Data Block': {},
@@ -7646,6 +7647,16 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification":
         [var] = children
         return env0.with_type_test(var, 'is a', T_alg_steps, asserting)
+
+    # PR 2109:
+    elif p == r"{CONDITION_1} : {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Abstract_Closure | T_alg_steps, asserting)
+
+    # PR 2109:
+    elif p == r"{CONDITION_1} : {var} is an Abstract Closure":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Abstract_Closure, asserting)
 
     elif p == r'{CONDITION_1} : {var} is an Array exotic object':
         [var] = children
@@ -14171,6 +14182,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
+
+    # PR 2109:
+    elif p == r"{EXPR} : the number of parameters taken by {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Abstract_Closure)
+        return (T_Integer_, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
