@@ -128,6 +128,7 @@ def prep_autolinking():
         elif term.startswith('LocalTZA('):
             term = 'LocalTZA'
 
+        # Different kinds of terms will be detected (for auto-linking) in different ways...
         if re.fullmatch(r'\w[-\w ]*\w', term) or term in ['\u211d', '\U0001d53d']:
             if 'id' in dfn.attrs:
                 # Occurrences of this term should be linked to the dfn itself.
@@ -162,7 +163,7 @@ def prep_autolinking():
             #XXX something.append(term)
         else:
             assert not dfn.attrs
-            assert term == '[[IsHTMLDDA]] internal slot'
+            assert term in ['[[IsHTMLDDA]] internal slot', '%TypedArray% prototype object']
             fragid = cc_section.section_id
             odd_ones.append(term)
 

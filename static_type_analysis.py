@@ -449,6 +449,14 @@ def create_operation_info_for_section(s):
             'The Date prototype object:',
             'The String prototype object:',
 
+            # PR 2065:
+            'The <dfn>Boolean prototype object</dfn>:',
+            'The <dfn>Symbol prototype object</dfn>:',
+            'The <dfn>Number prototype object</dfn>:',
+            'The <dfn>BigInt prototype object</dfn>:',
+            'The <dfn>Date prototype object</dfn>:',
+            'The <dfn>String prototype object</dfn>:',
+
             'Unless explicitly stated otherwise, the methods of the',
             'Unless explicitly defined otherwise, the methods of the',
 
