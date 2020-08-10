@@ -1087,8 +1087,9 @@
     a List whose elements are the code unit elements of {var}
     a List whose elements are, in left to right order, the arguments that were passed to this function invocation
     a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed
+    a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order
+    a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
     a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation
-    a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
     a List whose sole item is {var}
     a String according to {h_emu_xref}
     a String containing one instance of each code unit valid in {nonterminal}
@@ -1386,6 +1387,9 @@
 
     # obsoleted by the merge of PR #1376:
     # the intrinsic object {percent_word}
+
+    # obsoleted by the merge of PR #1402:
+    # a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
 
     # obsoleted by the merge of PR #1460:
     # a newly created Array exotic object

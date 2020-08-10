@@ -12318,23 +12318,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         list_type = env1.lookup(list_var)
         return (list_type, env1)
 
-    elif p == r"{EXPR} : a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements":
-        [e1_var, e2_var, rest_var, _] = children
-        (t1, env1) = tc_expr(e1_var, env0); assert env1 is env0
-        (t2, env2) = tc_expr(e2_var, env0); assert env2 is env0
-        (rest_t, rest_env) = tc_expr(rest_var, env0); assert rest_env is env0
-        if t1 == T_TBD and t2 == T_TBD and rest_t == T_List:
-            # can't really do much
-            pass
-        elif t1 == T_TBD and t2 == T_Tangible_:
-            pass
-        elif t1 == T_Object and t2 == T_Tangible_ and rest_t == ListType(T_Tangible_):
-            pass
-        else:
-            assert t1 == t2
-            assert isinstance(rest_t, ListType)
-            assert t1 == rest_t.element_type
-        return (rest_t, rest_env)
+#    elif p == r"{EXPR} : a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements":
+#        [e1_var, e2_var, rest_var, _] = children
+#        (t1, env1) = tc_expr(e1_var, env0); assert env1 is env0
+#        (t2, env2) = tc_expr(e2_var, env0); assert env2 is env0
+#        (rest_t, rest_env) = tc_expr(rest_var, env0); assert rest_env is env0
+#        if t1 == T_TBD and t2 == T_TBD and rest_t == T_List:
+#            # can't really do much
+#            pass
+#        elif t1 == T_TBD and t2 == T_Tangible_:
+#            pass
+#        elif t1 == T_Object and t2 == T_Tangible_ and rest_t == ListType(T_Tangible_):
+#            pass
+#        else:
+#            assert t1 == t2
+#            assert isinstance(rest_t, ListType)
+#            assert t1 == rest_t.element_type
+#        return (rest_t, rest_env)
+# ^ obsoleted by PR #1402
 
     elif p == r'{EXPR} : a new List containing the same values as the list {var} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using *undefined* as {var}':
         [var, _] = children
@@ -13929,6 +13930,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(start, T_Integer_)
         env0.assert_expr_is_of_type(end, T_Integer_)
         return (T_String, env0)
+
+    elif p in [
+        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order",
+        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements",
+    ]:
+        [head_var, tail_var] = children[0:2]
+        env0.assert_expr_is_of_type(head_var, T_Tangible_)
+        env1 = env0.ensure_expr_is_of_type(tail_var, ListType(T_Tangible_))
+        return (ListType(T_Tangible_), env1)
 
     elif p == r"{EXPR} : a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation":
         [var] = children
