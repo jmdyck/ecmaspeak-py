@@ -2107,6 +2107,7 @@ nature_to_tipe = {
         'an ArrayBuffer' : 'ArrayBuffer_object_',
         'an ArrayBuffer object' : 'ArrayBuffer_object_',
         'an ArrayBuffer or SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+        'an ArrayBuffer object or a SharedArrayBuffer object' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
         'a SharedArrayBuffer' : 'SharedArrayBuffer_object_',
         'a SharedArrayBuffer object' : 'SharedArrayBuffer_object_',
 
@@ -6979,7 +6980,11 @@ def tc_nonvalue(anode, env0):
 #        result = env0
 # ^ obsoleted by PR 1460
 
-    elif p == r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, in order, starting at {var}[{var}]":
+    elif p in [
+        r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, in order, starting at {var}[{var}]",
+        r"{COMMAND} : Store the individual bytes of {var} into {var}, in order, starting at {var}[{var}].",
+
+    ]:
         [var1, var2, var3, var4] = children
         env0.assert_expr_is_of_type(var1, ListType(T_Integer_))
         env1 = env0.ensure_expr_is_of_type(var2, T_Data_Block)
@@ -12144,13 +12149,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Integer_)
         return (ListType(T_Integer_), env0)
 
-    elif p == r"{EXPR} : a List of {var} containing, in order, the {var} sequence of bytes starting with {EX}":
-        # todo: fix odd syntax in spec.
-        [var1, var2, ex] = children
+    elif p == r"{EXPR} : a List of size {var} containing the sequence of {var} bytes starting with {var}[{var}]":
+        [var1, var2, var3, var4] = children
         assert var1.children == var2.children
         env0.assert_expr_is_of_type(var1, T_Integer_)
-        env0.assert_expr_is_of_type(ex, T_Integer_)
-        return (ListType(T_Integer_), env0)
+        env1 = env0.ensure_expr_is_of_type(var3, T_Data_Block | T_Shared_Data_Block)
+        env0.assert_expr_is_of_type(var4, T_Integer_)
+        return (ListType(T_Integer_), env1)
 
     elif p == r"{EXPR} : a List of 8-bit integers of size {var}":
         [var] = children

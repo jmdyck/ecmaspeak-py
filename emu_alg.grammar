@@ -154,6 +154,7 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
+    Store the individual bytes of {var} into {var}, in order, starting at {var}[{var}].
     Suspend the currently running execution context.
     Suspend {var} and remove it from the execution context stack.
     Suspend {var}.
@@ -1081,7 +1082,7 @@
     a List of length 1 that contains a nondeterministically chosen byte value
     a List of length {var} of nondeterministically chosen byte values
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
-    a List of {var} containing, in order, the {var} sequence of bytes starting with {EX}
+    a List of size {var} containing the sequence of {var} bytes starting with {var}[{var}]
     a List of {var} {LITERAL} values, indexed 1 through {var}
     a List whose elements are the arguments passed to this function
     a List whose elements are the code points of {var}
