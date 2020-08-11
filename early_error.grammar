@@ -87,8 +87,8 @@
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
-    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of a code point matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or the UTF16Encoding of either {named_char} or {named_char}, or the UTF16Encoding of a Unicode code point that would be matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, {starred_str}, ! {NAMED_OPERATION_INVOCATION}, ! {NAMED_OPERATION_INVOCATION}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} that would be matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, or some code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, {named_char}, {named_char}, or some code point matched by the {nonterminal} lexical grammar production
@@ -129,7 +129,9 @@
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
     the {cap_word} of {LOCAL_REF}
     {cap_word}({PROD_REF})
-    the result of performing UTF16DecodeSurrogatePair on the two code points matched by {nonterminal} and {nonterminal} respectively
+    the result of performing {cap_word} on {EX}
+    {cap_word}({var})
+    {cap_word}({named_char})
 
     ## directed-operations:
     ## {var}.\w+()
@@ -163,6 +165,7 @@
 {EX} :
     &laquo; &raquo;
     {LITERAL}
+    the two code points matched by {nonterminal} and {nonterminal} respectively
 
 {LITERAL} :
     {starred_str}

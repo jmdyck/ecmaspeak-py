@@ -40,9 +40,6 @@
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
-    the UTF16Encoding of the code point value of {PROD_REF}
-    the UTF16Encoding of the single code point matched by this production
-    the UTF16Encoding of {NAMED_OPERATION_INVOCATION}
 
     # PR 2018
     the String value consisting of {EXPR}
@@ -59,10 +56,12 @@
 {EX} :
     #pre-1135: the number of code points in {PROD_REF}
     a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
+    the code point value of {nonterminal}
     the code units of {NAMED_OPERATION_INVOCATION}
     the code units of {NAMED_OPERATION_INVOCATION} in order
     the mathematical integer number of code points in {PROD_REF}
     the mathematical value of the number of code points in {PROD_REF}
+    the single code point matched by this production
     {NAMED_OPERATION_INVOCATION}
     {NUM_LITERAL}
     {PRODUCT}
@@ -75,6 +74,7 @@
 {NAMED_OPERATION_INVOCATION} :
     the {ISDO_NAME} of {PROD_REF}
     {ISDO_NAME} of {PROD_REF}
+    the result of performing {cap_word} on {EX}
 
 {ISDO_NAME} :
     {cap_word}

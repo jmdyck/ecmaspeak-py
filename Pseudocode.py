@@ -1391,6 +1391,9 @@ def annotate_algo(algo):
                 '{cap_word} of {LOCAL_REF}',
                 '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
                 '{cap_word}({PROD_REF})',
+                '{cap_word}({var})',
+                '{cap_word}({named_char})',
+                'the result of performing {cap_word} on {EX}',
             ]:
                 cap_word = d.children[0]
                 op_names = [cap_word.source_text()]
@@ -1434,11 +1437,8 @@ def annotate_algo(algo):
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
                     "the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     "the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
-                    'the UTF16Encoding of each code point of {EX}'     : 'UTF16Encoding',
-                    'the UTF16Encoding of the code points of {var}'    : 'UTF16Encoding',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
-                    'the result of performing UTF16DecodeSurrogatePair on the two code points matched by {nonterminal} and {nonterminal} respectively' : 'UTF16DecodeSurrogatePair',
                 }[rhs]
                 op_names = [callee_name]
                 args = d.children # XXX incorrect for a few cases

@@ -334,6 +334,7 @@
     character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
     child node {var} of this Parse Node
     code point {var} in {PP_NAMED_OPERATION_INVOCATION}
+    code point {var} in {var}
     element {var} in {var}
     element {var} of {EX}
     element {var} of {var} in List order
@@ -1328,7 +1329,6 @@
     the source text that was recognized as {PROD_REF}
     the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
-    the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order
     the string-concatenation of {EX} and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String

@@ -4696,7 +4696,7 @@ class Env:
                 # sys.exit(0)
         else:
             assert expr_text in [
-                '! UTF16DecodeString(_value_)',
+                '! CodePointToUTF16CodeUnits(_cp_)',
                 '? CaseClauseIsSelected(_C_, _input_)', # Evaluation (CaseBlock)
                 '? Get(_obj_, `"length"`)',
                 '? GetValue(_defaultValue_)', # DestructuringAssignmentEvaluation, bleah
@@ -4708,6 +4708,7 @@ class Env:
                 '? ToPrimitive(_y_)', # Abstract Equality Comparison
                 '? ToPropertyKey(_lval_)',
                 'Call(_return_, _iterator_)', # AsyncIteratorClose
+                'CodePointToUTF16CodeUnits(_V_)',
                 'StringValue of |Identifier|',
                 'ToInteger(_P_)', # [[OwnPropertyKeys]]
                 'ToNumber(_x_)', # Abstract Equality Comparison
@@ -5325,7 +5326,7 @@ def tc_header(header):
                 or
                 header.name == 'SetRealmGlobalObject' and pn == '_globalObj_' and init_t == T_Object | T_Undefined
                 or
-                header.name == 'UTF16Encoding' and pn == '*return*' and init_t == ListType(T_code_unit_)
+                header.name == 'CodePointToUTF16CodeUnits' and pn == '*return*' and init_t == ListType(T_code_unit_)
                 or
                 header.name == 'PerformPromiseThen' and pn in ['_onFulfilled_', '_onRejected_'] and init_t == T_Tangible_
                 or
@@ -5384,9 +5385,9 @@ def tc_header(header):
                 or
                 header.name == '[[Construct]]' and pn == '*return*'
                 or
-                header.name == 'UTF16DecodeString' and pn == '*return*'
+                header.name == 'StringToCodePoints' and pn == '*return*'
                 or
-                header.name == 'UTF16Encoding' and pn == '_cp_'
+                header.name == 'CodePointToUTF16CodeUnits' and pn == '_cp_'
             ):
                 # -------------------------
                 # Don't change header types
@@ -5445,6 +5446,9 @@ def tc_header(header):
                 header.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_Integer_ | ThrowType(T_TypeError)
                 or
                 header.name == 'NewPromiseReactionJob' and pn == '*return*' and init_t == T_Job and final_t == T_Record
+                or
+                header.name == 'CodePointsToString' and pn == '_text_' and init_t == T_Unicode_code_points_ and final_t == ListType(T_code_point_)
+
                 # eoh is just wrong, because preamble is misleading
 
                 # or
@@ -6406,11 +6410,10 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_String))
             env_for_commands = env1.plus_new_entry(loop_var, T_String)
 
-#        elif each_thing.prod.rhs_s == 'code point {var} in {var}':
-#            [loop_var, collection_expr] = each_thing.children
-#            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_code_point_))
-#            env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
-# obsoleted by 1552
+        elif each_thing.prod.rhs_s == 'code point {var} in {var}':
+            [loop_var, collection_expr] = each_thing.children
+            env1 = env0.ensure_expr_is_of_type(collection_expr, T_Unicode_code_points_)
+            env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
 
         elif each_thing.prod.rhs_s == 'code point {var} in {PP_NAMED_OPERATION_INVOCATION}':
             [loop_var, collection_expr] = each_thing.children
@@ -10436,11 +10439,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero",
         r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}",
-
+        r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}",
     ]:
         [callee, local_ref] = children[0:2]
         callee_op_name = callee.source_text()
-        if callee_op_name == 'UTF16Encoding':
+        if callee_op_name == 'CodePointToUTF16CodeUnits':
             # An abstract operation that uses SDO-style invocation.
             return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
         else:
@@ -11501,6 +11504,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_Integer_, env0)
 
+    elif p == r"{EX} : the code point value of {nonterminal}":
+        [nont] = children
+        assert nont.source_text() == '|SourceCharacter|'
+        return (T_Integer_, env0)
+
     elif p in [
         r"{EXPR} : the code point value of {code_point_lit}",
         r"{EXPR} : the code point value of {NAMED_OPERATION_INVOCATION}",
@@ -11697,7 +11705,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
         return (T_String, env1)
 
-#    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16Encoding each code point":
+#    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by CodePointToUTF16CodeUnits??? each code point":
 #        return (T_String, env0)
 # ^ obsoleted by PR 1552
 
@@ -11933,14 +11941,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # env0.assert_expr_is_of_type(vc, T_String) repeats the var-being-defined
         return (T_String | T_throw_, env0)
 
-    elif p in [
-        r"{EXPR} : the string-concatenation of the code units that are the UTF16Encoding of each code point in {var}, in order",
-        r"{EXPR} : the string-concatenation of the Strings that are the UTF16Encoding of each code point in {var}, in order",
-    ]:
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (T_String, env0)
-
     # ----------------------------------------------------------
     # return T_character_
 
@@ -12059,6 +12059,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the code point matched by {PROD_REF}":
         [nont] = children
+        return (T_code_point_, env0)
+
+    elif p == r"{EX} : the single code point matched by this production":
+        [] = children
         return (T_code_point_, env0)
 
     # ----------------------------------------------------------
@@ -12217,40 +12221,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var1, var2] = children
         env0.assert_expr_is_of_type(var1, T_Integer_)
         env0.assert_expr_is_of_type(var2, T_Integer_)
-        return (ListType(T_code_unit_), env0)
-
-    elif p == r"{EXPR} : the UTF16Encoding of the code point value of {PROD_REF}":
-        [nonterminal] = children
-        # Should look up the return type of UTF16Encoding
-        t = ListType(T_code_unit_)
-        #PR2018 t = T_String
-        return (t, env0)
-
-    elif p == r"{EXPR} : the UTF16Encoding of {NAMED_OPERATION_INVOCATION}":
-        # todo: should be "the UTF16Encoding of the code point whose value is ..."
-        [noi] = children
-        env0.assert_expr_is_of_type(noi, T_MathInteger_)
-        t = ListType(T_code_unit_)
-        #PR2018 t = T_String
-        return (t, env0)
-
-    elif p == r"{EXPR} : the UTF16Encoding of the single code point matched by this production":
-        [] = children
-        t = ListType(T_code_unit_)
-        #PR2018 t = T_String
-        return (t, env0)
-
-    elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of each code point of {NAMED_OPERATION_INVOCATION}",
-        r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of each code point of {EX}",
-    ]:
-        [noi] = children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        return (ListType(T_code_unit_), env0)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the UTF16Encoding of the code points of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_code_point_))
         return (ListType(T_code_unit_), env0)
 
     elif p == r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}":
