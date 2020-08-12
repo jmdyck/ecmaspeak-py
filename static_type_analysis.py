@@ -14559,6 +14559,7 @@ fields_for_record_type_named_ = {
         'Set'        : T_function_object_,
     },
 
+    # 8.1
     'Environment Record': {
         'OuterEnv'         : T_Environment_Record,
     },
@@ -14571,7 +14572,7 @@ fields_for_record_type_named_ = {
         'OuterEnv'         : T_Environment_Record,
     },
 
-    # 5731: Table 16: Additional Fields of Function Environment Records
+    # 8.1.1.3 Table 16: Additional Fields of Function Environment Records
     'function Environment Record': {
         'OuterEnv'         : T_Environment_Record,
         'ThisValue'        : T_Tangible_,
@@ -14581,7 +14582,7 @@ fields_for_record_type_named_ = {
         'NewTarget'        : T_Object | T_Undefined,
     },
 
-    # 5907: Table 18: Additional Fields of Global Environment Records
+    # 8.1.1.4 Table 18: Additional Fields of Global Environment Records
     'global Environment Record': {
         'OuterEnv'         : T_Environment_Record,
         'ObjectRecord'     : T_object_Environment_Record,
@@ -14594,7 +14595,7 @@ fields_for_record_type_named_ = {
         'OuterEnv'         : T_Environment_Record,
     },
 
-    # 6561: Table 21: Realm Record Fields
+    # 8.2 Realms: Table 21: Realm Record Fields
     'Realm Record': {
         'Intrinsics'  : T_Intrinsics_Record,
         'GlobalObject': T_Object,
@@ -14603,13 +14604,13 @@ fields_for_record_type_named_ = {
         'HostDefined' : T_host_defined_ | T_Undefined,
     },
 
-    # 7212: NO TABLE
+    # 8.2: NO TABLE
     'templateMap_entry_': {
         'Site'    : T_Parse_Node,
         'Array'   : T_Object,
     },
 
-    # 7176: Agent Record Fields
+    # 8.6 Agents: Agent Record Fields
     'Agent Record': {
         'LittleEndian': T_Boolean,
         'CanBlock'    : T_Boolean,
