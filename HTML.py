@@ -246,6 +246,22 @@ def _validate(node):
 
     if node.element_name == '#LITERAL': return
 
+    # ------------------------
+
+    required_attrs = required_attrs_[node.element_name]
+    optional_attrs = optional_attrs_[node.element_name]
+    attrs = node.attrs.keys()
+
+    def stringify_set(s):
+        return ' '.join(sorted(s))
+
+    if not (attrs >= required_attrs):
+        msg_at_posn(node.start_posn, f"required attribute(s) are missing: {stringify_set(required_attrs - attrs)}")
+    if not (attrs <= required_attrs | optional_attrs):
+        msg_at_posn(node.start_posn, f"unexpected attribute(s): {stringify_set(attrs - (required_attrs | optional_attrs))}")
+
+    # ------------------------
+
     # First do a pass to figure whether the content of this node
     # is block items or inline items or (anomalously) both.
     node.block_child_element_names = set()
@@ -312,67 +328,67 @@ element_info = {
     # Block-level
 
         # block contains blocks:
-        '#DOC'              : ('B', '#DECL;#WS;html;#WS;'),
-        'html'              : ('B', '#WS;head;#WS;body;#WS;'),
-        'head'              : ('B', '#WS;meta;#WS;((link;|script;|style;)#WS;)+'),
-        'body'              : ('B', '#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
-        'emu-intro'         : ('B', '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
-        'emu-clause'        : ('B', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
-        'emu-annex'         : ('B', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
-        'emu-table'         : ('B', '#WS;(emu-caption;#WS;)?table;#WS;'),
-        'emu-figure'        : ('B', '#WS;(object;|img;)#WS;'),
-        'figure'            : ('B', '#WS;table;#WS;'),
-        'table'             : ('B', '#WS;(thead;#WS;)?tbody;#WS;'),
-        'tbody'             : ('B', '#WS;(tr;#WS;)+'),
-        'thead'             : ('B', '#WS;(tr;#WS;)+'),
-        'tr'                : ('B', '(#WS;)?((th;|td;)(#WS;)?)+'),
-        'ul'                : ('B', '#WS;(li;#WS;)+'),
-        'ol'                : ('B', '#WS;(li;#WS;)+'),
-        'dl'                : ('B', '#WS;(dt;#WS;dd;#WS;)+'),
-        'object'            : ('B', '#WS;img;#WS;'),
+        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;'),
+        'html'              : ('B', 'lang',      '',           '#WS;head;#WS;body;#WS;'),
+        'head'              : ('B', '',          '',           '#WS;meta;#WS;((link;|script;|style;)#WS;)+'),
+        'body'              : ('B', '',          '',           '#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
+        'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
+        'emu-clause'        : ('B', '', 'aoid id namespace normative-optional oldids', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
+        'emu-annex'         : ('B', 'id', 'aoid namespace normative', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
+        'emu-table'         : ('B', 'caption id', 'informative oldids', '#WS;(emu-caption;#WS;)?table;#WS;'),
+        'emu-figure'        : ('B', 'caption id', 'informative', '#WS;(object;|img;)#WS;'),
+        'figure'            : ('B', '',          '',           '#WS;table;#WS;'),
+        'table'             : ('B', '',          'class',      '#WS;(thead;#WS;)?tbody;#WS;'),
+        'tbody'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
+        'thead'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
+        'tr'                : ('B', '',          '',           '(#WS;)?((th;|td;)(#WS;)?)+'),
+        'ul'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
+        'ol'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
+        'dl'                : ('B', '',          '',           '#WS;(dt;#WS;dd;#WS;)+'),
+        'object'            : ('B', 'data height type width', '',           '#WS;img;#WS;'),
 
         # block contains blocks or contains inlines, but not both:
-        'emu-integration-plans': ('B', '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
-        'emu-note'             : ('B', '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|emu-xref;)+'),
-        'li'                   : ('B', '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
-        'td'                   : ('B', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
-        'div'                  : ('B', '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
-        'dd'                   : ('B', '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
+        'emu-integration-plans': ('B', '',          '',           '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
+        'emu-note'             : ('B', '',          '',           '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|emu-xref;)+'),
+        'li'                   : ('B', '',          '',           '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
+        'td'                   : ('B', '',          'colspan',    '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sup;)+'),
+        'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
+        'dd'                   : ('B', '',          '',           '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
 
         # block contains inlines:
-        'emu-motivation'       : ('B', '(#TEXT;|a;)+'), # PROPOSALS
-        'emu-todo'             : ('B', '(#TEXT;|a;)+'), # PROPOSALS
-        'emu-alg'              : ('B', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
-        'emu-caption'          : ('B', '(#TEXT;|emu-xref;)+'),
-        'pre'                  : ('B', '#TEXT;|code;'),
-        'style'                : ('B', '#TEXT;'),
-        'p'                    : ('B', 'img;|(#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
-        'h1'                   : ('B', '(#TEXT;|del;|i;|ins;)+'),
-        'h2'                   : ('B', '#TEXT;'),
-        'th'                   : ('B', '#TEXT;(sup;#TEXT;)?'),
-        'script'               : ('B', '(#TEXT;)?'),
-        'dt'                   : ('B', '#TEXT;'),
+        'emu-motivation'       : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
+        'emu-todo'             : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
+        'emu-alg'              : ('B', '',          'replaces-step type', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
+        'emu-caption'          : ('B', '',          '',           '(#TEXT;|emu-xref;)+'),
+        'pre'                  : ('B', '',          'class',      '#TEXT;|code;'),
+        'style'                : ('B', '',          '',           '#TEXT;'),
+        'p'                    : ('B', '',          '',           'img;|(#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
+        'h1'                   : ('B', '',          '',           '(#TEXT;|del;|i;|ins;)+'),
+        'h2'                   : ('B', '',          '',           '#TEXT;'),
+        'th'                   : ('B', '',          '',           '#TEXT;(sup;#TEXT;)?'),
+        'script'               : ('B', 'src',       '',           '(#TEXT;)?'),
+        'dt'                   : ('B', '',          '',           '#TEXT;'),
 
         # block is empty:
-        '#DECL'             : ('B', ''),
-        'meta'              : ('B', ''),
-        'link'              : ('B', ''),
-        'img'               : ('B', ''),
-        'emu-see-also-para' : ('B', ''),
-        'emu-import'        : ('B', ''),
+        '#DECL'             : ('B', '',          '',           ''),
+        'meta'              : ('B', 'charset',   '',           ''),
+        'link'              : ('B', 'href rel',  '',           ''),
+        'img'               : ('B', 'src',       'alt height id width', ''),
+        'emu-see-also-para' : ('B', 'op',        '',           ''),
+        'emu-import'        : ('B', 'href',      '',           ''),
 
     # ---------------------------------------------
     # can be block or inline, depending on the context:
 
-        'emu-grammar'       : ('A', '(#TEXT;|ins;|del;)+'),
-        'emu-prodref'       : ('A', ''),
-        'emu-eqn'           : ('A', '#TEXT;(sub;|sup;|#TEXT;)*'),
+        'emu-grammar'       : ('A', '',          'type',       '(#TEXT;|ins;|del;)+'),
+        'emu-prodref'       : ('A', 'name',      'a',          ''),
+        'emu-eqn'           : ('A', '',          'aoid id',    '#TEXT;(sub;|sup;|#TEXT;)*'),
 
-        'a'                 : ('A', '(#TEXT;|code;|del;|ins;)*'),
+        'a'                 : ('A', 'href',      '',           '(#TEXT;|code;|del;|ins;)*'),
         # was inline-only, but then BTerlson added <a id='table-9'></a>
         # Could change it back if he accepts oldids edit.
 
-        'em'                : ('A', '#TEXT;'),
+        'em'                : ('A', '',          'id',         '#TEXT;'),
         # was inline-only, but then PR #1062 added
         #    <em>This section is non-normative.</em>
         # as quasi-paragraph.
@@ -380,33 +396,37 @@ element_info = {
     # ---------------------------------------------
     # inlines:
 
-        'b'                 : ('I', '(#TEXT;|sub;|sup;)+'),
-        'br'                : ('I', ''),
-        'code'              : ('I', '(#TEXT;|i;|var;)+'),
-        'del'               : ('I', '(#TEXT;|emu-xref;)+'), # PROPOSALS
-        'dfn'               : ('I', '(#TEXT;|emu-eqn;)'),
-        'emu-not-ref'       : ('I', '#TEXT;'),
-        'emu-t'             : ('I', '#TEXT;'),
-        'emu-val'           : ('I', '#TEXT;var;#TEXT;'),
-        'emu-xref'          : ('I', '(#TEXT;|code;)?'),
-        'i'                 : ('I', '#TEXT;(sup;#TEXT;)?'),
-        'ins'               : ('I', '#TEXT;((a;|emu-xref;|sub;)#TEXT;)?'), # PROPOSALS?
-        'strong'            : ('I', '(#TEXT;|code;)+'),
-        'sub'               : ('I', '#TEXT;|dfn;'), # dfn; for num-ref
-        'sup'               : ('I', '(#TEXT;|sub;)+'), # sub; for num-ref
-        'var'               : ('I', '#TEXT;'),
+        'b'                 : ('I', '',          '',           '(#TEXT;|sub;|sup;)+'),
+        'br'                : ('I', '',          '',           ''),
+        'code'              : ('I', '',          'class',      '(#TEXT;|i;|var;)+'),
+        'del'               : ('I', '',          '',           '(#TEXT;|emu-xref;)+'), # PROPOSALS
+        'dfn'               : ('I', '',          'aoid id oldids', '(#TEXT;|emu-eqn;)'),
+        'emu-not-ref'       : ('I', '',          '',           '#TEXT;'),
+        'emu-t'             : ('I', '',          '',           '#TEXT;'),
+        'emu-val'           : ('I', '',          '',           '#TEXT;var;#TEXT;'),
+        'emu-xref'          : ('I', 'href',      'title',      '(#TEXT;|code;)?'),
+        'i'                 : ('I', '',          '',           '#TEXT;(sup;#TEXT;)?'),
+        'ins'               : ('I', '',          '',           '#TEXT;((a;|emu-xref;|sub;)#TEXT;)?'), # PROPOSALS?
+        'strong'            : ('I', '',          '',           '(#TEXT;|code;)+'),
+        'sub'               : ('I', '',          '',           '#TEXT;|dfn;'), # dfn; for num-ref
+        'sup'               : ('I', '',          '',           '(#TEXT;|sub;)+'), # sub; for num-ref
+        'var'               : ('I', '',          '',           '#TEXT;'),
 
     # ---------------------------------------------
     # other:
 
-        '#COMMENT'          : (None, ''),
+        '#COMMENT'          : (None, '',          '',           ''),
 
 }
 
 kind_ = {}
+required_attrs_ = {}
+optional_attrs_ = {}
 content_model_ = {}
-for (element_name, (kind, content_model)) in element_info.items():
+for (element_name, (kind, required_attrs, optional_attrs, content_model)) in element_info.items():
     kind_[element_name] = kind
+    required_attrs_[element_name] = set(required_attrs.split())
+    optional_attrs_[element_name] = set(optional_attrs.split())
     anchored_re = '^(' + content_model + ')$'
     content_model_[element_name] = anchored_re
 
