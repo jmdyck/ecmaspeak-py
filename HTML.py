@@ -29,7 +29,7 @@ def _parse():
     stderr("parsing spec...")
     header("parsing markup...")
 
-    doc_node = HNode(0, len(shared.spec_text), '#DOC', [])
+    doc_node = HNode(0, len(shared.spec_text), '#DOC', {})
     doc_node.parent = None
     current_open_node = doc_node
 
@@ -85,7 +85,7 @@ def _parse():
     # non-markup text:
     @for_pattern(r'[^<]+')
     def _(start_posn, end_posn, _):
-        add_child(HNode(start_posn, end_posn, '#LITERAL', []))
+        add_child(HNode(start_posn, end_posn, '#LITERAL', {}))
         return end_posn
 
     # start-tag:
@@ -121,13 +121,13 @@ def _parse():
     # comment:
     @for_pattern(r'(?s)<!--.*?-->')
     def _(start_posn, end_posn, _):
-        add_child(HNode(start_posn, end_posn, '#COMMENT', []))
+        add_child(HNode(start_posn, end_posn, '#COMMENT', {}))
         return end_posn
 
     # doctype-decl:
     @for_pattern(r'<!DOCTYPE html>')
     def _(start_posn, end_posn, _):
-        add_child(HNode(start_posn, end_posn, '#DECL', []))
+        add_child(HNode(start_posn, end_posn, '#DECL', {}))
         return end_posn
 
     # ---------------------------------------------
