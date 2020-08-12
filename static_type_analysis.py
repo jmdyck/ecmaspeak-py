@@ -3840,7 +3840,7 @@ named_type_hierarchy = {
                         },
                         'other Module Record': {},
                     },
-                    'PendingJob': {},
+                    # 'PendingJob': {}, # PR 1597
                     'PrivateField': {}, # PR 1668
                     'Private Name': {}, # PR 1668
                     'PromiseCapability Record': {},
@@ -5683,7 +5683,7 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)",
-        r"{COMMAND} : Let {var} be {EXPR}. Remove that record from {var}.",
+        # r"{COMMAND} : Let {var} be {EXPR}. Remove that record from {var}.", # PR 1597
         r"{COMMAND} : Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.",
         # r"{COMMAND} : Let {var} be {EXPR}. {note}", # obsoleted by PR 1831
         r"{COMMAND} : Let {var} be {EXPR}.",
@@ -6682,7 +6682,7 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Suspend the currently running execution context.",
-        r"{COMMAND} : Suspend the running execution context and remove it from the execution context stack.",
+        # r"{COMMAND} : Suspend the running execution context and remove it from the execution context stack.", # PR 1597
     ]:
         [] = children
         result = env0
@@ -6957,22 +6957,23 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(n2_var, T_String)
         result = env0
 
-    elif p == r'{COMMAND} : Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.':
-        [var1, dsbn, var2] = children
-        assert var1.children == var2.children
-        env0.assert_expr_is_of_type(var1, T_PendingJob)
-        result = env0
-
-    elif p == r"{COMMAND} : Perform any implementation or host environment defined job initialization using {var}.":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_PendingJob)
-        result = env0
-
-    elif p == r'{COMMAND} : Add {var} at the back of the Job Queue named by {var}.':
-        [job_var, queue_var] = children
-        env0.assert_expr_is_of_type(job_var, T_PendingJob)
-        env0.assert_expr_is_of_type(queue_var, T_String)
-        result = env0
+#    elif p == r'{COMMAND} : Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.':
+#        [var1, dsbn, var2] = children
+#        assert var1.children == var2.children
+#        env0.assert_expr_is_of_type(var1, T_PendingJob)
+#        result = env0
+#
+#    elif p == r"{COMMAND} : Perform any implementation or host environment defined job initialization using {var}.":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_PendingJob)
+#        result = env0
+#
+#    elif p == r'{COMMAND} : Add {var} at the back of the Job Queue named by {var}.':
+#        [job_var, queue_var] = children
+#        env0.assert_expr_is_of_type(job_var, T_PendingJob)
+#        env0.assert_expr_is_of_type(queue_var, T_String)
+#        result = env0
+# ^ obsoleted by PR 1597
 
 #    elif p == r"{COMMAND} : Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.":
 #        [var, dsbn1, dsbn2, emu_xref] = children
@@ -7208,14 +7209,15 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
 
-    elif p == r"{COMMAND} : In an implementation-dependent manner, obtain the ECMAScript source texts (see clause {h_emu_xref}) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {var} and {var}, do{IND_COMMANDS}":
-        [emu_xref, avar, bvar, commands] = children
-        env_for_commands = (
-            env0
-            .plus_new_entry(avar, T_Unicode_code_points_)
-            .plus_new_entry(bvar, T_host_defined_)
-        )
-        result = tc_nonvalue(commands, env_for_commands)
+#    elif p == r"{COMMAND} : In an implementation-dependent manner, obtain the ECMAScript source texts (see clause {h_emu_xref}) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {var} and {var}, do{IND_COMMANDS}":
+#        [emu_xref, avar, bvar, commands] = children
+#        env_for_commands = (
+#            env0
+#            .plus_new_entry(avar, T_Unicode_code_points_)
+#            .plus_new_entry(bvar, T_host_defined_)
+#        )
+#        result = tc_nonvalue(commands, env_for_commands)
+# ^ obsoleted by PR 1597
 
     # -----
 
@@ -7794,10 +7796,11 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', ListType(T_SyntaxError | T_ReferenceError), asserting)
 
-    elif p == r'{CONDITION_1} : {var} is a List that has the same number of elements as the number of parameters required by {var}':
-        [list_var, proc_var] = children
-        env0.assert_expr_is_of_type(proc_var, T_proc_)
-        return env0.with_type_test(list_var, 'is a', T_List, asserting)
+#    elif p == r'{CONDITION_1} : {var} is a List that has the same number of elements as the number of parameters required by {var}':
+#        [list_var, proc_var] = children
+#        env0.assert_expr_is_of_type(proc_var, T_proc_)
+#        return env0.with_type_test(list_var, 'is a', T_List, asserting)
+# ^ obsoleted by PR 1597
 
     elif p == r'{CONDITION_1} : {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}':
         [var, ex] = children
@@ -7917,9 +7920,10 @@ def tc_cond_(cond, env0, asserting):
         [var, nont] = children
         return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
 
-    elif p == r'{CONDITION_1} : {var} is the name of a Job':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_proc_, asserting)
+#    elif p == r'{CONDITION_1} : {var} is the name of a Job':
+#        [var] = children
+#        return env0.with_type_test(var, 'is a', T_proc_, asserting)
+# ^ obsoleted by PR 1597
 
     # PR 1668 privates:
     elif p == r"{CONDITION_1} : {EX} is a Private Name":
@@ -8853,7 +8857,7 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : The execution context stack has at least two elements",
         r"{CONDITION_1} : The execution context stack is not empty",
-        r"{CONDITION_1} : The execution context stack is now empty",
+        # r"{CONDITION_1} : The execution context stack is now empty", # PR 1597
         r"{CONDITION_1} : the execution context stack is empty",
     ]:
         [] = children
@@ -9090,10 +9094,11 @@ def tc_cond_(cond, env0, asserting):
             assert 0, container_t
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : its value is the name of a Job Queue recognized by this implementation':
-        # Once, in EnqueueJob
-        [] = children
-        return (env0, env0)
+#    elif p == r'{CONDITION_1} : its value is the name of a Job Queue recognized by this implementation':
+#        # Once, in EnqueueJob
+#        [] = children
+#        return (env0, env0)
+# ^ obsoleted by PR 1597
 
     elif p == r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}':
         [ab_var, st_var, t_var] = children
@@ -9490,11 +9495,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Number)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : All dependencies of {var} have been transitively resolved and {var} is ready for evaluation":
-        [var, var2] = children
-        assert var.children == var2.children
-        env0.assert_expr_is_of_type(var, T_Module_Record)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : All dependencies of {var} have been transitively resolved and {var} is ready for evaluation":
+#        [var, var2] = children
+#        assert var.children == var2.children
+#        env0.assert_expr_is_of_type(var, T_Module_Record)
+#        return (env0, env0)
+# ^ obsoleted by PR 1597
 
     elif p == r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object":
         [var] = children
@@ -9506,13 +9512,14 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {var} is the source code of a script",
-        r"{CONDITION_1} : {var} is the source code of a module",
-    ]:
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (env0, env0)
+#    elif p in [
+#        r"{CONDITION_1} : {var} is the source code of a script",
+#        r"{CONDITION_1} : {var} is the source code of a module",
+#    ]:
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        return (env0, env0)
+# ^ obsoleted by PR 1597
 
     elif p == r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits":
         [posa, posb, var] = children
@@ -10963,7 +10970,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # 'GeneratorContext': Generator Instance
 
             if dsbn_name == 'Realm':
-                assert candidate_type_names == ['Cyclic Module Record', 'Job_record_', 'Module Record', 'PendingJob', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
+                assert candidate_type_names == ['Cyclic Module Record', 'Job_record_', 'Module Record', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
                 if lhs_text == '_scriptRecord_':
                     lhs_t = T_Script_Record
                 elif lhs_text == '_module_':
@@ -13469,14 +13476,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Cyclic_Module_Record, env0)
 
-    elif p in [
-        r"{EX} : ScriptEvaluationJob",
-        r"{EX} : TopLevelModuleEvaluationJob",
-        r"{EX} : PromiseResolveThenableJob",
-        r"{EX} : PromiseReactionJob",
-    ]:
-        [] = children
-        return (T_proc_, env0)
+#    elif p in [
+#        r"{EX} : ScriptEvaluationJob",
+#        r"{EX} : TopLevelModuleEvaluationJob",
+#        r"{EX} : PromiseResolveThenableJob",
+#        r"{EX} : PromiseReactionJob",
+#    ]:
+#        [] = children
+#        return (T_proc_, env0)
+# ^ obsoleted by PR 1597
 
 #    elif p == r"{EXPR} : a newly created Array exotic object":
 #        [] = children
@@ -13575,20 +13583,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Object, env0)
 
-    elif p == r"{EXPR} : a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined":
-        [] = children
-        return (ListType(T_PendingJob), env0)
-
-    elif p == r"{EXPR} : the PendingJob record at the front of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_PendingJob))
-        return (T_PendingJob, env0)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments":
-        [adotting, bdotting] = children
-        env0.assert_expr_is_of_type(adotting, T_proc_)
-        env0.assert_expr_is_of_type(bdotting, T_List)
-        return (T_Tangible_ | T_empty_ | T_Abrupt, env0)
+#    elif p == r"{EXPR} : a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined":
+#        [] = children
+#        return (ListType(T_PendingJob), env0)
+#
+#    elif p == r"{EXPR} : the PendingJob record at the front of {var}":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, ListType(T_PendingJob))
+#        return (T_PendingJob, env0)
+#
+#    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments":
+#        [adotting, bdotting] = children
+#        env0.assert_expr_is_of_type(adotting, T_proc_)
+#        env0.assert_expr_is_of_type(bdotting, T_List)
+#        return (T_Tangible_ | T_empty_ | T_Abrupt, env0)
+# ^ obsoleted by PR 1597
 
     elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row":
         [_, v, _] = children
@@ -14612,14 +14621,15 @@ fields_for_record_type_named_ = {
         'KeptAlive'   : ListType(T_Object),
     },
 
-    # 7343: Table 25: PendingJob Record Fields
-    'PendingJob': {
-        'Job'           : T_proc_,
-        'Arguments'     : T_List,
-        'Realm'         : T_Realm_Record,
-        'ScriptOrModule': T_Script_Record | T_Module_Record,
-        'HostDefined'   : T_host_defined_ | T_Undefined,
-    },
+#    # 7343: Table 25: PendingJob Record Fields
+#    'PendingJob': {
+#        'Job'           : T_proc_,
+#        'Arguments'     : T_List,
+#        'Realm'         : T_Realm_Record,
+#        'ScriptOrModule': T_Script_Record | T_Module_Record,
+#        'HostDefined'   : T_host_defined_ | T_Undefined,
+#    },
+# ^ obsoleted by PR 1597
 
     # 5515+5660: NO TABLE, not even a mention
     'iterator_record_': {
