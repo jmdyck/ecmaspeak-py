@@ -2960,6 +2960,7 @@ class Header:
                 'CallConstruct',
                 'CallConstruct_overload',
                 'anonymous built-in function',
+                'host-defined abstract operation', # HostMakeJobCallback has a default implementation
             ]:
                 assert discriminator is None
             else:
@@ -3832,6 +3833,7 @@ named_type_hierarchy = {
                     'ImportMeta_record_': {},
                     'Intrinsics Record': {},
                     'JSON_Stringify_state_record_': {},
+                    'JobCallback Record': {},
                     'MapData_record_': {},
                     'Module Record': {
                         'Cyclic Module Record': {
@@ -14610,6 +14612,12 @@ fields_for_record_type_named_ = {
         'Array'   : T_Object,
     },
 
+    # 8.4.1
+    'JobCallback Record': {
+        'Callback'    : T_function_object_,
+        'HostDefined' : T_Top_,
+    },
+
     # 8.6 Agents: Agent Record Fields
     'Agent Record': {
         'LittleEndian': T_Boolean,
@@ -14779,7 +14787,7 @@ fields_for_record_type_named_ = {
     'PromiseReaction Record': {
         'Capability' : T_PromiseCapability_Record | T_Undefined,
         'Type'       : T_settlement_type_, # T_String,
-        'Handler'    : T_function_object_ | T_Undefined,
+        'Handler'    : T_JobCallback_Record | T_empty_,
     },
 
     # 39099: no table, no mention

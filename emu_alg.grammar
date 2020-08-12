@@ -1690,6 +1690,7 @@
     WriteSharedMemory
     the ExportEntry Record
     the ImportEntry Record
+    the JobCallback Record
     the PromiseCapability Record
     the PromiseReaction
     the PropertyDescriptor
