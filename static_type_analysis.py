@@ -1014,7 +1014,7 @@ single_sentence_rules_str = r'''
         (.+ returns (?P<retn>a promise) .+)
         v=\1
 
-        (.+ returns a substring .+)
+        (.+ returns a <emu-not-ref>substring</emu-not-ref> .+)
         retn=String
         v=\1
 
@@ -5961,16 +5961,17 @@ def tc_nonvalue(anode, env0):
         assert t == T_CharSet
         result = env1.plus_new_entry(let_var, t)
 
-    elif p == r"{COMMAND} : Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.":
-        [s_var, needle, leta_var, s_var2, letb_var, needle2, needle3, s_var3] = children
-        assert same_source_text(s_var, s_var2)
-        assert same_source_text(s_var, s_var3)
-        assert same_source_text(needle, needle2)
-        assert same_source_text(needle, needle3)
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(needle, T_String)
-        proc_add_return(env0, T_String, s_var3)
-        result = env0.plus_new_entry(leta_var, T_Integer_).plus_new_entry(letb_var, T_String)
+#    elif p == r"{COMMAND} : Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.":
+#        [s_var, needle, leta_var, s_var2, letb_var, needle2, needle3, s_var3] = children
+#        assert same_source_text(s_var, s_var2)
+#        assert same_source_text(s_var, s_var3)
+#        assert same_source_text(needle, needle2)
+#        assert same_source_text(needle, needle3)
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        env0.assert_expr_is_of_type(needle, T_String)
+#        proc_add_return(env0, T_String, s_var3)
+#        result = env0.plus_new_entry(leta_var, T_Integer_).plus_new_entry(letb_var, T_String)
+# ^ obsoleted by PR 2021
 
     elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.":
         [noi, v] = children
@@ -9662,27 +9663,33 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(lit, T_String)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}":
+        [var, nont] = children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})":
         [var1, var2, nont, emu_xref] = children
         assert same_source_text(var1, var2)
         env0.assert_expr_is_of_type(var1, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits":
-        [e1, e2, e3, e4, var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(e1, T_Integer_)
-        env0.assert_expr_is_of_type(e2, T_Integer_)
-        env0.assert_expr_is_of_type(e3, T_Integer_)
-        env0.assert_expr_is_of_type(e4, T_Integer_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits":
-        [i1, i2, var] = children
-        env0.assert_expr_is_of_type(i1, T_Integer_)
-        env0.assert_expr_is_of_type(i2, T_Integer_)
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits":
+#        [e1, e2, e3, e4, var] = children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        env0.assert_expr_is_of_type(e1, T_Integer_)
+#        env0.assert_expr_is_of_type(e2, T_Integer_)
+#        env0.assert_expr_is_of_type(e3, T_Integer_)
+#        env0.assert_expr_is_of_type(e4, T_Integer_)
+#        return (env0, env0)
+#
+#    elif p == r"{CONDITION_1} : the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits":
+#        [i1, i2, var] = children
+#        env0.assert_expr_is_of_type(i1, T_Integer_)
+#        env0.assert_expr_is_of_type(i2, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (env0, env0)
+# ^ obsoleted by PR 2021
 
     elif p == r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}":
         [var] = children
@@ -9755,13 +9762,14 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(lit, T_Integer_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}":
-        [sa, k, n, sb] = children
-        env0.assert_expr_is_of_type(sa, T_String)
-        env0.assert_expr_is_of_type(k, T_Integer_)
-        env0.assert_expr_is_of_type(n, T_Integer_)
-        env0.assert_expr_is_of_type(sb, T_String)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}":
+#        [sa, k, n, sb] = children
+#        env0.assert_expr_is_of_type(sa, T_String)
+#        env0.assert_expr_is_of_type(k, T_Integer_)
+#        env0.assert_expr_is_of_type(n, T_Integer_)
+#        env0.assert_expr_is_of_type(sb, T_String)
+#        return (env0, env0)
+# ^ obsoleted by PR 2021
 
     elif p == r"{CONDITION_1} : {var} is not currently an element of {var}":
         [item_var, list_var] = children
@@ -11369,7 +11377,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_COMPARAND} : the length of {var}",
         r"{EXPR} : the length of {var}",
         r"{EXPR} : the number of code units in {var}",
-        r"{TERM} : the number of code units in {var}",
+        # r"{TERM} : the number of code units in {var}", # PR 2021
         r"{EXPR} : the number of code unit elements in {var}",
     ]:
         [var] = children
@@ -11757,13 +11765,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String":
-        p_var = children[3]
-        env0.assert_expr_is_of_type(p_var, T_Integer_)
-        env1 = env0
-        for ex in children[0:3]:
-            env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
-        return (T_String, env1)
+#    elif p == r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String":
+#        p_var = children[3]
+#        env0.assert_expr_is_of_type(p_var, T_Integer_)
+#        env1 = env0
+#        for ex in children[0:3]:
+#            env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
+#        return (T_String, env1)
+# ^ obsoleted by PR 2021
 
     elif p == r'{EX} : the two uppercase hexadecimal digits encoding {var}':
         [var] = children
@@ -11802,23 +11811,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Integer_)
         return (T_String, env0)
 
-    elif p in [
-        r"{EXPR} : the substring of {var} from index {var} to index {var} inclusive",
-        r"{EXPR} : the matched substring (i.e. the portion of {var} between offset {var} inclusive and offset {var} exclusive)",
-        r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up to {var} (exclusive)",
-    ]:
-        [s_var, start_var, end_var] = children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(start_var, T_Integer_)
-        env0.assert_expr_is_of_type(end_var, T_Integer_)
-        return (T_String, env0)
-
-    elif p == r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up through the final code unit of {var} (inclusive)":
-        [s_var, start_var, s_var2] = children
-        assert same_source_text(s_var, s_var2)
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(start_var, T_Integer_)
-        return (T_String, env0)
+#    elif p in [
+#        r"{EXPR} : the substring of {var} from index {var} to index {var} inclusive",
+#        r"{EXPR} : the matched substring (i.e. the portion of {var} between offset {var} inclusive and offset {var} exclusive)",
+#        r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up to {var} (exclusive)",
+#    ]:
+#        [s_var, start_var, end_var] = children
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        env0.assert_expr_is_of_type(start_var, T_Integer_)
+#        env0.assert_expr_is_of_type(end_var, T_Integer_)
+#        return (T_String, env0)
+#
+#    elif p == r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up through the final code unit of {var} (inclusive)":
+#        [s_var, start_var, s_var2] = children
+#        assert same_source_text(s_var, s_var2)
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        env0.assert_expr_is_of_type(start_var, T_Integer_)
+#        return (T_String, env0)
+# ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : the String value of {DOTTING}":
         # todo: sounds like "String value" is an operation applied to the result of DOTTING
@@ -11954,6 +11964,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(vb, T_String)
         # env0.assert_expr_is_of_type(vc, T_String) repeats the var-being-defined
         return (T_String | T_throw_, env0)
+
+    elif p == r"{EX} : the substring of {var} from {EX} to {EX}":
+        [s_var, start_var, end_var] = children
+        env0.assert_expr_is_of_type(s_var, T_String)
+        env0.ensure_expr_is_of_type(start_var, T_Integer_)
+        env0.assert_expr_is_of_type(end_var, T_Integer_)
+        return (T_String, env0)
+
+    elif p == r"{EX} : the substring of {var} from {EX}":
+        [s_var, start_var] = children
+        env0.assert_expr_is_of_type(s_var, T_String)
+        env0.ensure_expr_is_of_type(start_var, T_Integer_)
+        return (T_String, env0)
 
     # ----------------------------------------------------------
     # return T_character_
@@ -13706,21 +13729,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var1, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}":
-        [e1, e2, e3, e4, var] = children
-        env0.assert_expr_is_of_type(e1, T_Integer_)
-        env0.assert_expr_is_of_type(e2, T_Integer_)
-        env0.assert_expr_is_of_type(e3, T_Integer_)
-        env0.assert_expr_is_of_type(e4, T_Integer_)
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Integer_, env0)
-
-    elif p == r"{EXPR} : the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}":
-        [i1, i2, var] = children
-        env0.assert_expr_is_of_type(i1, T_Integer_)
-        env0.assert_expr_is_of_type(i2, T_Integer_)
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Integer_, env0)
+#    elif p == r"{EXPR} : the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}":
+#        [e1, e2, e3, e4, var] = children
+#        env0.assert_expr_is_of_type(e1, T_Integer_)
+#        env0.assert_expr_is_of_type(e2, T_Integer_)
+#        env0.assert_expr_is_of_type(e3, T_Integer_)
+#        env0.assert_expr_is_of_type(e4, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (T_Integer_, env0)
+#
+#    elif p == r"{EXPR} : the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}":
+#        [i1, i2, var] = children
+#        env0.assert_expr_is_of_type(i1, T_Integer_)
+#        env0.assert_expr_is_of_type(i2, T_Integer_)
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (T_Integer_, env0)
+# ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : this Date object":
         [] = children
@@ -13777,23 +13801,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(n_var, T_Integer_)
         return (T_String, env1)
 
-    elif p in [
-        r"{EXPR} : the String value containing {var} consecutive code units from {var} beginning with the code unit at index {var}",
-        r"{EXPR} : the String value containing {DOTTING} consecutive code units from {var} beginning with the code unit at index {var}",
-    ]:
-        [len_expr, s_var, k_var] = children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(len_expr, T_Integer_)
-        env1 = env0.ensure_expr_is_of_type(k_var, T_Integer_)
-        return (T_String, env1)
-
-    elif p == r"{EXPR} : the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order":
-        [len_ex, s_var, start_var, end_var] = children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(start_var, T_Integer_)
-        env0.assert_expr_is_of_type(end_var, T_Integer_)
-        env0.assert_expr_is_of_type(len_ex, T_Integer_)
-        return (T_String, env0)
+#    elif p in [
+#        r"{EXPR} : the String value containing {var} consecutive code units from {var} beginning with the code unit at index {var}",
+#        r"{EXPR} : the String value containing {DOTTING} consecutive code units from {var} beginning with the code unit at index {var}",
+#    ]:
+#        [len_expr, s_var, k_var] = children
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        env0.assert_expr_is_of_type(len_expr, T_Integer_)
+#        env1 = env0.ensure_expr_is_of_type(k_var, T_Integer_)
+#        return (T_String, env1)
+#
+#    elif p == r"{EXPR} : the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order":
+#        [len_ex, s_var, start_var, end_var] = children
+#        env0.assert_expr_is_of_type(s_var, T_String)
+#        env0.assert_expr_is_of_type(start_var, T_Integer_)
+#        env0.assert_expr_is_of_type(end_var, T_Integer_)
+#        env0.assert_expr_is_of_type(len_ex, T_Integer_)
+#        return (T_String, env0)
+# ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : a value of Number type, whose value is {EXPR}":
         [expr] = children
@@ -13850,10 +13875,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        env0.assert_expr_is_of_type(var, T_String)
 #        return (T_String, env0)
 
-    elif p == r"{EXPR} : the substring of {var} consisting of all code units before the first such code unit":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_String, env0)
+#    elif p == r"{EXPR} : the substring of {var} consisting of all code units before the first such code unit":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_String)
+#        return (T_String, env0)
+# ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : the mathematical integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35":
         [zvar, rvar] = children
@@ -13898,24 +13924,25 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [percent_word] = children
         return (T_function_object_, env0)
 
-    elif p == r"{EX} : the first {var} code units of {var}":
-        [n, s] = children
-        env0.assert_expr_is_of_type(n, T_Integer_)
-        env0.assert_expr_is_of_type(s, T_String)
-        return (ListType(T_code_unit_), env0)
-
-    elif p == r"{EX} : the trailing substring of {var} starting at index {var}":
-        [s, n] = children
-        env0.assert_expr_is_of_type(s, T_String)
-        env0.assert_expr_is_of_type(n, T_Integer_)
-        return (T_String, env0)
-
-    elif p == r"{EXPR} : the String value equal to the substring of {var} consisting of the code units at indices {var} (inclusive) through {var} (exclusive)":
-        [s, start, end] = children
-        env0.assert_expr_is_of_type(s, T_String)
-        env0.assert_expr_is_of_type(start, T_Integer_)
-        env0.assert_expr_is_of_type(end, T_Integer_)
-        return (T_String, env0)
+#    elif p == r"{EX} : the first {var} code units of {var}":
+#        [n, s] = children
+#        env0.assert_expr_is_of_type(n, T_Integer_)
+#        env0.assert_expr_is_of_type(s, T_String)
+#        return (ListType(T_code_unit_), env0)
+#
+#    elif p == r"{EX} : the trailing substring of {var} starting at index {var}":
+#        [s, n] = children
+#        env0.assert_expr_is_of_type(s, T_String)
+#        env0.assert_expr_is_of_type(n, T_Integer_)
+#        return (T_String, env0)
+#
+#    elif p == r"{EXPR} : the String value equal to the substring of {var} consisting of the code units at indices {var} (inclusive) through {var} (exclusive)":
+#        [s, start, end] = children
+#        env0.assert_expr_is_of_type(s, T_String)
+#        env0.assert_expr_is_of_type(start, T_Integer_)
+#        env0.assert_expr_is_of_type(end, T_Integer_)
+#        return (T_String, env0)
+# ^ obsoleted by PR 2021
 
     elif p in [
         r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order",
@@ -13939,6 +13966,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)":
         [] = children
         return (T_String, env0)
+
+    elif p == r"{EXPR} : the index within {var} of the first such code unit":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Integer_, env0)
 
     elif p == r"{EXPR} : the larger of 0 and the result of {var} minus the number of elements of {var}":
         [num_var, list_var] = children
@@ -13967,15 +13999,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(lit, T_code_unit_)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value consisting of the first 10 code units of {var}":
-        [v] = children
-        env0.assert_expr_is_of_type(v, T_String)
-        return (T_String, env0)
-
-    elif p == r"{EX} : the current value of {var}":
-        [var] = children
-        (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
-        return (var_t, env0)
+#    elif p == r"{EXPR} : the String value consisting of the first 10 code units of {var}":
+#        [v] = children
+#        env0.assert_expr_is_of_type(v, T_String)
+#        return (T_String, env0)
+#
+#    elif p == r"{EX} : the current value of {var}":
+#        [var] = children
+#        (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
+#        return (var_t, env0)
+# ^ obsoleted by PR 2021
 
     elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
         # XXX

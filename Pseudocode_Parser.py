@@ -124,6 +124,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_emu_not_ref_Record}        : < emu-not-ref > Record < / emu-not-ref >
     {h_emu_not_ref_Property_name} : < emu-not-ref > Property \x20 name < / emu-not-ref >
     {h_emu_not_ref_property_name} : < emu-not-ref > property \x20 name < / emu-not-ref >
+    {h_emu_not_ref_substring}     : < emu-not-ref > substring < / emu-not-ref >
     {h_sub_math_r}   : < sub > \u211d < / sub >
     {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
     {h_end_tag}      : </ [\w-]+ >
