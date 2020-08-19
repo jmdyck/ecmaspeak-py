@@ -552,8 +552,8 @@
     this method was called with more than one argument
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
-    {DOTTING} contains {var}
     {DOTTING} contains a Record {var} such that {CONDITION_1}
+    {DOTTING} contains {var}
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {EX} and {EX} are both {LITERAL}
@@ -1080,8 +1080,8 @@
     a List containing the elements, in order, of {var} followed by {var}
     a List containing the one element which is {var}
     a List containing the single element, {var}
-    a List containing the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List containing the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
+    a List containing the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List containing {PP_NAMED_OPERATION_INVOCATION}
     a List containing {PROD_REF}
     a List containing {var} followed by the elements, in order, of {var}
@@ -1144,9 +1144,9 @@
     an empty Set
     an empty set
     an implementation-defined Completion value
-    an implementation-defined string that is either {EX} or {EXPR}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
+    an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
     such an object created in a host-defined manner
     the 32-bit two's complement bit string representing the mathematical value of {var}
@@ -1231,8 +1231,8 @@
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
-    the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row
     the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row
+    the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row
     the character matched by {PROD_REF}
     the character represented by {PROD_REF}
     the character value of character {var}
