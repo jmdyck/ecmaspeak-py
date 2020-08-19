@@ -244,7 +244,53 @@ def _validate(node):
         stderr("validating markup...")
         header("validating markup...")
 
-    if node.element_name == '#LITERAL': return
+    def is_loose_about_spaces(x):
+        # In   sec-assignment-operators-runtime-semantics-evaluation
+        # and  sec-applystringornumericbinaryoperator.
+        # we have <emu-alg> elements that contain 'lightweight' tables
+        # where we format the source with extra spaces in the <th> and <td> elements
+        # to make the source easier to read.
+        return (
+            x.element_name in ['th', 'td']
+            and
+            x.parent.parent.parent.attrs.get('class', None) == 'lightweight-table'
+            # x.parent is the <tr>
+            # x.parent.parent is the <tbody>
+            # x.parent.parent.parent is the <table>
+        )
+
+    if node.element_name == '#LITERAL':
+        # Check for runs of multiple space characters.
+
+        for mo in re.compile(r' {2,}').finditer(shared.spec.text, node.start_posn, node.end_posn):
+            s_posn = mo.start()
+            n_spaces = mo.end() - mo.start()
+            if shared.spec.text[s_posn-1] == '\n':
+                # indentation
+                continue
+
+            if is_loose_about_spaces(node.parent):
+                continue
+
+            msg_at_posn(
+                s_posn,
+                f"{n_spaces} space characters"
+            )
+        return
+
+    # ------------------------
+
+    if hasattr(node, 'inner_start_posn') and not is_loose_about_spaces(node):
+        ist = node.inner_source_text()
+        if ist.startswith(' '):
+            msg_at_posn(node.inner_start_posn, f"<{node.element_name}> content starts with space")
+
+        if re.search('\n +$', ist):
+            # That's just an indented end-tag
+            pass
+        elif ist.endswith(' '):
+            msg_at_posn(node.inner_end_posn, f"<{node.element_name}> content ends with space")
+
 
     # ------------------------
 
