@@ -10182,7 +10182,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
         r"{EX} : ({EX})",
-        r"{EX} : the previous value of {var}",
+        # r"{EX} : the previous value of {var}", # PR 2138
         r"{EX} : the value of {SETTABLE}",
         r"{EX} : the {var} flag",
         r"{EX} : {code_unit_lit}",

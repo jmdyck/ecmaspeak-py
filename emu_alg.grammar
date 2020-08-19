@@ -410,7 +410,6 @@
     {B} the code units of the remaining {NUM_EXPR} digits of the decimal representation of {var}
     {B} the code units of the {var} digits of the decimal representation of {var}
     {B} the code units of the {var} digits of the decimal representation of {var} (in order, with no leading zeroes)
-    {B} the previous value of {var}
     {B} {code_unit_lit} or {code_unit_lit} according to whether {var} - 1 is positive or negative
     {B} {EX} occurrences of {code_unit_lit}
     {B} {LITERAL}
@@ -420,6 +419,9 @@
     # {B} If any {DSBN} call returns {LITERAL} a {ERROR_TYPE} exception is thrown.
     # {B} The arguments for calls to SortCompare are values returned by a previous call to the {DSBN} internal method, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
     # {B} The property key argument for each call to {DSBN}, {DSBN}, HasOwnProperty, or DeletePropertyOrThrow is the string representation of a nonnegative integer less than {var}.
+
+    # oboleted by the merge of PR #2138:
+    # {B} the previous value of {var}
 
     # PR 1554 NumericValue:
     {B} {PROD_REF}
@@ -1500,7 +1502,6 @@
     the mathematical value of {var} raised to the power {var}
     the number of elements in {var}
     the numeric value of {EX}
-    the previous value of {var}
     the referenced name component of {var}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
@@ -1532,6 +1533,9 @@
     # PromiseResolveThenableJob
     # ScriptEvaluationJob
     # TopLevelModuleEvaluationJob
+
+    # obsoleted by the merge of PR #2138:
+    # the previous value of {var}
 
     # PR 1668 private fields
     \u00ab \u00bb
