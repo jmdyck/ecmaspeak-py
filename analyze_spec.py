@@ -33,10 +33,11 @@ def main():
     # only matters when two msg_at_posn() calls
     # address the exact same position.
 
-    check_indentation()
-    check_for_extra_blank_lines()
-    check_trailing_whitespace()
     check_characters()
+
+    check_indentation()
+    check_trailing_whitespace()
+    check_for_extra_blank_lines()
 
     check_ids()
 
