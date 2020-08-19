@@ -28,13 +28,11 @@ def main():
 
     spec.doc_node = HTML.parse_and_validate()
 
-    # It feels like it would make more sense to check characters and indentation
-    # before paring/checking markup, because they're more 'primitive' than markup.
-    # But when it comes to fixing errors, you should make sure
-    # you've got the markup correct before fiddling with indentation.
-    # So to encourage that, have markup errors appear before indentation errors,
-    # i.e. run the markup checks before indentation checks.
-    # (Not sure about characters.)
+    # Now that errors/warnings are interleaved with a copy of the spec text,
+    # the order in which we call these functions
+    # only matters when two msg_at_posn() calls
+    # address the exact same position.
+
     check_indentation()
     check_for_extra_blank_lines()
     check_trailing_whitespace()
@@ -298,6 +296,7 @@ def check_characters():
     stderr("checking characters...")
     header("checking characters...")
     for mo in re.finditer(r'[^\n -~]', spec.text):
+        # Note that this will (among other things) find and complain about TAB characters.
         posn = mo.start()
         character = spec.text[posn]
         if character == '\u211d':
