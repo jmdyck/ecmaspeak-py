@@ -6997,7 +6997,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var4, T_Integer_)
         result = env1
 
-    elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.":
+    elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.":
         [noi, w_var, t_var, *blah] = children
         env0.assert_expr_is_of_type(noi, T_not_returned)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)

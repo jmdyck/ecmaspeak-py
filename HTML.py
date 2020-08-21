@@ -391,7 +391,7 @@ element_info = {
         'ul'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
         'ol'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
         'dl'                : ('B', '',          '',           '#WS;(dt;#WS;dd;#WS;)+'),
-        'object'            : ('B', 'data height type width', '',           '#WS;img;#WS;'),
+        'object'            : ('B', 'data height type width', '',           'img;'),
 
         # block contains blocks or contains inlines, but not both:
         'emu-integration-plans': ('B', '',          '',           '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS

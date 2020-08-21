@@ -107,7 +107,7 @@
     Perform an implementation-defined sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
-    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost.  {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
+    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
     Push {var} onto the execution context stack; {var} is now the running execution context.
