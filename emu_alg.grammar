@@ -85,7 +85,6 @@
     Let {var} be equivalent to a function that returns {var}.
     Let {var} be equivalent to a function that throws {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
-    Let {var} be the smallest nonnegative integer such that {CONDITION}.
     Let {var} be the smallest nonnegative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
     Let {var} be {EXPR}, and let {var} be {EXPR}.
     Let {var} be {EXPR}.
@@ -217,6 +216,9 @@
 
     # obsoleted by the merge of PR #2021:
     # Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.
+
+    # obsoleted by the merge of PR #2029:
+    # Let {var} be the smallest nonnegative integer such that {CONDITION}.
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
@@ -478,6 +480,7 @@
     The execution context stack has at least two elements
     The execution context stack is not empty
     The following loop will terminate
+    The length of {var} is {var}
     The next step never returns an abrupt completion because {CONDITION_1}
     The value of {SETTABLE} is {LITERAL}
     The value of {var}'s {starred_str} property is {EX}
@@ -533,14 +536,12 @@
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
     the mathematical value of {var} is less than the mathematical value of {var}
-    the most significant bit in {var} is {NUM_LITERAL}
     the number of actual arguments is {NUM_LITERAL}
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the source code matching {PROD_REF} is strict mode code
     the source code matching {var} is non-strict code
     the source text matching {var} is strict mode code
-    the two most significant bits in {var} are not 10
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist a member {var} of set {var} such that {CONDITION_1}
     there does not exist an element {var} of {var} such that {CONDITION_1}
@@ -911,6 +912,10 @@
     # obsoleted by the merge of PR #2022:
     # {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}
 
+    # obsoleted by the merge of PR #2029:
+    # the most significant bit in {var} is {NUM_LITERAL}
+    # the two most significant bits in {var} are not 10
+
     # PR 1477 scope-records:
     it must be in the object Scope Record
     the base of {var} is a Scope Record
@@ -1010,12 +1015,14 @@
     =
     equals
     is at least
-    is greater than
     is greater than or equal to
     is less than
     is less than or equal to
     is not greater than
     is not less than
+
+    # obsoleted by the merge of PR #2029:
+    # is greater than
 
 # ---------------------------------------------------------------
 
@@ -1085,7 +1092,6 @@
     a List containing {PP_NAMED_OPERATION_INVOCATION}
     a List containing {PROD_REF}
     a List containing {var} followed by the elements, in order, of {var}
-    a List of 8-bit integers of size {var}
     a List of length 1 that contains a nondeterministically chosen byte value
     a List of length {var} of nondeterministically chosen byte values
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
@@ -1282,6 +1288,7 @@
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
     the number of elements of {var}
+    the number of leading 1 bits in {var}
     the number of leading zero bits in the 32-bit binary representation of {var}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
@@ -1298,7 +1305,6 @@
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the result of left shifting {var} by {var} bits. The result is a signed 32-bit integer
-    the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
     the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
@@ -1450,6 +1456,10 @@
     # the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String
     # the substring of {var} consisting of all code units before the first such code unit
     # the substring of {var} from index {var} to index {var} inclusive
+
+    # obsoleted by the merge of PR #2029:
+    # a List of 8-bit integers of size {var}
+    # the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object
@@ -1788,17 +1798,19 @@
 
 {NUM_EXPR} :
     #pre-1135: the exact mathematical value of {SUM}
-    {BIT_EX}
     {PRODUCT}
     {SUM}
     {math_r}({var})
 
-{BIT_EX} :
-    {FACTOR} {BIT_OPERATOR} {FACTOR}
+    # obsoleted by the merge of PR #2029:
+    # {BIT_EX}
 
-{BIT_OPERATOR} :
-    &amp;
-    &lt;&lt;
+# {BIT_EX} :
+#     {FACTOR} {BIT_OPERATOR} {FACTOR}
+#
+# {BIT_OPERATOR} :
+#     &amp;
+#     &lt;&lt;
 
 {SUM} :
     {SUM} {SUM_OPERATOR} {TERM}

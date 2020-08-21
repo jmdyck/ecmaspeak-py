@@ -5771,11 +5771,12 @@ def tc_nonvalue(anode, env0):
         (t2, env2) = tc_expr(expr2, env1) # ; assert env2 is env0 disable assert due to toExponential
         result = env2.plus_new_entry(let_var1, t1).plus_new_entry(let_var2, t2)
 
-    elif p == r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}.":
-        [var, cond] = children
-        env_for_cond = env0.plus_new_entry(var, T_Integer_)
-        (t_env, f_env) = tc_cond(cond, env_for_cond); assert t_env.equals(env_for_cond); assert f_env.equals(env_for_cond)
-        result = t_env
+#    elif p == r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}.":
+#        [var, cond] = children
+#        env_for_cond = env0.plus_new_entry(var, T_Integer_)
+#        (t_env, f_env) = tc_cond(cond, env_for_cond); assert t_env.equals(env_for_cond); assert f_env.equals(env_for_cond)
+#        result = t_env
+# ^ obsoleted by PR 2029
 
     elif p in [
         r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)",
@@ -9531,15 +9532,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the most significant bit in {var} is {NUM_LITERAL}":
-        [var, lit] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : the two most significant bits in {var} are not 10":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : the most significant bit in {var} is {NUM_LITERAL}":
+#        [var, lit] = children
+#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        return (env0, env0)
+#
+#    elif p == r"{CONDITION_1} : the two most significant bits in {var} are not 10":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        return (env0, env0)
+# ^ obsoleted by PR 2029
 
     elif p == r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point":
         [var] = children
@@ -10022,6 +10024,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(varc, T_List)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : The length of {var} is {var}":
+        [list_var, len_var] = children
+        env0.assert_expr_is_of_type(list_var, T_List)
+        env0.assert_expr_is_of_type(len_var, T_Number)
+        return (env0, env0)
+
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
@@ -10225,7 +10233,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_COMPARAND} : {PRODUCT}",
         r"{NUM_EXPR} : {PRODUCT}",
         r"{NUM_EXPR} : {SUM}",
-        r"{NUM_EXPR} : {BIT_EX}",
+        # r"{NUM_EXPR} : {BIT_EX}", # 2029
         r"{SETTABLE} : {DOTTING}",
         r"{TERM} : ({PRODUCT})",
         r"{TERM} : {DOTTING}",
@@ -11419,11 +11427,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----
     # return T_Integer_: arithmetic:
 
-    elif p == r"{EXPR} : the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}":
-        [var, var2, _] = children
-        assert var.children == var2.children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (T_Integer_, env0)
+#    elif p == r"{EXPR} : the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}":
+#        [var, var2, _] = children
+#        assert var.children == var2.children
+#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        return (T_Integer_, env0)
+# ^ obsoleted by PR 2029
 
     elif p in [
         r"{EXPR} : the numeric value 1",
@@ -11472,11 +11481,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(bex, T_Integer_)
         return (T_Integer_, env0)
 
-    elif  p == r"{BIT_EX} : {FACTOR} {BIT_OPERATOR} {FACTOR}":
-        [numa, op, numb] = children
-        env0.assert_expr_is_of_type(numa, T_Integer_)
-        env0.assert_expr_is_of_type(numb, T_Integer_)
-        return (T_Integer_, env0)
+#    elif  p == r"{BIT_EX} : {FACTOR} {BIT_OPERATOR} {FACTOR}":
+#        [numa, op, numb] = children
+#        env0.assert_expr_is_of_type(numa, T_Integer_)
+#        env0.assert_expr_is_of_type(numb, T_Integer_)
+#        return (T_Integer_, env0)
+# ^ obsoleted by PR 2029
 
     elif p == r"{EXPR} : the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))":
         [var1, var2] = children
@@ -12189,10 +12199,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var4, T_Integer_)
         return (ListType(T_Integer_), env1)
 
-    elif p == r"{EXPR} : a List of 8-bit integers of size {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Integer_)
-        return (ListType(T_Integer_), env0)
+#    elif p == r"{EXPR} : a List of 8-bit integers of size {var}":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Integer_)
+#        return (ListType(T_Integer_), env0)
+# ^ obsoleted by PR 2029
 
     elif p == r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}":
         [dotting] = children
@@ -13756,7 +13767,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         dotting_type.is_a_subtype_of_or_equal_to(T_List)
         return (dotting_type, env0)
 
-    elif p == r"{EXPR} : the number of leading zero bits in the 32-bit binary representation of {var}":
+    elif p in [
+        r"{EXPR} : the number of leading 1 bits in {var}",
+        r"{EXPR} : the number of leading zero bits in the 32-bit binary representation of {var}",
+    ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Integer_, env0)
