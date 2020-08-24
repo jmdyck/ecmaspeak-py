@@ -1271,7 +1271,6 @@
     the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
-    the larger of 0 and the result of {var} minus the number of elements of {var}
     the largest possible nonnegative integer {var} not larger than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
     the last element in {var}
     the length of {var}
@@ -1460,6 +1459,9 @@
     # obsoleted by the merge of PR #2029:
     # a List of 8-bit integers of size {var}
     # the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
+
+    # obsoleted by the merge of PR #2146:
+    # the larger of 0 and the result of {var} minus the number of elements of {var}
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object

@@ -13986,11 +13986,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Integer_, env0)
 
-    elif p == r"{EXPR} : the larger of 0 and the result of {var} minus the number of elements of {var}":
-        [num_var, list_var] = children
-        env0.assert_expr_is_of_type(list_var, T_List)
-        env1 = env0.ensure_expr_is_of_type(num_var, T_Integer_)
-        return (T_Integer_, env1)
+#    elif p == r"{EXPR} : the larger of 0 and the result of {var} minus the number of elements of {var}":
+#        [num_var, list_var] = children
+#        env0.assert_expr_is_of_type(list_var, T_List)
+#        env1 = env0.ensure_expr_is_of_type(num_var, T_Integer_)
+#        return (T_Integer_, env1)
+# ^ obsoleted by PR 2146
 
     elif p == r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}":
         [emu_xref, dotting] = children
