@@ -6775,6 +6775,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Append {EX} to the end of {var}.",
         r"{COMMAND} : Append {EX} to {EX}.",
         r"{COMMAND} : Insert {var} as the first element of {var}.",
+        r"{COMMAND} : Prepend {var} to {var}.",
         r"{SMALL_COMMAND} : append {LITERAL} to {var}",
         r"{SMALL_COMMAND} : append {var} to {var}",
     ]:
@@ -7287,10 +7288,11 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_A_can_be_element_of_list_B(el_var, list_var)
         result = env1
 
-    elif p == r"{SMALL_COMMAND} : in left to right order, starting with the second argument, append each argument as the last element of {var}":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
-        result = env1
+#    elif p == r"{SMALL_COMMAND} : in left to right order, starting with the second argument, append each argument as the last element of {var}":
+#        [var] = children
+#        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
+#        result = env1
+# ^ obsoleted by PR 2139
 
     elif p == r"{COMMAND} : Append in order the code unit elements of {var} to the end of {var}.":
         [a, b] = children
@@ -9735,7 +9737,7 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : this method was called with more than one argument",
+        # r"{CONDITION_1} : this method was called with more than one argument", # PR 2139
         r"{CONDITION_1} : only one argument was passed",
     ]:
         [] = children
@@ -9759,10 +9761,11 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(exb, t)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : the number of actual arguments is {NUM_LITERAL}":
-        [lit] = children
-        env0.assert_expr_is_of_type(lit, T_Integer_)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : the number of actual arguments is {NUM_LITERAL}":
+#        [lit] = children
+#        env0.assert_expr_is_of_type(lit, T_Integer_)
+#        return (env0, env0)
+# ^ obsoleted by PR 2139
 
 #    elif p == r"{CONDITION_1} : the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}":
 #        [sa, k, n, sb] = children
@@ -13685,23 +13688,25 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         return (T_Tangible_, env0)
 
-    elif p in [
-        r"{EXPR} : a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty",
-        r"{EXPR} : a List containing the arguments passed to this function",
-        r"{EXPR} : a List whose elements are the arguments passed to this function",
-        r"{EXPR} : a List whose elements are, in left to right order, the arguments that were passed to this function invocation",
-        r"{EXPR} : a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed",
-        r"{EXPR} : a zero-origined List containing the argument items in order",
-        r"{EXPR} : the List of argument values starting with the second argument",
-        r"{EXPR} : the List of arguments passed to this function",
-    ]:
-        [] = children
-        return (ListType(T_Tangible_), env0)
+#    elif p in [
+#        r"{EXPR} : a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty",
+#        r"{EXPR} : a List containing the arguments passed to this function",
+#        r"{EXPR} : a List whose elements are the arguments passed to this function",
+#        r"{EXPR} : a List whose elements are, in left to right order, the arguments that were passed to this function invocation",
+#        r"{EXPR} : a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed",
+#        r"{EXPR} : a zero-origined List containing the argument items in order",
+#        r"{EXPR} : the List of argument values starting with the second argument",
+#        r"{EXPR} : the List of arguments passed to this function",
+#    ]:
+#        [] = children
+#        return (ListType(T_Tangible_), env0)
+# ^ obsoleted by PR 2139
 
     elif p in [
-        r"{EXPR} : the actual number of arguments passed to this function",
-        r"{EXPR} : the number of actual arguments minus 2",
-        r"{EXPR} : the number of actual arguments",
+        # r"{EXPR} : the actual number of arguments passed to this function",
+        # r"{EXPR} : the number of actual arguments minus 2",
+        # r"{EXPR} : the number of actual arguments",
+        # ^ obsoleted by PR 2139
         r"{EXPR} : the number of arguments passed to this function call",
     ]:
         [] = children
@@ -13967,15 +13972,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(tail_var, ListType(T_Tangible_))
         return (ListType(T_Tangible_), env1)
 
-    elif p == r"{EXPR} : a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Tangible_)
-        return (ListType(T_Tangible_), env0)
-
-    elif p == r"{EXPR} : a new (possibly empty) List consisting of all of the argument values provided after {var} in order":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Tangible_)
-        return (ListType(T_Tangible_), env0)
+#    elif p == r"{EXPR} : a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Tangible_)
+#        return (ListType(T_Tangible_), env0)
+#
+#    elif p == r"{EXPR} : a new (possibly empty) List consisting of all of the argument values provided after {var} in order":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Tangible_)
+#        return (ListType(T_Tangible_), env0)
+# ^ obsoleted by PR 2139
 
     elif p == r"{EXPR} : the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)":
         [] = children

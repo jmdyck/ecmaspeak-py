@@ -110,6 +110,7 @@
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
+    Prepend {var} to {var}.
     Push {var} onto the execution context stack; {var} is now the running execution context.
     Remove the binding for {var} from {var}.
     Remove the first element from {var} and let {var} be the value of that element.
@@ -290,7 +291,6 @@
     change its bound value to {var}
     convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
     create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
-    in left to right order, starting with the second argument, append each argument as the last element of {var}
     let {var} be {EXPR}
     let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
@@ -311,6 +311,9 @@
 
     # obsoleted by merge of PR #1614:
     # no further validation is required
+
+    # obsoleted by merge of PR #2139:
+    # in left to right order, starting with the second argument, append each argument as the last element of {var}
 
     # PR 1732 GetSubstitution
     the replacement is {EXPR}
@@ -536,7 +539,6 @@
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
     the mathematical value of {var} is less than the mathematical value of {var}
-    the number of actual arguments is {NUM_LITERAL}
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the source code matching {PROD_REF} is strict mode code
@@ -550,7 +552,6 @@
     there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
     there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}
     there is an event {var} such that {CONDITION}
-    this method was called with more than one argument
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
     {DOTTING} contains a Record {var} such that {CONDITION_1}
@@ -916,6 +917,10 @@
     # the most significant bit in {var} is {NUM_LITERAL}
     # the two most significant bits in {var} are not 10
 
+    # obsoleted by the merge of PR #2139:
+    # the number of actual arguments is {NUM_LITERAL}
+    # this method was called with more than one argument
+
     # PR 1477 scope-records:
     it must be in the object Scope Record
     the base of {var} is a Scope Record
@@ -1077,13 +1082,11 @@
 
 {EXPR} :
     Type({var})
-    a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
     a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing only {var}
     a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List containing the arguments passed to this function
     a List containing the elements, in order, of {var} followed by {var}
     a List containing the one element which is {var}
     a List containing the single element, {var}
@@ -1097,14 +1100,10 @@
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
     a List of size {var} containing the sequence of {var} bytes starting with {var}[{var}]
     a List of {var} {LITERAL} values, indexed 1 through {var}
-    a List whose elements are the arguments passed to this function
     a List whose elements are the code points of {var}
     a List whose elements are the code unit elements of {var}
-    a List whose elements are, in left to right order, the arguments that were passed to this function invocation
-    a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed
     a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order
     a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
-    a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation
     a List whose sole item is {var}
     a String according to {h_emu_xref}
     a String containing one instance of each code unit valid in {nonterminal}
@@ -1117,7 +1116,6 @@
     a copy of {var} with all the elements of {var} appended
     a copy of {var} with {var} appended
     a copy of {var}'s _captures_ List
-    a new (possibly empty) List consisting of all of the argument values provided after {var} in order
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
     a new List containing the same values as the list {var} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using *undefined* as {var}
@@ -1145,7 +1143,6 @@
     a value of Number type, whose value is {EXPR}
     a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
     a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
-    a zero-origined List containing the argument items in order
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
     an empty set
@@ -1179,8 +1176,6 @@
     the Element Size value specified in {h_emu_xref} for {var}
     the Element Type value in {h_emu_xref} for {EX}
     the List of Unicode code points of {var}
-    the List of argument values starting with the second argument
-    the List of arguments passed to this function
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
@@ -1229,7 +1224,6 @@
     the WaiterList that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
     the active function object
-    the actual number of arguments passed to this function
     the algorithm steps defined in {h_emu_xref}
     the arguments object
     the binding object for {var}
@@ -1277,8 +1271,6 @@
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the mathematical integer number of code points in {PROD_REF}
     the mathematical integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
-    the number of actual arguments
-    the number of actual arguments minus 2
     the number of arguments passed to this function call
     the number of bytes in {var}
     the number of characters contained in {var}
@@ -1459,6 +1451,21 @@
     # obsoleted by the merge of PR #2029:
     # a List of 8-bit integers of size {var}
     # the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
+
+    # obsoleted by the merge of PR #2139:
+    # a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
+    # a List containing the arguments passed to this function
+    # a List whose elements are the arguments passed to this function
+    # a List whose elements are, in left to right order, the arguments that were passed to this function invocation
+    # a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed
+    # a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation
+    # a new (possibly empty) List consisting of all of the argument values provided after {var} in order
+    # a zero-origined List containing the argument items in order
+    # the List of argument values starting with the second argument
+    # the List of arguments passed to this function
+    # the actual number of arguments passed to this function
+    # the number of actual arguments
+    # the number of actual arguments minus 2
 
     # obsoleted by the merge of PR #2146:
     # the larger of 0 and the result of {var} minus the number of elements of {var}
