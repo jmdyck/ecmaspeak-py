@@ -654,6 +654,7 @@ regexp_also = [
     ('_IgnoreCase_'      , 'from somewhere'),
     ('_Multiline_'       , 'from somewhere'),
     ('_Unicode_'         , 'from somewhere'),
+    ('_WordCharacters_'  , 'from somewhere'),
 ]
 
 # ----------------------------
@@ -3266,6 +3267,7 @@ ahat_ = {
     ('_IgnoreCase_'      , 'from somewhere'): 'Boolean',
     ('_Multiline_'       , 'from somewhere'): 'Boolean',
     ('_Unicode_'         , 'from somewhere'): 'Boolean',
+    ('_WordCharacters_'  , 'from somewhere'): 'CharSet',
 
     ('_comparefn_' , 'from the `sort` method'): 'function_object_ | Undefined',
     ('_buffer_'    , 'from the `sort` method'): 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
@@ -5942,25 +5944,26 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env1, T_Number, literal)
         result = env1
 
-    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be its result.':
-        [prefix_paren, let_var] = children
-        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-        result = env1.plus_new_entry(let_var, t)
-
-    elif p in [
-        # r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.', obs by PR 1797
-        r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the Boolean result.',
-    ]:
-        [prefix_paren, let_var] = children
-        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-        assert t == T_Boolean
-        result = env1.plus_new_entry(let_var, t)
-
-    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting CharSet.':
-        [prefix_paren, let_var] = children
-        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-        assert t == T_CharSet
-        result = env1.plus_new_entry(let_var, t)
+#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be its result.':
+#        [prefix_paren, let_var] = children
+#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
+#        result = env1.plus_new_entry(let_var, t)
+#
+#    elif p in [
+#        # r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.', obs by PR 1797
+#        r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the Boolean result.',
+#    ]:
+#        [prefix_paren, let_var] = children
+#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
+#        assert t == T_Boolean
+#        result = env1.plus_new_entry(let_var, t)
+#
+#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting CharSet.':
+#        [prefix_paren, let_var] = children
+#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
+#        assert t == T_CharSet
+#        result = env1.plus_new_entry(let_var, t)
+# ^ obsoleted by PR 2112
 
 #    elif p == r"{COMMAND} : Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.":
 #        [s_var, needle, leta_var, s_var2, letb_var, needle2, needle3, s_var3] = children
@@ -6201,18 +6204,19 @@ def tc_nonvalue(anode, env0):
         result = None
 
 
-    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and return its result.':
-        [prefix_paren] = children
-        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-        proc_add_return(env1, t, anode)
-        result = None
-
-    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and return its Matcher result.':
-        [prefix_paren] = children
-        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-        assert t == T_Matcher
-        proc_add_return(env1, t, anode)
-        result = None
+#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and return its result.':
+#        [prefix_paren] = children
+#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
+#        proc_add_return(env1, t, anode)
+#        result = None
+#
+#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and return its Matcher result.':
+#        [prefix_paren] = children
+#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
+#        assert t == T_Matcher
+#        proc_add_return(env1, t, anode)
+#        result = None
+# ^ obsoleted by PR 2112
 
     elif p == r'{IAO_BODY} : Returns {LITERAL} if {CONDITION}; otherwise returns {LITERAL}.':
         [t_lit, cond, f_lit] = children
@@ -6550,14 +6554,19 @@ def tc_nonvalue(anode, env0):
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
-        elif each_thing.prod.rhs_s == r"character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}":
-            [loop_var, charset_var, noi, charset_var2] = each_thing.children
-            assert charset_var.children == charset_var2.children
-            env0.assert_expr_is_of_type(charset_var, T_CharSet)
-            env1 = env0.plus_new_entry(loop_var, T_character_)
-            env1.assert_expr_is_of_type(noi, T_character_)
-            env_for_commands = env1
+#        elif each_thing.prod.rhs_s == r"character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}":
+#            [loop_var, charset_var, noi, charset_var2] = each_thing.children
+#            assert charset_var.children == charset_var2.children
+#            env0.assert_expr_is_of_type(charset_var, T_CharSet)
+#            env1 = env0.plus_new_entry(loop_var, T_character_)
+#            env1.assert_expr_is_of_type(noi, T_character_)
+#            env_for_commands = env1
+# ^ obsoleted by PR 2112
 
+        elif each_thing.prod.rhs_s == r"character {var} in the CharSet of all characters":
+            [loop_var] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_character_)
+            env_for_commands = env1
 
         # elif each_thing.prod.rhs_s == r"WriteSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})":
         # elif each_thing.prod.rhs_s == r"child node {var} of this Parse Node":
@@ -6617,11 +6626,12 @@ def tc_nonvalue(anode, env0):
         (t2_env, f2_env) = tc_cond(cond2, t1_env, asserting=True)
         result = env_or(f1_env, t2_env)
 
-    elif p == r"{COMMAND} : Assert: Unless {CONDITION_1}, {CONDITION}.":
-        [cond1, cond2] = children
-        (t1_env, f1_env) = tc_cond(cond1, env0)
-        (t2_env, f2_env) = tc_cond(cond2, f1_env, asserting=True)
-        result = env_or(t1_env, t2_env)
+#    elif p == r"{COMMAND} : Assert: Unless {CONDITION_1}, {CONDITION}.":
+#        [cond1, cond2] = children
+#        (t1_env, f1_env) = tc_cond(cond1, env0)
+#        (t2_env, f2_env) = tc_cond(cond2, f1_env, asserting=True)
+#        result = env_or(t1_env, t2_env)
+# ^ obsoleted by PR 2112
 
     elif p == r"{COMMAND} : Assert: {CONDITION_1} if and only if {CONDITION_1}.":
         [cond1, cond2] = children
@@ -7024,11 +7034,12 @@ def tc_nonvalue(anode, env0):
                 )
         result = env1
 
-    elif p == r"{COMMAND} : Add the characters in set {var} to set {var}.":
-        [var1, var2] = children
-        env0.assert_expr_is_of_type(var1, T_CharSet)
-        env0.assert_expr_is_of_type(var2, T_CharSet)
-        result = env0
+#    elif p == r"{COMMAND} : Add the characters in set {var} to set {var}.":
+#        [var1, var2] = children
+#        env0.assert_expr_is_of_type(var1, T_CharSet)
+#        env0.assert_expr_is_of_type(var2, T_CharSet)
+#        result = env0
+# ^ obsoleted by PR 2112
 
     elif p == r"{SMALL_COMMAND} : create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}":
         [kind, name_var, obj_var, *dsbn_, desc_var, desc_var2, emu_xref] = children
@@ -7205,7 +7216,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
-    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.":
+    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} containing a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.":
         [nont1, nont2, nont3, nont4, prod_ref] = children
         result = env0
 
@@ -7357,6 +7368,11 @@ def tc_nonvalue(anode, env0):
     elif p == r"{COMMAND} : Choose any such {var}.":
         [var] = children
         result = env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
+
+    elif p == r"{COMMAND} : Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.":
+        [var, nont] = children
+        env0.assert_expr_is_of_type(var, T_CharSet)
+        result = env0
 
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
@@ -8725,8 +8741,8 @@ def tc_cond_(cond, env0, asserting):
         return (env1, env1)
 
     elif p in [
-        r'{CONDITION_1} : there does not exist a member {var} of set {var} such that {CONDITION_1}',
-        r'{CONDITION_1} : there exists a member {var} of set {var} such that {CONDITION_1}',
+        r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}',
+        r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}',
     ]:
         [member_var, set_var, cond] = children
         env1 = env0.ensure_expr_is_of_type(set_var, T_CharSet)
@@ -11591,10 +11607,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Integer_, env0)
 
     elif p in [
+        r"{EXPR} : the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}",
         r"{EXPR} : the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}",
         r"{EXPR} : the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}",
     ]:
-        [prod_ref, emu_grammar, prod_ref2] = children
+        [prod_ref, emu_grammar, prod_ref2] = children[0:3]
         assert same_source_text(prod_ref, prod_ref2)
         return (T_Integer_, env0)
 
@@ -11716,10 +11733,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(old_var, T_code_unit_)
         return (T_String, env0)
 
-    elif p == r'{EXPR} : the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value':
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_String, env1)
+#    elif p == r'{EXPR} : the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value':
+#        [var] = children
+#        env1 = env0.ensure_expr_is_of_type(var, T_String)
+#        return (T_String, env1)
+# ^ obsoleted by PR 2112
 
     elif p == r'{EX} : the referenced name component of {var}':
         [v] = children
@@ -11734,7 +11752,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the String value consisting solely of {code_unit_lit}",
         r"{EXPR} : the String value containing only the code unit {var}",
-        r"{EXPR} : the String value consisting of the single code unit {var}",
+        # r"{EXPR} : the String value consisting of the single code unit {var}", # PR 2112
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
@@ -12147,6 +12165,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        return (T_Unicode_code_points_, env0)
+
+    elif p == r"{EXPR} : the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_Unicode_code_points_, env0)
 
     elif p == r"{EXPR} : the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}":
@@ -12588,7 +12611,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_CharSet
 
-    elif p == r'{EXPR} : the set containing all characters numbered {var} through {var}, inclusive':
+    elif p == r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}':
         [var1, var2] = children
         env1 = env0.ensure_expr_is_of_type(var1, T_Integer_)
         env2 = env0.ensure_expr_is_of_type(var2, T_Integer_)
@@ -12596,7 +12619,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert env2 is env0
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : an empty set":
+    elif p == r"{EXPR} : an empty CharSet":
         [] = children
         return (T_CharSet, env0)
 
@@ -12625,40 +12648,44 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         envc = env0.ensure_expr_is_of_type(vc, T_CharSet)
         return (T_CharSet, envs_or([enva, envb, envc]))
 
-    elif p == r"{EXPR} : the union of CharSets {var} and {var}":
+    elif p in [
+        r"{EXPR} : the union of {var} and {var}",
+        r"{EXPR} : the union of CharSets {var} and {var}",
+    ]:
         [va, vb] = children
         enva = env0.ensure_expr_is_of_type(va, T_CharSet)
         envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
         return (T_CharSet, env_or(enva, envb))
 
-    elif p == r"{MULTILINE_EXPR} : a set of characters containing the sixty-three characters:{nlai}{h_figure}":
+    elif p == r"{MULTILINE_EXPR} : a CharSet containing the sixty-three characters:{nlai}{h_figure}":
         [figure] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the set of all characters":
+    elif p == r"{EXPR} : the CharSet of all characters":
         [] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the set of all characters except {nonterminal}":
+    elif p == r"{EXPR} : the CharSet containing all characters not in the CharSet returned by {h_emu_grammar}":
         [nonterminal] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the ten-element set of characters containing the characters `0` through `9` inclusive":
+    elif p == r"{EXPR} : the ten-element CharSet containing the characters `0` through `9` inclusive":
         [] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the set of all characters not included in the set returned by {h_emu_grammar} ":
+    elif p == r"{EXPR} : the CharSet containing all characters not in the CharSet returned by {h_emu_grammar} ":
         [emu_grammar] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the set of characters containing the characters that are on the right-hand side of the {nonterminal} or {nonterminal} productions":
+    elif p == r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions":
         [nont1, nont2] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the set of all characters returned by {PREFIX_PAREN}":
-        [pp] = children
-        env0.assert_expr_is_of_type(pp, T_CharSet)
-        return (T_CharSet, env0)
+#    elif p == r"{EXPR} : the set of all characters returned by {PREFIX_PAREN}":
+#        [pp] = children
+#        env0.assert_expr_is_of_type(pp, T_CharSet)
+#        return (T_CharSet, env0)
+# ^ obsoleted by PR 2112
 
     elif p == r"{EXPR} : the empty CharSet":
         [] = children

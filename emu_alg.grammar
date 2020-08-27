@@ -24,7 +24,6 @@
 {COMMAND} :
     ? OperationName().
     ? {var}.OperationName().
-    Add the characters in set {var} to set {var}.
     Add {EX} as the last element of {var}.
     Add {var} as an element of the list {var}.
     Add {var} to the end of the list of waiters in {var}.
@@ -49,15 +48,9 @@
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
     Assert: If {CONDITION}, {CONDITION}.
-    Assert: Unless {CONDITION_1}, {CONDITION}.
     Assert: {CONDITION_1} if and only if {CONDITION_1}.
     Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
     Assert: {CONDITION}.
-    Call {PREFIX_PAREN} and let {var} be its result.
-    Call {PREFIX_PAREN} and let {var} be the Boolean result.
-    Call {PREFIX_PAREN} and let {var} be the resulting CharSet.
-    Call {PREFIX_PAREN} and return its Matcher result.
-    Call {PREFIX_PAREN} and return its result.
     Call {PREFIX_PAREN}.
     Choose any such {var}.
     Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
@@ -112,6 +105,7 @@
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
     Prepend {var} to {var}.
     Push {var} onto the execution context stack; {var} is now the running execution context.
+    Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.
     Remove the binding for {var} from {var}.
     Remove the first element from {var} and let {var} be the value of that element.
     Remove the first element from {var} and let {var} be the value of the element.
@@ -139,7 +133,7 @@
     Return.
     ReturnIfAbrupt({EX}).
     Scan until the next {code_point_lit}.
-    Search the enclosing {nonterminal} for an instance of a {nonterminal} for a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.
+    Search the enclosing {nonterminal} for an instance of a {nonterminal} containing a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.
     Set all of the bytes of {var} to 0.
     Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
     Set {DOTTING} as described in {h_emu_xref}.
@@ -220,6 +214,15 @@
 
     # obsoleted by the merge of PR #2029:
     # Let {var} be the smallest nonnegative integer such that {CONDITION}.
+
+    # obsoleted by the merge of PR #2112:
+    # Add the characters in set {var} to set {var}.
+    # Assert: Unless {CONDITION_1}, {CONDITION}.
+    # Call {PREFIX_PAREN} and let {var} be its result.
+    # Call {PREFIX_PAREN} and let {var} be the Boolean result.
+    # Call {PREFIX_PAREN} and let {var} be the resulting CharSet.
+    # Call {PREFIX_PAREN} and return its Matcher result.
+    # Call {PREFIX_PAREN} and return its result.
 
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
@@ -339,7 +342,6 @@
     WeakMap {var} such that {CONDITION}
     WeakRef {var} such that {CONDITION}
     WeakSet {var} such that {CONDITION}
-    character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
     child node {var} of this Parse Node
     code point {var} in {PP_NAMED_OPERATION_INVOCATION}
     code point {var} in {var}
@@ -383,6 +385,10 @@
     # own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation
     # own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation
     # own property key {var} of {var} that is an array index, in ascending numeric index order
+
+    # obsoleted by the merge of PR #2112:
+    # character {var} in the CharSet of all characters
+    # character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
 
     # PR 1623 index_strings
     own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
@@ -545,9 +551,8 @@
     the source code matching {var} is non-strict code
     the source text matching {var} is strict mode code
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
-    there does not exist a member {var} of set {var} such that {CONDITION_1}
     there does not exist an element {var} of {var} such that {CONDITION_1}
-    there exists a member {var} of set {var} such that {CONDITION_1}
+    there exists a member {var} of {var} such that {CONDITION_1}
     there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}
     there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
     there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}
@@ -917,6 +922,10 @@
     # the most significant bit in {var} is {NUM_LITERAL}
     # the two most significant bits in {var} are not 10
 
+    # obsoleted by the merge of PR #2112:
+    # there does not exist a member {var} of set {var} such that {CONDITION_1}
+    # there exists a member {var} of set {var} such that {CONDITION_1}
+
     # obsoleted by the merge of PR #2139:
     # the number of actual arguments is {NUM_LITERAL}
     # this method was called with more than one argument
@@ -1033,7 +1042,6 @@
 
 {MULTILINE_EXPR} :
     a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
-    a set of characters containing the sixty-three characters:{nlai}{h_figure}
     the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
     the string-concatenation of:{I_BULLETS}
     the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
@@ -1045,6 +1053,9 @@
     # an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}
     # an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}
     # an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
+
+    # obsoleted by the merge of PR #2112:
+    # a set of characters containing the sixty-three characters:{nlai}{h_figure}
 
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
@@ -1145,7 +1156,6 @@
     a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
-    an empty set
     an implementation-defined Completion value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
@@ -1164,9 +1174,13 @@
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
+    the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
+    the CharSet containing all characters not in the CharSet returned by {h_emu_grammar} 
+    the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}
     the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
+    the CharSet of all characters
     the CharSet that is {EXPR}
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
@@ -1194,7 +1208,6 @@
     the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with a zero if necessary
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
     the String value consisting of the code units of the digits of the decimal representation of {var}
-    the String value consisting of the single code unit {var}
     the String value consisting of {EX}
     the String value consisting solely of {code_unit_lit}
     the String value containing only the code unit {var}
@@ -1282,6 +1295,7 @@
     the number of leading 1 bits in {var}
     the number of leading zero bits in the 32-bit binary representation of {var}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
+    the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
     the one character in CharSet {var}
     the parse of some source text
@@ -1306,20 +1320,14 @@
     the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of the comparison {EX} == {EX}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
+    the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
-    the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
     the second element of {var}
     the second to top element of the execution context stack
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the sequence of code units consisting of the code units of {var} followed by the elements of {var}
     the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
-    the set containing all characters numbered {var} through {var}, inclusive
-    the set of all characters
-    the set of all characters except {nonterminal}
-    the set of all characters not included in the set returned by {h_emu_grammar} 
-    the set of all characters returned by {PREFIX_PAREN}
-    the set of characters containing the characters that are on the right-hand side of the {nonterminal} or {nonterminal} productions
     the smallest (closest to *-&infin;*) such integer
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
@@ -1337,11 +1345,12 @@
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the surrounding agent's Agent Record
-    the ten-element set of characters containing the characters `0` through `9` inclusive
+    the ten-element CharSet containing the characters `0` through `9` inclusive
     the three results {var}, {var}, and {LITERAL}
     the time value (UTC) identifying the current time
     the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}
     the two results {EX} and {EX}
+    the union of {var} and {var}
     the union of CharSets {var} and {var}
     the union of CharSets {var}, {var} and {var}
     the value currently bound to {var} in {var}
@@ -1451,6 +1460,18 @@
     # obsoleted by the merge of PR #2029:
     # a List of 8-bit integers of size {var}
     # the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
+
+    # obsoleted by the merge of PR #2112:
+    # an empty set
+    # the String value consisting of the single code unit {var}
+    # the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
+    # the set containing all characters numbered {var} through {var}, inclusive
+    # the set of all characters
+    # the set of all characters except {nonterminal}
+    # the set of all characters not included in the set returned by {h_emu_grammar} 
+    # the set of all characters returned by {PREFIX_PAREN}
+    # the set of characters containing the characters that are on the right-hand side of the {nonterminal} or {nonterminal} productions
+    # the ten-element set of characters containing the characters `0` through `9` inclusive
 
     # obsoleted by the merge of PR #2139:
     # a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
