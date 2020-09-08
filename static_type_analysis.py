@@ -10430,7 +10430,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (exa_type, env3) = tc_expr(exa, env2)
         return (exa_type, env3)
 
-    elif p == r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}':
+    elif p in [
+        r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}',
+        r'{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}',
+    ]:
         [ex3, var2, ex2, var1, ex1] = children
 
         (ex1_type, ex1_env) = tc_expr(ex1, env0); assert ex1_env is env0
@@ -11306,10 +11309,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the mathematical integer number of code points in {PROD_REF}",
-        r"{EX} : the mathematical integer number of code points in {PROD_REF}",
+        # r"{EX} : the mathematical integer number of code points in {PROD_REF}", # PR 2151
         r"{EX} : the mathematical value of the number of code points in {PROD_REF}",
     ]:
         [prod_ref] = children
+        return (T_MathInteger_, env0)
+
+    elif p in [
+        r"{EXPR} : the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
+        r"{EX} : the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
+        r"{EX} : the mathematical value of the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
+    ]:
+        [prod_ref, nont] = children
         return (T_MathInteger_, env0)
 
     elif p == r"{EX} : {var} rounded towards 0 to the next integral value":

@@ -2374,6 +2374,13 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # which can only be an instance of CallExpression : CoverCallExpressionAndAsyncArrowHead
         return True
 
+    if sdo_name == 'TRV' and lhs_nt == 'HexDigits' and def_i == 2:
+        # TRV applies to Template stuff,
+        # which derives HexDigits only via [Not]CodePoint,
+        # which passes ~Sep to HexDigits,
+        # which suppresses its 3rd RHS.
+        return True
+
     if lhs_nt == 'OptionalChain' and def_i in [3,7]:
         # "It is a Syntax Error if any code matches this production."
         # So no SDO will be invoked on them.

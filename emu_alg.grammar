@@ -1306,6 +1306,7 @@
     the length of {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the mathematical integer number of code points in {PROD_REF}
+    the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the mathematical integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
     the number of arguments passed to this function call
     the number of bytes in {var}
