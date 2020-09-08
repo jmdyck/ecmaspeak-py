@@ -1523,7 +1523,6 @@
     NewTarget
     The remainder of dividing {EX} by {EX}
     Type({var})::unit
-    \u00ab {EXLIST} \u00bb
     a newly created {ERROR_TYPE} object
     an implementation-defined timezone name
     hint Number
@@ -1589,6 +1588,9 @@
 
     # obsoleted by the merge of PR #2138:
     # the previous value of {var}
+
+    # obsoleted by the merge of PR #2149:
+    # \u00ab {EXLIST} \u00bb
 
     # PR 1668 private fields
     \u00ab \u00bb

@@ -13466,7 +13466,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EX} : &laquo; {EXLIST} &raquo;",
-        r"{EX} : \u00ab {EXLIST} \u00bb",
+        # r"{EX} : \u00ab {EXLIST} \u00bb", # PR 2149
     ]:
         [exlist] = children
         ex_types = set()
