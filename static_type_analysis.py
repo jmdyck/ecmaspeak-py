@@ -2170,7 +2170,7 @@ nature_to_tipe = {
         'a list of arguments'                  : 'List of Tangible_',
         'a List of ECMAScript language values' : 'List of Tangible_',
         'a possibly empty List of ECMAScript language values': 'List of Tangible_',
-        'a List of ImportEntry Records (see <emu-xref href="#table-39"></emu-xref>)': 'List of ImportEntry Record',
+        'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
 
         # Completion
 
