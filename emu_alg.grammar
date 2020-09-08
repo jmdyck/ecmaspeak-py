@@ -31,7 +31,7 @@
     Add {var} to {var}.
     Append all the entries of {var} to the end of {var}.
     Append each item in {var} to the end of {var}.
-    Append in list order the elements of {var} to the end of the List {var}.
+    Append in List order the elements of {var} to the end of the List {var}.
     Append in order the code unit elements of {var} to the end of {var}.
     Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
@@ -224,6 +224,9 @@
     # Call {PREFIX_PAREN} and return its Matcher result.
     # Call {PREFIX_PAREN} and return its result.
 
+    # obsoleted by the merge of PR #2152:
+    # Append in list order the elements of {var} to the end of the List {var}.
+
     # PR 1585 
     Sort {var} using an implementation-dependent sequence of calls to SortCompare.
 
@@ -324,33 +327,30 @@
 # ------------------------------------------------------
 
 {EACH_THING} :
-    Agent Events Record {var} in {DOTTING}
-    Cyclic Module Record {var} in {var}
-    ExportEntry Record {var} in {EX}
+    Agent Events Record {var} of {DOTTING}
+    Cyclic Module Record {var} of {var}
+    ExportEntry Record {var} of {EX}
     FinalizationRegistry {var} such that {CONDITION}
-    ImportEntry Record {var} in {EX}
-    Parse Node {var} in {var}
-    ReadSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})
-    Record { {DSBN}, {DSBN} } {var} in {var}
-    Record { {DSBN}, {DSBN} } {var} that is an element of {var}
-    Record { {DSBN}, {DSBN} } {var} that is an element of {var}, in original key insertion order
-    Record { {DSBN}, {DSBN}, {DSBN} } {var} that is an element of {DOTTING}
-    String {var} in {PP_NAMED_OPERATION_INVOCATION}
-    String {var} in {var}
-    String {var} in {var}, in list order
-    String {var} that is an element of {EX}
+    ImportEntry Record {var} of {EX}
+    Parse Node {var} of {var}
+    ReadSharedMemory or ReadModifyWriteSharedMemory event {var} of SharedDataBlockEventSet({var})
+    Record { {DSBN}, {DSBN} } {var} of {var}
+    Record { {DSBN}, {DSBN} } {var} of {var}, in original key insertion order
+    Record { {DSBN}, {DSBN}, {DSBN} } {var} of {DOTTING}
+    String {var} of {DOTTING}
+    String {var} of {PP_NAMED_OPERATION_INVOCATION}
+    String {var} of {var}
     WeakMap {var} such that {CONDITION}
     WeakRef {var} such that {CONDITION}
     WeakSet {var} such that {CONDITION}
     child node {var} of this Parse Node
-    code point {var} in {PP_NAMED_OPERATION_INVOCATION}
-    code point {var} in {var}
-    element {var} in {var}
+    code point {var} of {PP_NAMED_OPERATION_INVOCATION}
+    code point {var} of {var}
     element {var} of {EX}
-    element {var} of {var} in List order
-    element {var} of {var}, in ascending index order
-    event {var} in {DOTTING}
-    event {var} in {PP_NAMED_OPERATION_INVOCATION}
+    element {var} of {var}, in original insertion order
+    element {var} of {var}, in reverse List order
+    event {var} of {DOTTING}
+    event {var} of {PP_NAMED_OPERATION_INVOCATION}
     event {var} such that {CONDITION}
     field of {var} that is present
     index {var} of {var}
@@ -360,23 +360,11 @@
     integer {var} that satisfies {CONDITION}
     own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
-
     own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
-    string {var} in {var}
-    {nonterminal} {var} in order from {var}
-    {nonterminal} {var} in {var}
+    {nonterminal} {var} of {var}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
-    {var} from {var} in list order
-    {var} in {var}
-    {var} in {var} in List order
-    {var} in {var}, in original insertion order
-    {var} in {var}, in reverse list order
-    {var} of {var}
-    {var} of {var} in List order
-    {var} that is an element of {var}
-    {var} that is an element of {var}, in original insertion order
 
     # obsoleted by the merge of PR #1831:
     # {nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})
@@ -389,6 +377,41 @@
     # obsoleted by the merge of PR #2112:
     # character {var} in the CharSet of all characters
     # character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
+
+    # obsoleted by the merge of PR #2152:
+    # Agent Events Record {var} in {DOTTING}
+    # Cyclic Module Record {var} in {var}
+    # ExportEntry Record {var} in {EX}
+    # ImportEntry Record {var} in {EX}
+    # Parse Node {var} in {var}
+    # ReadSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})
+    # Record { {DSBN}, {DSBN} } {var} in {var}
+    # Record { {DSBN}, {DSBN} } {var} that is an element of {var}
+    # Record { {DSBN}, {DSBN} } {var} that is an element of {var}, in original key insertion order
+    # Record { {DSBN}, {DSBN}, {DSBN} } {var} that is an element of {DOTTING}
+    # String {var} in {PP_NAMED_OPERATION_INVOCATION}
+    # String {var} in {var}
+    # String {var} in {var}, in list order
+    # String {var} that is an element of {EX}
+    # code point {var} in {PP_NAMED_OPERATION_INVOCATION}
+    # code point {var} in {var}
+    # element {var} in {var}
+    # element {var} of {var} in List order
+    # element {var} of {var}, in ascending index order
+    # event {var} in {DOTTING}
+    # event {var} in {PP_NAMED_OPERATION_INVOCATION}
+    # string {var} in {var}
+    # {nonterminal} {var} in order from {var}
+    # {nonterminal} {var} in {var}
+    # {var} from {var} in list order
+    # {var} in {var}
+    # {var} in {var} in List order
+    # {var} in {var}, in original insertion order
+    # {var} in {var}, in reverse list order
+    # {var} of {var}
+    # {var} of {var} in List order
+    # {var} that is an element of {var}
+    # {var} that is an element of {var}, in original insertion order
 
     # PR 1623 index_strings
     own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
@@ -1231,7 +1254,7 @@
     the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
     the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty String is returned
-    the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned
+    the String value whose code units are, in order, the elements in the List {var}. If {var} is empty, the empty String is returned
     the String value whose code units are, in order, the elements in {PP_NAMED_OPERATION_INVOCATION}
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair ({var}, {var})
@@ -1490,6 +1513,9 @@
 
     # obsoleted by the merge of PR #2146:
     # the larger of 0 and the result of {var} minus the number of elements of {var}
+
+    # obsoleted by the merge of PR #2152:
+    # the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object

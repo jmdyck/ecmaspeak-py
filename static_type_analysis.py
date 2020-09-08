@@ -6301,20 +6301,9 @@ def tc_nonvalue(anode, env0):
 
         # generic list:
         if each_thing.prod.rhs_s in [
-            r"element {var} in {DOTTING}",
-            r"element {var} in {var}",
             r"element {var} of {EX}",
-            r"element {var} of {var} in List order",
-            r"element {var} of {var}, in ascending index order",
-            r"{var} from {var} in list order",
-            r"{var} in {var} in List order",
-            r"{var} in {var}",
-            r"{var} in {var}, in original insertion order",
-            r"{var} in {var}, in reverse list order",
-            r"{var} of {var}",
-            r"{var} of {var} in List order",
-            r"{var} that is an element of {var}",
-            r"{var} that is an element of {var}, in original insertion order",
+            r"element {var} of {var}, in original insertion order",
+            r"element {var} of {var}, in reverse List order",
         ]:
             [loop_var, collection_expr] = each_thing.children
             (list_type, env1) = tc_expr(collection_expr, env0); assert env1 is env0
@@ -6332,46 +6321,44 @@ def tc_nonvalue(anode, env0):
         # ---------------------
         # list of specific type:
 
-        elif each_thing.prod.rhs_s == r"Agent Events Record {var} in {DOTTING}":
+        elif each_thing.prod.rhs_s == r"Agent Events Record {var} of {DOTTING}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_Agent_Events_Record))
             env_for_commands = env1.plus_new_entry(loop_var, T_Agent_Events_Record)
 
-        elif each_thing.prod.rhs_s == r"event {var} in {DOTTING}":
+        elif each_thing.prod.rhs_s == r"event {var} of {DOTTING}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_event_))
             env_for_commands = env1.plus_new_entry(loop_var, T_event_)
 
-        elif each_thing.prod.rhs_s == r"ExportEntry Record {var} in {EX}":
+        elif each_thing.prod.rhs_s == r"ExportEntry Record {var} of {EX}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_ExportEntry_Record))
             env_for_commands = env1.plus_new_entry(loop_var, T_ExportEntry_Record)
 
-        elif each_thing.prod.rhs_s == r"Record { {DSBN}, {DSBN} } {var} in {var}":
-            [dsbn1, dsbn2, loop_var, collection_expr] = each_thing.children
-            assert dsbn1.source_text() == '[[Module]]'
-            assert dsbn2.source_text() == '[[ExportName]]'
-            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_ExportResolveSet_Record_))
-            env_for_commands = env1.plus_new_entry(loop_var, T_ExportResolveSet_Record_)
-
         elif each_thing.prod.rhs_s in [
-            r"Record { {DSBN}, {DSBN} } {var} that is an element of {var}",
-            r"Record { {DSBN}, {DSBN} } {var} that is an element of {var}, in original key insertion order",
+            r"Record { {DSBN}, {DSBN} } {var} of {var}",
+            r"Record { {DSBN}, {DSBN} } {var} of {var}, in original key insertion order",
         ]:
             [dsbn1, dsbn2, loop_var, collection_expr] = each_thing.children
-            assert dsbn1.source_text() == '[[Key]]'
-            assert dsbn2.source_text() == '[[Value]]'
-            # hack:
-            if collection_expr.source_text() == '_importMetaValues_':
-                element_type = T_ImportMeta_record_ # PR 1892
-            elif collection_expr.source_text() == '_entries_':
-                element_type = T_MapData_record_
+            dsbns = (dsbn1.source_text(), dsbn2.source_text())
+            if dsbns == ('[[Module]]', '[[ExportName]]'):
+                env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_ExportResolveSet_Record_))
+                env_for_commands = env1.plus_new_entry(loop_var, T_ExportResolveSet_Record_)
+            elif dsbns == ('[[Key]]', '[[Value]]'):
+                # hack:
+                if collection_expr.source_text() == '_importMetaValues_':
+                    element_type = T_ImportMeta_record_ # PR 1892
+                elif collection_expr.source_text() == '_entries_':
+                    element_type = T_MapData_record_
+                else:
+                    assert 0, collection_expr
+                env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(element_type))
+                env_for_commands = env1.plus_new_entry(loop_var, element_type)
             else:
-                assert 0, collection_expr
-            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(element_type))
-            env_for_commands = env1.plus_new_entry(loop_var, element_type)
+                assert 0, dsbns
 
-        elif each_thing.prod.rhs_s == r"Record { {DSBN}, {DSBN}, {DSBN} } {var} that is an element of {DOTTING}":
+        elif each_thing.prod.rhs_s == r"Record { {DSBN}, {DSBN}, {DSBN} } {var} of {DOTTING}":
             [dsbn1, dsbn2, dsbn3, loop_var, collection_expr] = each_thing.children
             assert dsbn1.source_text() == '[[WeakRefTarget]]'
             assert dsbn2.source_text() == '[[HeldValue]]'
@@ -6380,51 +6367,45 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(element_type))
             env_for_commands = env1.plus_new_entry(loop_var, element_type)
 
-        elif each_thing.prod.rhs_s == 'ImportEntry Record {var} in {EX}':
+        elif each_thing.prod.rhs_s == 'ImportEntry Record {var} of {EX}':
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_ImportEntry_Record))
             env_for_commands = env1.plus_new_entry(loop_var, T_ImportEntry_Record)
 
-        elif each_thing.prod.rhs_s == r"Parse Node {var} in {var}":
+        elif each_thing.prod.rhs_s == r"Parse Node {var} of {var}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_Parse_Node))
             env_for_commands = env1.plus_new_entry(loop_var, T_Parse_Node)
 
-        elif each_thing.prod.rhs_s == r"String {var} that is an element of {EX}":
-            [loop_var, collection_expr] = each_thing.children
-            env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_String))
-            env_for_commands = env1.plus_new_entry(loop_var, T_String)
-
-        elif each_thing.prod.rhs_s == r"Cyclic Module Record {var} in {var}":
+        elif each_thing.prod.rhs_s == r"Cyclic Module Record {var} of {var}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_Cyclic_Module_Record))
             env_for_commands = env1.plus_new_entry(loop_var, T_Cyclic_Module_Record)
 
         elif each_thing.prod.rhs_s in [
-            r"{nonterminal} {var} in {var}",
-            r"{nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})",
-            r"{nonterminal} {var} in order from {var}",
+            r"{nonterminal} {var} of {var}",
+            # r"{nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})",
+            # r"{nonterminal} {var} in order from {var}",
         ]:
             [nont, loop_var, collection_expr] = each_thing.children[0:3]
             env0.assert_expr_is_of_type(collection_expr, ListType(T_Parse_Node))
             env_for_commands = env0.plus_new_entry(loop_var, ptn_type_for(nont))
 
         elif each_thing.prod.rhs_s in [
-            r"String {var} in {PP_NAMED_OPERATION_INVOCATION}",
-            r"String {var} in {var}, in list order",
-            r"String {var} in {var}",
-            r"string {var} in {var}",
+            r"String {var} of {DOTTING}",
+            r"String {var} of {PP_NAMED_OPERATION_INVOCATION}",
+            r"String {var} of {var}",
         ]:
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, ListType(T_String))
             env_for_commands = env1.plus_new_entry(loop_var, T_String)
 
-        elif each_thing.prod.rhs_s == 'code point {var} in {var}':
+        elif each_thing.prod.rhs_s == 'code point {var} of {var}':
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Unicode_code_points_)
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
 
-        elif each_thing.prod.rhs_s == 'code point {var} in {PP_NAMED_OPERATION_INVOCATION}':
+        elif each_thing.prod.rhs_s == 'code point {var} of {PP_NAMED_OPERATION_INVOCATION}':
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Unicode_code_points_)
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
@@ -6477,7 +6458,7 @@ def tc_nonvalue(anode, env0):
         # -----------------------
         # other collections:
 
-        elif each_thing.prod.rhs_s == r"event {var} in {PP_NAMED_OPERATION_INVOCATION}":
+        elif each_thing.prod.rhs_s == r"event {var} of {PP_NAMED_OPERATION_INVOCATION}":
             [loop_var, collection_expr] = each_thing.children
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Set)
             env_for_commands = env1.plus_new_entry(loop_var, T_event_)
@@ -6487,7 +6468,7 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
             env_for_commands = env0.plus_new_entry(loop_var, T_Integer_)
 
-        elif each_thing.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})":
+        elif each_thing.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event {var} of SharedDataBlockEventSet({var})":
             [loop_var, collection_var] = each_thing.children
             env0.assert_expr_is_of_type(collection_var, T_candidate_execution)
             env_for_commands = env0.plus_new_entry(loop_var, T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
@@ -7311,7 +7292,7 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_expr_is_of_type(b, ListType(T_code_unit_))
         result = env1
 
-    elif p == r"{COMMAND} : Append in list order the elements of {var} to the end of the List {var}.":
+    elif p == r"{COMMAND} : Append in List order the elements of {var} to the end of the List {var}.":
         [a, b] = children
         env0.assert_expr_is_of_type(a, T_List)
         env0.assert_expr_is_of_type(b, T_List)
@@ -13829,9 +13810,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_Integer_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned":
-        [list_var, len_var] = children
-        env0.assert_expr_is_of_type(len_var, T_Integer_)
+    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} is empty, the empty String is returned":
+        [list_var, other_var] = children
+        env0.assert_expr_is_of_type(other_var, T_List)
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_code_unit_))
         return (T_String, env1)
 
