@@ -79,7 +79,6 @@
     Let {var} be equivalent to a function that throws {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
     Let {var} be the smallest nonnegative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
-    Let {var} be {EXPR}, and let {var} be {EXPR}.
     Let {var} be {EXPR}.
     Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the mathematical integer value that is represented by {var} in radix-{var} notation.)
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
@@ -107,8 +106,7 @@
     Push {var} onto the execution context stack; {var} is now the running execution context.
     Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.
     Remove the binding for {var} from {var}.
-    Remove the first element from {var} and let {var} be the value of that element.
-    Remove the first element from {var} and let {var} be the value of the element.
+    Remove the first element from {var}.
     Remove the first two code units from {var}.
     Remove the last element of {SETTABLE}.
     Remove the own property with name {var} from {var}.
@@ -223,6 +221,11 @@
     # Call {PREFIX_PAREN} and let {var} be the resulting CharSet.
     # Call {PREFIX_PAREN} and return its Matcher result.
     # Call {PREFIX_PAREN} and return its result.
+
+    # obsoleted by the merge of PR #2137:
+    # Let {var} be {EXPR}, and let {var} be {EXPR}.
+    # Remove the first element from {var} and let {var} be the value of that element.
+    # Remove the first element from {var} and let {var} be the value of the element.
 
     # obsoleted by the merge of PR #2152:
     # Append in list order the elements of {var} to the end of the List {var}.
@@ -1322,6 +1325,7 @@
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
     the one character in CharSet {var}
+    the other {EX} code units of {var}
     the parse of some source text
     the prefix associated with {var} in {h_emu_xref}
     the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}

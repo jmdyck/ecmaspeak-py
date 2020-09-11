@@ -5767,11 +5767,12 @@ def tc_nonvalue(anode, env0):
         (t, env1) = tc_expr(expr, env0)
         result = env1.plus_new_entry(let_var, t)
 
-    elif p == r'{COMMAND} : Let {var} be {EXPR}, and let {var} be {EXPR}.':
-        [let_var1, expr1, let_var2, expr2] = children
-        (t1, env1) = tc_expr(expr1, env0) # ; assert env1 is env0 disable assert due to toFixed
-        (t2, env2) = tc_expr(expr2, env1) # ; assert env2 is env0 disable assert due to toExponential
-        result = env2.plus_new_entry(let_var1, t1).plus_new_entry(let_var2, t2)
+#    elif p == r'{COMMAND} : Let {var} be {EXPR}, and let {var} be {EXPR}.':
+#        [let_var1, expr1, let_var2, expr2] = children
+#        (t1, env1) = tc_expr(expr1, env0) # ; assert env1 is env0 disable assert due to toFixed
+#        (t2, env2) = tc_expr(expr2, env1) # ; assert env2 is env0 disable assert due to toExponential
+#        result = env2.plus_new_entry(let_var1, t1).plus_new_entry(let_var2, t2)
+# ^ obsoleted by PR 2137
 
 #    elif p == r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}.":
 #        [var, cond] = children
@@ -5846,13 +5847,14 @@ def tc_nonvalue(anode, env0):
 
     # ---
 
-    elif p in [
-        r"{COMMAND} : Remove the first element from {var} and let {var} be the value of that element.",
-        r"{COMMAND} : Remove the first element from {var} and let {var} be the value of the element.",
-    ]:
-        [list_var, item_var] = children
-        list_type = env0.assert_expr_is_of_type(list_var, T_List)
-        result = env0.plus_new_entry(item_var, list_type.element_type)
+#    elif p in [
+#        r"{COMMAND} : Remove the first element from {var} and let {var} be the value of that element.",
+#        r"{COMMAND} : Remove the first element from {var} and let {var} be the value of the element.",
+#    ]:
+#        [list_var, item_var] = children
+#        list_type = env0.assert_expr_is_of_type(list_var, T_List)
+#        result = env0.plus_new_entry(item_var, list_type.element_type)
+# ^ obsoleted by PR 2137
 
     elif p == r"{COMMAND} : Let {var} be the first element of {var} and remove that element from {var}.":
         [item_var, list_var, list_var2] = children
@@ -7267,6 +7269,11 @@ def tc_nonvalue(anode, env0):
     elif p == r"{COMMAND} : Remove the first two code units from {var}.":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
+        result = env0
+
+    elif p == r"{COMMAND} : Remove the first element from {var}.":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
 #    elif p == r"{COMMAND} : Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.":
@@ -13804,7 +13811,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Number)
         return (ListType(T_code_unit_), env0)
 
-    elif p == r"{EX} : the remaining {EX} code units of {var}":
+    elif p in [
+        r"{EX} : the remaining {EX} code units of {var}",
+        r"{EXPR} : the other {EX} code units of {var}",
+    ]:
         [ex, var] = children
         env0.assert_expr_is_of_type(var, T_String)
         env1 = env0.ensure_expr_is_of_type(ex, T_Integer_)
