@@ -498,7 +498,10 @@
     {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
+    {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
+    {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
+    {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
 
     # obsoleted by PR #2111: 
     # {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
@@ -621,6 +624,7 @@
     {EX} is present, and is neither {LITERAL} nor {LITERAL}
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
+    {EX} is +1
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
@@ -794,6 +798,7 @@
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
     {var} is an integer index &le; {var}
+    {var} is an integral Number
     {var} is an ordinary, extensible object with no non-configurable properties
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is an? {PROPERTY_KIND} property
@@ -806,6 +811,7 @@
     {var} is either {LITERAL} or an? {nonterminal}
     {var} is empty
     {var} is finite
+    {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
     {var} is hint Number
     {var} is hint String
     {var} is never an abrupt completion
@@ -1132,6 +1138,7 @@
     a List containing {PP_NAMED_OPERATION_INVOCATION}
     a List containing {PROD_REF}
     a List containing {var} followed by the elements, in order, of {var}
+    a List containing {var}, {var}, and the elements of {var} in List order
     a List of length 1 that contains a nondeterministically chosen byte value
     a List of length {var} of nondeterministically chosen byte values
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
@@ -1182,6 +1189,7 @@
     a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
+    an implementation-approximated value representing {EXPR}
     an implementation-defined Completion value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
@@ -1297,9 +1305,12 @@
     the first waiter in {var}
     the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
     the grammar symbol {nonterminal}
+    the greatest (closest to *+&infin;*) integral Number value that is not greater than {var}
     the index into {var} of the character that was obtained from element {var} of {var}
     the index within {var} of the first such code unit
     the integer that is {EXPR}
+    the integral Number closest to {var}, preferring the Number closer to *+&infin;* in the case of a tie
+    the integral Number nearest {var} in the direction of *+0*
     the internal slots listed in {h_emu_xref}
     the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}
     the intrinsic function {percent_word}
@@ -1346,7 +1357,9 @@
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The result is an unsigned 32-bit integer
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
+    the result of subtracting 1 from the exponential function of {var}
     the result of the comparison {EX} == {EX}
+    the result of the {MATH_FUNC} of {EX}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
     the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm
     the result of {PP_NAMED_OPERATION_INVOCATION}
@@ -1356,11 +1369,13 @@
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the sequence of code units consisting of the code units of {var} followed by the elements of {var}
     the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
+    the smallest (closest to *-&infin;*) integral Number value that is not less than {var}
     the smallest (closest to *-&infin;*) such integer
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
     the source text matched by {PROD_REF}
     the source text that was recognized as {PROD_REF}
+    the square root of the sum of squares of the elements of {var}
     the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
     the string-concatenation of {EX} and {EX}
@@ -1378,9 +1393,9 @@
     the time value (UTC) identifying the current time
     the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}
     the two results {EX} and {EX}
-    the union of {var} and {var}
     the union of CharSets {var} and {var}
     the union of CharSets {var}, {var} and {var}
+    the union of {var} and {var}
     the value currently bound to {var} in {var}
     the value obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the value of the first element of {var}
@@ -1626,6 +1641,26 @@
     # PR 1668 private fields
     \u00ab \u00bb
 
+{MATH_FUNC} :
+    base 10 logarithm
+    base 2 logarithm
+    cosine
+    cube root
+    exponential function
+    hyperbolic cosine
+    hyperbolic sine
+    hyperbolic tangent
+    inverse cosine
+    inverse hyperbolic cosine
+    inverse hyperbolic sine
+    inverse hyperbolic tangent
+    inverse sine
+    inverse tangent
+    natural logarithm
+    sine
+    square root
+    tangent
+
 {ENVIRONMENT_RECORD_KIND} :
     declarative
     function
@@ -1861,6 +1896,14 @@
 
 {NUM_EXPR} :
     #pre-1135: the exact mathematical value of {SUM}
+    +&pi;
+    +&pi; / 2
+    +&pi; / 4
+    +3&pi; / 4
+    -&pi;
+    -&pi; / 2
+    -&pi; / 4
+    -3&pi; / 4
     {PRODUCT}
     {SUM}
     {math_r}({var})
@@ -1896,6 +1939,7 @@
     {UNARY_OPERATOR}{FACTOR}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
     {FACTOR} modulo {FACTOR}
+    the quotient {var} / {var}
 
 {UNARY_OPERATOR} :
     +

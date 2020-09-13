@@ -1732,6 +1732,11 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         # XXX not sure what to do
         return
 
+    if parameter_listing == 'zero or more arguments which form the rest parameter ..._values_':
+        oi.param_names = ['_values_']
+        oi.param_nature_['_values_'] = 'a List of values'
+        return
+
     if parameter_listing == 'one or two arguments, _predicate_ and _thisArg_':
         # 1 case
         oi.param_names = ['_predicate_', '_thisArg_']
@@ -2805,7 +2810,7 @@ class Header:
 
                 # move to apply_ad_hoc_fixes?
                 if self.kind in ['function property', 'function property overload', 'anonymous built-in function', 'accessor property']:
-                    if self.name.startswith('Math.'):
+                    if False and self.name.startswith('Math.'): # merge of PR 2122
                         # "Each of the following `Math` object functions
                         # applies the ToNumber abstract operation
                         # to each of its arguments
@@ -7452,6 +7457,9 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
     ]:
         logical = ('or', children)
         return tc_logical(logical, env0, asserting)
@@ -9193,9 +9201,10 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {EX} is -1",
         r"{CONDITION_1} : {EX} is not -1",
+        r"{CONDITION_1} : {EX} is +1",
     ]:
         [ex] = children
-        env0.assert_expr_is_of_type(ex, T_Integer_)
+        env0.ensure_expr_is_of_type(ex, T_Integer_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is not finite":
@@ -9503,6 +9512,13 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is finite":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}":
+        [var, lita, litb] = children
+        env0.assert_expr_is_of_type(var, T_Number)
+        env0.assert_expr_is_of_type(lita, T_Number)
+        env0.assert_expr_is_of_type(litb, T_Number)
         return (env0, env0)
 
 #    elif p == r"{CONDITION_1} : All dependencies of {var} have been transitively resolved and {var} is ready for evaluation":
@@ -10035,6 +10051,11 @@ def tc_cond_(cond, env0, asserting):
         [list_var, len_var] = children
         env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(len_var, T_Number)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is an integral Number":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Number)
         return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
@@ -11280,6 +11301,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
 
+    elif p in [
+        r"{EXPR} : the smallest (closest to *-&infin;*) integral Number value that is not less than {var}",
+        r"{EXPR} : the greatest (closest to *+&infin;*) integral Number value that is not greater than {var}",
+        r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to *+&infin;* in the case of a tie",
+        r"{EXPR} : the integral Number nearest {var} in the direction of *+0*",
+    ]:
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Number, env0)
+
     # --------------------------------------------------------
     # return T_MathInteger_
 
@@ -11395,6 +11426,25 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert ex_t == T_TBD or ex_t == T_MathInteger_
         return (ex_t, env0)
+
+    elif p == r"{PRODUCT} : the quotient {var} / {var}":
+        [vara, varb] = children
+        env0.assert_expr_is_of_type(vara, T_Number)
+        env0.assert_expr_is_of_type(varb, T_Number)
+        return (T_MathReal_, env0)
+
+    elif p in [
+        "{NUM_EXPR} : +&pi; / 2",
+        "{NUM_EXPR} : +&pi; / 4",
+        "{NUM_EXPR} : +&pi;",
+        "{NUM_EXPR} : +3&pi; / 4",
+        "{NUM_EXPR} : -&pi; / 2",
+        "{NUM_EXPR} : -&pi; / 4",
+        "{NUM_EXPR} : -&pi;",
+        "{NUM_EXPR} : -3&pi; / 4",
+    ]:
+        [] = children
+        return (T_MathReal_, env0)
 
     # --------------------------------------------------------
     # return T_Integer_: The size of some collection:
@@ -14267,6 +14317,27 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, T_Abstract_Closure)
         return (T_Integer_, env0)
+
+    elif p == r"{EXPR} : an implementation-approximated value representing {EXPR}":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_MathReal_)
+        return (T_Number, env0)
+
+    elif p == r"{EXPR} : the result of the {MATH_FUNC} of {EX}":
+        [math_func, ex] = children
+        env0.assert_expr_is_of_type(ex, T_Number | T_MathReal_)
+        return (T_MathReal_, env0)
+
+    elif p == r"{EXPR} : the result of subtracting 1 from the exponential function of {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_MathReal_, env0)
+
+    elif p == r"{EXPR} : the square root of the sum of squares of the elements of {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (T_MathReal_, env0)
+    
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
