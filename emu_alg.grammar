@@ -846,7 +846,7 @@
     {var} is odd
     {var} is on the list of waiters in {var}
     {var} is one of the code units in {STR_LITERAL}
-    {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}
+    {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is the String value {STR_LITERAL}
     {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
     {var} is the execution context of a generator
@@ -1138,7 +1138,6 @@
     a List containing {PP_NAMED_OPERATION_INVOCATION}
     a List containing {PROD_REF}
     a List containing {var} followed by the elements, in order, of {var}
-    a List containing {var}, {var}, and the elements of {var} in List order
     a List of length 1 that contains a nondeterministically chosen byte value
     a List of length {var} of nondeterministically chosen byte values
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors

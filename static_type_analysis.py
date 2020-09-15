@@ -1293,6 +1293,11 @@ class PreambleInfoHolder:
             poi.param_names = None
         elif len(pl_values) == 1:
             get_info_from_parameter_listing_in_preamble(poi, pl_values[0])
+        elif pl_values == [
+            'zero or more arguments',
+            'zero or more arguments which form the rest parameter ..._args_'
+        ]:
+            get_info_from_parameter_listing_in_preamble(poi, pl_values[1])
         else:
             stderr(f"{poi.name} has multi-pl: {poi.param_names}")
             assert 0
@@ -1732,9 +1737,9 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         # XXX not sure what to do
         return
 
-    if parameter_listing == 'zero or more arguments which form the rest parameter ..._values_':
-        oi.param_names = ['_values_']
-        oi.param_nature_['_values_'] = 'a List of values'
+    if parameter_listing == 'zero or more arguments which form the rest parameter ..._args_':
+        oi.param_names = ['_args_']
+        oi.param_nature_['_args_'] = 'a List of values'
         return
 
     if parameter_listing == 'one or two arguments, _predicate_ and _thisArg_':
@@ -8472,7 +8477,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}",
+        r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         # r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}", # PR 1546 obsoleted
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
