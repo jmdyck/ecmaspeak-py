@@ -855,6 +855,7 @@
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
     {var} is {LITERAL} because formal parameters mapped by argument objects are always writable
+    {var} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number
     {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is {nonterminal}

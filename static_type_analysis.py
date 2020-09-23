@@ -8471,6 +8471,14 @@ def tc_cond_(cond, env0, asserting):
             env_or(a_f_env, b_f_env)
         )
 
+    elif p == r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number":
+        [var, lita, litb, litc] = children
+        assert lita.source_text() == '*NaN*'
+        assert litb.source_text().startswith('*+&infin;*')
+        assert litc.source_text().startswith('*-&infin;*')
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (env0, env0)
+
     elif p in [
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}",
