@@ -1561,6 +1561,10 @@
     # PR 2109:
     the number of parameters taken by {var}
 
+    # PR 2115:
+    &laquo; {dsb_word}, {dsb_word} &raquo; and the internal slots specified in {h_emu_xref} or {h_emu_xref} and &laquo; {dsb_word} &raquo;, as appropriate
+    a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}
+
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;

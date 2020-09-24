@@ -2276,6 +2276,7 @@ nature_to_tipe = {
         'a List of byte values'                       : 'List of Integer_',
         'a List of slot-names'                        : 'List of SlotName_',
         'a List of names of internal slots'           : 'List of SlotName_',
+        'a List of internal slot names'               : 'List of SlotName_',
         'a List of ECMAScript Language Type names'    : 'List of LangTypeName_',
         'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
         'a collection of PromiseReactionRecords'      : 'List of PromiseReaction Record',
