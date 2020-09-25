@@ -2183,6 +2183,8 @@ nature_to_tipe = {
         'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
 
         # Completion
+        'an abrupt completion': 'Abrupt',
+        'a Completion Record': 'Abrupt | Normal',
 
         # Property Descriptor
         'Property Descriptor'   : 'Property Descriptor',
@@ -2192,6 +2194,9 @@ nature_to_tipe = {
         'Environment Record' : 'Environment Record',
         'an Environment Record' : 'Environment Record',
         'Scope Record' : 'Scope Record', # PR 1477 scope-records
+
+        # Abstract Closure
+        'an Abstract Closure with no parameters': '() -> Top_',
 
         # Data Block
         'a Shared Data Block' : 'Shared Data Block',
@@ -2379,6 +2384,7 @@ nature_to_tipe = {
     'Object | Undefined'                                         : 'Object | Undefined',
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
     'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
+    'a Parse Node or an Abstract Closure with no parameters'     : 'Parse Node | () -> Top_',
     'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
@@ -3795,7 +3801,6 @@ named_type_hierarchy = {
             },
             'Intangible_': {
                 'AssignmentTargetType_': {},
-                'Abstract Closure': {}, # hm
                 'CharSet': {},
                 'ClassElementKind_': {},
                 'Data Block': {},
@@ -4782,6 +4787,10 @@ class Env:
                 'the result of performing NamedEvaluation for |Initializer| with argument _bindingId_',
                 '_handler_', # NewPromiseReactionJob
                 '_r_.[[Value]]',
+                '%Generator.prototype.next%', # CreateListIteratorRecord
+                '? Yield(IteratorValue(_innerResult_))', # Evaluation
+                '? Yield(IteratorValue(_innerReturnResult_))', # Evaluation
+                '_list_[_index_]', # CreateListIteratorRecord
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -5232,7 +5241,7 @@ def mytrace(env):
         print("resulting env is None")
     else:
         # print("resulting env:", env)
-        for var_name in ['_argumentList_']:
+        for var_name in ['_list_']:
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
             # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
@@ -5254,7 +5263,7 @@ def tc_operation(op_name):
     global trace_this_op
     trace_this_op = False
     trace_this_op = (op_name in [
-        'xTypedArrayCreate'
+        'xCreateListIteratorRecord'
     ])
     # and you may want to tweak mytrace just above
 
@@ -7685,12 +7694,12 @@ def tc_cond_(cond, env0, asserting):
     # PR 2109:
     elif p == r"{CONDITION_1} : {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification":
         [var] = children
-        return env0.with_type_test(var, 'is a', T_Abstract_Closure | T_alg_steps, asserting)
+        return env0.with_type_test(var, 'is a', T_proc_ | T_alg_steps, asserting)
 
     # PR 2109:
     elif p == r"{CONDITION_1} : {var} is an Abstract Closure":
         [var] = children
-        return env0.with_type_test(var, 'is a', T_Abstract_Closure, asserting)
+        return env0.with_type_test(var, 'is a', T_proc_, asserting)
 
     elif p == r'{CONDITION_1} : {var} is an Array exotic object':
         [var] = children
@@ -8992,6 +9001,8 @@ def tc_cond_(cond, env0, asserting):
             env1 = env0
         elif exa_type == T_TBD:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
+        elif exb_type == T_TBD:
+            env1 = env0.with_expr_type_replaced(exb, exa_type)
         elif exa_type == T_Environment_Record | T_Undefined and exb_type == T_Environment_Record:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exa_type == T_Integer_ and exb_type == T_Number:
@@ -11478,6 +11489,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the number of characters contained in {var}",
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : the number of elements in {var}",
+        r"{NUM_COMPARAND} : the number of elements of {var}",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
@@ -14022,8 +14034,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the number of elements of {var}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_List)
-        return (T_Integer_, env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_List)
+        return (T_Integer_, env1)
 
     elif p == r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}":
         [dsbna, dsbnb, ex] = children
@@ -14329,7 +14341,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # PR 2109:
     elif p == r"{EXPR} : the number of parameters taken by {var}":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_Abstract_Closure)
+        env0.assert_expr_is_of_type(var, ProcType)
         return (T_Integer_, env0)
 
     elif p == r"{EXPR} : an implementation-approximated value representing {EXPR}":
@@ -15204,6 +15216,7 @@ type_of_internal_thing_ = {
     # 38581: Table 56: Internal Slots of Generator Instances
     'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
     'GeneratorContext': T_execution_context,
+    'GeneratorBrand'  : T_String | T_empty_, # 2045
 
     # 25.1.1.1 WeakRef ( _target_ ) NO TABLE
     'WeakRefTarget' : T_Object,

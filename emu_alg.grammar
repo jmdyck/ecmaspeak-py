@@ -1053,6 +1053,9 @@
     {SUM}
     {FACTOR}
 
+    # PR 2045:
+    the number of elements of {var}
+
 {NUM_COMPARATOR} :
     &ge;
     &gt;
