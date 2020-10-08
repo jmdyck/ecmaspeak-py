@@ -300,7 +300,7 @@ def _infer_section_kinds(section):
     elif (
         section.parent.section_title in ['Pattern Semantics', 'Runtime Semantics for Patterns']
         and
-        section.section_title not in ['Notation', 'Runtime Semantics: CharacterRangeOrUnion ( _A_, _B_ )']
+        section.section_title not in ['Notation', 'CharacterRangeOrUnion ( _A_, _B_ )']
     ):
         assert section.section_kind == 'catchall'
         section.section_kind = 'syntax_directed_operation'
