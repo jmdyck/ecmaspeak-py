@@ -896,7 +896,7 @@ def analyze_changes_section(section):
             p_ist = p.inner_source_text()
 
             if (
-                p_ist == 'For web browser compatibility, that rule is modified with the addition of the <ins>highlighted</ins> text:'
+                re.fullmatch(fr'The rules for the following production in {emu_xref_re} are modified with the addition of the <ins>highlighted</ins> text:', p_ist)
                 or
                 re.fullmatch(fr'The following Early Error rule is added to those in {emu_xref_re}\. .+', p_ist)
                 or
