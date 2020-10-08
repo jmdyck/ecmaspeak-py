@@ -11260,7 +11260,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_Integer_, env1)
 
-    elif p == r"{EXPR} : {var} `*` msPerHour `+` {var} `*` msPerMinute `+` {var} `*` msPerSecond `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)":
+    elif p == r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)":
         for var in children:
             env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)

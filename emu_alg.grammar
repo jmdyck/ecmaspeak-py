@@ -1412,7 +1412,7 @@
     this Date object
     this Source Text Module Record
     {EX}
-    {var} `*` msPerHour `+` {var} `*` msPerMinute `+` {var} `*` msPerSecond `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
+    (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
     {var}'s State
     {var}'s _captures_ List
     {var}'s code point value
