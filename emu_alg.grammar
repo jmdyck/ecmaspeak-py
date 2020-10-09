@@ -542,7 +542,6 @@
     every field in {var} is absent
     for all nonnegative integers {var} less than {var}, {CONDITION_1}
     it must be in the object Environment Record
-    its value is either {LITERAL} or {LITERAL}
     its value is {LITERAL}
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
@@ -599,6 +598,7 @@
     {EX} and {EX} are valid byte offsets within the memory of {var}
     {EX} does not contain {starred_str}
     {EX} has the value {LITERAL}
+    {EX} is +1
     {EX} is -1
     {EX} is a sequence of Unicode code points
     {EX} is absent
@@ -624,7 +624,6 @@
     {EX} is present, and is neither {LITERAL} nor {LITERAL}
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
-    {EX} is +1
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
@@ -812,8 +811,6 @@
     {var} is empty
     {var} is finite
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
-    {var} is hint Number
-    {var} is hint String
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
     {var} is not a Shared Data Block
@@ -848,7 +845,6 @@
     {var} is one of the code units in {STR_LITERAL}
     {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is the String value {STR_LITERAL}
-    {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
     {var} is the execution context of a generator
     {var} is the same Number value as {var}
     {var} is the value {LITERAL}
@@ -962,6 +958,12 @@
     # obsoleted by the merge of PR #2139:
     # the number of actual arguments is {NUM_LITERAL}
     # this method was called with more than one argument
+
+    # obsoleted by the merge of PR #2177:
+    # its value is either {LITERAL} or {LITERAL}
+    # {var} is hint Number
+    # {var} is hint String
+    # {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
@@ -1578,8 +1580,6 @@
     Type({var})::unit
     a newly created {ERROR_TYPE} object
     an implementation-defined timezone name
-    hint Number
-    hint String
     the *this* value
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List (see {h_emu_xref})
@@ -1644,6 +1644,10 @@
 
     # obsoleted by the merge of PR #2149:
     # \u00ab {EXLIST} \u00bb
+
+    # obsoleted by the merge of PR #2177:
+    # hint Number
+    # hint String
 
     # PR 1668 private fields
     \u00ab \u00bb

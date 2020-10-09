@@ -3828,6 +3828,7 @@ named_type_hierarchy = {
                     'PTN_Script': {},
                     'PTN_Pattern': {},
                 },
+                'PreferredTypeHint_': {},
                 'PropertyKeyKind_': {},
                 'Record': {
                     'Agent Record': {},
@@ -8184,13 +8185,14 @@ def tc_cond_(cond, env0, asserting):
             env0
         )
 
-    elif p in [
-        r"{CONDITION_1} : {var} is hint String",
-        r"{CONDITION_1} : {var} is hint Number",
-    ]:
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_LangTypeName_)
-        return (env0, env0)
+#    elif p in [
+#        r"{CONDITION_1} : {var} is hint String",
+#        r"{CONDITION_1} : {var} is hint Number",
+#    ]:
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_LangTypeName_)
+#        return (env0, env0)
+# ~ obsoleted by PR 2177
 
     elif p in [
         r'{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar} ',
@@ -9413,11 +9415,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(pn_var, T_String | T_Symbol)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : its value is either {LITERAL} or {LITERAL}":
-        # once, in OrdinaryToPrimitive
-        # elliptical    
-        [alit, blit] = children
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : its value is either {LITERAL} or {LITERAL}":
+#        # once, in OrdinaryToPrimitive
+#        # elliptical    
+#        [alit, blit] = children
+#        return (env0, env0)
+# ^ obsoleted by PR 2177
 
     elif p == r'{CONDITION_1} : {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
         [var] = children
@@ -9768,12 +9771,13 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}":
-        [var, lita, litb] = children
-        env0.assert_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
-        env0.assert_expr_is_of_type(lita, T_String)
-        env0.assert_expr_is_of_type(litb, T_String)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}":
+#        [var, lita, litb] = children
+#        env0.assert_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
+#        env0.assert_expr_is_of_type(lita, T_String)
+#        env0.assert_expr_is_of_type(litb, T_String)
+#        return (env0, env0)
+# ^ obsoleted by PR 2177
 
     elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL}":
         [var, lit] = children
@@ -10334,12 +10338,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [type_name] = children
         return (T_LangTypeName_, env0)
 
-    elif p in [
-        r"{EX} : hint Number",
-        r"{EX} : hint String",
-    ]:
-        [] = children
-        return (T_LangTypeName_, env0)
+#    elif p in [
+#        r"{EX} : hint Number",
+#        r"{EX} : hint String",
+#    ]:
+#        [] = children
+#        return (T_LangTypeName_, env0)
+# ^ obsoleted by PR 2177
 
     elif p in [
         r"{LITERAL} : the value *undefined*",
@@ -10414,6 +10419,26 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             assert 0, text
 
+        elif chars == 'string':
+            # T_PropertyKeyKind_ or T_PreferredTypeHint_
+            text = spec.text[expr.start_posn-32:expr.start_posn+32]
+            if (
+                'GetOwnPropertyKeys' in text
+                or
+                '_type_' in text
+            ):
+                return (T_PropertyKeyKind_, env0)
+            elif (
+                '_hint_' in text
+                or
+                'ToPrimitive' in text
+                or
+                '_tryFirst_' in text
+            ):
+                return (T_PreferredTypeHint_, env0)
+            else:
+                assert 0, text
+
         elif chars in ['global']:
             return (T_this_mode, env0)
         elif chars in ['initialized', 'uninitialized']:
@@ -10466,10 +10491,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_integrity_level_, env0)
         elif chars in ['lexical-this', 'non-lexical-this']:
             return (T_this_mode2_, env0)
-        elif chars in ['string', 'symbol']:
+        elif chars in ['symbol']:
             return (T_PropertyKeyKind_, env0)
         elif chars in ['ConstructorMethod', 'NonConstructorMethod']:
             return (T_ClassElementKind_, env0)
+        elif chars in ['number']:
+            return (T_PreferredTypeHint_, env0)
         else:
             assert 0, chars
 
