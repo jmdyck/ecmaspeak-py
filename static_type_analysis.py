@@ -7001,8 +7001,8 @@ def tc_nonvalue(anode, env0):
 # ^ obsoleted by PR 1460
 
     elif p in [
-        r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, in order, starting at {var}[{var}]",
-        r"{COMMAND} : Store the individual bytes of {var} into {var}, in order, starting at {var}[{var}].",
+        r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]",
+        r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].",
 
     ]:
         [var1, var2, var3, var4] = children
@@ -7314,7 +7314,7 @@ def tc_nonvalue(anode, env0):
 #        result = env1
 # ^ obsoleted by PR 2139
 
-    elif p == r"{COMMAND} : Append in order the code unit elements of {var} to the end of {var}.":
+    elif p == r"{COMMAND} : Append the code unit elements of {var} to the end of {var}.":
         [a, b] = children
         env0.assert_expr_is_of_type(a, T_String)
         env1 = env0.ensure_expr_is_of_type(b, ListType(T_code_unit_))
@@ -12021,7 +12021,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the String value consisting of the code units of {var}",
         r"{EXPR} : the String value consisting of {EX}",
         r"{EXPR} : the String value consisting of {NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the String value whose code units are, in order, the elements in {PP_NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}",
         # r"{EXPR} : the String value whose elements are, in order, the elements in {NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the string consisting of the code units of {var}",
     ]:
@@ -12352,7 +12352,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EX} : a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}",
         r"{EX} : the code units of {NAMED_OPERATION_INVOCATION}",
-        r"{EX} : the code units of {NAMED_OPERATION_INVOCATION} in order",
+        # r"{EX} : the code units of {NAMED_OPERATION_INVOCATION} in order", # PR 2142
         r"{EX} : the code units of {var}",
     ]:
         [noi] = children
@@ -12399,7 +12399,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var2, T_Integer_)
         return (ListType(T_code_unit_), env0)
 
-    elif p == r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}":
+    elif p == r"{EXPR} : a List containing the code units that are the elements of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_unit_), env0)
@@ -12407,7 +12407,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ---------------
     # ListType(T_String)
 
-    elif p == r"{EXPR} : a List containing {var} followed by the elements, in order, of {var}":
+    elif p == r"{EXPR} : a List containing {var} followed by the elements of {var}":
         # once, in TemplateStrings
         # This is over-specific to that case.
         [item_var, list_var] = children
@@ -12457,7 +12457,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : a copy of {var} with {var} appended",
-        r"{EXPR} : a List containing the elements, in order, of {var} followed by {var}",
+        r"{EXPR} : a List containing the elements of {var} followed by {var}",
     ]:
         [list_var, item_var] = children
         env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
@@ -12483,8 +12483,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (rest_t, rest_env)
 # ^ obsoleted by PR #1402
 
-    elif p == r'{EXPR} : a new List containing the same values as the list {var} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using *undefined* as {var}':
-        [var, _] = children
+    elif p == r'{EXPR} : a List containing the elements of {var} ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using {LITERAL} as {var}':
+        [var, _, _] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
@@ -12493,7 +12493,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont, prod_ref] = children
         return (ListType(T_Parse_Node), env0)
 
-    elif p == r"{EXPR} : a new list containing the same values as the list {var} in the same order followed by the same values as the list {var} in the same order":
+    elif p == r"{EXPR} : a List containing the elements of {var}, followed by the elements of {var}":
         [avar, bvar] = children
         env0.assert_expr_is_of_type(avar, ListType(T_Tangible_))
         env0.assert_expr_is_of_type(bvar, ListType(T_Tangible_))
@@ -12523,12 +12523,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
 
-    elif p == r"{EXPR} : a new List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)":
+    elif p == r"{EXPR} : a List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)":
         [list_var, s_var, e_var] = children
         env0.assert_expr_is_of_type(list_var, ListType(T_character_))
         env0.assert_expr_is_of_type(s_var, T_Integer_)
         env0.assert_expr_is_of_type(e_var, T_Integer_)
         return (ListType(T_character_), env0)
+
+    elif p == r"{EXPR} : a List containing bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)":
+        [data_var, lo_var, hi_ex] = children
+        env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
+        env1.assert_expr_is_of_type(lo_var, T_Integer_)
+        env1.assert_expr_is_of_type(hi_ex, T_Integer_)
+        return (ListType(T_Integer_), env1)
 
     # --------------------------------------------------------
     # return T_Parse_Node
@@ -13688,13 +13695,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : a copy of the List {var}",
-        r"{EXPR} : a new List which is a copy of {var}",
+        r"{EXPR} : a List containing the elements of {var}",
     ]:
         [var] = children
         t = env0.assert_expr_is_of_type(var, T_List)
         return (t, env0)
 
-    elif p == r"{EXPR} : a new List of {var} with {LITERAL} appended":
+    elif p == r"{EXPR} : a List containing the elements of {var}, followed by {LITERAL}":
         [list_var, element] = children
         t = env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(element, t.element_type)
@@ -13934,13 +13941,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_Integer_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} is empty, the empty String is returned":
+    elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned":
         [list_var, other_var] = children
         env0.assert_expr_is_of_type(other_var, T_List)
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty String is returned":
+    elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned":
         [list_var, list_var2] = children
         assert same_source_text(list_var, list_var2)
         env0.assert_expr_is_of_type(list_var, ListType(T_code_unit_))
@@ -14059,7 +14066,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             assert 0, word
 
-    elif p == r"{EXPR} : the number of elements of {var}":
+    elif p in [
+        r"{EXPR} : the number of elements of {var}",
+        r"{EX} : The number of elements in {var}",
+    ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
         return (T_Integer_, env1)
@@ -14096,8 +14106,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 # ^ obsoleted by PR 2021
 
     elif p in [
-        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order",
-        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements",
+        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}",
+        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}. {var} may contain no elements",
     ]:
         [head_var, tail_var] = children[0:2]
         env0.assert_expr_is_of_type(head_var, T_Tangible_)
@@ -14390,7 +14400,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, T_List)
         return (T_MathReal_, env0)
-    
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":

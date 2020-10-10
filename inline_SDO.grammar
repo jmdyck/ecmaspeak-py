@@ -59,7 +59,6 @@
     a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
     the code point value of {nonterminal}
     the code units of {NAMED_OPERATION_INVOCATION}
-    the code units of {NAMED_OPERATION_INVOCATION} in order
     the mathematical integer number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the mathematical value of the number of code points in {PROD_REF}
     the mathematical value of the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
@@ -75,6 +74,9 @@
 
     # obsoleted by the merge of PR #2151:
     # the mathematical integer number of code points in {PROD_REF}
+
+    # obsoleted by the merge of PR #2142:
+    # the code units of {NAMED_OPERATION_INVOCATION} in order
 
 {NAMED_OPERATION_INVOCATION} :
     the {ISDO_NAME} of {PROD_REF}
