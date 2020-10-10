@@ -1151,7 +1151,7 @@
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
     a List whose elements are the elements of {var} followed by {var}
-    a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using {LITERAL} as {var}
+    a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}
     a List whose elements are the elements of {var}, followed by the elements of {var}
     a List whose elements are the elements of {var}, followed by {LITERAL}
     a List whose elements are the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order

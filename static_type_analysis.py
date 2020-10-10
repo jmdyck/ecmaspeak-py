@@ -12486,8 +12486,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (rest_t, rest_env)
 # ^ obsoleted by PR #1402
 
-    elif p == r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using {LITERAL} as {var}':
-        [var, _, _] = children
+    elif p == r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}':
+        [var, _, _, _] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
