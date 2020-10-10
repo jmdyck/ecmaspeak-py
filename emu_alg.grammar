@@ -733,7 +733,6 @@
     {var} is a Cyclic Module Record
     {var} is a Data Block
     {var} is a List
-    {var} is a List containing only String and Symbol values
     {var} is a List of Record { {DSBN}, {DSBN} }
     {var} is a List of Source Text Module Records
     {var} is a List of String values
@@ -748,6 +747,7 @@
     {var} is a List of internal slot names
     {var} is a List of property keys
     {var} is a List whose elements are all ECMAScript language values
+    {var} is a List whose elements are only String and Symbol values
     {var} is a Module Record
     {var} is a Parse Node
     {var} is a Parse Node for {nonterminal}
@@ -1138,34 +1138,28 @@
 
 {EXPR} :
     Type({var})
-    a List containing bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)
-    a List containing only {var}
-    a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List containing the code units that are the elements of {var}
-    a List containing the elements of {var}
-    a List containing the elements of {var} followed by {var}
-    a List containing the elements of {var} ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using {LITERAL} as {var}
-    a List containing the elements of {var}, followed by the elements of {var}
-    a List containing the elements of {var}, followed by {LITERAL}
-    a List containing the one element which is {var}
-    a List containing the single element, {var}
-    a List containing the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
-    a List containing the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
-    a List containing {PP_NAMED_OPERATION_INVOCATION}
-    a List containing {PROD_REF}
-    a List containing {var} followed by the elements of {var}
-    a List of length 1 that contains a nondeterministically chosen byte value
-    a List of length {var} of nondeterministically chosen byte values
+    a List of length {var} whose elements are nondeterministically chosen byte values
+    a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
-    a List of size {var} containing the sequence of {var} bytes starting with {var}[{var}]
     a List of {var} {LITERAL} values, indexed 1 through {var}
+    a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)
+    a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
+    a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)
     a List whose elements are the code points of {var}
     a List whose elements are the code unit elements of {var}
+    a List whose elements are the code units that are the elements of {var}
+    a List whose elements are the elements of {var}
+    a List whose elements are the elements of {var} followed by {var}
+    a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using {LITERAL} as {var}
+    a List whose elements are the elements of {var}, followed by the elements of {var}
+    a List whose elements are the elements of {var}, followed by {LITERAL}
+    a List whose elements are the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
+    a List whose elements are the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
+    a List whose elements are {var} followed by the elements of {var}
     a List whose first element is {var} and whose subsequent elements are the elements of {var}
     a List whose first element is {var} and whose subsequent elements are the elements of {var}. {var} may contain no elements
-    a List whose sole item is {var}
+    a List whose sole element is {EX}
     a String according to {h_emu_xref}
     a String containing one instance of each code unit valid in {nonterminal}
     a String containing one instance of each code unit valid in {nonterminal} and {nonterminal} plus {STR_LITERAL}
@@ -1179,7 +1173,6 @@
     a copy of {var}'s _captures_ List
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
-    a new List containing {EXPR}
     a new Property Descriptor that initially has no fields
     a new Realm Record
     a new Record
@@ -1565,6 +1558,16 @@
     # obsoleted by the merge of PR #2152:
     # the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned
 
+    # obsoleted by the merge of PR #2201:
+    # a List containing only {var}
+    # a List containing the one element which is {var}
+    # a List containing the single element, {var}
+    # a List containing {PP_NAMED_OPERATION_INVOCATION}
+    # a List containing {PROD_REF}
+    # a List of length 1 that contains a nondeterministically chosen byte value
+    # a List whose sole item is {var}
+    # a new List containing {EXPR}
+
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object
     a new {ENVIRONMENT_RECORD_KIND} Scope Record
@@ -1603,6 +1606,7 @@
     The number of elements in {var}
     Type({var})::unit
     a newly created {ERROR_TYPE} object
+    a nondeterministically chosen byte value
     an implementation-defined timezone name
     the *this* value
     the GlobalSymbolRegistry List
