@@ -12,8 +12,8 @@
     <li>{nlai}{EE_RULE}{nlai}</li>
 
 {EE_RULE} :
-    <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
+    <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>
     All Early Error rules for {nonterminal} and its derived productions also apply to the {nonterminal} that is covered by {nonterminal}.
     All Early Error rules for {nonterminal} and its derived productions also apply to {NAMED_OPERATION_INVOCATION}.
     All Early Error rules for {nonterminal} and its derived productions apply to {NAMED_OPERATION_INVOCATION}.
@@ -125,13 +125,13 @@
     {NAMED_OPERATION_INVOCATION} is not empty
 
 {NAMED_OPERATION_INVOCATION} :
+    the result of performing {cap_word} on {EX}
+    the {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
-    the {cap_word} of {LOCAL_REF}
     {cap_word}({PROD_REF})
-    the result of performing {cap_word} on {EX}
-    {cap_word}({var})
     {cap_word}({named_char})
+    {cap_word}({var})
 
     ## directed-operations:
     ## {var}.\w+()
@@ -164,21 +164,21 @@
 
 {EX} :
     &laquo; &raquo;
-    {LITERAL}
     the two code points matched by {nonterminal} and {nonterminal} respectively
+    {LITERAL}
 
 {LITERAL} :
-    {starred_str}
     {BOOL_LITERAL}
+    {starred_str}
     {tilded_word}
 
 {G_SYM} :
-    {nonterminal}
     {TERMINAL}
+    {nonterminal}
 
 {TERMINAL} :
     {backticked_word}
 
 {BOOL_LITERAL} :
-    *true*
     *false*
+    *true*

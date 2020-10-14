@@ -14,8 +14,8 @@
     {_indent_}{COMMANDS}{_outdent_}
 
 {COMMANDS} :
-    {_NL_N} {COMMAND}
     {COMMANDS}{_NL_N} {COMMAND}
+    {_NL_N} {COMMAND}
 
 {_NL_N} :
     {nlai}{dec_int_lit}.
@@ -251,13 +251,13 @@
 
 {IF_CLOSED} :
     If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
+    If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.
+    If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
+    If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
     If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.
-    If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.
-    If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
-    If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
 
     # obsoleted by the merge of #1596:
     # If {CONDITION}, {SMALL_COMMAND}; else, {SMALL_COMMAND}.
@@ -275,9 +275,9 @@
     If {CONDITION}, {SMALL_COMMAND}.
 
 {IF_TAIL} :
+    {EPSILON}
     {_NL_N} {ELSEIF_PART}{IF_TAIL}
     {_NL_N} {ELSE_PART}
-    {EPSILON}
 
 {ELSEIF_PART} :
     Else if {CONDITION}, then{IND_COMMANDS}
@@ -438,8 +438,8 @@
     {_indent_}{BULLETS}{_outdent_}
 
 {BULLETS} :
-    {BULLET_LINE}
     {BULLETS}{BULLET_LINE}
+    {BULLET_LINE}
 
 {BULLET_LINE} :
     {B} If an abrupt completion is returned from any of these operations, it is immediately returned as the value of this function.
@@ -458,9 +458,9 @@
     {B} the code units of the remaining {NUM_EXPR} digits of the decimal representation of {var}
     {B} the code units of the {var} digits of the decimal representation of {var}
     {B} the code units of the {var} digits of the decimal representation of {var} (in order, with no leading zeroes)
-    {B} {code_unit_lit} or {code_unit_lit} according to whether {var} - 1 is positive or negative
     {B} {EX} occurrences of {code_unit_lit}
     {B} {LITERAL}
+    {B} {code_unit_lit} or {code_unit_lit} according to whether {var} - 1 is positive or negative
     {B} {var}
 
     # obsoleted by the merge of PR #1180.
@@ -472,9 +472,9 @@
     # {B} the previous value of {var}
 
     # PR 1554 NumericValue:
-    {B} {PROD_REF}
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position
+    {B} {PROD_REF}
 
     # PR 1612 sort_algo:
     {B} If {var} is *false* then DeletePropertyOrThrow must not be called.
@@ -632,8 +632,8 @@
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}
     {EX} is {PREFIX_PAREN}
+    {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}
     {EX} is {var}
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
@@ -655,8 +655,8 @@
     {PROD_REF} is contained in strict mode code
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
-    {SETTABLE} has an? {DSBN} field
     {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
+    {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
     {var} also has a {DSBN} internal slot
     {var} and {DOTTING} are the same Module Record
@@ -986,9 +986,9 @@
     {var} must be a Scope Record
 
     # PR 1554 NumericValue:
+    the first non white space code point in {var} is `"-"`
     {var} contains a {nonterminal}
     {var} has more than 20 significant digits
-    the first non white space code point in {var} is `"-"`
 
     # PR 1612 sort_algo
     SortCompare does not act as a consistent comparison function
@@ -1049,15 +1049,15 @@
     # Type({TYPE_ARG}) is {var}
 
 {TYPE_ARG} :
-    {var}
     {DOTTING}
+    {var}
     {var}'s base value component
 
 {NUM_COMPARISON} :
-    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
-    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
     {NUM_COMPARAND} is 10 or less
     {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}
+    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
+    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
 
 {NUM_COMPARAND} :
     the length of {var}
@@ -1105,10 +1105,10 @@
     an implementation-dependent choice of:{I_BULLETS}
 
 {CLOSURE_KIND} :
+    Abstract Closure
     Continuation
     Job Abstract Closure
     Matcher
-    Abstract Closure
     read-modify-write modification function
 
 {CLOSURE_PARAMETERS} :
@@ -1130,12 +1130,13 @@
     steps atomically
 
 {TABLE_RESULT_TYPE} :
-    sequence of Unicode code points
     abstract operation
+    sequence of Unicode code points
 
 # ---------------------------------------------------------------
 
 {EXPR} :
+    (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
     Type({var})
     a List of length {var} whose elements are nondeterministically chosen byte values
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
@@ -1263,9 +1264,9 @@
     the String value that is made from {var} copies of {var} appended together
     the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}
     the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}
-    the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}
     the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned
     the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned
+    the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}
     the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
     the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
     the String value {SETTABLE}
@@ -1409,7 +1410,6 @@
     this Date object
     this Source Text Module Record
     {EX}
-    (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
     {var}'s State
     {var}'s _captures_ List
     {var}'s code point value
@@ -1597,8 +1597,8 @@
     ({EX})
     *this* value
     NewTarget
-    The remainder of dividing {EX} by {EX}
     The number of elements in {var}
+    The remainder of dividing {EX} by {EX}
     Type({var})::unit
     a newly created {ERROR_TYPE} object
     a nondeterministically chosen byte value
@@ -1707,9 +1707,9 @@
 
 # "PP" = Possibly-Prefixed
 {PP_NAMED_OPERATION_INVOCATION} :
-    {NAMED_OPERATION_INVOCATION}
     ! {NAMED_OPERATION_INVOCATION}
     ? {NAMED_OPERATION_INVOCATION}
+    {NAMED_OPERATION_INVOCATION}
 
 {NAMED_OPERATION_INVOCATION} :
     Abstract Equality Comparison {var} == {var}
@@ -1721,13 +1721,13 @@
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
     the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-    {LOCAL_REF} Contains {nonterminal}
-    {LOCAL_REF} Contains {var}
-    {PREFIX_PAREN}
     the {cap_word} of {LOCAL_REF}
     the {cap_word} of {LOCAL_REF} (see {h_emu_xref})
     the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     the {cap_word} of {LOCAL_REF} {WITH_ARGS}
+    {LOCAL_REF} Contains {nonterminal}
+    {LOCAL_REF} Contains {var}
+    {PREFIX_PAREN}
     {cap_word} for {LOCAL_REF} {WITH_ARGS}
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
@@ -1760,13 +1760,13 @@
     the {nonterminal} whose evaluation is the direct eval
 
 {PROD_REF} :
-    the {nonterminal}
+    the corresponding {nonterminal}
+    the located {nonterminal}
     the {ORDINAL} {nonterminal}
+    the {nonterminal}
     this production
     this {nonterminal}
     {nonterminal}
-    the corresponding {nonterminal}
-    the located {nonterminal}
 
 {ORDINAL} :
     first
@@ -1824,12 +1824,12 @@
     {var}
 
 {EXLIST_OPT} :
-    {EXLIST}
     {EPSILON}
+    {EXLIST}
 
 {EXLIST} :
-    {EX}
     {EXLIST}, {EX}
+    {EX}
 
 # ------------------------------------------------------
 
@@ -1867,8 +1867,8 @@
     the ClassFieldDefinition Record
 
 {FIELDS} :
-    {FIELD}
     {FIELDS}, {FIELD}
+    {FIELD}
 
 {FIELD} :
     {DSBN}: {EX}
@@ -1910,13 +1910,13 @@
     the _withEnvironment_ flag of {var}.{dsb_word}
 
 {EXECUTION_CONTEXT_COMPONENT} :
-    code evaluation state
     Function
+    Generator
+    LexicalEnvironment
     Realm
     ScriptOrModule
-    LexicalEnvironment
     VariableEnvironment
-    Generator
+    code evaluation state
 
     # PR 1668 private fields:
     PrivateEnvironment
@@ -1934,14 +1934,14 @@
     &pi;
     &pi; / 2
     &pi; / 4
-    3&pi; / 4
     -&pi;
     -&pi; / 2
     -&pi; / 4
     -3&pi; / 4
+    3&pi; / 4
+    {EX} raised to the power {EX}
     {PRODUCT}
     {SUM}
-    {EX} raised to the power {EX}
 # Note that this is not trying to capture every expression that has a numeric result,
 # merely those that involve mathematical operators/forms.
 
@@ -1974,10 +1974,10 @@
 
 {PRODUCT} :
     the negation of {EX}
-    {UNARY_OPERATOR}{FACTOR}
-    {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
-    {FACTOR} modulo {FACTOR}
     the quotient {FACTOR} / {FACTOR}
+    {FACTOR} modulo {FACTOR}
+    {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
+    {UNARY_OPERATOR}{FACTOR}
 
 {UNARY_OPERATOR} :
     -
@@ -1989,8 +1989,8 @@
 
 {FACTOR} :
     ({NUM_EXPR})
-    msPerMinute
     msPerDay
+    msPerMinute
     {BASE}<sup>{EX}</sup>
     {NUM_LITERAL}
     {PP_NAMED_OPERATION_INVOCATION}
@@ -2003,16 +2003,16 @@
 # --------------------------------
 
 {DOTTING} :
-    {var}.{DSBN}
     {DOTTING}.{DSBN}
+    {var}.{DSBN}
 
 {DSBN} :
-    {dsb_word}
     {dsb_percent_word}
+    {dsb_word}
 
 {TERMINAL} :
-    {backticked_word}
     {backticked_oth}
+    {backticked_word}
 
 {LITERAL} :
     *false*
@@ -2044,25 +2044,25 @@
 
 {NUM_LITERAL} :
     #! (2|10)<sup>[0-9]+</sup>
+    *-0.5*{h_sub_fancy_f}
+    *0.5*{h_sub_fancy_f}
     +&infin;
     -&infin;
-    *0.5*{h_sub_fancy_f}
-    *-0.5*{h_sub_fancy_f}
     0.5
     8.64
     the *NaN* Number value
     {dec_int_lit}
     {hex_int_lit}
+    {starred_infinite_lit}{h_sub_fancy_f}
     {starred_int_lit}{h_sub_fancy_f}
     {starred_int_lit}{h_sub_fancy_z}
-    {starred_infinite_lit}{h_sub_fancy_f}
     {starred_nan_lit}
 
 {ERROR_TYPE} :
-    *TypeError*
-    *SyntaxError*
     *RangeError*
     *ReferenceError*
+    *SyntaxError*
+    *TypeError*
     *URIError*
     `AggregateError`
 
@@ -2083,9 +2083,9 @@
     Undefined
     #
     CharSet
-    integer
-    character
     Matcher
+    character
+    integer
 
     # obsoleted by the merge of PR #1797:
     # AssertionTester

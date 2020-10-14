@@ -32,14 +32,14 @@
     {nlai}= {EXPR} if {CONDITION}
 
 {CONDITION} :
-    {COND} and {COND}
     {COND}
+    {COND} and {COND}
 
 {COND} :
-    {EXPR} &ne; {EXPR}
     {EXPR} &le; {EXPR}
-    {EXPR} = {EXPR}
     {EXPR} &le; {EXPR} &lt; {EXPR}
+    {EXPR} &ne; {EXPR}
+    {EXPR} = {EXPR}
 
 # ------
 
@@ -56,10 +56,10 @@
     {PRODUCT}
 
 {PRODUCT} :
-    {FACTOR} &times; {FACTOR}
-    {FACTOR} modulo {FACTOR}
-    {FACTOR} / {FACTOR}
     {FACTOR}
+    {FACTOR} &times; {FACTOR}
+    {FACTOR} / {FACTOR}
+    {FACTOR} modulo {FACTOR}
 
 {FACTOR} :
     ({SUM})
@@ -73,10 +73,10 @@
     {OPN_BEFORE_PAREN}({EXPR})
 
 {OPN_BEFORE_PAREN} :
+    floor
     {OP_NAME}
     {fancy_f}
     {fancy_r}
-    floor
 
 {CONSTANT_NAME} :
     HoursPerDay

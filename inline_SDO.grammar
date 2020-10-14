@@ -24,23 +24,23 @@
     # The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
 
 {EXPR} :
-    {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})
     a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
+    the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the code unit whose value is {NAMED_OPERATION_INVOCATION}
     the code unit whose value is {SUM}
-    the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the empty code unit sequence
     the negative of {EX}
-    the sequence consisting of {code_unit_lit}
     the sequence consisting of {EX} followed by {EX}
     the sequence consisting of {EX} followed by {EX} followed by {EX}
     the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}
+    the sequence consisting of {code_unit_lit}
     {EX}
     {EX} followed by {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
     {EX}, where {var} is {EX}, and {var} is {EX}
+    {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})
 
     # PR 2018
     the String value consisting of {EXPR}
@@ -65,8 +65,8 @@
     {NAMED_OPERATION_INVOCATION}
     {NUM_LITERAL}
     {PRODUCT}
-    {SUM}
     {STR_LITERAL}
+    {SUM}
     {U_LITERAL}
     {code_unit_lit}
     {var}
@@ -78,9 +78,9 @@
     # the code units of {NAMED_OPERATION_INVOCATION} in order
 
 {NAMED_OPERATION_INVOCATION} :
+    the result of performing {cap_word} on {EX}
     the {ISDO_NAME} of {PROD_REF}
     {ISDO_NAME} of {PROD_REF}
-    the result of performing {cap_word} on {EX}
 
 {ISDO_NAME} :
     {cap_word}
@@ -107,8 +107,8 @@
     *undefined*
 
 {SUM} :
-    {TERM} {SUM_OPERATOR} {TERM}
     {SUM} {SUM_OPERATOR} {TERM}
+    {TERM} {SUM_OPERATOR} {TERM}
 
 {SUM_OPERATOR} :
     #pre-1135: -
@@ -125,14 +125,14 @@
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
 
 {PRODUCT_OPERATOR} :
-    times
     &times;
+    times
 
 {FACTOR} :
-    {NUM_LITERAL}
     ({SUM})
     {BASE}<sup>{EX}</sup>
     {NAMED_OPERATION_INVOCATION}
+    {NUM_LITERAL}
     {var}
 
 {NUM_LITERAL} :
