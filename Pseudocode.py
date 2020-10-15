@@ -353,6 +353,12 @@ def parse(hnode, what=None):
         assert what is None
         parser = emu_alg_parser
 
+        # # sneak this in...
+        # n_lines = spec.text.count('\n', start_posn, end_posn)
+        # if n_lines > 60:
+        #     cc_section = hnode.closest_containing_section()
+        #     print(f'\n    emu-alg with {n_lines} lines in {cc_section.section_num} "{cc_section.section_title}"')
+
     elif hnode.element_name == 'emu-eqn':
         assert what is None
         parser = emu_eqn_parser

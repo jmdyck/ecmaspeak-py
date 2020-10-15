@@ -187,12 +187,6 @@ def should_create_op_info_for_algoless_section(s):
             return True
 
     if s.section_kind == 'function_property':
-        if s.section_title in [
-            '%TypedArray%.prototype.set ( _overloaded_ [ , _offset_ ] )',
-            # This section is (mostly) just a holder for the two subsections
-            # that define the overloads
-        ]:
-            return False
 
         # There are various reasons why the spec doesn't provide
         # an algorithmic specification for a function property.
@@ -821,17 +815,6 @@ single_sentence_rules_str = r'''
 
         This (?P<kind>abstract method) performs the following steps:
 
-        This description applies if and only if the (?P<name>Array) constructor is called with (.+).
-        kind=overloaded constructor
-        overload_resolver=\2
-
-        This description applies only if the (?P<name>Date) constructor is called with (.+).
-        kind=overloaded constructor
-        overload_resolver=\2
-
-        This description applies only if the (?P<name>_TypedArray_) function is called with (.+).
-        kind=overloaded function
-        overload_resolver=\2
 
         This (?P<kind>function) takes (?P<pl>no arguments).
 
@@ -856,7 +839,7 @@ single_sentence_rules_str = r'''
         v=When it is called\5
 
         When the `(?P<name>Date)` (function) is called(.+)
-        kind=overloaded constructor
+        kind=constructor
         v=When it is called\3
 
         (When the `@@hasInstance` method) of an object _F_ (is called .+)
@@ -902,8 +885,6 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
     # Sentences that start with the operation/function name:
-
-        (?P<name>_\w+_) called with (?P<pl>.+) performs the following steps:
 
         (?P<name>\w+) is a (?P<kind>host-defined abstract operation) that (.+)
         v=!OP \3
@@ -1054,13 +1035,6 @@ single_sentence_rules_str = r'''
         # ps=\2 _S_
         # v=\1 the value of _S_.
         # Better to not try to extract parameter info from env-rec preambles?
-
-        (.+, reading the values from) (?P<ps>the _typedArray_ argument object).
-        v=\1 _typedArray_.
-
-        (.+, reading the values from) the object (?P<ps>_array_).
-        v=\1 _array_.
-        # don't include 'object' in ps because that's misleading
 
         (.+) as follows:
         v=\1.
@@ -1260,9 +1234,6 @@ class PreambleInfoHolder:
             'constructor'                               : 'function property',
             'function'                                  : 'function property',
             'method'                                    : 'function property',
-            'overloaded constructor'                    : 'function property overload',
-            'overloaded constructor & function'         : 'function property overload',
-            'overloaded function'                       : 'function property overload',
             None                                        : None,
         }[vs]
 
@@ -1278,8 +1249,6 @@ class PreambleInfoHolder:
 
             assert poi.kind == 'abstract operation'
             poi.kind = 'numeric method'
-
-        poi.overload_resolver = at_most_one_value('overload_resolver')
 
         # Have to do this one "out of order"
         # because of possible calls to add_to_description(). 
@@ -1669,10 +1638,8 @@ def get_info_from_heading(section):
 
     elif section.section_kind in [
         'function_property',
-        'function_property_overload',
         'accessor_property',
         'CallConstruct',
-        'CallConstruct_overload',
         'anonymous_built_in_function',
     ]:
         # convert heading-style to elsewhere-style:
@@ -1954,10 +1921,6 @@ def resolve_oi(hoi, poi):
     else:
         oi.for_phrase = poi.for_phrase # which might or might not be None
 
-    # overload_resolver
-    assert hoi.overload_resolver is None
-    oi.overload_resolver = poi.overload_resolver # might or might not be None
-
     # param_names
     if hoi.param_names is None:
         # assert poi.param_names is not None
@@ -2068,9 +2031,6 @@ nature_to_tipe = {
         'a Number'                   : 'Number',
         'a Number value'             : 'Number',
         'Number value'               : 'Number',
-        'an integral Number or &infin;' : 'Number',
-        'an ECMAScript Number value'    : 'Number',
-        'a nonnegative non-*NaN* Number': 'Number', # XXX loses info
 
         # BigInt
         'BigInt'      : 'BigInt',
@@ -2084,6 +2044,7 @@ nature_to_tipe = {
         'the object'  : 'Object',
         'the argument object': 'Object',
         'an object with a *"constructor"* property whose value is _F_': 'Object', # TODO
+        'an Object that is neither a TypedArray object nor an ArrayBuffer object': 'Object',
 
     # unofficial 'supertypes':
         'a primitive value'             : 'Primitive',
@@ -2099,6 +2060,7 @@ nature_to_tipe = {
         'Tangible_'                     : 'Tangible_',
         'an ECMAScript value, which is usually an object or array, although it can also be a String, Boolean, Number or *null*': 'Tangible_',
         'not a numeric value'           : 'Tangible_', # TODO
+        'an ECMAScript value other than a TypedArray object': 'Tangible_', # loses info
 
     # unofficial 'subtypes' of the above:
 
@@ -2558,7 +2520,6 @@ class Operation:
             'accessor property',
             'anonymous built-in function',
             'function property',
-            'function property overload',
         ]
         self.name = name
         self.kind = kind
@@ -2571,9 +2532,6 @@ class Operation:
             [header] = self.headers
             self.parameters_with_types = header.parameter_types.items()
             self.return_type = header.return_type
-
-        elif self.kind in ['CallConstruct_overload', 'function property overload']:
-            pass
 
         else:
             assert self.kind in ['concrete method', 'internal method', 'numeric method']
@@ -2604,8 +2562,6 @@ class Operation:
             'function property',
             'anonymous built-in function',
             'CallConstruct',
-            'function property overload',
-            'CallConstruct_overload',
             'accessor property',
         ]:
             d = spec.info_for_bif_named_
@@ -2635,7 +2591,6 @@ class Header:
         self.kind = None
         self.name = None
         self.for_phrase = None
-        self.overload_resolver = None
         self.param_names = None
         self.optional_params = set()
         self.rest_params = set()
@@ -2737,55 +2692,6 @@ class Header:
 
         # ------------------------------------------------------------
 
-        # For the overloads of %TypedArray%.prototype.set,
-        # the preambles don't say how to resolve theoverload.
-        # Instead, that info is given by Asserts in the alg.
-
-        if section.section_title.startswith('%TypedArray%.prototype.set'):
-            assert self.kind == 'function property overload'
-            assert self.overload_resolver is None
-
-            emu_alg_text = section.block_children[1].inner_source_text()
-            mo = re.search(r'\s+1. Assert: (.+?)\. ', emu_alg_text)
-            asserted_condition = mo.group(1)
-            if asserted_condition == '_array_ is any ECMAScript language value other than an Object with a [[TypedArrayName]] internal slot':
-                self.overload_resolver = asserted_condition.replace('_array_', 'the first argument')
-                self.param_nature_['_array_'] = 'a value'
-            elif asserted_condition == '_typedArray_ has a [[TypedArrayName]] internal slot':
-                self.overload_resolver = 'the first argument is an Object with a [[TypedArrayName]] internal slot'
-                self.param_nature_['_typedArray_'] = 'an Integer-Indexed object'
-            else:
-                assert 0, asserted_condition
-
-        # ------------------------------------------------------------
-
-        # For the overloads of _TypedArray_,
-        # the overload_resolver lets you infer a type for the first parameter
-        # (narrower than Tangible_).
-
-        if section.section_title.startswith('_TypedArray_ ('):
-            if self.overload_resolver == 'no arguments':
-                pass
-            else:
-                abbr = self.overload_resolver.replace('at least one argument and the Type of the first argument is ', '')
-                if abbr == 'not Object':
-                    assert self.param_names == ['_length_']
-                    self.param_nature_['_length_'] = 'a primitive value'
-
-                elif abbr == 'Object and that object has a [[TypedArrayName]] internal slot':
-                    assert self.param_names == ['_typedArray_']
-                    self.param_nature_['_typedArray_'] = 'an Integer-Indexed object'
-
-                elif abbr == 'Object and that object has an [[ArrayBufferData]] internal slot':
-                    assert self.param_names[0] == '_buffer_'
-                    self.param_nature_['_buffer_'] = 'an ArrayBuffer or SharedArrayBuffer'
-
-                elif abbr == 'Object and that object does not have either a [[TypedArrayName]] or an [[ArrayBufferData]] internal slot':
-                    assert self.param_names == ['_object_']
-                    self.param_nature_['_object_'] = 'an object'
-
-        # ------------------------------------------------------------
-
         if section.section_id == 'sec-built-in-function-objects-construct-argumentslist-newtarget':
             # The clause just says that it's like [[Call]] except for one step,
             # so it doesn't say anything about the parameters.
@@ -2822,7 +2728,7 @@ class Header:
                 nature = self.param_nature_.get(param_name, 'TBD')
 
                 # move to apply_ad_hoc_fixes?
-                if self.kind in ['function property', 'function property overload', 'anonymous built-in function', 'accessor property']:
+                if self.kind in ['function property', 'anonymous built-in function', 'accessor property']:
                     if False and self.name.startswith('Math.'): # merge of PR 2122
                         # "Each of the following `Math` object functions
                         # applies the ToNumber abstract operation
@@ -2839,10 +2745,6 @@ class Header:
                         nature = exp_nature
                     elif nature == exp_nature:
                         pass
-                    elif self.kind == 'function property overload':
-                        pass
-                        # because the overload-resolver can cause an overload
-                        # to only get certain types for some parameters
                     else:
                         oh_warn()
                         oh_warn(f"{self.name}: {exp_nature!r} overrides {nature!r}")
@@ -2974,10 +2876,8 @@ class Header:
                 assert discriminator is None
             elif self.kind in [
                 'function property',
-                'function property overload',
                 'accessor property',
                 'CallConstruct',
-                'CallConstruct_overload',
                 'anonymous built-in function',
                 'host-defined abstract operation', # HostMakeJobCallback has a default implementation
             ]:
@@ -3058,11 +2958,6 @@ class Header:
             pwi()
             pwi(f"  <dt>for</dt>")
             pwi(f"  <dd>{self.for_phrase}</dd>")
-
-        if self.overload_resolver:
-            pwi()
-            pwi(f"  <dt>overload selected when called with</dt>")
-            pwi(f"  <dd>{self.overload_resolver}</dd>")
 
         kludge = None
 
@@ -8037,6 +7932,10 @@ def tc_cond_(cond, env0, asserting):
         [expr] = children
         return env0.with_type_test(expr, 'is a', T_Object, asserting)
 
+    elif p == r"{CONDITION_1} : {var} is not an Object":
+        [expr] = children
+        return env0.with_type_test(expr, 'isnt a', T_Object, asserting)
+
     elif p == r"{CONDITION_1} : {var} is a Parse Node":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Parse_Node, asserting)
@@ -8288,7 +8187,7 @@ def tc_cond_(cond, env0, asserting):
         return (env1.with_expr_type_narrowed(local_ref, prodn_type), env1)
 
     elif p in [
-        r"{CONDITION_1} : {var} is an Object that has a {DSBN} internal slot",
+        r"{CONDITION_1} : {var} is an Object that has an? {DSBN} internal slot",
         r'{CONDITION_1} : {var} is an extensible object that does not have a {starred_str} own property',
 
         # PR 1302 obsoleted:
@@ -8297,14 +8196,6 @@ def tc_cond_(cond, env0, asserting):
         [var, _] = children
         return (
             env0.with_expr_type_narrowed(var, T_Object),
-            env0
-        )
-
-    elif p == r"{CONDITION_1} : {var} has a {DSBN} internal slot. If it does not, the definition in {h_emu_xref} applies":
-        [var, dsbn, emu_xref] = children
-        assert dsbn.source_text() == '[[TypedArrayName]]'
-        return (
-            env0.with_expr_type_narrowed(var, T_Integer_Indexed_object_),
             env0
         )
 
@@ -9979,8 +9870,8 @@ def tc_cond_(cond, env0, asserting):
         [ex, lit] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {h_emu_xref} applies":
-        [var, dsbn, emu_xref] = children
+    elif p == r"{CONDITION_1} : {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot":
+        [var, dsbn] = children
         env0.assert_expr_is_of_type(var, T_Tangible_)
         return (env0, env0)
 
@@ -14158,16 +14049,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        [] = children
 #        return (ListType(T_Tangible_), env0)
 # ^ obsoleted by PR 2139
-
-    elif p in [
-        # r"{EXPR} : the actual number of arguments passed to this function",
-        # r"{EXPR} : the number of actual arguments minus 2",
-        # r"{EXPR} : the number of actual arguments",
-        # ^ obsoleted by PR 2139
-        r"{EXPR} : the number of arguments passed to this function call",
-    ]:
-        [] = children
-        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}":
         [s_var, nf_var, h_a] = children

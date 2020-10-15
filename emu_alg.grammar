@@ -711,7 +711,6 @@
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
     {var} has a thisValue component
-    {var} has a {DSBN} internal slot. If it does not, the definition in {h_emu_xref} applies
     {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
     {var} has an? {DSBN} internal method
     {var} has an? {DSBN} internal slot
@@ -793,7 +792,7 @@
     {var} is an IEEE 754-2019 binary32 NaN value
     {var} is an IEEE 754-2019 binary64 NaN value
     {var} is an Integer-Indexed exotic object
-    {var} is an Object that has a {DSBN} internal slot
+    {var} is an Object that has an? {DSBN} internal slot
     {var} is an Object that has {DSBN} and {DSBN} internal slots
     {var} is an Object that implements the <i>IteratorResult</i> interface
     {var} is an abrupt completion
@@ -812,7 +811,7 @@
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is an? {PROPERTY_KIND} property
     {var} is an? {nonterminal}
-    {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {h_emu_xref} applies
+    {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot
     {var} is as small as possible
     {var} is divisible by {NUM_LITERAL}
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
@@ -828,6 +827,7 @@
     {var} is not a {h_emu_xref} or {h_emu_xref}
     {var} is not a {nonterminal}
     {var} is not already suspended
+    {var} is not an Object
     {var} is not an abrupt completion
     {var} is not an abrupt completion because of validation preceding step {h_emu_xref}
     {var} is not an array index
@@ -968,6 +968,10 @@
     # obsoleted by the merge of PR #2139:
     # the number of actual arguments is {NUM_LITERAL}
     # this method was called with more than one argument
+
+    # obsoleted by the merge of PR #2176:
+    # {var} has a {DSBN} internal slot. If it does not, the definition in {h_emu_xref} applies
+    # {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {h_emu_xref} applies
 
     # obsoleted by the merge of PR #2177:
     # its value is either {LITERAL} or {LITERAL}
@@ -1323,7 +1327,6 @@
     the length of {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the mathematical value that is the same sign as {var} and whose magnitude is {EX}
-    the number of arguments passed to this function call
     the number of bytes in {var}
     the number of characters contained in {var}
     the number of code points in {PROD_REF}
@@ -1552,6 +1555,9 @@
 
     # obsoleted by the merge of PR #2152:
     # the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned
+
+    # obsoleted by the merge of PR #2176:
+    # the number of arguments passed to this function call
 
     # obsoleted by the merge of PR #2201:
     # a List containing only {var}
