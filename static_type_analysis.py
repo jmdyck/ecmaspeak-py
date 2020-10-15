@@ -6882,6 +6882,7 @@ def tc_nonvalue(anode, env0):
             'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
             'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
             'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
             'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
 
             # 9.5.*
