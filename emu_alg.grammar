@@ -426,8 +426,9 @@
     # {var} that is an element of {var}, in original insertion order
 
     # PR 1623 index_strings
-    own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
-    own property key {var} of {var} that is a Uint32-string, in ascending numeric index order
+    # own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
+    # own property key {var} of {var} that is a Uint32-string, in ascending numeric index order
+    own property key {var} of {var} that is a Uint32-string, whose numeric value is greater than or equal to {var}, in descending numeric index order
 
     # PR 1668 private fields
     binding named {var} in {EX}
