@@ -2056,6 +2056,27 @@ def analyze_sdo_coverage_info():
     coverage_f = shared.open_for_output('sdo_coverage')
     def put(*args): print(*args, file=coverage_f)
 
+    # -------------
+
+    sdos_defined_for_lhs_ = defaultdict(set)
+    for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
+        for lhs_nt in coverage_info_for_this_sdo.keys():
+            sdos_defined_for_lhs_[lhs_nt].add(sdo_name)
+    max_n_sdos = max(
+        len(sdo_names)
+        for (lhs_nt, sdo_names) in sdos_defined_for_lhs_.items()
+    )
+    put(f"max number of SDOs defined for a given lhs_nt: {max_n_sdos}")
+    put("e.g.:")
+    for (lhs_nt, sdo_names) in sorted(sdos_defined_for_lhs_.items()):
+        if len(sdo_names) == max_n_sdos:
+            put(f"    {lhs_nt} has definitions for:")
+            for sdo_name in sorted(sdo_names):
+                put(f"        {sdo_name}")
+    put()
+
+    # -------------
+
     for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
 
         if sdo_name == 'Contains':
