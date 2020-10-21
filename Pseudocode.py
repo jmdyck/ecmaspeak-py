@@ -1639,8 +1639,6 @@ class FooDefn:
             or
             isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
             or
-            isinstance(discriminator, ANode) and discriminator.prod.lhs_s == '{nonterminal}' and discriminator.source_text() == '|HexDigit|' and foo_info.name == 'TRV' # This will be obsoleted by PR 1301
-            or
             isinstance(discriminator, str) # type name
         )
 
@@ -2034,15 +2032,7 @@ def check_sdo_coverage():
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
                 if foo_defn.section.section_num.startswith('B'): continue
 
-                # This will be obsoleted by PR 1301:
                 discriminator = foo_defn.discriminator
-                if isinstance(discriminator, ANode):
-                    assert discriminator.prod.lhs_s == '{nonterminal}'
-                    assert discriminator.source_text() == '|HexDigit|'
-                    discriminator.summary = [
-                        ('HexDigit', i, [])
-                        for i in range(22)
-                    ]
 
                 if discriminator is None:
                     assert op_name == 'Contains'
