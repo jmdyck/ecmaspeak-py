@@ -1704,7 +1704,10 @@ def analyze_static_dependencies():
                         (callee_names, args) = d._op_invocation
                         for callee_name in callee_names:
                             foo_defn.callees.add(callee_name)
-                            spec.info_for_op_named_[callee_name].invocations.append(d)
+                            if callee_name in spec.info_for_op_named_:
+                                spec.info_for_op_named_[callee_name].invocations.append(d)
+                            else:
+                                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({foo_name} calls it in {foo_defn.section.section_num})")
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         assert foo_name == 'Early Errors'
                         # "... and the following algorithm evaluates to *true*: ..."
@@ -1720,7 +1723,10 @@ def analyze_static_dependencies():
             put('  ', callee)
 
         for callee_name in foo_info.callees:
-            spec.info_for_op_named_[callee_name].callers.add(foo_name)
+            if callee_name in spec.info_for_op_named_:
+                spec.info_for_op_named_[callee_name].callers.add(foo_name)
+            else:
+                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({foo_name} calls it)")
 
     # ----------------------------------------------------
 

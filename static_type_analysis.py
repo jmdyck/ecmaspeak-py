@@ -3134,7 +3134,6 @@ class Header:
 
     def change_declared_type(self, pname, new_t, tweak=False):
         if pname == '*return*':
-            # if new_t == T_Reference: pdb.set_trace()
             old_t = self.return_type
             self.return_type = new_t
         else:
@@ -3778,6 +3777,7 @@ named_type_hierarchy = {
                         # subtypes data and accessor and generic?
                     },
                     'Realm Record': {},
+                    'Reference Record': {},
                     'ResolvedBinding Record': {},
                     'ResolvingFunctions_record_': {},
                     'Script Record': {},
@@ -3799,7 +3799,7 @@ named_type_hierarchy = {
                     'methodDef_record_': {},
                     'templateMap_entry_': {},
                 },
-                'Reference': {},
+                # 'Reference': {}, # 2085
                 'Relation': {},
                 'Set': {},
                 'Shared Data Block': {},
@@ -3808,6 +3808,7 @@ named_type_hierarchy = {
                 'TrimString_where_': {},
                 'TypedArray_element_type_': {},
                 'Unicode_code_points_': {},
+                'Unresolvable_': {},
                 'WaiterList' : {},
                 'agent_signifier_' : {},
                 'alg_steps': {},
@@ -4537,7 +4538,7 @@ class Env:
                 # ForIn/OfBodyEvaluation
                 or
                 old_t == T_Boolean | T_Environment_Record | T_Number | T_Object | T_String | T_Symbol | T_Undefined and new_t == T_Object
-                # GetValue. (Fix by replacing T_Reference with ReferenceType(base_type)?)
+                # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
                 or
                 old_t == T_Abrupt | T_Boolean | T_Intangible_ | T_Null | T_Number | T_Object | T_String | T_Symbol and new_t == T_Environment_Record
                 # InitializeBoundName
@@ -4576,16 +4577,16 @@ class Env:
                 # ??
                 or
                 old_t == T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
-                or old_t == ListType(T_code_unit_) | T_Reference | T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
+                or old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
                 # Evaluation of TemplateLiteral : TemplateHead Expression TemplateSpans
                 or
-                old_t == ListType(T_code_unit_) | T_Reference | T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String
+                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String
                 # Evaluation of TemplateMiddleList : TemplateMiddleList TemplateMiddle Expression
                 or
                 old_t == T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
                 # DefineMethod
                 or
-                old_t == ListType(T_code_unit_) | T_Reference | T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
+                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
                 # DefineMethod
                 or
                 old_t == T_MathInteger_ | T_Tangible_ | T_code_unit_ and new_t == T_MathInteger_ | T_Number | T_code_unit_
@@ -5596,7 +5597,7 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
             #     print("`%s` : # member_types = %d" % (pn, len(ptype.member_types)))
             #     if len(ptype.member_types) == 41: assert 0
 
-            if pn == '*return*' and T_not_returned.is_a_subtype_of_or_equal_to(ptype) and ptype != T_Abrupt | ListType(T_code_unit_) | T_Reference | T_Tangible_ | T_empty_ | T_not_returned:
+            if pn == '*return*' and T_not_returned.is_a_subtype_of_or_equal_to(ptype) and ptype != T_Abrupt | ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned:
                 add_pass_error(
                     node,
                     "At exit, ST of `%s` is `%s`" % (pn, ptype)
@@ -7540,7 +7541,7 @@ def tc_cond_(cond, env0, asserting):
         r"{TYPE_TEST} : Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
         r"{TYPE_TEST} : Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}",
         r"{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
-        r"{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
+        r"{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
         r'{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}',
     ]:
         [type_arg, *type_name_] = children
@@ -7929,7 +7930,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r'{CONDITION_1} : {EXPR} is an object',
-        r"{CONDITION_1} : {EX} is an Object",
+        # r"{CONDITION_1} : {EX} is an Object", # 2085
     ]:
         [expr] = children
         return env0.with_type_test(expr, 'is a', T_Object, asserting)
@@ -7997,6 +7998,14 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} is a Realm Record':
         [var] = children
         return env0.with_type_test(var, 'is a', T_Realm_Record, asserting)
+
+    elif p == r'{CONDITION_1} : {var} is a Reference Record':
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Reference_Record, asserting)
+
+    elif p == r'{CONDITION_1} : {var} is not a Reference Record':
+        [var] = children
+        return env0.with_type_test(var, 'isnt a', T_Reference_Record, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a ResolvedBinding Record":
         [var] = children
@@ -8369,7 +8378,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is not {LITERAL} or {LITERAL}",
         r"{CONDITION_1} : {EX} is neither {LITERAL} nor {LITERAL}",
         r"{CONDITION_1} : {EX} is present, and is neither {LITERAL} nor {LITERAL}",
-        r"{CONDITION_1} : In this case, {var} will never be {LITERAL} or {LITERAL}",
+        # r"{CONDITION_1} : In this case, {var} will never be {LITERAL} or {LITERAL}", # 2085
     ]:
         [ex, lita, litb] = children
 
@@ -8987,15 +8996,16 @@ def tc_cond_(cond, env0, asserting):
         # which are tiny)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} has a thisValue component':
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Reference)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is a Reference to an Environment Record binding":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Reference)
-        return (env0, env0)
+#    elif p == r'{CONDITION_1} : {var} has a thisValue component':
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Reference)
+#        return (env0, env0)
+#
+#    elif p == r"{CONDITION_1} : {var} is a Reference to an Environment Record binding":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Reference)
+#        return (env0, env0)
+# ^ obsoleted by PR 2085
 
     elif p == r'{CONDITION_1} : The calling agent is in the critical section for {var}':
         [var] = children
@@ -9388,10 +9398,11 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the base of {var} is an Environment Record":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Reference)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : the base of {var} is an Environment Record":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Reference)
+#        return (env0, env0)
+# ^ obsoleted by PR 2085
 
     elif p == r"{CONDITION_1} : the above call will not return here, but instead evaluation will continue as if the following return has already occurred":
         [] = children
@@ -10537,6 +10548,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_PreferredTypeHint_, env0)
         elif chars == 'not-matched':
             return (T_NotMatched_, env0)
+        elif chars == 'unresolvable':
+            return (T_Unresolvable_, env0)
         else:
             assert 0, chars
 
@@ -11053,8 +11066,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype.is_a_subtype_of_or_equal_to(T_Tangible_ | T_empty_):
                         result_memtype = memtype
 
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Reference):
-                        # Completion Record's [[Value]] can be a Reference, despite the definition of CR?
+                    elif memtype.is_a_subtype_of_or_equal_to(T_Reference_Record):
+                        # Completion Record's [[Value]] can be a Reference Record, despite the definition of CR?
                         result_memtype = memtype
                     elif memtype == T_Realm_Record:
                         # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
@@ -11079,7 +11092,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         result_memtype = T_String | T_empty_
                     elif memtype in [T_Tangible_, T_empty_]:
                         result_memtype = T_empty_
-                    elif memtype in [T_Reference, T_not_returned, ListType(T_code_unit_)]:
+                    elif memtype in [T_not_returned, ListType(T_code_unit_)]: # T_Reference_Record?
                         # hm.
                         result_memtype = T_empty_
                     else:
@@ -11120,6 +11133,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif lhs_text == '_declResult_':
                 # EvaluateBody: See Issue 837
                 lhs_t = T_throw_
+            elif lhs_text == '_ref_':
+                # EvaluateCall
+                lhs_t = T_Reference_Record
             else:
                 assert 0, expr.source_text()
             add_pass_error(
@@ -11139,8 +11155,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             T_Object | T_Null,
             T_Object | T_Undefined,
         ]:
-            # GetValue. (Fix by replacing T_Reference with ReferenceType(base_type)?)
+            # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
             lhs_t = T_Object
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t in [
+            ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
+            ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_,
+            ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
+        ]:
+            lhs_t =  T_Reference_Record 
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t == T_Realm_Record | T_Undefined:
@@ -12047,10 +12071,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_String, env1)
 # ^ obsoleted by PR 2112
 
-    elif p == r'{EX} : the referenced name component of {var}':
-        [v] = children
-        env0.assert_expr_is_of_type(v, T_Reference)
-        return (T_String | T_Symbol | T_Private_Name, env0) # PR 1668 privates
+#    elif p == r'{EX} : the referenced name component of {var}':
+#        [v] = children
+#        env0.assert_expr_is_of_type(v, T_Reference)
+#        return (T_String | T_Symbol | T_Private_Name, env0) # PR 1668 privates
+# ^ obsoleted by PR 2085
 
     elif p == r'{EXPR} : the string result of converting {EX} to a String of four lowercase hexadecimal digits':
         [ex] = children
@@ -13100,41 +13125,43 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_execution_context, env0)
 
+#    # -------------------------------------------------
+#    # return T_Reference
+#
+#    elif p == r'{EXPR} : a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}':
+#        [bv_ex, rn_var, srf_var] = children
+#
+#        env1 = env0.ensure_expr_is_of_type(bv_ex, T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record)
+#        env2 = env1.ensure_expr_is_of_type(rn_var, T_String | T_Symbol)
+#        env3 = env2.ensure_expr_is_of_type(srf_var, T_Boolean)
+#
+#        return (T_Reference, env3)
+#
+#    elif p in [
+#        r'{V} : the reference (_V_)',
+#        r'{V} : (_V_)',
+#    ]:
+#        [v_name] = children
+#        assert v_name == '_V_'
+#        assert env0.vars[v_name] == T_Reference
+#        return (T_Reference, env0)
+#
+#    elif p == r"{EXPR} : a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}":
+#        [b_var, n_var, t_var, s_var] = children
+#        env0.assert_expr_is_of_type(b_var, T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number)
+#        env0.assert_expr_is_of_type(n_var, T_String | T_Symbol)
+#        env0.assert_expr_is_of_type(t_var, T_Tangible_)
+#        env0.assert_expr_is_of_type(s_var, T_Boolean)
+#        return (T_Reference, env0)
+# ^ obsoleted by PR 2085
+
     # -------------------------------------------------
-    # return T_Reference
 
-    elif p == r'{EXPR} : a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}':
-        [bv_ex, rn_var, srf_var] = children
-
-        env1 = env0.ensure_expr_is_of_type(bv_ex, T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record)
-        env2 = env1.ensure_expr_is_of_type(rn_var, T_String | T_Symbol)
-        env3 = env2.ensure_expr_is_of_type(srf_var, T_Boolean)
-
-        return (T_Reference, env3)
-
-    elif p in [
-        r'{V} : the reference (_V_)',
-        r'{V} : (_V_)',
-    ]:
-        [v_name] = children
-        assert v_name == '_V_'
-        assert env0.vars[v_name] == T_Reference
-        return (T_Reference, env0)
-
-    elif p == r"{EXPR} : a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}":
-        [b_var, n_var, t_var, s_var] = children
-        env0.assert_expr_is_of_type(b_var, T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number)
-        env0.assert_expr_is_of_type(n_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(t_var, T_Tangible_)
-        env0.assert_expr_is_of_type(s_var, T_Boolean)
-        return (T_Reference, env0)
-
-    # -------------------------------------------------
-
-    elif p == r"{EXPR} : the value of the thisValue component of the reference {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Reference)
-        return (T_Tangible_, env0)
+#    elif p == r"{EXPR} : the value of the thisValue component of the reference {var}":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Reference)
+#        return (T_Tangible_, env0)
+# ^ obsoleted by PR 2085
 
     elif p in [
         r"{EXPR} : the value currently bound to {var} in {var}",
@@ -13607,10 +13634,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         return (T_Iterator_object_, env1)
 
-    elif p == r'{EX} : the base value component of {var}':
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Reference)
-        return (T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record, env1)
+#    elif p == r'{EX} : the base value component of {var}':
+#        [var] = children
+#        env1 = env0.ensure_expr_is_of_type(var, T_Reference)
+#        return (T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record, env1)
+# ^ obsoleted by PR 2085
 
     elif p == r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}":
         [noi] = children
@@ -13701,16 +13729,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return (normal_part_of_type, env2)
 
-    elif p == r"{TYPE_ARG} : {var}'s base value component":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Reference)
-        return_type = T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record
-        return (return_type, env0)
-
-    elif p == r'{EX} : the strict reference flag of {var}':
-        [v] = children
-        env0.assert_expr_is_of_type(v, T_Reference)
-        return (T_Boolean, env0)
+#    elif p == r"{TYPE_ARG} : {var}'s base value component":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Reference)
+#        return_type = T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record
+#        return (return_type, env0)
+#
+#    elif p == r'{EX} : the strict reference flag of {var}':
+#        [v] = children
+#        env0.assert_expr_is_of_type(v, T_Reference)
+#        return (T_Boolean, env0)
+# ^ obsoleted by PR 2085
 
     elif p in [
         r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}",
@@ -14950,6 +14979,15 @@ def get_fields(fields):
 
 fields_for_record_type_named_ = {
 
+    # 6.2.4
+    'Reference Record': {
+        'Base'           : T_Tangible_ | T_Environment_Record | T_Unresolvable_,
+        'ReferencedName' : T_String | T_Symbol,
+        'Strict'         : T_Boolean,
+        'ThisValue'      : T_Tangible_ | T_empty_,
+    },
+
+    # 6.2.5
     'Property Descriptor': { # XXX not modelling this very well
         # table 2
         'Value'       : T_Tangible_,

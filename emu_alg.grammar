@@ -489,7 +489,6 @@
 {CONDITION} :
     ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
     Either {CONDITION_1} or {CONDITION_1}
-    either {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}
     {CONDITION_1} and if {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
@@ -513,6 +512,9 @@
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
 
+    # obsoleted by PR #2085: 
+    # either {CONDITION_1} or {CONDITION_1}
+
     # obsoleted by PR #2111: 
     # {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
 
@@ -522,7 +524,6 @@
     All named exports from {var} are resolvable
     Evaluate has already been invoked on {var} and successfully completed
     GlobalSymbolRegistry does not currently contain an entry for {var}
-    In this case, {var} will never be {LITERAL} or {LITERAL}
     The calling agent is in the critical section for {var}
     The calling agent is not in the critical section for any WaiterList
     The execution context stack has at least two elements
@@ -562,7 +563,6 @@
     the above call will not return here, but instead evaluation will continue as if the following return has already occurred
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
-    the base of {var} is an Environment Record
     the binding exists
     the binding for {var} in {var} cannot be deleted
     the binding for {var} in {var} has not yet been initialized
@@ -611,7 +611,6 @@
     {EX} is a sequence of Unicode code points
     {EX} is absent
     {EX} is absent or has the value {LITERAL}
-    {EX} is an Object
     {EX} is an element of {var}
     {EX} is different from {EX}
     {EX} is either {LITERAL} or {LITERAL}
@@ -711,7 +710,6 @@
     {var} has a binding for the name that is the value of {var}
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
-    {var} has a thisValue component
     {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
     {var} has an? {DSBN} internal method
     {var} has an? {DSBN} internal slot
@@ -760,7 +758,7 @@
     {var} is a ReadSharedMemory or ReadModifyWriteSharedMemory event
     {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
     {var} is a Realm Record
-    {var} is a Reference to an Environment Record binding
+    {var} is a Reference Record
     {var} is a ResolvedBinding Record
     {var} is a Shared Data Block
     {var} is a Source Text Module Record
@@ -823,6 +821,7 @@
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
+    {var} is not a Reference Record
     {var} is not a Shared Data Block
     {var} is not a {h_emu_xref}
     {var} is not a {h_emu_xref} or {h_emu_xref}
@@ -962,6 +961,13 @@
     # the most significant bit in {var} is {NUM_LITERAL}
     # the two most significant bits in {var} are not 10
 
+    # obsoleted by the merge of PR #2085:
+    # In this case, {var} will never be {LITERAL} or {LITERAL}
+    # the base of {var} is an Environment Record
+    # {EX} is an Object
+    # {var} has a thisValue component
+    # {var} is a Reference to an Environment Record binding
+
     # obsoleted by the merge of PR #2112:
     # there does not exist a member {var} of set {var} such that {CONDITION_1}
     # there exists a member {var} of set {var} such that {CONDITION_1}
@@ -1048,15 +1054,20 @@
     Type({TYPE_ARG}) is the same as Type({TYPE_ARG})
     Type({TYPE_ARG}) is {TYPE_NAME}
     Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}
-    Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+    Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
 
     # obsoleted by the merge of PR #1918:
     # Type({TYPE_ARG}) is {var}
 
+    # obsoleted by the merge of PR #2085:
+    # Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+
 {TYPE_ARG} :
     {DOTTING}
     {var}
-    {var}'s base value component
+
+    # obsoleted by the merge of PR #2085:
+    # {var}'s base value component
 
 {NUM_COMPARISON} :
     {NUM_COMPARAND} is 10 or less
@@ -1194,8 +1205,6 @@
     a newly created object with an internal slot for each name in {var}
     a one-element CharSet containing the character {var}
     a reference to the list of waiters in {var}
-    a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
-    a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
     an implementation-approximated value representing {EXPR}
@@ -1404,7 +1413,6 @@
     the union of {var} and {var}
     the value currently bound to {var} in {var}
     the value of the first element of {var}
-    the value of the thisValue component of the reference {var}
     the value that {var} corresponds to in {h_emu_xref}
     the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked
     the {nonterminal} that is covered by {LOCAL_REF}
@@ -1507,6 +1515,11 @@
     # obsoleted by the merge of PR #2029:
     # a List of 8-bit integers of size {var}
     # the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
+
+    # obsoleted by the merge of PR #2085:
+    # a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
+    # a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
+    # the value of the thisValue component of the reference {var}
 
     # obsoleted by the merge of PR #2112:
     # an empty set
@@ -1616,7 +1629,6 @@
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {EX}
     the String {var}
-    the base value component of {var}
     the code unit at index {EX} within {EX}
     the code unit that is {PP_NAMED_OPERATION_INVOCATION}
     the code units of {var}
@@ -1629,11 +1641,9 @@
     the number of code units in {var}
     the number of elements in {var}
     the numeric value of {EX}
-    the referenced name component of {var}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
-    the strict reference flag of {var}
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
     the value of {SETTABLE}
@@ -1666,6 +1676,11 @@
     # the substring of {var} consisting of the code units from {var} (inclusive) up through the final code unit of {var} (inclusive)
     # the substring of {var} consisting of the code units from {var} (inclusive) up to {var} (exclusive)
     # the trailing substring of {var} starting at index {var}
+
+    # obsoleted by the merge of PR #2085:
+    # the base value component of {var}
+    # the referenced name component of {var}
+    # the strict reference flag of {var}
 
     # obsoleted by the merge of PR #2138:
     # the previous value of {var}
@@ -1862,6 +1877,7 @@
     the PromiseReaction
     the PropertyDescriptor
     the Record
+    the Reference Record
 
     # obsoleted by the merge of PR #1597:
     # PendingJob
@@ -2082,7 +2098,6 @@
     Null
     Number
     Object
-    Reference
     Set
     Shared Data Block
     String
@@ -2096,6 +2111,9 @@
 
     # obsoleted by the merge of PR #1797:
     # AssertionTester
+
+    # obsoleted by the merge of PR #2085:
+    # Reference
 
     # PR 1668 privates:
     Private Name
