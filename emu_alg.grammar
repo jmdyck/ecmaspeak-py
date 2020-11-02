@@ -269,10 +269,12 @@
     {IF_OPEN}{IF_TAIL}
 
 {IF_OPEN} :
-    If {CONDITION}, then {SMALL_COMMAND}.
     If {CONDITION}, then{IND_COMMANDS}
     If {CONDITION}, {MULTILINE_SMALL_COMMAND}
     If {CONDITION}, {SMALL_COMMAND}.
+
+    # obsoleted by the merge of PR #2218
+    # If {CONDITION}, then {SMALL_COMMAND}.
 
 {IF_TAIL} :
     {EPSILON}

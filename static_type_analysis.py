@@ -6135,7 +6135,7 @@ def tc_nonvalue(anode, env0):
 
         if if_open.prod.rhs_s in [
             r'If {CONDITION}, {SMALL_COMMAND}.',
-            r'If {CONDITION}, then {SMALL_COMMAND}.',
+            # r'If {CONDITION}, then {SMALL_COMMAND}.', # 2218
             r'If {CONDITION}, then{IND_COMMANDS}',
             r'If {CONDITION}, {MULTILINE_SMALL_COMMAND}',
         ]:
