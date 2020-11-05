@@ -7012,10 +7012,11 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.",
+        r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}",
         r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}",
         r"{COMMAND} : Call {PREFIX_PAREN}.",
     ]:
-        [noi] = children
+        noi = children[0]
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
         if noi_t.is_a_subtype_of_or_equal_to(T_not_returned | T_Undefined | T_empty_):
             pass

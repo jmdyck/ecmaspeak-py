@@ -9,6 +9,7 @@
 
 {ONE_LINE_ALG} :
     {nlai}{COMMAND}{nlai}
+    {nlai}{COMMAND}{nlai}{h_emu_note}{nlai}
 
 {COMMAND} :
     If {CONDITION}, return {LITERAL}. If {CONDITION}, return {LITERAL}.

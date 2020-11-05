@@ -878,6 +878,7 @@ def analyze_changes_section(section):
                 for pattern in [
                     f"During {op_name} the following steps are performed in place of step <emu-xref .+:",
                     f"The following steps are inserted after step <emu-xref.+ of the .+{op_name}.+ algorithm:",
+                    f"The following steps replace step <emu-xref.+ of the .+>{op_name}.+ algorithm:",
                     f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
                 ]
             ), p_ist
@@ -1111,6 +1112,10 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
         '#LITERAL sub #LITERAL',
         '#LITERAL sub #LITERAL sub #LITERAL',
     ]:
+        foo_add_defn('op: solo', op_name, discriminator, tdb, section)
+
+    elif x == '#LITERAL emu-note #LITERAL':
+        # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
         foo_add_defn('op: solo', op_name, discriminator, tdb, section)
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':

@@ -119,6 +119,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_figure}       : <figure> (.|\n)+? </figure>
     {h_pre_code}     : <pre><code \x20 class="javascript"> ([^<>]+) </code></pre>
     {h_emu_grammar}  : < emu-grammar > .+? </ emu-grammar >
+    {h_emu_note}     : < emu-note > (.|\n)+? </ emu-note >
     {h_emu_xref}     : < emu-xref (\x20 \w+ (= " [^"]+ ")? )* > [^<>]* < / emu-xref >
     {h_emu_alg}      : < emu-alg > (.|\n)+? < / emu-alg >
     {h_emu_not_ref_Record}        : < emu-not-ref > Record < / emu-not-ref >

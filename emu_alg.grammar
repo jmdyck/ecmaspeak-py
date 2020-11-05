@@ -102,6 +102,7 @@
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
+    Perform {PP_NAMED_OPERATION_INVOCATION}. {note}
     Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
     Prepend {var} to {var}.
     Push {var} onto the execution context stack; {var} is now the running execution context.
