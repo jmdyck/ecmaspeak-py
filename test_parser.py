@@ -33,58 +33,58 @@ def main():
     else:
         mo = re.fullmatch(r'--all-dir=(\w+)', sys.argv[1])
         if mo:
-            dirname = mo.group(1)
-            test_all_in_dir(dirname)
+            test_dirname = mo.group(1)
+            test_all_in_dir(test_dirname)
         else:
-            for file_relpath in sys.argv[1:]:
-                test_one(file_relpath)
+            for test_file_relpath in sys.argv[1:]:
+                test_one(test_file_relpath)
 
 def test_all():
     test_all_in_dir('fail')
     test_all_in_dir('early')
     test_all_in_dir('pass')
 
-def test_all_in_dir(dirname):
-    print(dirname, file=sys.stderr)
-    assert dirname in ['fail', 'early', 'pass', 'pass-explicit']
-    output_filename = f'_testing/{dirname}_output.new'
+def test_all_in_dir(test_dirname):
+    print(test_dirname, file=sys.stderr)
+    assert test_dirname in ['fail', 'early', 'pass', 'pass-explicit']
+    output_filename = f'_testing/{test_dirname}_output.new'
 
     with open(output_filename, 'w', encoding='utf8') as f:
-        dirpath = root_test_dirpath + "/" + dirname
-        for i, filename in enumerate(sorted(os.listdir(dirpath))):
-            assert filename.endswith('.js')
+        dirpath = root_test_dirpath + "/" + test_dirname
+        for i, test_filename in enumerate(sorted(os.listdir(dirpath))):
+            assert test_filename.endswith('.js')
             if i % 20 == 0:
                 sys.stderr.write('.')
                 sys.stderr.flush()
-            file_relpath = dirname + '/' + filename
+            test_file_relpath = test_dirname + '/' + test_filename
 
-            result = test_one(file_relpath, f)
+            result = test_one(test_file_relpath, f)
 
-            if file_relpath in corrections:
-                dirname_for_expectation_purposes = corrections[file_relpath]
+            if test_file_relpath in corrections:
+                dirname_for_expectation_purposes = corrections[test_file_relpath]
             else:
-                dirname_for_expectation_purposes = dirname
+                dirname_for_expectation_purposes = test_dirname
                 
             expected_result = 'ParseError' if dirname_for_expectation_purposes == 'fail' else 'no error'
 
             if result != expected_result:
-                print(f"TEST {file_relpath} FAILED: expected {expected_result}, but got {result}", file=f)
+                print(f"TEST {test_file_relpath} FAILED: expected {expected_result}, but got {result}", file=f)
         sys.stderr.write('\n')
         print('====', file=f)
         print('Done', file=f)
 
-def test_one(file_relpath, f=sys.stdout):
+def test_one(test_file_relpath, f=sys.stdout):
     print(file=f)
     print('===================', file=f)
-    print(file_relpath, file=f)
+    print(test_file_relpath, file=f)
 
-    filepath = root_test_dirpath + '/' + file_relpath
-    source_text = open(filepath,'r', encoding='utf-8', newline='').read()
+    test_filepath = root_test_dirpath + '/' + test_file_relpath
+    source_text = open(test_filepath,'r', encoding='utf-8', newline='').read()
     print(source_text, file=f)
     file_of_interest = 'xxx'
     # file_of_interest = '3dbb6e166b14a6c0.js'
-    trace_level = (9 if filepath.endswith(file_of_interest) else 0)
-    goal_symbol = 'Module' if filepath.endswith('.module.js') else 'Script'
+    trace_level = (9 if test_filepath.endswith(file_of_interest) else 0)
+    goal_symbol = 'Module' if test_filepath.endswith('.module.js') else 'Script'
     try:
         node = es_parser.parse(source_text, goal_symbol, trace_level=trace_level, trace_f=f)
         if trace_level > 0: node.dump()
