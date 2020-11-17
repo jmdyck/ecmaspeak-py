@@ -11,7 +11,7 @@ from collections import defaultdict
 from pprint import pprint # mainly for debugging
 import misc
 
-from emu_grammar_tokens import *
+from mynamedtuple import mynamedtuple
 
 g_outdir = '../ecma262/_editorial' # XXX Should be able to set this dynamically.
 
@@ -56,6 +56,7 @@ def my_object_hook(d):
         elif T == 'T_nc'         : return T_nc(**d)
         elif T == 'T_named'      : return T_named(**d)
         elif T == 'T_u_p'        : return T_u_p(**d)
+        elif T == 'T_u_r'        : return T_u_r(**d)
         elif T == 'A_but_not'    : return A_but_not(**d)
         elif T == 'A_but_only_if': return A_but_only_if(**d)
         elif T == 'A_no_LT'      : return A_no_LT(**d)
@@ -68,6 +69,25 @@ def my_object_hook(d):
 
     else:
         return d
+
+# I use very short names here so that when a tokenized RHS is printed, it isn't too long.
+# Maybe I'll change my mind about that.
+GNT           = mynamedtuple('GNT', 'n a o')   # generalized non-terminal
+SNT           = mynamedtuple('SNT', 'n')       # simple non-terminal 
+T_lit         = mynamedtuple('T_lit', 'c')     # literal characters
+T_nc          = mynamedtuple('T_nc', 'n')      # named character
+T_u_p         = mynamedtuple('T_u_p', 'p')     # Unicode code point with a Unicode property
+T_u_r         = mynamedtuple('T_u_r', 'rlo rhi') # Range of Unicode code points
+T_named       = mynamedtuple('T_named', 'n')   # named terminal
+A_guard       = mynamedtuple('A_guard', 's n')
+A_id          = mynamedtuple('A_id', 'i')
+A_but_only_if = mynamedtuple('A_but_only_if', 'c')
+A_but_not     = mynamedtuple('A_but_not', 'b')
+A_empty       = mynamedtuple('A_empty', '')
+A_no_LT       = mynamedtuple('A_no_LT', '')
+LAI           = mynamedtuple('LAI', 'ts')  # lookahead inclusion
+LAX           = mynamedtuple('LAX', 'ts')  # lookahead exclusion
+Arg           = mynamedtuple('Arg', 's n')
 
 T_EOI = mynamedtuple('T_EOI', 'n')
 
@@ -307,6 +327,41 @@ class _Earley:
 
             else:
                 assert 0, rush
+
+            # When closing an Earley-state, and you encounter an item
+            # with a lookahead-constraint in the post-dot position,
+            # what do you do with it? I can think of 3 approaches:
+            #
+            # (1) During closure, ignore the constraint; come back to it later,
+            #     after the requisite number of tokens have been read,
+            #     possibly after all the parsing is done.
+            #
+            #     I think this could work, but might be inefficient,
+            #     because the LAX is there to prevent ambiguities,
+            #     so ignoring it allows ambiguities to multiply.
+            #
+            # (2) During closure, pause and immediately go check
+            #     whether the next few tokens satisfy the constraint.
+            #     If they don't, then delete the item or mark it bad somehow,
+            #     and don't let it contribute to the closure of the state.
+            #
+            #     This would be a sensible approach if ES had a conventional lexer
+            #     (where you can lex a whole text before doing any syntactic parsing).
+            #     But with ES's lexer, the goal symbol depends on the current syntactic context,
+            #     so the lexer can't get ahead of the parser (more than 1 token).
+            #     When you're closing the state, you (theoretically) don't even know
+            #     the current syntactic context, so you can't even get the next token,
+            #     let alone any subsequent ones.
+            #     Practically, the syntactic context is determined by the items in the
+            #     state's kernel, so maybe with some prep-work you could know the context
+            #     and thus get the next token.
+            #     The next+1 would be harder though.
+            #     
+            # (3) During closure, allow the item to contribute,
+            #     but modify its contributions so as to enforce the constraint.
+            #     (similar to baking the constraint into the grammar)
+            #
+            #     ?
 
         def Item_reduce(item):
             trace(9, '    Item_reduce:', Item_stringify(item))
@@ -1215,6 +1270,8 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
         # But then we'd need to know when to skip non-tokens *without* caring about LTs,
         # so we'd need to make that explicit in the syntactic grammar,
         # or else make the Earley code aware of the distinction.)
+        #
+        # (But why is A_no_LT a post rather than a pre?)
 
         next_text_posn = find_any_following_non_tokens(token.end_posn) # can create Node
 
@@ -1472,13 +1529,15 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             assert 0, pre
 
     def syntactic_LAX_is_satisfied(node, lax):
-        for lat in lax.ts:
-            assert lat.T == 'T_lit'
-            if lat.c in ['class', 'function', 'let', '{']:
-                x = [lat.c]
-            elif lat.c == 'let` `[':
+        for ts in lax.ts:
+            if len(ts) == 1:
+                [lit] = ts
+                assert type(lit) == T_lit
+                assert lit.c in ['class', 'function', 'let', '{']
+                x = [lit.c]
+            elif ts == [T_lit('let'), T_lit('[')]:
                 x = ['let', '*', '[']
-            elif lat.c == 'async nLTh function':
+            elif ts == [T_lit('async'), A_no_LT(), T_lit('function')]:
                 x = ['async', 'nLTh', 'function']
             else:
                 assert 0, lat
@@ -1767,7 +1826,14 @@ def Rush_stringify(rush):
         )
     elif post.T == 'LAX':
         post_s = ' [lookahead != %s]' % (
-            ' '.join(Rsymbol_stringify(t) for t in post.ts)
+            '|'.join(
+                (
+                    ' '.join(Rsymbol_stringify(t) for t in ts)
+                    if type(ts) == list else
+                    Rsymbol_stringify(ts)
+                )
+                for ts in post.ts
+            )
         )
     else:
         post_s = ' ' + str(post)

@@ -1628,7 +1628,7 @@ class Grammar:
     def generate_parser(this_grammar):
         if this_grammar.level == 'lexical':
             this_grammar.explode_multichar_literals()
-            # this_grammar.distinguish_Token_from_NonToken()
+            this_grammar.distinguish_Token_from_NonToken() #??
 
         this_grammar.save_as_json()
 
@@ -1677,12 +1677,6 @@ class Grammar:
     def distinguish_Token_from_NonToken(this_grammar):
         assert this_grammar.level == 'lexical'
 
-        non_token_names = ['WhiteSpace','LineTerminator', 'Comment']
-        non_token_rhss = [
-            [GNT(non_token_name, (), False)]
-            for non_token_name in non_token_names
-        ]
-
         for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
             if lhs_symbol.startswith('InputElement'):
                 ie_rest = lhs_symbol.replace('InputElement', '')
@@ -1690,14 +1684,23 @@ class Grammar:
                 # print(production_n._param_names)
                 # print(production_n._rhss)
                 assert len(production_n._rhss) == 6
-                assert production_n._rhss[0:3] == non_token_rhss
+                assert production_n._rhss[0].source_text() == '\n      WhiteSpace'
+                assert production_n._rhss[1].source_text() == '\n      LineTerminator'
+                assert production_n._rhss[2].source_text() == '\n      Comment'
                 # del production_n._rhss[0:3]
+                non_token_rhss = production_n._rhss[0:3]
 
-                this_grammar.prodn_for_lhs_['_Token' + ie_rest] = (
-                    production_n._param_names, production_n._rhss[3:]) #!
+                token_production_n = GNode(-1, -1, None, None)
+                token_production_n._rhss = production_n._rhss[3:]
+                token_production_n._param_names = []
+
+                this_grammar.prodn_for_lhs_['_Token' + ie_rest] = token_production_n
                 del this_grammar.prodn_for_lhs_[lhs_symbol] 
 
-        this_grammar.prodn_for_lhs_['_NonToken'] = (0, [], non_token_rhss) #!
+        production_n = GNode(-1, -1, None, None)
+        production_n._rhss = non_token_rhss
+        production_n._param_names = []
+        this_grammar.prodn_for_lhs_['_NonToken'] = production_n
 
     # ==========================================================================
 

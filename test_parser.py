@@ -81,7 +81,7 @@ def test_one(test_file_relpath, f=sys.stdout):
     test_filepath = root_test_dirpath + '/' + test_file_relpath
     source_text = open(test_filepath,'r', encoding='utf-8', newline='').read()
     print(source_text, file=f)
-    file_of_interest = 'xxx'
+    file_of_interest = 'xx005dc7dff71d4b97.js'
     # file_of_interest = '3dbb6e166b14a6c0.js'
     trace_level = (9 if test_filepath.endswith(file_of_interest) else 0)
     goal_symbol = 'Module' if test_filepath.endswith('.module.js') else 'Script'
