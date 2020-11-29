@@ -4431,6 +4431,10 @@ class Env:
             # ParseModule
             result = item_env.with_expr_type_replaced(item_ex, T_String)
 
+        elif list_type == ListType(T_String) and item_type == T_String | ListType(T_code_unit_):
+            # ContainsDuplicateLabels
+            result = item_env.with_expr_type_replaced(item_ex, T_String)
+
         # ----------------------------------------
         # cases where we don't change either ST:
 
@@ -4632,7 +4636,7 @@ class Env:
                 # sys.exit(0)
         else:
             assert expr_text in [
-                '! CodePointToUTF16CodeUnits(_cp_)',
+                '! UTF16EncodeCodePoint(_cp_)',
                 '? CaseClauseIsSelected(_C_, _input_)', # Evaluation (CaseBlock)
                 '? Get(_obj_, `"length"`)',
                 '? GetValue(_defaultValue_)', # DestructuringAssignmentEvaluation, bleah
@@ -4644,7 +4648,7 @@ class Env:
                 '? ToPrimitive(_y_)', # Abstract Equality Comparison
                 '? ToPropertyKey(_lval_)',
                 'Call(_return_, _iterator_)', # AsyncIteratorClose
-                'CodePointToUTF16CodeUnits(_V_)',
+                'UTF16EncodeCodePoint(_V_)',
                 'StringValue of |Identifier|',
                 'ToInteger(_P_)', # [[OwnPropertyKeys]]
                 'ToNumber(_x_)', # Abstract Equality Comparison
@@ -5279,7 +5283,7 @@ def tc_header(header):
                 or
                 header.name == 'SetRealmGlobalObject' and pn == '_globalObj_' and init_t == T_Object | T_Undefined
                 or
-                header.name == 'CodePointToUTF16CodeUnits' and pn == '*return*' and init_t == ListType(T_code_unit_)
+                header.name == 'UTF16EncodeCodePoint' and pn == '*return*' and init_t == ListType(T_code_unit_)
                 or
                 header.name == 'PerformPromiseThen' and pn in ['_onFulfilled_', '_onRejected_'] and init_t == T_Tangible_
                 or
@@ -5340,7 +5344,7 @@ def tc_header(header):
                 or
                 header.name == 'StringToCodePoints' and pn == '*return*'
                 or
-                header.name == 'CodePointToUTF16CodeUnits' and pn == '_cp_'
+                header.name == 'UTF16EncodeCodePoint' and pn == '_cp_'
                 or
                 header.name == 'UTF16Encoding' and pn == '_cp_'
                 or
@@ -5976,10 +5980,11 @@ def tc_nonvalue(anode, env0):
 #        result = env0.plus_new_entry(leta_var, T_MathInteger_).plus_new_entry(letb_var, T_String)
 # ^ obsoleted by PR 2021
 
-    elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.":
-        [noi, v] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
-        result = env0.plus_new_entry(v, T_code_unit_)
+#    elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.":
+#        [noi, v] = children
+#        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
+#        result = env0.plus_new_entry(v, T_code_unit_)
+# ^ obsoleted by PR 2018
 
     # ---
     # parse
@@ -7267,12 +7272,13 @@ def tc_nonvalue(anode, env0):
         env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
         result = env2
 
-    elif p == r"{COMMAND} : Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.":
-        [noi, var] = children
-        # over-specific, but it only occurs once, in String.fromCodePoint:
-        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_code_unit_))
-        result = env1
+#    elif p == r"{COMMAND} : Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.":
+#        [noi, var] = children
+#        # over-specific, but it only occurs once, in String.fromCodePoint:
+#        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
+#        env1 = env0.ensure_expr_is_of_type(var, ListType(T_code_unit_))
+#        result = env1
+# ^ obsoleted by PR 2018
 
     elif p == r"{SMALL_COMMAND} : remove the first code unit from {var}":
         [var] = children
@@ -10588,7 +10594,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}",
-        r"{NAMED_OPERATION_INVOCATION} : {ISDO_NAME} of {PROD_REF}",
+        # r"{NAMED_OPERATION_INVOCATION} : {ISDO_NAME} of {PROD_REF}", # PR 2018
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}",
@@ -10598,7 +10604,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [callee, local_ref] = children[0:2]
         callee_op_name = callee.source_text()
-        if callee_op_name == 'CodePointToUTF16CodeUnits':
+        if callee_op_name == 'UTF16EncodeCodePoint':
             # An abstract operation that uses SDO-style invocation.
             return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
         else:
@@ -11161,9 +11167,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t in [
-            ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
-            ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_,
-            ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
+            T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
+            T_Reference_Record | T_Tangible_ | T_empty_,
+            T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
         ]:
             lhs_t =  T_Reference_Record 
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
@@ -12092,7 +12098,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
         return (T_String, env1)
 
-#    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by CodePointToUTF16CodeUnits??? each code point":
+#    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16EncodeCodePoint??? each code point":
 #        return (T_String, env0)
 # ^ obsoleted by PR 1552
 
@@ -12240,39 +12246,41 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsbn.source_text() == '[[Description]]'
         return (T_String | T_Undefined, env0)
 
-    elif p in [
-        r"{EXPR} : the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}",
-        # r"{EXPR} : the String value whose elements are {NAMED_OPERATION_INVOCATION}",
-    ]:
-        [noi] = children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
-        return (T_String, env1)
+#    elif p in [
+#        r"{EXPR} : the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}",
+#        # r"{EXPR} : the String value whose elements are {NAMED_OPERATION_INVOCATION}",
+#    ]:
+#        [noi] = children
+#        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
+#        return (T_String, env1)
+# ^ obsoleted by PR 2018
 
     elif p in [
         r"{EXPR} : the String value consisting of {EXPR}",
-        r"{EXPR} : the String value consisting of the code units of {var}",
+        # r"{EXPR} : the String value consisting of the code units of {var}", # PR 2018
         r"{EXPR} : the String value consisting of {EX}",
-        r"{EXPR} : the String value consisting of {NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}",
+        # r"{EXPR} : the String value consisting of {NAMED_OPERATION_INVOCATION}", # PR 2018
+        # r"{EXPR} : the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}", # PR 2018
         # r"{EXPR} : the String value whose elements are, in order, the elements in {NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the string consisting of the code units of {var}",
+        # r"{EXPR} : the string consisting of the code units of {var}", # PR 2018
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}":
-        [noi, emu_xref] = children    
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
-        return (T_String, env1)
-
-    elif p in [
-        r"{EXPR} : the String value whose code units are the elements of {var} followed by the elements of {var}",
-        r"{EXPR} : the String value whose code units are the elements of {var} followed by the elements of {var} followed by the elements of {var}",
-    ]:
-        for var in children:
-            env0 = env0.ensure_expr_is_of_type(var, T_String | ListType(T_code_unit_))
-        return (T_String, env0)
+#    elif p == r"{EXPR} : the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}":
+#        [noi, emu_xref] = children    
+#        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
+#        return (T_String, env1)
+#
+#    elif p in [
+#        r"{EXPR} : the String value whose code units are the elements of {var} followed by the elements of {var}",
+#        r"{EXPR} : the String value whose code units are the elements of {var} followed by the elements of {var} followed by the elements of {var}",
+#    ]:
+#        for var in children:
+#            env0 = env0.ensure_expr_is_of_type(var, T_String | ListType(T_code_unit_))
+#        return (T_String, env0)
+# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : a String according to {h_emu_xref}":
         [emu_xref] = children
@@ -12409,8 +12417,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_code_unit_, env0)
 
     elif p in [
-        r"{EXPR} : the code unit whose value is {SUM}",
-        r"{EXPR} : the code unit whose value is {EXPR}",
+        # r"{EXPR} : the code unit whose value is {SUM}", # PR 2018
+        r"{EX} : the code unit whose value is {EX}",
         r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}", 
     ]:
         [ex] = children
@@ -12422,10 +12430,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        env0.assert_expr_is_of_type(var, T_MathInteger_)
 #        return (T_code_unit_, env0)
 
-    elif p == r"{EX} : the code unit that is {PP_NAMED_OPERATION_INVOCATION}":
-        [noi] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
-        return (T_code_unit_, env0)
+#    elif p == r"{EX} : the code unit that is {PP_NAMED_OPERATION_INVOCATION}":
+#        [noi] = children
+#        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
+#        return (T_code_unit_, env0)
+# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : the code unit whose numeric value is that of {var}":
         [var] = children
@@ -12578,17 +12587,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----------------------
     # ListType(T_code_unit_)
 
-    elif p == r"{EXPR} : the empty code unit sequence":
-        [] = children
-        return (ListType(T_code_unit_), env0)
-
-    elif p == r"{EXPR} : the sequence consisting of {code_unit_lit}":
-        [lit] = children
-        return (ListType(T_code_unit_), env0)
+#    elif p == r"{EXPR} : the empty code unit sequence":
+#        [] = children
+#        return (ListType(T_code_unit_), env0)
+#
+#    elif p == r"{EXPR} : the sequence consisting of {code_unit_lit}":
+#        [lit] = children
+#        return (ListType(T_code_unit_), env0)
+# ^ obsoleted by PR 2018
 
     elif p in [
-        r"{EX} : a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}",
-        r"{EX} : the code units of {NAMED_OPERATION_INVOCATION}",
+        # r"{EX} : a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}", # PR 2018
+        # r"{EX} : the code units of {NAMED_OPERATION_INVOCATION}", # PR 2018
         # r"{EX} : the code units of {NAMED_OPERATION_INVOCATION} in order", # PR 2142
         r"{EX} : the code units of {var}",
     ]:
@@ -12596,45 +12606,47 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
         return (ListType(T_code_unit_), env1)
 
-    elif p in [
-        r"{EXPR} : {EX} followed by {EX}",
-        r"{EXPR} : the sequence consisting of {EX} followed by {EX}",
-        r"{EXPR} : the sequence consisting of {EX} followed by {EX} followed by {EX}",
-        r"{EXPR} : the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}",
-    ]:
-        env1 = env0
-        for ex in children:
-            env1 = env1.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
-        return (ListType(T_code_unit_), env1)
-
-    elif p in [
-        r"{EXPR} : a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}",
-    ]:
-        [ex1, ex2] = children
-        env1 = (
-            env0.ensure_expr_is_of_type(ex1, ListType(T_code_unit_))
-                .ensure_expr_is_of_type(ex2, ListType(T_code_unit_))
-        )
-        return (ListType(T_code_unit_), env1)
+#    elif p in [
+#        r"{EXPR} : {EX} followed by {EX}",
+#        r"{EXPR} : the sequence consisting of {EX} followed by {EX}",
+#        r"{EXPR} : the sequence consisting of {EX} followed by {EX} followed by {EX}",
+#        r"{EXPR} : the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}",
+#    ]:
+#        env1 = env0
+#        for ex in children:
+#            env1 = env1.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
+#        return (ListType(T_code_unit_), env1)
+#
+#    elif p in [
+#        r"{EXPR} : a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}",
+#    ]:
+#        [ex1, ex2] = children
+#        env1 = (
+#            env0.ensure_expr_is_of_type(ex1, ListType(T_code_unit_))
+#                .ensure_expr_is_of_type(ex2, ListType(T_code_unit_))
+#        )
+#        return (ListType(T_code_unit_), env1)
+# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : a List whose elements are the code unit elements of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_unit_), env0)
 
-    elif p in [
-        r"{EXPR} : the sequence of code units consisting of the code units of {var} followed by the elements of {var}",
-        r"{EXPR} : the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}",
-    ]:
-        for var in children:
-            env0.ensure_expr_is_of_type(var, T_String | ListType(T_code_unit_))
-        return (ListType(T_code_unit_), env0)
-
-    elif p == r"{EXPR} : the code unit sequence consisting of {var} followed by {var}":
-        [var1, var2] = children
-        env0.assert_expr_is_of_type(var1, T_MathInteger_)
-        env0.assert_expr_is_of_type(var2, T_MathInteger_)
-        return (ListType(T_code_unit_), env0)
+#    elif p in [
+#        r"{EXPR} : the sequence of code units consisting of the code units of {var} followed by the elements of {var}",
+#        r"{EXPR} : the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}",
+#    ]:
+#        for var in children:
+#            env0.ensure_expr_is_of_type(var, T_String | ListType(T_code_unit_))
+#        return (ListType(T_code_unit_), env0)
+#
+#    elif p == r"{EXPR} : the code unit sequence consisting of {var} followed by {var}":
+#        [var1, var2] = children
+#        env0.assert_expr_is_of_type(var1, T_MathInteger_)
+#        env0.assert_expr_is_of_type(var2, T_MathInteger_)
+#        return (ListType(T_code_unit_), env0)
+# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : a List whose elements are the code units that are the elements of {var}":
         [var] = children

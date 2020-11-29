@@ -24,29 +24,29 @@
     # The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
 
 {EXPR} :
-    a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
+    the String value consisting of {EXPR}
     the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the code unit whose value is {NAMED_OPERATION_INVOCATION}
-    the code unit whose value is {SUM}
-    the empty code unit sequence
     the negative of {EX}
-    the sequence consisting of {EX} followed by {EX}
-    the sequence consisting of {EX} followed by {EX} followed by {EX}
-    the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}
-    the sequence consisting of {code_unit_lit}
+    the string-concatenation of {EX} and {EX}
+    the string-concatenation of {EX}, {EX}, and {EX}
+    the string-concatenation of {EX}, {EX}, {EX}, and {EX}
     {EX}
-    {EX} followed by {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
     {EX}, where {var} is {EX}, and {var} is {EX}
     {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})
 
-    # PR 2018
-    the String value consisting of {EXPR}
-    the string-concatenation of {EX} and {EX}
-    the string-concatenation of {EX}, {EX}, and {EX}
-    the string-concatenation of {EX}, {EX}, {EX}, and {EX}
+    # obsoleted by the merge of PR 2018:
+    # a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
+    # the code unit whose value is {SUM}
+    # the empty code unit sequence
+    # the sequence consisting of {EX} followed by {EX}
+    # the sequence consisting of {EX} followed by {EX} followed by {EX}
+    # the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}
+    # the sequence consisting of {code_unit_lit}
+    # {EX} followed by {EX}
 
 {CONDITION} :
     either {CONDITION_1} or {CONDITION_1}
@@ -56,9 +56,7 @@
 
 {EX} :
     #pre-1135: the number of code points in {PROD_REF}
-    a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
     the code point value of {nonterminal}
-    the code units of {NAMED_OPERATION_INVOCATION}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the single code point matched by this production
@@ -77,10 +75,16 @@
     # obsoleted by the merge of PR #2142:
     # the code units of {NAMED_OPERATION_INVOCATION} in order
 
+    # obsoleted by the merge of PR #2018:
+    # a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
+    # the code units of {NAMED_OPERATION_INVOCATION}
+
 {NAMED_OPERATION_INVOCATION} :
     the result of performing {cap_word} on {EX}
     the {ISDO_NAME} of {PROD_REF}
-    {ISDO_NAME} of {PROD_REF}
+
+    # obsoleted by the merge of PR #2018:
+    # {ISDO_NAME} of {PROD_REF}
 
 {ISDO_NAME} :
     {cap_word}

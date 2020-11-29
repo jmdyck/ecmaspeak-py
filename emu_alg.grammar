@@ -33,7 +33,6 @@
     Append each item in {var} to the end of {var}.
     Append in List order the elements of {var} to the end of the List {var}.
     Append the code unit elements of {var} to the end of {var}.
-    Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} each element of {var} that is not already an element of {var}.
     Append to {var} the elements of {EXPR}.
@@ -58,7 +57,6 @@
     Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.
     Create any host-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
-    Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.
     Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.
@@ -208,6 +206,10 @@
 
     # obsoleted by the merge of PR #1907:
     # Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
+
+    # obsoleted by the merge of PR #2018:
+    # Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.
+    # Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
 
     # obsoleted by the merge of PR #2021:
     # Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.
@@ -1283,9 +1285,6 @@
     the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}
     the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned
     the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned
-    the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}
-    the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
-    the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
@@ -1312,9 +1311,7 @@
     the code point whose numeric value is that of {var}
     the code point {var}
     the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}
-    the code unit sequence consisting of {var} followed by {var}
     the code unit whose numeric value is that of {var}
-    the code unit whose value is {EXPR}
     the element in {DOTTING} whose {DSBN} is {EX}
     the element of {DOTTING} whose {DSBN} field is {var}
     the element of {var} whose {DSBN} is the same as {DOTTING}
@@ -1385,8 +1382,6 @@
     the second element of {var}
     the second to top element of the execution context stack
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
-    the sequence of code units consisting of the code units of {var} followed by the elements of {var}
-    the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
     the smallest (closest to -&infin;) integral Number value that is not less than {var}
     the smallest (closest to -&infin;) such integer
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
@@ -1500,6 +1495,14 @@
 
     # obsoleted by the merge of PR #2009:
     # the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
+
+    # obsoleted by the merge of PR #2018:
+    # the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}
+    # the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
+    # the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
+    # the code unit sequence consisting of {var} followed by {var}
+    # the sequence of code units consisting of the code units of {var} followed by the elements of {var}
+    # the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
 
     # obsoleted by the merge of PR #2021:
     # the String value consisting of the first 10 code units of {var}
@@ -1633,7 +1636,7 @@
     the Number value for {EX}
     the String {var}
     the code unit at index {EX} within {EX}
-    the code unit that is {PP_NAMED_OPERATION_INVOCATION}
+    the code unit whose value is {EX}
     the code units of {var}
     the current Realm Record
     the digits of the decimal representation of {var} (in order, with no leading zeroes)
@@ -1672,6 +1675,9 @@
     # PromiseResolveThenableJob
     # ScriptEvaluationJob
     # TopLevelModuleEvaluationJob
+
+    # obsoleted by the merge of PR #2018:
+    # the code unit that is {PP_NAMED_OPERATION_INVOCATION}
 
     # obsoleted by the merge of PR #2021:
     # the current value of {var}
