@@ -50,6 +50,7 @@
     Assert: {CONDITION_1} if and only if {CONDITION_1}.
     Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
     Assert: {CONDITION}.
+    Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
     Call {PREFIX_PAREN}.
     Choose any such {var}.
     Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
@@ -91,9 +92,6 @@
     Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
     Optionally, {SMALL_COMMAND}.
     Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
-    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.
-    Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.
-    Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.
     Perform an implementation-defined debugging action.
     Perform an implementation-defined sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
     Perform any necessary implementation-defined initialization of {var}.
@@ -207,6 +205,11 @@
     # obsoleted by the merge of PR #1907:
     # Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
 
+    # obsoleted by the merge of PR #2013:
+    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.
+    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.
+    # Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.
+
     # obsoleted by the merge of PR #2018:
     # Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.
     # Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
@@ -253,7 +256,6 @@
 # ----------------------------------------------
 
 {IF_CLOSED} :
-    If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
@@ -267,6 +269,9 @@
 
     # obsoleted by the merge of #2009:
     # If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.
+
+    # obsoleted by the merge of PR #2013:
+    # If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
 
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
@@ -307,6 +312,7 @@
     append {LITERAL} to {var}
     append {code_unit_lit} as the last code unit of {var}
     append {var} to {var}
+    apply the early error rules for {h_emu_grammar} to {var}
     change its bound value to {var}
     convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
     create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
@@ -510,7 +516,6 @@
     {CONDITION_1}, or if {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}, or {CONDITION_1}
-    {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
@@ -519,6 +524,9 @@
 
     # obsoleted by PR #2085: 
     # either {CONDITION_1} or {CONDITION_1}
+
+    # obsoleted by the merge of PR #2013:
+    # {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}
 
     # obsoleted by PR #2111: 
     # {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
@@ -549,9 +557,7 @@
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When {SETTABLE} is instantiated it will have a direct binding for {var}
     an implementation-defined debugging facility is available and enabled
-    any Early Error conditions exist
     any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
-    any elements of {var} were not matched by the parse
     both {EX} and {EX} are absent
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
@@ -589,6 +595,7 @@
     the host requires use of an exotic object to serve as {var}'s global object
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
+    the parse succeeded and no early errors were found
     the source code matching {PROD_REF} is strict mode code
     the source code matching {var} is non-strict code
     the source text matching {var} is strict mode code
@@ -692,7 +699,6 @@
     {var} contains {DSBN}
     {var} contains {LITERAL}
     {var} contains {var}
-    {var} did not conform to the grammar
     {var} does not already have a binding for {var}
     {var} does not consist of a single code unit
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
@@ -954,6 +960,11 @@
     # there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}
     # there is no such integer {var}
 
+    # obsoleted by the merge of PR #2013:
+    # any Early Error conditions exist
+    # any elements of {var} were not matched by the parse
+    # {var} did not conform to the grammar
+
     # obsoleted by the merge of PR #2021:
     # the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits
     # the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}
@@ -1107,7 +1118,7 @@
 
 {MULTILINE_EXPR} :
     a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
-    the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
+    the source text{_indent_}{nlai}{h_pre_code}{_outdent_}
     the string-concatenation of:{I_BULLETS}
     the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
 
@@ -1118,6 +1129,9 @@
     # an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}
     # an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}
     # an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
+
+    # obsoleted by the merge of PR #2013:
+    # the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
 
     # obsoleted by the merge of PR #2112:
     # a set of characters containing the sixty-three characters:{nlai}{h_figure}
@@ -1161,7 +1175,7 @@
     Type({var})
     a List of length {var} whose elements are nondeterministically chosen byte values
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
-    a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
+    a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present
     a List of {var} {LITERAL} values, indexed 1 through {var}
     a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)
     a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
@@ -1242,7 +1256,6 @@
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
-    the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {var}
     the Element Type value in {h_emu_xref} for {EX}
@@ -1255,7 +1268,7 @@
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Number value that results from rounding {EX} as described below
-    the Parse Node resulting from the parse
+    the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
     the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}
@@ -1363,10 +1376,9 @@
     the result of clamping {var} between 0 and {EX}
     the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
+    the result of evaluating {var}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
-    the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
-    the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
     the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
@@ -1495,6 +1507,13 @@
 
     # obsoleted by the merge of PR #2009:
     # the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
+
+    # obsoleted by the merge of PR #2013:
+    # a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
+    # the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
+    # the Parse Node resulting from the parse
+    # the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
+    # the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
 
     # obsoleted by the merge of PR #2018:
     # the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}

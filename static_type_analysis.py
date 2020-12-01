@@ -2274,6 +2274,7 @@ nature_to_tipe = {
         'the |ScriptBody|'               : 'Parse Node for |ScriptBody|',
         'a Parse Node for |ScriptBody|'  : 'Parse Node for |ScriptBody|',
         '|CaseClause|'                   : 'Parse Node for |CaseClause|',
+        'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
 
 
 
@@ -6013,15 +6014,16 @@ def tc_nonvalue(anode, env0):
     # ---
     # parse
 
-    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.':
-        [source_var, nonterminal, result_var1, result_var2, error_type1] = children
-        env1 = env0.ensure_expr_is_of_type(source_var, T_Unicode_code_points_)
-        assert env1 is env0
-        assert result_var1.children == result_var2.children
-        error_type1_name = error_type1.source_text()[1:-1]
-        result_type = ptn_type_for(nonterminal) | ListType(NamedType(error_type1_name))
-        result = env1.plus_new_entry(result_var1, result_type)
-        # but no result variable, hm.
+#    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.':
+#        [source_var, nonterminal, result_var1, result_var2, error_type1] = children
+#        env1 = env0.ensure_expr_is_of_type(source_var, T_Unicode_code_points_)
+#        assert env1 is env0
+#        assert result_var1.children == result_var2.children
+#        error_type1_name = error_type1.source_text()[1:-1]
+#        result_type = ptn_type_for(nonterminal) | ListType(NamedType(error_type1_name))
+#        result = env1.plus_new_entry(result_var1, result_type)
+#        # but no result variable, hm.
+# ^ obsoleted by PR 2013
 
 #    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting each of its 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
 #        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
@@ -6045,11 +6047,12 @@ def tc_nonvalue(anode, env0):
 #        # but no result variable, hm.
 # ^ obsoleted by PR 1866
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.":
-        [var, emu_xref, goal_nont, other_nont, goal_nont2] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
-        result = env1
-        # but no result variable, hm.
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.":
+#        [var, emu_xref, goal_nont, other_nont, goal_nont2] = children
+#        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
+#        result = env1
+#        # but no result variable, hm.
+# ^ obsoleted by PR 2013
 
 #    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting {var} as UTF-16 encoded Unicode code points ({h_emu_xref}). The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
 #        [var, emu_xref, var2, emu_xref2, goal_nont, error_type, var3, var4] = children
@@ -6110,10 +6113,11 @@ def tc_nonvalue(anode, env0):
 #        result = None
 # ^ obsoleted by PR 1866
 
-    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.":
-        [var, emu_xref, goal_nont] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
-        result = env1
+#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.":
+#        [var, emu_xref, goal_nont] = children
+#        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
+#        result = env1
+# ^ obsoleted by PR 2013
 
     # ----------------------------------
     # IF stuff
@@ -7205,14 +7209,15 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         result = env0
 
-    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
-        [avar, bvar, error_type1, cond, emu_grammar] = children
-        env0.assert_expr_is_of_type(avar, T_Parse_Node)
-        env0.assert_expr_is_of_type(bvar, T_Parse_Node)
-        error_type_name1 = error_type1.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
-        (t_env, f_env) = tc_cond(cond, env0); assert t_env.equals(env0); assert f_env.equals(env0)
-        result = env0
+#    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
+#        [avar, bvar, error_type1, cond, emu_grammar] = children
+#        env0.assert_expr_is_of_type(avar, T_Parse_Node)
+#        env0.assert_expr_is_of_type(bvar, T_Parse_Node)
+#        error_type_name1 = error_type1.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
+#        (t_env, f_env) = tc_cond(cond, env0); assert t_env.equals(env0); assert f_env.equals(env0)
+#        result = env0
+# ^ obsoleted by PR 2013
 
     elif p == r"{COMMAND} : Order the elements of {var} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method were invoked with {var}.":
         [avar, bvar] = children
@@ -7403,6 +7408,17 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_CharSet)
         result = env0
 
+    elif p == r"{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.":
+        [text_var, goal_var] = children
+        env0.assert_expr_is_of_type(text_var, T_Unicode_code_points_)
+        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
+        result = env0
+
+    elif p == r"{SMALL_COMMAND} : apply the early error rules for {h_emu_grammar} to {var}":
+        [_, subject_var] = children
+        env0.assert_expr_is_of_type(subject_var, T_Parse_Node)
+        result = env0
+
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
     # elif p == r"{COMMAND} : For each {EACH_THING}, if {CONDITION}, then {SMALL_COMMAND}.":
@@ -7492,7 +7508,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}",
+        # r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}", # PR 2013
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
@@ -10109,19 +10125,20 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} did not conform to the grammar":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : any elements of {var} were not matched by the parse": 
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : any Early Error conditions exist":
-        [] = children
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : {var} did not conform to the grammar":
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        return (env0, env0)
+#
+#    elif p == r"{CONDITION_1} : any elements of {var} were not matched by the parse": 
+#        [var] = children
+#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+#        return (env0, env0)
+#
+#    elif p == r"{CONDITION_1} : any Early Error conditions exist":
+#        [] = children
+#        return (env0, env0)
+# ^ obsoleted by PR 2013
 
     elif p == r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent":
         [] = children
@@ -10161,6 +10178,10 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is an integral Number":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the parse succeeded and no early errors were found":
+        [] = children
         return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
@@ -12815,9 +12836,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # return T_Parse_Node
 
-    elif p == r'{MULTILINE_EXPR} : the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}':
-        [_, nonterminal] = children
-        return (ptn_type_for(nonterminal), env0)
+#    elif p == r'{MULTILINE_EXPR} : the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}':
+#        [_, nonterminal] = children
+#        return (ptn_type_for(nonterminal), env0)
+# ^ obsoleted by PR 2013
 
     elif p == r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}":
         [nonterminal, local_ref] = children
@@ -12837,17 +12859,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (ptn_type_for(goal_nont), env0)
 # ^ obsoleted by PR 1552
 
-    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
-        [s_noi, goal_nont,
-        error_type1,
-        error_type2, emu_xref4] = children
-        #
-        env0.assert_expr_is_of_type(s_noi, T_Unicode_code_points_)
-        error_type_name1 = error_type1.source_text()[1:-1]
-        error_type_name2 = error_type2.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
-        proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
-        return (ptn_type_for(goal_nont), env0)
+#    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
+#        [s_noi, goal_nont,
+#        error_type1,
+#        error_type2, emu_xref4] = children
+#        #
+#        env0.assert_expr_is_of_type(s_noi, T_Unicode_code_points_)
+#        error_type_name1 = error_type1.source_text()[1:-1]
+#        error_type_name2 = error_type2.source_text()[1:-1]
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
+#        proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
+#        return (ptn_type_for(goal_nont), env0)
+# ^ obsoleted by PR 2013
 
 
 #    elif p == r"{EXPR} : the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
@@ -12859,13 +12882,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_Parse_Node, env0)
 # ^ obsoleted by PR 1552
 
-    elif p == r"{EXPR} : the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
-        [noi, goal_var, error_type] = children    
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
-        return (T_Parse_Node, env0)
+#    elif p == r"{EXPR} : the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
+#        [noi, goal_var, error_type] = children    
+#        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+#        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
+#        error_type_name = error_type.source_text()[1:-1]
+#        proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
+#        return (T_Parse_Node, env0)
+# ^ obsoleted by PR 2013
 
 
     # ----
@@ -14419,10 +14443,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_Tangible_ | T_throw_, env0)
 # ^ obsoleted by PR 1552
 
-    elif p == r"{EXPR} : the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
-        [noi, nont, emu_xref] = children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        return (T_Tangible_ | T_throw_, env0)
+#    elif p == r"{EXPR} : the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
+#        [noi, nont, emu_xref] = children
+#        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+#        return (T_Tangible_ | T_throw_, env0)
+# ^ obsoleted by PR 2013
 
     elif p == r"{EXPR} : the String value containing {var} occurrences of {code_unit_lit}":
         [n, lit] = children
@@ -14611,19 +14636,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
-    elif p == r"{EXPR} : the Parse Node resulting from the parse":
-        [] = children
-        return (T_Parse_Node, env0)
+#    elif p == r"{EXPR} : the Parse Node resulting from the parse":
+#        [] = children
+#        return (T_Parse_Node, env0)
+# ^ obsoleted by PR 2013
 
     elif p == r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors":
-        [error_type] = children
-        error_type_name = error_type.source_text()[1:-1]
-        return (ListType(NamedType(error_type_name)), env0)
+#    elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors":
+#        [error_type] = children
+#        error_type_name = error_type.source_text()[1:-1]
+#        return (ListType(NamedType(error_type_name)), env0)
+# ^ obsoleted by PR 2013
 
     # for PR #1961 compound_assignment
     elif p == r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}":
@@ -14680,6 +14707,25 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_MathNonNegativeInteger_, env0)
         else:
             return (T_MathReal_, env0)
+
+    elif p == r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_grammar_symbol_)
+        return (T_Parse_Node, env0)
+
+    elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present":
+        [error_type] = children
+        error_type_name = error_type.source_text()[1:-1]
+        return (ListType(NamedType(error_type_name)), env0)
+
+    elif p == r"{MULTILINE_EXPR} : the source text{_indent_}{nlai}{h_pre_code}{_outdent_}":
+        [pre_code] = children
+        return (T_Unicode_code_points_, env0)
+
+    elif p == r"{EXPR} : the result of evaluating {var}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
+        [var, _] = children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (T_Tangible_, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
