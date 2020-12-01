@@ -3215,6 +3215,8 @@ class Type(tuple):
             return subtype_memo[(A,B)]
         # No speed-up? 
 
+        if B == T_Top_: return True
+
         A_members = A.set_of_types()
         B_members = B.set_of_types()
 
@@ -5227,7 +5229,20 @@ def tc_header(header):
     if header.t_defns == []:
         return False
 
-    final_env = tc_proc(header.name, header.t_defns, init_env)
+    # Eventually, `header` will also contain (ahead of time)
+    # an indication of the operation's expected return type.
+    # We should complain about any return-points
+    # that do not conform.
+    # In the meantime, ...
+    if header.kind in ['anonymous built-in function', 'accessor property', 'function property']:
+        expected_return_type = T_Tangible_ | T_throw_ | T_empty_
+        # T_empty_ shouldn't really be allowed,
+        # but if I leave it out,
+        # I get a bunch of complaints that I think are false positives.
+    else:
+        expected_return_type = T_Top_
+
+    final_env = tc_proc(header.name, header.t_defns, init_env, expected_return_type)
 
     assert final_env is not None
 
@@ -5473,7 +5488,7 @@ def tc_header(header):
 
 proc_return_envs_stack = []
 
-def tc_proc(op_name, defns, init_env):
+def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
     assert defns
 
     header_names = sorted(init_env.vars.keys())
@@ -5513,6 +5528,9 @@ def tc_proc(op_name, defns, init_env):
         return final_env
 
     proc_return_envs_stack.append(set())
+
+    global proc_expected_return_type
+    proc_expected_return_type = expected_return_type
 
     for (i, (discriminator, body)) in enumerate(defns):
         if op_name is not None:
@@ -5588,7 +5606,13 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
 #                ????,
 #                "warning: static type of return value includes `%s`" % str(t)
 #            )
-    # or, eventually, check that the return value conforms to the proc's declared return
+
+    # Check that the return value conforms to the proc's declared return
+    if not type_of_returned_value.is_a_subtype_of_or_equal_to(proc_expected_return_type):
+        add_pass_error(
+            node,
+            f"static type of return value is {type_of_returned_value}, should be (a subtype of) {proc_expected_return_type}"
+        )
 
     if type_of_returned_value in [T_Top_, T_Normal]: # , T_TBD]:
         assert 0, str(type_of_returned_value)
