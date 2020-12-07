@@ -2362,6 +2362,7 @@ nature_to_tipe = {
     'property key'                                               : 'String | Symbol',
     'a property key'                                             : 'String | Symbol',
     'the property key'                                           : 'String | Symbol',
+    'an ECMAScript language value or a Reference Record'         : 'Tangible_ | Reference Record',
     '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
 
 }
