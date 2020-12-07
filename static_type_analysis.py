@@ -11090,6 +11090,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 T_PromiseReaction_Record,
                 T_Property_Descriptor,
                 T_boolean_value_record_,
+                T_boolean_value_record_ | T_Boolean,
                 T_integer_value_record_,
             ]:
                 # We know we're not dealing with a Completion Record
@@ -11218,6 +11219,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
         ]:
             lhs_t =  T_Reference_Record 
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t == T_boolean_value_record_ | T_Boolean:
+            lhs_t = T_boolean_value_record_
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t == T_Realm_Record | T_Undefined:
@@ -15625,7 +15630,7 @@ type_of_internal_thing_ = {
     'Values'            : ListType(T_Tangible_),
     'Capability'        : T_PromiseCapability_Record,
     'RemainingElements' : T_integer_value_record_,
-    'AlreadyCalled'     : T_boolean_value_record_,
+    'AlreadyCalled'     : T_boolean_value_record_ | T_Boolean,
 
     # 40093:
     'WeakMapData' : ListType(T_MapData_record_),
