@@ -557,9 +557,9 @@ def check_tables():
             msg_at_posn(et.start_posn, f'no id attribute for table with caption "{caption}"')
 
         header_tr = [tr for tr in et.each_descendant_named('tr')][0]
-        header_line = '; '.join(th.inner_source_text().strip() for th in header_tr.each_descendant_named('th'))
+        column_heads = [th.inner_source_text().strip() for th in header_tr.each_descendant_named('th')]
+        header_line = '; '.join(column_heads)
         if 'Field' in caption:
-            # print(header_line, ':', caption)
             if re.match(r'^(.+) Fields$', caption):
                 pass
             elif re.match(r'^Additional Fields of (.+)$', caption):
@@ -569,6 +569,20 @@ def check_tables():
                 pass
             else:
                 assert 0, caption
+            assert header_line in [
+                'Field Name; Value Type; Meaning',
+                'Field Name; Value; Meaning',
+                'Field Name; Value; Usage',
+            ], header_line
+            for tr in et.each_descendant_named('tr'):
+                if tr == header_tr: continue
+                [field_name, value_type, meaning] = [
+                    td.inner_source_text().strip()
+                    for td in tr.each_descendant_named('td')
+                ]
+                assert re.fullmatch(r'\[\[[A-Z][A-Za-z0-9]+\]\]', field_name), field_name
+                # `value_type` is limited, could be checked, but format is ad hoc
+                # `meaning` is arbitrary prose
 
         elif 'Slot' in caption:
             if re.match(r'^Internal Slots of (.+)$', caption):
