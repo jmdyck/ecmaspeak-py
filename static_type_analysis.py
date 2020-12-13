@@ -165,10 +165,6 @@ def should_create_op_info_for_algoless_section(s):
         )
         return True
 
-    if s.section_kind == 'env_rec_method':
-        assert s.section_id == 'sec-object-environment-records-createimmutablebinding-n-s'
-        return True
-
     if s.section_kind == 'numeric_method':
         return True
 
@@ -176,6 +172,13 @@ def should_create_op_info_for_algoless_section(s):
 
     # It's the kind of section that we usually want to create op info for,
     # but with some exceptions:
+
+    if s.section_kind == 'env_rec_method':
+        assert s.section_id in [
+            'sec-object-environment-records-createimmutablebinding-n-s',
+            'sec-module-environment-records-deletebinding-n',
+        ]
+        return False
 
     if s.section_kind == 'accessor_property':
         if s.section_title == 'Object.prototype.__proto__':
@@ -261,11 +264,6 @@ def create_operation_info_for_section(s):
     ]:
         # Its emu-algs aren't complete, they just replace a step in another emu-alg.
         # XXX: We could analyze them if we made the replacement.
-        return
-    elif s.section_id == 'sec-module-environment-records-deletebinding-n':
-        # "Assert: This method is never invoked."
-        # So there's no point type-checking it.
-        # (It shouldn't even be there, really.)
         return
 
     # if s.section_title.startswith('String.prototype.localeCompare'):
@@ -591,7 +589,7 @@ def create_operation_info_for_section(s):
             for line_info in spec.info_for_line_[start_ln:end_ln]:
                 line_info.suppress = True
 
-            info_holder = extract_info_from_preamble(s.block_children[p_start_i:p_end_i])
+            info_holder = extract_info_from_preamble(s.block_children[p_start_i:p_end_i], s)
             poi = info_holder.convert_to_header()
 
         # -----------------------------------
@@ -750,10 +748,6 @@ single_sentence_rules_str = r'''
         The (comparison .+), where (?P<ps>_x_ and _y_ are values), produces (.+)
         v=!OP performs the \1, returning \3
 
-        The concrete Environment Record method (?P<name>\w+) for (?P<for>.+ Environment Record)s (.+)
-        kind=concrete method
-        v=!CM \3
-
         The following steps are performed:
 
         The following steps are taken:
@@ -773,18 +767,11 @@ single_sentence_rules_str = r'''
 
         # ---------
 
-        The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>a .+) (implements .+)
-        v=!CM \4
-
-            !CM implements the corresponding.* Module Record abstract method.
+        The (?P<name>ResolveExport) (?P<kind>concrete method) of (?P<for>.+) takes (?P<pl>.+)\.
 
         The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object) that (?P<desc>is defined once for each realm.)
 
         The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps:
-
-        The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) (for|of) (?P<for>.+) is called with (?P<pl>.+).
-
-        The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) (for|of) (?P<for>.+) when called with (?P<pl>.+) performs the following steps:
 
         # ------------
 
@@ -810,16 +797,12 @@ single_sentence_rules_str = r'''
 
         # Note that none of these leave anything for the description.
 
-        This (?P<kind>abstract method) performs the following steps \(m(ost of the work is done by .+)\):
-        v=(M\2.)
-
-        This (?P<kind>abstract method) performs the following steps:
-
-
         This (?P<kind>function) takes (?P<pl>no arguments).
 
         This function (.+)
         v=!FUNC \1
+
+        This concrete method performs the following steps when called:
 
     # ==========================================================================
     # Sentences that start with "When"
@@ -827,16 +810,6 @@ single_sentence_rules_str = r'''
         # (Ultimately, almost nothing falls through to the description.)
 
         # When the ...
-
-        When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>_\w+_) is called(.+)
-        v=When it is called\4
-
-        When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>an? .+ _\w+_) is called(.+)
-        v=When it is called\4
-
-        When the (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (a bound function exotic object), _F_(, which| that) was created using the bind function is called(.+)
-        for=\3 _F_
-        v=When it is called\5
 
         When the `(?P<name>Date)` (function) is called(.+)
         kind=constructor
@@ -899,31 +872,10 @@ single_sentence_rules_str = r'''
         # v=The operation \1
 
     # ==========================================================================
-    # Sentences that start with a parameter name:
-
-        (?P<ps>_\w+_ is a Module Record, and _N2_ is .+).
-
-        (?P<ps>_\w+_ is a possibly empty List of ECMAScript language values).
-
-    # ==========================================================================
     # Miscellaneous starts:
 
         Given (?P<pl>zero or more arguments), (calls ToNumber .+)
         v=!FUNC \2
-
-        If (Boolean argument) _D_ (.+)
-        # ps=\1 _D_
-        v=If _D_ \2
-
-        If (the Boolean argument) _S_ (.+)
-        # ps=\1 _S_
-        v=If _S_ \2
-
-        (.+ of) the Boolean argument _S_.
-        v=\1 _S_.
-
-        (.+ depends upon the value of) the _S_ argument:
-        v=\1 _S_.
 
         # (Don't extract parameter info ('ps') from env-rec preambles,
         # because you'll get lots of warnings re mismatches.)
@@ -1039,9 +991,6 @@ single_sentence_rules_str = r'''
         (.+) as follows:
         v=\1.
 
-        (.+ determines .+):
-        v=\1.
-
 '''
 
 class ExtractionRules:
@@ -1107,6 +1056,10 @@ class ExtractionRules:
                 # no point trying further rules
                 break
 
+        # debugging:
+        # if self == single_sentence_rules and subject == orig_subject:
+        #     print(f"No change: {orig_subject}")
+
         return subject
 
 class HeaderConstructionRule:
@@ -1129,24 +1082,34 @@ class HeaderConstructionRule:
 multi_sentence_rules = ExtractionRules(multi_sentence_rules_str)
 single_sentence_rules = ExtractionRules(single_sentence_rules_str)
 
-def extract_info_from_preamble(preamble_nodes):
+def extract_info_from_preamble(preamble_nodes, section):
     # PR #1914 established a consistent format for abstract operation preambles
-    def looks_like_a_standard_ao_preamble(preamble_text):
-        return (
+    if len(preamble_nodes) == 1:
+        preamble_node = preamble_nodes[0]
+        preamble_text = preamble_node.inner_source_text().strip()
+        if (
             preamble_text.startswith('The abstract operation')
-            # and
-            # 'takes' in preamble_text
-        )
-    tao_nodes = [
-        preamble_node
-        for preamble_node in preamble_nodes
-        if looks_like_a_standard_ao_preamble(preamble_node.inner_source_text().strip())
-    ]
-    if tao_nodes:
-        assert len(tao_nodes) == 1
-        assert len(preamble_nodes) == 1
-        ih = extract_info_from_standard_ao_preamble(preamble_nodes[0])
-        if ih: return ih
+            or
+            (preamble_text.startswith('The ') and ' takes ' in preamble_text)
+            and
+            not preamble_text.startswith("The `")
+        ):
+            ih = extract_info_from_standard_preamble(preamble_nodes[0])
+            if ih: return ih
+    
+    # Okay, so this preamble has a non-standard format.
+    if section.section_kind in [
+        'anonymous_built_in_function',
+        'accessor_property',
+        'function_property',
+        'CallConstruct',
+    ]:
+        # no standard yet
+        pass
+    else:
+        oh_warn()
+        oh_warn(f"non-standard preamble for {section.section_kind}:")
+        oh_warn(section.section_num, section.section_title, section.section_id)
 
     info_holder = PreambleInfoHolder()
 
@@ -1424,7 +1387,7 @@ for line in rec_method_declarations.split('\n'):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def extract_info_from_standard_ao_preamble(preamble_node):
+def extract_info_from_standard_preamble(preamble_node):
     preamble_text = preamble_node.inner_source_text().strip()
 
     sentences = re.split('(?<=\.) +', preamble_text)
@@ -1437,13 +1400,14 @@ def extract_info_from_standard_ao_preamble(preamble_node):
     # The first sentence in the preamble:
 
     for pattern in [
-        r'The abstract operation (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
-        r'The abstract operation (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
-        r'The abstract operation (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
+        r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
+        r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
+        r'The (?P<kind>abstract operation) (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
+        r'The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>.+) takes (?P<pl>.+)\.',
+        r'The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>.+) takes (?P<pl>.+)\.',
     ]:
         mo = re.fullmatch(pattern, sentence0)
         if mo:
-            info_holder.add('kind', 'abstract operation')
             for (key, value) in mo.groupdict().items():
                 info_holder.add(key, value)
             break
@@ -1496,6 +1460,8 @@ def extract_info_from_standard_ao_preamble(preamble_node):
                 ('It returns the global object used by the currently running execution context.', 'an object'),
                 ('It returns the loaded value.', 'TBD'),
                 ('It returns the sequence of Unicode code points that .+', 'a sequence of Unicode code points'),
+                ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
+                ('It returns the value of its bound identifier whose name is the value of the argument _N_.', 'an ECMAScript language value'),
                 ('It returns the value of the \*"length"\* property of an array-like object.', 'a non-negative integer'),
                 ('It returns the value of the \*"length"\* property of an array-like object \(as a non-negative integer\).', 'a non-negative integer'),
             ]:
@@ -2624,17 +2590,6 @@ class Header:
 
         if self.name in predeclared_rec_method_info:
 
-            if section.parent.parent.section_title in ['Environment Records', 'The Environment Record Type Hierarchy']:
-                mo = re.fullmatch(r'(\w+) Environment Records', section.parent.section_title)
-                assert mo
-                f = mo.group(1).lower() + ' Environment Record'
-                if self.for_phrase is None:
-                    self.for_phrase = f
-                else:
-                    assert self.for_phrase == f
-            else:
-                assert self.for_phrase != ''
-
             (pd_param_names, pd_param_nature_, pd_return_nature_normal, pd_return_nature_abrupt) = predeclared_rec_method_info[self.name]
             assert self.param_names == pd_param_names
             for param_name in self.param_names:
@@ -2682,26 +2637,6 @@ class Header:
 
             checked_set('return_nature_normal', pd_return_nature_normal)
             checked_set('return_nature_abrupt', pd_return_nature_abrupt)
-
-        # ------------------------------------------------------------
-
-        # For the internal methods of ordinary objects, 
-        # the preambles don't say that they're for ordinary objects.
-        # (Unlike the internal methods of everything else.)
-
-        if self.kind == 'internal method' and section.parent.section_title == 'Ordinary Object Internal Methods and Internal Slots':
-            assert self.for_phrase == '_O_'
-            self.for_phrase = 'ordinary object _O_'
-
-        # ------------------------------------------------------------
-
-        if section.section_id == 'sec-built-in-function-objects-construct-argumentslist-newtarget':
-            # The clause just says that it's like [[Call]] except for one step,
-            # so it doesn't say anything about the parameters.
-            # Presumably they're the same as for [[Call]].
-            # Rather than fish those out, hard-code this:
-            assert self.param_nature_['_argumentsList_'] == 'TBD'
-            self.param_nature_['_argumentsList_'] = 'List of Tangible_'
 
     # --------------------------------------------------------------------------
 
@@ -9434,9 +9369,10 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
  
-    elif p == r"{CONDITION_1} : This method is never invoked. See {h_emu_xref}":
-        [emu_xref] = children
-        return (None, env0)
+#    elif p == r"{CONDITION_1} : This method is never invoked. See {h_emu_xref}":
+#        [emu_xref] = children
+#        return (None, env0)
+# ^ obsoleted by PR 1994
 
     # for PR #1961 compound_assignment
     elif p == r"{CONDITION_1} : Execution cannot reach this step":
@@ -13012,9 +12948,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (T_Object, env0)
 
-    elif p == r"{EXPR} : the arguments object":
-        [] = children
-        return (T_Object, env0)
+#    elif p == r"{EXPR} : the arguments object":
+#        [] = children
+#        return (T_Object, env0)
+# ^ obsoleted by PR 1994
 
     elif p == r"{EXPR} : {var}'s intrinsic object named {var}":
         [r_var, n_var] = children
@@ -13463,7 +13400,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # return Environment_Record
 
     elif p in [
-        r'{EXPR} : the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked',
+        # r'{EXPR} : the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked', # PR 1994
         r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings',
         r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record',
     ]:
@@ -13952,13 +13889,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsbn_name == 'DateValue'
         return (T_Number, env0)
 
-    elif p == r"{EXPR} : this Source Text Module Record":
-        [] = children
-        return (T_Source_Text_Module_Record, env0)
-
-    elif p == r"{EXPR} : this Cyclic Module Record":
-        [] = children
-        return (T_Cyclic_Module_Record, env0)
+#    elif p == r"{EXPR} : this Source Text Module Record":
+#        [] = children
+#        return (T_Source_Text_Module_Record, env0)
+#
+#    elif p == r"{EXPR} : this Cyclic Module Record":
+#        [] = children
+#        return (T_Cyclic_Module_Record, env0)
+# ^ obsoleted by PR 1994
 
 #    elif p in [
 #        r"{EX} : ScriptEvaluationJob",
