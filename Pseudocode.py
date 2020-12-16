@@ -909,7 +909,7 @@ def analyze_changes_section(section):
             if (
                 re.fullmatch(fr'The rules for the following production in {emu_xref_re} are modified with the addition of the <ins>highlighted</ins> text:', p_ist)
                 or
-                re.fullmatch(fr'The following Early Error rule is added to those in {emu_xref_re}\. .+', p_ist)
+                re.fullmatch(fr'The following Early Error rule is added to those in {emu_xref_re}\. (.|\n)+', p_ist)
                 or
                 re.fullmatch(fr'The content of subclause {emu_xref_re} is replaced with the following:', p_ist)
             ):
