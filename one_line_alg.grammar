@@ -20,7 +20,7 @@
     Throw a {ERROR_TYPE} exception.
 
 {CONDITION} :
-    {var} is the empty String (its length is zero)
+    {var} is the empty String (its length is 0)
     {var} is {LITERAL}
     {var} is {LITERAL}, {LITERAL}, or {LITERAL}
 
