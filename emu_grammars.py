@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import atexit, subprocess, re, time, sys, pdb
+import atexit, subprocess, re, time, sys, pdb, json
 from collections import namedtuple, defaultdict, OrderedDict
 
 import DFA
@@ -1204,24 +1204,6 @@ def u_item_matches_d_item(u_item_n, d_item_n):
 
     return note
 
-#    if (
-#        t == A_but_only_if
-#        and
-#        d_item_n.c == "the integer value of DecimalEscape is 0"
-#        and
-#        u_item_n.c == "&hellip;"
-#    ):
-#        return 'ellipsify condition in but_only_if'
-#
-#    if (
-#        t == A_but_only_if
-#        and
-#        d_item_n.c == "the integer value of |DecimalEscape| is 0"
-#        and
-#        u_item_n.c == "&hellip;"
-#    ):
-#        return 'ellipsify condition in but_only_if'
-
 def d_item_doesnt_require_a_matching_u_item(d_item_n):
     if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
         return {'annotations suppressed': d_item_n, 'L-900': 1}
@@ -1631,9 +1613,6 @@ def generate_es_parsers():
 
 # ------------------------------------------------------------------------------
 
-# from emu_grammar_tokens import *  # e.g. T_lit, LAX, A_guard
-# terminal_types = [T_lit, T_nc, T_u_p, T_named ]
-
 class Grammar:
     def __init__(this_grammar, level, arena):
         this_grammar.level = level
@@ -1647,6 +1626,14 @@ class Grammar:
         lhs_symbol = production_n._lhs_symbol
         assert lhs_symbol not in this_grammar.prodn_for_lhs_, lhs_symbol
         this_grammar.prodn_for_lhs_[lhs_symbol] = production_n
+
+    # --------------------------------------------------------------------------
+
+    def get_name_kind(this_grammar, name):
+        if name in this_grammar.prodn_for_lhs_:
+            return 'NT'
+        else:
+            return 'T_named'
 
     # --------------------------------------------------------------------------
 
@@ -1694,53 +1681,271 @@ class Grammar:
     # ==========================================================================
 
     def generate_parser(this_grammar):
-        if this_grammar.level == 'lexical':
-            this_grammar.explode_multichar_literals()
-            this_grammar.distinguish_Token_from_NonToken() #??
+        # We don't actually generate a parser,
+        # we just put the grammar in a more parser-friendly form.
+
+        stderr('    simplify ...')
+
+        # We simplify it in a few senses:
+        # - Convert from GNodes to built-in (JSON-friendly) data structures.
+        # - Eliminate certain features:
+        #     - Eliminate grammatical parameters (lhs-subscript, rhs-guard, rhs-subscript)
+        #       by 'expanding' productions more-or-less as described in the spec.
+        #     - Eliminate rhs-labels.
+        #     - Eliminate multi-character literals in the lexical grammar.
+
+        # Put the expanded set of productions here:
+        this_grammar.exp_prodns = OrderedDict()
+
+        # this_grammar.handle_multiple_goal_symbols()
+        # Don't need this for Earley approach.
+
+        # if this_grammar.level == 'lexical': this_grammar.distinguish_Token_from_NonToken() #??
+
+        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
+            if 0:
+                print()
+                print('    ', lhs_symbol, production_n._param_names)
+                for rhs_n in production_n._rhss:
+                    print('        ', rhs_n)
+
+            for params_setting in each_params_setting(production_n._param_names):
+                for rhs_n in production_n._rhss:
+                    this_grammar.simplify_prod(params_setting, lhs_symbol, rhs_n)
+
+        if this_grammar.level == 'lexical': this_grammar.make_InputElement_common()
+
+        # this_grammar.print_exp_prodns()
 
         this_grammar.save_as_json()
 
-        if 0:
-            # An LR approach, which bogged down
-            # when I tried to handle lookahead-restrictions:
-            this_grammar.expand_abbreviations()
-            this_grammar.print_exp_prodns()
-            this_grammar.calc_min_length()
-            this_grammar.compute_firstk()
+    # ==========================================================================
 
-            # Have to exclude lexicalB because it's incomplete.
-            # (It doesn't 'duplicate' all prodns that must have 'N' added as grammatical param.)
-            if this_grammar.name != 'lexicalB':
-                this_grammar.generate_LR0_automaton()
+    def handle_multiple_goal_symbols(this_grammar):
 
-    def explode_multichar_literals(this_grammar):
-        # mcl = "multicharacter literal",
-        #
-        #" A <em>lexical grammar</em> for ECMAScript ...
-        #" has as its terminal symbols Unicode code points ...
-        #
-        # So, in the lexical grammar, we explode multicharacter literals.
+        this_grammar.start_symbol = {'T': 'NT', 'n': '$multigoal'}
+        this_grammar.eoi_symbol = {'T': 'T_named', 'n': 'EOI'}
+        for goal_symbol in this_grammar.goal_symbols:
+            # kludge:
+            if goal_symbol == 'Pattern':
+                exp_goal_symbols = ['Pattern~U~N', 'Pattern~U+N', 'Pattern+U+N']
 
-        def is_mcl(rhs_item_n):
-            return rhs_item_n.kind == 'BACKTICKED_THING' and len(rhs_item_n._chars)>1
+            elif goal_symbol in [
+                'ArrowFormalParameters',
+                'AssignmentPattern',
+                'ParenthesizedExpression',
+                'CallMemberExpression',
+            ]:
+                exp_goal_symbols = [
+                    goal_symbol + '~Yield~Await',
+                    goal_symbol + '~Yield+Await',
+                    goal_symbol + '+Yield~Await',
+                    goal_symbol + '+Yield+Await',
+                ]
 
-        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
-            for rhs_n in production_n._rhss:
-                if any(is_mcl(rhs_item_n) for rhs_item_n in rhs_n._rhs_items):
-                    # stderr(f"exploding things in {rhs_n}")
-                    new_rhs_items = []
-                    for rhs_item_n in rhs_n._rhs_items:
-                        if is_mcl(rhs_item_n):
-                            for char in rhs_item_n._chars:
-                                #XXX kludgey
-                                new_node = GNode(0, 0, 'BACKTICKED_THING', [])
-                                new_node._chars = char
-                                new_rhs_items.append(new_node)
-                        else:
-                            new_rhs_items.append(rhs_item_n)
-                    rhs_n._rhs_items = new_rhs_items
+            else:
+                exp_goal_symbols = [goal_symbol]
+
+            # When there are multiple possible goal symbols,
+            # we could generate a separate parser for each,
+            # but that would be inefficient in time+space+attention,
+            # because they'd be largely identical.
+            # So instead, for each goal_symbol G,
+            # we augment the grammar with a production of the form:
+            #     $multigoal -> $prep_for_G  G  EOI
+            # where $prep_for_G is an ad hoc terminal that we'll feed to the parser
+            # to indicate which goal_symbol we're interested in.
+            for exp_goal_symbol in exp_goal_symbols:
+                prep_symbol = { 'T': 'T_named', 'n': '$prep_for_' + exp_goal_symbol}
+                this_grammar.add_exp_prod1(
+                    this_grammar.start_symbol['n'],
+                    [prep_symbol, {'T': 'NT', 'n': exp_goal_symbol}, this_grammar.eoi_symbol]
+                )
 
     # ==========================================================================
+
+    def simplify_prod(this_grammar, params_setting, lhs_symbol, rhs_n):
+        exp_lhs_symbol = lhs_symbol + ''.join(params_setting)
+        assert rhs_n.kind in ['RHS_LINE', 'BACKTICKED_THING'], rhs_n.kind
+
+        # A RHS_LINE can have a guard.
+        if rhs_n.kind == 'RHS_LINE':
+            (optional_guard_n, rhs_body_n, optional_label_n) = rhs_n.children
+
+            if all(
+                guard_param_n.source_text() in params_setting
+                for guard_param_n in optional_guard_n.children
+            ):
+                # The guard succeeds (in the current `params_setting`).
+                pass
+            else:
+                # The guard fails.
+                return
+
+        exp_rhs = []
+
+        for (i, rhs_item_n) in enumerate(rhs_n._rhs_items):
+
+            if rhs_item_n.kind == 'PARAMS':
+                # This is a guard, and we've already determined that it succeeds.
+                assert i == 0
+            elif rhs_item_n.kind == 'LABEL':
+                assert i == len(rhs_n._rhs_items)-1
+
+            # ----------------------------------------
+
+            elif rhs_item_n.kind == 'GNT':
+                nk = this_grammar.get_name_kind(rhs_item_n._nt_name)
+                exp_name = expand_nt_wrt_params_setting(rhs_item_n, params_setting)
+                if rhs_item_n._is_optional:
+                    # The spec says that a RHS with N optionals
+                    # is an abbreviation for 2^N RHSs,
+                    # one for each combination of optionals being present/absent.
+                    # However, during parsing,
+                    # you want all 2^N to be instances of the same production,
+                    # which is harder if they come from different productions.
+                    # So instead, treat X? as a non-terminal, defined X? := X | epsilon
+                    opt_exp_name = exp_name + '?'
+                    if opt_exp_name not in this_grammar.exp_prodns:
+                        this_grammar.add_exp_prod1( opt_exp_name, [{'T': nk, 'n': exp_name}] )
+                        this_grammar.add_exp_prod1( opt_exp_name, [] )
+                        # Conceivably, the parser could infer these rules.
+                    exp_rhs.append({'T': 'NT', 'n': opt_exp_name})
+                else:
+                    exp_rhs.append({'T': nk, 'n': exp_name})
+
+            elif rhs_item_n.kind == 'BACKTICKED_THING':
+                chars = rhs_item_n._chars
+                if this_grammar.level == 'lexical' and len(chars) > 1:
+                    #" A <em>lexical grammar</em> for ECMAScript ...
+                    #" has as its terminal symbols Unicode code points ...
+                    #
+                    # So, in the lexical grammar, we explode multicharacter literals.
+                    for char in chars:
+                        exp_rhs.append({'T': 'T_lit', 'c': char})
+                else: 
+                    exp_rhs.append({'T': 'T_lit', 'c': chars})
+
+            elif rhs_item_n.kind  == 'NAMED_CHAR':
+                exp_rhs.append({'T': 'T_named', 'n': rhs_item_n.groups[0]})
+
+            elif rhs_item_n.kind == 'U_PROP':
+                exp_rhs.append({'T': 'T_u_p', 'p': rhs_item_n.groups[0]})
+
+            elif rhs_item_n.kind == 'U_RANGE':
+                exp_rhs.append({'T': 'T_u_r', 'rlo': rhs_item_n.groups[0], 'rhi': rhs_item_n.groups[1]})
+
+            elif rhs_item_n.kind == 'U_ANY':
+                exp_rhs.append({'T': 'T_u_r', 'rlo': '0x0000', 'rhi': '0x10FFFF'})
+
+            elif rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET']:
+
+                def convert_terminal_seq_n(terminal_seq_n):
+                    assert terminal_seq_n.kind == 'TERMINAL_SEQ'
+                    ts = []
+                    for terminal_item_n in terminal_seq_n.children:
+                        if terminal_item_n.kind == 'BACKTICKED_THING':
+                            t = {'T': 'T_lit', 'c': terminal_item_n._chars}
+                        elif terminal_item_n.kind == 'NAMED_CHAR':
+                            t = {'T': 'T_named', 'n': terminal_item_n.groups[0]}
+                        elif terminal_item_n.kind == 'NLTH_BAR':
+                            t = {'T': 'C_no_LT_here'}
+                        else:
+                            t = str(terminal_item_n)
+                        ts.append(t)
+                    return ts
+
+                if rhs_item_n.kind == 'LAC_SINGLE':
+                    [lac_single_op, terminal_seq_n] = rhs_item_n.children
+                    matches = {
+                        '==': True,
+                        '!=': False,
+                    }[lac_single_op.source_text()]
+                    rsymbol = {'T': 'C_lookahead', 'matches': matches, 'tss': [convert_terminal_seq_n(terminal_seq_n)]}
+
+                elif rhs_item_n.kind == 'LAC_SET':
+                    [lac_set_operand_n] = rhs_item_n.children
+                    if lac_set_operand_n.kind == 'NT':
+                        nt_name = lac_set_operand_n._nt_name
+                        # (could precompute these, but probably not worth it)
+                        la_prodn = this_grammar.prodn_for_lhs_[nt_name]
+                        tss = []
+                        for la_rhs_n in la_prodn._rhss:
+                            assert la_rhs_n.kind == 'BACKTICKED_THING'
+                            t = {'T': 'T_lit', 'c': la_rhs_n._chars}
+                            ts = [t]
+                            tss.append(ts)
+                    elif lac_set_operand_n.kind == 'SET_OF_TERMINAL_SEQ':
+                        tss = []
+                        for terminal_seq_n in lac_set_operand_n.children:
+                            tss.append(convert_terminal_seq_n(terminal_seq_n))
+                    else:
+                        assert 0
+                    rsymbol = {'T': 'C_lookahead', 'matches': False, 'tss': tss}
+
+                else:
+                    assert 0
+
+                exp_rhs.append(rsymbol)
+
+            elif rhs_item_n.kind == 'BUT_ONLY':
+                exp_rhs.append({'T': 'C_but_only_if', 'c': decode_entities(rhs_item_n.groups[0])})
+
+            elif rhs_item_n.kind == 'NLTH':
+                exp_rhs.append({'T': 'C_no_LT_here'})
+
+            elif rhs_item_n.kind == 'NT_BUT_NOT':
+
+                def convert_nt(nt_n):
+                    nt_name = nt_n._nt_name
+                    if nt_n.kind == 'GNT':
+                        assert nt_n._params == []
+                        assert nt_n._is_optional == False
+                    elif nt_n.kind == 'NT':
+                        pass
+                    else:
+                        assert 0
+                    #
+                    nk = this_grammar.get_name_kind(nt_name)
+                    return {'T': nk, 'n': nt_name}
+
+                (nt_n, exclusion_n) = rhs_item_n.children
+
+                rsymbol = convert_nt(nt_n)
+                exp_rhs.append(rsymbol)
+
+                b = []
+                for excludable_n in exclusion_n._excludables:
+                    if excludable_n.kind == 'NT':
+                        ex_symbol = convert_nt(excludable_n)
+                    elif excludable_n.kind == 'BACKTICKED_THING':
+                        ex_symbol = {'T': 'T_lit', 'c': excludable_n._chars}
+                    else:
+                        assert 0
+                    b.append(ex_symbol)
+                rsymbol = {'T': 'C_but_not', 'b': b}
+                exp_rhs.append(rsymbol)
+
+            else:
+                assert 0, rhs_item_n
+
+        this_grammar.add_exp_prod1( exp_lhs_symbol, exp_rhs )
+
+    # ==========================================================================
+
+    def add_exp_prod1(this_grammar, exp_lhs, exp_rhs):
+        if exp_lhs not in this_grammar.exp_prodns:
+            this_grammar.exp_prodns[exp_lhs] = []
+        this_grammar.exp_prodns[exp_lhs].append( exp_rhs )
+
+    # ==========================================================================
+
+    def make_InputElement_common(this_grammar):
+        assert this_grammar.level == 'lexical'
+        this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'WhiteSpace'}])
+        this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'LineTerminator'}])
+        this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'Comment'}])
+        this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'CommonToken'}])
 
     def distinguish_Token_from_NonToken(this_grammar):
         assert this_grammar.level == 'lexical'
@@ -1770,379 +1975,6 @@ class Grammar:
         production_n._param_names = []
         this_grammar.prodn_for_lhs_['_NonToken'] = production_n
 
-    # ==========================================================================
-
-    def save_as_json(this_grammar):
-        filename = '%s_cfps.json' % this_grammar.name
-        f = shared.open_for_output(filename)
-        def put(*args): print(*args, file=f)
-
-        def to_json(x):
-            if x is None:
-                return 'null'
-            elif type(x) == bool:
-                return 'true' if x else 'false'
-            elif type(x) == str:
-                return (
-                    '"'
-                    + x.replace('\\', '\\\\').replace('"', '\\"')
-                    + '"'
-                )
-            elif type(x) in [list,tuple]:
-                return '[' + ', '.join(to_json(e) for e in x) + ']'
-            elif hasattr(x, 'items'):
-                return (
-                '{'
-                + ', '.join(
-                    '"%s": %s' % (name, to_json(value))
-                    for (name, value) in x.items()
-                    )
-                + '}'
-                )
-            else:
-                assert 0, x
-
-        def convert_lac(lac_n):
-            if lac_n.kind == 'LAC_SINGLE':
-                [lac_single_op, terminal_seq_n] = lac_n.children
-                T = {
-                    '==': 'LAI',
-                    '!=': 'LAX',
-                }[lac_single_op.source_text()]
-                return {'T': T, 'ts': [convert_terminal_seq_n(terminal_seq_n)]}
-
-            elif lac_n.kind == 'LAC_SET':
-                [lac_set_operand_n] = lac_n.children
-                if lac_set_operand_n.kind == 'NT':
-                    ts = [{'T': 'GNT', 'n': lac_set_operand_n.source_text(), 'a': [], 'o': False}]
-                elif lac_set_operand_n.kind == 'SET_OF_TERMINAL_SEQ':
-                    ts = []
-                    for terminal_seq_n in lac_set_operand_n.children:
-                        ts.append(convert_terminal_seq_n(terminal_seq_n))
-                else:
-                    assert 0
-                return {'T': 'LAX', 'ts': ts}
-            else:
-                assert 0
-
-        def convert_terminal_seq_n(terminal_seq_n):
-            ts = []
-            for terminal_item_n in terminal_seq_n.children:
-                if terminal_item_n.kind == 'BACKTICKED_THING':
-                    t = {'T': 'T_lit', 'c': terminal_item_n._chars}
-                elif terminal_item_n.kind == 'NAMED_CHAR':
-                    t = {'T': 'T_nc', 'n': terminal_item_n.source_text()[4:-4]}
-                elif terminal_item_n.kind == 'NLTH_BAR':
-                    t = {'T': 'A_no_LT'}
-                else:
-                    t = str(terminal_item_n)
-                ts.append(t)
-            return ts
-
-        # These are symbols that appear in both the syntactic and lexical grammars.
-        # In the lexical, they're nonterminals, but in the syntactic, they're terminals.
-        # (So the 'nt' in 'bilevel_nt_names' is a misnomer,
-        # but the metagrammar identifies them as non-terminals anyway...)
-        # XXX This should be deduced rather than hardcoded.
-        bilevel_nt_names = [
-            'IdentifierName',
-            'NumericLiteral',
-            'StringLiteral',
-            'RegularExpressionLiteral',
-            'TemplateHead',
-            'NoSubstitutionTemplate',
-            'TemplateMiddle',
-            'TemplateTail'
-        ]
-
-        def convert_nt(nt_n):
-            nt_name = nt_n._nt_name
-            if nt_n.kind == 'GNT':
-                args = nt_n._params
-                is_optional = nt_n._is_optional
-            elif nt_n.kind == 'NT':
-                args = []
-                is_optional = False
-            else:
-                assert 0
-            #
-            if this_grammar.level == 'syntactic' and nt_name in bilevel_nt_names:
-                assert args == []
-                assert is_optional == False
-                return {'T': 'T_named', 'n': nt_name}
-            else:
-                a = [
-                    {'T': 'Arg', 's': sign, 'n': name}
-                    for (sign, name) in args
-                ]
-                return {'T': 'GNT', 'n': nt_name, 'a': a, 'o': is_optional}
-
-        #XXX This code is just an interim mess that mostly reproduces what the former code did.
-
-        # all_params = set()
-        # all_types = set()
-        put('[')
-        n_rhss = 0
-        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
-
-            # for param in production_n._param_names: all_params.add(param)
-
-            for rhs_n in production_n._rhss:
-                n_rhss += 1
-                if n_rhss > 1: put(',')
-                put('{')
-                put('  "n": %d,' % n_rhss)
-                put('  "lhs": "%s",' % lhs_symbol)
-                put('  "params": [%s],' % ','.join('"%s"' % param for param in production_n._param_names))
-                if rhs_n._rhs_items and rhs_n._rhs_items[0].kind == 'PARAMS':
-                    p0 = rhs_n._rhs_items[0].children[0]
-                    put('  "guard": {"s":"%s", "n":"%s"},' % p0.groups)
-                else:
-                    put('  "guard": null,')
-
-                saved_pre = None
-                runit = None
-                runits = []
-                for (r,rhs_item_n) in enumerate(rhs_n._rhs_items):
-                    K = rhs_item_n.kind
-                    # all_types.add(rhs_item_n.T)
-
-                    if K == 'PARAMS':
-                        assert r == 0
-                        # already handled above
-                    elif K == 'LABEL':
-                        assert r == len(rhs_n._rhs_items) - 1
-                        # doesn't contribute to parser
-
-                    # Things that attach to the following symbol:
-                    elif (
-                        (K.startswith('LAC_') and r < len(rhs_n._rhs_items) - 1)
-                    ):
-                        assert saved_pre is None
-                        saved_pre = convert_lac(rhs_item_n)
-
-                    # Things that attach to the preceding symbol:
-                    elif (
-                        K in ['BUT_ONLY', 'NLTH']
-                        or
-                        (K.startswith('LAC_') and r == len(rhs_n._rhs_items) - 1)
-                    ):
-                        if K == 'NLTH':
-                            post = {'T': 'A_no_LT'}
-                        elif K == 'BUT_ONLY':
-                            post = {'T': 'A_but_only_if', 'c': decode_entities(rhs_item_n.groups[0])}
-                        elif K.startswith('LAC_'):
-                            post = convert_lac(rhs_item_n)
-                        else:
-                            post = str(rhs_item_n)
-
-                        assert runit is not None
-                        assert runit['post'] is None
-                        runit['post'] = post
-
-                    elif K == 'NT_BUT_NOT':
-                        (nt_n, exclusion_n) = rhs_item_n.children
-
-                        b = []
-                        for excludable_n in exclusion_n._excludables:
-                            if excludable_n.kind == 'NT':
-                                ex_symbol = convert_nt(excludable_n)
-                            elif excludable_n.kind == 'BACKTICKED_THING':
-                                ex_symbol = {'T': 'T_lit', 'c': excludable_n._chars}
-                            else:
-                                assert 0
-                            b.append(ex_symbol)
-                        post = {'T': 'A_but_not', 'b': b}
-
-                        runit = OrderedDict(
-                            [('pre', None), ('rsymbol', convert_nt(nt_n)), ('post', post)]
-                        )
-                        runits.append(runit)
-
-                    else:
-                        if K == 'GNT':
-                            rsymbol = convert_nt(rhs_item_n)
-                        elif K == 'BACKTICKED_THING':
-                            rsymbol = {'T': 'T_lit', 'c': rhs_item_n._chars}
-                        elif K == 'NAMED_CHAR':
-                            rsymbol = {'T': 'T_nc', 'n': rhs_item_n.source_text()[4:-4]}
-                        elif K == 'U_ANY':
-                            rsymbol = {'T': 'T_u_p', 'p': None}
-                        elif K == 'U_PROP':
-                            rsymbol = {'T': 'T_u_p', 'p': rhs_item_n.groups[0]}
-                        elif K == 'U_RANGE':
-                            rsymbol = {'T': 'T_u_r', 'rlo': rhs_item_n.groups[0], 'rhi': rhs_item_n.groups[1]}
-                        else:
-                            assert 0, K
-
-                        runit = OrderedDict(
-                            [('pre', saved_pre), ('rsymbol', rsymbol), ('post', None)]
-                        )
-                        runits.append(runit)
-                        saved_pre = None
-
-                if saved_pre:
-                    runits.append(saved_pre)
-
-                put('  "rhs": [')
-                prefix = '      '
-                for runit in runits:
-                    put(prefix + to_json(runit))
-                    prefix = '    , '
-                put('  ]')
-
-                put('}')
-        put(']')
-
-        # print('params:', sorted(list(all_params)))
-        # print('types:', sorted(list(all_types)))
-
-    # ==========================================================================
-
-    #XXX From here down, the code has not been updated to the new GNode representation.
-
-    def expand_abbreviations(this_grammar):
-        # Expand productions with respect to optionals and parameters.
-        # (Expanding wrt parameters eliminates A_guard items.
-        # Also eliminate A_id items, as they don't contribute.)
-        # Generally, convert the grammar to something closer to a CFG.
-
-        stderr('    expand_abbreviations ...')
-
-        # Put the expanded set of productions here:
-        this_grammar.exp_prodns = OrderedDict()
-
-        this_grammar.start_symbol = SNT('START')
-        this_grammar.eoi_symbol = T_named('EOI')
-        for goal_symbol in this_grammar.goal_symbols:
-            # kludge:
-            if goal_symbol == 'Pattern':
-                goal_symbols = ['Pattern~U~N', 'Pattern~U+N', 'Pattern+U+N']
-
-            elif goal_symbol in [
-                'ArrowFormalParameters',
-                'AssignmentPattern',
-                'ParenthesizedExpression',
-                'CallMemberExpression',
-            ]:
-                goal_symbols = [
-                    goal_symbol + '~Yield~Await',
-                    goal_symbol + '~Yield+Await',
-                    goal_symbol + '+Yield~Await',
-                    goal_symbol + '+Yield+Await',
-                ]
-
-            else:
-                goal_symbols = [goal_symbol]
-
-            # When there are multiple possible goal symbols,
-            # we could generate a separate parser for each,
-            # but that would be inefficient in time+space+attention,
-            # because they'd be largely identical.
-            # So instead, for each goal_symbol G,
-            # we augment the grammar with a production of the form:
-            #     START -> prep_for_G  G  EOI
-            # where prep_for_G is an ad hoc terminal that we'll feed to the parser
-            # to indicate which goal_symbol we're interested in.
-            for goal_symbol in goal_symbols:
-                prep_symbol = T_named('prep_for_' + goal_symbol)
-                this_grammar.add_exp_prod1(
-                    this_grammar.start_symbol.n,
-                    [prep_symbol, SNT(goal_symbol), this_grammar.eoi_symbol]
-                )
-
-        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
-            if 0:
-                print()
-                print('    ', lhs_symbol, production_n._param_names)
-                for rhs_n in production_n._rhss:
-                    print('        ', rhs_n)
-
-            for params_setting in each_params_setting(production_n._param_names):
-                exp_lhs_symbol = lhs_symbol + ''.join(params_setting)
-                for rhs_n in production_n._rhss:
-
-                    if rhs_n:
-                        rthing0 = rhs_n[0]
-                        if type(rthing0) == A_guard:
-                            if (rthing0.s + rthing0.n) in params_setting:
-                                # The guard succeeds (in the current `params_setting`).
-                                pass
-                            else:
-                                # The guard fails.
-                                continue # to next rhs_n
-
-                    # count the number of optionals in this rhs_n
-                    n_optionals = len([
-                        rhs_item_n
-                        for rhs_item_n in rhs_n._rhs_items
-                        if type(rhs_item_n) == GNT and rhs_item_n._is_optional
-                    ])
-
-                    # Generate a different rhs_n for each combo of optionals
-                    for include_optional_ in each_boolean_vector_of_length(n_optionals):
-
-                        opt_i = 0
-                        exp_rhs = []
-
-                        for (i,rhs_item_n) in enumerate(rhs_n._rhs_items):
-                            if type(rhs_item_n) == A_guard:
-                                assert i == 0
-                                # We've already determined that this guard succeeds.
-                                continue # to next rhs_item_n
-                            elif type(rhs_item_n) == A_id:
-                                assert i == len(rhs_n)-1
-                                continue
-
-                            elif type(rhs_item_n) in [A_but_only_if, A_but_not, A_no_LT]:
-                                exp_rthing = rhs_item_n
-
-                            elif type(rhs_item_n) in [LAX, LAI]:
-                                if type(rhs_item_n.ts) in [tuple, list]:
-                                    ts = rhs_item_n.ts
-                                else:
-                                    ts = [rhs_item_n.ts]
-
-                                terminal_sequences = []
-                                for t in ts:
-                                    if type(t) == T_lit:
-                                        terminal_sequences.append(map(c_to_terminal, t.c.split(' ')))
-                                    elif type(t) == GNT:
-                                        terminal_sequences.extend([]) # XXX
-                                    elif type(t) == T_nc:
-                                        pass # XXX
-                                    else:
-                                        assert 0, t
-                                exp_rthing = rhs_item_n # XXX something(terminal_sequences)
-
-                            elif type(rhs_item_n) in terminal_types:
-                                exp_rthing = rhs_item_n
-
-                            elif type(rhs_item_n) == GNT:
-                                exp_rthing = SNT(expand_nt_wrt_params_setting(rhs_item_n, params_setting))
-                                if rhs_item_n._is_optional:
-                                    include_this_optional = include_optional_[opt_i]
-                                    opt_i += 1
-                                    if include_this_optional:
-                                        pass
-                                    else:
-                                        # omit the optional
-                                        continue # to next rhs_item_n
-
-                            else:
-                                assert 0, rhs_item_n
-
-                            exp_rhs.append(exp_rthing)
-
-                        this_grammar.add_exp_prod1( exp_lhs_symbol, exp_rhs )
-
-                        assert opt_i == n_optionals
-
-    def add_exp_prod1(this_grammar, exp_lhs, exp_rhs):
-        if exp_lhs not in this_grammar.exp_prodns:
-            this_grammar.exp_prodns[exp_lhs] = []
-        this_grammar.exp_prodns[exp_lhs].append( exp_rhs )
-
     # --------------------------------------------------------------------------
 
     def print_exp_prodns(this_grammar):
@@ -2163,452 +1995,22 @@ class Grammar:
                 i += 1
         f.close()
 
-    # --------------------------------------------------------------------------
+    # ==========================================================================
 
-    def calc_min_length(this_grammar):
-        # XXX UNUSED?
-        stderr('    calc_min_length ...')
+    def save_as_json(this_grammar):
+        j_prodns = []
+        for (lhs_symbol, exp_rhss) in sorted(this_grammar.exp_prodns.items()):
+            for exp_rhs in exp_rhss:
+                j_prodn = {
+                    'n': 1 + len(j_prodns),
+                    'lhs': lhs_symbol,
+                    'rhs': exp_rhs,
+                }
+                j_prodns.append(j_prodn)
 
-        this_grammar.min_length_for_nt_named_ = defaultdict(int)
-
-        def min_len(rhs_item_n):
-            if type(rhs_item_n) == SNT:
-                return this_grammar.min_length_for_nt_named_[rhs_item_n.n]
-            elif type(rhs_item_n) in terminal_types:
-                return 1
-            elif type(rhs_item_n) in [LAI, LAX, A_but_not, A_but_only_if, A_no_LT]:
-                return 0
-            else:
-                assert 0, rhs_item_n
-
-        while True:
-            something_changed = False
-            for (exp_lhs, exp_rhss) in this_grammar.exp_prodns.items():
-                new_min_len = min(
-                    sum(
-                        min_len(rhs_item_n)
-                        for rhs_item_n in exp_rhs
-                    )
-                    for exp_rhs in exp_rhss
-                )
-                assert new_min_len >= this_grammar.min_length_for_nt_named_[exp_lhs]
-                if new_min_len > this_grammar.min_length_for_nt_named_[exp_lhs]:
-                    this_grammar.min_length_for_nt_named_[exp_lhs] = new_min_len
-                    something_changed = True
-            if not something_changed:
-                break
-
-        filename = '%s_min_len' % this_grammar.name
+        filename = '%s_cfps.json' % this_grammar.name
         f = shared.open_for_output(filename)
-        for (exp_lhs, min_len) in sorted(this_grammar.min_length_for_nt_named_.items()):
-            print(min_len, exp_lhs, file=f)
-        f.close()
-
-    # --------------------------------------------------------------------------
-
-    def compute_firstk(this_grammar):
-        stderr('    compute_firstk ...')
-
-        this_grammar.firstk_for_nt_named_ = defaultdict(lambda: defaultdict(set))
-
-        def firstk_for_symbols(symbols, k):
-            assert k >= 0
-            if symbols == [] or k == 0:
-                yield tuple()
-            else:
-                (s0, rest) = (symbols[0], symbols[1:])
-                if type(s0) == SNT:
-                    x = this_grammar.firstk_for_nt_named_[s0.n][k]
-                    if rest and type(rest[0]) == A_but_not:
-                        # stderr('>>  ', symbols)
-                        pass # XXX?
-                elif type(s0) in terminal_types:
-                    f00 = tuple([s0])
-                    x = set([f00])
-                elif type(s0) in [A_no_LT, A_but_not, LAX]:
-                    f00 = tuple([])
-                    x = set([f00])
-                else:
-                    assert 0, s0
-                for f0 in x:
-                    assert isinstance(f0, tuple)
-                    for fr in firstk_for_symbols(rest, k - len(f0)):
-                        assert isinstance(fr, tuple)
-                        yield f0 + fr
-
-        # kludge
-        max_k = 2 if this_grammar.name == 'syntactic' else 1
-
-        n_passes = 0
-        while True:
-            something_changed = False
-            n_passes += 1
-
-            for (exp_lhs, exp_rhss) in this_grammar.exp_prodns.items():
-                trace = (exp_lhs == 'ArgumentList+Yield')
-
-                for k in range(1, max_k+1):
-
-                    old_firstk = this_grammar.firstk_for_nt_named_[exp_lhs][k]
-
-                    new_firstk = set()
-                    for exp_rhs in exp_rhss:
-                        new_firstk.update( firstk_for_symbols(exp_rhs, k) )
-
-                    if False and trace:
-                        stderr()
-                        stderr('pass %d' % n_passes)
-                        stderr('  old_firstk:', old_firstk)
-                        stderr('  new_firstk:', new_firstk)
-
-                    if new_firstk != old_firstk:
-                        if 0:
-                            print("first %d for %s has changed\n  from %r\n    to %r" %
-                                (k, exp_lhs, old_firstk, new_firstk)
-                            )
-                        assert new_firstk > old_firstk
-                        this_grammar.firstk_for_nt_named_[exp_lhs][k] = new_firstk
-                        something_changed = True
-
-
-            if not something_changed:
-                break
-
-        stderr(f'        {n_passes} passes')
-
-        filename = '%s_firstk' % this_grammar.name
-        f = shared.open_for_output(filename)
-        for (exp_lhs, k_firstk) in sorted(this_grammar.firstk_for_nt_named_.items()):
-            print(file=f)
-            print(exp_lhs, file=f)
-            for (k, firstk) in sorted(k_firstk.items()):
-                print('  ', k, file=f)
-                for fk in sorted(list(firstk)):
-                    print('    [' + ' '.join(map(str, fk)) + ']', file=f)
-        f.close()
-
-    # --------------------------------------------------------------------------
-
-    def generate_LR0_automaton(this_grammar):
-        stderr('    generate_LR0_automaton ...')
-
-        n_conflicts = 0
-        max_stacklet_len = 0
-
-        # ------------------------------------------------------------
-
-        def generate_LR0_main():
-            t_start = time.time()
-
-            item0 = LR0_Item(None, (this_grammar.start_symbol,), 0)
-            lr0 = DFA.Automaton(item0, LR0_State)
-
-            t_end = time.time()
-            t_elapsed = t_end - t_start
-            stderr(
-                "    LR0 machine constructed (in %d sec) with %d states and %d conflicts" %
-                (t_elapsed, len(lr0.state_for_kernel_), n_conflicts)
-            )
-
-            stderr("    printing automaton...")
-            filename = '%s_automaton' % this_grammar.name
-            f = shared.open_for_output(filename)
-            lr0.print(f, stringify_rthing)
-            stderr("    done")
-
-            return # XXX for now
-
-            for state in lr0.state_for_kernel_.values():
-                state.resolve_any_conflicts()
-
-        # ------------------------------------------------------------
-
-        class LR0_Item(namedtuple('_Item', 'lhs rhs dot_posn')):
-
-            def __str__(this_item):
-                return (
-                    stringify_rthing(this_item.lhs)
-                    +
-                    ' -> '
-                    +
-                    stringify_rthings(this_item.rhs[0:this_item.dot_posn])
-                    +
-                    ' ## '
-                    +
-                    stringify_rthings(this_item.rhs[this_item.dot_posn:])
-                )
-
-            def each_transition(this_item):
-                assert this_item.dot_posn >= 0
-                assert this_item.dot_posn <= len(this_item.rhs)
-
-                current_lax = None
-                for (rposn, rhs_item_n) in enumerate(this_item.rhs):
-                    if rposn < this_item.dot_posn: continue
-
-                    t = type(rhs_item_n)
-                    if t in [A_but_only_if, A_but_not, A_no_LT]:
-                        pass
-
-                    elif t in [LAX,LAI]:
-                        assert current_lax is None
-                        current_lax = rhs_item_n
-
-                    elif t in terminal_types:
-                        if current_lax is not None:
-                            assert this_item.lax_is_satisfied_by_terminal(current_lax, rhs_item_n)
-                            current_lax = None
-
-                        next_item = LR0_Item(this_item.lhs, this_item.rhs, rposn+1)
-                        yield (rhs_item_n, next_item)
-                        break # don't look at any further things in the rhs
-
-                    elif t == SNT:
-                        nt = rhs_item_n
-                        for derived_rhs in this_grammar.exp_prodns[nt.n]:
-                            if current_lax is None:
-                                new_item_rhs = derived_rhs
-                            else:
-                                # new_item_rhs = this_item.lax_plus_rhs(current_lax, derived_rhs)
-                                new_item_rhs = derived_rhs
-
-                            if new_item_rhs is not None:
-                                new_item = LR0_Item(nt, tuple(new_item_rhs), 0)
-                                yield (None, new_item)
-
-                        next_item = LR0_Item(this_item.lhs, this_item.rhs, rposn+1)
-                        yield (rhs_item_n, next_item)
-                        break # don't look at any further things in the rhs
-
-                    else:
-                        assert 0, rhs_item_n
-
-            def lax_is_satisfied_by_terminal(this_item, lax, terminal):
-                return True
-                # --------------------
-                if lax.ts == (T_lit('let ['),) and terminal == T_lit(';'):
-                    return True
-                assert 0, (lax, terminal)
-
-            def lax_plus_rhs(this_item, lax, rhs):
-                rhs_item_n = rhs[0]
-                if type(rhs_item_n) in terminal_types:
-                    for lax_thing in lax.ts:
-                        assert type(lax_thing) == T_lit
-                        if type(lax_thing) != type(rhs_item_n):
-                            pass
-                        elif lax_thing == rhs_item_n:
-                            # The LAX prohibits the first symbol of the rhs
-                            return None
-                        elif ' ' in lax_thing.c:
-                            pieces = lax_thing.c.split()
-                            assert pieces[0] != rhs_item_n.c
-
-                    # The LAX does not prohibit the first symbol of the rhs.
-                    # Therefore, it is redundant.
-                    return rhs
-                elif type(rhs_item_n) == SNT:
-                    # Should we determine how lax compares to rhing's language?
-                    return [lax] + rhs
-                else:
-                    assert 0, rhs_item_n
-                    return [lax] + rhs
-                    # --------------------
-
-        class LR0_State(DFA.State):
-            def __repr__(this_state):
-                return "<State #%d>" % this_state.number
-
-            def __lt__(this_state, other_state):
-                return (this_state.number < other_state.number)
-
-            def post_close(this_state):
-                for next_state in this_state.transitions.values():
-                    if not hasattr(next_state, 'prev_states'):
-                        next_state.prev_states = []
-                    next_state.prev_states.append(this_state)
-
-                this_state.has_conflict = (
-                    len(this_state.final_items) > 1
-                    or
-                    len(this_state.final_items) > 0 and len([
-                            X
-                            for (X, _) in this_state.transitions.items()
-                            if type(X) != SNT
-                        ]) > 0
-                )
-                if this_state.has_conflict:
-                    nonlocal n_conflicts
-                    n_conflicts += 1
-
-#                this_state.actions_ = {
-#                    'terminal': defaultdict(list),
-#                    'nonterminal': defaultdict(list)
-#                }
-#
-#                for (X, next_state) in sorted(this_state.transitions.items()):
-#                    if X == this_grammar.eoi_symbol:
-#                        action = ('accept',)
-#                        which = 'terminal'
-#                    else:
-#                        action = ('shift_and_go_to', next_state)
-#                        if type(X) in terminal_types:
-#                            which = 'terminal'
-#                        elif type(X) == SNT:
-#                            which = 'nonterminal'
-#                        else:
-#                            assert 0, X
-#                    this_state.actions_[which][X].append(action)
-
-            def post_print(this_state, put):
-                if this_state.has_conflict:
-                    put()
-                    put('  CONFLICT!')
-                put()
-#                put('  actions:')
-#                for which in ['terminal', 'nonterminal']:
-#                    put('    ', which)
-#                    for (X, actions) in sorted(this_state.actions_[which].items()):
-#                        put('      ', stringify_rthing(X))
-#                        for action in actions:
-#                            if action[0] == 'accept':
-#                                action_str = 'ACCEPT'
-#                            elif action[0] == 'shift_and_go_to':
-#                                action_str = '%s #%d' % (action[0], action[1].number)
-#                            else:
-#                                assert 0
-#                            put('        ', action_str)
-
-            def resolve_any_conflicts(this_lr0_state):
-                if not this_lr0_state.has_conflict: return
-
-                # Generate a lookahead automaton to allow us
-                # to decide between conflicting actions.
-
-                stderr("    state #%d has a conflict" % this_lr0_state.number)
-
-                stacklet = (this_lr0_state,)
-                la_item0 = LA_Item(None, stacklet)
-                this_lr0_state.la_automaton = DFA.Automaton(la_item0, LA_State)
-                stderr("    LA automaton has %d states" %
-                    len(this_lr0_state.la_automaton.state_for_kernel_)
-                )
-
-        # ------------------------------------------------------------
-
-        class LA_Item(namedtuple('_LA_Item', 'choice stacklet')):
-
-            def each_transition(this_la_item):
-
-                def each_transition_main():
-                    (choice, stacklet) = this_la_item
-                    top_lr0_state = stacklet[-1]
-                    assert isinstance(top_lr0_state, LR0_State)
-
-                    # reductions
-                    for lr0_item in top_lr0_state.final_items:
-                        next_choice = ('r',lr0_item) if choice is None else choice
-                        for next_stacklet in simulate_reduction(stacklet, lr0_item):
-                            next_item = LA_Item(next_choice, next_stacklet)
-                            yield (None, next_item)
-
-                    # shifts
-                    for (X, next_lr0_state) in sorted(top_lr0_state.transitions.items()):
-                        if type(X) == SNT: continue
-                        assert type(X) in terminal_types
-                        next_choice = ('s',X) if choice is None else choice
-                        next_stacklet = simulate_shift(stacklet, X, next_lr0_state)
-                        next_item = LA_Item(next_choice, next_stacklet)
-                        yield (X, next_item)
-
-                def simulate_reduction(stacklet, lr0_item):
-                    if 0:
-                        print()
-                        print('simulate_reduction...')
-                        print('    ', stacklet)
-                        print('    ', lr0_item)
-
-                    # assert lr0_item.dot_posn == len(lr0_item.rhs)
-                    # Thats usually true, but not if the last rhs_item_n
-                    # in the rhs is an annotation.
-
-                    n_symbols_in_rhs = sum(
-                        1
-                        for rhs_item_n in lr0_item.rhs
-                        if type(rhs_item_n) == SNT or type(rhs_item_n) in terminal_types
-                    )
-                    if 0: print('    ', n_symbols_in_rhs)
-
-                    for st in backtrack(stacklet, n_symbols_in_rhs):
-                        back_lr0_state = st[-1]
-                        next_lr0_state = back_lr0_state.transitions[lr0_item.lhs]
-                        rst = simulate_shift(st, lr0_item.lhs, next_lr0_state)
-                        if 0: print('        ', rst)
-                        yield rst
-
-                def backtrack(stacklet, n_to_pop):
-                    assert len(stacklet) > 0
-                    if n_to_pop == 0:
-                        yield stacklet
-                    else:
-                        # backtrack by 1:
-                        if len(stacklet) > 1:
-                            back_st = stacklet[0:-1]
-                            for st in backtrack(back_st, n_to_pop-1):
-                                yield st
-                        elif len(stacklet) == 1:
-                            [remaining_state] = stacklet
-                            for back_lr0_state in remaining_state.prev_states:
-                                back_st = (back_lr0_state,)
-                                for st in backtrack(back_st, n_to_pop-1):
-                                    yield st
-                        else:
-                            assert 0
-
-                def simulate_shift(stacklet, symbol, lr0_state):
-                    new_stacklet = stacklet + (lr0_state,)
-                    m = 3
-                    if len(new_stacklet) > m:
-                        # print('    truncating stacklet of length', len(new_stacklet))
-                        new_stacklet = new_stacklet[-m:]
-
-                    nonlocal max_stacklet_len
-                    max_stacklet_len = max(max_stacklet_len, len(new_stacklet))
-                    return new_stacklet
-                    # XXX: also stack the symbol?
-
-                # ----------------------------
-
-                yield from each_transition_main()
-
-        class LA_State(DFA.State):
-            def should_be_closed(this_state):
-                if this_state.number == 0:
-                    return True
-
-                if this_state.number > 100:
-                    f = open('/tmp/la_au', 'w')
-                    this_state.automaton.print(f, str)
-                    f.close()
-                    assert 0
-                    return False
-
-                # An LA_State needs to be closed if the items in its kernel
-                # reflect more than one distinct choice.
-                distinct_choices = set(
-                    la_item.choice
-                    for la_item in this_state.kernel
-                )
-                assert len(distinct_choices) >= 1
-                return (len(distinct_choices) > 1)
-
-            def post_close(this_state):
-                # this_state.print(sys.stdout, str)
-                pass
-
-        # ------------------------------------------------------------
-
-        generate_LR0_main()
+        json.dump(j_prodns, f, indent=2)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2622,26 +2024,22 @@ def each_params_setting(params):
             for (b, p) in zip(bools, params)
         ]
 
-def c_to_terminal(c):
-    if c == "'":
-        return '"' + c + '"'
-    else:
-        return "'" + c + "'"
-
 def expand_nt_wrt_params_setting(nt, params_setting):
-    assert type(nt) == GNT
-    result = nt.n
-    for arg in nt.a:
-        if arg.s == '?':
-            for p in params_setting:
-                if p[1:] == arg.n:
-                    result += p
+    assert type(nt) == GNode
+    assert nt.kind == 'GNT'
+    result = nt._nt_name
+    for (arg_prefix, arg_name) in nt._params:
+        if arg_prefix == '?':
+            for param_setting in params_setting:
+                if param_setting[1:] == arg_name:
                     break
             else:
                 # There is no param by that name in params_setting.
                 assert 0, nt
-        elif arg.s in ['+','~']:
-            result += arg.s + arg.n
+            result += param_setting
+        elif arg_prefix in ['+', '~']:
+            result += arg_prefix + arg_name
+            # regardless of whether there's a param_setting
         else:
             assert 0, arg
     return result

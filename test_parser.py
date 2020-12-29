@@ -6,8 +6,8 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 # example use:
-# test_parser.py --all && car _testing/{fail,early,pass}_output
-# ^ takes about 2.5 minutes
+# test_parser.py --all && car _testing/{fail,early,pass,pass-explicit}_output
+# ^ takes about 3 minutes
 # test_parser.py --all-dir=fail && car _testing/fail_output
 
 # You may need to `export PYTHONIOENCODING=utf-8` before running this script.
@@ -26,12 +26,12 @@ def main():
     # which is like (((1))) but with 50 pairs of parentheses,
     # each of which takes 22 levels of the parse tree.
     # (And in final_check, we traverse the tree recursively.)
-    sys.setrecursionlimit(1150)
+    # sys.setrecursionlimit(1150)
 
     if sys.argv[1] == '--all':
         test_all()
     else:
-        mo = re.fullmatch(r'--all-dir=(\w+)', sys.argv[1])
+        mo = re.fullmatch(r'--all-dir=([\w-]+)', sys.argv[1])
         if mo:
             test_dirname = mo.group(1)
             test_all_in_dir(test_dirname)
@@ -43,6 +43,7 @@ def test_all():
     test_all_in_dir('fail')
     test_all_in_dir('early')
     test_all_in_dir('pass')
+    test_all_in_dir('pass-explicit')
 
 def test_all_in_dir(test_dirname):
     print(test_dirname, file=sys.stderr)
@@ -52,23 +53,17 @@ def test_all_in_dir(test_dirname):
     with open(output_filename, 'w', encoding='utf8') as f:
         dirpath = root_test_dirpath + "/" + test_dirname
         for i, test_filename in enumerate(sorted(os.listdir(dirpath))):
-            assert test_filename.endswith('.js')
-            if i % 20 == 0:
-                sys.stderr.write('.')
-                sys.stderr.flush()
             test_file_relpath = test_dirname + '/' + test_filename
+
+            if 0:
+                sys.stderr.write(test_file_relpath + '\n')
+            else:
+                if i % 20 == 0:
+                    sys.stderr.write('.')
+                    sys.stderr.flush()
 
             result = test_one(test_file_relpath, f)
 
-            if test_file_relpath in corrections:
-                dirname_for_expectation_purposes = corrections[test_file_relpath]
-            else:
-                dirname_for_expectation_purposes = test_dirname
-                
-            expected_result = 'ParseError' if dirname_for_expectation_purposes == 'fail' else 'no error'
-
-            if result != expected_result:
-                print(f"TEST {test_file_relpath} FAILED: expected {expected_result}, but got {result}", file=f)
         sys.stderr.write('\n')
         print('====', file=f)
         print('Done', file=f)
@@ -77,6 +72,14 @@ def test_one(test_file_relpath, f=sys.stdout):
     print(file=f)
     print('===================', file=f)
     print(test_file_relpath, file=f)
+    assert test_file_relpath.endswith('.js')
+
+    (test_dirname, test_filename) = test_file_relpath.split('/')
+    expectation = expectation_for_dirname(test_dirname)
+    if test_file_relpath in corrections:
+        new_expectation = expectation_for_dirname(corrections[test_file_relpath])
+        print(f"(changing expectation from {expectation} to {new_expectation})", file=f)
+        expectation = new_expectation
 
     test_filepath = root_test_dirpath + '/' + test_file_relpath
     source_text = open(test_filepath,'r', encoding='utf-8', newline='').read()
@@ -87,31 +90,39 @@ def test_one(test_file_relpath, f=sys.stdout):
     goal_symbol = 'Module' if test_filepath.endswith('.module.js') else 'Script'
     try:
         node = es_parser.parse(source_text, goal_symbol, trace_level=trace_level, trace_f=f)
-        if trace_level > 0: node.dump()
     except es_parser.ParseError as pe:
         print(file=f)
         print('ParseError:', file=f)
         print(misc.display_position_in_text(source_text, pe.posn), end='', file=f)
         for item_string in pe.kernel_item_strings:
             print(f"    {item_string}", file=f)
-        return 'ParseError'
+        outcome = 'ParseError'
+        if outcome != expectation:
+            print(f"TEST {test_file_relpath} FAILED: expected {expectation}, but got {outcome}", file=f)
+        return
+
+    if trace_level > 0: node.dump()
+    outcome = 'no error'
+    if outcome != expectation:
+        print(f"TEST {test_file_relpath} FAILED: expected {expectation}, but got {outcome}", file=f)
+        node.dump(f=f)
 
     # early_errors = execution.detect_early_errors(node)
     # if early_errors:
     #     return 'early errors'
     
-    return 'no error'
+
+def expectation_for_dirname(dirname):
+    return {
+        'fail'         : 'ParseError',
+        'early'        : 'no error', # eventually will be some kind of error, but not yet
+        'pass'         : 'no error',
+        'pass-explicit': 'no error',
+    }[dirname]
 
 corrections = {
-    # These two are in 'early', but should be in 'fail'.
-    # They raise a ParseError, but not due to an early error,
-    # rather due to a "but only if" production-annotation.
-    # Given the wording in test262-parser-tests/README.md,
-    # they "do not match the grammar", so they should be in 'fail'.
-    # See issue #15.
-    'early/14eaa7e71c682461.js': 'fail',
-    'early/aca911e336954a5b.js': 'fail',
 
+    # [fixed by PR #29:]
     # These 6 are in 'pass', but should be in 'fail'.
     # They contain an HTMLCloseComment, which (in a valid Script)
     # must be preceded by a LineTerminatorSequence or a /* ... LineTerminator ... */
@@ -122,12 +133,42 @@ corrections = {
     'pass/ba00173ff473e7da.js': 'fail',
     'pass/e03ae54743348d7d.js': 'fail',
 
-    # In 'fail', should be in 'pass'? No.
-    # See issue #18
-    # 'fail/3e6146fd7daff493.js': 'pass', # for(;;)
+    # [fixed by PR #30:]
+    # In 'fail', should be in 'pass'.
+    'fail/647e21f8f157c338.js': 'pass',
+    'fail/8af69d8f15295ed2.js': 'pass',
+
+    # [fixed by PR #31:]
+    # In 'fail', should be in 'pass'.
+    'fail/0d5e450f1da8a92a.js': 'pass',
+    'fail/748656edbfb2d0bb.js': 'pass',
+    'fail/79f882da06f88c9f.js': 'pass',
+    'fail/92b6af54adef3624.js': 'pass',
+
+    # [fixed by PR #32:]
+    # These two are in 'early', but should be in 'fail'.
+    # They raise a ParseError, but not due to an early error,
+    # rather due to a "but only if" production-annotation.
+    # Given the wording in test262-parser-tests/README.md,
+    # they "do not match the grammar", so they should be in 'fail'.
+    # See issue #15.
+    'early/14eaa7e71c682461.js': 'fail',
+    'early/aca911e336954a5b.js': 'fail',
+
+    # ------------
 
     # In 'fail', should be in 'early':
     'fail/abc46381e4e6bcca.js': 'early', # var \uD83B\uDE00 (early error is 11.6.1.1)
+
+    # These are in 'fail', but should maybe be in 'early'.
+    # Each involves a RegularExpressionLiteral,
+    # which I believe is well-formed as such,
+    # but which would not pass IsValidRegularExpressionLiteral,
+    # which is invoked from an Early Error rule.
+    'fail/66e383bfd18e66ab.js': 'early',
+    'fail/78c215fabdf13bae.js': 'early',
+    'fail/bf49ec8d96884562.js': 'early',
+    'fail/e4a43066905a597b.js': 'early',
 
     # These are in 'fail', but should maybe be in 'early',
     # because when you have an instance of a Cover production,
