@@ -11429,7 +11429,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}",
     ]:
         [emu_xref, var] = children
-        assert var.source_text() in ['_type_', '_srcType_']
+        assert var.source_text() in ['_type_', '_srcType_', '_elementType_']
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
         return (T_MathInteger_, env1)
 
