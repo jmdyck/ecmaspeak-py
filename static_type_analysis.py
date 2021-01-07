@@ -854,8 +854,6 @@ single_sentence_rules_str = r'''
         When it is called it returns (.+)
         v=It returns \1
 
-        When called with (?P<pl>.+), it performs the following steps:
-
     # ==========================================================================
     # Sentences that start with the operation/function name:
 
@@ -2117,6 +2115,7 @@ nature_to_tipe = {
         # Completion
         'an abrupt completion': 'Abrupt',
         'a Completion Record': 'Abrupt | Normal',
+        'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
 
         # Property Descriptor
         'Property Descriptor'   : 'Property Descriptor',
@@ -4646,6 +4645,7 @@ class Env:
                 '_handler_', # NewPromiseReactionJob
                 '_r_.[[Value]]',
                 '%Generator.prototype.next%', # CreateListIteratorRecord
+                '%GeneratorFunction.prototype.prototype.next%',
                 '? Yield(IteratorValue(_innerResult_))', # Evaluation
                 '? Yield(IteratorValue(_innerReturnResult_))', # Evaluation
                 '_list_[_index_]', # CreateListIteratorRecord
@@ -4660,6 +4660,7 @@ class Env:
                 '\u211d(_lastIndex_)', # RegExpBuiltinExec
                 '\u211d(_ny_)', # Math.atan2
                 '\u211d(_nx_)', # Math.atan2
+                'NormalCompletion(_value_)', # GeneratorResume
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -5835,7 +5836,7 @@ def tc_nonvalue(anode, env0):
     ]:
         [ctx_var, resa_ex, resb_var] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_return_ | T_throw_)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_empty_ | T_return_ | T_throw_)
         result = env1.plus_new_entry(resb_var, T_Tangible_)
 
     elif p == r"{COMMAND} : {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.":
@@ -7670,6 +7671,10 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_proc_ | T_alg_steps, asserting)
 
+    elif p == r"{CONDITION_1} : {var} is an Abstract Closure with no parameters":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_proc_, asserting)
+
     # PR 2109:
     elif p == r"{CONDITION_1} : {var} is an Abstract Closure":
         [var] = children
@@ -9041,7 +9046,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is the same as {EX}",
         # r"{CONDITION_1} : {var} and {var} are the same", # obsoleted by PR #1046
         r"{CONDITION_1} : {var} is not the same as {var}",
-        r"{CONDITION_1} : {var} is not the same value as {var}",
+        r"{CONDITION_1} : {EX} is not the same value as {var}",
     ]:
         [exa, exb] = children
         (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
@@ -15296,6 +15301,9 @@ fields_for_record_type_named_ = {
     'MapData_record_': {
         'Key'   : T_Tangible_ | T_empty_,
         'Value' : T_Tangible_ | T_empty_,
+        # but Value is empty only if Key is empty?
+        # So if you establish that _e_.[[Key]] isn't ~empty~,
+        # you know that _e_.[[Value]] isn't ~empty~ ?
     },
 
     # 39328: 28.2 Agent Events Record Fields
