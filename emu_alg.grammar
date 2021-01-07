@@ -377,7 +377,7 @@
     field of {var} that is present
     index {var} of {var}
     integer {var} in the range 0 &le; {var} &lt; {var}
-    integer {var} starting with 0 such that {CONDITION}, in ascending order
+    integer {var} starting with {EX} such that {CONDITION}, in ascending order
     integer {var} such that {CONDITION}
     integer {var} that satisfies {CONDITION}
     non-negative integer {var} starting with 0 such that {CONDITION}, in ascending order
@@ -602,7 +602,6 @@
     there does not exist an element {var} of {var} such that {CONDITION_1}
     there exists a member {var} of {var} such that {CONDITION_1}
     there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}
-    there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
     there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}
     there is an event {var} such that {CONDITION}
     we return here
@@ -868,6 +867,7 @@
     {var} is the String value {STR_LITERAL}
     {var} is the execution context of a generator
     {var} is the same Number value as {var}
+    {var} is the same sequence of code units as {var}
     {var} is the value {LITERAL}
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
@@ -1003,6 +1003,9 @@
     # {var} is hint Number
     # {var} is hint String
     # {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
+
+    # obsoleted by the merge of PR #2258:
+    # there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
 
     # PR 1477 scope-records:
     it must be in the object Scope Record
@@ -1396,7 +1399,6 @@
     the second to top element of the execution context stack
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the smallest (closest to -&infin;) integral Number value that is not less than {var}
-    the smallest (closest to -&infin;) such integer
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
     the source text matched by {PROD_REF}
@@ -1611,6 +1613,9 @@
     # a List of length 1 that contains a nondeterministically chosen byte value
     # a List whose sole item is {var}
     # a new List containing {EXPR}
+
+    # obsoleted by the merge of PR #2258:
+    # the smallest (closest to -&infin;) such integer
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object

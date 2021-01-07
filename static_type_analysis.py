@@ -6475,8 +6475,9 @@ def tc_nonvalue(anode, env0):
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
-        elif each_thing.prod.rhs_s == r"integer {var} starting with 0 such that {CONDITION}, in ascending order":
-            [loop_var, condition] = each_thing.children
+        elif each_thing.prod.rhs_s == r"integer {var} starting with {EX} such that {CONDITION}, in ascending order":
+            [loop_var, start_ex, condition] = each_thing.children
+            env0.assert_expr_is_of_type(start_ex, T_MathInteger_)
             env1 = env0.plus_new_entry(loop_var, T_MathInteger_)
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
@@ -8829,6 +8830,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var1, T_Number)
         env1 = env0.ensure_expr_is_of_type(var2, T_Number)
         return (env1, env1)
+
+    elif p == r'{CONDITION_1} : {var} is the same sequence of code units as {var}':
+        [var1, var2] = children
+        env0.assert_expr_is_of_type(var1, T_String)
+        env0.ensure_expr_is_of_type(var2, T_String)
+        return (env0, env0)
 
     elif p == r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}':
         [a, _, b, _, c] = children
