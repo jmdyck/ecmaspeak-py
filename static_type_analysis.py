@@ -5360,7 +5360,7 @@ def tc_header(header):
                     or
                     header.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
                     or
-                    header.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
+                    header.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::leftShift', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
                 )
                 # This pass just narrowed the type.
                 # ----
