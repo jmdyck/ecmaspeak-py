@@ -5355,6 +5355,12 @@ def tc_header(header):
                     header.name == 'SetMutableBinding' and pn == '*return*'
                     or
                     header.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
+                    or
+                    header.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
+                    or
+                    header.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
+                    or
+                    header.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
                 )
                 # This pass just narrowed the type.
                 # ----
@@ -5430,40 +5436,6 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
     assert defns
 
     header_names = sorted(init_env.vars.keys())
-
-    # XXX This is a hack until I can do a better job of analyzing numeric exprs.
-    if op_name and '::' in op_name:
-        stderr("    hack!")
-        assert len(defns) == 1
-        [(base_type, body)] = defns
-
-        final_env = Env()
-        for name in header_names:
-            if name == '*return*':
-                if op_name in [
-                    '::equal',
-                    '::sameValue',
-                    '::sameValueZero',
-                ]:
-                    t = T_Boolean
-                elif op_name == '::lessThan':
-                    t = T_Boolean | T_Undefined
-                elif op_name == '::toString':
-                    t = T_String
-                else:
-                    t = base_type
-                if op_name in [
-                    '::exponentiate',
-                    '::divide',
-                    '::remainder',
-                ]:
-                    t |= ThrowType(T_RangeError)
-                elif op_name == '::unsignedRightShift':
-                    t |= ThrowType(T_TypeError) 
-            else:
-                t = base_type
-            final_env.vars[name] = t
-        return final_env
 
     proc_return_envs_stack.append(set())
 
@@ -8406,7 +8378,7 @@ def tc_cond_(cond, env0, asserting):
                 pass
             else:
                 env1 = env1.with_expr_type_replaced(ex, lita_type)
-            return (env1, env1)
+            return (env1, env0)
 
         elif lita_type == T_Boolean and litb_type == T_Undefined:
             # Evaluation of RelationalExpression: If _r_ is *true* or *undefined*, ...
@@ -8870,6 +8842,11 @@ def tc_cond_(cond, env0, asserting):
                     env0.with_expr_type_narrowed(a, is_t),
                     env0.with_expr_type_narrowed(a, isnt_t)
                 )
+
+        elif a_t.is_a_subtype_of_or_equal_to(T_BigInt) and b_t.is_a_subtype_of_or_equal_to(T_BigInt):
+            # great!
+            pass
+
         elif (a_t.is_a_subtype_of_or_equal_to(T_Number) and b_t.is_a_subtype_of_or_equal_to(T_Number)):
             # Probably good, except for NaN
 
@@ -9047,6 +9024,7 @@ def tc_cond_(cond, env0, asserting):
         # r"{CONDITION_1} : {var} and {var} are the same", # obsoleted by PR #1046
         r"{CONDITION_1} : {var} is not the same as {var}",
         r"{CONDITION_1} : {EX} is not the same value as {var}",
+        r"{CONDITION_1} : {EX} is {PREFIX_PAREN}",
     ]:
         [exa, exb] = children
         (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
@@ -9061,6 +9039,8 @@ def tc_cond_(cond, env0, asserting):
         elif exa_type == T_Environment_Record | T_Undefined and exb_type == T_Environment_Record:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
+            env1 = env0
+        elif exa_type == T_MathInteger_ and exb_type == T_ExtendedMathReal_: # Number::toString, over-specific
             env1 = env0
         else:
             assert 0, (exa_type, exb_type)
@@ -9560,6 +9540,12 @@ def tc_cond_(cond, env0, asserting):
         [avar, bvar] = children
         env0.assert_expr_is_of_type(avar, T_MathInteger_) # XXX or infinity
         env0.assert_expr_is_of_type(bvar, T_MathInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} and {var} are finite and non-zero":
+        [avar, bvar] = children
+        env0.assert_expr_is_of_type(avar, T_Number)
+        env0.assert_expr_is_of_type(bvar, T_Number)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : the character {EX} is one of {nonterminal}":
@@ -11373,6 +11359,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_BigInt, env0)
 
+    elif p == r"{EXPR} : the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}":
+        # XXX
+        return (T_BigInt, env0)
+
     # -------------------------------------------------
     # return T_Number
 
@@ -11508,15 +11498,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Number, env0)
 
     elif p in [
-        r"{EXPR} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
+        r"{EX} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
         r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
         r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string",
         r"{EXPR} : the result of applying the bitwise operator @ to {var} and {var}. The result is a signed 32-bit integer",
     ]:
         [avar, bvar] = children
-        env0.assert_expr_is_of_type(avar, T_MathInteger_)
-        env0.assert_expr_is_of_type(bvar, T_MathInteger_)
-        return (T_Number, env0)
+        env1 = env0.ensure_expr_is_of_type(avar, T_IntegralNumber_)
+        env1.assert_expr_is_of_type(bvar, T_MathInteger_)
+        return (T_IntegralNumber_, env1)
 
     elif p == r"{EXPR} : the Number value that results from rounding {EX} as described below":
         [ex] = children
@@ -11590,7 +11580,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [prod_ref, nont] = children
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EX} : {var} rounded towards 0 to the next integral value":
+    elif p == r"{EX} : {var} rounded towards 0 to the next integer value":
         [var] = children    
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathInteger_, env0)
@@ -11623,6 +11613,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_MathInteger_) # bit string
         return (T_MathInteger_, env0)
 
+    elif p == r"{EX} : {EX}, rounding down to the nearest integer, including for negative numbers":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_MathReal_)
+        return (T_MathInteger_, env0)
+
     # --------------------------------------------------------
     # return T_MathReal_
 
@@ -11649,6 +11644,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert ex_t == T_TBD or ex_t == T_MathInteger_
         return (ex_t, env0)
+
+    elif p == r"{PRODUCT} : the negation of {EX}":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_MathReal_)
+        return (T_MathReal_, env0)
 
     elif p == r"{PRODUCT} : the quotient {FACTOR} / {FACTOR}":
         [vara, varb] = children
@@ -11760,7 +11760,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [base, exponent] = children
         (base_t, env1) = tc_expr(base, env0); assert env1 is env0
         if base_t == T_MathInteger_:
-            env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_)
+            env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_ | T_BigInt)
         else:
             assert 0, base_t
         return (base_t, env1) # XXX unless exponent is negative
@@ -12030,7 +12030,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         ex = children[-1]
         (t, env1) = tc_expr(ex, env0); assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_MathReal_) or t.is_a_subtype_of_or_equal_to(T_Number)
+        assert (
+            t.is_a_subtype_of_or_equal_to(T_MathReal_)
+            or
+            t.is_a_subtype_of_or_equal_to(T_Number)
+            or
+            t.is_a_subtype_of_or_equal_to(T_BigInt)
+        )
         return (t, env1)
 
         # almost: env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
@@ -12156,6 +12162,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_String, env0)
+
+    elif p == r"{EXPR} : the String value consisting of the code units of the digits of the decimal representation of {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_MathInteger_ | T_BigInt)
         return (T_String, env0)
 
     elif p in [
