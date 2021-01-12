@@ -11669,6 +11669,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_MathReal_, env0)
 
+    elif p == r"{EXPR} : the result of the {MATH_FUNC} of {EX}":
+        [math_func, ex] = children
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
+        return (T_MathReal_, env1)
+
+    elif p == r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}":
+        [var] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
+        return (T_MathReal_, env1)
+
+    elif p == r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (T_MathReal_, env0)
+
     # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:
 
@@ -12174,7 +12189,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : the code units of the remaining {NUM_EXPR} digits of the decimal representation of {var}",
         r"{EX} : the code units of the {var} digits of the decimal representation of {var} (in order, with no leading zeroes)",
         r"{EX} : the code units of the {var} digits of the decimal representation of {var}",
-
     ]:
         [nd_var, num_var] = children
         env0.assert_expr_is_of_type(nd_var, T_MathInteger_)
@@ -14646,21 +14660,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [ex] = children
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
-
-    elif p == r"{EXPR} : the result of the {MATH_FUNC} of {EX}":
-        [math_func, ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
-        return (T_MathReal_, env1)
-
-    elif p == r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
-        return (T_MathReal_, env1)
-
-    elif p == r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_List)
-        return (T_MathReal_, env0)
 
     elif p == r"{EX} : a nondeterministically chosen byte value":
         [] = children
