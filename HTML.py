@@ -379,7 +379,7 @@ element_info = {
         'head'              : ('B', '',          '',           '#WS;meta;#WS;((link;|script;|style;)#WS;)+'),
         'body'              : ('B', '',          '',           '#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
-        'emu-clause'        : ('B', '', 'aoid id namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
+        'emu-clause'        : ('B', '', 'aoid example id namespace normative-optional oldids', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', 'id', 'aoid namespace normative', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
         'emu-table'         : ('B', 'caption id', 'informative oldids', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', 'caption id', 'informative', '#WS;(object;|img;)#WS;'),
@@ -398,13 +398,13 @@ element_info = {
         'emu-note'             : ('B', '',          '',           '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|emu-xref;)+'),
         'li'                   : ('B', '',          'oldids',     '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '',          'colspan oldids', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-xref;|i;|ins;|sub;|sup;)+'),
-        'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|i;|sup;)#TEXT;)?'),
+        'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|em;|i;|sup;)#TEXT;)*'),
         'dd'                   : ('B', '',          '',           '#WS;ul;#WS;|(#TEXT;|code;|dfn;|emu-eqn;|emu-xref;|i;|sup;)+'),
 
         # block contains inlines:
         'emu-motivation'       : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
         'emu-todo'             : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
-        'emu-alg'              : ('B', '',          'replaces-step type', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
+        'emu-alg'              : ('B', '',          'example replaces-step', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
         'emu-caption'          : ('B', '',          '',           '(#TEXT;|emu-xref;)+'),
         'pre'                  : ('B', '',          'class',      '#TEXT;|code;'),
         'style'                : ('B', '',          '',           '#TEXT;'),
@@ -426,7 +426,7 @@ element_info = {
     # ---------------------------------------------
     # can be block or inline, depending on the context:
 
-        'emu-grammar'       : ('A', '',          'type',       '(#TEXT;|ins;|del;)+'),
+        'emu-grammar'       : ('A', '',          'example type', '(#TEXT;|ins;|del;)+'),
         'emu-prodref'       : ('A', 'name',      'a',          ''),
         'emu-eqn'           : ('A', '',          'aoid id',    '#TEXT;(sub;|sup;|#TEXT;)*'),
 

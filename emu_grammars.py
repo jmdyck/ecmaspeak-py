@@ -24,7 +24,10 @@ def do_stuff_with_emu_grammars():
     }
     for emu_grammar in spec.doc_node.each_descendant_named('emu-grammar'):
         parse_emu_grammar(emu_grammar)
-        t = emu_grammar.attrs.get('type', 'reference')
+        if 'example' in emu_grammar.attrs:
+            t = 'example'
+        else:
+            t = emu_grammar.attrs.get('type', 'reference')
         emu_grammars_of_type_[t].append(emu_grammar)
 
     stderr('<emu-grammar> counts:')

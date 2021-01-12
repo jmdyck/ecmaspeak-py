@@ -2046,9 +2046,11 @@
     -
 
 {PRODUCT_OPERATOR} :
-    &divide;
     &times;
     /
+
+    # obsoleted by the merge of PR #2270:
+    # &divide;
 
 {FACTOR} :
     ({NUM_EXPR})
