@@ -38,6 +38,7 @@ def do_stuff_with_emu_grammars():
     check_reachability() # not that useful?
 
     check_non_defining_prodns(emu_grammars_of_type_['reference'])
+    check_order_of_RHSs_within_each_SDO_clause()
 
     check_emu_prodrefs(spec.doc_node)
     approximate_annex_A()
@@ -547,6 +548,10 @@ def process_defining_emu_grammars(emu_grammars):
     grammar_f = shared.open_for_output('def_prodns')
     info_for_nt_ = defaultdict(NonterminalInfo)
 
+    # Each defining production is assigned a doc_i,
+    # giving its index in document order.
+    next_doc_i = 0
+
     for emu_grammar in emu_grammars:
         # emu_grammar is an HNode (see static.py)
         # representing an <emu-grammar> element
@@ -568,6 +573,7 @@ def process_defining_emu_grammars(emu_grammars):
         assert gnode.kind == 'BLOCK_PRODUCTIONS'
 
         for production_n in gnode.children:
+            production_n.doc_i = next_doc_i; next_doc_i += 1
             defining_production_check_left(production_n, cc_section)
 
     for emu_grammar in emu_grammars:
@@ -829,6 +835,8 @@ def check_non_defining_prodns(emu_grammars):
 
         gnode = emu_grammar._gnode
 
+        lhs_nt_for_this_emu_grammar = set()
+
         for u_production_n in gnode._productions:
             assert u_production_n.kind in ['ONELINE_PRODUCTION', 'MULTILINE_PRODUCTION']
             (u_gnt_n, u_colons_n, _) = u_production_n.children
@@ -845,6 +853,13 @@ def check_non_defining_prodns(emu_grammars):
                 continue
 
             nt_info = info_for_nt_[lhs_nt]
+
+            # Disable this because too many hits:
+            if False and lhs_nt in lhs_nt_for_this_emu_grammar:
+                msg_at_node(u_nt_n,
+                    f"{lhs_nt} already appears as a lhs symbol in this <emu-grammar>"
+                )
+            lhs_nt_for_this_emu_grammar.add(lhs_nt)
 
             # -----------------------
 
@@ -1016,13 +1031,16 @@ def check_non_defining_prodns(emu_grammars):
                     msg_at_node(u_rhs,
                         f"ERROR: This RHS does not match any defining RHS for {lhs_nt}"
                     )
+                    u_rhs.d_i = None
                 elif L == 1:
                     # good
-                    pass
+                    [u_rhs.d_i] = dis
                 else:
                     msg_at_node(u_rhs,
                         f"WARNING: This RHS matches {L} defining RHSs for {lhs_nt} [but probably resolved by guards]"
                     )
+                    u_rhs.d_i = min(dis)
+                u_rhs.d_production_n = d_production_n
 
             # As you walk through the 'use' RHSs in order,
             # the corresponding 'def' RHSs should also be in order
@@ -1212,6 +1230,48 @@ def d_item_doesnt_require_a_matching_u_item(d_item_n):
         return {'optional-GNT': (d_item_n._nt_name, 'omitted'), 'L-903': 1}
 
     return None
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_order_of_RHSs_within_each_SDO_clause():
+    stderr("check_order_of_RHSs_within_each_SDO_clause ...")
+    header("check_order_of_RHSs_within_each_SDO_clause ...")
+
+    for section in spec.root_section.each_descendant_that_is_a_section():
+        if section.section_kind != 'syntax_directed_operation': continue
+
+        prev_key = (-1, -1)
+
+        for emu_grammar in section.each_descendant_named('emu-grammar'):
+            # We only want <emu-grammar> elements that are directly contained by this section,
+            # and not by a nested section.
+            # HasCallInTailPosition is the only example, I think.
+            if emu_grammar.closest_containing_section() is not section:
+                continue
+
+            # We only want <emu-grammar> elements that are the "syntax-directed" part of the SDO,
+            # and not embedded within an emu-alg, e.g.:
+            # "1. If |Statement| is <emu-grammar>Statement : LabelledStatement</emu-grammar> ..."
+            if emu_grammar.nearest_ancestor_satisfying(lambda anc: anc.element_name == 'emu-alg'):
+                continue
+
+            for u_production_n in emu_grammar._gnode._productions:
+                for u_rhs_n in u_production_n._rhss:
+                    d_prodn_n = u_rhs_n.d_production_n
+                    key = (d_prodn_n.doc_i, u_rhs_n.d_i)
+                    if key < prev_key:
+                        if key[0] == prev_key[0]:
+                            msg = f"ORDER: This is {d_prodn_n._lhs_symbol}'s RHS #{u_rhs_n.d_i}, but we just handled RHS #{prev_key[1]}"
+                        else:
+                            msg = f"ORDER: This LHS is {d_prodn_n._lhs_symbol} (#{d_prodn_n.doc_i}), but we just handled LHS #{prev_key[0]}"
+                        msg_at_posn(u_rhs_n.start_posn, msg)
+                    # key == prev_key is okay.
+                    # E.g., a defining RHS might have an optional nonterminal,
+                    # and an SDO needs to handle presence/absence differently,
+                    # so two 'use' productions will legitimately
+                    # map to the same 'def' RHS.
+
+                    prev_key = key
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
