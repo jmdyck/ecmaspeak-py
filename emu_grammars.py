@@ -806,7 +806,7 @@ def get_grammar_arena_for_section(section):
     else:
         return 'A'
 
-# ------------------------------------------------------------------------------
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_non_defining_prodns(emu_grammars):
     stderr("check_non_defining_prodns...")
@@ -942,6 +942,8 @@ def check_non_defining_prodns(emu_grammars):
 
             # --------------------------
 
+            # Match 'use' RHSs against 'defining' RHSs.
+
             matches = []
 
             d_rhss = d_production_n._rhss
@@ -1033,11 +1035,11 @@ def check_non_defining_prodns(emu_grammars):
                 pass
             else:
                 msg_at_node(u_rhss[-1],
-                    f"ERROR: 'use' RHSs are out-of-order wrt corresponding def RHSs: {[i+1 for i in all_def_i_s]}"
+                    f"ERROR: 'use' RHSs are out-of-order wrt corresponding def RHSs: {[i+1 for i in dis]}"
                 )
 
             # Each 'def' RHS should match at most one 'use' RHS.
-            # (Actually, it's conceivable that this could happen without being a mistake.
+            # (Actually, it *could* legitimately match more than one.
             # E.g. consider a def RHS that has 2 optional NTs,
             # and imagine that if both are omitted, then one algorithm applies,
             # but in any other case, another algorithm applies.
@@ -1135,7 +1137,10 @@ def u_item_matches_d_item(u_item_n, d_item_n):
         else:
             # In the definition, this GNT does not have a '?'
             # So in the use, it can't have a '?' either.
-            assert not u_item_n._is_optional
+            if u_item_n._is_optional:
+                msg_at_node(u_item_n,
+                    f"ERROR: use has '?' but def does not"
+                )
             note['L-687'] = 1
             # 2285 occurrences
 
@@ -1208,7 +1213,7 @@ def d_item_doesnt_require_a_matching_u_item(d_item_n):
 
     return None
 
-# ------------------------------------------------------------------------------
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_emu_prodrefs(doc_node):
     stderr("check_emu_prodrefs...")
