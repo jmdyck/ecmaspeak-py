@@ -59,7 +59,7 @@
     the code matched by {PROD_REF} is contained in strict mode code
     the code that matches {PROD_REF} is contained in strict mode code
     the duplicate entries are only bound by {cap_word}
-    the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose StringValue equals the StringValue of the {nonterminal} of {PROD_REF}
+    the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals the {cap_word} of the {nonterminal} of {PROD_REF}
     the goal symbol of the syntactic grammar is {nonterminal}
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
@@ -70,7 +70,7 @@
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
     {LOCAL_REF} contains a Unicode escape sequence
-    {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same StringValue
+    {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}
     {LOCAL_REF} is an {nonterminal} or an {nonterminal}
     {LOCAL_REF} is contained in strict mode code
     {LOCAL_REF} is not covering an? {nonterminal}

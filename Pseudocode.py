@@ -2430,6 +2430,16 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # So no SDO will be invoked on them.
         return True
 
+    if sdo_name == 'EvaluateConciseBody' and lhs_nt == 'ConciseBody' and def_i != 0:
+        # EvaluateConciseBody is invoked on ConciseBody *only* when it's of the form
+        # `ConciseBody : ExpressionBody` (i.e. def_i == 0)
+        return True
+
+    if sdo_name == 'EvaluateAsyncConciseBody' and lhs_nt == 'AsyncConciseBody' and def_i != 0:
+        # EvaluateAsyncConciseBody is invoked on AsyncConciseBody *only* when it's of the form
+        # `AsyncConciseBody : ExpressionBody` (i.e. def_i == 0)
+        return True
+
     # ----------
 
     if (

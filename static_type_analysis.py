@@ -7156,8 +7156,8 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
-    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} containing a {nonterminal} which has a StringValue equal to the StringValue of the {nonterminal} contained in {PROD_REF}.":
-        [nont1, nont2, nont3, nont4, prod_ref] = children
+    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to the {cap_word} of the {nonterminal} contained in {PROD_REF}.":
+        [nont1, nont2, nont3, cw1, cw2, nont4, prod_ref] = children
         result = env0
 
     elif p == r"{COMMAND} : Create any host-defined global object properties on {var}.":

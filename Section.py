@@ -107,7 +107,11 @@ def establish_section_r(node, section_level, section_num):
             else:
                 node.block_children.append(child)
 
-        assert len(node.block_children) > 0 or len(node.numless_children) > 0 or len(node.section_children) > 0
+        if len(node.block_children) == 0 and len(node.numless_children) == 0 and len(node.section_children) == 0:
+            msg_at_posn(
+                node.start_posn,
+                "section is empty!"
+            )
 
         # "bcen" = "block children element names"
         node.bcen_list = [
@@ -273,24 +277,25 @@ def _infer_section_kinds(section):
             if c0.element_name == 'p':
                 p_text = c0.source_text()
                 if p_text.startswith('<p>With '):
-                    mo = re.match(r'^<p>With parameters? (.+)\.</p>$', p_text)
-                    assert mo
+                    mo = re.match(r'^<p>With(?: parameters?)? (.+)\.</p>$', p_text)
+                    assert mo, p_text
                     params_s = mo.group(1)
                     if params_s == '_object_ and optional parameters _functionPrototype_ and _name_':
                         # kludge for my 'SetFunctionName' branch
+                        # ("optional parameters" applies to two params, but splitting on 'and' will lose the second)
                         parameters['_object_'] = ''
                         parameters['_name_'] = '[]'
                         parameters['_functionPrototype_'] = '[]'
                     else:
                         for param in re.split(r', and |, | and ', params_s):
-                            if param == 'optional parameter _functionPrototype_':
-                                param_name = '_functionPrototype_'
+                            if (mo := re.fullmatch(r'optional parameter (_\w+_)', param)):
+                                param_name = mo.group(1)
                                 param_punct = '[]'
-                            elif param == 'List _argumentsList_':
+                            elif param == '_argumentsList_ (a List)':
                                 param_name = '_argumentsList_'
                                 param_punct = ''
                             else:
-                                assert re.match(r'^_[a-zA-Z]+_$', param)
+                                assert re.match(r'^_[a-zA-Z]+_$', param), param
                                 param_name = param
                                 param_punct = ''
                             assert param_name not in parameters
@@ -314,6 +319,29 @@ def _infer_section_kinds(section):
         assert 'op_name' not in section.ste
         section.ste['op_name'] = 'WeakRef emptying thing'
         section.ste['parameters'] = OrderedDict([('_S_', '')])
+
+    # ======================================================
+
+    expect_attr_type_is_sdo = (
+        section.section_kind == 'syntax_directed_operation'
+        and
+        section.ste['op_name'] not in [
+            'MV',
+            'TV and TRV',
+            'Evaluation',
+            'regexp-Evaluate'
+        ]
+    )
+    type_is_sdo = (section.attrs.get('type') == 'sdo')
+
+    if type_is_sdo and not expect_attr_type_is_sdo:
+        msg_at_posn(section.start_posn,
+            f'Did not expect `type="sdo"` for this section'
+        )
+    elif not type_is_sdo and expect_attr_type_is_sdo:
+        msg_at_posn(section.start_posn,
+            f'Expected `type="sdo"` for this section'
+        )
 
     # ======================================================
 
@@ -548,6 +576,26 @@ def _check_aoids(section):
                     expected_aoid = None
                 else:
                     expected_aoid = op_name
+
+            elif section.section_kind == 'syntax_directed_operation':
+                if op_name in [
+                    'MV',
+                    'TV and TRV',
+                    'Evaluation',
+                    'HasCallInTailPosition',
+                    'regexp-Evaluate',
+                ]:
+                    # After 2271, there are still a few SDOs that are defined piecewise.
+                    expected_aoid = None
+                elif section.element_name == 'emu-annex' and op_name in [
+                    'IsCharacterClass',
+                    'CharacterValue',
+                ]:
+                    # These can't duplicate the aoid of the main-spec clause.
+                    expected_aoid = None
+                else:
+                    expected_aoid = op_name
+
             else:
                 expected_aoid = None
 

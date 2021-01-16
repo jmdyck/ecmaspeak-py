@@ -378,7 +378,9 @@ def check_ids():
                 possibles = [
                     id_prefix_expectation + aoid.lower().replace(' ', '-').replace('::', '-'),
                     id_prefix_expectation + aoid,
-                    id_prefix_expectation + kebab(aoid)
+                    id_prefix_expectation + kebab(aoid),
+                    id_prefix_expectation + 'static-semantics-' + aoid.lower(),
+                    id_prefix_expectation + 'runtime-semantics-' + aoid.lower(),
                 ]
                 if defid not in possibles:
                     msg_at_posn(node.start_posn, f'Expected id="{possibles[0]}"')
