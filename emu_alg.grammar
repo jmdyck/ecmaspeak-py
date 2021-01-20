@@ -863,6 +863,7 @@
     {var} is on the list of waiters in {var}
     {var} is one of the code units in {STR_LITERAL}
     {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+    {var} is present in the table in step {h_emu_xref}
     {var} is the String value {STR_LITERAL}
     {var} is the execution context of a generator
     {var} is the same Number value as {var}
