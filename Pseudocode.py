@@ -965,7 +965,7 @@ def analyze_changes_section(section):
                     assert emu_alg.element_name == 'emu-alg'
                     handle_solo_op('EvalDeclarationInstantiation', emu_alg, section)
 
-            elif re.fullmatch(fr'The following augments the \|IterationStatement\| production in {emu_xref_re}:', p_ist):
+            elif re.fullmatch(fr'The following augments the \|\w+\| production in {emu_xref_re}:', p_ist):
                 emu_grammar = section.block_children[i]; i += 1
                 assert emu_grammar.element_name == 'emu-grammar'
                 p2 = section.block_children[i]; i += 1
