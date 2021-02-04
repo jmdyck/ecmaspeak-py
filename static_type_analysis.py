@@ -1719,10 +1719,20 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
     elif parameter_listing == 'up to three arguments _target_, _start_ and _end_':
         # 1 case
         oi.param_names = ['_target_', '_start_', '_end_']
+        oh_warn()
+        oh_warn(f"`{oi.name}` preamble param list:")
+        oh_warn(repr(parameter_listing))
+        oh_warn(f"is of the form: ... X, X and X")
+        oh_warn(f"but expected  : ... X, X, and X")
         return
     elif parameter_listing == 'up to three arguments _value_, _start_ and _end_':
         # 1 case
         oi.param_names = ['_value_', '_start_', '_end_']
+        oh_warn()
+        oh_warn(f"`{oi.name}` preamble param list:")
+        oh_warn(repr(parameter_listing))
+        oh_warn(f"is of the form: ... X, X and X")
+        oh_warn(f"but expected  : ... X, X, and X")
         return
 
     elif re.fullmatch(r'(two )?arguments _x_ and _y_ of type BigInt', parameter_listing):
@@ -1769,7 +1779,24 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             ('^two arguments,? ', ''),
         ])
 
-        param_items = re.split(', and |, | and ', part)
+        pieces = re.split('(, and |, | and )', part)
+        assert len(pieces) % 2 == 1
+        param_items = pieces[0::2]
+        connectors = pieces[1::2]
+
+        if len(connectors) == 0:
+            expected_connectors = []
+        elif len(connectors) == 1:
+            expected_connectors = [' and ']
+        else:
+            expected_connectors = [', '] * (len(connectors) - 1) + [', and ']
+
+        if connectors != expected_connectors:
+            oh_warn()
+            oh_warn(f"`{oi.name}` preamble param list:")
+            oh_warn(repr(part))
+            oh_warn(f"is of the form: X{'X'.join(connectors)}X")
+            oh_warn(f"but expected  : X{'X'.join(expected_connectors)}X")
 
         var_pattern = r'\b_\w+_\b'
 
