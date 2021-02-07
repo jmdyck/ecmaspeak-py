@@ -4688,6 +4688,8 @@ class Env:
                 '\u211d(_ny_)', # Math.atan2
                 '\u211d(_nx_)', # Math.atan2
                 'NormalCompletion(_value_)', # GeneratorResume
+                '\u211d(_exponent_)', # Number::exponentiate
+                '\u211d(_d_)', # Number::remainder
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -5382,6 +5384,8 @@ def tc_header(header):
                     header.name == 'SetMutableBinding' and pn == '*return*'
                     or
                     header.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
+                    or
+                    header.name in ['::divide','::exponentiate','::remainder'] and pn == '*return*' and init_t == T_Number | ThrowType(T_RangeError) and final_t == T_Number
                     or
                     header.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
                     or
@@ -8468,6 +8472,15 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0
 
+    elif p == r"{CONDITION_1} : {var} and {var} are both finite":
+        [a, b] = children
+        (a_t_env, a_f_env) = env0.with_type_test(a, 'is a', T_FiniteNumber_, asserting)
+        (b_t_env, b_f_env) = env0.with_type_test(b, 'is a', T_FiniteNumber_, asserting)
+        return (
+            env_and(a_t_env, b_t_env),
+            env_or(a_f_env, b_f_env)
+        )
+
     elif p == r"{CONDITION_1} : {var} is not finite":
         [var] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
@@ -9589,10 +9602,10 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}":
         [var, lita, litb] = children
-        env0.assert_expr_is_of_type(var, T_Number)
-        env0.assert_expr_is_of_type(lita, T_Number)
-        env0.assert_expr_is_of_type(litb, T_Number)
-        return (env0, env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
+        return (env1, env1)
 
 #    elif p == r"{CONDITION_1} : All dependencies of {var} have been transitively resolved and {var} is ready for evaluation":
 #        [var, var2] = children
@@ -10137,7 +10150,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an integral Number":
+    elif p in [
+        r"{CONDITION_1} : {var} is an integral Number",
+        r"{CONDITION_1} : {var} is not an integral Number",
+        r"{CONDITION_1} : {var} is an odd integral Number",
+    ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
         return (env0, env0)
@@ -11711,10 +11728,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
         return (T_MathReal_, env1)
 
+    elif p == r"{EXPR} : the result of raising {EX} to the {EX} power":
+        [avar, bvar] = children
+        env1 = env0.ensure_expr_is_of_type(avar, T_MathReal_)
+        env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
+        return (T_MathReal_, env2)
+
     elif p == r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_List)
         return (T_MathReal_, env0)
+
+    elif p == r"{EXPR} : {EX} - ({EX} &times; {var}) where {var} is an integer that is negative if and only if {var} and {var} have opposite sign, and whose magnitude is as large as possible without exceeding the magnitude of {EX} / {EX}":
+        [exa, exb, _, _, _, _, _, _] = children # XXX
+        env1 = env0.ensure_expr_is_of_type(exa, T_MathReal_)
+        env2 = env1.ensure_expr_is_of_type(exb, T_MathReal_)
+        return (T_MathReal_, env2)
 
     # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:

@@ -672,6 +672,7 @@
     {var} also has a {DSBN} internal slot
     {var} and {DOTTING} are the same Module Record
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
+    {var} and {var} are both finite
     {var} and {var} are both the same Symbol value
     {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)
     {var} and {var} are finite and non-zero
@@ -815,6 +816,7 @@
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
     {var} is an integral Number
+    {var} is an odd integral Number
     {var} is an ordinary, extensible object with no non-configurable properties
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is an? {PROPERTY_KIND} property
@@ -842,6 +844,7 @@
     {var} is not an array index
     {var} is not an empty List
     {var} is not an integer index
+    {var} is not an integral Number
     {var} is not an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}
     {var} is not currently an element of {var}
@@ -1392,6 +1395,7 @@
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
+    the result of raising {EX} to the {EX} power
     the result of subtracting 1 from the exponential function of {EX}
     the result of the comparison {EX} == {EX}
     the result of the {MATH_FUNC} of {EX}
@@ -1436,6 +1440,7 @@
     the {var} that was passed to this function by {DSBN} or {DSBN}
     this Date object
     {EX}
+    {EX} - ({EX} &times; {var}) where {var} is an integer that is negative if and only if {var} and {var} have opposite sign, and whose magnitude is as large as possible without exceeding the magnitude of {EX} / {EX}
     {var}'s State
     {var}'s _captures_ List
     {var}'s code point value
