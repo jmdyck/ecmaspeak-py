@@ -93,7 +93,6 @@
     Optionally, {SMALL_COMMAND}.
     Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Perform an implementation-defined debugging action.
-    Perform an implementation-defined sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
@@ -143,6 +142,7 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
+    Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that completion.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
     Suspend the currently running execution context.
     Suspend {var} and remove it from the execution context stack.
@@ -163,6 +163,9 @@
 
     # obsoleted by the merge of PR #1460:
     # Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
+
+    # obsoleted by the merge of PR #1585
+    # Perform an implementation-defined sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
 
     # obsoleted by the merge of PR #1597:
     # Add {var} at the back of the Job Queue named by {var}.
@@ -240,9 +243,6 @@
 
     # obsoleted by the merge of PR #2152:
     # Append in list order the elements of {var} to the end of the List {var}.
-
-    # PR 1585 
-    Sort {var} using an implementation-dependent sequence of calls to SortCompare.
 
     # PR 1612 sort_algo:
     Let {var} be {LITERAL} if any of the following conditions are satisfied, and let it be {LITERAL} otherwise:{I_BULLETS}
@@ -376,7 +376,6 @@
     event {var} such that {CONDITION}
     field of {var} that is present
     index {var} of {var}
-    integer {var} in the range 0 &le; {var} &lt; {var}
     integer {var} starting with {EX} such that {CONDITION}, in ascending order
     integer {var} such that {CONDITION}
     integer {var} that satisfies {CONDITION}
@@ -388,6 +387,9 @@
     {nonterminal} {var} of {var}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
+
+    # obsoleted by the merge of PR #1585:
+    # integer {var} in the range 0 &le; {var} &lt; {var}
 
     # obsoleted by the merge of PR #1831:
     # {nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})
@@ -454,11 +456,6 @@
     {BULLET_LINE}
 
 {BULLET_LINE} :
-    {B} If an abrupt completion is returned from any of these operations, it is immediately returned as the value of this function.
-    {B} If {var} is not sparse then DeletePropertyOrThrow must not be called.
-    {B} The `Throw` argument for every call to {h_emu_xref} is {LITERAL}.
-    {B} The arguments for calls to SortCompare are values returned by a previous call to the {cap_word} abstract operation, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent, use {NUM_LITERAL}. If only the second prospective argument is non-existent, use {NUM_LITERAL}.
-    {B} The property key argument for each call to {cap_word}, {h_emu_xref}, {cap_word}, or {cap_word} is the string representation of a non-negative integer less than {var}.
 
     {B} the String representation of {EX}, formatted as a four-digit lowercase hexadecimal number, padded to the left with zeroes if necessary
     {B} the String representation of {EX}, formatted as a four-digit uppercase hexadecimal number, padded to the left with zeroes if necessary
@@ -479,6 +476,13 @@
     # {B} If any {DSBN} call returns {LITERAL} a {ERROR_TYPE} exception is thrown.
     # {B} The arguments for calls to SortCompare are values returned by a previous call to the {DSBN} internal method, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
     # {B} The property key argument for each call to {DSBN}, {DSBN}, HasOwnProperty, or DeletePropertyOrThrow is the string representation of a nonnegative integer less than {var}.
+
+    # obsoleted by the merge of PR #1585:
+    # {B} If an abrupt completion is returned from any of these operations, it is immediately returned as the value of this function.
+    # {B} If {var} is not sparse then DeletePropertyOrThrow must not be called.
+    # {B} The `Throw` argument for every call to {h_emu_xref} is {LITERAL}.
+    # {B} The arguments for calls to SortCompare are values returned by a previous call to the {cap_word} abstract operation, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent, use {NUM_LITERAL}. If only the second prospective argument is non-existent, use {NUM_LITERAL}.
+    # {B} The property key argument for each call to {cap_word}, {h_emu_xref}, {cap_word}, or {cap_word} is the string representation of a non-negative integer less than {var}.
 
     # oboleted by the merge of PR #2138:
     # {B} the previous value of {var}

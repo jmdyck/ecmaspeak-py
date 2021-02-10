@@ -78,6 +78,7 @@ def each_step_ref():
         patterns = [
             fr'steps {x}, {x}, and {x}',
             fr'steps {x}-{x}',
+             f'steps {x}\u2013{x}',
             fr'steps {x} and {x}',
             fr'step {x}',
         ]
@@ -121,6 +122,9 @@ def each_step_ref():
         elif ref_is_followed_by(' in the algorithm that handles the addition operator `+`'): # compound_assignment branch
             refd_alg_name = 'ApplyStringOrNumericBinaryOperator'
             refd_section_id = 'sec-applystringornumericbinaryoperator'
+        elif ref_is_followed_by(' in <emu-xref href="#sec-array.prototype.sort"></emu-xref>'):
+            refd_alg_name = 'Array.prototype.sort'
+            refd_section_id = 'sec-array.prototype.sort'
         elif ref_is_preceded_by('the same as [[Call]] (see <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>) except that '):
             refd_alg_name = '[[Call]] for built-in functions'
             refd_section_id = 'sec-built-in-function-objects-call-thisargument-argumentslist'

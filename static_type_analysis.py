@@ -358,14 +358,9 @@ def create_operation_info_for_section(s):
         # and it's easier to say that here than later.
         pre_algo_spans = [(0, 0)]
 
-    elif s.section_title == 'Array.prototype.sort ( _comparefn_ )':
-        assert n_algos == 3
-        # but they're really 3 pieces of one algorithm,
-        # so only use the first span
-        pre_algo_spans = pre_algo_spans[0:1]
     elif s.section_title == '%TypedArray%.prototype.sort ( _comparefn_ )':
         assert n_algos == 2
-        # The first algo is just a variant of the first piece from Array.p.sort,
+        # The first algo is just a variant of the first few steps from Array.p.sort,
         # but we still want an eoh for the function.
         # And the second is an alternative defn of SortCompare,
         # so use both pre_algo_spans.
@@ -6541,7 +6536,6 @@ def tc_nonvalue(anode, env0):
         # elif each_thing.prod.rhs_s == r"code point {var} in {var}, in order":
         # elif each_thing.prod.rhs_s == r"element {var} in {NAMED_OPERATION_INVOCATION}":
         # elif each_thing.prod.rhs_s == r"event {var} in {var}":
-        # elif each_thing.prod.rhs_s == r"integer {var} in the range 0&le;{var}&lt; {var}":
         # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in EventSet({var})":
         # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in HostEventSet({var})":
         # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in SharedDataBlockEventSet({var})":
@@ -7360,6 +7354,11 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(subject_var, T_Parse_Node)
         result = env0
 
+    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that completion.":
+        [var] = children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
+        result = env1
+
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
     # elif p == r"{COMMAND} : For each {EACH_THING}, if {CONDITION}, then {SMALL_COMMAND}.":
@@ -7367,7 +7366,6 @@ def tc_nonvalue(anode, env0):
     # elif p == r"{COMMAND} : Let {var} be {EXPR}. If {CONDITION}, {var} will be the execution context that performed the direct eval. If {CONDITION}, {var} will be the execution context for the invocation of the `eval` function.":
     # elif p == r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even.":
     # elif p == r"{COMMAND} : Order the elements of {var} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method was invoked with {var}.":
-    # elif p == r"{COMMAND} : Perform an implementation-dependent sequence of calls to the {DSBN} and {DSBN} internal methods of {var}, to the DeletePropertyOrThrow and HasOwnProperty abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}":
     # elif p == r"{COMMAND} : Repeat, while {var} is less than the total number of elements of {var}. The number of elements must be redetermined each time this method is evaluated.{IND_COMMANDS}":
     # elif p == r"{COMMAND} : Return {LITERAL},? if {CONDITION}.":
     # elif p == r"{COMMAND} : Return {LITERAL},? if {CONDITION}. Otherwise, return {LITERAL}.":
