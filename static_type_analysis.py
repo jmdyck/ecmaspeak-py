@@ -11790,6 +11790,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_MathNonNegativeInteger_, env0)
 
+    elif p == r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}":
+        [xref] = children
+        return (T_MathNonNegativeInteger_, env0)
+
+    elif p == r"{EXPR} : the number of non-optional parameters of an {cap_word} function as specified below":
+        [cap_word] = children
+        return (T_MathNonNegativeInteger_, env0)
+
     # ----
     # return T_MathInteger_: arithmetic:
 

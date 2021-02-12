@@ -1378,6 +1378,8 @@
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
+    the number of non-optional parameters of an {cap_word} function as specified below
+    the number of non-optional parameters of the function definition in {h_emu_xref}
     the one character in CharSet {var}
     the other {EX} code units of {var}
     the parse of some source text
