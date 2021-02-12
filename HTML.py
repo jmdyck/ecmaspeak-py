@@ -106,7 +106,7 @@ def _parse():
                 posn = mo.end()
                 continue
 
-            fatal_lex_erroror(posn)
+            fatal_error(posn, "lexing error")
 
         add_child(HNode(tag_start_posn, tag_end_posn, element_name, attrs))
         return tag_end_posn
@@ -132,13 +132,13 @@ def _parse():
 
     # ---------------------------------------------
 
-    def fatal_lex_erroror(posn):
+    def fatal_error(posn, msg):
         (line_num, col_num) = shared.convert_posn_to_linecol(posn)
         stderr()
         stderr("********************************************")
         stderr(f"line {line_num}, col {col_num}:")
         stderr(repr(shared.spec_text[posn:posn+30] + '...'))
-        stderr("lexing error")
+        stderr(msg)
         stderr("********************************************")
         sys.exit(1)
 
@@ -152,7 +152,7 @@ def _parse():
                 posn = func(mo.start(), mo.end(), mo.groups())
                 break
         else:
-            fatal_lex_erroror(posn)
+            fatal_error(posn, "lexing error")
 
     if current_open_node.element_name != '#DOC':
         msg_at_posn(
