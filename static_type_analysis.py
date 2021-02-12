@@ -429,6 +429,8 @@ def create_operation_info_for_section(s):
                                                             # 18.2.1.2 HostEnsureCanCompileStrings
                                                             # 25.6.1.9 HostPromiseRejectionTracker
 
+            'Most hosts will be able to simply define',     # HostFinalizeImportMeta
+
             'The Boolean prototype object:',
             'The Symbol prototype object:',
             'The Number prototype object:',
@@ -852,9 +854,6 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with the operation/function name:
 
-        (?P<name>\w+) is a (?P<kind>host-defined abstract operation) that (.+)
-        v=!OP \3
-
         (?P<name>LocalTZA)\( _t_, _isUTC_ \) is an (?P<kind>implementation-defined algorithm) that (returns .+)
         v=!OP \3
 
@@ -964,17 +963,6 @@ single_sentence_rules_str = r'''
         v=\1
 
         # -----------
-
-        (.+ to) (?P<ps>the \|ModuleSpecifier\| String, _specifier_), (occurring .+)
-        v=\1 _specifier_ \3
-
-        (.+ by) (?P<ps>the Script Record or Module Record (_\w+_)).
-        v=\1 \3.
-
-        (.*(?P<ps>_\w+_ may also be \*null\*), if .+)
-        v=\1
-
-        # ----
 
         # (.+) the value of (the Boolean argument) _S_.
         # ps=\2 _S_
@@ -1396,6 +1384,7 @@ def extract_info_from_standard_preamble(preamble_node):
         r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
         r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
         r'The (?P<kind>abstract operation) (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
+        r'The (?P<kind>host-defined abstract operation) (?P<name>\w+) takes (?P<pl>.+)\.',
         r'The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>.+) takes (?P<pl>.+)\.',
         r'The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>.+) takes (?P<pl>.+)\.',
     ]:
@@ -1409,6 +1398,9 @@ def extract_info_from_standard_preamble(preamble_node):
         oh_warn("Starts like std preamble but isn't:")
         oh_warn(preamble_text)
         return None
+
+    if sentences == []:
+        return info_holder
 
     # ----------------------------------
     # also
@@ -2004,9 +1996,11 @@ nature_to_tipe = {
         'the String value': 'String',
         'a substring'     : 'String',
         '*"default"*, *"number"*, and *"string"*': 'String',
+        '*"reject"* or *"handle"*': 'String',
         'passed as a String value': 'String',
         'the String name of a property in _holder_': 'String', # TODO
         'the |ModuleSpecifier| String': 'String', # TODO
+        'a |ModuleSpecifier| String': 'String', # TODO
         "the name of a binding that exists in _M_'s module Environment Record": 'String', # TODO
         'the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String', # TODO
         'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
@@ -2091,6 +2085,7 @@ nature_to_tipe = {
         #? 'a Proxy exotic object' : 'Proxy_object_',
 
         'a promise' : 'Promise_object_',
+        'a Promise' : 'Promise_object_',
         'a new promise': 'Promise_object_',
 
         'an Integer-Indexed object': 'Integer_Indexed_object_',
@@ -2171,6 +2166,9 @@ nature_to_tipe = {
 
         # 8.4 Jobs etc
         'a Job Abstract Closure' : 'Job Abstract Closure',
+
+        # 8.4.1 JobCallback Record
+        'a JobCallback Record': 'JobCallback Record',
 
         # 15.1.8 Script Records: Script Record
 
@@ -2338,6 +2336,7 @@ nature_to_tipe = {
     'a Parse Node or an Abstract Closure with no parameters'     : 'Parse Node | () -> Top_',
     'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
+    'a Realm Record or *null*'                                   : 'Realm Record | Null',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
     'a ResolvedBinding Record or *null* or a String'             : 'ResolvedBinding Record | Null | String',
     'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
