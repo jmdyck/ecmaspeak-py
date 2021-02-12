@@ -159,6 +159,7 @@ def _parse():
             current_open_node.start_posn,
             "ERROR: At end of file, this element is still open"
         )
+        fatal_error(current_open_node.start_posn, f"At end of file, this element is still open")
 
     return doc_node
 
