@@ -6,14 +6,14 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 
-import json, pdb, unicodedata, sys, re
+import pdb, unicodedata, sys, re
 from collections import defaultdict
 from pprint import pprint # mainly for debugging
 import misc
 
 from mynamedtuple import mynamedtuple
-
-g_outdir = '../ecma262/_editorial' # XXX Should be able to set this dynamically.
+import shared
+from shared import spec
 
 character_named_ = {
     # table-31:
@@ -43,6 +43,12 @@ class ParseError(Exception):
         self.kernel_item_strings = item_strings
 
 def my_object_hook(d):
+    if isinstance(d, list):
+        return [
+            my_object_hook(x)
+            for x in d
+        ]
+
     if 'T' in d:
         T = d['T']
         del d['T']
@@ -53,13 +59,13 @@ def my_object_hook(d):
         elif T == 'T_named'      : return T_named(**d)
         elif T == 'T_u_p'        : return T_u_p(**d)
         elif T == 'T_u_r'        : return T_u_r(int(d['rlo'], 16), int(d['rhi'], 16))
-        elif T == 'C_but_not'    : return C_but_not(b=tuple(d['b']))
+        elif T == 'C_but_not'    : return C_but_not(b=tuple(my_object_hook(d['b'])))
         elif T == 'C_but_only_if': return C_but_only_if(**d)
         elif T == 'C_no_LT_here' : return C_no_LT_here(**d)
         elif T == 'C_lookahead'  : return C_lookahead(
                                             matches = d['matches'],
                                             tss = tuple(
-                                                tuple(seq)
+                                                tuple(my_object_hook(seq))
                                                 for seq in d['tss']
                                             )
                                         )
@@ -127,8 +133,22 @@ class _Earley:
         this_parser.name = name
         this_parser.how_much_to_consume = how_much_to_consume
 
-        filename = f'{g_outdir}/{this_parser.name}B_cfps.json'
-        this_parser.cfps_from_file = json.load(open(filename, 'r'), object_hook=my_object_hook)
+        grammar = spec.grammar_[(name, 'B')]
+
+        j_prodns = []
+        for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
+            for exp_rhs in exp_rhss:
+                j_prodn = {
+                    'n': 1 + len(j_prodns),
+                    'lhs': lhs_symbol,
+                    'rhs': [
+                        my_object_hook(r_obj)
+                        for r_obj in exp_rhs
+                    ]
+                }
+                j_prodns.append(j_prodn)
+
+        this_parser.cfps_from_file = j_prodns
         #
         ns = [ prod['n'] for prod in this_parser.cfps_from_file ]
         assert are_distinct(ns)
@@ -746,6 +766,10 @@ def gather_ReservedWords(cfps):
     # print('ReservedWords:', sorted(ReservedWords))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+g_outdir = '../ecma262/_editorial' # XXX Should be able to set this dynamically.
+shared.register_output_dir(g_outdir)
+spec.restore()
 
 lexical_earley = _Earley('lexical', 'as much as possible')
 syntactic_earley = _Earley('syntactic', 'all')
@@ -1701,7 +1725,7 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
 if __name__ == '__main__':
     # test
 
-    script_text = r'await'
+    script_text = '({}=1)'
 
     tree = parse(script_text, 'Script', trace_level=9, trace_f=open('/home/michael/tmp/trace.new', 'w'))
     print()

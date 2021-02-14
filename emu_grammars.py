@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import atexit, subprocess, re, time, sys, pdb, json
+import atexit, subprocess, re, time, sys, pdb
 from collections import namedtuple, defaultdict, OrderedDict
 
 import DFA
@@ -1709,8 +1709,6 @@ class Grammar:
 
         # this_grammar.print_exp_prodns()
 
-        this_grammar.save_as_json()
-
     # ==========================================================================
 
     def simplify_prod(this_grammar, params_setting, lhs_symbol, rhs_n):
@@ -1915,23 +1913,6 @@ class Grammar:
                 )
                 i += 1
         f.close()
-
-    # ==========================================================================
-
-    def save_as_json(this_grammar):
-        j_prodns = []
-        for (lhs_symbol, exp_rhss) in sorted(this_grammar.exp_prodns.items()):
-            for exp_rhs in exp_rhss:
-                j_prodn = {
-                    'n': 1 + len(j_prodns),
-                    'lhs': lhs_symbol,
-                    'rhs': exp_rhs,
-                }
-                j_prodns.append(j_prodn)
-
-        filename = '%s_cfps.json' % this_grammar.name
-        f = shared.open_for_output(filename)
-        json.dump(j_prodns, f, indent=2)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
