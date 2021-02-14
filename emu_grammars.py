@@ -1558,14 +1558,11 @@ def check_nonterminal_refs(doc_node):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-grammar_ = None
-
 def make_grammars():
-    global grammar_
-    grammar_ = {}
+    spec.grammar_ = {}
     for level in ['lexical', 'syntactic']:
         for arena in ['A', 'B']:
-            grammar_[(level,arena)] = Grammar(level, arena)
+            spec.grammar_[(level,arena)] = Grammar(level, arena)
 
     for (lhs_symbol, nt_info) in sorted(info_for_nt_.items()):
 
@@ -1586,14 +1583,14 @@ def make_grammars():
             production_n = nt_info.get_appropriate_def_occ(arena)
             if production_n is None: continue
 
-            grammar_[(grammar_level, arena)].add_prodn(production_n)
+            spec.grammar_[(grammar_level, arena)].add_prodn(production_n)
 
 def do_grammar_left_right_stuff():
     grammar_lr_f = shared.open_for_output('grammar_lr')
     def put(*args):
         print(*args, file=grammar_lr_f)
 
-    for (_, g) in sorted(grammar_.items()):
+    for (_, g) in sorted(spec.grammar_.items()):
         g.do_left_right_stuff(put)
 
 # ------------------------------------------------------------------------------
@@ -1601,7 +1598,7 @@ def do_grammar_left_right_stuff():
 def generate_es_parsers():
     stderr("generate_es_parsers...")
 
-    for (_, g) in sorted(grammar_.items()):
+    for (_, g) in sorted(spec.grammar_.items()):
         # stderr()
         # stderr('---------------------------')
         stderr(f"    {g.name}")
