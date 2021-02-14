@@ -1697,11 +1697,6 @@ class Grammar:
         # Put the expanded set of productions here:
         this_grammar.exp_prodns = OrderedDict()
 
-        # this_grammar.handle_multiple_goal_symbols()
-        # Don't need this for Earley approach.
-
-        # if this_grammar.level == 'lexical': this_grammar.distinguish_Token_from_NonToken() #??
-
         for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
             if 0:
                 print()
@@ -1718,49 +1713,6 @@ class Grammar:
         # this_grammar.print_exp_prodns()
 
         this_grammar.save_as_json()
-
-    # ==========================================================================
-
-    def handle_multiple_goal_symbols(this_grammar):
-
-        this_grammar.start_symbol = {'T': 'NT', 'n': '$multigoal'}
-        this_grammar.eoi_symbol = {'T': 'T_named', 'n': 'EOI'}
-        for goal_symbol in this_grammar.goal_symbols:
-            # kludge:
-            if goal_symbol == 'Pattern':
-                exp_goal_symbols = ['Pattern~U~N', 'Pattern~U+N', 'Pattern+U+N']
-
-            elif goal_symbol in [
-                'ArrowFormalParameters',
-                'AssignmentPattern',
-                'ParenthesizedExpression',
-                'CallMemberExpression',
-            ]:
-                exp_goal_symbols = [
-                    goal_symbol + '~Yield~Await',
-                    goal_symbol + '~Yield+Await',
-                    goal_symbol + '+Yield~Await',
-                    goal_symbol + '+Yield+Await',
-                ]
-
-            else:
-                exp_goal_symbols = [goal_symbol]
-
-            # When there are multiple possible goal symbols,
-            # we could generate a separate parser for each,
-            # but that would be inefficient in time+space+attention,
-            # because they'd be largely identical.
-            # So instead, for each goal_symbol G,
-            # we augment the grammar with a production of the form:
-            #     $multigoal -> $prep_for_G  G  EOI
-            # where $prep_for_G is an ad hoc terminal that we'll feed to the parser
-            # to indicate which goal_symbol we're interested in.
-            for exp_goal_symbol in exp_goal_symbols:
-                prep_symbol = { 'T': 'T_named', 'n': '$prep_for_' + exp_goal_symbol}
-                this_grammar.add_exp_prod1(
-                    this_grammar.start_symbol['n'],
-                    [prep_symbol, {'T': 'NT', 'n': exp_goal_symbol}, this_grammar.eoi_symbol]
-                )
 
     # ==========================================================================
 
@@ -1946,34 +1898,6 @@ class Grammar:
         this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'LineTerminator'}])
         this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'Comment'}])
         this_grammar.add_exp_prod1( 'InputElement_common', [{'T': 'NT', 'n': 'CommonToken'}])
-
-    def distinguish_Token_from_NonToken(this_grammar):
-        assert this_grammar.level == 'lexical'
-
-        for (lhs_symbol, production_n) in sorted(this_grammar.prodn_for_lhs_.items()):
-            if lhs_symbol.startswith('InputElement'):
-                ie_rest = lhs_symbol.replace('InputElement', '')
-                # print(lhs_symbol)
-                # print(production_n._param_names)
-                # print(production_n._rhss)
-                assert len(production_n._rhss) == 6
-                assert production_n._rhss[0].source_text() == '\n      WhiteSpace'
-                assert production_n._rhss[1].source_text() == '\n      LineTerminator'
-                assert production_n._rhss[2].source_text() == '\n      Comment'
-                # del production_n._rhss[0:3]
-                non_token_rhss = production_n._rhss[0:3]
-
-                token_production_n = GNode(-1, -1, None, None)
-                token_production_n._rhss = production_n._rhss[3:]
-                token_production_n._param_names = []
-
-                this_grammar.prodn_for_lhs_['_Token' + ie_rest] = token_production_n
-                del this_grammar.prodn_for_lhs_[lhs_symbol] 
-
-        production_n = GNode(-1, -1, None, None)
-        production_n._rhss = non_token_rhss
-        production_n._param_names = []
-        this_grammar.prodn_for_lhs_['_NonToken'] = production_n
 
     # --------------------------------------------------------------------------
 
