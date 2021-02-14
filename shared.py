@@ -38,13 +38,15 @@ class _Spec:
         install_spec_text(self.text)
 
     def save(self):
-        stderr('pickling...')
-        with open(g_outdir + '/spec.pickle','wb') as fp:
+        pickle_file = g_outdir + '/spec.pickle'
+        stderr(f'pickling {pickle_file} ...')
+        with open(pickle_file,'wb') as fp:
             pickle.dump(self, fp)
 
     def restore(self):
-        stderr('unpickling...')
-        with open(g_outdir + '/spec.pickle', 'rb') as fp:
+        pickle_file = g_outdir + '/spec.pickle'
+        stderr(f'unpickling {pickle_file} ...')
+        with open(pickle_file, 'rb') as fp:
             spec = pickle.load(fp)
         self.__dict__.update(spec.__dict__)
         # spec_text = open('spec.html','r', encoding='utf-8').read()
