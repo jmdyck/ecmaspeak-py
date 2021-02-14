@@ -4793,6 +4793,12 @@ class Env:
 
         (expr_t, env1) = tc_expr(expr, self)
 
+        if spec.text[expr.start_posn-5:expr.start_posn] == 'Type(' and not expr_t.is_a_subtype_of_or_equal_to(T_Tangible_):
+            add_pass_error(
+                expr,
+                f"ST of Type() arg is {expr_t}"
+            )
+
         # assert env1 is self
         # No, e.g. expr_text is '_R_.[[Value]]', where the out-env
         # has a narrower binding for _R_.
@@ -9379,6 +9385,7 @@ def tc_cond_(cond, env0, asserting):
 # ^ obsoleted by the merge of PR #1918
 
     elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}":
+        # once, in CreateListFromArrayLike
         [type_arg, var] = children
         env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
         return (env0, env0)
