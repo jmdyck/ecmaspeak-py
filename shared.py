@@ -220,6 +220,20 @@ RE = rem()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def decode_entities(text):
+    assert '<' not in text, text
+    # assert '>' not in text 
+    # comment it out due to "[>" in grammars?
+    return ( text
+        .replace(r'&lt;', '<')
+        .replace(r'&gt;', '>')
+        .replace(r'&ldquo;', '\u201C')
+        .replace(r'&rdquo;', '\u201D')
+        .replace(r'&amp;', '&')
+    )
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def stderr(*s, **kwargs):
     print(*s, **kwargs, file=sys.stderr)
 

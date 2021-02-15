@@ -7,13 +7,14 @@
 
 
 import pdb, unicodedata, sys, re
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from pprint import pprint # mainly for debugging
 import misc
 
 from mynamedtuple import mynamedtuple
 import shared
-from shared import spec
+from shared import spec, decode_entities
+from emu_grammars import GNode
 
 character_named_ = {
     # table-31:
@@ -122,7 +123,298 @@ def Rthing_is_constraint(rthing):
 def are_distinct(values):
     return len(set(values)) == len(values)
 
-# -----------
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def simplify_grammar(grammar):
+    # Put the grammar in a more parser-friendly form.
+
+    # We simplify it in a few senses:
+    # - Convert from GNodes to hashable data structures.
+    # - Eliminate certain features:
+    #     - Eliminate grammatical parameters (lhs-subscript, rhs-guard, rhs-subscript)
+    #       by 'expanding' productions more-or-less as described in the spec.
+    #     - Eliminate rhs-labels.
+    #     - Eliminate multi-character literals in the lexical grammar.
+
+    # Put the expanded set of productions here:
+    grammar.exp_prodns = OrderedDict()
+
+    for (lhs_symbol, production_n) in sorted(grammar.prodn_for_lhs_.items()):
+        if 0:
+            print()
+            print('    ', lhs_symbol, production_n._param_names)
+            for rhs_n in production_n._rhss:
+                print('        ', rhs_n)
+
+        for params_setting in each_params_setting(production_n._param_names):
+            for rhs_n in production_n._rhss:
+                simplify_prod(grammar, params_setting, lhs_symbol, rhs_n)
+
+    if grammar.level == 'lexical': make_InputElement_common(grammar)
+
+    # grammar.print_exp_prodns()
+
+# --------------------------------------------------------------------------
+
+def each_params_setting(params):
+    # `params` is a list of grammatical parameters (i.e., just names).
+    # Each of them can take on a '+' or '~' setting.
+    # Yield every possible combination of settings for these parameters.
+    for bools in each_boolean_vector_of_length(len(params)):
+        yield [
+            ('+' if b else '~') + p
+            for (b, p) in zip(bools, params)
+        ]
+
+def each_boolean_vector_of_length(n):
+    if n == 0:
+        yield []
+    elif n == 1:
+        yield [False]
+        yield [True]
+    elif n == 2:
+        yield [False, False]
+        yield [False, True]
+        yield [True,  False]
+        yield [True,  True]
+    elif n == 3:
+        yield [False, False, False]
+        yield [False, False, True]
+        yield [False, True,  False]
+        yield [False, True,  True]
+        yield [True,  False, False]
+        yield [True,  False, True]
+        yield [True,  True,  False]
+        yield [True,  True,  True]
+    else:
+        assert 0, n
+
+def expand_nt_wrt_params_setting(nt, params_setting):
+    assert type(nt) == GNode
+    assert nt.kind == 'GNT'
+    result = nt._nt_name
+    for (arg_prefix, arg_name) in nt._params:
+        if arg_prefix == '?':
+            for param_setting in params_setting:
+                if param_setting[1:] == arg_name:
+                    break
+            else:
+                # There is no param by that name in params_setting.
+                assert 0, nt
+            result += param_setting
+        elif arg_prefix in ['+', '~']:
+            result += arg_prefix + arg_name
+            # regardless of whether there's a param_setting
+        else:
+            assert 0, arg
+    return result
+
+# --------------------------------------------------------------------------
+
+def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
+    exp_lhs_symbol = lhs_symbol + ''.join(params_setting)
+    assert rhs_n.kind in ['RHS_LINE', 'BACKTICKED_THING'], rhs_n.kind
+
+    # A RHS_LINE can have a guard.
+    if rhs_n.kind == 'RHS_LINE':
+        (optional_guard_n, rhs_body_n, optional_label_n) = rhs_n.children
+
+        if all(
+            guard_param_n.source_text() in params_setting
+            for guard_param_n in optional_guard_n.children
+        ):
+            # The guard succeeds (in the current `params_setting`).
+            pass
+        else:
+            # The guard fails.
+            return
+
+    exp_rhs = []
+
+    for (i, rhs_item_n) in enumerate(rhs_n._rhs_items):
+
+        if rhs_item_n.kind == 'PARAMS':
+            # This is a guard, and we've already determined that it succeeds.
+            assert i == 0
+        elif rhs_item_n.kind == 'LABEL':
+            assert i == len(rhs_n._rhs_items)-1
+
+        # ----------------------------------------
+
+        elif rhs_item_n.kind == 'GNT':
+            nk = grammar.get_name_kind(rhs_item_n._nt_name)
+            exp_name = expand_nt_wrt_params_setting(rhs_item_n, params_setting)
+            if rhs_item_n._is_optional:
+                # The spec says that a RHS with N optionals
+                # is an abbreviation for 2^N RHSs,
+                # one for each combination of optionals being present/absent.
+                # However, during parsing,
+                # you want all 2^N to be instances of the same production,
+                # which is harder if they come from different productions.
+                # So instead, treat X? as a non-terminal, defined X? := X | epsilon
+                opt_exp_name = exp_name + '?'
+                if opt_exp_name not in grammar.exp_prodns:
+                    add_exp_prod1(grammar, opt_exp_name, [{'T': nk, 'n': exp_name}] )
+                    add_exp_prod1(grammar, opt_exp_name, [] )
+                    # Conceivably, the parser could infer these rules.
+                exp_rhs.append({'T': 'NT', 'n': opt_exp_name})
+            else:
+                exp_rhs.append({'T': nk, 'n': exp_name})
+
+        elif rhs_item_n.kind == 'BACKTICKED_THING':
+            chars = rhs_item_n._chars
+            if grammar.level == 'lexical' and len(chars) > 1:
+                #" A <em>lexical grammar</em> for ECMAScript ...
+                #" has as its terminal symbols Unicode code points ...
+                #
+                # So, in the lexical grammar, we explode multicharacter literals.
+                for char in chars:
+                    exp_rhs.append({'T': 'T_lit', 'c': char})
+            else: 
+                exp_rhs.append({'T': 'T_lit', 'c': chars})
+
+        elif rhs_item_n.kind  == 'NAMED_CHAR':
+            exp_rhs.append({'T': 'T_named', 'n': rhs_item_n.groups[0]})
+
+        elif rhs_item_n.kind == 'U_PROP':
+            exp_rhs.append({'T': 'T_u_p', 'p': rhs_item_n.groups[0]})
+
+        elif rhs_item_n.kind == 'U_RANGE':
+            exp_rhs.append({'T': 'T_u_r', 'rlo': rhs_item_n.groups[0], 'rhi': rhs_item_n.groups[1]})
+
+        elif rhs_item_n.kind == 'U_ANY':
+            exp_rhs.append({'T': 'T_u_r', 'rlo': '0x0000', 'rhi': '0x10FFFF'})
+
+        elif rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET']:
+
+            def convert_terminal_seq_n(terminal_seq_n):
+                assert terminal_seq_n.kind == 'TERMINAL_SEQ'
+                ts = []
+                for terminal_item_n in terminal_seq_n.children:
+                    if terminal_item_n.kind == 'BACKTICKED_THING':
+                        t = {'T': 'T_lit', 'c': terminal_item_n._chars}
+                    elif terminal_item_n.kind == 'NAMED_CHAR':
+                        t = {'T': 'T_named', 'n': terminal_item_n.groups[0]}
+                    elif terminal_item_n.kind == 'NLTH_BAR':
+                        t = {'T': 'C_no_LT_here'}
+                    else:
+                        t = str(terminal_item_n)
+                    ts.append(t)
+                return ts
+
+            if rhs_item_n.kind == 'LAC_SINGLE':
+                [lac_single_op, terminal_seq_n] = rhs_item_n.children
+                matches = {
+                    '==': True,
+                    '!=': False,
+                }[lac_single_op.source_text()]
+                rsymbol = {'T': 'C_lookahead', 'matches': matches, 'tss': [convert_terminal_seq_n(terminal_seq_n)]}
+
+            elif rhs_item_n.kind == 'LAC_SET':
+                [lac_set_operand_n] = rhs_item_n.children
+                if lac_set_operand_n.kind == 'NT':
+                    nt_name = lac_set_operand_n._nt_name
+                    # (could precompute these, but probably not worth it)
+                    la_prodn = grammar.prodn_for_lhs_[nt_name]
+                    tss = []
+                    for la_rhs_n in la_prodn._rhss:
+                        assert la_rhs_n.kind == 'BACKTICKED_THING'
+                        t = {'T': 'T_lit', 'c': la_rhs_n._chars}
+                        ts = [t]
+                        tss.append(ts)
+                elif lac_set_operand_n.kind == 'SET_OF_TERMINAL_SEQ':
+                    tss = []
+                    for terminal_seq_n in lac_set_operand_n.children:
+                        tss.append(convert_terminal_seq_n(terminal_seq_n))
+                else:
+                    assert 0
+                rsymbol = {'T': 'C_lookahead', 'matches': False, 'tss': tss}
+
+            else:
+                assert 0
+
+            exp_rhs.append(rsymbol)
+
+        elif rhs_item_n.kind == 'BUT_ONLY':
+            exp_rhs.append({'T': 'C_but_only_if', 'c': decode_entities(rhs_item_n.groups[0])})
+
+        elif rhs_item_n.kind == 'NLTH':
+            exp_rhs.append({'T': 'C_no_LT_here'})
+
+        elif rhs_item_n.kind == 'NT_BUT_NOT':
+
+            def convert_nt(nt_n):
+                nt_name = nt_n._nt_name
+                if nt_n.kind == 'GNT':
+                    assert nt_n._params == []
+                    assert nt_n._is_optional == False
+                elif nt_n.kind == 'NT':
+                    pass
+                else:
+                    assert 0
+                #
+                nk = grammar.get_name_kind(nt_name)
+                return {'T': nk, 'n': nt_name}
+
+            (nt_n, exclusion_n) = rhs_item_n.children
+
+            rsymbol = convert_nt(nt_n)
+            exp_rhs.append(rsymbol)
+
+            b = []
+            for excludable_n in exclusion_n._excludables:
+                if excludable_n.kind == 'NT':
+                    ex_symbol = convert_nt(excludable_n)
+                elif excludable_n.kind == 'BACKTICKED_THING':
+                    ex_symbol = {'T': 'T_lit', 'c': excludable_n._chars}
+                else:
+                    assert 0
+                b.append(ex_symbol)
+            rsymbol = {'T': 'C_but_not', 'b': b}
+            exp_rhs.append(rsymbol)
+
+        else:
+            assert 0, rhs_item_n
+
+    add_exp_prod1(grammar, exp_lhs_symbol, exp_rhs)
+
+# ==========================================================================
+
+def add_exp_prod1(grammar, exp_lhs, exp_rhs):
+    if exp_lhs not in grammar.exp_prodns:
+        grammar.exp_prodns[exp_lhs] = []
+    grammar.exp_prodns[exp_lhs].append( exp_rhs )
+
+# ==========================================================================
+
+def make_InputElement_common(grammar):
+    assert grammar.level == 'lexical'
+    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'WhiteSpace'}])
+    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'LineTerminator'}])
+    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'Comment'}])
+    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'CommonToken'}])
+
+# --------------------------------------------------------------------------
+
+def print_exp_prodns(grammar):
+    stderr('    print_exp_prodns ...')
+    filename = '%s_expanded_grammar' % grammar.name
+    f = shared.open_for_output(filename)
+
+    i = 0
+    for (exp_lhs, exp_rhss) in grammar.exp_prodns.items():
+        for exp_rhs in exp_rhss:
+            # print("%3d: " % i, end=None)
+            print("%61s -> %s" % (
+                    exp_lhs,
+                    stringify_rthings(exp_rhs)
+                ),
+                file=f
+            )
+            i += 1
+    f.close()
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class _Earley:
 
@@ -134,6 +426,8 @@ class _Earley:
         this_parser.how_much_to_consume = how_much_to_consume
 
         grammar = spec.grammar_[(name, 'B')]
+
+        simplify_grammar(grammar)
 
         j_prodns = []
         for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
