@@ -43,36 +43,6 @@ class ParseError(Exception):
         self.posn = posn
         self.kernel_item_strings = item_strings
 
-def my_object_hook(d):
-    if isinstance(d, list):
-        return [
-            my_object_hook(x)
-            for x in d
-        ]
-
-    if 'T' in d:
-        T = d['T']
-        del d['T']
-
-        if False: assert 0
-        elif T == 'NT'           : return NT(**d)
-        elif T == 'T_lit'        : return T_lit(**d)
-        elif T == 'T_named'      : return T_named(**d)
-        elif T == 'T_u_p'        : return T_u_p(**d)
-        elif T == 'T_u_r'        : return T_u_r(int(d['rlo'], 16), int(d['rhi'], 16))
-        elif T == 'C_but_not'    : return C_but_not(b=tuple(my_object_hook(d['b'])))
-        elif T == 'C_but_only_if': return C_but_only_if(**d)
-        elif T == 'C_no_LT_here' : return C_no_LT_here(**d)
-        elif T == 'C_lookahead'  : return C_lookahead(
-                                            matches = d['matches'],
-                                            tss = tuple(
-                                                tuple(my_object_hook(seq))
-                                                for seq in d['tss']
-                                            )
-                                        )
-    else:
-        return d
-
 # -----------
 
 # I use very short names here so that when a tokenized RHS is printed, it isn't too long.
@@ -153,6 +123,17 @@ def simplify_grammar(grammar):
     if grammar.level == 'lexical': make_InputElement_common(grammar)
 
     # grammar.print_exp_prodns()
+
+    list_of_prodns = []
+    for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
+        for exp_rhs in exp_rhss:
+            j_prodn = {
+                'n': 1 + len(list_of_prodns),
+                'lhs': lhs_symbol,
+                'rhs': exp_rhs
+            }
+            list_of_prodns.append(j_prodn)
+    return list_of_prodns
 
 # --------------------------------------------------------------------------
 
@@ -242,8 +223,14 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
         # ----------------------------------------
 
         elif rhs_item_n.kind == 'GNT':
-            nk = grammar.get_name_kind(rhs_item_n._nt_name)
             exp_name = expand_nt_wrt_params_setting(rhs_item_n, params_setting)
+            nk = grammar.get_name_kind(rhs_item_n._nt_name)
+            if nk == 'NT':
+                exp_thing = NT(exp_name)
+            elif nk == 'T_named':
+                exp_thing = T_named(exp_name)
+            else:
+                assert 0, nk
             if rhs_item_n._is_optional:
                 # The spec says that a RHS with N optionals
                 # is an abbreviation for 2^N RHSs,
@@ -254,12 +241,12 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                 # So instead, treat X? as a non-terminal, defined X? := X | epsilon
                 opt_exp_name = exp_name + '?'
                 if opt_exp_name not in grammar.exp_prodns:
-                    add_exp_prod1(grammar, opt_exp_name, [{'T': nk, 'n': exp_name}] )
+                    add_exp_prod1(grammar, opt_exp_name, [exp_thing] )
                     add_exp_prod1(grammar, opt_exp_name, [] )
                     # Conceivably, the parser could infer these rules.
-                exp_rhs.append({'T': 'NT', 'n': opt_exp_name})
+                exp_rhs.append(NT(opt_exp_name))
             else:
-                exp_rhs.append({'T': nk, 'n': exp_name})
+                exp_rhs.append(exp_thing)
 
         elif rhs_item_n.kind == 'BACKTICKED_THING':
             chars = rhs_item_n._chars
@@ -269,21 +256,21 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                 #
                 # So, in the lexical grammar, we explode multicharacter literals.
                 for char in chars:
-                    exp_rhs.append({'T': 'T_lit', 'c': char})
+                    exp_rhs.append(T_lit(char))
             else: 
-                exp_rhs.append({'T': 'T_lit', 'c': chars})
+                exp_rhs.append(T_lit(chars))
 
         elif rhs_item_n.kind  == 'NAMED_CHAR':
-            exp_rhs.append({'T': 'T_named', 'n': rhs_item_n.groups[0]})
+            exp_rhs.append(T_named(rhs_item_n.groups[0]))
 
         elif rhs_item_n.kind == 'U_PROP':
-            exp_rhs.append({'T': 'T_u_p', 'p': rhs_item_n.groups[0]})
+            exp_rhs.append(T_u_p(rhs_item_n.groups[0]))
 
         elif rhs_item_n.kind == 'U_RANGE':
-            exp_rhs.append({'T': 'T_u_r', 'rlo': rhs_item_n.groups[0], 'rhi': rhs_item_n.groups[1]})
+            exp_rhs.append(T_u_r(int(rhs_item_n.groups[0],16), int(rhs_item_n.groups[1],16)))
 
         elif rhs_item_n.kind == 'U_ANY':
-            exp_rhs.append({'T': 'T_u_r', 'rlo': '0x0000', 'rhi': '0x10FFFF'})
+            exp_rhs.append(T_u_r(0x0000,0x10FFFF))
 
         elif rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET']:
 
@@ -292,15 +279,15 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                 ts = []
                 for terminal_item_n in terminal_seq_n.children:
                     if terminal_item_n.kind == 'BACKTICKED_THING':
-                        t = {'T': 'T_lit', 'c': terminal_item_n._chars}
+                        t = T_lit(terminal_item_n._chars)
                     elif terminal_item_n.kind == 'NAMED_CHAR':
-                        t = {'T': 'T_named', 'n': terminal_item_n.groups[0]}
+                        t = T_named(terminal_item_n.groups[0])
                     elif terminal_item_n.kind == 'NLTH_BAR':
-                        t = {'T': 'C_no_LT_here'}
+                        t = C_no_LT_here()
                     else:
                         t = str(terminal_item_n)
                     ts.append(t)
-                return ts
+                return tuple(ts)
 
             if rhs_item_n.kind == 'LAC_SINGLE':
                 [lac_single_op, terminal_seq_n] = rhs_item_n.children
@@ -308,7 +295,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                     '==': True,
                     '!=': False,
                 }[lac_single_op.source_text()]
-                rsymbol = {'T': 'C_lookahead', 'matches': matches, 'tss': [convert_terminal_seq_n(terminal_seq_n)]}
+                rsymbol = C_lookahead(matches=matches, tss=tuple([convert_terminal_seq_n(terminal_seq_n)]))
 
             elif rhs_item_n.kind == 'LAC_SET':
                 [lac_set_operand_n] = rhs_item_n.children
@@ -319,8 +306,8 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                     tss = []
                     for la_rhs_n in la_prodn._rhss:
                         assert la_rhs_n.kind == 'BACKTICKED_THING'
-                        t = {'T': 'T_lit', 'c': la_rhs_n._chars}
-                        ts = [t]
+                        t = T_lit(la_rhs_n._chars)
+                        ts = tuple([t])
                         tss.append(ts)
                 elif lac_set_operand_n.kind == 'SET_OF_TERMINAL_SEQ':
                     tss = []
@@ -328,7 +315,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                         tss.append(convert_terminal_seq_n(terminal_seq_n))
                 else:
                     assert 0
-                rsymbol = {'T': 'C_lookahead', 'matches': False, 'tss': tss}
+                rsymbol = C_lookahead(matches=False, tss=tuple(tss))
 
             else:
                 assert 0
@@ -336,10 +323,10 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
             exp_rhs.append(rsymbol)
 
         elif rhs_item_n.kind == 'BUT_ONLY':
-            exp_rhs.append({'T': 'C_but_only_if', 'c': decode_entities(rhs_item_n.groups[0])})
+            exp_rhs.append(C_but_only_if(decode_entities(rhs_item_n.groups[0])))
 
         elif rhs_item_n.kind == 'NLTH':
-            exp_rhs.append({'T': 'C_no_LT_here'})
+            exp_rhs.append(C_no_LT_here())
 
         elif rhs_item_n.kind == 'NT_BUT_NOT':
 
@@ -354,7 +341,13 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                     assert 0
                 #
                 nk = grammar.get_name_kind(nt_name)
-                return {'T': nk, 'n': nt_name}
+                if nk == 'NT':
+                    exp_thing = NT(nt_name)
+                elif nk == 'T_named':
+                    exp_thing = T_named(nt_name)
+                else:
+                    assert 0, nk
+                return exp_thing
 
             (nt_n, exclusion_n) = rhs_item_n.children
 
@@ -366,11 +359,11 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                 if excludable_n.kind == 'NT':
                     ex_symbol = convert_nt(excludable_n)
                 elif excludable_n.kind == 'BACKTICKED_THING':
-                    ex_symbol = {'T': 'T_lit', 'c': excludable_n._chars}
+                    ex_symbol = T_lit(excludable_n._chars)
                 else:
                     assert 0
                 b.append(ex_symbol)
-            rsymbol = {'T': 'C_but_not', 'b': b}
+            rsymbol = C_but_not(tuple(b))
             exp_rhs.append(rsymbol)
 
         else:
@@ -378,21 +371,21 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
 
     add_exp_prod1(grammar, exp_lhs_symbol, exp_rhs)
 
-# ==========================================================================
+# --------------------------------------------------------------------------
+
+def make_InputElement_common(grammar):
+    assert grammar.level == 'lexical'
+    add_exp_prod1(grammar, 'InputElement_common', [NT('WhiteSpace')])
+    add_exp_prod1(grammar, 'InputElement_common', [NT('LineTerminator')])
+    add_exp_prod1(grammar, 'InputElement_common', [NT('Comment')])
+    add_exp_prod1(grammar, 'InputElement_common', [NT('CommonToken')])
+
+# --------------------------------------------------------------------------
 
 def add_exp_prod1(grammar, exp_lhs, exp_rhs):
     if exp_lhs not in grammar.exp_prodns:
         grammar.exp_prodns[exp_lhs] = []
     grammar.exp_prodns[exp_lhs].append( exp_rhs )
-
-# ==========================================================================
-
-def make_InputElement_common(grammar):
-    assert grammar.level == 'lexical'
-    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'WhiteSpace'}])
-    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'LineTerminator'}])
-    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'Comment'}])
-    add_exp_prod1(grammar, 'InputElement_common', [{'T': 'NT', 'n': 'CommonToken'}])
 
 # --------------------------------------------------------------------------
 
@@ -427,22 +420,7 @@ class _Earley:
 
         grammar = spec.grammar_[(name, 'B')]
 
-        simplify_grammar(grammar)
-
-        j_prodns = []
-        for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
-            for exp_rhs in exp_rhss:
-                j_prodn = {
-                    'n': 1 + len(j_prodns),
-                    'lhs': lhs_symbol,
-                    'rhs': [
-                        my_object_hook(r_obj)
-                        for r_obj in exp_rhs
-                    ]
-                }
-                j_prodns.append(j_prodn)
-
-        this_parser.cfps_from_file = j_prodns
+        this_parser.cfps_from_file = simplify_grammar(grammar)
         #
         ns = [ prod['n'] for prod in this_parser.cfps_from_file ]
         assert are_distinct(ns)
@@ -2019,7 +1997,7 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
 if __name__ == '__main__':
     # test
 
-    script_text = '({}=1)'
+    script_text = 'await'
 
     tree = parse(script_text, 'Script', trace_level=9, trace_f=open('/home/michael/tmp/trace.new', 'w'))
     print()
