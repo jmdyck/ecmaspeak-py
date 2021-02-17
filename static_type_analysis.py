@@ -2802,7 +2802,7 @@ class Header:
                     print("type_tweaks: %s does not have param named %s" % (ton, tpn))
                     sys.exit(1)
                 if tot != old_type:
-                    # This can happen when you've read tweaks from the cheater file,
+                    # This can happen ...
                     # because return-type is split in spec,
                     # and fake_node only points to the abrupt part.
                     # "warning: tweak %s fails old-type check: In %s, existing type of %s is %s, not %s" % (
@@ -3901,10 +3901,169 @@ def maybe_NamedType(name):
     else:
         return NamedType(name)
 
-type_tweaks_filename = '_type_tweaks.txt'
-# type_tweaks_filename = '_operation_headers/cheater_type_tweaks'
+type_tweaks_str = '''
+Abstract Relational Comparison           ; _LeftFirst_            ; Boolean             ; Boolean | not_passed
+AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
+ArrayAccumulation                        ; _nextIndex_            ; TBD                 ; MathInteger_
+AsyncFunctionAwait                       ; _value_                ; TBD                 ; Tangible_
+AsyncFunctionStart                       ; _asyncFunctionBody_    ; TBD                 ; Parse Node
+AsyncGeneratorEnqueue                    ; _completion_           ; Abrupt | Normal     ; Tangible_ | return_ | throw_
+AsyncIteratorClose                       ; _completion_           ; TBD                 ; Tangible_ | empty_ | throw_
+BindingClassDeclarationEvaluation        ; *return*               ; TBD                 ; function_object_ | throw_
+BindingInitialization                    ; _environment_          ; TBD                 ; Environment Record | Undefined
+BitwiseOp                                ; _op_                   ; TBD                 ; (MathInteger_, MathInteger_) -> MathInteger_
+ClassDefinitionEvaluation                ; _className_            ; TBD                 ; String | Undefined
+ClassDefinitionEvaluation                ; *return*               ; TBD                 ; function_object_ | throw_
+ClassFieldDefinitionEvaluation           ; *return*               ; TBD                 ; ClassFieldDefinition Record | throw_
+Construct                                ; _F_                    ; function_object_    ; constructor_object_
+Construct                                ; _argumentsList_        ; (optional) TBD      ; (optional) List of Tangible_
+Construct                                ; _newTarget_            ; (optional) TBD      ; (optional) constructor_object_
+ConstructorMethod                        ; *return*               ; TBD                 ; empty_ | Parse Node for |ClassElement|
+Contains                                 ; _symbol_               ; TBD                 ; grammar_symbol_
+ContainsDuplicateLabels                  ; *return*               ; TBD                 ; Boolean
+ContainsDuplicateLabels                  ; _labelSet_             ; TBD                 ; List of String
+ContainsUndefinedBreakTarget             ; *return*               ; TBD                 ; Boolean
+ContainsUndefinedContinueTarget          ; *return*               ; TBD                 ; Boolean
+CopyDataProperties                       ; _source_               ; TBD                 ; Tangible_
+CreateBuiltinFunction                    ; _realm_                ; (optional) TBD      ; (optional) Realm Record
+CreateBuiltinFunction                    ; _prototype_            ; (optional) TBD      ; (optional) Object | Null
+CreateListFromArrayLike                  ; _obj_                  ; TBD                 ; Tangible_
+CreateMapIterator                        ; _map_                  ; TBD                 ; Tangible_
+CreateMappedArgumentsObject              ; _argumentsList_        ; List                ; List of Tangible_
+CreatePerIterationEnvironment            ; _perIterationBindings_ ; TBD                 ; List of String
+CreateSetIterator                        ; _set_                  ; TBD                 ; Tangible_
+DefineMethod                             ; _functionPrototype_    ; (optional) TBD      ; (optional) Object
+DefineMethod                             ; *return*               ; TBD                 ; methodDef_record_ | throw_
+DestructuringAssignmentEvaluation        ; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
+DetachArrayBuffer                        ; _arrayBuffer_          ; TBD                 ; ArrayBuffer_object_
+DetachArrayBuffer                        ; _key_                  ; (optional) TBD      ; (optional) Tangible_
+EvalDeclarationInstantiation             ; _varEnv_               ; TBD                 ; Environment Record
+EvalDeclarationInstantiation             ; _lexEnv_               ; TBD                 ; Environment Record
+# 1668 + 2290: EvalDeclarationInstantiation             ; _privateEnv_           ; TBD                 ; Environment Record
+Evaluation                               ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
+ExportEntriesForModule                   ; _module_               ; TBD                 ; String | Null
+FinishDynamicImport                      ; _referencingScriptOrModule_ ; TBD            ; Script Record | Module Record | Null
+FinishDynamicImport                      ; _specifier_            ; TBD                 ; String
+FinishDynamicImport                      ; _completion_           ; TBD                 ; Tangible_ | throw_
+FlattenIntoArray                         ; *return*               ; TBD                 ; MathNonNegativeInteger_ | throw_
+GeneratorResume                          ; _value_                ; TBD                 ; Tangible_ | empty_
+GeneratorValidate                        ; _generator_            ; TBD                 ; Tangible_
+GetExportedNames                         ; _exportStarSet_        ; (optional) TBD      ; (optional) List of Source Text Module Record
+GetIterator                              ; _hint_                 ; (optional) TBD      ; (optional) IteratorKind_
+GetIterator                              ; _method_               ; (optional) TBD      ; (optional) function_object_
+GetMethod                                ; *return*               ; TBD                 ; Undefined | function_object_ | throw_
+GetOwnPropertyKeys                       ; _O_                    ; TBD                 ; Tangible_
+GetPrototypeFromConstructor              ; _intrinsicDefaultProto_; TBD                 ; String
+GetSubstitution                          ; _captures_             ; TBD                 ; List of String
+GetSubstitution                          ; _namedCaptures_        ; TBD                 ; Tangible_
+GetValue                                 ; *return*               ; TBD                 ; Tangible_ | throw_
+GetValue                                 ; _V_                    ; TBD                 ; Tangible_ | Reference Record | throw_
+GetViewValue                             ; _view_                 ; TBD                 ; Tangible_
+GetViewValue                             ; _isLittleEndian_       ; TBD                 ; Tangible_
+HasCallInTailPosition                    ; _call_                 ; TBD                 ; Parse Node
+HostEnqueuePromiseJob                    ; *return*               ; TBD                 ; empty_
+HostEnsureCanCompileStrings              ; *return*               ; TBD                 ; host_defined_ | throw_
+HostFinalizeImportMeta                   ; *return*               ; TBD                 ; empty_
+HostGetImportMetaProperties              ; *return*               ; TBD                 ; List of ImportMeta_record_
+HostHasSourceTextAvailable               ; *return*               ; TBD                 ; Boolean
+HostImportModuleDynamically              ; *return*               ; TBD                 ; Undefined
+HostPromiseRejectionTracker              ; *return*               ; TBD                 ; empty_
+HostReportErrors                         ; *return*               ; TBD                 ; empty_
+HostReportErrors                         ; _errorList_            ; TBD                 ; List of Error
+HostResolveImportedModule                ; *return*               ; TBD                 ; Module Record | throw_ *Error*
+InitializeBoundName                      ; _value_                ; TBD                 ; Tangible_
+InitializeReferencedBinding              ; _V_                    ; TBD                 ; Reference Record | throw_
+InitializeReferencedBinding              ; _W_                    ; TBD                 ; Tangible_ | throw_
+InnerModuleLinking                       ; _module_               ; Cyclic Module Record; Module Record
+IsArray                                  ; _argument_             ; TBD                 ; Tangible_
+IsConcatSpreadable                       ; _O_                    ; TBD                 ; Tangible_
+IsInteger                                ; _argument_             ; TBD                 ; Tangible_
+IsIntegralNumber                         ; _argument_             ; TBD                 ; Tangible_
+IsLabelledFunction                       ; _stmt_                 ; TBD                 ; Parse Node
+IsPromise                                ; _x_                    ; TBD                 ; Tangible_
+IsRegExp                                 ; _argument_             ; TBD                 ; Tangible_
+IteratorBindingInitialization            ; _environment_          ; TBD                 ; Environment Record | Undefined
+IteratorClose                            ; _completion_           ; TBD                 ; Tangible_ | empty_ | throw_
+IteratorDestructuringAssignmentEvaluation; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
+IteratorNext                             ; _value_                ; (optional) TBD      ; (optional) Tangible_
+IteratorStep                             ; *return*               ; TBD                 ; Boolean | Object | throw_
+IteratorValue                            ; *return*               ; TBD                 ; Tangible_ | throw_
+KeyedBindingInitialization               ; _environment_          ; TBD                 ; Environment Record | Undefined
+KeyedDestructuringAssignmentEvaluation   ; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
+LabelledEvaluation                       ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
+LocalTZA                                 ; *return*               ; Number              ; IntegralNumber_
+LoopContinues                            ; _completion_           ; TBD                 ; Tangible_ | empty_ | Abrupt
+LoopEvaluation                           ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
+MV                                       ; *return*               ; TBD                 ; MathInteger_
+MakeIndicesArray                         ; _indices_              ; TBD                 ; List of (Match Record | Undefined)
+MakeIndicesArray                         ; _groupNames_           ; TBD                 ; List of (String | Undefined) | Undefined
+MakeSuperPropertyReference               ; _actualThis_           ; TBD                 ; Tangible_
+MakeSuperPropertyReference               ; _propertyKey_          ; TBD                 ; String | Symbol
+MakeSuperPropertyReference               ; _strict_               ; TBD                 ; Boolean
+xModuleExecution                          ; _module_               ; TBD                 ; Source Text Module Record
+NewPromiseReactionJob                    ; _argument_             ; TBD                 ; Tangible_
+NumberToString                           ; *return*               ; TBD                 ; String
+OrdinaryCreateFromConstructor            ; _intrinsicDefaultProto_; TBD                 ; String
+OrdinaryHasInstance                      ; _O_                    ; TBD                 ; Tangible_
+ParsePattern                             ; *return*               ; TBD                 ; List of SyntaxError | Parse Node for |Pattern|
+PerformEval                              ; _x_                    ; TBD                 ; Tangible_
+PerformPromiseThen                       ; _onFulfilled_          ; TBD                 ; Tangible_
+PerformPromiseThen                       ; _onRejected_           ; TBD                 ; Tangible_
+PromiseResolve                           ; _C_                    ; constructor_object_ ; Object
+PropertyDefinitionEvaluation             ; *return*               ; TBD                 ; not_returned | throw_
+ProxyCreate                              ; _handler_              ; TBD                 ; Tangible_
+ProxyCreate                              ; _target_               ; TBD                 ; Tangible_
+PutValue                                 ; _V_                    ; TBD                 ; Tangible_ | Reference Record | throw_
+PutValue                                 ; _W_                    ; TBD                 ; Tangible_ | throw_
+QuoteJSONString                          ; _value_                ; TBD                 ; String
+RegExpInitialize                         ; _flags_                ; TBD                 ; Tangible_
+RegExpInitialize                         ; _pattern_              ; TBD                 ; Tangible_
+RepeatMatcher                            ; *return*               ; TBD                 ; MatchResult
+RequireInternalSlot                      ; _O_                    ; TBD                 ; Tangible_
+RequireInternalSlot                      ; _internalSlot_         ; TBD                 ; SlotName_
+RequireObjectCoercible                   ; *return*               ; throw_              ; Boolean | Number | String | Symbol | Object | throw_ *TypeError*
+RequireObjectCoercible                   ; _argument_             ; TBD                 ; Tangible_
+ResolveBinding                           ; _env_                  ; (optional) Environment Record; (optional) Environment Record | Undefined
+ResolveExport                            ; _resolveSet_           ; (optional) TBD      ; (optional) List of ExportResolveSet_Record_
+SV                                       ; *return*               ; TBD                 ; String
+SetRealmGlobalObject                     ; _globalObj_            ; TBD                 ; Object | Undefined
+SetRealmGlobalObject                     ; _thisValue_            ; TBD                 ; Tangible_
+SetViewValue                             ; _view_                 ; TBD                 ; Tangible_
+SetViewValue                             ; _isLittleEndian_       ; TBD                 ; Tangible_
+SortCompare                              ; _x_                    ; TBD                 ; Tangible_
+SortCompare                              ; _y_                    ; TBD                 ; Tangible_
+StringToBigInt                           ; *return*               ; TBD                 ; BigInt | Number
+TRV                                      ; *return*               ; TBD                 ; String
+TV                                       ; *return*               ; TBD                 ; String | Undefined
+TemplateStrings                          ; *return*               ; TBD                 ; List of String
+ToBoolean                                ; *return*               ; TBD                 ; Boolean
+ToBoolean                                ; _argument_             ; TBD                 ; Tangible_
+ToIndex                                  ; _value_                ; TBD                 ; Tangible_
+ToLength                                 ; *return*               ; TBD                 ; IntegralNumber_ | throw_ *TypeError*
+ToNumber                                 ; *return*               ; TBD                 ; Number | throw_ *TypeError*
+ToNumber                                 ; _argument_             ; TBD                 ; Tangible_
+ToObject                                 ; *return*               ; TBD                 ; Object | throw_ *TypeError*
+ToObject                                 ; _argument_             ; TBD                 ; Tangible_
+ToPropertyDescriptor                     ; _Obj_                  ; TBD                 ; Tangible_
+ToString                                 ; *return*               ; TBD                 ; String | throw_ *TypeError*
+ToString                                 ; _argument_             ; TBD                 ; Tangible_
+TriggerPromiseReactions                  ; _argument_             ; TBD                 ; Tangible_
+TrimString                               ; _string_               ; TBD                 ; Tangible_
+UTC                                      ; _t_                    ; TBD                 ; Number
+xUTF16Decode                              ; _string_               ; TBD                 ; String
+xUTF16Encode                              ; _text_                 ; TBD                 ; Unicode_code_points_
+UpdateEmpty                              ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
+UpdateEmpty                              ; _completionRecord_     ; TBD                 ; Tangible_ | empty_ | Abrupt
+UpdateEmpty                              ; _value_                ; TBD                 ; Tangible_ | empty_
+ValidateAndApplyPropertyDescriptor       ; _P_                    ; String | Symbol     ; String | Symbol | Undefined
+ValidateAndApplyPropertyDescriptor       ; _current_              ; Property Descriptor ; Property Descriptor | Undefined
+ValidateSharedIntegerTypedArray          ; _typedArray_           ; TBD                 ; Tangible_
+ValidateTypedArray                       ; _O_                    ; TBD                 ; Tangible_
+[[Call]]                                 ; *return*               ; TBD                 ; Tangible_ | throw_
+[[Construct]]                            ; *return*               ; TBD                 ; Object | throw_
+'''
 type_tweaks = []
-for line in open(type_tweaks_filename, 'r'):
+for line in type_tweaks_str.strip().split('\n'):
     [op_name, p_name, old_t_str, new_t_str] = re.split(' *; *', line.rstrip())
     type_tweaks.append( (
         op_name,
