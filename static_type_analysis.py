@@ -2792,10 +2792,11 @@ class Header:
         # tweak some parameter/return types:
         # Theoretically, the STA would figure all this out,
         # but (a) it's not that smart, and (b) this saves some churn.
-        for (ton, tpn, tot, tnt) in type_tweaks:
-            # NUMBER=INTEGER?
-            if tot == T_Number and tnt == T_Number: continue
-            if ton == self.name:
+        if self.name in type_tweaks_for_op_:
+            tweaks = type_tweaks_for_op_[self.name]
+            for (ton, tpn, tot, tnt) in tweaks:
+                # NUMBER=INTEGER?
+                if tot == T_Number and tnt == T_Number: continue
                 try:
                     old_type = self.return_type if tpn == '*return*' else self.parameter_types[tpn]
                 except KeyError:
@@ -4062,10 +4063,10 @@ ValidateTypedArray                       ; _O_                    ; TBD         
 [[Call]]                                 ; *return*               ; TBD                 ; Tangible_ | throw_
 [[Construct]]                            ; *return*               ; TBD                 ; Object | throw_
 '''
-type_tweaks = []
+type_tweaks_for_op_ = defaultdict(list)
 for line in type_tweaks_str.strip().split('\n'):
     [op_name, p_name, old_t_str, new_t_str] = re.split(' *; *', line.rstrip())
-    type_tweaks.append( (
+    type_tweaks_for_op_[op_name].append( (
         op_name,
         p_name,
         parse_type_string(old_t_str),
