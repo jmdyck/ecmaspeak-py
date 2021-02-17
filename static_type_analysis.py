@@ -3907,18 +3907,18 @@ def maybe_NamedType(name):
 
 type_tweaks_str = '''
 Abstract Relational Comparison           ; _LeftFirst_            ; Boolean             ; Boolean | not_passed
-AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
+# AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
 ArrayAccumulation                        ; _nextIndex_            ; TBD                 ; MathInteger_
-AsyncFunctionAwait                       ; _value_                ; TBD                 ; Tangible_
+# AsyncFunctionAwait                       ; _value_                ; TBD                 ; Tangible_
 AsyncFunctionStart                       ; _asyncFunctionBody_    ; TBD                 ; Parse Node
 AsyncGeneratorEnqueue                    ; _completion_           ; Abrupt | Normal     ; Tangible_ | return_ | throw_
 AsyncIteratorClose                       ; _completion_           ; TBD                 ; Tangible_ | empty_ | throw_
 BindingClassDeclarationEvaluation        ; *return*               ; TBD                 ; function_object_ | throw_
 BindingInitialization                    ; _environment_          ; TBD                 ; Environment Record | Undefined
-BitwiseOp                                ; _op_                   ; TBD                 ; (MathInteger_, MathInteger_) -> MathInteger_
+# BitwiseOp                                ; _op_                   ; TBD                 ; (MathInteger_, MathInteger_) -> MathInteger_
 ClassDefinitionEvaluation                ; _className_            ; TBD                 ; String | Undefined
 ClassDefinitionEvaluation                ; *return*               ; TBD                 ; function_object_ | throw_
-ClassFieldDefinitionEvaluation           ; *return*               ; TBD                 ; ClassFieldDefinition Record | throw_
+# ClassFieldDefinitionEvaluation           ; *return*               ; TBD                 ; ClassFieldDefinition Record | throw_
 Construct                                ; _F_                    ; function_object_    ; constructor_object_
 Construct                                ; _argumentsList_        ; (optional) TBD      ; (optional) List of Tangible_
 Construct                                ; _newTarget_            ; (optional) TBD      ; (optional) constructor_object_
@@ -3972,8 +3972,8 @@ HostGetImportMetaProperties              ; *return*               ; TBD         
 HostHasSourceTextAvailable               ; *return*               ; TBD                 ; Boolean
 HostImportModuleDynamically              ; *return*               ; TBD                 ; Undefined
 HostPromiseRejectionTracker              ; *return*               ; TBD                 ; empty_
-HostReportErrors                         ; *return*               ; TBD                 ; empty_
-HostReportErrors                         ; _errorList_            ; TBD                 ; List of Error
+# HostReportErrors                         ; *return*               ; TBD                 ; empty_
+# HostReportErrors                         ; _errorList_            ; TBD                 ; List of Error
 HostResolveImportedModule                ; *return*               ; TBD                 ; Module Record | throw_ *Error*
 InitializeBoundName                      ; _value_                ; TBD                 ; Tangible_
 InitializeReferencedBinding              ; _V_                    ; TBD                 ; Reference Record | throw_
@@ -3981,7 +3981,7 @@ InitializeReferencedBinding              ; _W_                    ; TBD         
 InnerModuleLinking                       ; _module_               ; Cyclic Module Record; Module Record
 IsArray                                  ; _argument_             ; TBD                 ; Tangible_
 IsConcatSpreadable                       ; _O_                    ; TBD                 ; Tangible_
-IsInteger                                ; _argument_             ; TBD                 ; Tangible_
+# IsInteger                                ; _argument_             ; TBD                 ; Tangible_
 IsIntegralNumber                         ; _argument_             ; TBD                 ; Tangible_
 IsLabelledFunction                       ; _stmt_                 ; TBD                 ; Parse Node
 IsPromise                                ; _x_                    ; TBD                 ; Tangible_
@@ -3999,14 +3999,14 @@ LocalTZA                                 ; *return*               ; Number      
 LoopContinues                            ; _completion_           ; TBD                 ; Tangible_ | empty_ | Abrupt
 LoopEvaluation                           ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
 MV                                       ; *return*               ; TBD                 ; MathInteger_
-MakeIndicesArray                         ; _indices_              ; TBD                 ; List of (Match Record | Undefined)
-MakeIndicesArray                         ; _groupNames_           ; TBD                 ; List of (String | Undefined) | Undefined
+# MakeIndicesArray                         ; _indices_              ; TBD                 ; List of (Match Record | Undefined)
+# MakeIndicesArray                         ; _groupNames_           ; TBD                 ; List of (String | Undefined) | Undefined
 MakeSuperPropertyReference               ; _actualThis_           ; TBD                 ; Tangible_
 MakeSuperPropertyReference               ; _propertyKey_          ; TBD                 ; String | Symbol
 MakeSuperPropertyReference               ; _strict_               ; TBD                 ; Boolean
-xModuleExecution                          ; _module_               ; TBD                 ; Source Text Module Record
+# xModuleExecution                          ; _module_               ; TBD                 ; Source Text Module Record
 NewPromiseReactionJob                    ; _argument_             ; TBD                 ; Tangible_
-NumberToString                           ; *return*               ; TBD                 ; String
+# NumberToString                           ; *return*               ; TBD                 ; String
 OrdinaryCreateFromConstructor            ; _intrinsicDefaultProto_; TBD                 ; String
 OrdinaryHasInstance                      ; _O_                    ; TBD                 ; Tangible_
 ParsePattern                             ; *return*               ; TBD                 ; List of SyntaxError | Parse Node for |Pattern|
@@ -4054,14 +4054,14 @@ ToString                                 ; _argument_             ; TBD         
 TriggerPromiseReactions                  ; _argument_             ; TBD                 ; Tangible_
 TrimString                               ; _string_               ; TBD                 ; Tangible_
 UTC                                      ; _t_                    ; TBD                 ; Number
-xUTF16Decode                              ; _string_               ; TBD                 ; String
-xUTF16Encode                              ; _text_                 ; TBD                 ; Unicode_code_points_
+# xUTF16Decode                              ; _string_               ; TBD                 ; String
+# xUTF16Encode                              ; _text_                 ; TBD                 ; Unicode_code_points_
 UpdateEmpty                              ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
 UpdateEmpty                              ; _completionRecord_     ; TBD                 ; Tangible_ | empty_ | Abrupt
 UpdateEmpty                              ; _value_                ; TBD                 ; Tangible_ | empty_
 ValidateAndApplyPropertyDescriptor       ; _P_                    ; String | Symbol     ; String | Symbol | Undefined
 ValidateAndApplyPropertyDescriptor       ; _current_              ; Property Descriptor ; Property Descriptor | Undefined
-ValidateSharedIntegerTypedArray          ; _typedArray_           ; TBD                 ; Tangible_
+# ValidateSharedIntegerTypedArray          ; _typedArray_           ; TBD                 ; Tangible_
 ValidateTypedArray                       ; _O_                    ; TBD                 ; Tangible_
 [[Call]]                                 ; *return*               ; TBD                 ; Tangible_ | throw_
 [[Construct]]                            ; *return*               ; TBD                 ; Object | throw_
@@ -4073,6 +4073,7 @@ class TypeTweaks:
 
 type_tweaks_for_op_ = defaultdict(TypeTweaks)
 for line in type_tweaks_str.strip().split('\n'):
+    if line.startswith('#'): continue
     [op_name, p_name, old_t_str, new_t_str] = re.split(' *; *', line.rstrip())
     type_tweaks_for_op_[op_name].tweaks.append( (
         op_name,
