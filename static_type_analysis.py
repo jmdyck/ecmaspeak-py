@@ -2381,6 +2381,8 @@ def prep_for_STA():
                 after_thing.prep_for_STA()
         line_info.msgs = []
 
+    print_unused_type_tweaks()
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def gather_nonterminals():
@@ -2794,7 +2796,7 @@ class Header:
         # but (a) it's not that smart, and (b) this saves some churn.
         if self.name in type_tweaks_for_op_:
             tweaks = type_tweaks_for_op_[self.name]
-            for (ton, tpn, tot, tnt) in tweaks:
+            for (ton, tpn, tot, tnt) in tweaks.tweaks:
                 # NUMBER=INTEGER?
                 if tot == T_Number and tnt == T_Number: continue
                 try:
@@ -2810,6 +2812,7 @@ class Header:
                     # (ton, tpn, tot, tnt), self.name, tpn, old_type, tot)
                     assert 0, (ton, tpn, tot, tnt, old_type)
                 self.change_declared_type(tpn, tnt, tweak=True)
+            tweaks.n_uses += 1
 
         # -------------------------
 
@@ -4063,15 +4066,26 @@ ValidateTypedArray                       ; _O_                    ; TBD         
 [[Call]]                                 ; *return*               ; TBD                 ; Tangible_ | throw_
 [[Construct]]                            ; *return*               ; TBD                 ; Object | throw_
 '''
-type_tweaks_for_op_ = defaultdict(list)
+class TypeTweaks:
+    def __init__(self):
+        self.tweaks = []
+        self.n_uses = 0
+
+type_tweaks_for_op_ = defaultdict(TypeTweaks)
 for line in type_tweaks_str.strip().split('\n'):
     [op_name, p_name, old_t_str, new_t_str] = re.split(' *; *', line.rstrip())
-    type_tweaks_for_op_[op_name].append( (
+    type_tweaks_for_op_[op_name].tweaks.append( (
         op_name,
         p_name,
         parse_type_string(old_t_str),
         parse_type_string(new_t_str),
     ))
+
+def print_unused_type_tweaks():
+    f = shared.open_for_output('unused_type_tweaks')
+    for (op_name, type_tweaks) in type_tweaks_for_op_.items():
+        if type_tweaks.n_uses == 0:
+            print(op_name, file=f)
 
 # UpdateEmpty: _completionRecord_, *return
 
