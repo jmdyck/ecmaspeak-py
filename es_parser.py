@@ -421,6 +421,10 @@ class _Earley:
 
         this_parser.cfps_from_file = simplify_grammar(grammar)
 
+        this_parser.productions_with_lhs_ = defaultdict(list)
+        for prod in this_parser.cfps_from_file:
+            this_parser.productions_with_lhs_[prod['lhs']].append(prod)
+
     # -------------------------------------------------
 
     def run(
@@ -760,10 +764,7 @@ class _Earley:
                 this_parser.end_of_input_rsymbol
             ]
         }
-
-        this_parser.productions_with_lhs_ = defaultdict(list)
-        for prod in [start_production] + this_parser.cfps_from_file:
-            this_parser.productions_with_lhs_[prod['lhs']].append(prod)
+        this_parser.productions_with_lhs_['*START*'] = [start_production]
 
         # And make an item for it:
         initial_item = Item(None, None, Point(start_production, 0))
