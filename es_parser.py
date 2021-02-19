@@ -505,161 +505,151 @@ class _Earley:
 
         # -------------------------------------------
 
-        def Item_make(cause, transit_node, resulting_point):
-            return (cause, transit_node, resulting_point)
+        class Item(namedtuple('Item', 'cause transit_node resulting_point')):
 
-        def Item_stringify(item):
-            (_, _, point) = item
-            return "_ _ %s" % (
-                str(point)
-            )
+            def __str__(item):
+                return f"_ _ {item.resulting_point}"
 
-        def Item_advance(item, node):
-            (_, _, point) = item
-            new_point = point.advance()
-            if new_point is None: return None
-            return Item_make(item, node, new_point)
+            def advance(item, node):
+                new_point = item.resulting_point.advance()
+                if new_point is None: return None
+                return Item(item, node, new_point)
 
-        def Item_get_rthing_after_dot(item):
-            (_, _, point) = item
-
-            rthing = point.get_rthing_after_dot()
-            if rthing is None:
-                return X_eor()
-            else:
-                return rthing
-
-        def Item_get_derived_items(item, this_set):
-            rthing = Item_get_rthing_after_dot(item)
-
-            if rthing is None:
-                assert 0
-
-            elif type(rthing) == X_eor:
-                # There is nothing after the dot.
-                # I.e., the dot is at the end of the RHS.
-                # Perform "Completer":
-                for new_item in Item_reduce(item):
-                    yield new_item
-
-            elif Rthing_is_nonterminal(rthing):
-                # Perform "Predictor":
-                for point in Rsymbol_get_rhs_start_points(rthing):
-                    yield Item_make(this_set, None, point)
-                # Aycock + Horspool (2002) say:
-                #     if rthing is nullable, yield Item_advance(item, None)
-                # But if it's *indirectly* nullable,
-                # that would result in a parse tree
-                # that doesn't reflect the substructure.
-
-            elif Rthing_is_terminal(rthing):
-                # Don't perform "Scanner" yet.
-                pass
-
-            elif Rthing_is_constraint(rthing):
-                # trace_at(9, "  CHKING %s" % indent + Item_stringify(item))
-                trace_at(9, f"  checking constraint {rthing}")
-                (_, prec_node, _) = item
-                constraint_is_satisfied = check_constraint(prec_node, this_set.text_posn, rthing)
-                if constraint_is_satisfied:
-                    trace_at(9, f"  constraint is satisfied")
-                    yield Item_advance(item, None)
+            def get_rthing_after_dot(item):
+                rthing = item.resulting_point.get_rthing_after_dot()
+                if rthing is None:
+                    return X_eor()
                 else:
-                    trace_at(9, f"  constraint is not satisfied, so this item is a dead end")
+                    return rthing
 
-                # When closing an Earley-state, and you encounter an item
-                # with a lookahead-constraint in the post-dot position,
-                # what do you do with it? I can think of 3 approaches:
-                #
-                # (1) During closure, ignore the constraint; come back to it later,
-                #     after the requisite number of tokens have been read,
-                #     possibly after all the parsing is done.
-                #
-                #     I think this could work, but might be inefficient,
-                #     because the C_lookahead is there to prevent ambiguities,
-                #     so ignoring it allows ambiguities to multiply.
-                #
-                # (2) During closure, pause and immediately go check
-                #     whether the next few tokens satisfy the constraint.
-                #     If they don't, then delete the item or mark it bad somehow,
-                #     and don't let it contribute to the closure of the state.
-                #
-                #     This would be a sensible approach if ES had a conventional lexer
-                #     (where you can lex a whole text before doing any syntactic parsing).
-                #     But with ES's lexer, the goal symbol depends on the current syntactic context,
-                #     so the lexer can't get ahead of the parser (more than 1 token).
-                #     When you're closing the state, you (theoretically) don't even know
-                #     the current syntactic context, so you can't even get the next token,
-                #     let alone any subsequent ones.
-                #     Practically, the syntactic context is determined by the items in the
-                #     state's kernel, so maybe with some prep-work you could know the context
-                #     and thus get the next token.
-                #     The next+1 would be harder though.
-                #
-                # (3) During closure, allow the item to contribute,
-                #     but modify its contributions so as to enforce the constraint.
-                #     (similar to baking the constraint into the grammar)
-                #
-                #     ?
+            def get_derived_items(item, this_set):
+                rthing = item.get_rthing_after_dot()
 
-            else:
-                assert 0, rthing
+                if rthing is None:
+                    assert 0
 
-        def Item_reduce(item):
-            trace_at(9, '    Item_reduce:', Item_stringify(item))
-            (_, _, point) = item
+                elif type(rthing) == X_eor:
+                    # There is nothing after the dot.
+                    # I.e., the dot is at the end of the RHS.
+                    # Perform "Completer":
+                    for new_item in item.reduce():
+                        yield new_item
 
-            # "pop items off the stack"
-            child_nodes = []
-            back_item = item
-            while True:
-                (cause, transit_node, point) = back_item
-                if type(cause) == tuple: # (another item)
-                    if transit_node is not None:
-                        child_nodes.insert(0, transit_node)
-                    back_item = cause
-                elif type(cause) == EarleySet:
-                    assert transit_node is None
-                    back_set = cause
-                    break
+                elif Rthing_is_nonterminal(rthing):
+                    # Perform "Predictor":
+                    for point in Rsymbol_get_rhs_start_points(rthing):
+                        yield Item(this_set, None, point)
+                    # Aycock + Horspool (2002) say:
+                    #     if rthing is nullable, yield item.advance(None)
+                    # But if it's *indirectly* nullable,
+                    # that would result in a parse tree
+                    # that doesn't reflect the substructure.
+
+                elif Rthing_is_terminal(rthing):
+                    # Don't perform "Scanner" yet.
+                    pass
+
+                elif Rthing_is_constraint(rthing):
+                    # trace_at(9, "  CHKING %s" % indent + str(item))
+                    trace_at(9, f"  checking constraint {rthing}")
+                    constraint_is_satisfied = check_constraint(item.transit_node, this_set.text_posn, rthing)
+                    if constraint_is_satisfied:
+                        trace_at(9, f"  constraint is satisfied")
+                        yield item.advance(None)
+                    else:
+                        trace_at(9, f"  constraint is not satisfied, so this item is a dead end")
+
+                    # When closing an Earley-state, and you encounter an item
+                    # with a lookahead-constraint in the post-dot position,
+                    # what do you do with it? I can think of 3 approaches:
+                    #
+                    # (1) During closure, ignore the constraint; come back to it later,
+                    #     after the requisite number of tokens have been read,
+                    #     possibly after all the parsing is done.
+                    #
+                    #     I think this could work, but might be inefficient,
+                    #     because the C_lookahead is there to prevent ambiguities,
+                    #     so ignoring it allows ambiguities to multiply.
+                    #
+                    # (2) During closure, pause and immediately go check
+                    #     whether the next few tokens satisfy the constraint.
+                    #     If they don't, then delete the item or mark it bad somehow,
+                    #     and don't let it contribute to the closure of the state.
+                    #
+                    #     This would be a sensible approach if ES had a conventional lexer
+                    #     (where you can lex a whole text before doing any syntactic parsing).
+                    #     But with ES's lexer, the goal symbol depends on the current syntactic context,
+                    #     so the lexer can't get ahead of the parser (more than 1 token).
+                    #     When you're closing the state, you (theoretically) don't even know
+                    #     the current syntactic context, so you can't even get the next token,
+                    #     let alone any subsequent ones.
+                    #     Practically, the syntactic context is determined by the items in the
+                    #     state's kernel, so maybe with some prep-work you could know the context
+                    #     and thus get the next token.
+                    #     The next+1 would be harder though.
+                    #
+                    # (3) During closure, allow the item to contribute,
+                    #     but modify its contributions so as to enforce the constraint.
+                    #     (similar to baking the constraint into the grammar)
+                    #
+                    #     ?
+
                 else:
-                    assert 0, cause
+                    assert 0, rthing
 
-            if child_nodes:
-                extent = child_nodes
-            else:
-                extent = (eset_text_posn, eset_text_posn)
+            def reduce(item):
+                trace_at(9, '    reduce:', str(item))
 
-            prod = point.get_prod()
-            parent_node = make_nonterminal_node(prod, extent)
-            lhs_symbol = prod['lhs']
+                # "pop items off the stack"
+                child_nodes = []
+                back_item = item
+                while True:
+                    if isinstance(back_item.cause, Item):
+                        if back_item.transit_node is not None:
+                            child_nodes.insert(0, back_item.transit_node)
+                        back_item = back_item.cause
+                    elif isinstance(back_item.cause, EarleySet):
+                        assert back_item.transit_node is None
+                        back_set = back_item.cause
+                        break
+                    else:
+                        assert 0, back_item.cause
 
-            back_items = Set_get_items_expecting_symbol(back_set, NT(lhs_symbol))
-            if len(back_items) == 0:
-                trace_at(1, )
-                trace_at(1, "no items expecting '%s' in back_set:" % lhs_symbol)
-                Set_trace(1, back_set)
-                assert 0 # because item must have come from somewhere
-
-            # The problem with Earley's algorithm and nullability:
-            # If lhs_symbol is nullable,
-            # then back_set might be this_set,
-            # which is still being built,
-            # so back_items might be partial.
-            if back_set.is_under_construction:
-                trace_at(1, f"    Set is under construction, so remembering nullable {lhs_symbol}")
-                back_set.nullables.append( (NT(lhs_symbol), parent_node) )
-                # Have back_set remember lhs_symbol and parent_node:
-                # if an item is added to back_set that expects lhs_symbol,
-                # then that's another back_item...
-
-            for back_item in back_items:
-                new_item = Item_advance(back_item, parent_node)
-                if new_item is None:
-                    assert 0 # You must be able to advance out of a back_item
-                    trace_at(1, "    Item_advance(...) returned None")
+                if child_nodes:
+                    extent = child_nodes
                 else:
-                    yield new_item
+                    extent = (eset_text_posn, eset_text_posn)
+
+                prod = item.resulting_point.get_prod()
+                parent_node = make_nonterminal_node(prod, extent)
+                lhs_symbol = prod['lhs']
+
+                back_items = Set_get_items_expecting_symbol(back_set, NT(lhs_symbol))
+                if len(back_items) == 0:
+                    trace_at(1, )
+                    trace_at(1, "no items expecting '%s' in back_set:" % lhs_symbol)
+                    Set_trace(1, back_set)
+                    assert 0 # because item must have come from somewhere
+
+                # The problem with Earley's algorithm and nullability:
+                # If lhs_symbol is nullable,
+                # then back_set might be this_set,
+                # which is still being built,
+                # so back_items might be partial.
+                if back_set.is_under_construction:
+                    trace_at(1, f"    Set is under construction, so remembering nullable {lhs_symbol}")
+                    back_set.nullables.append( (NT(lhs_symbol), parent_node) )
+                    # Have back_set remember lhs_symbol and parent_node:
+                    # if an item is added to back_set that expects lhs_symbol,
+                    # then that's another back_item...
+
+                for back_item in back_items:
+                    new_item = back_item.advance(parent_node)
+                    if new_item is None:
+                        assert 0 # You must be able to advance out of a back_item
+                        trace_at(1, "    back_item.advance(...) returned None")
+                    else:
+                        yield new_item
 
         # -------------------------------------------
         # (Similarly.)
@@ -679,7 +669,7 @@ class _Earley:
             for (x, items) in sorted(this_set.items_with_dot_before_.items()):
                 trace_at(tl, f'  {x}:')
                 for item in items:
-                    trace_at(tl, '    ', Item_stringify(item))
+                    trace_at(tl, '    ', str(item))
 
         def Set_close(this_set, kernel_items):
             for item in kernel_items:
@@ -688,22 +678,22 @@ class _Earley:
             this_set.is_under_construction = False
 
         def Set_add_and_recurse(this_set, item, indent):
-            rthing = Item_get_rthing_after_dot(item)
+            rthing = item.get_rthing_after_dot()
 
             if item in this_set.items_with_dot_before_[rthing]:
                 # We've already processed this item, don't have to do anything.
                 return
 
-            trace_at(9, "  ADDING %s" % indent + Item_stringify(item))
+            trace_at(9, "  ADDING %s" % indent + str(item))
             this_set.items_with_dot_before_[rthing].append(item)
 
             for (nul_symbol, nul_node) in this_set.nullables:
                 if nul_symbol == rthing:
                     trace_at(9, f"  Recalling nullable {rthing}")
-                    new_item = Item_advance(item, nul_node)
+                    new_item = item.advance(nul_node)
                     Set_add_and_recurse(this_set, new_item, indent+' ')
 
-            for new_item in Item_get_derived_items(item, this_set):
+            for new_item in item.get_derived_items(this_set):
                 Set_add_and_recurse(this_set, new_item, indent+' ')
 
         def Set_get_expected_terminals(this_set):
@@ -713,7 +703,7 @@ class _Earley:
                 if symbol == X_eor(): continue
                 # if Symbol_is_terminal(symbol):
                 for item in items:
-                    rthing = Item_get_rthing_after_dot(item)
+                    rthing = item.get_rthing_after_dot()
                     assert rthing == symbol #??
                     if Rthing_is_terminal(rthing) and rthing not in result:
                         result.append(rthing)
@@ -743,7 +733,7 @@ class _Earley:
                     raise_parse_error()
 
                 else:
-                    (_, goal_node, _) = latest_accepting_item
+                    goal_node = latest_accepting_item.transit_node
                     assert goal_node.symbol == goal_symname
                     if trace_level >= 2:
                         trace_at(2, 'returning prior acceptable:')
@@ -761,7 +751,7 @@ class _Earley:
 
         def raise_parse_error():
             item_strings = [
-                Item_stringify(item)
+                str(item)
                 for item in next_kernel_items
             ]
             raise ParseError(eset_text_posn, item_strings)
@@ -790,7 +780,7 @@ class _Earley:
             this_parser.productions_with_lhs_[prod['lhs']].append(prod)
 
         # And make an item for it:
-        initial_item = Item_make(None, None, Point(0,0))
+        initial_item = Item(None, None, Point(0,0))
         next_kernel_items = [initial_item]
 
         if this_parser.how_much_to_consume == 'as much as possible':
@@ -829,9 +819,8 @@ class _Earley:
                         trace_at(2, "%d items!" % len(accepting_items_here))
                         if trace_level >= 2:
                             for item in accepting_items_here:
-                                (_, node, _) = item
                                 trace_at(2, '')
-                                node.dump(this_parser.trace_prefix + '   ', f=trace_f)
+                                item.transit_node.dump(this_parser.trace_prefix + '   ', f=trace_f)
                         print('NEED TO RESOLVE AMBIGUITY', file=trace_f) # XXX
 
                     latest_accepting_item = accepting_items_here[0]
@@ -841,9 +830,8 @@ class _Earley:
             ASI_kludge = None
             if this_parser.name.startswith('syntactic') and T_lit(';') in expected_terminals:
                 for item in eset.items_with_dot_before_[T_lit(';')]:
-                    (_, _, point) = item
-                    # trace_at(2, f"point {str(point)}")
-                    lhs = point.get_lhs_symbol()
+                    # trace_at(2, f"point {item.resulting_point}")
+                    lhs = item.resulting_point.get_lhs_symbol()
                     if lhs == 'EmptyStatement':
                         assert ASI_kludge is None
                         ASI_kludge = lhs
@@ -891,7 +879,7 @@ class _Earley:
                 for item in Set_get_items_expecting_symbol(eset, rsymbol):
                     # print(rsymbol, file=sys.stderr)
                     # if trace_level >= 9 and rsymbol == T_lit(';'): pdb.set_trace()
-                    new_item = Item_advance(item, termin)
+                    new_item = item.advance(termin)
                     # print(new_item, file=sys.stderr)
                     if new_item is None:
                         print('got None when attempting to advance', item, termin)
@@ -903,7 +891,7 @@ class _Earley:
                 trace_at(9, )
                 trace_at(9, 'next_kernel_items:')
                 for item in next_kernel_items:
-                    trace_at(9, '  ', Item_stringify(item))
+                    trace_at(9, '  ', str(item))
                 if len(next_kernel_items) == 0:
                     trace_at(9, '  ', 'None!')
 
@@ -916,9 +904,10 @@ class _Earley:
                 trace_at(1, "results:")
                 valid_trees = []
                 for end_item in next_kernel_items:
-                    (prev_item, n0, _) = end_item
-                    assert n0.symbol == this_parser.end_of_input_rsymbol
-                    (_, goal_node, _) = prev_item
+                    assert end_item.transit_node.symbol == this_parser.end_of_input_rsymbol
+                    prev_item = end_item.cause
+                    assert isinstance(prev_item, Item)
+                    goal_node = prev_item.transit_node
                     assert goal_node.symbol == goal_symname
                     valid_trees.append(goal_node)
                     if trace_level >= 1:
