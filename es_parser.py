@@ -128,7 +128,6 @@ def simplify_grammar(grammar):
     for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
         for exp_rhs in exp_rhss:
             j_prodn = {
-                'n': 1 + len(list_of_prodns),
                 'lhs': lhs_symbol,
                 'rhs': exp_rhs
             }
@@ -421,10 +420,6 @@ class _Earley:
         grammar = spec.grammar_[(name, 'B')]
 
         this_parser.cfps_from_file = simplify_grammar(grammar)
-        #
-        ns = [ prod['n'] for prod in this_parser.cfps_from_file ]
-        assert are_distinct(ns)
-        assert 0 not in ns # so we can use it for start_production
 
     # -------------------------------------------------
 
@@ -759,7 +754,6 @@ class _Earley:
         # or should each _Earley have a distinct EOI symbol?
 
         start_production = {
-            'n': 0,
             'lhs': '*START*',
             'rhs': [
                 NT(n=goal_symname),
