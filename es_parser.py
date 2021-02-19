@@ -7,7 +7,7 @@
 
 
 import pdb, unicodedata, sys, re
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, OrderedDict, namedtuple
 from pprint import pprint # mainly for debugging
 import misc
 
@@ -450,7 +450,7 @@ class _Earley:
         def Rsymbol_get_rhs_start_points(rsymbol):
             assert Rthing_is_nonterminal(rsymbol)
             return [
-                (prod['n'], 0)
+                Point(prod['n'], 0)
                 for prod in this_parser.productions_with_lhs_[rsymbol.n]
             ]
 
@@ -459,61 +459,49 @@ class _Earley:
         # i.e., a point in the RHS of some production.
         # (Elsewhere called an LR(0) item,
         # but I'm using "Item" for a slightly bigger concept.)
-        #
-        # 'Point' should logically be a nested class,
-        # except that its methods wouldn't get access to this_parser.cfps.
-        # (Unless you pass down a reference to it,
-        # and every Item saves it as an instance variable,
-        # but that seems excessive.)
 
-        def Point_make(prod_num, dot_posn):
-            return (prod_num, dot_posn)
+        class Point(namedtuple('Point', 'prod_num dot_posn')):
 
-        def Point_stringify(point):
-            (prod_num, dot_posn) = point
-            prod = this_parser.cfps[prod_num] # XXX
-            lhs = prod['lhs']
-            rhs = prod['rhs']
-            # dot = '\u25CF'
-            dot = '@'
-            return "%s -> %s %s %s " % (
-                lhs,
-                ' '.join(str(r) for r in rhs[0:dot_posn]),
-                dot,
-                ' '.join(str(r) for r in rhs[dot_posn:])
-            )
+            def __str__(point):
+                prod = this_parser.cfps[point.prod_num] # XXX
+                lhs = prod['lhs']
+                rhs = prod['rhs']
+                # dot = '\u25CF'
+                dot = '@'
+                return "%s -> %s %s %s " % (
+                    lhs,
+                    ' '.join(str(r) for r in rhs[0:point.dot_posn]),
+                    dot,
+                    ' '.join(str(r) for r in rhs[point.dot_posn:])
+                )
 
-        def Point_get_rthing_after_dot(point):
-            (prod_num, dot_posn) = point
-            prod = this_parser.cfps[prod_num]
-            rhs = prod['rhs']
-            if dot_posn < len(rhs):
-                return rhs[dot_posn]
-            elif dot_posn == len(rhs):
-                return None
-            else:
-                assert 0
+            def get_rthing_after_dot(point):
+                prod = this_parser.cfps[point.prod_num]
+                rhs = prod['rhs']
+                if point.dot_posn < len(rhs):
+                    return rhs[point.dot_posn]
+                elif point.dot_posn == len(rhs):
+                    return None
+                else:
+                    assert 0
 
-        def Point_advance(point):
-            # Return the next point after `point`.
-            (prod_num, dot_posn) = point
+            def advance(point):
+                # Return the next point after `point`.
 
-            prod = this_parser.cfps[prod_num]
-            assert dot_posn < len(prod['rhs'])
-            # We'd never be asked to advance from the last point in a production.
+                prod = this_parser.cfps[point.prod_num]
+                assert point.dot_posn < len(prod['rhs'])
+                # We'd never be asked to advance from the last point in a production.
 
-            return Point_make(prod_num, dot_posn+1)
+                return Point(point.prod_num, point.dot_posn+1)
 
-        def Point_get_prod(point):
-            (prod_num, dot_posn) = point
-            prod = this_parser.cfps[prod_num]
-            return prod
+            def get_prod(point):
+                prod = this_parser.cfps[point.prod_num]
+                return prod
 
-        def Point_get_lhs_symbol(point):
-            (prod_num, _) = point
-            prod = this_parser.cfps[prod_num]
-            lhs_symname = prod['lhs']
-            return lhs_symname
+            def get_lhs_symbol(point):
+                prod = this_parser.cfps[point.prod_num]
+                lhs_symname = prod['lhs']
+                return lhs_symname
 
         # -------------------------------------------
 
@@ -523,19 +511,19 @@ class _Earley:
         def Item_stringify(item):
             (_, _, point) = item
             return "_ _ %s" % (
-                Point_stringify(point)
+                str(point)
             )
 
         def Item_advance(item, node):
             (_, _, point) = item
-            new_point = Point_advance(point)
+            new_point = point.advance()
             if new_point is None: return None
             return Item_make(item, node, new_point)
 
         def Item_get_rthing_after_dot(item):
             (_, _, point) = item
 
-            rthing = Point_get_rthing_after_dot(point)
+            rthing = point.get_rthing_after_dot()
             if rthing is None:
                 return X_eor()
             else:
@@ -642,7 +630,7 @@ class _Earley:
             else:
                 extent = (eset_text_posn, eset_text_posn)
 
-            prod = Point_get_prod(point)
+            prod = point.get_prod()
             parent_node = make_nonterminal_node(prod, extent)
             lhs_symbol = prod['lhs']
 
@@ -802,7 +790,7 @@ class _Earley:
             this_parser.productions_with_lhs_[prod['lhs']].append(prod)
 
         # And make an item for it:
-        initial_item = Item_make(None, None, Point_make(0,0))
+        initial_item = Item_make(None, None, Point(0,0))
         next_kernel_items = [initial_item]
 
         if this_parser.how_much_to_consume == 'as much as possible':
@@ -854,8 +842,8 @@ class _Earley:
             if this_parser.name.startswith('syntactic') and T_lit(';') in expected_terminals:
                 for item in eset.items_with_dot_before_[T_lit(';')]:
                     (_, _, point) = item
-                    # trace_at(2, f"point {Point_stringify(point)}")
-                    lhs = Point_get_lhs_symbol(point)
+                    # trace_at(2, f"point {str(point)}")
+                    lhs = point.get_lhs_symbol()
                     if lhs == 'EmptyStatement':
                         assert ASI_kludge is None
                         ASI_kludge = lhs
