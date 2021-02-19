@@ -607,8 +607,6 @@ single_sentence_rules_str = r'''
         pl=a \1
         v=\2 \3 if this operation \5.
 
-        A (?P<name>.+) function is an (?P<kind>anonymous built-in function).
-
         (An? (?P<name>.+) function) is an (?P<kind>anonymous built-in function) that ((has|is) .+)
         v=!FUNC \4
 

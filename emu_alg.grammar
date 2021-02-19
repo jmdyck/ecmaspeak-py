@@ -739,7 +739,6 @@
     {var} is an array index
     {var} is an empty List
     {var} is an extensible object that does not have a {starred_str} own property
-    {var} is an extensible ordinary object
     {var} is an extensible ordinary object with no own properties
     {var} is an initialized RegExp instance
     {var} is an instance of a concrete subclass of Module Record
@@ -756,7 +755,7 @@
     {var} is as small as possible
     {var} is divisible by {NUM_LITERAL}
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
-    {var} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification
+    {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification
     {var} is either {LITERAL} or an? {nonterminal}
     {var} is empty
     {var} is finite
@@ -1110,7 +1109,7 @@
     a new Record
     a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
     a new Synchronize event
-    a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
+    a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
     a new empty List
     a new execution context
     a new unique Symbol value whose {DSBN} value is {var}

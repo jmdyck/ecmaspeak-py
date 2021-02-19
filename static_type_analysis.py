@@ -1766,8 +1766,6 @@ ContainsDuplicateLabels                  ; _labelSet_             ; TBD         
 ContainsUndefinedBreakTarget             ; *return*               ; TBD                 ; Boolean
 ContainsUndefinedContinueTarget          ; *return*               ; TBD                 ; Boolean
 CopyDataProperties                       ; _source_               ; TBD                 ; Tangible_
-CreateBuiltinFunction                    ; _realm_                ; (optional) TBD      ; (optional) Realm Record | empty_
-CreateBuiltinFunction                    ; _prototype_            ; (optional) TBD      ; (optional) Object | Null
 CreateListFromArrayLike                  ; _obj_                  ; TBD                 ; Tangible_
 CreateMapIterator                        ; _map_                  ; TBD                 ; Tangible_
 CreateMappedArgumentsObject              ; _argumentsList_        ; List                ; List of Tangible_
@@ -5652,9 +5650,9 @@ def tc_cond_(cond, env0, asserting):
         [var, _] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is either a set of algorithm steps or other definition of a function's behaviour provided in this specification":
+    elif p == r"{CONDITION_1} : {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification":
         [var] = children
-        return env0.with_type_test(var, 'is a', T_alg_steps, asserting)
+        return env0.with_type_test(var, 'is a', T_proc_ | T_alg_steps, asserting)
 
     elif p == r"{CONDITION_1} : {var} is an Abstract Closure with no parameters":
         [var] = children
@@ -6184,7 +6182,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {var} is an ordinary, extensible object with no non-configurable properties",
-        r"{CONDITION_1} : {var} is an extensible ordinary object",
         r"{CONDITION_1} : {var} is an extensible ordinary object with no own properties",
         r"{CONDITION_1} : {var} is an initialized RegExp instance",
         r'{CONDITION_1} : {var} is an Object that implements the <i>IteratorResult</i> interface',
@@ -11513,8 +11510,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_function_object_, env0)
 # ^ obsoleted by PR #1460
 
-    elif p == r'{EXPR} : a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot':
-        [var1, var2, dsbn] = children
+    elif p == r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot':
+        [var1, var2, var3, dsbn] = children
         env1 = env0.ensure_expr_is_of_type(var1, T_alg_steps)
         # env1 = env0.ensure_expr_is_of_type(var2, )
         return (T_function_object_, env1)
