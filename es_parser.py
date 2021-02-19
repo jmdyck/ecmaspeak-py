@@ -132,7 +132,12 @@ def simplify_grammar(grammar):
                 'rhs': exp_rhs
             }
             list_of_prodns.append(j_prodn)
-    return list_of_prodns
+
+    productions_with_lhs_ = defaultdict(list)
+    for prod in list_of_prodns:
+        productions_with_lhs_[prod['lhs']].append(prod)
+
+    return productions_with_lhs_
 
 # --------------------------------------------------------------------------
 
@@ -419,11 +424,7 @@ class _Earley:
 
         grammar = spec.grammar_[(name, 'B')]
 
-        this_parser.cfps_from_file = simplify_grammar(grammar)
-
-        this_parser.productions_with_lhs_ = defaultdict(list)
-        for prod in this_parser.cfps_from_file:
-            this_parser.productions_with_lhs_[prod['lhs']].append(prod)
+        this_parser.productions_with_lhs_ = simplify_grammar(grammar)
 
     # -------------------------------------------------
 
