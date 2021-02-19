@@ -624,11 +624,11 @@ class _Earley:
                 parent_node = make_nonterminal_node(prod, extent)
                 lhs_symbol = prod['lhs']
 
-                back_items = Set_get_items_expecting_symbol(back_set, NT(lhs_symbol))
+                back_items = back_set.get_items_expecting_symbol(NT(lhs_symbol))
                 if len(back_items) == 0:
                     trace_at(1, )
                     trace_at(1, "no items expecting '%s' in back_set:" % lhs_symbol)
-                    Set_trace(1, back_set)
+                    back_set.trace(1)
                     assert 0 # because item must have come from somewhere
 
                 # The problem with Earley's algorithm and nullability:
@@ -652,7 +652,6 @@ class _Earley:
                         yield new_item
 
         # -------------------------------------------
-        # (Similarly.)
 
         class EarleySet:
             def __init__(this_set, text_posn):
@@ -663,56 +662,56 @@ class _Earley:
                 this_set.is_under_construction = True
                 this_set.nullables = []
 
-        def Set_trace(tl, this_set):
-            trace_at(tl, )
-            trace_at(tl, "EarleySet:")
-            for (x, items) in sorted(this_set.items_with_dot_before_.items()):
-                trace_at(tl, f'  {x}:')
-                for item in items:
-                    trace_at(tl, '    ', str(item))
+            def trace(this_set, tl):
+                trace_at(tl, )
+                trace_at(tl, "EarleySet:")
+                for (x, items) in sorted(this_set.items_with_dot_before_.items()):
+                    trace_at(tl, f'  {x}:')
+                    for item in items:
+                        trace_at(tl, '    ', str(item))
 
-        def Set_close(this_set, kernel_items):
-            for item in kernel_items:
-                Set_add_and_recurse(this_set, item, '')
+            def close(this_set, kernel_items):
+                for item in kernel_items:
+                    this_set._add_and_recurse(item, '')
 
-            this_set.is_under_construction = False
+                this_set.is_under_construction = False
 
-        def Set_add_and_recurse(this_set, item, indent):
-            rthing = item.get_rthing_after_dot()
+            def _add_and_recurse(this_set, item, indent):
+                rthing = item.get_rthing_after_dot()
 
-            if item in this_set.items_with_dot_before_[rthing]:
-                # We've already processed this item, don't have to do anything.
-                return
+                if item in this_set.items_with_dot_before_[rthing]:
+                    # We've already processed this item, don't have to do anything.
+                    return
 
-            trace_at(9, "  ADDING %s" % indent + str(item))
-            this_set.items_with_dot_before_[rthing].append(item)
+                trace_at(9, "  ADDING %s" % indent + str(item))
+                this_set.items_with_dot_before_[rthing].append(item)
 
-            for (nul_symbol, nul_node) in this_set.nullables:
-                if nul_symbol == rthing:
-                    trace_at(9, f"  Recalling nullable {rthing}")
-                    new_item = item.advance(nul_node)
-                    Set_add_and_recurse(this_set, new_item, indent+' ')
+                for (nul_symbol, nul_node) in this_set.nullables:
+                    if nul_symbol == rthing:
+                        trace_at(9, f"  Recalling nullable {rthing}")
+                        new_item = item.advance(nul_node)
+                        this_set._add_and_recurse(new_item, indent+' ')
 
-            for new_item in item.get_derived_items(this_set):
-                Set_add_and_recurse(this_set, new_item, indent+' ')
+                for new_item in item.get_derived_items(this_set):
+                    this_set._add_and_recurse(new_item, indent+' ')
 
-        def Set_get_expected_terminals(this_set):
-            result = []
-            # XXX optimize
-            for (symbol, items) in this_set.items_with_dot_before_.items():
-                if symbol == X_eor(): continue
-                # if Symbol_is_terminal(symbol):
-                for item in items:
-                    rthing = item.get_rthing_after_dot()
-                    assert rthing == symbol #??
-                    if Rthing_is_terminal(rthing) and rthing not in result:
-                        result.append(rthing)
-            return result
+            def get_expected_terminals(this_set):
+                result = []
+                # XXX optimize
+                for (symbol, items) in this_set.items_with_dot_before_.items():
+                    if symbol == X_eor(): continue
+                    # if Symbol_is_terminal(symbol):
+                    for item in items:
+                        rthing = item.get_rthing_after_dot()
+                        assert rthing == symbol #??
+                        if Rthing_is_terminal(rthing) and rthing not in result:
+                            result.append(rthing)
+                return result
 
-        def Set_get_items_expecting_symbol(this_set, symbol):
-            items = this_set.items_with_dot_before_[symbol]
-            assert len(items) > 0 or symbol == this_parser.end_of_input_rsymbol
-            return items
+            def get_items_expecting_symbol(this_set, symbol):
+                items = this_set.items_with_dot_before_[symbol]
+                assert len(items) > 0 or symbol == this_parser.end_of_input_rsymbol
+                return items
 
         # -------------------------------------------
 
@@ -790,14 +789,14 @@ class _Earley:
         while True:
             eset = EarleySet(eset_text_posn)
 
-            Set_close(eset, next_kernel_items)
+            eset.close(next_kernel_items)
 
             if trace_level >= 3:
-                Set_trace(3, eset)
+                eset.trace(3)
 
             # -----------------
 
-            expected_terminals = Set_get_expected_terminals(eset)
+            expected_terminals = eset.get_expected_terminals()
 
             if len(expected_terminals) == 0:
                 trace_at(2, "No expected terminals! (e.g., due to application of a 'but not')")
@@ -811,7 +810,7 @@ class _Earley:
                     trace_at(9, '  ', st)
 
             if this_parser.how_much_to_consume == 'as much as possible':
-                accepting_items_here = Set_get_items_expecting_symbol(eset, this_parser.end_of_input_rsymbol)
+                accepting_items_here = eset.get_items_expecting_symbol(this_parser.end_of_input_rsymbol)
                 if accepting_items_here:
                     trace_at(9, )
                     trace_at(9, '(there are accepting_items_here)')
@@ -876,7 +875,7 @@ class _Earley:
             # print('...', file=sys.stderr)
             next_kernel_items = []
             for (rsymbol, termin) in rats:
-                for item in Set_get_items_expecting_symbol(eset, rsymbol):
+                for item in eset.get_items_expecting_symbol(rsymbol):
                     # print(rsymbol, file=sys.stderr)
                     # if trace_level >= 9 and rsymbol == T_lit(';'): pdb.set_trace()
                     new_item = item.advance(termin)
