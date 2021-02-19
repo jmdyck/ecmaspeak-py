@@ -947,23 +947,22 @@ def show_ambiguity(A_tree, B_tree, f):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def gather_char_sets(cfps):
+def gather_char_sets(productions_with_lhs_):
     global char_set_
 
     def recurse(name):
         result = set()
-        for prod in cfps:
-            if prod['lhs'] == name:
-                assert len(prod['rhs']) == 1
-                [rsymbol] = prod['rhs']
-                if rsymbol.T == 'T_lit':
-                    result.add( rsymbol.c )
-                elif rsymbol.T == 'T_named':
-                    result.add( character_named_[rsymbol.n] )
-                elif rsymbol.T == 'NT':
-                    result.update( recurse(rsymbol.n) )
-                else:
-                    assert 0, rsymbol.T
+        for prod in productions_with_lhs_[name]:
+            assert len(prod['rhs']) == 1
+            [rsymbol] = prod['rhs']
+            if rsymbol.T == 'T_lit':
+                result.add( rsymbol.c )
+            elif rsymbol.T == 'T_named':
+                result.add( character_named_[rsymbol.n] )
+            elif rsymbol.T == 'NT':
+                result.update( recurse(rsymbol.n) )
+            else:
+                assert 0, rsymbol.T
         # print("recurse: '%s' : %s" % (name, result))
         return result
 
@@ -981,22 +980,21 @@ def gather_char_sets(cfps):
 
 # ------------------------------------------------------------------------------
 
-def gather_ReservedWords(cfps):
+def gather_ReservedWords(productions_with_lhs_):
     # kludgy, but anything non-kludgy would be over-engineered
     global ReservedWords
     ReservedWords = set()
 
     def recurse(name):
-        for prod in cfps:
-            if prod['lhs'] == name:
-                assert len(prod['rhs']) == 1
-                [rsym] = prod['rhs']
-                t = rsym.T
-                if t == 'NT':
-                    # (not actually used any more, but keep it just in case)
-                    recurse(rsym.n)
-                elif t == 'T_lit':
-                    ReservedWords.add(rsym.c)
+        for prod in productions_with_lhs_[name]:
+            assert len(prod['rhs']) == 1
+            [rsym] = prod['rhs']
+            t = rsym.T
+            if t == 'NT':
+                # (not actually used any more, but keep it just in case)
+                recurse(rsym.n)
+            elif t == 'T_lit':
+                ReservedWords.add(rsym.c)
 
     recurse('ReservedWord')
     # print('ReservedWords:', sorted(ReservedWords))
@@ -1010,9 +1008,9 @@ spec.restore()
 lexical_earley = _Earley('lexical', 'as much as possible')
 syntactic_earley = _Earley('syntactic', 'all')
 
-gather_char_sets(lexical_earley.cfps_from_file)
+gather_char_sets(lexical_earley.productions_with_lhs_)
 
-gather_ReservedWords(syntactic_earley.cfps_from_file) # for "but not ReservedWord"
+gather_ReservedWords(syntactic_earley.productions_with_lhs_) # for "but not ReservedWord"
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
