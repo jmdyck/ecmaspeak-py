@@ -761,10 +761,8 @@ class _Earley:
             ]
         }
 
-        this_parser.cfps = [start_production] + this_parser.cfps_from_file
-
         this_parser.productions_with_lhs_ = defaultdict(list)
-        for prod in this_parser.cfps:
+        for prod in [start_production] + this_parser.cfps_from_file:
             this_parser.productions_with_lhs_[prod['lhs']].append(prod)
 
         # And make an item for it:
