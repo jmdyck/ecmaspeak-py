@@ -450,7 +450,7 @@ class _Earley:
         def Rsymbol_get_rhs_start_points(rsymbol):
             assert Rthing_is_nonterminal(rsymbol)
             return [
-                Point(prod['n'], 0)
+                Point(prod, 0)
                 for prod in this_parser.productions_with_lhs_[rsymbol.n]
             ]
 
@@ -460,12 +460,11 @@ class _Earley:
         # (Elsewhere called an LR(0) item,
         # but I'm using "Item" for a slightly bigger concept.)
 
-        class Point(namedtuple('Point', 'prod_num dot_posn')):
+        class Point(namedtuple('Point', 'prod dot_posn')):
 
             def __str__(point):
-                prod = this_parser.cfps[point.prod_num] # XXX
-                lhs = prod['lhs']
-                rhs = prod['rhs']
+                lhs = point.prod['lhs']
+                rhs = point.prod['rhs']
                 # dot = '\u25CF'
                 dot = '@'
                 return "%s -> %s %s %s " % (
@@ -476,8 +475,7 @@ class _Earley:
                 )
 
             def get_rthing_after_dot(point):
-                prod = this_parser.cfps[point.prod_num]
-                rhs = prod['rhs']
+                rhs = point.prod['rhs']
                 if point.dot_posn < len(rhs):
                     return rhs[point.dot_posn]
                 elif point.dot_posn == len(rhs):
@@ -488,19 +486,16 @@ class _Earley:
             def advance(point):
                 # Return the next point after `point`.
 
-                prod = this_parser.cfps[point.prod_num]
-                assert point.dot_posn < len(prod['rhs'])
+                assert point.dot_posn < len(point.prod['rhs'])
                 # We'd never be asked to advance from the last point in a production.
 
-                return Point(point.prod_num, point.dot_posn+1)
+                return Point(point.prod, point.dot_posn+1)
 
             def get_prod(point):
-                prod = this_parser.cfps[point.prod_num]
-                return prod
+                return point.prod
 
             def get_lhs_symbol(point):
-                prod = this_parser.cfps[point.prod_num]
-                lhs_symname = prod['lhs']
+                lhs_symname = point.prod['lhs']
                 return lhs_symname
 
         # -------------------------------------------
@@ -779,7 +774,7 @@ class _Earley:
             this_parser.productions_with_lhs_[prod['lhs']].append(prod)
 
         # And make an item for it:
-        initial_item = Item(None, None, Point(0,0))
+        initial_item = Item(None, None, Point(start_production, 0))
         next_kernel_items = [initial_item]
 
         if this_parser.how_much_to_consume == 'as much as possible':
