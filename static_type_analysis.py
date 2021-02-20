@@ -828,6 +828,8 @@ single_sentence_rules_str = r'''
 
         When an? (?P<name>.+) function that expects (?P<pl>.+) is called it performs the following steps:
 
+        When a (?P<name>Default Constructor) Function is called with (?P<pl>zero or more arguments which form the rest parameter \.\.\._args_), the following steps are taken:
+
         # -----------------------------------------------------
 
         # When <name> ...
@@ -1659,6 +1661,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
     if parameter_listing == 'zero or more arguments which form the rest parameter ..._args_':
         oi.param_names = ['_args_']
         oi.param_nature_['_args_'] = 'a List of values'
+        oi.rest_params.add('_args_')
         return
 
     if parameter_listing == 'one or two arguments, _predicate_ and _thisArg_':
@@ -1935,7 +1938,11 @@ def resolve_oi(hoi, poi):
                 oh_warn('h:', sorted(list(hoi.optional_params)))
                 oh_warn('p:', sorted(list(poi.optional_params)))
 
-        assert not poi.rest_params
+        assert (
+            not poi.rest_params
+            or
+            poi.rest_params == hoi.rest_params
+        )
 
     assert hoi.param_nature_ == {} # heading never has type info
     oi.param_nature_ = poi.param_nature_
@@ -2671,7 +2678,9 @@ class Header:
                 # but neither the clause-heading nor the preamble say so.
                 self.param_names = []
             else:
-                assert 0
+                oh_warn()
+                oh_warn(f"{self.name}: self.param_names is None")
+                self.param_names = []
 
         self.param_tipes = OrderedDict()
         for param_name in self.param_names:
@@ -2707,7 +2716,7 @@ class Header:
                         pass
                     else:
                         oh_warn()
-                        oh_warn(f"{self.name}: {exp_nature!r} overrides {nature!r}")
+                        oh_warn(f"{self.name}: param {param_name}: {exp_nature!r} overrides {nature!r}")
                         nature = exp_nature
 
                 tipe = convert_nature_to_tipe(nature)
@@ -3929,7 +3938,7 @@ ContainsDuplicateLabels                  ; _labelSet_             ; TBD         
 ContainsUndefinedBreakTarget             ; *return*               ; TBD                 ; Boolean
 ContainsUndefinedContinueTarget          ; *return*               ; TBD                 ; Boolean
 CopyDataProperties                       ; _source_               ; TBD                 ; Tangible_
-CreateBuiltinFunction                    ; _realm_                ; (optional) TBD      ; (optional) Realm Record
+CreateBuiltinFunction                    ; _realm_                ; (optional) TBD      ; (optional) Realm Record | empty_
 CreateBuiltinFunction                    ; _prototype_            ; (optional) TBD      ; (optional) Object | Null
 CreateListFromArrayLike                  ; _obj_                  ; TBD                 ; Tangible_
 CreateMapIterator                        ; _map_                  ; TBD                 ; Tangible_
@@ -5526,6 +5535,8 @@ def tc_header(header):
                 header.name == 'BigInt.asIntN' and pn == '_bits_'
                 or
                 header.name == 'BigInt.asUintN' and pn == '_bits_'
+                or
+                header.name == 'CreateBuiltinFunction' and pn == '_realm_'
             ):
                 # -------------------------
                 # Don't change header types
@@ -7830,6 +7841,7 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r'{CONDITION_1} : {var} is an ECMAScript function',
         r'{CONDITION_1} : {var} is an ECMAScript function object',
+        r'{CONDITION_1} : {var} is an ECMAScript function object or a built-in function object',
     ]:
         [var] = children
         return env0.with_type_test(var, 'is a', T_function_object_, asserting)

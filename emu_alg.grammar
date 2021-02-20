@@ -746,6 +746,7 @@
     {var} is an AsyncGeneratorRequest record
     {var} is an ECMAScript function
     {var} is an ECMAScript function object
+    {var} is an ECMAScript function object or a built-in function object
     {var} is an ECMAScript language value
     {var} is an ECMAScript source text (see clause {h_emu_xref})
     {var} is an Environment Record
@@ -1081,7 +1082,6 @@
 
 {MULTILINE_EXPR} :
     a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
-    the source text{_indent_}{nlai}{h_pre_code}{_outdent_}
     the string-concatenation of:{I_BULLETS}
     the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
 
@@ -1098,6 +1098,9 @@
 
     # obsoleted by the merge of PR #2112:
     # a set of characters containing the sixty-three characters:{nlai}{h_figure}
+
+    # obsoleted by the merge of PR #2216:
+    # the source text{_indent_}{nlai}{h_pre_code}{_outdent_}
 
     # PR 1554 NumericValue
     an implementation-dependent choice of:{I_BULLETS}
