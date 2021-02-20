@@ -124,18 +124,14 @@ def simplify_grammar(grammar):
 
     # grammar.print_exp_prodns()
 
-    list_of_prodns = []
+    productions_with_lhs_ = defaultdict(list)
     for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
         for exp_rhs in exp_rhss:
             j_prodn = {
                 'lhs': lhs_symbol,
                 'rhs': exp_rhs
             }
-            list_of_prodns.append(j_prodn)
-
-    productions_with_lhs_ = defaultdict(list)
-    for prod in list_of_prodns:
-        productions_with_lhs_[prod['lhs']].append(prod)
+            productions_with_lhs_[lhs_symbol].append(j_prodn)
 
     return productions_with_lhs_
 
