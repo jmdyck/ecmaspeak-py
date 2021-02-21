@@ -602,12 +602,18 @@ class _Earley:
                         assert 0, back_item.cause
 
                 if child_nodes:
+                    option_bits = [
+                        len(child.children)
+                        for child in child_nodes
+                        if isinstance(child.symbol, str) and child.symbol.endswith('?')
+                    ]
                     extent = child_nodes
                 else:
+                    option_bits = []
                     extent = (eset_text_posn, eset_text_posn)
 
                 prod = item.resulting_point.get_prod()
-                parent_node = make_nonterminal_node(prod, extent)
+                parent_node = make_nonterminal_node(prod, option_bits, extent)
                 lhs_symbol = prod.ex_lhs
 
                 back_items = back_set.get_items_expecting_symbol(NT(lhs_symbol))
@@ -1759,9 +1765,9 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     # --------------------------------------------------------------------------
 
-    def _make_nonterminal_node(prod, extent):
+    def _make_nonterminal_node(prod, option_bits, extent):
         assert isinstance(prod, ExProd)
-        node = ENode(prod, source_text, extent)
+        node = ENode((prod, option_bits), source_text, extent)
         return node
 
     # --------------------------------------------------------------------------
@@ -1788,13 +1794,19 @@ class ENode:
     def __init__(self, shape, whole_text, extent):
 
         # shape:
-        if type(shape) == ExProd:
-            self.production = shape
-            self.symbol = shape.og_lhs
+        if type(shape) == tuple:
+            (self.production, self.option_bits) = shape
+            assert type(self.production) == ExProd
+            assert all(
+                bit in [0,1]
+                for bit in self.option_bits
+            )
+            self.symbol = self.production.og_lhs
             assert type(self.symbol) == str
         elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
             self.symbol = shape
             self.production = None
+            self.option_bits = None
         else:
             assert 0
 
