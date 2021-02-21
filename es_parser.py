@@ -124,13 +124,7 @@ def simplify_grammar(grammar):
 
     # grammar.print_exp_prodns()
 
-    productions_with_lhs_ = defaultdict(list)
-    for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
-        for exp_rhs in exp_rhss:
-            j_prodn = ExProd(lhs_symbol, exp_rhs)
-            productions_with_lhs_[lhs_symbol].append(j_prodn)
-
-    return productions_with_lhs_
+    return grammar.exp_prodns
 
 # --------------------------------------------------------------------------
 
@@ -382,7 +376,8 @@ def make_InputElement_common(grammar):
 def add_exp_prod1(grammar, exp_lhs, exp_rhs):
     if exp_lhs not in grammar.exp_prodns:
         grammar.exp_prodns[exp_lhs] = []
-    grammar.exp_prodns[exp_lhs].append( exp_rhs )
+    exprod = ExProd(exp_lhs, exp_rhs)
+    grammar.exp_prodns[exp_lhs].append(exprod)
 
 class ExProd(namedtuple('ExProd', 'ex_lhs ex_rhs')): pass
 
@@ -394,12 +389,12 @@ def print_exp_prodns(grammar):
     f = shared.open_for_output(filename)
 
     i = 0
-    for (exp_lhs, exp_rhss) in grammar.exp_prodns.items():
-        for exp_rhs in exp_rhss:
+    for (exp_lhs, exprods) in grammar.exp_prodns.items():
+        for exprod in exprods:
             # print("%3d: " % i, end=None)
             print("%61s -> %s" % (
                     exp_lhs,
-                    stringify_rthings(exp_rhs)
+                    stringify_rthings(exprod.ex_rhs)
                 ),
                 file=f
             )
