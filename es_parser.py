@@ -366,10 +366,9 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
 
 def make_InputElement_common(grammar):
     assert grammar.level == 'lexical'
-    add_exp_prod1(grammar, 'InputElement_common', [NT('WhiteSpace')])
-    add_exp_prod1(grammar, 'InputElement_common', [NT('LineTerminator')])
-    add_exp_prod1(grammar, 'InputElement_common', [NT('Comment')])
-    add_exp_prod1(grammar, 'InputElement_common', [NT('CommonToken')])
+    lhs = 'InputElement_common'
+    for nt_name in ['WhiteSpace', 'LineTerminator', 'Comment', 'CommonToken']:
+        add_exp_prod1(grammar, lhs, [NT(nt_name)])
 
 # --------------------------------------------------------------------------
 
