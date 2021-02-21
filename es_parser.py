@@ -1764,18 +1764,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
         lhs_symname = prod.ex_lhs
         assert type(lhs_symname) == str
 
-        if type(extent) == list:
-            child_nodes = extent
-            assert len(child_nodes) > 0
-            start_posn = child_nodes[0].start_posn
-            end_posn = child_nodes[-1].end_posn
-        elif type(extent) == tuple:
-            child_nodes = []
-            (start_posn, end_posn) = extent
-        else:
-            assert 0
-
-        node = ENode(lhs_symname, prod, source_text, start_posn, end_posn, child_nodes)
+        node = ENode(lhs_symname, prod, source_text, extent)
         return node
 
     # --------------------------------------------------------------------------
@@ -1788,7 +1777,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                 T_lit(';'), # an auto-inserted semicolon
                 END_OF_INPUT
             ]
-        node = ENode(terminal_symbol, None, source_text, start_posn, end_posn, [])
+        node = ENode(terminal_symbol, None, source_text, (start_posn, end_posn))
         return node
 
     # ==========================================================================
@@ -1799,25 +1788,30 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class ENode:
-    def __init__(self, symbol, production, whole_text, start_posn, end_posn, children):
+    def __init__(self, symbol, production, whole_text, extent):
         assert type(symbol) == str or symbol.T.startswith('T_')
         assert isinstance(production, ExProd) or production is None
         assert type(whole_text) == str
-        assert type(start_posn) == int
-        assert type(end_posn) == int
-        assert 0 <= start_posn <= end_posn <= len(whole_text)
-        assert type(children) == list
+
+        # extent:
+        if type(extent) == list:
+            self.children = extent
+            assert len(self.children) > 0
+            self.start_posn = self.children[0].start_posn
+            self.end_posn = self.children[-1].end_posn
+        elif type(extent) == tuple:
+            self.children = []
+            (self.start_posn, self.end_posn) = extent
+        else:
+            assert 0
+        #
+        assert type(self.start_posn) == int
+        assert type(self.end_posn) == int
+        assert 0 <= self.start_posn <= self.end_posn <= len(whole_text)
 
         self.symbol = symbol
         self.production = production
         self.whole_text = whole_text
-        self.start_posn = start_posn
-        self.end_posn = end_posn
-
-        self.children = children
-        if children:
-            assert self.start_posn == children[0].start_posn
-            assert self.end_posn == children[-1].end_posn
 
     def __str__(self):
         return "<ENode symbol=%s, %d children>" % (self.symbol, len(self.children))
