@@ -1761,10 +1761,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     def _make_nonterminal_node(prod, extent):
         assert isinstance(prod, ExProd)
-        lhs_symname = prod.ex_lhs
-        assert type(lhs_symname) == str
-
-        node = ENode(lhs_symname, prod, source_text, extent)
+        node = ENode(prod, source_text, extent)
         return node
 
     # --------------------------------------------------------------------------
@@ -1777,7 +1774,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                 T_lit(';'), # an auto-inserted semicolon
                 END_OF_INPUT
             ]
-        node = ENode(terminal_symbol, None, source_text, (start_posn, end_posn))
+        node = ENode(terminal_symbol, source_text, (start_posn, end_posn))
         return node
 
     # ==========================================================================
@@ -1788,10 +1785,22 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class ENode:
-    def __init__(self, symbol, production, whole_text, extent):
-        assert type(symbol) == str or symbol.T.startswith('T_')
-        assert isinstance(production, ExProd) or production is None
+    def __init__(self, shape, whole_text, extent):
+
+        # shape:
+        if type(shape) == ExProd:
+            self.production = shape
+            self.symbol = shape.ex_lhs
+            assert type(self.symbol) == str
+        elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
+            self.symbol = shape
+            self.production = None
+        else:
+            assert 0
+
+        # whole_text:
         assert type(whole_text) == str
+        self.whole_text = whole_text
 
         # extent:
         if type(extent) == list:
@@ -1808,10 +1817,6 @@ class ENode:
         assert type(self.start_posn) == int
         assert type(self.end_posn) == int
         assert 0 <= self.start_posn <= self.end_posn <= len(whole_text)
-
-        self.symbol = symbol
-        self.production = production
-        self.whole_text = whole_text
 
     def __str__(self):
         return "<ENode symbol=%s, %d children>" % (self.symbol, len(self.children))
