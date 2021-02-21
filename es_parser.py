@@ -127,10 +127,7 @@ def simplify_grammar(grammar):
     productions_with_lhs_ = defaultdict(list)
     for (lhs_symbol, exp_rhss) in sorted(grammar.exp_prodns.items()):
         for exp_rhs in exp_rhss:
-            j_prodn = {
-                'lhs': lhs_symbol,
-                'rhs': exp_rhs
-            }
+            j_prodn = ExProd(lhs_symbol, exp_rhs)
             productions_with_lhs_[lhs_symbol].append(j_prodn)
 
     return productions_with_lhs_
@@ -387,6 +384,8 @@ def add_exp_prod1(grammar, exp_lhs, exp_rhs):
         grammar.exp_prodns[exp_lhs] = []
     grammar.exp_prodns[exp_lhs].append( exp_rhs )
 
+class ExProd(namedtuple('ExProd', 'ex_lhs ex_rhs')): pass
+
 # --------------------------------------------------------------------------
 
 def print_exp_prodns(grammar):
@@ -459,8 +458,8 @@ class _Earley:
         class Point(namedtuple('Point', 'prod dot_posn')):
 
             def __str__(point):
-                lhs = point.prod['lhs']
-                rhs = point.prod['rhs']
+                lhs = point.prod.ex_lhs
+                rhs = point.prod.ex_rhs
                 # dot = '\u25CF'
                 dot = '@'
                 return "%s -> %s %s %s " % (
@@ -471,7 +470,7 @@ class _Earley:
                 )
 
             def get_rthing_after_dot(point):
-                rhs = point.prod['rhs']
+                rhs = point.prod.ex_rhs
                 if point.dot_posn < len(rhs):
                     return rhs[point.dot_posn]
                 elif point.dot_posn == len(rhs):
@@ -482,7 +481,7 @@ class _Earley:
             def advance(point):
                 # Return the next point after `point`.
 
-                assert point.dot_posn < len(point.prod['rhs'])
+                assert point.dot_posn < len(point.prod.ex_rhs)
                 # We'd never be asked to advance from the last point in a production.
 
                 return Point(point.prod, point.dot_posn+1)
@@ -491,7 +490,7 @@ class _Earley:
                 return point.prod
 
             def get_lhs_symbol(point):
-                lhs_symname = point.prod['lhs']
+                lhs_symname = point.prod.ex_lhs
                 return lhs_symname
 
         # -------------------------------------------
@@ -613,7 +612,7 @@ class _Earley:
 
                 prod = item.resulting_point.get_prod()
                 parent_node = make_nonterminal_node(prod, extent)
-                lhs_symbol = prod['lhs']
+                lhs_symbol = prod.ex_lhs
 
                 back_items = back_set.get_items_expecting_symbol(NT(lhs_symbol))
                 if len(back_items) == 0:
@@ -754,13 +753,13 @@ class _Earley:
         this_parser.end_of_input_rsymbol = END_OF_INPUT
         # or should each _Earley have a distinct EOI symbol?
 
-        start_production = {
-            'lhs': '*START*',
-            'rhs': [
+        start_production = ExProd(
+            ex_lhs = '*START*',
+            ex_rhs = [
                 NT(n=goal_symname),
                 this_parser.end_of_input_rsymbol
             ]
-        }
+        )
         this_parser.productions_with_lhs_['*START*'] = [start_production]
 
         # And make an item for it:
@@ -950,8 +949,8 @@ def gather_char_sets(productions_with_lhs_):
     def recurse(name):
         result = set()
         for prod in productions_with_lhs_[name]:
-            assert len(prod['rhs']) == 1
-            [rsymbol] = prod['rhs']
+            assert len(prod.ex_rhs) == 1
+            [rsymbol] = prod.ex_rhs
             if rsymbol.T == 'T_lit':
                 result.add( rsymbol.c )
             elif rsymbol.T == 'T_named':
@@ -984,8 +983,8 @@ def gather_ReservedWords(productions_with_lhs_):
 
     def recurse(name):
         for prod in productions_with_lhs_[name]:
-            assert len(prod['rhs']) == 1
-            [rsym] = prod['rhs']
+            assert len(prod.ex_rhs) == 1
+            [rsym] = prod.ex_rhs
             t = rsym.T
             if t == 'NT':
                 # (not actually used any more, but keep it just in case)
@@ -1762,8 +1761,8 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
     # --------------------------------------------------------------------------
 
     def _make_nonterminal_node(prod, extent):
-        assert type(prod) == dict
-        lhs_symname = prod['lhs']
+        assert isinstance(prod, ExProd)
+        lhs_symname = prod.ex_lhs
         assert type(lhs_symname) == str
 
         if type(extent) == list:
@@ -1803,7 +1802,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 class ENode:
     def __init__(self, symbol, production, whole_text, start_posn, end_posn, children):
         assert type(symbol) == str or symbol.T.startswith('T_')
-        assert type(production) == dict or production is None
+        assert isinstance(production, ExProd) or production is None
         assert type(whole_text) == str
         assert type(start_posn) == int
         assert type(end_posn) == int
