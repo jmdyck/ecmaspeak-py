@@ -1686,7 +1686,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
         elif type(constraint) == C_but_only_if:
             if 'MV of |HexDigits|' in constraint.c:
-                assert prec_node.symbol == 'HexDigits~Sep'
+                assert prec_node.symbol == 'HexDigits'
                 HexDigits_text = prec_node.text()
                 # XXX Properly, we should invoke the MV SDO here.
                 HexDigits_MV = int(HexDigits_text, 16)
@@ -1790,7 +1790,7 @@ class ENode:
         # shape:
         if type(shape) == ExProd:
             self.production = shape
-            self.symbol = shape.ex_lhs
+            self.symbol = shape.og_lhs
             assert type(self.symbol) == str
         elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
             self.symbol = shape
