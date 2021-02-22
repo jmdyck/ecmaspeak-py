@@ -2069,9 +2069,24 @@ def check_sdo_coverage():
                         spec.sdo_coverage_map[op_name][lhs_nt] = {}
                     if def_i not in spec.sdo_coverage_map[op_name][lhs_nt]:
                         spec.sdo_coverage_map[op_name][lhs_nt][def_i] = []
-                    spec.sdo_coverage_map[op_name][lhs_nt][def_i].append(optionals)
+                    for opt_bits in each_optbits_covered_by(optionals):
+                        spec.sdo_coverage_map[op_name][lhs_nt][def_i].append(opt_bits)
 
     analyze_sdo_coverage_info()
+
+def each_optbits_covered_by(optionals):
+    if optionals == []:
+        yield ''
+    else:
+        [head, *tail] = optionals
+        (nt, optionality) = head
+        assert optionality in ['omitted', 'required', 'either']
+        if optionality in ['omitted', 'either']:
+            for tail_optbits in each_optbits_covered_by(tail):
+                yield '0' + tail_optbits
+        if optionality in ['required', 'either']:
+            for tail_optbits in each_optbits_covered_by(tail):
+                yield '1' + tail_optbits
 
 # ------------------------------------------------------------------------------
 
@@ -2312,33 +2327,23 @@ def required_nts_in(opt_combo):
     return [nt for (nt, omreq) in opt_combo if omreq == 'required']
 
 def sdo_rules_that_handle(sdo_name, lhs_nt, def_i, opt_combo):
+    optbits = ''.join(
+        {
+            'omitted': '0',
+            'required': '1'
+        } [optionality]
+        for (_, optionality) in opt_combo
+    )
     coverage_info_for_this_sdo = spec.sdo_coverage_map[sdo_name]
     coverage_info_for_this_nt = coverage_info_for_this_sdo.get(lhs_nt, {})
     if def_i not in coverage_info_for_this_nt: return []
-    list_of_opt_covers = coverage_info_for_this_nt[def_i]
-    covers = []
-    for opt_cover in list_of_opt_covers:
-        # print(opt_cover, covers_opt_combo(opt_cover, opt_combo))
-        if covers_opt_combo(opt_cover, opt_combo):
-            covers.append(opt_cover)
+    list_of_covered_optbits = coverage_info_for_this_nt[def_i]
+    covers = [
+        covered_optbits
+        for covered_optbits in list_of_covered_optbits
+        if covered_optbits == optbits
+    ]
     return covers
-
-def covers_opt_combo(opt_cover, opt_combo):
-    assert len(opt_cover) == len(opt_combo)
-    for (cover_item, combo_item) in zip(opt_cover, opt_combo):
-        assert cover_item[0] == combo_item[0]
-        assert cover_item[1] in ['omitted', 'required', 'either']
-        assert combo_item[1] in ['omitted', 'required']
-        if cover_item[1] == combo_item[1]:
-            # easy
-            pass
-        elif cover_item[1] == 'either':
-            # covers either
-            pass
-        else:
-            # incompatible
-            return False
-    return True
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
     # Looking at the productions that share a LHS
