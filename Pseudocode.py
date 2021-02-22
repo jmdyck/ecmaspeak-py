@@ -2046,7 +2046,7 @@ def check_sdo_coverage():
 
     # collect sdo_coverage_info:
     for (op_name, op_info) in spec.info_for_op_named_.items():
-        if op_info.kind == 'op: syntax-directed':
+        if op_info.kind in ['op: syntax-directed', 'op: early error']:
 
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}
