@@ -2065,12 +2065,11 @@ def check_sdo_coverage():
                     stderr(f"! sdo_coverage may be broken because no summary for {discriminator.source_text()}")
 
                 for (lhs_nt, def_i, optionals) in discriminator.summary:
-                    if lhs_nt not in spec.sdo_coverage_map[op_name]:
-                        spec.sdo_coverage_map[op_name][lhs_nt] = {}
-                    if def_i not in spec.sdo_coverage_map[op_name][lhs_nt]:
-                        spec.sdo_coverage_map[op_name][lhs_nt][def_i] = []
                     for opt_bits in each_optbits_covered_by(optionals):
-                        spec.sdo_coverage_map[op_name][lhs_nt][def_i].append(opt_bits)
+                        key = (lhs_nt, def_i, opt_bits)
+                        if key not in spec.sdo_coverage_map[op_name]:
+                            spec.sdo_coverage_map[op_name][key] = []
+                        spec.sdo_coverage_map[op_name][key].append(foo_defn)
 
     analyze_sdo_coverage_info()
 
@@ -2096,19 +2095,19 @@ def analyze_sdo_coverage_info():
 
     # -------------
 
-    sdos_defined_for_lhs_ = defaultdict(set)
+    sdos_defined_for_key_ = defaultdict(set)
     for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
-        for lhs_nt in coverage_info_for_this_sdo.keys():
-            sdos_defined_for_lhs_[lhs_nt].add(sdo_name)
+        for key in coverage_info_for_this_sdo.keys():
+            sdos_defined_for_key_[key].add(sdo_name)
     max_n_sdos = max(
         len(sdo_names)
-        for (lhs_nt, sdo_names) in sdos_defined_for_lhs_.items()
+        for (_, sdo_names) in sdos_defined_for_key_.items()
     )
-    put(f"max number of SDOs defined for a given lhs_nt: {max_n_sdos}")
+    put(f"max number of SDOs defined for a given key: {max_n_sdos}")
     put("e.g.:")
-    for (lhs_nt, sdo_names) in sorted(sdos_defined_for_lhs_.items()):
+    for (key, sdo_names) in sorted(sdos_defined_for_key_.items()):
         if len(sdo_names) == max_n_sdos:
-            put(f"    {lhs_nt} has definitions for:")
+            put(f"    {key} has definitions for:")
             for sdo_name in sorted(sdo_names):
                 put(f"        {sdo_name}")
     put()
@@ -2334,16 +2333,8 @@ def sdo_rules_that_handle(sdo_name, lhs_nt, def_i, opt_combo):
         } [optionality]
         for (_, optionality) in opt_combo
     )
-    coverage_info_for_this_sdo = spec.sdo_coverage_map[sdo_name]
-    coverage_info_for_this_nt = coverage_info_for_this_sdo.get(lhs_nt, {})
-    if def_i not in coverage_info_for_this_nt: return []
-    list_of_covered_optbits = coverage_info_for_this_nt[def_i]
-    covers = [
-        covered_optbits
-        for covered_optbits in list_of_covered_optbits
-        if covered_optbits == optbits
-    ]
-    return covers
+    key = (lhs_nt, def_i, optbits)
+    return spec.sdo_coverage_map[sdo_name].get(key, [])
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
     # Looking at the productions that share a LHS
