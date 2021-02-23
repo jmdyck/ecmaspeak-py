@@ -430,7 +430,7 @@ class _Earley:
         trace_prefix,
         trace_f
     ):
-        # Either returns a single ENode, or raises a ParseError.
+        # Either returns a single ParseNode, or raises a ParseError.
 
         this_parser.trace_prefix = trace_prefix
 
@@ -1219,7 +1219,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
     # --------------------------------------------------------------------------
 
     def get_named_token(token):
-        # {token} is an InputElement* ENode.
+        # {token} is an InputElement* ParseNode.
         # But the syntactic grammar makes no reference
         # to InputElement or CommonToken or Punctuator etc,
         # and the syntactic parser won't know what to do
@@ -1428,7 +1428,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                     trace_f
                 )
 
-                assert isinstance(input_element, ENode)
+                assert isinstance(input_element, ParseNode)
 
                 assert input_element.start_posn == self._scouting_text_posn
                 assert input_element.start_posn < input_element.end_posn
@@ -1767,7 +1767,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     def _make_nonterminal_node(prod, option_bits, extent):
         assert isinstance(prod, ExProd)
-        node = ENode((prod, option_bits), source_text, extent)
+        node = ParseNode((prod, option_bits), source_text, extent)
         return node
 
     # --------------------------------------------------------------------------
@@ -1780,7 +1780,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                 T_lit(';'), # an auto-inserted semicolon
                 END_OF_INPUT
             ]
-        node = ENode(terminal_symbol, source_text, (start_posn, end_posn))
+        node = ParseNode(terminal_symbol, source_text, (start_posn, end_posn))
         return node
 
     # ==========================================================================
@@ -1790,7 +1790,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class ENode:
+class ParseNode:
     def __init__(self, shape, whole_text, extent):
 
         # shape:
@@ -1853,7 +1853,7 @@ class ENode:
             self.is_instance_of_chain_prod = False
 
     def __str__(self):
-        return "<ENode symbol=%s, %d children>" % (self.symbol, len(self.children))
+        return "<ParseNode symbol=%s, %d children>" % (self.symbol, len(self.children))
 
     def text(self):
         return self.whole_text[self.start_posn:self.end_posn]
