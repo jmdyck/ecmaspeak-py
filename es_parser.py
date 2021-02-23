@@ -1833,6 +1833,25 @@ class ENode:
         assert type(self.end_posn) == int
         assert 0 <= self.start_posn <= self.end_posn <= len(whole_text)
 
+        # Is this an instance of a chain production?
+        # "A <dfn>chain production</dfn> is a production that has
+        # exactly one nonterminal symbol on its right-hand side
+        # along with zero or more terminal symbols."
+        nt_children = []
+        for child in self.children:
+            if not child.is_terminal:
+                if child.symbol.endswith('?'):
+                    if child.children:
+                        [nt_child] = child.children
+                        nt_children.append(nt_child)
+                else:
+                    nt_children.append(child)
+        if len(nt_children) == 1:
+            self.is_instance_of_chain_prod = True
+            [self.direct_chain] = nt_children
+        else:
+            self.is_instance_of_chain_prod = False
+
     def __str__(self):
         return "<ENode symbol=%s, %d children>" % (self.symbol, len(self.children))
 
