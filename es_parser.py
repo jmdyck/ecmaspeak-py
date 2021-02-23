@@ -1803,10 +1803,13 @@ class ENode:
             )
             self.symbol = self.production.og_lhs
             assert type(self.symbol) == str
+            self.is_terminal = False
+            self.sdo_key = (self.symbol, self.production.og_rhs_i, self.option_bits)
         elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
             self.symbol = shape
             self.production = None
             self.option_bits = None
+            self.is_terminal = True
         else:
             assert 0
 
