@@ -1804,7 +1804,8 @@ class ParseNode:
             self.symbol = self.production.og_lhs
             assert type(self.symbol) == str
             self.is_terminal = False
-            self.sdo_key = (self.symbol, self.production.og_rhs_i, self.option_bits)
+            self.puk = (self.symbol, self.production.og_rhs_i, self.option_bits)
+            # "production use key"
         elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
             self.symbol = shape
             self.production = None
