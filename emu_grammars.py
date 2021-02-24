@@ -1014,7 +1014,24 @@ def check_non_defining_prodns(emu_grammars):
 
                     # ------------------
 
-                    emu_grammar.summary.append((lhs_nt, d_i, notes['optional-GNT']))
+                    def each_optbits_covered_by(optionals):
+                        if optionals == []:
+                            yield ''
+                        else:
+                            [head, *tail] = optionals
+                            (nt, optionality) = head
+                            assert optionality in ['omitted', 'required', 'either']
+                            if optionality in ['omitted', 'either']:
+                                for tail_optbits in each_optbits_covered_by(tail):
+                                    yield '0' + tail_optbits
+                            if optionality in ['required', 'either']:
+                                for tail_optbits in each_optbits_covered_by(tail):
+                                    yield '1' + tail_optbits
+
+                    for optbits in each_optbits_covered_by(notes['optional-GNT']):
+                        # Production Use Key
+                        puk = (lhs_nt, d_i, optbits)
+                        emu_grammar.summary.append(puk)
 
             # --------------------------
 

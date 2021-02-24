@@ -2050,28 +2050,12 @@ def check_sdo_coverage():
                 if discriminator.summary == []:
                     stderr(f"! sdo_coverage may be broken because no summary for {discriminator.source_text()}")
 
-                for (lhs_nt, def_i, optionals) in discriminator.summary:
-                    for opt_bits in each_optbits_covered_by(optionals):
-                        key = (lhs_nt, def_i, opt_bits)
-                        if key not in spec.sdo_coverage_map[op_name]:
-                            spec.sdo_coverage_map[op_name][key] = []
-                        spec.sdo_coverage_map[op_name][key].append(foo_defn)
+                for puk in discriminator.summary:
+                    if puk not in spec.sdo_coverage_map[op_name]:
+                        spec.sdo_coverage_map[op_name][puk] = []
+                    spec.sdo_coverage_map[op_name][puk].append(foo_defn)
 
     analyze_sdo_coverage_info()
-
-def each_optbits_covered_by(optionals):
-    if optionals == []:
-        yield ''
-    else:
-        [head, *tail] = optionals
-        (nt, optionality) = head
-        assert optionality in ['omitted', 'required', 'either']
-        if optionality in ['omitted', 'either']:
-            for tail_optbits in each_optbits_covered_by(tail):
-                yield '0' + tail_optbits
-        if optionality in ['required', 'either']:
-            for tail_optbits in each_optbits_covered_by(tail):
-                yield '1' + tail_optbits
 
 # ------------------------------------------------------------------------------
 
