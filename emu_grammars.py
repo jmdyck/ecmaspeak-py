@@ -534,6 +534,9 @@ class GNode(SpecNode):
         snippet = st if len(st) <= 50 else (st[0:47] + '...')
         return f"({self.kind} {snippet!r})"
 
+    def tree_slug(self):
+        return str(self)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 info_for_nt_ = None
