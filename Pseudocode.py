@@ -1189,21 +1189,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo, section):
         assert len(emu_grammars) == 1
         [emu_grammar] = emu_grammars
 
-        if text == 'The production <G>, where @ is one of the bitwise operators in the productions above, is evaluated as follows:':
-            # assert emu_grammar.attrs.get('type', 'reference') == 'example'
-            assert 'type' not in emu_grammar.attrs
-            assert emu_grammar.inner_source_text() == 'A : A @ B'
-            # It isn't really an example, and yet it isn't a proper production.
-            # Because it doesn't parse, it didn't get a 'summary' property
-            # over in check_non_defining_prodns().
-            # Hard-code the summary.
-            emu_grammar.summary = [
-                ('BitwiseANDExpression', 1, []),
-                ('BitwiseXORExpression', 1, []),
-                ('BitwiseORExpression',  1, []),
-            ]
-
-        elif text == 'The production <G> evaluates as follows:':
+        if text == 'The production <G> evaluates as follows:':
             pass
 
         else:
@@ -2441,20 +2427,6 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         return True
 
     # ----------
-
-    if (
-        sdo_name == 'Evaluation'
-        and
-        lhs_nt in [
-            'BitwiseANDExpression',
-            'BitwiseXORExpression',
-            'BitwiseORExpression',
-        ]
-        and
-        def_i == 1
-    ):
-        # This is handled by the stupid "A : A @ B" rule.
-        return True
 
     if sdo_name in ['AllPrivateIdentifiersValid', 'ContainsArguments']:
         # PR 1668 private fields:

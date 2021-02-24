@@ -5669,16 +5669,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
         print()
 
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IAO_BODY}', '{IND_COMMANDS}']:
-            # kludge:
-            if (
-                isinstance(discriminator, HTML.HNode)
-                and
-                discriminator.source_text() == '<emu-grammar>A : A @ B</emu-grammar>'
-            ):
-                init_env1 = init_env.plus_new_entry('_A_', T_Parse_Node).plus_new_entry('_B_', T_Parse_Node)
-            else:
-                init_env1 = init_env
-            assert tc_nonvalue(body, init_env1) is None
+            assert tc_nonvalue(body, init_env) is None
         elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
             (out_t, out_env) = tc_expr(body, init_env)
             proc_add_return(out_env, out_t, body)
