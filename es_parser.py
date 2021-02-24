@@ -13,7 +13,7 @@ import misc
 
 from mynamedtuple import mynamedtuple
 import shared
-from shared import spec, decode_entities
+from shared import spec, decode_entities, print_tree
 from emu_grammars import GNode
 
 character_named_ = {
@@ -1858,25 +1858,15 @@ class ParseNode:
     def text(self):
         return self.whole_text[self.start_posn:self.end_posn]
 
-    def dump(self, prefix='  ', self_is_last_child=True, f=sys.stdout):
-        # hor_char = ('\u2517' if self_is_last_child else '\u2523')
-        hor_char = ("'-" if self_is_last_child else '|-')
-        n_children = len(self.children)
-        print(
-            prefix
-            + hor_char
-            + ' '
-            + ('(omitted)' if self.symbol is None else str(self.symbol))
+    def dump(self, prefix='  ', f=sys.stdout):
+        print_tree(self, prefix, f)
+
+    def tree_slug(self):
+        return (
+              ('(omitted)' if self.symbol is None else str(self.symbol))
             + f' [{self.start_posn}:{self.end_posn}]'
-            + (' ' + escape(self.text()) if n_children == 0 else ''),
-            file=f
+            + (' ' + escape(self.text()) if self.children == [] else '')
         )
-        if n_children > 0:
-            # sub_hor_char = (' ' if self_is_last_child else '\u2503')
-            sub_hor_char = ('  ' if self_is_last_child else '| ')
-            child_prefix = prefix + sub_hor_char + ' '
-            for (i,child) in enumerate(self.children):
-                child.dump(child_prefix, (i == n_children-1), f=f)
 
     def contains_a(self, symbol):
         return (

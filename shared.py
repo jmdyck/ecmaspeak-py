@@ -96,6 +96,25 @@ class SpecNode:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def print_tree(root, prefix, f):
+    # Assumes every descendant of {root} has attributes `children` and `dump_slug`
+
+    def recurse(node, prefix, self_is_last_child):
+        # hor_char = ('\u2517' if self_is_last_child else '\u2523')
+        hor_char = ("'-" if self_is_last_child else '|-')
+        print(prefix + hor_char + ' ' + node.tree_slug(), file=f)
+        n_children = len(node.children)
+        if n_children > 0:
+            # sub_hor_char = (' ' if self_is_last_child else '\u2503')
+            sub_hor_char = ('  ' if self_is_last_child else '| ')
+            child_prefix = prefix + sub_hor_char + ' '
+            for (i,child) in enumerate(node.children):
+                recurse(child, child_prefix, (i == n_children-1))
+
+    recurse(root, prefix, True)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 spec_text = None
 _newline_posns = None
 
