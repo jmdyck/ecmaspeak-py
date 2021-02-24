@@ -820,7 +820,7 @@ def check_non_defining_prodns(emu_grammars):
     header("checking non-defining productions...")
 
     for emu_grammar in emu_grammars:
-        emu_grammar.summary = []
+        emu_grammar.puk_set = set()
 
         # The production(s) in this emu_grammar are (in some sense)
         # instances of productions defined elsewhere,
@@ -1031,7 +1031,7 @@ def check_non_defining_prodns(emu_grammars):
                     for optbits in each_optbits_covered_by(notes['optional-GNT']):
                         # Production Use Key
                         puk = (lhs_nt, d_i, optbits)
-                        emu_grammar.summary.append(puk)
+                        emu_grammar.puk_set.add(puk)
 
             # --------------------------
 
@@ -1099,8 +1099,8 @@ def check_non_defining_prodns(emu_grammars):
                         f"ERROR: RHS#{','.join(u_j_s)} all match def RHS#{d_i+1}"
                     )
 
-        if emu_grammar.summary == []:
-            stderr(f"    no summary for {emu_grammar.source_text()}")
+        if not emu_grammar.puk_set:
+            stderr(f"    no puk_set for {emu_grammar.source_text()}")
 
 def u_rhs_matches_d_rhs_(u_rhs_n, d_rhs_n):
     notes = defaultdict(list)

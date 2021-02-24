@@ -2047,10 +2047,10 @@ def check_sdo_coverage():
                     assert op_name == 'Contains'
                     continue
 
-                if discriminator.summary == []:
-                    stderr(f"! sdo_coverage may be broken because no summary for {discriminator.source_text()}")
+                if not discriminator.puk_set:
+                    stderr(f"! sdo_coverage may be broken because no puk_set for {discriminator.source_text()}")
 
-                for puk in discriminator.summary:
+                for puk in discriminator.puk_set:
                     if puk not in spec.sdo_coverage_map[op_name]:
                         spec.sdo_coverage_map[op_name][puk] = []
                     spec.sdo_coverage_map[op_name][puk].append(foo_defn)
