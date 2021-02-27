@@ -7,7 +7,7 @@
 
 import sys, collections, pdb, math, functools, os, re
 
-from LR_Parser import LR_Parser, ParsingError
+from LR_Parser import LR_Parser, ParsingError, TooManyHeadsError
 # import Earley
 import shared
 from shared import SpecNode
@@ -344,6 +344,11 @@ class Pseudocode_Parser:
                 )
             print('(Error)', file=self.f_parsed)
             return None
+
+        except TooManyHeadsError as e:
+            (_, tok_s_posn, _, _) = tokens[e.posn]
+            print(shared.source_line_with_caret_marking_column(tok_s_posn))
+            raise
 
         if len(results) != 1:
             print('-------------------------------', file=self.f_ambig)
