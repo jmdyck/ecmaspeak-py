@@ -351,20 +351,16 @@
 {EACH_THING} :
     child node {var} of this Parse Node
     element {var} of {EX}
-    element {var} of {var}, in original insertion order
     element {var} of {var}, in reverse List order
     field of {var} that is present
     index {var} of {var}
     integer {var} starting with {EX} such that {CONDITION}, in ascending order
-    non-negative integer {var} starting with 0 such that {CONDITION}, in ascending order
     own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
     {ITEM_NATURE} {var} of {EX}
-    {ITEM_NATURE} {var} of {var}, in original key insertion order
     {ITEM_NATURE} {var} such that {CONDITION}
-    {ITEM_NATURE} {var} that satisfies {CONDITION}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
 

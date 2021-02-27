@@ -2257,8 +2257,8 @@ nature_to_tipe = {
         'a List of internal slot names'               : 'List of SlotName_',
         'a List of ECMAScript Language Type names'    : 'List of LangTypeName_',
         'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
+        'a List of PromiseReaction Records'           : 'List of PromiseReaction Record',
         'a collection of PromiseReactionRecords'      : 'List of PromiseReaction Record',
-        'a collection of PromiseReaction Records'     : 'List of PromiseReaction Record',
 
     # unofficial spec types
 
@@ -6458,7 +6458,6 @@ def tc_nonvalue(anode, env0):
         # generic list:
         if each_thing.prod.rhs_s in [
             r"element {var} of {EX}",
-            r"element {var} of {var}, in original insertion order",
             r"element {var} of {var}, in reverse List order",
         ]:
             [loop_var, collection_expr] = each_thing.children
@@ -6476,10 +6475,7 @@ def tc_nonvalue(anode, env0):
 
         # ---------------------
 
-        elif each_thing.prod.rhs_s in [
-            "{ITEM_NATURE} {var} of {EX}",
-            "{ITEM_NATURE} {var} of {var}, in original key insertion order",
-        ]:
+        elif each_thing.prod.rhs_s == "{ITEM_NATURE} {var} of {EX}":
             [item_nature, loop_var, collection_expr] = each_thing.children
 
             if item_nature.prod.rhs_s == "code point":
@@ -6588,10 +6584,7 @@ def tc_nonvalue(anode, env0):
         # --------------------------------------------------
         # things from a large (possibly infinite) set, those that satisfy a condition:
 
-        elif each_thing.prod.rhs_s in [
-            r"{ITEM_NATURE} {var} such that {CONDITION}",
-            r"{ITEM_NATURE} {var} that satisfies {CONDITION}",
-        ]:
+        elif each_thing.prod.rhs_s == r"{ITEM_NATURE} {var} such that {CONDITION}":
             [item_nature, loop_var, condition] = each_thing.children
             item_type = {
                 "FinalizationRegistry": T_FinalizationRegistry_object_,
@@ -6609,12 +6602,6 @@ def tc_nonvalue(anode, env0):
             [loop_var, start_ex, condition] = each_thing.children
             env0.assert_expr_is_of_type(start_ex, T_MathInteger_)
             env1 = env0.plus_new_entry(loop_var, T_MathInteger_)
-            (tenv, fenv) = tc_cond(condition, env1)
-            env_for_commands = tenv
-
-        elif each_thing.prod.rhs_s == r"non-negative integer {var} starting with 0 such that {CONDITION}, in ascending order":
-            [loop_var, condition] = each_thing.children
-            env1 = env0.plus_new_entry(loop_var, T_MathNonNegativeInteger_)
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
