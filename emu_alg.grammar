@@ -349,42 +349,22 @@
 # ------------------------------------------------------
 
 {EACH_THING} :
-    Agent Events Record {var} of {DOTTING}
-    Cyclic Module Record {var} of {var}
-    ExportEntry Record {var} of {EX}
-    FinalizationRegistry {var} such that {CONDITION}
-    ImportEntry Record {var} of {EX}
-    Parse Node {var} of {var}
-    ReadSharedMemory or ReadModifyWriteSharedMemory event {var} of SharedDataBlockEventSet({var})
-    Record { {DSBN}, {DSBN} } {var} of {var}
-    Record { {DSBN}, {DSBN} } {var} of {var}, in original key insertion order
-    Record { {DSBN}, {DSBN}, {DSBN} } {var} of {DOTTING}
-    String {var} of {DOTTING}
-    String {var} of {PP_NAMED_OPERATION_INVOCATION}
-    String {var} of {var}
-    WeakMap {var} such that {CONDITION}
-    WeakRef {var} such that {CONDITION}
-    WeakSet {var} such that {CONDITION}
     child node {var} of this Parse Node
-    code point {var} of {PP_NAMED_OPERATION_INVOCATION}
-    code point {var} of {var}
     element {var} of {EX}
     element {var} of {var}, in original insertion order
     element {var} of {var}, in reverse List order
-    event {var} of {DOTTING}
-    event {var} of {PP_NAMED_OPERATION_INVOCATION}
-    event {var} such that {CONDITION}
     field of {var} that is present
     index {var} of {var}
     integer {var} starting with {EX} such that {CONDITION}, in ascending order
-    integer {var} such that {CONDITION}
-    integer {var} that satisfies {CONDITION}
     non-negative integer {var} starting with 0 such that {CONDITION}, in ascending order
     own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
-    {nonterminal} {var} of {var}
+    {ITEM_NATURE} {var} of {EX}
+    {ITEM_NATURE} {var} of {var}, in original key insertion order
+    {ITEM_NATURE} {var} such that {CONDITION}
+    {ITEM_NATURE} {var} that satisfies {CONDITION}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
 
@@ -393,6 +373,25 @@
 
     # PR 1668 private fields
     binding named {var} in {EX}
+
+{ITEM_NATURE} :
+    Agent Events Record
+    Cyclic Module Record
+    ExportEntry Record
+    FinalizationRegistry
+    ImportEntry Record
+    Parse Node
+    ReadSharedMemory or ReadModifyWriteSharedMemory event
+    Record { {DSBN}, {DSBN} }
+    Record { {DSBN}, {DSBN}, {DSBN} }
+    String
+    WeakMap
+    WeakRef
+    WeakSet
+    code point
+    event
+    integer
+    {nonterminal}
 
 # ------------------------------------------------------
 
