@@ -388,59 +388,7 @@
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
 
-    # obsoleted by the merge of PR #1585:
-    # integer {var} in the range 0 &le; {var} &lt; {var}
-
-    # obsoleted by the merge of PR #1831:
-    # {nonterminal} {var} in {var} (NOTE: this is another complete iteration of {PROD_REF})
-
-    # obsoleted by the merge of PR #1923:
-    # own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation
-    # own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation
-    # own property key {var} of {var} that is an array index, in ascending numeric index order
-
-    # obsoleted by the merge of PR #2112:
-    # character {var} in the CharSet of all characters
-    # character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}
-
-    # obsoleted by the merge of PR #2152:
-    # Agent Events Record {var} in {DOTTING}
-    # Cyclic Module Record {var} in {var}
-    # ExportEntry Record {var} in {EX}
-    # ImportEntry Record {var} in {EX}
-    # Parse Node {var} in {var}
-    # ReadSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})
-    # Record { {DSBN}, {DSBN} } {var} in {var}
-    # Record { {DSBN}, {DSBN} } {var} that is an element of {var}
-    # Record { {DSBN}, {DSBN} } {var} that is an element of {var}, in original key insertion order
-    # Record { {DSBN}, {DSBN}, {DSBN} } {var} that is an element of {DOTTING}
-    # String {var} in {PP_NAMED_OPERATION_INVOCATION}
-    # String {var} in {var}
-    # String {var} in {var}, in list order
-    # String {var} that is an element of {EX}
-    # code point {var} in {PP_NAMED_OPERATION_INVOCATION}
-    # code point {var} in {var}
-    # element {var} in {var}
-    # element {var} of {var} in List order
-    # element {var} of {var}, in ascending index order
-    # event {var} in {DOTTING}
-    # event {var} in {PP_NAMED_OPERATION_INVOCATION}
-    # string {var} in {var}
-    # {nonterminal} {var} in order from {var}
-    # {nonterminal} {var} in {var}
-    # {var} from {var} in list order
-    # {var} in {var}
-    # {var} in {var} in List order
-    # {var} in {var}, in original insertion order
-    # {var} in {var}, in reverse list order
-    # {var} of {var}
-    # {var} of {var} in List order
-    # {var} that is an element of {var}
-    # {var} that is an element of {var}, in original insertion order
-
     # PR 1623 index_strings
-    # own property key {var} of {var} that is a String but is not a Uint32-string, in ascending chronological order of property creation
-    # own property key {var} of {var} that is a Uint32-string, in ascending numeric index order
     own property key {var} of {var} that is a Uint32-string, whose numeric value is greater than or equal to {var}, in descending numeric index order
 
     # PR 1668 private fields

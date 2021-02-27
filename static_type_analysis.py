@@ -6556,13 +6556,6 @@ def tc_nonvalue(anode, env0):
             env1 = env0.ensure_expr_is_of_type(collection_expr, T_Unicode_code_points_)
             env_for_commands = env1.plus_new_entry(loop_var, T_code_point_)
 
-        # explicit-exotics:
-        elif each_thing.prod.rhs_s == r"internal slot in {var}":
-            [collection_expr] = each_thing.children
-            loop_var = None # todo: no loop variable!
-            env0.assert_expr_is_of_type(collection_expr, ListType(T_SlotName_))
-            env_for_commands = env0
-
         # ------------------------
         # property keys of an object:
 
@@ -6571,20 +6564,6 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(obj_var, T_Object)
             env0.assert_expr_is_of_type(lo_var, T_Number)
             env_for_commands = env0.plus_new_entry(loop_var, T_String)
-
-#         elif each_thing.prod.rhs_s in [
-#             r"own property key {var} of {var} that is an array index, in ascending numeric index order",
-#             r"own property key {var} of {var} that is a String but is not an array index, in ascending chronological order of property creation",
-#         ]:
-#             [loop_var, obj_var] = each_thing.children
-#             env0.assert_expr_is_of_type(obj_var, T_Object)
-#             env_for_commands = env0.plus_new_entry(loop_var, T_String)
-# 
-#         elif each_thing.prod.rhs_s == r"own property key {var} of {var} that is a Symbol, in ascending chronological order of property creation":
-#             [loop_var, obj_var] = each_thing.children
-#             env0.assert_expr_is_of_type(obj_var, T_Object)
-#             env_for_commands = env0.plus_new_entry(loop_var, T_Symbol)
-# ^ obsoleted by the merge of PR #1923
 
         elif each_thing.prod.rhs_s in [
             r"own property key {var} of {var} such that {CONDITION}, in ascending numeric index order",
@@ -6634,6 +6613,7 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(envrec_ex, T_Environment_Record)
             env_for_commands = env0.plus_new_entry(name_var, T_String)
 
+        # --------------------------------------------------
         # things from a large (possibly infinite) set, those that satisfy a condition:
 
         elif each_thing.prod.rhs_s in [
@@ -6688,38 +6668,18 @@ def tc_nonvalue(anode, env0):
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
-#        elif each_thing.prod.rhs_s == r"character {var} not in set {var} where {PP_NAMED_OPERATION_INVOCATION} is in {var}":
-#            [loop_var, charset_var, noi, charset_var2] = each_thing.children
-#            assert charset_var.children == charset_var2.children
-#            env0.assert_expr_is_of_type(charset_var, T_CharSet)
-#            env1 = env0.plus_new_entry(loop_var, T_character_)
-#            env1.assert_expr_is_of_type(noi, T_character_)
-#            env_for_commands = env1
-# ^ obsoleted by PR 2112
-
         elif each_thing.prod.rhs_s == r"character {var} in the CharSet of all characters":
             [loop_var] = each_thing.children
             env1 = env0.plus_new_entry(loop_var, T_character_)
             env_for_commands = env1
-
-        # elif each_thing.prod.rhs_s == r"WriteSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var})":
-        # elif each_thing.prod.rhs_s == r"child node {var} of this Parse Node":
-        # elif each_thing.prod.rhs_s == r"code point {var} in {var}, in order":
-        # elif each_thing.prod.rhs_s == r"element {var} in {NAMED_OPERATION_INVOCATION}":
-        # elif each_thing.prod.rhs_s == r"event {var} in {var}":
-        # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in EventSet({var})":
-        # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in HostEventSet({var})":
-        # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in SharedDataBlockEventSet({var})":
-        # elif each_thing.prod.rhs_s == r"pair of events {var} and {var} in SharedDataBlockEventSet({var}) such that {CONDITION}":
-        # elif each_thing.prod.rhs_s == r"record {var} in {var}":
-        # elif each_thing.prod.rhs_s == r"{nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}":
-        # elif each_thing.prod.rhs_s == r"{nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}":
 
         else:
             stderr()
             stderr("each_thing:")
             stderr('        elif each_thing.prod.rhs_s == r"%s":' % each_thing.prod.rhs_s)
             sys.exit(0)
+
+        # --------------------------------------------------
 
         env_after_commands = tc_nonvalue(commands, env_for_commands)
         # XXX do I need to feed this back somehow?
