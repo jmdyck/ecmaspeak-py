@@ -13,7 +13,7 @@ import misc
 
 from mynamedtuple import mynamedtuple
 import shared
-from shared import spec, decode_entities, print_tree
+from shared import spec, decode_entities, print_tree, stderr
 from emu_grammars import GNode
 
 character_named_ = {
@@ -405,14 +405,23 @@ def print_exp_prodns(grammar):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+_trace_f = None
+_trace_level = None
+
+def trace(*args, **kwargs):
+    print(*args, **kwargs, file=_trace_f)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 class _Earley:
 
-    def __init__(this_parser, name, how_much_to_consume):
+    def __init__(this_parser, name, how_much_to_consume, trace_prefix):
 
         assert how_much_to_consume in ['all', 'as much as possible']
 
         this_parser.name = name
         this_parser.how_much_to_consume = how_much_to_consume
+        this_parser.trace_prefix = trace_prefix
 
         grammar = spec.grammar_[(name, 'B')]
 
@@ -422,25 +431,21 @@ class _Earley:
 
     def run(
         this_parser,
-        start_text_posn,
         goal_symname,
-        get_next_terminal_instances,
-        make_nonterminal_node,
-        check_constraint,
-        trace_level,
-        trace_prefix,
-        trace_f
+        tip,
+        start_ti_pos,
     ):
         # Either returns a single ParseNode, or raises a ParseError.
 
-        this_parser.trace_prefix = trace_prefix
-
         def trace_at(trace_level_of_this_msg, *args):
-            if trace_level_of_this_msg <= trace_level:
-                print(this_parser.trace_prefix, *args, file=trace_f)
+            if trace_level_of_this_msg <= _trace_level:
+                print(this_parser.trace_prefix, *args, file=_trace_f)
 
         def Rsymbol_get_rhs_start_points(rsymbol):
             assert Rthing_is_nonterminal(rsymbol)
+            if rsymbol.n not in this_parser.productions_with_lhs_:
+                # grammar bug
+                raise_parse_error()
             return [
                 Point(prod, 0)
                 for prod in this_parser.productions_with_lhs_[rsymbol.n]
@@ -539,7 +544,7 @@ class _Earley:
                 elif Rthing_is_constraint(rthing):
                     # trace_at(9, "  CHKING %s" % indent + str(item))
                     trace_at(9, f"  checking constraint {rthing}")
-                    constraint_is_satisfied = check_constraint(item.transit_node, this_set.text_posn, rthing)
+                    constraint_is_satisfied = tip.check_constraint(item.transit_node, this_set.ti_pos, rthing)
                     if constraint_is_satisfied:
                         trace_at(9, f"  constraint is satisfied")
                         yield item.advance(None)
@@ -587,6 +592,8 @@ class _Earley:
             def reduce(item):
                 trace_at(9, '    reduce:', str(item))
 
+                prod = item.resulting_point.get_prod()
+
                 # "pop items off the stack"
                 child_nodes = []
                 back_item = item
@@ -611,12 +618,11 @@ class _Earley:
                     extent = child_nodes
                 else:
                     option_bits = ''
-                    extent = (eset_text_posn, eset_text_posn)
+                    extent = (eset_ti_pos, eset_ti_pos)
 
-                prod = item.resulting_point.get_prod()
-                parent_node = make_nonterminal_node(prod, option_bits, extent)
+                parent_node = ParseNode((prod, option_bits), extent, tip)
+
                 lhs_symbol = prod.ex_lhs
-
                 back_items = back_set.get_items_expecting_symbol(NT(lhs_symbol))
                 if len(back_items) == 0:
                     trace_at(1, )
@@ -647,10 +653,10 @@ class _Earley:
         # -------------------------------------------
 
         class EarleySet:
-            def __init__(this_set, text_posn):
+            def __init__(this_set, ti_pos):
                 trace_at(9, )
-                trace_at(9, f'new set at posn {text_posn}...')
-                this_set.text_posn = text_posn
+                trace_at(9, f'new set at ti_pos = {ti_pos}...')
+                this_set.ti_pos = ti_pos
                 this_set.items_with_dot_before_ = defaultdict(list)
                 this_set.is_under_construction = True
                 this_set.nullables = []
@@ -726,10 +732,10 @@ class _Earley:
 
                 else:
                     goal_node = latest_accepting_item.transit_node
-                    assert goal_node.symbol == goal_symname
-                    if trace_level >= 2:
+                    assert goal_node.production.ex_lhs == goal_symname
+                    if _trace_level >= 2:
                         trace_at(2, 'returning prior acceptable:')
-                        goal_node.dump(this_parser.trace_prefix + '   ', f=trace_f)
+                        goal_node.dump(this_parser.trace_prefix + '   ', f=_trace_f)
                     return goal_node
 
             else:
@@ -746,12 +752,12 @@ class _Earley:
                 str(item)
                 for item in next_kernel_items
             ]
-            raise ParseError(eset_text_posn, item_strings)
+            raise ParseError(eset_ti_pos, item_strings)
 
         # -------------------------------------------
 
         trace_at(1, )
-        trace_at(1, f"{this_parser.name}.run invoked at posn {start_text_posn} with goal '{goal_symname}'")
+        trace_at(1, f"{this_parser.name}.run invoked at ti_pos = {start_ti_pos} with goal '{goal_symname}'")
 
         if this_parser.how_much_to_consume == 'all':
             # We're looking for an instance of the goal symbol
@@ -781,13 +787,13 @@ class _Earley:
         if this_parser.how_much_to_consume == 'as much as possible':
             latest_accepting_item = None
 
-        eset_text_posn = start_text_posn
+        eset_ti_pos = start_ti_pos
         while True:
-            eset = EarleySet(eset_text_posn)
+            eset = EarleySet(eset_ti_pos)
 
             eset.close(next_kernel_items)
 
-            if trace_level >= 3:
+            if _trace_level >= 3:
                 eset.trace(3)
 
             # -----------------
@@ -795,10 +801,10 @@ class _Earley:
             expected_terminals = eset.get_expected_terminals()
 
             if len(expected_terminals) == 0:
-                trace_at(2, "No expected terminals! (e.g., due to application of a 'but not')")
+                trace_at(2, "No expected terminals! (e.g., due to the failure of a constraint)")
                 return cannot_continue()
 
-            if trace_level >= 9:
+            if _trace_level >= 9:
                 trace_at(9, )
                 trace_at(9, 'expected_terminals:')
                 strings = [ str(tsymbol) for tsymbol in expected_terminals ]
@@ -812,11 +818,11 @@ class _Earley:
                     trace_at(9, '(there are accepting_items_here)')
                     if len(accepting_items_here) > 1:
                         trace_at(2, "%d items!" % len(accepting_items_here))
-                        if trace_level >= 2:
+                        if _trace_level >= 2:
                             for item in accepting_items_here:
                                 trace_at(2, '')
-                                item.transit_node.dump(this_parser.trace_prefix + '   ', f=trace_f)
-                        print('NEED TO RESOLVE AMBIGUITY', file=trace_f) # XXX
+                                item.transit_node.dump(this_parser.trace_prefix + '   ', f=_trace_f)
+                        print('NEED TO RESOLVE AMBIGUITY', file=_trace_f) # XXX
 
                     latest_accepting_item = accepting_items_here[0]
 
@@ -836,7 +842,7 @@ class _Earley:
 
             # -----------------
 
-            result = get_next_terminal_instances(eset_text_posn, expected_terminals, ASI_kludge)
+            result = tip.get_next_terminal_instances(eset_ti_pos, expected_terminals, ASI_kludge)
 
             trace_at(2, )
             trace_at(2, f"(back in {this_parser.name}.run after return from get_next_terminal_instances...)")
@@ -849,21 +855,21 @@ class _Earley:
 
             # -----------------
 
-            (rats, next_text_posn) = result
+            (rats, next_ti_pos) = result
             # "rats" = rsymbols and terminal-instances
 
-            if trace_level >= 3:
+            if _trace_level >= 3:
                 trace_at(3, )
                 trace_at(3, f'gnti returned {len(rats)} matches:')
                 for (rsymbol, termin) in rats:
                     trace_at(3, "  For the expected terminal symbol:")
                     trace_at(3, "    " + str(rsymbol))
                     trace_at(3, "  we have the terminal instance:")
-                    termin.dump(this_parser.trace_prefix + '     ', f=trace_f)
+                    termin.dump(this_parser.trace_prefix + '     ', f=_trace_f)
                     trace_at(3, )
-                trace_at(3, f'and next_text_posn = {next_text_posn}')
+                trace_at(3, f'and next_ti_pos = {next_ti_pos}')
 
-            assert eset_text_posn <= next_text_posn
+            assert eset_ti_pos <= next_ti_pos
             # It would be strictly less-than, except for inserted semicolons.
 
             # -------------------------------------
@@ -873,7 +879,7 @@ class _Earley:
             for (rsymbol, termin) in rats:
                 for item in eset.get_items_expecting_symbol(rsymbol):
                     # print(rsymbol, file=sys.stderr)
-                    # if trace_level >= 9 and rsymbol == T_lit(';'): pdb.set_trace()
+                    # if _trace_level >= 9 and rsymbol == T_lit(';'): pdb.set_trace()
                     new_item = item.advance(termin)
                     # print(new_item, file=sys.stderr)
                     if new_item is None:
@@ -882,7 +888,7 @@ class _Earley:
                     else:
                         next_kernel_items.append(new_item)
 
-            if trace_level >= 9:
+            if _trace_level >= 9:
                 trace_at(9, )
                 trace_at(9, 'next_kernel_items:')
                 for item in next_kernel_items:
@@ -903,10 +909,10 @@ class _Earley:
                     prev_item = end_item.cause
                     assert isinstance(prev_item, Item)
                     goal_node = prev_item.transit_node
-                    assert goal_node.symbol == goal_symname
+                    assert goal_node.symbol == re.sub('[~+]\w+', '', goal_symname)
                     valid_trees.append(goal_node)
-                    if trace_level >= 1:
-                        goal_node.dump(f=trace_f)
+                    if _trace_level >= 1:
+                        goal_node.dump(f=_trace_f)
 
                 n_valids = len(valid_trees)
                 if n_valids == 0:
@@ -914,44 +920,15 @@ class _Earley:
                 elif n_valids == 1:
                     [result] = valid_trees
                 else:
-                    print(f'AMBIGUITY? {n_valids} RESULT TREES', file=trace_f)
-                    print('comparing two:', file=trace_f)
-                    show_ambiguity(valid_trees[0], valid_trees[1], trace_f)
+                    print(f'AMBIGUITY? {n_valids} RESULT TREES', file=_trace_f)
+                    print('comparing two:', file=_trace_f)
+                    show_ambiguity(valid_trees[0], valid_trees[1], _trace_f)
                     result = valid_trees[0]
                 return result
 
-            eset_text_posn = next_text_posn
+            eset_ti_pos = next_ti_pos
 
         assert 0 # unreachable
-
-def show_ambiguity(A_tree, B_tree, f):
-    def put(*args): print(*args, file=f)
-
-    if A_tree.symbol != B_tree.symbol:
-        put(f"Posn {A_tree.start_posn} - {A_tree.end_posn}, text:")
-        put(A_tree.text())
-        put('-----')
-        put(f"A symbol: {A_tree.symbol}")
-        put(f"B symbol: {B_tree.symbol}")
-        return
-
-    if (
-        hasattr(A_tree, 'production')
-        and
-        hasattr(B_tree, 'production')
-        and
-        A_tree.production != B_tree.production
-    ):
-        put(f"Posn {A_tree.start_posn} - {A_tree.end_posn}, text:")
-        put(A_tree.text())
-        put('-----')
-        put(f"A production: {A_tree.production['lhs']} -> {stringify_rthing_sequence(A_tree.production['rhs'])}")
-        put(f"B production: {B_tree.production['lhs']} -> {stringify_rthing_sequence(B_tree.production['rhs'])}")
-        return
-
-    assert len(A_tree.children) == len(B_tree.children)
-    for (A_child, B_child) in zip(A_tree.children, B_tree.children):
-        show_ambiguity(A_child, B_child, f)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -980,7 +957,7 @@ def gather_char_sets(productions_with_lhs_):
         'EscapeCharacter',
         'HexDigit',
         'OctalDigit',
-        # SyntaxCharacter
+        'SyntaxCharacter',
         # UnicodeIDContinue
     ]:
         char_set_[n] = recurse(n)
@@ -1013,8 +990,8 @@ g_outdir = '../ecma262/_editorial' # XXX Should be able to set this dynamically.
 shared.register_output_dir(g_outdir)
 spec.restore()
 
-lexical_earley = _Earley('lexical', 'as much as possible')
-syntactic_earley = _Earley('syntactic', 'all')
+lexical_earley = _Earley('lexical', 'as much as possible', '| ')
+syntactic_earley = _Earley('syntactic', 'all', '')
 
 gather_char_sets(lexical_earley.productions_with_lhs_)
 
@@ -1022,78 +999,181 @@ gather_ReservedWords(syntactic_earley.productions_with_lhs_) # for "but not Rese
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
+def parse(subject, goal_symname, trace_level=0, trace_f=sys.stdout):
     # Using `lexical_earley` and `syntactic_earley`,
-    # attempt to parse the given `source_text`,
+    # attempt to parse the given `subject`,
     # using `goal_symname` as the goal symbol.
     #
     # Return a single node or raise an Error.
 
-    def trace(*args, **kwargs):
-        print(*args, **kwargs, file=trace_f)
+    global _trace_f, _trace_level
+    _trace_f = trace_f
+    _trace_level = trace_level
 
-    temp_posn_of_latest_asi = -1
-    lexical_trace_level = trace_level
-    ies = None
-
-    def parse_main():
-        nonlocal ies
-        ies = InputElementStream('| ')
-
-        text_posn = 0
-        node = syntactic_earley.run(
-            text_posn,
-            goal_symname,
-            _syntactic_get_next_terminal_instances,
-            _make_nonterminal_node,
-            _syntactic_check_constraint,
-            trace_level,
-            '',
-            trace_f
+    assert isinstance(goal_symname, str)
+    if '[' in goal_symname:
+        # It has grammatical parameters.
+        # Convert to the 'expanded' name.
+        # E.g., "Pattern[+U, +N]" -> "Pattern+U+N")
+        goal_symname = (
+            goal_symname
+            .replace('[', '')
+            .replace(', ', '')
+            .replace(']', '')
         )
-        return node
 
-    # --------------------------------------------------------------------------
+    if goal_symname in syntactic_earley.productions_with_lhs_:
+        if isinstance(subject, str):
+            text_posn = 0
+            lex_tip = LexicalTIP(subject)
+            syn_tip = SyntacticTIP(subject, lex_tip)
 
-    def _syntactic_get_next_terminal_instances(text_posn, expected_terminals, ASI_kludge):
+        elif isinstance(subject, ParseNode):
+            stderr('REPARSE!!')
+            assert isinstance(subject.tip, SyntacticTIP)
+            syn_tip = subject.tip
+            syn_tip.set_reparse_bounds(subject.start_posn, subject.end_posn)
+            text_posn = subject.start_posn
 
-        if trace_level >= 2:
+        else:
+            assert 0
+
+        node = syntactic_earley.run(
+            goal_symname,
+            syn_tip,
+            text_posn
+        )
+
+    elif goal_symname in lexical_earley.productions_with_lhs_:
+        # This has some commonalities with the syntactic case above,
+        # so I could merge+differentiate,
+        # but I don't think the result would be clear.
+        assert isinstance(subject, str)
+        text_posn = 0
+        lex_tip = LexicalTIP(subject)
+
+        node = lexical_earley.run(
+            goal_symname,
+            lex_tip,
+            text_posn
+        )
+
+        # Since lexical_earley tries to consume "as much as possible",
+        # it might return a node that covers
+        # some but not all of the available text.
+        # But we're only interested in a node that covers all of the available text.
+        # (Should there be a different lexical earley that tries to consume all?)
+        if node.end_posn != len(subject):
+            raise ParseError(node.end_posn, [f"found a valid {goal_symname}, but it did not consume all of subject"])
+
+    else:
+        assert 0, "Unknown goal symbol {goal_symname!r}"
+
+    node.parent = None
+    add_parent_links(node)
+    return node
+
+# --------------------------------------------------------------------------
+
+def add_parent_links(node):
+    # Note that we can't add parent links during the parsing process,
+    # because a node can be a provisional child of multiple other nodes
+    # (under different competing parses).
+    # It's only when one parse 'wins' that a node has a unique parent.
+    for child in node.children:
+        child.parent = node
+        add_parent_links(child)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# TIP = Terminal Instance Provider
+# i.e. it provides instances of terminal symbols to an Earley object.
+# via the `get_next_terminal_instances` method.
+# Also handles `check_constraint`.
+
+class SyntacticTIP:
+    def __init__(syn_tip, source_text, lexical_tip):
+        syn_tip.source_text = source_text
+        syn_tip.lexical_tip = lexical_tip
+
+        syn_tip.temp_posn_of_latest_asi = -1
+
+        syn_tip._input_elements = []  # A list of all input elements (incl tokens).
+        syn_tip._tokens = []          # A list of just the tokens.
+        syn_tip._current_token_i = -1 # The index in self._tokens of the current token.
+        syn_tip._scouting_text_posn = 0
+        syn_tip._lexing_is_done = False
+        syn_tip._scout_ahead()
+        syn_tip._end_token_i = sys.maxsize
+
+    def show_current_state(syn_tip, when_blurb):
+        return
+        print(when_blurb + ':')
+        print('  ies_i tok_i extent  text')
+        next_tok_i = 0
+        for (ies_i, ie) in enumerate(syn_tip._input_elements):
+            if next_tok_i < len(syn_tip._tokens) and ie is syn_tip._tokens[next_tok_i]:
+                tok_i_thing = '%4d' % next_tok_i
+                if next_tok_i == syn_tip._current_token_i:
+                    tok_i_thing += '*'
+                else:
+                    tok_i_thing += ' '
+                next_tok_i += 1
+            else:
+                tok_i_thing = ''
+            assert ie.ies_i == ies_i
+            hm = ' ' if ie.ies_i == ies_i else '!'
+            print(f"  {ies_i:5} {tok_i_thing:5} {ie.ies_i:5}{hm} [{ie.start_posn:2}:{ie.end_posn:2}] {ie.text()}")
+        print('---')
+
+    def get_next_terminal_instances(syn_tip, text_posn, expected_terminals, ASI_kludge):
+        if _trace_level >= 2:
             trace()
-            trace(f': _syntactic_get_next_terminal_instances called at posn {text_posn}')
+            trace(f': syn_tip.get_next_terminal_instances called at text_posn = {text_posn}, which starts at text_posn = {text_posn}:')
             trace(':')
-            trace(misc.display_position_in_text(source_text, text_posn, indent=': '), end='')
+            trace(misc.display_position_in_text(syn_tip.source_text, text_posn, indent=': '), end='')
+
+        # But we barely use {text_posn},
+        # because we know that Earley will ask for things in order.
 
         # ------------------------------
 
         # When the syntactic parser wants its next terminal (token),
         # it runs the lexical parser to find an input element.
 
-        lexical_goal = get_lexical_goal_symbol(expected_terminals)
+        lexical_goal = syn_tip.get_lexical_goal_symbol(expected_terminals)
 
-        if trace_level >= 2:
+        if _trace_level >= 2:
             trace(':')
             trace(f': based on expected_terminals, lexical_goal = {lexical_goal}')
+            trace(':')
 
         # ------------------------------
 
-        token = ies.advance_token_cursor(lexical_goal)
+        token = syn_tip.advance_token_cursor(lexical_goal)
 
-        if trace_level >= 2:
+        if _trace_level >= 2:
             trace()
             trace(':')
             trace(f': So the input-element stream has returned the token-tree:')
-            token.dump(':  ', f=trace_f)
+            token.dump(':  ', f=_trace_f)
 
         # ------------------------------
 
-        named_token = get_named_token(token)
+        named_token = syn_tip.get_named_token(token)
         token_name = '' if named_token is None else named_token.symbol
 
         token_text = token.text()
 
+        # not sure how to handle this:
+        if token.symbol == T_lit(';') and token.start_posn == token.end_posn:
+            # This is an automatically-inserted semicolon.
+            assert token_text == ''
+            token_text = ';'
+
         # ------------------------------
 
-        if trace_level >= 2:
+        if _trace_level >= 2:
             trace(':')
             trace(': Now we check which (if any) of the expected_terminals match that...')
 
@@ -1105,7 +1185,8 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                 match_token = token
 
             elif type(expected_symbol) == T_lit and expected_symbol.c == token_text:
-                match_token = make_terminal_node(T_lit(token_text), token.start_posn, token.end_posn)
+                #! match_token = ParseNode(T_lit(token_text), (token_i, token_i+1), syn_tip)
+                match_token = ParseNode(T_lit(token_text), (token.start_posn, token.end_posn), syn_tip)
 
             elif type(expected_symbol) == T_named and expected_symbol.n == token_name:
                 match_token = named_token
@@ -1117,17 +1198,17 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             matches.append((expected_symbol, match_token))
 
         if matches:
-            if trace_level >= 2:
+            if _trace_level >= 2:
                 trace(':')
                 trace(': matching symbols:')
                 for match in matches:
                     trace(':   ', match[0])
                 trace(':')
-                trace(f': which _syntactic_get_next_terminal_instances returns with next_text_posn={token.end_posn}')
+                trace(f': which syn_tip.get_next_terminal_instances returns with next_text_posn={token.end_posn}')
             return (matches, token.end_posn)
 
         else:
-            if trace_level >= 2: trace(": The token we found is not expected by the parser.")
+            if _trace_level >= 2: trace(": The token we found is not expected by the parser.")
 
             if token.symbol == END_OF_INPUT:
                 # ASI rule #2:
@@ -1137,7 +1218,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                 #" as a single instance of the goal nonterminal,
                 #" then a semicolon is automatically inserted
                 #" at the end of the input stream. 
-                if trace_level >= 2: trace(': so ASI rule #2 says to insert a semicolon at the end of the input stream')
+                if _trace_level >= 2: trace(': so ASI rule #2 says to insert a semicolon at the end of the input stream')
 
             else:
                 # ASI rule 1:
@@ -1154,30 +1235,29 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                 #"    would then be parsed as the terminating semicolon
                 #"    of a do-while statement (13.7.2).
                 if (
-                    ies.a_LineTerminator_occurs_in_gap_before_current_token()
+                    syn_tip.a_LineTerminator_occurs_in_gap_before_current_token()
                     or
                     token.text() == '}'
                     or
                     ASI_kludge == 'DoWhileStatement'
                 ):
-                    if trace_level >= 2: trace(": ASI rule #1 says to insert a semicolon before it.")
+                    if _trace_level >= 2: trace(": ASI rule #1 says to insert a semicolon before it.")
                 else:
                     return None
 
-            nonlocal temp_posn_of_latest_asi
-            if text_posn == temp_posn_of_latest_asi:
-                if trace_level >= 2:
+            if text_posn == syn_tip.temp_posn_of_latest_asi:
+                if _trace_level >= 2:
                     trace(": but we've already inserted one here.")
                     trace(": Aborting to avoid infinite ASI loop.")
                 return None
-            temp_posn_of_latest_asi = text_posn
+            syn_tip.temp_posn_of_latest_asi = text_posn
 
             expected_semicolon_symbols = [
                 tsymbol
                 for tsymbol in expected_terminals
                 if tsymbol.T == 'T_lit' and tsymbol.c == ';'
             ]
-            if trace_level >= 2:
+            if _trace_level >= 2:
                 trace(": expected_semicolon_symbols:")
                 for tsymbol in expected_semicolon_symbols:
                     trace(f":     {tsymbol}")
@@ -1187,7 +1267,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             if len(expected_semicolon_symbols) == 0:
                 # e.g. 036f6b8da7e53ee5.js: `({get `
                 #  or  0ff3826356c94f67.js: `({function} = 0)`
-                if trace_level >= 2:
+                if _trace_level >= 2:
                     trace(": but a semicolon isn't expected here, so giving up.")
                 return None
 
@@ -1202,7 +1282,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             #" [2] if that semicolon would become one of the two semicolons
             #" in the header of a for statement (see 13.7.4). XXX not handling this yet
             if ASI_kludge == 'EmptyStatement':
-                if trace_level >= 2:
+                if _trace_level >= 2:
                     trace(": but that semicolon would then be parsed as an empty statement, so we can't insert it.")
                 return None
 
@@ -1218,14 +1298,14 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             # (i.e., ASI *is* allowed to insert the semicolon that ends a LexicalDeclaration
             # if it's not the child of a for-loop.)
 
-            node = make_terminal_node(T_lit(';'), text_posn, text_posn)
+            node = ParseNode(T_lit(';'), (text_posn, text_posn), syn_tip)
 
-            ies.insert_before_current_token(node)
+            syn_tip.insert_before_current_token(node)
             return ([(semicolon_symbol, node)], text_posn) # NOT next_text_posn
 
     # --------------------------------------------------------------------------
 
-    def get_named_token(token):
+    def get_named_token(syn_tip, token):
         # {token} is an InputElement* ParseNode.
         # But the syntactic grammar makes no reference
         # to InputElement or CommonToken or Punctuator etc,
@@ -1274,6 +1354,9 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             ]:
                 return None
 
+            elif tok.symbol == T_lit(';'):
+                return None
+
             else:
                 assert 0, tok.symbol
 
@@ -1281,7 +1364,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     # --------------------------------------------------------------------------
 
-    def get_lexical_goal_symbol(expected_terminals):
+    def get_lexical_goal_symbol(syn_tip, expected_terminals):
         # https://tc39.es/ecma262/#sec-ecmascript-language-source-code
         # 11. ECMAScript Language: Lexical Grammar
         # 
@@ -1328,12 +1411,12 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     # --------------------------------------------------------------------------
 
-    def _syntactic_check_constraint(prec_node, text_posn, constraint):
+    def check_constraint(syn_tip, prec_node, text_posn, constraint):
         # Return True if the constraint is satisfied, False if not.
 
         if type(constraint) == C_lookahead:
             any_ts_matches_lookahead = any(
-                ies.lookahead_matches_terminal_sequence(ts, text_posn)
+                syn_tip.lookahead_matches_terminal_sequence(ts, text_posn)
                 for ts in constraint.tss
             )
             if constraint.matches:
@@ -1351,7 +1434,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
             #" it indicates that the production is a restricted production:
             #" it may not be used if a LineTerminator occurs in the input stream
             #" at the indicated position.
-            return not ies.a_LineTerminator_occurs_in_gap_after_current_token()
+            return not syn_tip.a_LineTerminator_occurs_in_gap_after_current_token()
 
         elif type(constraint) == C_but_not:
             # In the syntactic grammar, there's only one occurrence of "but not":
@@ -1365,328 +1448,359 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     # ==========================================================================
 
-    class InputElementStream:
-        def __init__(self, trace_prefix):
-            self._trace_prefix = trace_prefix
-            self._input_elements = []  # A list of all input elements (incl tokens).
-            self._tokens = []          # A list of just the tokens.
-            self._current_token_i = -1 # The index in self._tokens of the current token.
-            self._scouting_text_posn = 0
-            self._lexing_is_done = False
-            self._scout_ahead()
+    def get_text_posn(syn_tip, token_i):
+        if token_i < len(syn_tip._tokens):
+            text_posn = syn_tip._tokens[token_i].start_posn
+        else:
+            assert token_i == len(syn_tip._tokens)
+            text_posn = syn_tip._input_elements[-1].end_posn
+        return text_posn
 
-        # --------------------------------------------------------------------------
+    def set_reparse_bounds(syn_tip, start_posn, end_posn):
 
-        def advance_token_cursor(self, lexical_goal):
-            self._current_token_i += 1
-            if trace_level >= 3:
-                trace(f": Advancing _current_token_i to {self._current_token_i}")
-            assert self._current_token_i <= len(self._tokens)
-            if self._current_token_i < len(self._tokens):
-                if trace_level >= 3:
-                    trace(f": ... which is a previously-scouted token.")
-            else:
-                if trace_level >= 3:
-                    trace(f": ... The cursor has caught up with the scouting frontier,")
-                    trace(f":     so need to scout_ahead...")
-                assert self._get_one_input_element(lexical_goal)
-                assert self._current_token_i < len(self._tokens)
-                self._scout_ahead()
-            return self._tokens[self._current_token_i]
+        # This could be more efficient, but it probably doesn't need to be.
+        [token_k_start] = [
+            token_k
+            for (token_k,token) in enumerate(syn_tip._tokens)
+            if token.start_posn == start_posn
+        ]
+        token_k_end = min(
+            token_k
+            for (token_k, token) in enumerate(syn_tip._tokens)
+            if token.start_posn >= end_posn
+        )
+        # pprint(ies._tokens[token_k_start].__dict__)
+        # pprint(ies._tokens[token_k_end].__dict__)
 
-        # --------------------------------------------------------------------------
+        syn_tip._current_token_i = token_k_start - 1
+        # minus 1 because advance_token_cursor starts by adding 1.
+        syn_tip._end_token_i = token_k_end
 
-        def _scout_ahead(self):
-            try:
-                while self._get_one_input_element('InputElement_common'):
-                    pass
-            except ParseError:
-                # The source_text, starting at self._scouting_text_posn,
-                # doesn't match InputElement_common.
-                # It might be that there's a syntax error here,
-                # or it might be that we just need to use the correct goal symbol.
-                # In general, we can't know which of those is the case
-                # until we know the correct goal symbol.
-                # So just suspend scouting until then.
+    def advance_token_cursor(syn_tip, lexical_goal):
+
+        syn_tip._current_token_i += 1
+        if _trace_level >= 3:
+            trace(f": Advancing _current_token_i to {syn_tip._current_token_i}")
+
+        assert syn_tip._current_token_i <= syn_tip._end_token_i
+        if syn_tip._current_token_i == syn_tip._end_token_i:
+            token = syn_tip._tokens[syn_tip._current_token_i]
+            text_posn = token.start_posn
+            input_element = ParseNode(END_OF_INPUT, (text_posn, text_posn), syn_tip.lexical_tip)
+            return input_element
+
+        assert syn_tip._current_token_i <= len(syn_tip._tokens)
+        if syn_tip._current_token_i < len(syn_tip._tokens):
+            if _trace_level >= 3:
+                trace(f": ... which is a previously-scouted token.")
+        else:
+            if _trace_level >= 3:
+                trace(f": ... The cursor has caught up with the scouting frontier,")
+                trace(f":     so need to scout_ahead...")
+            assert syn_tip._get_one_input_element(lexical_goal)
+            assert syn_tip._current_token_i < len(syn_tip._tokens)
+            syn_tip._scout_ahead()
+
+        return syn_tip._tokens[syn_tip._current_token_i]
+
+    # --------------------------------------------------------------------------
+
+    def _scout_ahead(syn_tip):
+        try:
+            while syn_tip._get_one_input_element('InputElement_common'):
                 pass
+        except ParseError:
+            # The source_text, starting at syn_tip._scouting_text_posn,
+            # doesn't match InputElement_common.
+            # It might be that there's a syntax error here,
+            # or it might be that we just need to use the correct goal symbol.
+            # In general, we can't know which of those is the case
+            # until we know the correct goal symbol.
+            # So just suspend scouting until then.
+            pass
+        syn_tip.show_current_state("After _scout_ahead")
 
-        # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
-        def _get_one_input_element(self, lexical_goal):
+    def _get_one_input_element(syn_tip, lexical_goal):
 
-            if self._lexing_is_done: return False
+        if syn_tip._lexing_is_done: return False
 
-            # --------------------------
-            # Get the next input element
+        # --------------------------
+        # Get the next input element
 
-            if self._scouting_text_posn == len(source_text):
-                self._lexing_is_done = True
-                input_element = make_terminal_node(END_OF_INPUT, self._scouting_text_posn, self._scouting_text_posn)
+        if syn_tip._scouting_text_posn == len(syn_tip.source_text):
+            syn_tip._lexing_is_done = True
+            input_element = ParseNode(END_OF_INPUT, (syn_tip._scouting_text_posn, syn_tip._scouting_text_posn), syn_tip.lexical_tip)
 
-            else:
-                input_element = lexical_earley.run(
-                    self._scouting_text_posn,
-                    lexical_goal,
-                    _lexical_get_next_terminal_instances,
-                    _make_nonterminal_node,
-                    _lexical_check_constraint,
-                    lexical_trace_level,
-                    self._trace_prefix,
-                    trace_f
-                )
-
-                assert isinstance(input_element, ParseNode)
-
-                assert input_element.start_posn == self._scouting_text_posn
-                assert input_element.start_posn < input_element.end_posn
-
-                self._scouting_text_posn = input_element.end_posn
-
-            # ---------------------
-            # Install the input element in the stream
-    
-            input_element.ies_i = len(self._input_elements) 
-            self._input_elements.append(input_element)
-
-            if (
-                len(input_element.children) == 1
-                and input_element.children[0].symbol in ['WhiteSpace', 'LineTerminator', 'Comment']
-            ):
-                # It's a non-token
-                pass
-            else:
-                # It's a token
-                # (or it's an end-of-source-text marker that we're going to treat as a token)
-                self._tokens.append(input_element)
-
-            return True
-
-        # --------------------------------------------------------------------------
-
-        def insert_before_current_token(self, token_to_insert):
-            current_token = self._tokens[self._current_token_i]
-            assert self._input_elements[current_token.ies_i] is current_token
-
-            # Insert token into _input_elements (shifting subsequents one to the right)
-            self._input_elements.insert(current_token.ies_i, token_to_insert)
-            for tok in self._tokens[self._current_token_i:]:
-                tok.ies_i += 1
-
-            token_to_insert.ies_i = current_token.ies_i
-
-            # Insert token into _tokens
-            self._tokens.insert(self._current_token_i, token_to_insert)
-
-            # Keep self._current_token_i the same,
-            # so the token just inserted is now the current_token.
-
-        # --------------------------------------------------------------------------
-
-        def a_LineTerminator_occurs_in_gap_before_current_token(self):
-            return self.rel_gap_contains_a_LineTerminator(-1)
-
-        def a_LineTerminator_occurs_in_gap_after_current_token(self):
-            return self.rel_gap_contains_a_LineTerminator(+1)
-
-        # ----------------------------------------------------------------------
-
-        def lookahead_matches_terminal_sequence(self, ts, TEMP_text_posn):
-            # The "lookahead" is the sequence of input elements that immediately follows
-            # the current token.
-            # Return True iff the lookahead matches {ts}, a sequence of terminals.
-
-            # More precisely, each element of {ts} is either a T_lit or a C_no_LT_here.
-            assert all(
-                type(t) in [T_lit, C_no_LT_here]
-                for t in ts
+        else:
+            input_element = lexical_earley.run(
+                lexical_goal,
+                syn_tip.lexical_tip,
+                syn_tip._scouting_text_posn
             )
 
-            # This is coded very non-generally,
-            # but it's clearer than general code would be,
-            # and it's unlikely to be invalidated.
-            # If the grammar ever changes in such a way that some assertion here fails,
-            # I'll consider rewriting.
-            if len(ts) == 1:
-                [term1] = ts
-                assert type(term1) == T_lit
-                return (
-                    self.rel_token_matches_symbol(1, term1)
-                )
+            assert isinstance(input_element, ParseNode)
 
-            elif len(ts) == 2:
-                [term1, term2] = ts
-                assert type(term1) == T_lit
-                assert type(term2) == T_lit
-                return (
-                    self.rel_token_matches_symbol(1, term1)
-                    and
-                    self.rel_token_matches_symbol(2, term2)
-                )
+            assert input_element.start_posn == syn_tip._scouting_text_posn
+            assert input_element.start_posn < input_element.end_posn
 
-            elif len(ts) == 3:
-                [term1, nlth, term2] = ts
-                assert type(term1) == T_lit
-                assert type(nlth)  == C_no_LT_here
-                assert type(term2) == T_lit
-                return (
-                    self.rel_token_matches_symbol(1, term1)
-                    and
-                    not self.rel_gap_contains_a_LineTerminator(2)
-                    and
-                    self.rel_token_matches_symbol(2, term2)
-                )
+            syn_tip._scouting_text_posn = input_element.end_posn
 
-            else:
-                assert 0
+        # ---------------------
+        # Install the input element in the stream
 
-        # ----------------------------------------------------------------------
-        # "rel" means "relative to the current token".
-        #
-        # The current token is at token_offset=0.
-        #
-        # Tokens to its right are at token_offset=+1, +2, ...
-        # Tokens to its left are at token_offset=-1, -2,  ...
-        #
-        # Between any two adjacent tokens is a "gap",
-        # consisting of zero or more non-tokens.
-        # Likewise, there's a gap before the first token and after the last.
-        # Gaps to the right of the current token are at gap_offset=+1, +2, ...
-        # Gaps to the left of the current token are at gap_offset=-1, -2, ...
-        # (gap_offset=0 is meaningless)
-        #
-        # I.e., the neighborhood of the current token (from left to right) is:
-        # - token at token_offset = -1 ("the previous token")
-        # - gap   at gap_offset   = -1
-        # - token at token_offset =  0 ("the current token")
-        # - gap   at gap_offset   = +1
-        # - token at token_offset = +1 ("the next token")
+        input_element.ies_i = len(syn_tip._input_elements) 
+        syn_tip._input_elements.append(input_element)
 
-        def rel_token_matches_symbol(self, token_offset, terminal):
-            assert type(terminal) == T_lit
-            token_i = self._current_token_i + token_offset
-            if 0 <= token_i < len(self._tokens):
-                token = self._tokens[token_i]
-                # We can't just test whether (token.symbol == terminal).
-                # For one thing, {terminal} is a T_lit,
-                # whereas {token.symbol} is an NT for some InputElement*.
-                # You might consider going 'down' from {token},
-                # looking for a T_lit that matches {terminal},
-                # and that might work in some cases, but not in general.
-                # Instead, what works is to ignore all of {token}'s substructure,
-                # and just ask if its text matches {terminal}'s chars
-                return (token.text() == terminal.c)
+        if (
+            len(input_element.children) == 1
+            and input_element.children[0].symbol in ['WhiteSpace', 'LineTerminator', 'Comment']
+        ):
+            # It's a non-token
+            pass
+        else:
+            # It's a token
+            # (or it's an end-of-source-text marker that we're going to treat as a token)
+            syn_tip._tokens.append(input_element)
 
-                trace(terminal)
-                token.dump(f=trace_f)
-                def is_at_some_level(token, terminal):
-                    if token.symbol == terminal:
-                        return True
-                    if len(token.children) != 1:
-                        return False
-                    [child] = token.children
-                    return is_at_some_level(child, terminal)
-                return is_at_some_level(token, terminal)
-            else:
-                # {token_offset} indicates a spot that doesn't exist.
-                # It might be past the rightmost token in the source text,
-                # or it might be a spot that will eventually be filled in,
-                # but hasn't been 'scouted' yet.
-                #
-                # The spec says:
-                #" ... it is considered an editorial error
-                #" for a token sequence _seq_ to appear in a lookahead restriction
-                #" (including as part of a set of sequences)
-                #" if the choices of lexical goal symbols to use
-                #" could change whether or not _seq_
-                #" would be a prefix of the resulting token sequence.
-                #
-                # That is, everything in _seq_ must match InputElement_common.
-                # So if there is a match, all necessary input elements must have been scouted.
-                # Conversely, if an input element hasn't been scouted, it can't be a match.
-                return False
+        syn_tip.show_current_state("In _get_one_input_element, after installing input element")
 
-        def rel_gap_contains_a_LineTerminator(self, gap_offset):
-            assert self._current_token_i < len(self._tokens)
-            curr_token_ies_i = self._tokens[self._current_token_i].ies_i
+        return True
 
-            if gap_offset < 0:
-                preceding_tok_offset = gap_offset
-            elif gap_offset > 0:
-                preceding_tok_offset = gap_offset - 1
-            else:
-                assert 0
+    # --------------------------------------------------------------------------
 
-            preceding_token_i = self._current_token_i + preceding_tok_offset
-            following_token_i = preceding_token_i + 1
+    def insert_before_current_token(syn_tip, token_to_insert):
+        current_token = syn_tip._tokens[syn_tip._current_token_i]
+        assert syn_tip._input_elements[current_token.ies_i] is current_token
 
-            assert -1 <= preceding_token_i <  len(self._tokens)
-            assert  0 <= following_token_i <= len(self._tokens)
+        # Insert token into _input_elements where the current_token is,
+        # shifting subsequents one to the right.
+        token_to_insert.ies_i = current_token.ies_i
+        syn_tip._input_elements.insert(current_token.ies_i, token_to_insert)
+        for tok in syn_tip._tokens[syn_tip._current_token_i:]:
+            tok.ies_i += 1
 
-            prec_token_ies_i = (
-                self._tokens[preceding_token_i].ies_i
-                if preceding_token_i >= 0
-                else -1
-            )
-            foll_token_ies_i = (
-                self._tokens[following_token_i].ies_i
-                if following_token_i < len(self._tokens)
-                else len(self._input_elements)
+        # Insert token into _tokens
+        syn_tip._tokens.insert(syn_tip._current_token_i, token_to_insert)
+
+        # Keep syn_tip._current_token_i the same,
+        # so the token just inserted is now the current_token.
+
+        syn_tip.show_current_state("After insert_before_current_token")
+
+    # --------------------------------------------------------------------------
+
+    def a_LineTerminator_occurs_in_gap_before_current_token(syn_tip):
+        return syn_tip.rel_gap_contains_a_LineTerminator(-1)
+
+    def a_LineTerminator_occurs_in_gap_after_current_token(syn_tip):
+        return syn_tip.rel_gap_contains_a_LineTerminator(+1)
+
+    # ----------------------------------------------------------------------
+
+    def lookahead_matches_terminal_sequence(syn_tip, ts, TEMP_text_posn):
+        # The "lookahead" is the sequence of input elements that immediately follows
+        # the current token.
+        # Return True iff the lookahead matches {ts}, a sequence of terminals.
+
+        # More precisely, each element of {ts} is either a T_lit or a C_no_LT_here.
+        assert all(
+            type(t) in [T_lit, C_no_LT_here]
+            for t in ts
+        )
+
+        # This is coded very non-generally,
+        # but it's clearer than general code would be,
+        # and it's unlikely to be invalidated.
+        # If the grammar ever changes in such a way that some assertion here fails,
+        # I'll consider rewriting.
+        if len(ts) == 1:
+            [term1] = ts
+            assert type(term1) == T_lit
+            return (
+                syn_tip.rel_token_matches_symbol(1, term1)
             )
 
-            return self.a_LineTerminator_occurs_in(self._input_elements[prec_token_ies_i+1 : foll_token_ies_i])
+        elif len(ts) == 2:
+            [term1, term2] = ts
+            assert type(term1) == T_lit
+            assert type(term2) == T_lit
+            return (
+                syn_tip.rel_token_matches_symbol(1, term1)
+                and
+                syn_tip.rel_token_matches_symbol(2, term2)
+            )
 
-        def a_LineTerminator_occurs_in(self, non_tokens):
-            assert isinstance(non_tokens, list)
-            for non_token in non_tokens:
-                assert non_token.symbol.startswith('InputElement')
-                assert len(non_token.children) == 1
-                [child] = non_token.children
-                assert child.symbol in ['WhiteSpace', 'LineTerminator', 'Comment']
-                if child.symbol == 'LineTerminator':
+        elif len(ts) == 3:
+            [term1, nlth, term2] = ts
+            assert type(term1) == T_lit
+            assert type(nlth)  == C_no_LT_here
+            assert type(term2) == T_lit
+            return (
+                syn_tip.rel_token_matches_symbol(1, term1)
+                and
+                not syn_tip.rel_gap_contains_a_LineTerminator(2)
+                and
+                syn_tip.rel_token_matches_symbol(2, term2)
+            )
+
+        else:
+            assert 0
+
+    # ----------------------------------------------------------------------
+    # "rel" means "relative to the current token".
+    #
+    # The current token is at token_offset=0.
+    #
+    # Tokens to its right are at token_offset=+1, +2, ...
+    # Tokens to its left are at token_offset=-1, -2,  ...
+    #
+    # Between any two adjacent tokens is a "gap",
+    # consisting of zero or more non-tokens.
+    # Likewise, there's a gap before the first token and after the last.
+    # Gaps to the right of the current token are at gap_offset=+1, +2, ...
+    # Gaps to the left of the current token are at gap_offset=-1, -2, ...
+    # (gap_offset=0 is meaningless)
+    #
+    # I.e., the neighborhood of the current token (from left to right) is:
+    # - token at token_offset = -1 ("the previous token")
+    # - gap   at gap_offset   = -1
+    # - token at token_offset =  0 ("the current token")
+    # - gap   at gap_offset   = +1
+    # - token at token_offset = +1 ("the next token")
+
+    def rel_token_matches_symbol(syn_tip, token_offset, terminal):
+        assert type(terminal) == T_lit
+        token_i = syn_tip._current_token_i + token_offset
+        if 0 <= token_i < len(syn_tip._tokens):
+            token = syn_tip._tokens[token_i]
+            # We can't just test whether (token.symbol == terminal).
+            # For one thing, {terminal} is a T_lit,
+            # whereas {token.symbol} is an NT for some InputElement*.
+            # You might consider going 'down' from {token},
+            # looking for a T_lit that matches {terminal},
+            # and that might work in some cases, but not in general.
+            # Instead, what works is to ignore all of {token}'s substructure,
+            # and just ask if its text matches {terminal}'s chars
+            return (token.text() == terminal.c)
+
+            trace(terminal)
+            token.dump(f=trace_f)
+            def is_at_some_level(token, terminal):
+                if token.symbol == terminal:
                     return True
-                elif child.symbol == 'Comment' and child.contains_a('LineTerminator'):
-                    #" if a |MultiLineComment| contains a line terminator code point,
-                    #" then the entire comment is considered to be a |LineTerminator|
-                    #" for purposes of parsing by the syntactic grammar.
-                    return True
+                if len(token.children) != 1:
+                    return False
+                [child] = token.children
+                return is_at_some_level(child, terminal)
+            return is_at_some_level(token, terminal)
+        else:
+            # {token_offset} indicates a spot that doesn't exist.
+            # It might be past the rightmost token in the source text,
+            # or it might be a spot that will eventually be filled in,
+            # but hasn't been 'scouted' yet.
+            #
+            # The spec says:
+            #" ... it is considered an editorial error
+            #" for a token sequence _seq_ to appear in a lookahead restriction
+            #" (including as part of a set of sequences)
+            #" if the choices of lexical goal symbols to use
+            #" could change whether or not _seq_
+            #" would be a prefix of the resulting token sequence.
+            #
+            # That is, everything in _seq_ must match InputElement_common.
+            # So if there is a match, all necessary input elements must have been scouted.
+            # Conversely, if an input element hasn't been scouted, it can't be a match.
             return False
 
-    # ==========================================================================
+    def rel_gap_contains_a_LineTerminator(syn_tip, gap_offset):
+        assert syn_tip._current_token_i < len(syn_tip._tokens)
+        curr_token_ies_i = syn_tip._tokens[syn_tip._current_token_i].ies_i
 
-    def _lexical_get_next_terminal_instances(text_posn, expected_terminals, ASI_kludge):
+        if gap_offset < 0:
+            preceding_tok_offset = gap_offset
+        elif gap_offset > 0:
+            preceding_tok_offset = gap_offset - 1
+        else:
+            assert 0
+
+        preceding_token_i = syn_tip._current_token_i + preceding_tok_offset
+        following_token_i = preceding_token_i + 1
+
+        assert -1 <= preceding_token_i <  len(syn_tip._tokens)
+        assert  0 <= following_token_i <= len(syn_tip._tokens)
+
+        prec_token_ies_i = (
+            syn_tip._tokens[preceding_token_i].ies_i
+            if preceding_token_i >= 0
+            else -1
+        )
+        foll_token_ies_i = (
+            syn_tip._tokens[following_token_i].ies_i
+            if following_token_i < len(syn_tip._tokens)
+            else len(syn_tip._input_elements)
+        )
+
+        return syn_tip.a_LineTerminator_occurs_in(syn_tip._input_elements[prec_token_ies_i+1 : foll_token_ies_i])
+
+    def a_LineTerminator_occurs_in(syn_tip, non_tokens):
+        assert isinstance(non_tokens, list)
+        for non_token in non_tokens:
+            assert non_token.symbol.startswith('InputElement')
+            assert len(non_token.children) == 1
+            [child] = non_token.children
+            assert child.symbol in ['WhiteSpace', 'LineTerminator', 'Comment']
+            if child.symbol == 'LineTerminator':
+                return True
+            elif child.symbol == 'Comment' and child.contains_a('LineTerminator'):
+                #" if a |MultiLineComment| contains a line terminator code point,
+                #" then the entire comment is considered to be a |LineTerminator|
+                #" for purposes of parsing by the syntactic grammar.
+                return True
+        return False
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class LexicalTIP:
+    def __init__(lex_tip, source_text):
+        lex_tip.source_text = source_text
+
+    def get_next_terminal_instances(lex_tip, text_posn, expected_terminals, ASI_kludge):
+        # For LexicalTIP, a "ti_position" is an index into the source_text.
 
         assert ASI_kludge is None
 
-        if text_posn > len(source_text):
+        if text_posn > len(lex_tip.source_text):
             assert 0
-        elif text_posn == len(source_text):
-            if lexical_trace_level >= 2:
+        elif text_posn == len(lex_tip.source_text):
+            if _trace_level >= 2:
                 trace("|+")
                 trace("|+   posn: %d  (at end of input)" % text_posn)
 
             return None
 
-        c = source_text[text_posn]
+        c = lex_tip.source_text[text_posn]
 
-        if lexical_trace_level >= 2:
+        if _trace_level >= 2:
             trace("|+")
             trace("|+   posn: %d  char: '%s'" % (text_posn, c))
 
         rats = []
         for rthing in expected_terminals:
             if lexical_Rsymbol_matches_char(rthing, c):
-                node = make_terminal_node(rthing, text_posn, text_posn+1)
+                node = ParseNode(rthing, (text_posn, text_posn+1), lex_tip)
                 rats.append((rthing, node))
 
         if len(rats) == 0:
-            if lexical_trace_level >= 2:
+            if _trace_level >= 2:
                 trace('|+')
                 trace("|+   which doesn't match anything in expected_terminals!")
 
             return None
 
         else:
-            if lexical_trace_level >= 2:
+            if _trace_level >= 2:
                 trace('|+')
                 trace('|+   which matches the following expected_terminals:')
                 for (rsymbol, node) in rats:
@@ -1696,7 +1810,7 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
 
     # --------------------------------------------------------------------------
 
-    def _lexical_check_constraint(prec_node, text_posn, constraint):
+    def check_constraint(lex_tip, prec_node, text_posn, constraint):
         if type(constraint) == C_but_not:
             return not char_matches_any_of_the_symbols(prec_node.text(), constraint.b)
 
@@ -1712,12 +1826,33 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                     return (HexDigits_MV > 0x10FFFF)
                 else:
                     assert 0, constraint.c
+
+            elif 'MV of |Hex4Digits|' in constraint.c:
+                assert prec_node.symbol == 'Hex4Digits'
+                Hex4Digits_text = prec_node.text()
+                # XXX Properly, we should invoke the MV SDO here.
+                Hex4Digits_MV = int(Hex4Digits_text, 16)
+                if constraint.c == 'the MV of |Hex4Digits| is in the inclusive range 0xD800 to 0xDBFF':
+                    return (0xD800 <= Hex4Digits_MV <= 0xDBFF)
+                elif constraint.c == 'the MV of |Hex4Digits| is in the inclusive range 0xDC00 to 0xDFFF':
+                    return (0xDC00 <= Hex4Digits_MV <= 0xDFFF)
+                elif constraint.c == 'the MV of |Hex4Digits| is not in the inclusive range 0xD800 to 0xDFFF':
+                    return not (0xD800 <= Hex4Digits_MV <= 0xDFFF)
+                else:
+                    assert 0, constraint.c
+
+            elif constraint.c == 'the CapturingGroupNumber of |DecimalEscape| is &le; _NcapturingParens_':
+                # We don't know what _NcapturingParens_ is yet,
+                # so we can't enforce this constraint yet.
+                # Ignore it for now, enforce it later.
+                return True
+
             else:
                 assert 0, constraint.c
 
         elif type(constraint) == C_lookahead:
-            if text_posn < len(source_text):
-                next_char = source_text[text_posn]
+            if text_posn < len(lex_tip.source_text):
+                next_char = lex_tip.source_text[text_posn]
 
                 any_ts_matches_lookahead = False
                 for ts in constraint.tss:
@@ -1744,14 +1879,6 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
         else:
             assert 0, constraint
 
-    def char_matches_any_of_the_symbols(char, rsymbols):
-        assert len(char) == 1
-        for rsymbol in rsymbols:
-            # trace(rsymbol)
-            if lexical_Rsymbol_matches_char(rsymbol, char):
-                return True
-        return False
-
     # XXX not invoked, but I'll need something like this...
 
     def lexical_node_satisfies_adhoc_checks(node):
@@ -1773,77 +1900,98 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
                     return True
         return False
 
-    # --------------------------------------------------------------------------
-
-    def _make_nonterminal_node(prod, option_bits, extent):
-        assert isinstance(prod, ExProd)
-        node = ParseNode((prod, option_bits), source_text, extent)
-        return node
-
-    # --------------------------------------------------------------------------
-
-    def make_terminal_node(terminal_symbol, start_posn, end_posn):
-        assert type(terminal_symbol) in [T_lit, T_named, T_u_p, T_u_r]
-        assert 0 <= start_posn <= end_posn <= len(source_text)
-        if start_posn == end_posn:
-            assert terminal_symbol in [
-                T_lit(';'), # an auto-inserted semicolon
-                END_OF_INPUT
-            ]
-        node = ParseNode(terminal_symbol, source_text, (start_posn, end_posn))
-        return node
-
-    # ==========================================================================
-    # body of parse():
-
-    return parse_main()
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class ParseNode:
-    def __init__(self, shape, whole_text, extent):
 
+    def __init__(self, shape, extent, tip):
+
+        # ----
+        # tip:
+
+        assert isinstance(tip, SyntacticTIP) or isinstance(tip, LexicalTIP)
+        self.tip = tip
+
+        self.whole_text = self.tip.source_text
+
+        # ------
         # shape:
-        if type(shape) == tuple:
-            (self.production, self.option_bits) = shape
-            assert type(self.production) == ExProd
-            assert all(
-                bit in ['0','1']
-                for bit in self.option_bits
-            )
-            self.symbol = self.production.og_lhs
-            assert type(self.symbol) == str
-            self.is_terminal = False
-            self.puk = (self.symbol, self.production.og_rhs_reduced, self.option_bits)
-            # "production use key"
-        elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
+
+        if type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
+            # terminal
             self.symbol = shape
             self.production = None
             self.option_bits = None
             self.is_terminal = True
+
+        elif type(shape) == tuple and len(shape) == 2:
+            # nonterminal
+            (self.production, self.option_bits) = shape
+            self.symbol = self.production.og_lhs
+            self.is_terminal = False
+
+            assert isinstance(self.production, ExProd)
+            assert isinstance(self.option_bits, str)
+            assert all(
+                bit in ['0','1']
+                for bit in self.option_bits
+            )
+
+            assert type(self.symbol) == str
+            self.puk = (self.symbol, self.production.og_rhs_reduced, self.option_bits)
+            # "production use key"
+
         else:
-            assert 0
+            assert 0, shape
 
-        # whole_text:
-        assert type(whole_text) == str
-        self.whole_text = whole_text
-
+        # -------
         # extent:
-        if type(extent) == list:
-            self.children = extent
-            assert len(self.children) > 0
-            self.start_posn = self.children[0].start_posn
-            self.end_posn = self.children[-1].end_posn
-        elif type(extent) == tuple:
+
+        if type(extent) == list and len(extent) > 0:
+            assert not self.is_terminal
+            self.children    = extent
+            self.start_posn  = self.children[0].start_posn
+            self.end_posn    = self.children[-1].end_posn
+
+            # if isinstance(self.tip, SyntacticTIP):
+                # self.start_token_k = self.children[0].start_token_k
+                # print(f"1839 stk = {self.start_token_k} for {self}")
+                # self.end_token_k   = self.children[-1].end_token_k
+                # assert 0 <= self.start_token_k <= self.end_token_k <= len(self.tip._tokens)
+
+        elif type(extent) == tuple and len(extent) == 2:
             self.children = []
-            (self.start_posn, self.end_posn) = extent
+
+            (start, end) = extent
+
+            if isinstance(self.tip, LexicalTIP):
+                self.start_posn = start
+                self.end_posn = end
+            elif isinstance(self.tip, SyntacticTIP):
+                # self.start_token_k = start
+                # print(f"1851 stk = {self.start_token_k} for {self}")
+                # self.end_token_k = end
+                # assert 0 <= self.start_token_k <= self.end_token_k <= len(self.tip._tokens)
+
+                # # XXX
+                # # Problem: the ParseNode that we're in the process of creating
+                # # hasn't been inserted into self.tip yet.
+
+                # self.start_posn = self.tip._tokens[self.start_token_k].start_posn
+                # self.end_posn   = self.tip._tokens[self.end_token_k-1].end_posn
+                self.start_posn = start
+                self.end_posn = end
+            else:
+                assert 0, self.tip
+
         else:
-            assert 0
-        #
+            assert 0, extent
+
         assert type(self.start_posn) == int
         assert type(self.end_posn) == int
-        assert 0 <= self.start_posn <= self.end_posn <= len(whole_text)
+        assert 0 <= self.start_posn <= self.end_posn <= len(self.whole_text)
 
+        # --------------------------
         # Is this an instance of a chain production?
         # "A <dfn>chain production</dfn> is a production that has
         # exactly one nonterminal symbol on its right-hand side
@@ -1863,6 +2011,8 @@ class ParseNode:
         else:
             self.is_instance_of_chain_prod = False
 
+    # ------------------------------------------------------------------
+
     def __str__(self):
         return "<ParseNode symbol=%s, %d children>" % (self.symbol, len(self.children))
 
@@ -1879,12 +2029,71 @@ class ParseNode:
             + (' ' + escape(self.text()) if self.children == [] else '')
         )
 
+    def is_nonterminal(self):
+        return not self.is_terminal
+
     def contains_a(self, symbol):
         return (
             self.symbol == symbol
             or
             any(child.contains_a(symbol) for child in self.children)
         )
+
+    def unit_derives_a(self, symbol):
+        if self.symbol == symbol:
+            return self
+        elif len(self.children) == 1:
+            [child] = self.children
+            return child.unit_derives_a(symbol)
+        else:
+            return None
+
+    def each_ancestor(self):
+        n = self.parent
+        while n is not None:
+            yield n
+            n = n.parent
+
+    def root(self):
+        n = self
+        while True:
+            if n.parent is None:
+                return n
+            n = n.parent
+
+    def preorder_traverse(self):
+        yield self
+        for child in self.children:
+            yield from child.preorder_traverse()
+
+def show_ambiguity(A_tree, B_tree, f):
+    def put(*args): print(*args, file=f)
+
+    if A_tree.symbol != B_tree.symbol:
+        put(f"Posn {A_tree.start_posn} - {A_tree.end_posn}, text:")
+        put(A_tree.text())
+        put('-----')
+        put(f"A symbol: {A_tree.symbol}")
+        put(f"B symbol: {B_tree.symbol}")
+        return
+
+    if (
+        hasattr(A_tree, 'production')
+        and
+        hasattr(B_tree, 'production')
+        and
+        A_tree.production != B_tree.production
+    ):
+        put(f"Posn {A_tree.start_posn} - {A_tree.end_posn}, text:")
+        put(A_tree.text())
+        put('-----')
+        put(f"A production: {A_tree.production['lhs']} -> {stringify_rthing_sequence(A_tree.production['rhs'])}")
+        put(f"B production: {B_tree.production['lhs']} -> {stringify_rthing_sequence(B_tree.production['rhs'])}")
+        return
+
+    assert len(A_tree.children) == len(B_tree.children)
+    for (A_child, B_child) in zip(A_tree.children, B_tree.children):
+        show_ambiguity(A_child, B_child, f)
 
 def escape(s):
     def uify(mo):
@@ -1894,6 +2103,14 @@ def escape(s):
     return re.sub(r'[^ -~]', uify, s)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def char_matches_any_of_the_symbols(char, rsymbols):
+    assert len(char) == 1
+    for rsymbol in rsymbols:
+        # trace(rsymbol)
+        if lexical_Rsymbol_matches_char(rsymbol, char):
+            return True
+    return False
 
 def lexical_Rsymbol_matches_char(rsymbol, char):
     assert len(char) == 1
@@ -1988,7 +2205,7 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
 if __name__ == '__main__':
     # test
 
-    script_text = '(10) => 0'
+    script_text = '`\\07`'
 
     tree = parse(script_text, 'Script', trace_level=9, trace_f=open('/home/michael/tmp/trace.new', 'w'))
     print()

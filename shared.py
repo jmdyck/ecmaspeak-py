@@ -97,19 +97,37 @@ class SpecNode:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def print_tree(root, prefix, f):
-    # Assumes every descendant of {root} has attributes `children` and `dump_slug`
+    # Assumes every descendant of {root} has attributes `children` and `tree_slug`
 
     def recurse(node, prefix, self_is_last_child):
-        # hor_char = ('\u2517' if self_is_last_child else '\u2523')
-        hor_char = ("'-" if self_is_last_child else '|-')
-        print(prefix + hor_char + ' ' + node.tree_slug(), file=f)
+
+        if self_is_last_child:
+            bit_for_first_line  = "'-"
+            bit_for_later_lines = '  '
+            # bit_for_first_line = '\u2517'
+            # bit_for_later_lines = ' '
+        else:
+            bit_for_first_line  = '|-'
+            bit_for_later_lines = '| '
+            # bit_for_first_line = '\u2523'
+            # bit_for_later_lines = '\u2503'
+
+        if node is None:
+            print(prefix + bit_for_first_line + ' ' + '(nothing)', file=f)
+            return
+
+        print(prefix + bit_for_first_line + ' ' + node.tree_slug(), file=f)
+
         n_children = len(node.children)
         if n_children > 0:
-            # sub_hor_char = (' ' if self_is_last_child else '\u2503')
-            sub_hor_char = ('  ' if self_is_last_child else '| ')
-            child_prefix = prefix + sub_hor_char + ' '
+            child_prefix = prefix + bit_for_later_lines + ' '
             for (i,child) in enumerate(node.children):
                 recurse(child, child_prefix, (i == n_children-1))
+
+        if hasattr(node, 'covered_thing'):
+            print(prefix + bit_for_later_lines + 'COVERS', file=f)
+            covered_prefix = prefix + bit_for_later_lines + ' '
+            recurse(node.covered_thing, covered_prefix, True)
 
     recurse(root, prefix, True)
 

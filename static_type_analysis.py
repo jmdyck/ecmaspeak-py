@@ -8150,6 +8150,17 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {var} is an instance of {var}":
+        [var1, var2] = children
+        env0.assert_expr_is_of_type(var1, T_Parse_Node)
+        env0.assert_expr_is_of_type(var2, T_grammar_symbol_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is an instance of a nonterminal":
+        [var1] = children
+        env0.assert_expr_is_of_type(var1, T_Parse_Node)
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production":
         [noi, ssa, ssb, noi2, var, nont] = children
         env0.assert_expr_is_of_type(noi, T_String)

@@ -16,18 +16,11 @@ import sys, os, re, contextlib
 
 import es_parser
 import misc
-# import execution
+import execution
 
 root_test_dirpath = "../test262-parser-tests"
 
 def main():
-    # By default the recursion limit is 1000.
-    # We need slightly more, to handle pass/dd3c63403db5c06e.js,
-    # which is like (((1))) but with 50 pairs of parentheses,
-    # each of which takes 22 levels of the parse tree.
-    # (And in final_check, we traverse the tree recursively.)
-    # sys.setrecursionlimit(1150)
-
     if sys.argv[1] == '--all':
         test_all()
     else:
@@ -52,7 +45,11 @@ def test_all_in_dir(test_dirname):
 
     with open(output_filename, 'w', encoding='utf8') as f:
         dirpath = root_test_dirpath + "/" + test_dirname
+
+        n_success = 0
+        n_failure = 0
         for i, test_filename in enumerate(sorted(os.listdir(dirpath))):
+            # if test_filename < 'f7f6': continue
             test_file_relpath = test_dirname + '/' + test_filename
 
             if 0:
@@ -62,16 +59,28 @@ def test_all_in_dir(test_dirname):
                     sys.stderr.write('.')
                     sys.stderr.flush()
 
-            result = test_one(test_file_relpath, f)
+            success = test_one(test_file_relpath, f)
+            if success:
+                n_success += 1
+            else:
+                n_failure += 1
 
         sys.stderr.write('\n')
         print('====', file=f)
         print('Done', file=f)
+        print(f"n_success = {n_success}", file=f)
+        print(f"n_failure = {n_failure}", file=f)
 
 def test_one(test_file_relpath, f=sys.stdout):
+    # Returns True if the test succeeded, False if it failed.
+
     print(file=f)
     print('===================', file=f)
     print(test_file_relpath, file=f)
+    print()
+    print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+    print(test_file_relpath)
+
     assert test_file_relpath.endswith('.js')
 
     (test_dirname, test_filename) = test_file_relpath.split('/')
@@ -84,6 +93,7 @@ def test_one(test_file_relpath, f=sys.stdout):
     test_filepath = root_test_dirpath + '/' + test_file_relpath
     source_text = open(test_filepath,'r', encoding='utf-8', newline='').read()
     print(source_text, file=f)
+
     file_of_interest = 'xx005dc7dff71d4b97.js'
     # file_of_interest = '3dbb6e166b14a6c0.js'
     trace_level = (9 if test_filepath.endswith(file_of_interest) else 0)
@@ -97,25 +107,47 @@ def test_one(test_file_relpath, f=sys.stdout):
         for item_string in pe.kernel_item_strings:
             print(f"    {item_string}", file=f)
         outcome = 'ParseError'
-        if outcome != expectation:
+        if outcome == expectation:
+            return True
+        else:
             print(f"TEST {test_file_relpath} FAILED: expected {expectation}, but got {outcome}", file=f)
-        return
+            return False
 
     if trace_level > 0: node.dump()
-    outcome = 'no error'
-    if outcome != expectation:
+
+    if test_file_relpath in [
+        # 'pass/6b5e7e125097d439.js',
+        # 'pass/714be6d28082eaa7.js',
+        # 'pass/882910de7dd1aef9.js',
+        # 'pass/dd3c63403db5c06e.js',
+    ]:
+        print('SKIPPING detect_early_errors due to seg fault', file=f)
+        # investigate later
+        return False
+
+    early_errors = execution.detect_early_errors(node)
+    if early_errors:
+        print('Early Errors:', file=f)
+        for ee in early_errors:
+            print(file=f)
+            print(ee.kind, file=f)
+            print(misc.display_position_in_text(source_text, ee.location.start_posn), end='', file=f)
+            print(ee.condition, file=f)
+        outcome = 'early error'
+    else:
+        outcome = 'no error'
+
+    if outcome == expectation:
+        return True
+    else:
         print(f"TEST {test_file_relpath} FAILED: expected {expectation}, but got {outcome}", file=f)
         node.dump(f=f)
-
-    # early_errors = execution.detect_early_errors(node)
-    # if early_errors:
-    #     return 'early errors'
-    
+        return False
 
 def expectation_for_dirname(dirname):
     return {
         'fail'         : 'ParseError',
-        'early'        : 'no error', # eventually will be some kind of error, but not yet
+        'early'        : 'early error',
         'pass'         : 'no error',
         'pass-explicit': 'no error',
     }[dirname]

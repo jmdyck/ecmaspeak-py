@@ -2062,12 +2062,14 @@ def check_sdo_coverage():
 
                 if discriminator is None:
                     assert op_name in ops_with_implicit_defns
-                    continue
+                    puk = ('*default*', '', '')
+                    puk_set = set([puk])
+                else:
+                    puk_set = discriminator.puk_set
+                    if not puk_set:
+                        stderr(f"! sdo_coverage may be broken because no puk_set for {discriminator.source_text()}")
 
-                if not discriminator.puk_set:
-                    stderr(f"! sdo_coverage may be broken because no puk_set for {discriminator.source_text()}")
-
-                for puk in discriminator.puk_set:
+                for puk in puk_set:
                     if puk not in spec.sdo_coverage_map[op_name]:
                         spec.sdo_coverage_map[op_name][puk] = []
                     spec.sdo_coverage_map[op_name][puk].append(alg_defn)
