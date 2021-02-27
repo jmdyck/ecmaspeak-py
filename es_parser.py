@@ -291,7 +291,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_i, rhs_n):
                 rsymbol = C_lookahead(matches=matches, tss=tuple([convert_terminal_seq_n(terminal_seq_n)]))
 
             elif rhs_item_n.kind == 'LAC_SET':
-                [lac_set_operand_n] = rhs_item_n.children
+                [lac_set_op, lac_set_operand_n] = rhs_item_n.children
                 if lac_set_operand_n.kind == 'NT':
                     nt_name = lac_set_operand_n._nt_name
                     # (could precompute these, but probably not worth it)

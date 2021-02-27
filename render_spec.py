@@ -1044,8 +1044,11 @@ def expand_emu_grammar(emu_grammar):
             return '<emu-gann>[no <emu-nt><a href="#prod-LineTerminator">LineTerminator</a></emu-nt> here]</emu-gann>'
 
         elif gnode.kind == 'LAC_SET':
-            [exp_operand] = expanded_children
+            [exp_operator, exp_operand] = expanded_children
             return f'<emu-gann>[lookahead ∉ {exp_operand}]</emu-gann>'
+
+        elif gnode.kind == 'LAC_SET_OP':
+            return '&notin;'
 
         elif gnode.kind == 'LAC_SINGLE':
             (exp_operator, exp_operand) = expanded_children
