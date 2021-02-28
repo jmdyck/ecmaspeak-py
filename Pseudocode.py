@@ -613,9 +613,9 @@ def analyze_sdo_section(section):
         # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
 
         for (i,c) in enumerate(section.block_children):
-            if c.element_name == 'emu-grammar':
-                next_c = section.block_children[i+1]
-                handle_composite_sdo(sdo_name, c, next_c, section)
+            if c.element_name == 'emu-alg':
+                prev_c = section.block_children[i-1]
+                handle_composite_sdo(sdo_name, prev_c, c, section)
 
     elif 'ul' in section.bcen_set:
         assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
@@ -1038,12 +1038,6 @@ def analyze_other_section(section):
             # Skip it.
             pass
 
-        elif section.section_title == 'Static Semantics' and section.section_num == '5.2.4':
-            # It's the default definition of Contains
-            preamble_text = section.block_children[emu_alg_posn-1].source_text()
-            assert preamble_text.endswith('The default definition of Contains is:</p>')
-            handle_composite_sdo('Contains', None, emu_alg, section)
-
         elif section.section_title == 'Array.prototype [ @@unscopables ]':
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
@@ -1175,25 +1169,21 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo, section):
     # ---------------------------
     # grammar_arg -> emu_grammar:
 
-    if grammar_arg is None:
-        assert sdo_name == 'Contains'
-        # This is the default definition,
-        # which isn't associated with a particular production.
-        emu_grammar = None
-    
-    elif grammar_arg.element_name == 'emu-grammar':
+    if grammar_arg.element_name == 'emu-grammar':
         emu_grammar = grammar_arg
 
     elif grammar_arg.element_name == 'p':
-        (emu_grammars, text) = extract_grammars(grammar_arg)
-        assert len(emu_grammars) == 1
-        [emu_grammar] = emu_grammars
-
-        if text == 'The production <G> evaluates as follows:':
-            pass
+        if sdo_name == 'Contains':
+            assert grammar_arg.inner_source_text() == "Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of Contains:"
+            # This is the default definition,
+            # which isn't associated with a particular production.
+            emu_grammar = None
 
         else:
-            assert 0, text
+            (emu_grammars, text) = extract_grammars(grammar_arg)
+            assert len(emu_grammars) == 1
+            [emu_grammar] = emu_grammars
+            assert text == 'The production <G> evaluates as follows:'
 
     else:
         assert 0, grammar_arg.element_name
