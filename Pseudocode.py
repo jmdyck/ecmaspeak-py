@@ -540,7 +540,10 @@ def analyze_sections():
                     emu_alg._syntax_tree = None
                     continue
 
+                # print('\n!', section.section_num, section.section_title)
                 parse(emu_alg)
+                # Most of these are involved in the definition of shorthands,
+                # which I don't handle well.
 
     stderr()
 
