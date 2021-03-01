@@ -598,18 +598,9 @@ def analyze_sdo_section(section):
 
     # ------------------------------------------------------------------------------
 
-    if section.section_title == 'Static Semantics: Number Value':
-        # In the BigInt proposal, it has a <ul> defining "significant digit" and then <p> instead of <emu-alg>.
-        assert section.bcen_list == ['p', 'ul', 'emu-grammar', 'p', 'emu-grammar', 'p']
-        return
-    elif section.section_title == 'Static Semantics: BigInt Value':
-        # In the BigInt proposal, it has <ul> instead of <emu-alg>
-        assert section.bcen_list == ['emu-grammar', 'ul'] * 5
-        return
-
     if 'emu-grammar' in section.bcen_set:
         if section.section_title == 'Static Semantics: NumericValue':
-            # In the BigInt proposal, it has a <ul> defining "significant digit"
+            # It has a <ul> defining "significant digit"
             assert section.bcen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
         else:
             assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-see-also-para', 'emu-table', 'p'])
