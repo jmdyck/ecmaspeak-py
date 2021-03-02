@@ -592,7 +592,7 @@ def create_operation_info_for_section(s):
         # -----------------------------------
 
         oi = resolve_oi(hoi, poi)
-        oi.apply_ad_hoc_fixes(s)
+        oi.apply_ad_hoc_fixes()
         oi.finish_initialization()
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
@@ -2600,7 +2600,7 @@ class Header:
         self.u_defns = []
         self.line_num = None
 
-    def apply_ad_hoc_fixes(self, section):
+    def apply_ad_hoc_fixes(self):
 
         # ------------------------------------------------------------
 
