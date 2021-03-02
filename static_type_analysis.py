@@ -2688,27 +2688,14 @@ class Header:
 
             if param_name in self.rest_params:
                 assert param_name not in self.optional_params
-                if self.name.startswith('Math.'):
-                    tipe = 'List of Number'
-                else:
-                    tipe = 'List of Tangible_'
+                tipe = 'List of Tangible_'
             else:
                 # not a rest parameter
                 nature = self.param_nature_.get(param_name, 'TBD')
 
                 # move to apply_ad_hoc_fixes?
                 if self.kind in ['function property', 'anonymous built-in function', 'accessor property']:
-                    if False and self.name.startswith('Math.'): # merge of PR 2122
-                        # "Each of the following `Math` object functions
-                        # applies the ToNumber abstract operation
-                        # to each of its arguments
-                        # (in left-to-right order if there is more than one)."
-                        #
-                        # So the algorithms are written under the assumption
-                        # that the parameters have type 'Number'.
-                        exp_nature = 'Number'
-                    else:
-                        exp_nature = 'a value'
+                    exp_nature = 'a value'
 
                     if nature == 'TBD':
                         nature = exp_nature
