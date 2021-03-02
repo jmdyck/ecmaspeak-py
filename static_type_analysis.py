@@ -1659,7 +1659,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
     if parameter_listing == 'zero or more arguments which form the rest parameter ..._args_':
         oi.param_names = ['_args_']
-        oi.param_nature_['_args_'] = 'a List of values'
+        oi.param_nature_['_args_'] = 'a List of ECMAScript language values'
         oi.rest_params.add('_args_')
         return
 
@@ -1685,8 +1685,8 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
     ]:
         # 4 cases
         oi.param_names = ['_args_', '_body_']
-        oi.param_nature_['_args_'] = 'list of values'
-        oi.param_nature_['_body_'] = 'a value'
+        oi.param_nature_['_args_'] = 'a List of ECMAScript language values'
+        oi.param_nature_['_body_'] = 'an ECMAScript language value'
         oi.optional_params.add('_body_')
         return
 
@@ -2680,30 +2680,25 @@ class Header:
                 oh_warn(f"{self.name}: self.param_names is None")
                 self.param_names = []
 
+        if self.kind in ['function property', 'anonymous built-in function', 'accessor property']:
+            for param_name in self.param_names:
+                nature = self.param_nature_.get(param_name, 'TBD')
+                if nature == 'TBD':
+                    if param_name in self.rest_params:
+                        nature = 'a List of ECMAScript language values'
+                    else:
+                        nature = 'an ECMAScript language value'
+                    self.param_nature_[param_name] = nature
+
         self.param_tipes = OrderedDict()
         for param_name in self.param_names:
             optionality = '(optional) ' if param_name in self.optional_params else ''
 
             if param_name in self.rest_params:
                 assert param_name not in self.optional_params
-                tipe = 'List of Tangible_'
-            else:
-                # not a rest parameter
-                nature = self.param_nature_.get(param_name, 'TBD')
 
-                if self.kind in ['function property', 'anonymous built-in function', 'accessor property']:
-                    exp_nature = 'a value'
-
-                    if nature == 'TBD':
-                        nature = exp_nature
-                    elif nature == exp_nature:
-                        pass
-                    else:
-                        oh_warn()
-                        oh_warn(f"{self.name}: param {param_name}: {exp_nature!r} overrides {nature!r}")
-                        nature = exp_nature
-
-                tipe = convert_nature_to_tipe(nature)
+            nature = self.param_nature_.get(param_name, 'TBD')
+            tipe = convert_nature_to_tipe(nature)
 
             param_tipe = optionality + tipe
 
