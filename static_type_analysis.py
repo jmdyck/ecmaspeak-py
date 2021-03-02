@@ -592,7 +592,6 @@ def create_operation_info_for_section(s):
         # -----------------------------------
 
         oi = resolve_oi(hoi, poi)
-        oi.apply_ad_hoc_fixes()
         oi.finish_initialization()
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
@@ -1221,7 +1220,7 @@ class PreambleInfoHolder:
         if also is None:
             poi.also = None
         else:
-            # move to apply_ad_hoc_fixes ?
+            # move to finish_initialization ?
             (varnames, where) = {
                 'the _comparefn_ argument passed to the current invocation of the `sort` method':
                     (['_comparefn_'], 'from the current invocation of the `sort` method'),
@@ -1248,7 +1247,7 @@ class PreambleInfoHolder:
             ]
 
         # Cheat: Add some 'also' info that doesn't appear in the preamble.
-        # move to apply_ad_hoc_fixes?
+        # move to finish_initialization?
 
         if poi.name in [
             'WordCharacters',
@@ -2600,7 +2599,7 @@ class Header:
         self.u_defns = []
         self.line_num = None
 
-    def apply_ad_hoc_fixes(self):
+    def finish_initialization(self):
 
         # ------------------------------------------------------------
 
@@ -2667,9 +2666,8 @@ class Header:
             checked_set('return_nature_normal', pd_return_nature_normal)
             checked_set('return_nature_abrupt', pd_return_nature_abrupt)
 
-    # --------------------------------------------------------------------------
+        # --------------------------------------------------------------------------
 
-    def finish_initialization(self):
         assert len(self.rest_params) in [0,1]
 
         if self.param_names is None:
@@ -2693,7 +2691,6 @@ class Header:
                 # not a rest parameter
                 nature = self.param_nature_.get(param_name, 'TBD')
 
-                # move to apply_ad_hoc_fixes?
                 if self.kind in ['function property', 'anonymous built-in function', 'accessor property']:
                     exp_nature = 'a value'
 
