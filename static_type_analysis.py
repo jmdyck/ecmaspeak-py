@@ -610,7 +610,7 @@ def something_sdo(s):
     param_dict = OrderedDict()
     for (param_name, param_punct) in s.ste['parameters'].items():
         if param_name == '_argumentsList_':
-            param_type = 'List'
+            param_type = 'a List'
         else:
             param_type = 'TBD'
 
@@ -661,7 +661,7 @@ def declare_sdo(op_name, param_dict, also=[]):
     if op_name == 'regexp-Evaluate':
         assert oi.param_names == [] or oi.param_names == ['_direction_']
         oi.param_names = ['_direction_']
-        oi.param_nature_ = OrderedDict( [('_direction_', 'integer')] )
+        oi.param_nature_ = OrderedDict( [('_direction_', '1 or -1')] )
         # oi.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
 
     if op_name in spec.oi_for_sdo_:
@@ -708,7 +708,8 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "A" or "An"
 
-        A (?P<pl>candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
+        A (candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
+        pl=a \1
         v=\2 \3 if this operation \5.
 
         A (?P<name>.+) function is an (?P<kind>anonymous built-in function).
@@ -910,16 +911,21 @@ single_sentence_rules_str = r'''
         (Return (?P<retn>a String) .+)
         v=\1
 
-        (Returns (a|the) (?P<retn>Number) .+)
+        (Returns (?P<retn>a Number) .+)
         v=\1
 
-        (Returns a new (?P<retn>_TypedArray_ object) .+)
+        (Returns the Number .+)
+        retn=a Number
+        v=\1
+
+        (Returns (?P<retn>a new _TypedArray_ object) .+)
         v=\1
 
         (Returns (?P<retn>an Array object) into .+)
         v=\1
 
-        (Returns the .+ (?P<retn>Number value) .+)
+        (Returns the .+ integral Number value .+)
+        retn=an integral Number
         v=\1
 
         (Returns the integral part of the number .+)
@@ -939,7 +945,7 @@ single_sentence_rules_str = r'''
         v=\1
 
         (.+ returns a <emu-not-ref>substring</emu-not-ref> .+)
-        retn=String
+        retn=a String
         v=\1
 
         (.+ returns (an Array object) containing .+, (or \*null\*) if _string_ did not match.)
@@ -959,8 +965,7 @@ single_sentence_rules_str = r'''
         retn=a promise
         v=\1
 
-        (.+ returns an integral Number representing the local time zone adjustment, .+)
-        retn=a Number
+        (.+ returns (?P<retn>an integral Number) representing the local time zone adjustment, .+)
         v=\1
 
         # -----------
@@ -1267,6 +1272,18 @@ class PreambleInfoHolder:
 
         poi.return_nature_abrupt = at_most_one_value('reta')
 
+        if poi.return_nature_normal and 'a completion record' in poi.return_nature_normal:
+            assert poi.return_nature_abrupt is None
+            if poi.return_nature_normal == 'a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean':
+                poi.return_nature_normal = 'a Boolean'
+                poi.return_nature_abrupt = 'N/A'
+            elif poi.return_nature_normal == 'a completion record which, if its [[Type]] is ~normal~, has a [[Value]] which is a Boolean':
+                poi.return_nature_normal = 'a Boolean'
+            else:
+                stderr()
+                stderr(poi.name)
+                stderr(poi.return_nature_normal)
+
         return poi
 
 # ----------------------------------
@@ -1288,8 +1305,8 @@ rec_method_declarations = '''
     CreateMutableBinding(N, D)   -> TBD
     CreateImmutableBinding(N, S) -> TBD
     InitializeBinding(N, V)      -> TBD
-    SetMutableBinding(N, V, S)   -> a Boolean or *empty* | throw_
-    GetBindingValue(N, S)        -> an ECMAScript language value | throw_ *ReferenceError*
+    SetMutableBinding(N, V, S)   -> a Boolean or *empty* | throw
+    GetBindingValue(N, S)        -> an ECMAScript language value | throw *ReferenceError*
     DeleteBinding(N)             -> a Boolean
     HasThisBinding()             -> a Boolean
     HasSuperBinding()            -> a Boolean
@@ -1297,11 +1314,11 @@ rec_method_declarations = '''
 
     # Table 18: Additional Methods of Function Environment Records
     BindThisValue(V) -> TBD
-    GetThisBinding() -> an ECMAScript language value | throw_ *ReferenceError*
+    GetThisBinding() -> an ECMAScript language value | throw *ReferenceError*
     GetSuperBase()   -> an Object or *null* or *undefined*
 
     # Table 20: Additional Methods of Global Environment Records
-    # GetThisBinding()                   -> an ECMAScript language value | throw_ *ReferenceError*
+    # GetThisBinding()                   -> an ECMAScript language value | throw *ReferenceError*
     HasVarDeclaration(N)                 -> a Boolean
     HasLexicalDeclaration(N)             -> a Boolean
     HasRestrictedGlobalProperty(N)       -> a Boolean
@@ -1312,11 +1329,11 @@ rec_method_declarations = '''
 
     # Table 21: Additional Methods of Module Environment Records
     CreateImportBinding(N, M, N2) -> TBD
-    # GetThisBinding()            -> an ECMAScript language value | throw_ *ReferenceError*
+    # GetThisBinding()            -> an ECMAScript language value | throw *ReferenceError*
 
     # Table 39: Abstract Methods of Module Records
-    GetExportedNames(exportStarSet)       -> a List of String
-    ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or a String
+    GetExportedNames(exportStarSet)       -> a List of names
+    ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or *"ambiguous"*
     Link()                                -> TBD
     Evaluate()                            -> TBD
 
@@ -1462,9 +1479,9 @@ def extract_info_from_standard_preamble(preamble_node):
 
         elif sentence.startswith('It throws'):
             for (pattern, nature) in [
-                ('It throws an error .+',     'throws an exception'),
-                ('It throws an exception .+', 'throws an exception'),
-                ('It throws a \*TypeError\* exception .+', 'throws a *TypeError* exception'),
+                ('It throws an error .+',     'throw'),
+                ('It throws an exception .+', 'throw'),
+                ('It throws a \*TypeError\* exception .+', 'throw *TypeError*'),
             ]:
                 if re.fullmatch(pattern, sentence):
                     info_holder.add('reta', nature)
@@ -1825,7 +1842,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
                 (r'a Boolean flag named VAR', 'a Boolean'),
                 (r'(an? .+) VAR', r'\1'),
-                (r'(.+) VAR',     r'\1'), # XXX prefix with "a"/"an"?
+                (r'(value) VAR',     r'a \1'),
             ]:
                 mo = re.fullmatch(pat, r_param_item)
                 if mo:
@@ -1967,6 +1984,7 @@ def oh_warn(*args):
 
 def convert_nature_to_tipe(nature):
     if nature == 'TBD': return 'TBD'
+    if nature == 'N/A': return 'N/A'
 
     assert 'VAR' not in nature, nature
 
@@ -1992,8 +2010,6 @@ nature_to_tipe = {
         'a Boolean flag'    : 'Boolean',
         'A Boolean value'   : 'Boolean',
         '*true* or *false*' : 'Boolean',
-        'a completion record which, if its [[Type]] is ~normal~, has a [[Value]] which is a Boolean': 'Boolean',
-        'a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean':            'Boolean',
 
         # String
         'String'          : 'String',
@@ -2079,7 +2095,7 @@ nature_to_tipe = {
         'the TypedArray instance' : 'TypedArray_object_',
         'a TypedArray instance'   : 'TypedArray_object_',
         'a TypedArray object'     : 'TypedArray_object_',
-        '_TypedArray_ object'     : 'TypedArray_object_',
+        'a new _TypedArray_ object' : 'TypedArray_object_',
 
         # 9.4.2
         'an Array exotic object' : 'Array_object_',
@@ -2123,7 +2139,7 @@ nature_to_tipe = {
         'List' : 'List',
         'a List' : 'List',
         'List of String'                       : 'List of String',
-        'a List of String'                     : 'List of String',
+        'a List of names'                      : 'List of String',
         'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
@@ -2295,9 +2311,7 @@ nature_to_tipe = {
         'throw *TypeError*'              : 'throw_ *TypeError*',
         'throw a *TypeError* exception'  : 'throw_ *TypeError*',
         'throw'                          : 'throw_',
-        'throw_'                         : 'throw_',
-        'throw_ *ReferenceError*'        : 'throw_ *ReferenceError*',
-        'throw_ *TypeError*'             : 'throw_ *TypeError*',
+        'throw *ReferenceError*'         : 'throw_ *ReferenceError*',
         'throws a *TypeError* exception' : 'throw_ *TypeError*',
         'throws an exception'            : 'throw_',
 
@@ -2344,7 +2358,7 @@ nature_to_tipe = {
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'a Realm Record or *null*'                                   : 'Realm Record | Null',
     'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
-    'a ResolvedBinding Record or *null* or a String'             : 'ResolvedBinding Record | Null | String',
+    'a ResolvedBinding Record or *null* or *"ambiguous"*'        : 'ResolvedBinding Record | Null | String',
     'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
     'the Script Record or Module Record; may also be *null*'     : 'Script Record | Module Record | Null',
     'a Script Record or Module Record; may also be Null'         : 'Script Record | Module Record | Null',
@@ -2706,10 +2720,15 @@ class Header:
 
         if self.return_nature_normal is None:
             if self.name.startswith('Math.'):
-                self.return_nature_normal = 'Number'
+                self.return_nature_normal = 'a Number'
+            else:
+                self.return_nature_normal = 'TBD'
 
-        self.return_tipe_normal = convert_nature_to_tipe(self.return_nature_normal or 'TBD')
-        self.return_tipe_abrupt = convert_nature_to_tipe(self.return_nature_abrupt or 'TBD')
+        if self.return_nature_abrupt is None:
+            self.return_nature_abrupt = 'TBD'
+
+        self.return_tipe_normal = convert_nature_to_tipe(self.return_nature_normal)
+        self.return_tipe_abrupt = convert_nature_to_tipe(self.return_nature_abrupt)
 
     def prep_for_STA(self):
 
@@ -2761,7 +2780,7 @@ class Header:
 
         if self.return_tipe_normal == 'TBD' and self.return_tipe_abrupt == 'TBD':
             rt = 'TBD'
-        elif self.return_tipe_abrupt == 'TBD':
+        elif self.return_tipe_abrupt in ['TBD', 'N/A']:
             rt = self.return_tipe_normal
         elif self.return_tipe_normal == 'TBD':
             rt = self.return_tipe_abrupt
@@ -3983,7 +4002,6 @@ IteratorValue                            ; *return*               ; TBD         
 KeyedBindingInitialization               ; _environment_          ; TBD                 ; Environment Record | Undefined
 KeyedDestructuringAssignmentEvaluation   ; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
 LabelledEvaluation                       ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
-LocalTZA                                 ; *return*               ; Number              ; IntegralNumber_
 LoopContinues                            ; _completion_           ; TBD                 ; Tangible_ | empty_ | Abrupt
 LoopEvaluation                           ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
 MV                                       ; *return*               ; TBD                 ; MathInteger_
