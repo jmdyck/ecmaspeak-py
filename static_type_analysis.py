@@ -2964,9 +2964,11 @@ class Header:
             )
 
             if mode == 'dls w initial info':
-                for (param_name, param_tipe) in self.param_tipes.items():
+                for param_name in self.param_names:
                     prefix = param_name.ljust(pn_max_width)
-                    pwi(f"      <li>{prefix} : {param_tipe}</li>")
+                    optionality = '(optional) ' if param_name in self.optional_params else ''
+                    param_nature = self.param_nature_.get(param_name, 'TBD')
+                    pwi(f"      <li>{prefix} : {optionality}{param_nature}</li>")
 
             else:
                 if mode == 'messages in algs and dls':
@@ -3026,8 +3028,8 @@ class Header:
         pwi(f"    <ul>")
 
         if mode == 'dls w initial info':
-            pwi(f"      <li>normal : {self.return_tipe_normal}</li>")
-            pwi(f"      <li>abrupt : {self.return_tipe_abrupt}</li>")
+            pwi(f"      <li>normal : {self.return_nature_normal}</li>")
+            pwi(f"      <li>abrupt : {self.return_nature_abrupt}</li>")
 
         else:
             if mode == 'messages in algs and dls':
