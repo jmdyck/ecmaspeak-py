@@ -596,10 +596,10 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
-                oi.u_defns.append(algo._parent_foodefn)
+                oi.u_defns.append(algo._parent_algdefn)
             else:
                 assert algo.element_name in ['ul', 'emu-table']
-                assert not hasattr(algo, '_parent_foodefn')
+                assert not hasattr(algo, '_parent_algdefn')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -676,10 +676,10 @@ def declare_sdo(op_name, param_dict, also=[]):
         op_info = spec.info_for_op_named_[op_name]
         assert op_info.name == op_name
         assert op_info.kind == 'op: syntax-directed'
-        for foo_defn in op_info.definitions:
-            if foo_defn.section.section_num.startswith('B'): continue
-            if foo_defn.discriminator is None: continue # XXX for now
-            oi.u_defns.append(foo_defn)
+        for alg_defn in op_info.definitions:
+            if alg_defn.section.section_num.startswith('B'): continue
+            if alg_defn.discriminator is None: continue # XXX for now
+            oi.u_defns.append(alg_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2590,8 +2590,8 @@ class Operation:
         else:
             name_for_spec_info = self.name
 
-        foo_info = d[name_for_spec_info]
-        for callee in sorted(foo_info.callees):
+        alg_info = d[name_for_spec_info]
+        for callee in sorted(alg_info.callees):
             if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
             dep_graph.add_arc(self.name, callee)
 
@@ -2825,9 +2825,9 @@ class Header:
 
         self.t_defns = []
 
-        for foo_defn in self.u_defns:
+        for alg_defn in self.u_defns:
             if self.kind == 'syntax-directed operation':
-                discriminator = foo_defn.discriminator
+                discriminator = alg_defn.discriminator
             else:
                 discriminator = self.for_param_type
 
@@ -2854,15 +2854,15 @@ class Header:
             else:
                 assert 0, self.kind
 
-            assert isinstance(foo_defn.anode, ANode)
-            assert foo_defn.anode.prod.lhs_s in [
+            assert isinstance(alg_defn.anode, ANode)
+            assert alg_defn.anode.prod.lhs_s in [
                 '{EMU_ALG_BODY}',
                 '{IAO_BODY}',
                 '{EXPR}',
                 '{NAMED_OPERATION_INVOCATION}',
-            ], foo_defn.anode.prod.lhs_s
+            ], alg_defn.anode.prod.lhs_s
 
-            self.t_defns.append((discriminator,foo_defn.anode))
+            self.t_defns.append((discriminator,alg_defn.anode))
 
         # -------------------------
 

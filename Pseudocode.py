@@ -719,17 +719,17 @@ def analyze_other_op_section(section):
 
         elif op_name.startswith('Host') or op_name == 'LocalTZA':
             # These are host-defined ops, so we expect no alg.
-            ensure_foo('op: host-defined', op_name)
+            ensure_alg('op: host-defined', op_name)
             pass
 
         elif section.section_kind == 'numeric_method':
             # A mathematical operation that we merely constrain, via a bullet-list.
-            ensure_foo('op: numeric method', op_name)
+            ensure_alg('op: numeric method', op_name)
             pass
 
         elif op_name == 'StringToBigInt':
             # Apply other alg with changes, ick.
-            ensure_foo('op: solo', op_name)
+            ensure_alg('op: solo', op_name)
 
         else:
             assert 0, (section.section_num, section.section_title)
@@ -1014,13 +1014,13 @@ def analyze_other_section(section):
 
     if n_emu_algs == 0:
         if section.section_title == 'Mathematical Operations':
-            ensure_foo('op: solo', 'abs')
-            ensure_foo('op: solo', 'min')
-            ensure_foo('op: solo', 'max')
-            ensure_foo('op: solo', 'floor')
-            ensure_foo('op: solo', '\U0001d53d')
-            ensure_foo('op: solo', '\u211d')
-            ensure_foo('op: solo', '\u2124')
+            ensure_alg('op: solo', 'abs')
+            ensure_alg('op: solo', 'min')
+            ensure_alg('op: solo', 'max')
+            ensure_alg('op: solo', 'floor')
+            ensure_alg('op: solo', '\U0001d53d')
+            ensure_alg('op: solo', '\u211d')
+            ensure_alg('op: solo', '\u2124')
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
@@ -1063,16 +1063,16 @@ def analyze_other_section(section):
 
         if section.section_kind == 'shorthand':
             if section.section_title == 'Implicit Completion Values':
-                ensure_foo('shorthand', 'Completion')
+                ensure_alg('shorthand', 'Completion')
             elif section.section_title in [
                 'ReturnIfAbrupt',
                 'Await',
                 'NormalCompletion',
                 'ThrowCompletion',
             ]:
-                ensure_foo('shorthand', section.section_title)
+                ensure_alg('shorthand', section.section_title)
             elif section.section_title == 'IfAbruptRejectPromise ( _value_, _capability_ )':
-                ensure_foo('shorthand', 'IfAbruptRejectPromise')
+                ensure_alg('shorthand', 'IfAbruptRejectPromise')
             else:
                 pass
                 # print('>', section.section_num, section.section_title)
@@ -1090,7 +1090,7 @@ def handle_solo_op(op_name, emu_alg, section):
     # "solo" in the sense of having a single definition,
     # in contrast to multiple definitions discriminated by type or syntax
 
-    foo_add_defn('op: solo', op_name, None, emu_alg, section)
+    alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1111,11 +1111,11 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
         '#LITERAL sub #LITERAL',
         '#LITERAL sub #LITERAL sub #LITERAL',
     ]:
-        foo_add_defn('op: solo', op_name, discriminator, tdb, section)
+        alg_add_defn('op: solo', op_name, discriminator, tdb, section)
 
     elif x == '#LITERAL emu-note #LITERAL':
         # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
-        foo_add_defn('op: solo', op_name, discriminator, tdb, section)
+        alg_add_defn('op: solo', op_name, discriminator, tdb, section)
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
@@ -1127,7 +1127,7 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
     elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
         (_, p, _, emu_alg, _) = tdb.children
         assert p.source_text() == '<p>Apply the following steps:</p>'
-        foo_add_defn('op: solo', op_name, discriminator, emu_alg, section)
+        alg_add_defn('op: solo', op_name, discriminator, emu_alg, section)
 
     else:
         assert 0, x
@@ -1135,7 +1135,7 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg, section):
-    foo_add_defn(op_kind, op_name, discriminator, emu_alg, section)
+    alg_add_defn(op_kind, op_name, discriminator, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1151,7 +1151,7 @@ def handle_early_error(emu_grammar, ul, section):
             if tree is None: continue
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            foo_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
+            alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
         else:
             assert 0, li.element_name
 
@@ -1186,7 +1186,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, code_hnode, section):
 
     # ----------
 
-    foo_add_defn('op: syntax-directed', sdo_name, emu_grammar, code_hnode, section)
+    alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, code_hnode, section)
 
 # ------------------------------------------------------------------------------
 
@@ -1258,7 +1258,7 @@ def handle_inline_sdo(li, section_sdo_name, section):
     assert 0 < len(rule_grammars) <= 5
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
-            foo_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
+            alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1283,12 +1283,12 @@ def handle_emu_eqn(emu_eqn, section):
     if child.prod.lhs_s == '{CONSTANT_DEF}':
         [constant_name, dec_int_lit] = child.children[0:2]
         assert constant_name.source_text() == aoid
-        # XXX foo_add_defn('constant', aoid, None, dec_int_lit, section)
+        # XXX alg_add_defn('constant', aoid, None, dec_int_lit, section)
     elif child.prod.lhs_s == '{OPERATION_DEF}':
         [op_name, parameter, body] = child.children
         assert op_name.source_text() == aoid
         parameter_name = parameter.source_text()
-        foo_add_defn('op: solo', aoid, None, body, section)
+        alg_add_defn('op: solo', aoid, None, body, section)
     else:
         assert 0
 
@@ -1296,7 +1296,7 @@ def handle_emu_eqn(emu_eqn, section):
 
 def handle_function(bif_kind, locater, emu_alg, section):
 
-    foo_add_defn(bif_kind, locater, None, emu_alg, section)
+    alg_add_defn(bif_kind, locater, None, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1578,8 +1578,9 @@ spec.info_for_bif_named_ = {}
 # These need to be separate because Set() is both
 # an abstract operation and a built-in function.
 
-class Foo:
-    # "Foo" = "Function or Operation"
+class Alg:
+    # An operation (widely construed) or
+    # the algorithmic aspect of a (built-in) function.
     def __init__(self, name, kind):
         self.name = name
         self.kind = kind
@@ -1588,38 +1589,38 @@ class Foo:
         self.callees = set()
         self.callers = set()
 
-def ensure_foo(foo_kind, foo_name):
-    if foo_kind.startswith('bif'):
+def ensure_alg(alg_kind, alg_name):
+    if alg_kind.startswith('bif'):
         iffn = spec.info_for_bif_named_
     else:
         iffn = spec.info_for_op_named_
 
-    if foo_name in iffn:
-        foo_info = iffn[foo_name]
-        assert foo_info.name == foo_name
-        assert foo_info.kind == foo_kind
+    if alg_name in iffn:
+        alg_info = iffn[alg_name]
+        assert alg_info.name == alg_name
+        assert alg_info.kind == alg_kind
     else:
-        foo_info = Foo(foo_name, foo_kind)
-        iffn[foo_name] = foo_info
+        alg_info = Alg(alg_name, alg_kind)
+        iffn[alg_name] = alg_info
 
-    return foo_info
+    return alg_info
 
 # ------------------------------------------------
 
-def foo_add_defn(foo_kind, foo_name, discriminator, hnode_or_anode, section):
-    assert type(foo_name) == str
+def alg_add_defn(alg_kind, alg_name, discriminator, hnode_or_anode, section):
+    assert type(alg_name) == str
 
-    foo_info = ensure_foo(foo_kind, foo_name)
+    alg_info = ensure_alg(alg_kind, alg_name)
 
     if hnode_or_anode is None:
         assert discriminator is None
         return
 
-    FooDefn(foo_info, discriminator, hnode_or_anode, section)
+    AlgDefn(alg_info, discriminator, hnode_or_anode, section)
 
-class FooDefn:
-    def __init__(self, foo_info, discriminator, hnode_or_anode, section):
-        self.the_foo_to_which_this_belongs = foo_info
+class AlgDefn:
+    def __init__(self, alg_info, discriminator, hnode_or_anode, section):
+        self.the_alg_to_which_this_belongs = alg_info
         self.discriminator = discriminator
         self.section = section
 
@@ -1636,8 +1637,8 @@ class FooDefn:
             assert hnode.element_name in ['emu-alg', 'td']
             self.anode = parse(hnode)
             if self.anode is None: return
-            assert not hasattr(hnode, '_parent_foodefn')
-            hnode._parent_foodefn = self
+            assert not hasattr(hnode, '_parent_algdefn')
+            hnode._parent_algdefn = self
 
         elif isinstance(hnode_or_anode, ANode):
             self.anode = hnode_or_anode
@@ -1654,7 +1655,7 @@ class FooDefn:
             '{ONE_LINE_ALG}',
         ]
 
-        foo_info.definitions.append(self)
+        alg_info.definitions.append(self)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1678,43 +1679,43 @@ def analyze_static_dependencies():
 
     # Find and print all the static dependencies:
 
-    for (foo_name, foo_info) in (
+    for (alg_name, alg_info) in (
         sorted(spec.info_for_op_named_.items())
         +
         sorted(spec.info_for_bif_named_.items())
     ):
-        for foo_defn in foo_info.definitions:
-            foo_defn.callees = set()
+        for alg_defn in alg_info.definitions:
+            alg_defn.callees = set()
 
             def recurse(anode):
                 for d in anode.each_descendant_or_self():
                     if hasattr(d, '_op_invocation'):
                         (callee_names, args) = d._op_invocation
                         for callee_name in callee_names:
-                            foo_defn.callees.add(callee_name)
+                            alg_defn.callees.add(callee_name)
                             if callee_name in spec.info_for_op_named_:
                                 spec.info_for_op_named_[callee_name].invocations.append(d)
                             else:
-                                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({foo_name} calls it in {foo_defn.section.section_num})")
+                                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.section.section_num})")
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
-                        assert foo_name == 'Early Errors'
+                        assert alg_name == 'Early Errors'
                         # "... and the following algorithm evaluates to *true*: ..."
                         recurse(d._hnode._syntax_tree)
 
-            recurse(foo_defn.anode)
-            foo_info.callees.update(foo_defn.callees)
+            recurse(alg_defn.anode)
+            alg_info.callees.update(alg_defn.callees)
 
         put()
-        put(foo_name)
-        put(f"[{foo_info.kind}, {len(foo_info.definitions)} definitions]")
-        for callee in sorted(foo_info.callees):
+        put(alg_name)
+        put(f"[{alg_info.kind}, {len(alg_info.definitions)} definitions]")
+        for callee in sorted(alg_info.callees):
             put('  ', callee)
 
-        for callee_name in foo_info.callees:
+        for callee_name in alg_info.callees:
             if callee_name in spec.info_for_op_named_:
-                spec.info_for_op_named_[callee_name].callers.add(foo_name)
+                spec.info_for_op_named_[callee_name].callers.add(alg_name)
             else:
-                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({foo_name} calls it)")
+                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({alg_name} calls it)")
 
     # ----------------------------------------------------
 
@@ -2022,11 +2023,11 @@ def check_sdo_coverage():
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}
 
-            for foo_defn in op_info.definitions:
+            for alg_defn in op_info.definitions:
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
-                if foo_defn.section.section_num.startswith('B'): continue
+                if alg_defn.section.section_num.startswith('B'): continue
 
-                discriminator = foo_defn.discriminator
+                discriminator = alg_defn.discriminator
 
                 if discriminator is None:
                     assert op_name == 'Contains'
@@ -2038,7 +2039,7 @@ def check_sdo_coverage():
                 for puk in discriminator.puk_set:
                     if puk not in spec.sdo_coverage_map[op_name]:
                         spec.sdo_coverage_map[op_name][puk] = []
-                    spec.sdo_coverage_map[op_name][puk].append(foo_defn)
+                    spec.sdo_coverage_map[op_name][puk].append(alg_defn)
 
     analyze_sdo_coverage_info()
 
