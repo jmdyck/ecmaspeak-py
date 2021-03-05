@@ -316,18 +316,6 @@ def create_operation_info_for_section(s):
                     s.section_title
                 )
             )
-            or
-            (
-                # For most Math functions (and many Number methods),
-                # a <ul> plays roughly the role of an <emu-alg>.
-                child.element_name == 'ul'
-                and
-                (
-                    s.parent.section_title == 'Function Properties of the Math Object'
-                    or
-                    s.section_title.startswith('Number::')
-                )
-            )
         )
     ]
 
@@ -505,7 +493,7 @@ def create_operation_info_for_section(s):
             algo = None
         else:
             algo = s.block_children[span_end_i]
-            assert algo.element_name in ['emu-alg', 'emu-table', 'ul']
+            assert algo.element_name in ['emu-alg', 'emu-table']
 
         if (
             span_start_i == 0 and not (
@@ -593,7 +581,7 @@ def create_operation_info_for_section(s):
             if algo.element_name == 'emu-alg':
                 oi.u_defns.append(algo._parent_algdefn)
             else:
-                assert algo.element_name in ['ul', 'emu-table']
+                assert algo.element_name in ['emu-table']
                 assert not hasattr(algo, '_parent_algdefn')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
