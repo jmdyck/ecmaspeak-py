@@ -394,7 +394,7 @@ def parse(hnode, what=None):
         return None
 
     connect_anodes_to_hnodes(hnode, tree)
-    annotate_algo(tree)
+    annotate_invocations(tree)
     return tree
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1157,7 +1157,7 @@ def handle_early_error(emu_grammar, ul, section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_composite_sdo(sdo_name, grammar_arg, algo, section):
+def handle_composite_sdo(sdo_name, grammar_arg, code_hnode, section):
 
     # ---------------------------
     # grammar_arg -> emu_grammar:
@@ -1183,7 +1183,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, algo, section):
 
     # ----------
 
-    foo_add_defn('op: syntax-directed', sdo_name, emu_grammar, algo, section)
+    foo_add_defn('op: syntax-directed', sdo_name, emu_grammar, code_hnode, section)
 
 # ------------------------------------------------------------------------------
 
@@ -1358,11 +1358,11 @@ def connect_anodes_to_hnodes(base_hnode, base_anode):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def annotate_algo(algo):
+def annotate_invocations(anode):
 
-    # For each node in `algo` that is an invocation of an operation,
+    # For each node in `anode` that is an invocation of an operation,
     # annotate it with info about the invocation.
-    for d in algo.each_descendant_or_self():
+    for d in anode.each_descendant_or_self():
         op_names = None
 
         if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
@@ -1603,19 +1603,19 @@ def ensure_foo(foo_kind, foo_name):
 
 # ------------------------------------------------
 
-def foo_add_defn(foo_kind, foo_name, discriminator, algo_or_anode, section):
+def foo_add_defn(foo_kind, foo_name, discriminator, hnode_or_anode, section):
     assert type(foo_name) == str
 
     foo_info = ensure_foo(foo_kind, foo_name)
 
-    if algo_or_anode is None:
+    if hnode_or_anode is None:
         assert discriminator is None
         return
 
-    FooDefn(foo_info, discriminator, algo_or_anode, section)
+    FooDefn(foo_info, discriminator, hnode_or_anode, section)
 
 class FooDefn:
-    def __init__(self, foo_info, discriminator, algo_or_anode, section):
+    def __init__(self, foo_info, discriminator, hnode_or_anode, section):
         self.the_foo_to_which_this_belongs = foo_info
         self.discriminator = discriminator
         self.section = section
@@ -1628,16 +1628,16 @@ class FooDefn:
             isinstance(discriminator, str) # type name
         )
 
-        if isinstance(algo_or_anode, HNode):
-            hnode = algo_or_anode
+        if isinstance(hnode_or_anode, HNode):
+            hnode = hnode_or_anode
             assert hnode.element_name in ['emu-alg', 'td']
             self.anode = parse(hnode)
             if self.anode is None: return
             assert not hasattr(hnode, '_parent_foodefn')
             hnode._parent_foodefn = self
 
-        elif isinstance(algo_or_anode, ANode):
-            self.anode = algo_or_anode
+        elif isinstance(hnode_or_anode, ANode):
+            self.anode = hnode_or_anode
 
         else:
             assert 0
