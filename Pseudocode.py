@@ -1158,6 +1158,9 @@ def handle_early_error(emu_grammar, ul, section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def handle_composite_sdo(sdo_name, grammar_arg, code_hnode, section):
+    assert isinstance(grammar_arg, HNode)
+    assert isinstance(code_hnode, HNode)
+    assert code_hnode.element_name == 'emu-alg'
 
     # ---------------------------
     # grammar_arg -> emu_grammar:
