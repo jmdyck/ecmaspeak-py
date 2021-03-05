@@ -461,8 +461,7 @@ def analyze_sections():
     prev_top_level_num = ''
 
     sys.setrecursionlimit(2000)
-    # Adding `self.algo._parent_foodefn = self`
-    # caused spec.save to hit the default recursion limit (1000).
+    # This might not be necessary any more.
 
     for section in spec.root_section.each_descendant_that_is_a_section():
         assert hasattr(section, 'ste')
@@ -1630,15 +1629,14 @@ class FooDefn:
         )
 
         if isinstance(algo_or_anode, HNode):
-            self.algo = algo_or_anode
-            assert self.algo.element_name in ['emu-alg', 'td']
-            self.anode = parse(self.algo)
+            hnode = algo_or_anode
+            assert hnode.element_name in ['emu-alg', 'td']
+            self.anode = parse(hnode)
             if self.anode is None: return
-            assert not hasattr(self.algo, '_parent_foodefn')
-            self.algo._parent_foodefn = self
+            assert not hasattr(hnode, '_parent_foodefn')
+            hnode._parent_foodefn = self
 
         elif isinstance(algo_or_anode, ANode):
-            self.algo = None
             self.anode = algo_or_anode
 
         else:
