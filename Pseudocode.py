@@ -782,7 +782,7 @@ def analyze_other_op_section(section):
                 'Proxy Object Internal Methods and Internal Slots': 'Proxy exotic object',
             }[section.parent.section_title]
 
-            op_kind = {
+            op_species = {
                 'numeric_method'   : 'op: numeric method',
                 'env_rec_method'   : 'op: concrete method: env rec',
                 'module_rec_method': 'op: concrete method: module rec',
@@ -794,7 +794,7 @@ def analyze_other_op_section(section):
                 # So type-checking it will not confirm the signature.
                 return
 
-            handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg, section)
+            handle_type_discriminated_op(op_name, op_species, discriminator, emu_alg, section)
 
         else:
             assert 0, section.section_kind
@@ -823,7 +823,7 @@ def analyze_built_in_section(section):
         assert n_emu_algs == 0
         return
 
-    bif_kind = {
+    bif_species = {
         'CallConstruct'               : 'bif: value of data property',
         'CallConstruct_overload'      : 'bif: value of data property: overload',
         'accessor_property'           : 'bif: accessor function',
@@ -840,12 +840,12 @@ def analyze_built_in_section(section):
         if prop_path == '%TypedArray%.prototype.set':
             # 22.2.3.23 contains 2 child clauses that define overloads for this function.
             return
-        handle_function(bif_kind, prop_path, None, section)
+        handle_function(bif_species, prop_path, None, section)
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        handle_function(bif_kind, prop_path, emu_alg, section)
+        handle_function(bif_species, prop_path, emu_alg, section)
 
     else:
         assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
@@ -853,7 +853,7 @@ def analyze_built_in_section(section):
         # The first emu-alg is at least the *start* of the full algorithm.
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        handle_function(bif_kind, prop_path, emu_alg, section)
+        handle_function(bif_species, prop_path, emu_alg, section)
 
         if prop_path == '%TypedArray%.prototype.sort':
             assert n_emu_algs == 2
@@ -1134,8 +1134,8 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_type_discriminated_op(op_name, op_kind, discriminator, emu_alg, section):
-    alg_add_defn(op_kind, op_name, discriminator, emu_alg, section)
+def handle_type_discriminated_op(op_name, op_species, discriminator, emu_alg, section):
+    alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1294,9 +1294,9 @@ def handle_emu_eqn(emu_eqn, section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_function(bif_kind, locater, emu_alg, section):
+def handle_function(bif_species, locater, emu_alg, section):
 
-    alg_add_defn(bif_kind, locater, None, emu_alg, section)
+    alg_add_defn(bif_species, locater, None, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1580,34 +1580,34 @@ spec.alg_info_ = { 'bif': {}, 'op': {} }
 class Alg:
     # An operation (widely construed) or
     # the algorithmic aspect of a (built-in) function.
-    def __init__(self, name, kind):
+    def __init__(self, name, species):
         self.name = name
-        self.kind = kind
+        self.species = species
         self.definitions = []
         self.invocations = []
         self.callees = set()
         self.callers = set()
 
-def ensure_alg(alg_kind, alg_name):
-    bif_or_op = 'bif' if alg_kind.startswith('bif:') else 'op'
+def ensure_alg(alg_species, alg_name):
+    bif_or_op = 'bif' if alg_species.startswith('bif:') else 'op'
     iffn = spec.alg_info_[bif_or_op]
 
     if alg_name in iffn:
         alg_info = iffn[alg_name]
         assert alg_info.name == alg_name
-        assert alg_info.kind == alg_kind
+        assert alg_info.species == alg_species
     else:
-        alg_info = Alg(alg_name, alg_kind)
+        alg_info = Alg(alg_name, alg_species)
         iffn[alg_name] = alg_info
 
     return alg_info
 
 # ------------------------------------------------
 
-def alg_add_defn(alg_kind, alg_name, discriminator, hnode_or_anode, section):
+def alg_add_defn(alg_species, alg_name, discriminator, hnode_or_anode, section):
     assert type(alg_name) == str
 
-    alg_info = ensure_alg(alg_kind, alg_name)
+    alg_info = ensure_alg(alg_species, alg_name)
 
     if hnode_or_anode is None:
         assert discriminator is None
@@ -1704,7 +1704,7 @@ def analyze_static_dependencies():
 
         put()
         put(alg_name)
-        put(f"[{alg_info.kind}, {len(alg_info.definitions)} definitions]")
+        put(f"[{alg_info.species}, {len(alg_info.definitions)} definitions]")
         for callee in sorted(alg_info.callees):
             put('  ', callee)
 
@@ -2015,7 +2015,7 @@ def check_sdo_coverage():
 
     # collect sdo_coverage_info:
     for (op_name, op_info) in spec.alg_info_['op'].items():
-        if op_info.kind in ['op: syntax-directed', 'op: early error']:
+        if op_info.species in ['op: syntax-directed', 'op: early error']:
 
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}

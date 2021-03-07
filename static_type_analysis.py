@@ -655,7 +655,7 @@ def declare_sdo(op_name, param_dict, also=[]):
 
         op_info = spec.alg_info_['op'][op_name]
         assert op_info.name == op_name
-        assert op_info.kind == 'op: syntax-directed'
+        assert op_info.species == 'op: syntax-directed'
         for alg_defn in op_info.definitions:
             if alg_defn.section.section_num.startswith('B'): continue
             if alg_defn.discriminator is None: continue # XXX for now
