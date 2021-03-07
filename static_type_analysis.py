@@ -5114,7 +5114,7 @@ def do_static_type_analysis(levels):
                 pass_errors = []
                 n_ops_changed = 0
                 for alg in cluster.members:
-                    changed = tc_operation(alg)
+                    changed = tc_alg(alg)
                     if changed: n_ops_changed += 1
                 print("%d operations changed" % n_ops_changed)
                 if n_ops_changed > 0:
@@ -5265,7 +5265,7 @@ def mytrace(env):
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
             # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
-def tc_operation(alg):
+def tc_alg(alg):
     print()
     print('-' * 30)
     print(alg)
