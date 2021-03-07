@@ -2462,20 +2462,18 @@ def compute_dependency_levels():
     stderr()
     stderr('analyzing dependencies...')
 
-    for op in operation_named_.values():
-        summarize_headers(op)
+    alg_items = sorted(spec.alg_info_['bif'].items()) + sorted(spec.alg_info_['op'].items())
+
+    for (_, alg) in alg_items:
+        summarize_headers(alg)
 
     # Analyze the definition(s) of each named operation to find its dependencies.
     dep_graph = Graph()
-    for (op_name, op) in sorted(operation_named_.items()):
-        find_dependencies(op, dep_graph)
+    for (_, alg) in alg_items:
+        find_dependencies(alg, dep_graph)
 
     f = shared.open_for_output('deps')
     dep_graph.print_arcs(file=f)
-
-    for vertex in sorted(list(dep_graph.vertices)):
-        if vertex not in operation_named_ and vertex not in built_in_ops:
-            print("unknown operation:", vertex)
 
     # Based on all that dependency info, compute the dep levels.
     levels = dep_graph.compute_dependency_levels()
@@ -2497,52 +2495,31 @@ def compute_dependency_levels():
     # sys.exit(0)
     return levels
 
-operation_named_ = {}
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
-class Operation:
-    def __init__(self, name, kind):
-        assert kind in [
-            'abstract operation',
-            'concrete method',
-            'host-defined abstract operation',
-            'internal method',
-            'numeric method',
-            'syntax-directed operation',
-            #
-            'accessor property',
-            'anonymous built-in function',
-            'function property',
-        ]
-        self.name = name
-        self.kind = kind
-        self.headers = []
-        self.return_type = None
-
-def summarize_headers(self):
-    assert len(self.headers) > 0
-    if len(self.headers) == 1:
-        [header] = self.headers
-        self.parameters_with_types = header.parameter_types.items()
-        self.return_type = header.return_type
+def summarize_headers(alg):
+    if len(alg.headers) == 0:
+        print("no headers for", alg.species, alg.name)
+    elif len(alg.headers) == 1:
+        [header] = alg.headers
+        alg.parameters_with_types = header.parameter_types.items()
+        alg.return_type = header.return_type
 
     else:
-        assert self.kind in ['concrete method', 'internal method', 'numeric method']
-        n_params = len(self.headers[0].parameter_types)
-        assert all(len(header.parameter_types) == n_params for header in self.headers)
+        assert alg.species in ['op: concrete method: env rec', 'op: internal method', 'op: numeric method'], alg.species
+        n_params = len(alg.headers[0].parameter_types)
+        assert all(len(header.parameter_types) == n_params for header in alg.headers)
 
         param_names_ = [set() for i in range(n_params)]
         param_types_ = [set() for i in range(n_params)]
         return_types = set()
-        for header in self.headers:
+        for header in alg.headers:
             for (i, (param_name, param_type)) in enumerate(header.parameter_types.items()):
                 param_names_[i].add(param_name)
                 param_types_[i].add(param_type)
             return_types.add(header.return_type)
 
-        self.parameters_with_types = [
+        alg.parameters_with_types = [
             (
                 '|'.join(sorted(list(param_names_[i])))
             ,
@@ -2550,30 +2527,18 @@ def summarize_headers(self):
             )
             for i in range(n_params)
         ]
-        self.return_type = union_of_types(return_types)
+        alg.return_type = union_of_types(return_types)
 
-def find_dependencies(self, dep_graph):
-    if self.kind in [
-        'function property',
-        'anonymous built-in function',
-        'CallConstruct',
-        'accessor property',
-    ]:
-        d = spec.alg_info_['bif']
-    else:
-        d = spec.alg_info_['op']
+def find_dependencies(alg, dep_graph):
+    dep_graph.add_vertex(alg)
 
-    dep_graph.add_vertex(self.name)
-
-    if self.name == 'built-in Set':
-        name_for_spec_info = 'Set'
-    else:
-        name_for_spec_info = self.name
-
-    alg_info = d[name_for_spec_info]
-    for callee in sorted(alg_info.callees):
-        if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
-        dep_graph.add_arc(self.name, callee)
+    for callee in sorted(alg.callees):
+        if alg.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
+        if callee not in spec.alg_info_['op']:
+            print("unknown operation:", callee)
+        else:
+            callee_alg = spec.alg_info_['op'][callee]
+            dep_graph.add_arc(alg, callee_alg)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2852,23 +2817,12 @@ class AlgHeader:
 
         # -------------------------
 
-        if self.name == 'Set' and self.kind == 'function property':
-            name_for_op_dict = 'built-in Set'
-            # so that it doesn't collide with the abstract operation 'Set'
+        if self.kind in ['function property', 'accessor property', 'anonymous built-in function']:
+            bif_or_op = 'bif'
         else:
-            name_for_op_dict = self.name
-
-        if name_for_op_dict in operation_named_:
-            # We've already seen a header for an operation with this name.
-            op = operation_named_[name_for_op_dict]
-            assert self.kind != 'abstract operation'
-            assert op.kind == self.kind
-        else:
-            # First header for an operation with this name.
-            op = Operation(name_for_op_dict, self.kind)
-            operation_named_[name_for_op_dict] = op
-
-        op.headers.append(self)
+            bif_or_op = 'op'
+        alg = spec.alg_info_[bif_or_op][self.name]
+        alg.headers.append(self)
 
     # ------------------------------------------------------
 
@@ -5159,8 +5113,8 @@ def do_static_type_analysis(levels):
                 global pass_errors
                 pass_errors = []
                 n_ops_changed = 0
-                for op_name in cluster.members:
-                    changed = tc_operation(op_name)
+                for alg in cluster.members:
+                    changed = tc_operation(alg)
                     if changed: n_ops_changed += 1
                 print("%d operations changed" % n_ops_changed)
                 if n_ops_changed > 0:
@@ -5311,37 +5265,31 @@ def mytrace(env):
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
             # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
-def tc_operation(op_name):
+def tc_operation(alg):
     print()
     print('-' * 30)
-    print(op_name)
+    print(alg)
 
-    # if op_name == '[[Call]]': pdb.set_trace()
+    # if alg.name == '[[Call]]': pdb.set_trace()
 
-    if op_name in built_in_ops:
+    if alg.name in built_in_ops:
         print('skipping built-in')
         return False # no change
 
-    if op_name not in operation_named_:
-        print("skipping for some other reason?")
-        return False
-
     global trace_this_op
     trace_this_op = False
-    trace_this_op = (op_name in [
+    trace_this_op = (alg.name in [
         'xToIntegerOrInfinity'
     ])
     # and you may want to tweak mytrace just above
 
-    op = operation_named_[op_name]
-
     any_change = False
-    for header in op.headers:
+    for header in alg.headers:
         c = tc_header(header)
         if c: any_change = True
     
     if any_change:
-        summarize_headers(op)
+        summarize_headers(alg)
 
     if trace_this_op:
         pass
@@ -10793,8 +10741,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             [var, cap_word] = opn_before_paren.children
             callee_op_name = cap_word.source_text()
 
-            callee_op = operation_named_[callee_op_name]
-            assert callee_op.kind == 'concrete method'
+            callee_op = spec.alg_info_['op'][callee_op_name]
+            assert callee_op.species.startswith('op: concrete method:')
 
             # XXX If PR #955 is accepted, that will change things around here.
 
@@ -10865,8 +10813,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert 0, expr.source_text()
 
             callee_op_name = '::' + low_word.source_text()
-            callee_op = operation_named_[callee_op_name]
-            assert callee_op.kind == 'numeric method'
+            callee_op = spec.alg_info_['op'][callee_op_name]
+            assert callee_op.species == 'op: numeric method'
             assert len(callee_op.headers) == 2
 
             for header in callee_op.headers:
@@ -11039,8 +10987,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             # ---------------
 
             else:
-                callee_op = operation_named_[callee_op_name]
-                if callee_op.kind == 'syntax-directed operation':
+                callee_op = spec.alg_info_['op'][callee_op_name]
+                if callee_op.species == 'op: syntax-directed':
                     add_pass_error(
                         expr,
                         "Unusual to invoke a SDO via prefix-paren notation: " + expr.source_text()
@@ -11048,7 +10996,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.kind in ['abstract operation', 'host-defined abstract operation']
+                    assert callee_op.species in ['op: solo', 'op: host-defined'], callee_op.species
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
@@ -14945,16 +14893,16 @@ def exes_in_exlist(exlist):
     return exes
 
 def tc_ao_invocation(callee_op_name, args, expr, env0):
-    callee_op = operation_named_[callee_op_name]
-    assert callee_op.kind == 'abstract operation'
+    callee_op = spec.alg_info_['op'][callee_op_name]
+    assert callee_op.species == 'op: solo'
     params = callee_op.parameters_with_types
     env1 = tc_args(params, args, env0, expr)
     return_type = callee_op.return_type
     return (return_type, env1)
 
 def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
-    op = operation_named_[op_name]
-    assert op.kind == 'syntax-directed operation'
+    op = spec.alg_info_['op'][op_name]
+    assert op.species == 'op: syntax-directed'
 
     env1 = env0.ensure_expr_is_of_type(main_arg, T_Parse_Node)
     # XXX expectation should be specific to what the callee accepts

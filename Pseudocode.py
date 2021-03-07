@@ -1588,6 +1588,7 @@ class Alg:
         self.invocations = []
         self.callees = set()
         self.callers = set()
+        self.headers = []
 
     def __str__(self):
         return f"{self.bif_or_op}: {self.name}"
