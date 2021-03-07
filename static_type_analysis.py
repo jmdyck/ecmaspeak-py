@@ -2470,7 +2470,15 @@ def compute_dependency_levels():
     # Analyze the definition(s) of each named operation to find its dependencies.
     dep_graph = Graph()
     for (_, alg) in alg_items:
-        find_dependencies(alg, dep_graph)
+        dep_graph.add_vertex(alg)
+
+        for callee in sorted(alg.callees):
+            if alg.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
+            if callee not in spec.alg_info_['op']:
+                print("unknown operation:", callee)
+            else:
+                callee_alg = spec.alg_info_['op'][callee]
+                dep_graph.add_arc(alg, callee_alg)
 
     f = shared.open_for_output('deps')
     dep_graph.print_arcs(file=f)
@@ -2528,17 +2536,6 @@ def summarize_headers(alg):
             for i in range(n_params)
         ]
         alg.return_type = union_of_types(return_types)
-
-def find_dependencies(alg, dep_graph):
-    dep_graph.add_vertex(alg)
-
-    for callee in sorted(alg.callees):
-        if alg.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
-        if callee not in spec.alg_info_['op']:
-            print("unknown operation:", callee)
-        else:
-            callee_alg = spec.alg_info_['op'][callee]
-            dep_graph.add_arc(alg, callee_alg)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
