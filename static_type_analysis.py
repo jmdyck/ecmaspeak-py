@@ -653,7 +653,7 @@ def declare_sdo(op_name, param_dict, also=[]):
         oi.finish_initialization()
         spec.oi_for_sdo_[op_name] = oi
 
-        op_info = spec.info_for_op_named_[op_name]
+        op_info = spec.alg_info_['op'][op_name]
         assert op_info.name == op_name
         assert op_info.kind == 'op: syntax-directed'
         for alg_defn in op_info.definitions:
@@ -2559,9 +2559,9 @@ class Operation:
             'CallConstruct',
             'accessor property',
         ]:
-            d = spec.info_for_bif_named_
+            d = spec.alg_info_['bif']
         else:
-            d = spec.info_for_op_named_
+            d = spec.alg_info_['op']
 
         dep_graph.add_vertex(self.name)
 

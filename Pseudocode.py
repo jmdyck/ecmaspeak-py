@@ -1573,8 +1573,7 @@ def exes_in_exlist(exlist):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-spec.info_for_op_named_ = {}
-spec.info_for_bif_named_ = {}
+spec.alg_info_ = { 'bif': {}, 'op': {} }
 # These need to be separate because Set() is both
 # an abstract operation and a built-in function.
 
@@ -1590,10 +1589,8 @@ class Alg:
         self.callers = set()
 
 def ensure_alg(alg_kind, alg_name):
-    if alg_kind.startswith('bif'):
-        iffn = spec.info_for_bif_named_
-    else:
-        iffn = spec.info_for_op_named_
+    bif_or_op = 'bif' if alg_kind.startswith('bif:') else 'op'
+    iffn = spec.alg_info_[bif_or_op]
 
     if alg_name in iffn:
         alg_info = iffn[alg_name]
@@ -1680,9 +1677,9 @@ def analyze_static_dependencies():
     # Find and print all the static dependencies:
 
     for (alg_name, alg_info) in (
-        sorted(spec.info_for_op_named_.items())
+        sorted(spec.alg_info_['op'].items())
         +
-        sorted(spec.info_for_bif_named_.items())
+        sorted(spec.alg_info_['bif'].items())
     ):
         for alg_defn in alg_info.definitions:
             alg_defn.callees = set()
@@ -1693,10 +1690,10 @@ def analyze_static_dependencies():
                         (callee_names, args) = d._op_invocation
                         for callee_name in callee_names:
                             alg_defn.callees.add(callee_name)
-                            if callee_name in spec.info_for_op_named_:
-                                spec.info_for_op_named_[callee_name].invocations.append(d)
+                            if callee_name in spec.alg_info_['op']:
+                                spec.alg_info_['op'][callee_name].invocations.append(d)
                             else:
-                                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.section.section_num})")
+                                stderr(f"spec.alg_info_['op'] has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.section.section_num})")
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         assert alg_name == 'Early Errors'
                         # "... and the following algorithm evaluates to *true*: ..."
@@ -1712,10 +1709,10 @@ def analyze_static_dependencies():
             put('  ', callee)
 
         for callee_name in alg_info.callees:
-            if callee_name in spec.info_for_op_named_:
-                spec.info_for_op_named_[callee_name].callers.add(alg_name)
+            if callee_name in spec.alg_info_['op']:
+                spec.alg_info_['op'][callee_name].callers.add(alg_name)
             else:
-                stderr(f"spec.info_for_op_named_ has no entry for {callee_name!r} ({alg_name} calls it)")
+                stderr(f"spec.alg_info_['op'] has no entry for {callee_name!r} ({alg_name} calls it)")
 
     # ----------------------------------------------------
 
@@ -1730,10 +1727,10 @@ def analyze_static_dependencies():
             # No point in continuing.
             return
         # put('  '*level, op_name)
-        if op_name not in spec.info_for_op_named_:
+        if op_name not in spec.alg_info_['op']:
             op_names_with_no_info.add(op_name)
             return
-        op_info = spec.info_for_op_named_[op_name]
+        op_info = spec.alg_info_['op'][op_name]
         if hasattr(op_info, '_reached'): return
         op_info._reached = True
         for callee_name in sorted(list(op_info.callees)):
@@ -1767,7 +1764,7 @@ def analyze_static_dependencies():
     #
     reach_op('Data Races', 0)
 
-    for (bif_name, bif_info) in sorted(spec.info_for_bif_named_.items()):
+    for (bif_name, bif_info) in sorted(spec.alg_info_['bif'].items()):
         # put(bif_name)
         for callee in sorted(bif_info.callees):
             reach_op(callee, 1)
@@ -1786,7 +1783,7 @@ def analyze_static_dependencies():
 
     put()
     put('operations declared but not reached:')
-    for (op_name, op_info) in sorted(spec.info_for_op_named_.items()):
+    for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
         if not hasattr(op_info, '_reached'):
             put(f"    {op_name}")
 
@@ -1859,7 +1856,7 @@ def analyze_static_dependencies():
             if op_name in op_names_reached_from_ss_starting_points:
                 return
             op_names_reached_from_ss_starting_points.add(op_name)
-            op_info = spec.info_for_op_named_[op_name]
+            op_info = spec.alg_info_['op'][op_name]
             for callee_name in sorted(list(op_info.callees)):
                 if op_name == 'ToString' and callee_name in ['ToPrimitive', 'ToString']:
                     # These calls only happen for an Object argument,
@@ -1901,7 +1898,7 @@ def analyze_static_dependencies():
     ss_calls_non = []
     non_calls_ss = []
 
-    for (op_name, op_info) in sorted(spec.info_for_op_named_.items()):
+    for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
         caller_is_ss = op_name in op_names_labelled_ss
         for callee_name in sorted(op_info.callees):
             callee_is_ss = callee_name in op_names_labelled_ss
@@ -1961,7 +1958,7 @@ def analyze_static_dependencies():
 
     # First, find the ops that directly look runtimey.
     ops_that_look_runtimey = set()
-    for (op_name, op_info) in sorted(spec.info_for_op_named_.items()):
+    for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
         for op_defn in op_info.definitions:
             def recurse(anode):
                 for d in anode.each_descendant_or_self():
@@ -1977,9 +1974,9 @@ def analyze_static_dependencies():
     while True:
         next_ops_that_look_runtimey = ops_that_look_runtimey.copy()
         for op_name in ops_that_look_runtimey:
-            op_info = spec.info_for_op_named_[op_name]
+            op_info = spec.alg_info_['op'][op_name]
             for caller in op_info.callers:
-                if caller in spec.info_for_op_named_:
+                if caller in spec.alg_info_['op']:
                     next_ops_that_look_runtimey.add(caller)
         if next_ops_that_look_runtimey == ops_that_look_runtimey:
             # fixed point
@@ -1987,7 +1984,7 @@ def analyze_static_dependencies():
         ops_that_look_runtimey = next_ops_that_look_runtimey
 
     ops_that_dont_look_runtimey = (
-        set(spec.info_for_op_named_.keys())
+        set(spec.alg_info_['op'].keys())
         -
         ops_that_look_runtimey
     )
@@ -2017,7 +2014,7 @@ def check_sdo_coverage():
     spec.sdo_coverage_map = {}
 
     # collect sdo_coverage_info:
-    for (op_name, op_info) in spec.info_for_op_named_.items():
+    for (op_name, op_info) in spec.alg_info_['op'].items():
         if op_info.kind in ['op: syntax-directed', 'op: early error']:
 
             assert op_name not in spec.sdo_coverage_map
@@ -2102,7 +2099,7 @@ def analyze_sdo_coverage_info():
             # or might indicate that the code below has missed some invocations)
 
             nt_set = set()
-            for opcall in spec.info_for_op_named_[sdo_name].invocations:
+            for opcall in spec.alg_info_['op'][sdo_name].invocations:
                 # opcall.printTree()
                 (callee_names, args) = opcall._op_invocation
                 assert sdo_name in callee_names
