@@ -2664,6 +2664,17 @@ class AlgHeader:
         if self.return_nature_abrupt is None:
             self.return_nature_abrupt = 'TBD'
 
+        # -------------------------
+
+        if self.kind in ['function property', 'accessor property', 'anonymous built-in function']:
+            bif_or_op = 'bif'
+        else:
+            bif_or_op = 'op'
+        alg = spec.alg_info_[bif_or_op][self.name]
+        alg.headers.append(self)
+
+    # --------------------------------------------------------------------------
+
     def prep_for_STA(self):
 
         self.param_tipes = OrderedDict()
@@ -2814,15 +2825,6 @@ class AlgHeader:
             ], alg_defn.anode.prod.lhs_s
 
             self.t_defns.append((discriminator,alg_defn.anode))
-
-        # -------------------------
-
-        if self.kind in ['function property', 'accessor property', 'anonymous built-in function']:
-            bif_or_op = 'bif'
-        else:
-            bif_or_op = 'op'
-        alg = spec.alg_info_[bif_or_op][self.name]
-        alg.headers.append(self)
 
     # ------------------------------------------------------
 
