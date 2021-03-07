@@ -2463,12 +2463,12 @@ def compute_dependency_levels():
     stderr('analyzing dependencies...')
 
     for op in operation_named_.values():
-        op.summarize_headers()
+        summarize_headers(op)
 
     # Analyze the definition(s) of each named operation to find its dependencies.
     dep_graph = Graph()
     for (op_name, op) in sorted(operation_named_.items()):
-        op.find_dependencies(dep_graph)
+        find_dependencies(op, dep_graph)
 
     f = shared.open_for_output('deps')
     dep_graph.print_arcs(file=f)
@@ -2521,59 +2521,59 @@ class Operation:
         self.headers = []
         self.return_type = None
 
-    def summarize_headers(self):
-        assert len(self.headers) > 0
-        if len(self.headers) == 1:
-            [header] = self.headers
-            self.parameters_with_types = header.parameter_types.items()
-            self.return_type = header.return_type
+def summarize_headers(self):
+    assert len(self.headers) > 0
+    if len(self.headers) == 1:
+        [header] = self.headers
+        self.parameters_with_types = header.parameter_types.items()
+        self.return_type = header.return_type
 
-        else:
-            assert self.kind in ['concrete method', 'internal method', 'numeric method']
-            n_params = len(self.headers[0].parameter_types)
-            assert all(len(header.parameter_types) == n_params for header in self.headers)
+    else:
+        assert self.kind in ['concrete method', 'internal method', 'numeric method']
+        n_params = len(self.headers[0].parameter_types)
+        assert all(len(header.parameter_types) == n_params for header in self.headers)
 
-            param_names_ = [set() for i in range(n_params)]
-            param_types_ = [set() for i in range(n_params)]
-            return_types = set()
-            for header in self.headers:
-                for (i, (param_name, param_type)) in enumerate(header.parameter_types.items()):
-                    param_names_[i].add(param_name)
-                    param_types_[i].add(param_type)
-                return_types.add(header.return_type)
+        param_names_ = [set() for i in range(n_params)]
+        param_types_ = [set() for i in range(n_params)]
+        return_types = set()
+        for header in self.headers:
+            for (i, (param_name, param_type)) in enumerate(header.parameter_types.items()):
+                param_names_[i].add(param_name)
+                param_types_[i].add(param_type)
+            return_types.add(header.return_type)
 
-            self.parameters_with_types = [
-                (
-                    '|'.join(sorted(list(param_names_[i])))
-                ,
-                    union_of_types(param_types_[i])
-                )
-                for i in range(n_params)
-            ]
-            self.return_type = union_of_types(return_types)
+        self.parameters_with_types = [
+            (
+                '|'.join(sorted(list(param_names_[i])))
+            ,
+                union_of_types(param_types_[i])
+            )
+            for i in range(n_params)
+        ]
+        self.return_type = union_of_types(return_types)
 
-    def find_dependencies(self, dep_graph):
-        if self.kind in [
-            'function property',
-            'anonymous built-in function',
-            'CallConstruct',
-            'accessor property',
-        ]:
-            d = spec.alg_info_['bif']
-        else:
-            d = spec.alg_info_['op']
+def find_dependencies(self, dep_graph):
+    if self.kind in [
+        'function property',
+        'anonymous built-in function',
+        'CallConstruct',
+        'accessor property',
+    ]:
+        d = spec.alg_info_['bif']
+    else:
+        d = spec.alg_info_['op']
 
-        dep_graph.add_vertex(self.name)
+    dep_graph.add_vertex(self.name)
 
-        if self.name == 'built-in Set':
-            name_for_spec_info = 'Set'
-        else:
-            name_for_spec_info = self.name
+    if self.name == 'built-in Set':
+        name_for_spec_info = 'Set'
+    else:
+        name_for_spec_info = self.name
 
-        alg_info = d[name_for_spec_info]
-        for callee in sorted(alg_info.callees):
-            if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
-            dep_graph.add_arc(self.name, callee)
+    alg_info = d[name_for_spec_info]
+    for callee in sorted(alg_info.callees):
+        if self.name in ['ToNumber', 'ToString'] and callee in ['ToPrimitive']: continue # XXX for now
+        dep_graph.add_arc(self.name, callee)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -5341,7 +5341,7 @@ def tc_operation(op_name):
         if c: any_change = True
     
     if any_change:
-        op.summarize_headers()
+        summarize_headers(op)
 
     if trace_this_op:
         pass
