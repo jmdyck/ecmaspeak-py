@@ -511,7 +511,7 @@ def create_operation_info_for_section(s):
         else:
             # The op is *not* the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
-            hoi = Header()
+            hoi = AlgHeader()
             if s.section_title.startswith('MakeArgGetter'):
                 pass
             elif s.section_title.startswith('MakeArgSetter'):
@@ -633,7 +633,7 @@ regexp_also = [
 spec.oi_for_sdo_ = {}
 
 def declare_sdo(op_name, param_dict, also=[]):
-    oi = Header()
+    oi = AlgHeader()
     oi.kind = 'syntax-directed operation'
     oi.name = op_name
     oi.for_phrase = 'Parse Node'
@@ -1136,7 +1136,7 @@ class PreambleInfoHolder:
     def convert_to_header(self):
         self._dedupe()
 
-        poi = Header()
+        poi = AlgHeader()
 
         def join_field_values(key, joiner = ' & '):
             values = self.fields[key]
@@ -1563,7 +1563,7 @@ def add_to_description(oi, sentence):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_heading(section):
-    oi = Header()
+    oi = AlgHeader()
 
     if section.section_kind in [
         'catchall',
@@ -1844,7 +1844,7 @@ def resolve_oi(hoi, poi):
         # no preamble, so just use info from heading
         return hoi
 
-    oi = Header()
+    oi = AlgHeader()
 
     # kind
     if hoi.kind is None and poi.kind is None:
@@ -2380,7 +2380,7 @@ def prep_for_STA():
     # headers for everything else:
     for line_info in spec.info_for_line_[1:]:
         for after_thing in line_info.afters:
-            if isinstance(after_thing, Header):
+            if isinstance(after_thing, AlgHeader):
                 after_thing.prep_for_STA()
         line_info.msgs = []
 
@@ -2580,7 +2580,7 @@ class Operation:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class Header:
+class AlgHeader:
     def __init__(self):
         self.kind = None
         self.name = None
@@ -2875,7 +2875,7 @@ class Header:
 
     def __repr__(self):
         return f"""
-            Header:
+            AlgHeader:
                 name: {self.name}
                 kind: {self.kind}
                 for : {self.for_param_type}
