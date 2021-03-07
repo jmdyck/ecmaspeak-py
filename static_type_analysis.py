@@ -2565,11 +2565,7 @@ class Operation:
 
         dep_graph.add_vertex(self.name)
 
-        if self.name.startswith('<'):
-            mo = re.fullmatch(r'<dfn [^<>]+>([^<>]+)</dfn>', self.name)
-            assert mo
-            name_for_spec_info = mo.group(1)
-        elif self.name == 'built-in Set':
+        if self.name == 'built-in Set':
             name_for_spec_info = 'Set'
         else:
             name_for_spec_info = self.name
@@ -2598,6 +2594,12 @@ class AlgHeader:
         self.line_num = None
 
     def finish_initialization(self):
+
+        self.name_w_markup = self.name
+        if self.name.startswith('<'):
+            mo = re.fullmatch(r'<dfn [^<>]+>([^<>]+)</dfn>', self.name)
+            assert mo
+            self.name = mo.group(1)
 
         # ------------------------------------------------------------
 
@@ -2853,10 +2855,6 @@ class AlgHeader:
         if self.name == 'Set' and self.kind == 'function property':
             name_for_op_dict = 'built-in Set'
             # so that it doesn't collide with the abstract operation 'Set'
-        elif self.name.startswith('<'):
-            mo = re.fullmatch(r'<dfn [^<>]+>([^<>]+)</dfn>', self.name)
-            assert mo
-            name_for_op_dict = mo.group(1)
         else:
             name_for_op_dict = self.name
 
@@ -2905,7 +2903,7 @@ class AlgHeader:
         pwi(f"  <dd>{self.kind}</dd>")
         pwi()
         pwi(f"  <dt>name</dt>")
-        pwi(f"  <dd>{self.name}</dd>")
+        pwi(f"  <dd>{self.name_w_markup}</dd>")
 
         if self.for_phrase:
             pwi()
