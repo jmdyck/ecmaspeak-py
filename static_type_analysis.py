@@ -92,8 +92,6 @@ class NewStyling:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def make_initial_headers():
-    global un_f
-    un_f = shared.open_for_output('unconverted_natures')
     global oh_inc_f
     oh_inc_f = shared.open_for_output('oh_warnings')
 
@@ -105,7 +103,6 @@ def make_initial_headers():
 
     note_unused_rules()
 
-    un_f.close()
     oh_inc_f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2373,6 +2370,9 @@ def sub_many(subject, pattern_repls):
 def prep_for_STA():
     stderr('prep_for_STA ...')
 
+    global un_f
+    un_f = shared.open_for_output('unconverted_natures')
+
     # headers for SDOs:
     for header in spec.oi_for_sdo_.values():
         header.prep_for_STA()
@@ -2384,6 +2384,7 @@ def prep_for_STA():
                 after_thing.prep_for_STA()
         line_info.msgs = []
 
+    un_f.close()
     print_unused_type_tweaks()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2687,6 +2688,17 @@ class AlgHeader:
                         nature = 'an ECMAScript language value'
                     self.param_nature_[param_name] = nature
 
+        if self.return_nature_normal is None:
+            if self.name.startswith('Math.'):
+                self.return_nature_normal = 'a Number'
+            else:
+                self.return_nature_normal = 'TBD'
+
+        if self.return_nature_abrupt is None:
+            self.return_nature_abrupt = 'TBD'
+
+    def prep_for_STA(self):
+
         self.param_tipes = OrderedDict()
         for param_name in self.param_names:
             optionality = '(optional) ' if param_name in self.optional_params else ''
@@ -2701,19 +2713,8 @@ class AlgHeader:
 
             self.param_tipes[param_name] = param_tipe
 
-        if self.return_nature_normal is None:
-            if self.name.startswith('Math.'):
-                self.return_nature_normal = 'a Number'
-            else:
-                self.return_nature_normal = 'TBD'
-
-        if self.return_nature_abrupt is None:
-            self.return_nature_abrupt = 'TBD'
-
         self.return_tipe_normal = convert_nature_to_tipe(self.return_nature_normal)
         self.return_tipe_abrupt = convert_nature_to_tipe(self.return_nature_abrupt)
-
-    def prep_for_STA(self):
 
         if self.for_phrase is None:
             self.for_param_type = None

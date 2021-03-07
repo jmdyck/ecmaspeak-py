@@ -110,11 +110,11 @@ gdiff -R _master/ref.index.html _master/\index.html
 
 # Optional, if you only want to see the initial headers,
 # without waiting for the whole static type analysis:
-D=_`gcbn` && $EK/static_type_analysis.py -just_initial_headers $D && car -d $D oh_warnings unconverted_natures spec_w_eoh
+D=_`gcbn` && $EK/static_type_analysis.py -just_initial_headers $D && car -d $D oh_warnings spec_w_eoh
 # (~ 2s)
 
 D=_`gcbn` && $EK/static_type_analysis.py $D
-D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D oh_warnings unconverted_natures spec_w_eoh deps spec_w_errors spec_w_edits sta_misc
+D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D oh_warnings spec_w_eoh unconverted_natures deps spec_w_errors spec_w_edits sta_misc
 # (~ 23s)
 	# split_types
 
