@@ -12,7 +12,7 @@ from itertools import zip_longest
 from pprint import pprint
 
 import shared, HTML
-from shared import stderr, spec, RE
+from shared import stderr, spec, RE, DL
 from Pseudocode_Parser import ANode
 from Graph import Graph
 
@@ -2843,67 +2843,46 @@ class AlgHeader:
     def lines(self, indentation, mode):
         assert mode in ['dls w initial info', 'messages in algs and dls', 'dls w revised info']
 
-        ind = ' ' * indentation
-        lines = []
-        def pwi(s=''): # put-with-indentation
-            lines.append('' if s == '' else ind + s)
+        _ = DL(indentation)
 
         # ---------------------------------------
 
-        pwi(f"<dl class='header'>")
-        pwi()
-        pwi(f"  <dt>op kind</dt>")
-        pwi(f"  <dd>{self.kind}</dd>")
-        pwi()
-        pwi(f"  <dt>name</dt>")
-        pwi(f"  <dd>{self.name_w_markup}</dd>")
+        _.start()
+        _.dt("op kind")
+        _.dd(self.kind)
+        _.dt("name")
+        _.dd(self.name_w_markup)
 
         if self.for_phrase:
-            pwi()
-            pwi(f"  <dt>for</dt>")
-            pwi(f"  <dd>{self.for_phrase}</dd>")
-
-        kludge = None
+            _.dt("for")
+            _.dd(self.for_phrase)
 
         # ---------------------------------------
-        def put_prefix_and_type(prefix, ptype):
-            nonlocal kludge
+        def put_name_and_type(name, ptype):
             if ptype == T_0:
                 if mode == 'messages in algs and dls':
-                    pwi(f"      <li>{prefix} : TBD</li>")
-                    kludge = 3
+                    _.dd_ul_li(name, "TBD")
                 else:
                     # show nothing
                     pass
             else:
-                s = ptype.unparse()
-                pwi(f"      <li>{prefix} : {s}</li>")
-                kludge = len(s)
+                _.dd_ul_li(name, ptype.unparse())
         # ---------------------------------------
 
         assert self.param_names is not None
         if len(self.param_names) == 0:
-            pwi()
-            pwi(f"  <dt>parameters</dt>")
-            pwi(f"  <dd>none</dd>")
+            _.dt("parameters")
+            _.dd("none")
 
         else:
-            pwi()
-            pwi(f"  <dt>parameters</dt>")
-            pwi(f"  <dd>")
-            pwi(f"    <ul>")
-
-            pn_max_width = max(
-                len(param_name)
-                for param_name in self.param_names
-            )
+            _.dt("parameters")
+            _.dd_ul_start(self.param_names)
 
             if mode == 'dls w initial info':
                 for param_name in self.param_names:
-                    prefix = param_name.ljust(pn_max_width)
                     optionality = '(optional) ' if param_name in self.optional_params else ''
                     param_nature = self.param_nature_.get(param_name, 'TBD')
-                    pwi(f"      <li>{prefix} : {optionality}{param_nature}</li>")
+                    _.dd_ul_li(param_name, optionality + param_nature)
 
             else:
                 if mode == 'messages in algs and dls':
@@ -2912,7 +2891,7 @@ class AlgHeader:
                     params = self.parameter_types
 
                 for (pn, pt) in params.items():
-                    put_prefix_and_type(pn.ljust(pn_max_width), pt)
+                    put_name_and_type(pn, pt)
 
                     # XXX Cases where operation_headers types the parameter as 'MathNonNegativeInteger_',
                     # but then that gets translated to 'Integer',
@@ -2928,43 +2907,33 @@ class AlgHeader:
                         p_node = self.fake_node_for_[pn]
                         if hasattr(p_node, 'errors'):
                             for msg in p_node.errors:
-                                lines.append('-' * (indentation + 6 + 4 + pn_max_width + 3) + '^' * kludge)
-                                lines.append('>>> ' + msg)
-                                lines.append('')
+                                _.dd_ul_li_comment(msg)
 
-            pwi(f"    </ul>")
-            pwi(f"  </dd>")
+            _.dd_ul_end()
 
         # -------------------------
 
         if self.also:
-            pwi()
-            pwi(f"  <dt>also has access to</dt>")
-            pwi(f"  <dd>")
-            pwi(f"    <ul>")
-
-            max_width = max(len(var_name) for (var_name,_) in self.also)
+            _.dt("also has access to")
+            _.dd_ul_start(var_name for (var_name,_) in self.also)
 
             if mode == 'dls w initial info':
                 for (var_name, expl) in self.also:
-                    pwi(f"      <li>{var_name: <{max_width}} : {expl}</li>")
+                    _.dd_ul_li(var_name, expl)
             else:
                 for (var_name, vt) in self.typed_alsos.items():
-                    pwi(f"      <li>{var_name: <{max_width}} : {vt}</li>")
+                    _.dd_ul_li(var_name, vt)
 
-            pwi(f"    </ul>")
-            pwi(f"  </dd>")
+            _.dd_ul_end()
 
         # -------------------------
 
-        pwi()
-        pwi(f"  <dt>returns</dt>")
-        pwi(f"  <dd>")
-        pwi(f"    <ul>")
+        _.dt("returns")
+        _.dd_ul_start(["normal", "abrupt"])
 
         if mode == 'dls w initial info':
-            pwi(f"      <li>normal : {self.return_nature_normal}</li>")
-            pwi(f"      <li>abrupt : {self.return_nature_abrupt}</li>")
+            _.dd_ul_li("normal", self.return_nature_normal)
+            _.dd_ul_li("abrupt", self.return_nature_abrupt)
 
         else:
             if mode == 'messages in algs and dls':
@@ -2978,25 +2947,21 @@ class AlgHeader:
             else:
                 (abrupt_part, normal_part) = rt.split_by(T_Abrupt)
 
-            put_prefix_and_type('normal', normal_part)
-            put_prefix_and_type('abrupt', abrupt_part)
+            put_name_and_type('normal', normal_part)
+            put_name_and_type('abrupt', abrupt_part)
 
             if mode == 'messages in algs and dls':
                 p_node = self.fake_node_for_['*return*']
                 if hasattr(p_node, 'errors'):
                     for msg in p_node.errors:
-                        lines.append('-' * (indentation + 6 + 4 + 6 + 3) + '^' * kludge)
-                        lines.append('>>> ' + msg)
-                        lines.append('')
+                        _.dd_ul_li_comment(msg)
 
-        pwi(f"    </ul>")
-        pwi(f"  </dd>")
+        _.dd_ul_end()
 
         # -------------------------
 
         if self.description:
-            pwi()
-            pwi(f"  <dt>description</dt>")
+            _.dt("description")
             assert isinstance(self.description, list)
             assert len(self.description) > 0
             desc = ' '.join(self.description)
@@ -3006,11 +2971,11 @@ class AlgHeader:
                 .replace('!OP', 'This operation')
                 .replace('!FUNC', 'This function')
             )
-            pwi(f"  <dd>{desc}</dd>")
+            _.dd(desc)
 
             # if len(self.description) > 1: make separate <p> elements?
 
-        pwi(f"</dl>")
+        lines = _.end()
 
         return lines
 

@@ -218,6 +218,71 @@ def write_spec_with_replacements(base, replacements):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+class DL:
+    # A utility for creating <dl> elements
+    # (of the particular kind that static_type_analysis generates).
+
+    def __init__(self, indentation):
+        self.indentation = indentation
+        self.lines = []
+        self.expecting = '<dl>'
+
+    def start(self):
+        assert self.expecting == '<dl>'
+        self._pwi(f"<dl class='header'>")
+        self.expecting = '<dt>'
+
+    def dt(self, dt_content):
+        assert self.expecting == '<dt>'
+        self._pwi('')
+        self._pwi(f"  <dt>{dt_content}</dt>")
+        self.expecting = '<dd>'
+
+    def dd(self, dd_content):
+        assert self.expecting == '<dd>'
+        self._pwi(f"  <dd>{dd_content}</dd>")
+        self.expecting = '<dt>'
+
+    def dd_ul_start(self, lefts):
+        assert self.expecting == '<dd>'
+        self._pwi(f"  <dd>")
+        self._pwi(f"    <ul>")
+        self.expecting = '<li>'
+        self.left_max_width = max(len(left) for left in lefts)
+
+    def dd_ul_li(self, left, right):
+        assert self.expecting == '<li>'
+        padded_left = left.ljust(self.left_max_width)
+        self._pwi(f"      <li>{padded_left} : {right}</li>")
+        self.latest_right_len = len(right)
+
+    def dd_ul_li_comment(self, msg):
+        assert self.expecting == '<li>'
+        # We assume it's always a comment on the 'right' part.
+        lead_up = self.indentation + 6 + 4 + self.left_max_width + 3
+        # 6 for extra indentation, 4 for "<li>", 3 for " : "
+        self.lines.append('-' * lead_up + '^' * self.latest_right_len)
+        self.lines.append('>>> ' + msg)
+        self.lines.append('')
+
+    def dd_ul_end(self):
+        assert self.expecting == '<li>'
+        self._pwi(f"    </ul>")
+        self._pwi(f"  </dd>")
+        self.expecting = '<dt>'
+
+    def end(self):
+        assert self.expecting == '<dt>'
+        self._pwi(f"</dl>")
+        self.expecting = None
+        return self.lines
+
+    def _pwi(self, s): # put-with-indentation
+        ind_str = ' ' * self.indentation
+        self.lines.append('' if s == '' else ind_str + s)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 class rem: # re with a memory
 
     def _init__(self):
