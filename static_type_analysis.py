@@ -69,6 +69,7 @@ class LineInfo:
         self.indentation = indentation
         self.suppress = False
         self.afters = []
+        self.targeted_msgs = []
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2382,7 +2383,6 @@ def prep_for_STA():
         for after_thing in line_info.afters:
             if isinstance(after_thing, AlgHeader):
                 after_thing.prep_for_STA()
-        line_info.msgs = []
 
     un_f.close()
     print_unused_type_tweaks()
@@ -5160,7 +5160,7 @@ def install_error(anode, msg):
         else:
             stderr("Node spans multiple lines: (%d,%d) to (%d,%d)" % (sl,sc,el,ec))
             thing = (0, ec, msg)
-        spec.info_for_line_[el].msgs.append(thing)
+        spec.info_for_line_[el].targeted_msgs.append(thing)
 
 # ------------------------------------------------------------------------------
 
@@ -5197,7 +5197,7 @@ def write_modified_spec(mode = 'messages in algs and dls'):
             # show any messages relating to that anode.
 
             # For things on the same line, secondary sort by *end*-column.
-            for (sc,ec,msg) in sorted(line_info.msgs, key=lambda t: t[1]):
+            for (sc,ec,msg) in sorted(line_info.targeted_msgs, key=lambda t: t[1]):
                 caret_line = '-' * (sc-1) + '^' * (ec-sc)
                 print(caret_line, file=f)
                 print('>>> ' + msg, file=f)
