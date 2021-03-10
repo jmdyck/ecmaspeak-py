@@ -2374,15 +2374,10 @@ def prep_for_STA():
     global un_f
     un_f = shared.open_for_output('unconverted_natures')
 
-    # headers for SDOs:
-    for header in spec.oi_for_sdo_.values():
-        header.prep_for_STA()
-
-    # headers for everything else:
-    for line_info in spec.info_for_line_[1:]:
-        for after_thing in line_info.afters:
-            if isinstance(after_thing, AlgHeader):
-                after_thing.prep_for_STA()
+    for bif_or_op in ['bif', 'op']:
+        for alg in spec.alg_info_[bif_or_op].values():
+            for header in alg.headers:
+                header.prep_for_STA()
 
     un_f.close()
     print_unused_type_tweaks()
