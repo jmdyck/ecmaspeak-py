@@ -115,6 +115,79 @@ def print_tree(root, prefix, f):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+# This isn't a good abstraction yet.
+
+class LineInfo:
+    def __init__(self, line_num, start_posn, end_posn, indentation):
+        self.line_num = line_num
+        self.start_posn = start_posn
+        self.end_posn = end_posn
+        self.indentation = indentation
+        self.suppress = False
+        self.afters = []
+        self.targeted_msgs = []
+
+def prep_for_line_info():
+    stderr('prep_for_line_info ...')
+    ln = 0
+    spec.info_for_line_ = [None] # "line #0"
+    for mo in re.finditer('(?m)^( *).*$', spec.text):
+        (s,e) = mo.span()
+
+        # If `spec.text` ends with a newline,
+        # then the pattern will match immediately after that newline,
+        # but we don't want a line for that.
+        if s == e and s == len(spec.text):
+            break
+
+        i = len(mo.group(1))
+        ln += 1
+        spec.info_for_line_.append(LineInfo(ln, s, e, i))
+
+def put_targeted_msg(anode, msg):
+    # We *could* just attach {msg} to {anode},
+    # but then at each line, we'd need to get all the nodes
+    # that pertain to that line (i.e., end on it),
+    # and that'd be a pain?
+
+    (sl, sc) = convert_posn_to_linecol(anode.start_posn)
+    (el, ec) = convert_posn_to_linecol(anode.end_posn)
+    if sl == el:
+        thing = (sc, ec, msg)
+    else:
+        stderr("Node spans multiple lines: (%d,%d) to (%d,%d)" % (sl,sc,el,ec))
+        thing = (0, ec, msg)
+    spec.info_for_line_[el].targeted_msgs.append(thing)
+
+def write_spec_with_extras(mode, show_targeted_msgs, f):
+    for line_info in spec.info_for_line_[1:]:
+
+        if not line_info.suppress:
+            print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
+
+        if line_info.afters:
+            indentation = line_info.indentation
+            if indentation == 0:
+                # somewhat kludgey
+                indentation = spec.info_for_line_[line_info.line_num-1].indentation
+
+            for after_thing in line_info.afters:
+                for line in after_thing.lines(indentation, mode):
+                    print(line, file=f)
+
+        if show_targeted_msgs:
+            # For each anode that ends on this line,
+            # show any messages relating to that anode.
+
+            # For things on the same line, secondary sort by *end*-column.
+            for (sc,ec,msg) in sorted(line_info.targeted_msgs, key=lambda t: t[1]):
+                caret_line = '-' * (sc-1) + '^' * (ec-sc)
+                print(caret_line, file=f)
+                print('>>> ' + msg, file=f)
+                print(file=f)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 spec_text = None
 _newline_posns = None
 

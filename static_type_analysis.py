@@ -28,7 +28,7 @@ def main():
 
     shared.register_output_dir(outdir)
     spec.restore()
-    add_line_info()
+    shared.prep_for_line_info()
 
     add_styling()
     make_initial_headers()
@@ -40,37 +40,6 @@ def main():
     do_static_type_analysis(levels)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def add_line_info():
-    # This (or something like it) should maybe be pushed down to shared.py
-    # and used earlier/more.
-    stderr('add_line_info ...')
-    ln = 0
-    spec.info_for_line_ = [None] # "line #0"
-    for mo in re.finditer('(?m)^( *).*$', spec.text):
-        (s,e) = mo.span()
-
-        # If `spec.text` ends with a newline,
-        # then the pattern will match immediately after that newline,
-        # but we don't want a line for that.
-        if s == e and s == len(spec.text):
-            break
-
-        i = len(mo.group(1))
-        ln += 1
-        spec.info_for_line_.append(LineInfo(ln, s, e, i))
-
-class LineInfo:
-    def __init__(self, line_num, start_posn, end_posn, indentation):
-        self.line_num = line_num
-        self.start_posn = start_posn
-        self.end_posn = end_posn
-        self.indentation = indentation
-        self.suppress = False
-        self.afters = []
-        self.targeted_msgs = []
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def add_styling():
@@ -5142,25 +5111,14 @@ def install_error(anode, msg):
         anode.errors.append(msg)
     else:
         # It's a real node.
-        #
-        # We *could* just attach the msg to the node,
-        # but then at each line, we'd need to get all the nodes
-        # that pertain to that line (i.e., end on it),
-        # and that'd be a pain?
-
-        (sl, sc) = shared.convert_posn_to_linecol(anode.start_posn)
-        (el, ec) = shared.convert_posn_to_linecol(anode.end_posn)
-        if sl == el:
-            thing = (sc, ec, msg)
-        else:
-            stderr("Node spans multiple lines: (%d,%d) to (%d,%d)" % (sl,sc,el,ec))
-            thing = (0, ec, msg)
-        spec.info_for_line_[el].targeted_msgs.append(thing)
+        shared.put_targeted_msg(anode, msg)
 
 # ------------------------------------------------------------------------------
 
 def write_modified_spec(mode = 'messages in algs and dls'):
     assert mode in ['dls w initial info', 'messages in algs and dls', 'dls w revised info']
+
+    show_targeted_msgs = (mode == 'messages in algs and dls')
 
     if mode == 'dls w initial info':
         filename = 'spec_w_eoh'
@@ -5172,31 +5130,7 @@ def write_modified_spec(mode = 'messages in algs and dls'):
 
     f = shared.open_for_output(filename)
 
-    for line_info in spec.info_for_line_[1:]:
-
-        if not line_info.suppress:
-            print(spec.text[line_info.start_posn:line_info.end_posn], file=f)
-
-        if line_info.afters:
-            indentation = line_info.indentation
-            if indentation == 0:
-                # somewhat kludgey
-                indentation = spec.info_for_line_[line_info.line_num-1].indentation
-
-            for after_thing in line_info.afters:
-                for line in after_thing.lines(indentation, mode):
-                    print(line, file=f)
-
-        if mode == 'messages in algs and dls':
-            # For each anode that ends on this line,
-            # show any messages relating to that anode.
-
-            # For things on the same line, secondary sort by *end*-column.
-            for (sc,ec,msg) in sorted(line_info.targeted_msgs, key=lambda t: t[1]):
-                caret_line = '-' * (sc-1) + '^' * (ec-sc)
-                print(caret_line, file=f)
-                print('>>> ' + msg, file=f)
-                print(file=f)
+    shared.write_spec_with_extras(mode, show_targeted_msgs, f)
 
     f.close()
 
