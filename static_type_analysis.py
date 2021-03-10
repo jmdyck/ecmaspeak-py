@@ -4332,7 +4332,10 @@ def tc_nonvalue(anode, env0):
         # --------------------------------------------------
         # things from a large (possibly infinite) set, those that satisfy a condition:
 
-        elif each_thing.prod.rhs_s == r"{ITEM_NATURE} {var} such that {CONDITION}":
+        elif each_thing.prod.rhs_s in [
+            r"{ITEM_NATURE} {var} such that {CONDITION}",
+            r"{ITEM_NATURE} {var} such that {CONDITION}, in ascending order",
+        ]:
             [item_nature, loop_var, condition] = each_thing.children
             item_type = {
                 "FinalizationRegistry": T_FinalizationRegistry_object_,

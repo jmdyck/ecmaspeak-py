@@ -361,6 +361,7 @@
     property of the Global Object specified in clause {h_emu_xref}
     {ITEM_NATURE} {var} of {EX}
     {ITEM_NATURE} {var} such that {CONDITION}
+    {ITEM_NATURE} {var} such that {CONDITION}, in ascending order
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
 
