@@ -1152,7 +1152,7 @@ class PreambleInfoHolder:
 
         # Have to do this one "out of order"
         # because of possible calls to add_to_description(). 
-        poi.description = self.fields['desc']
+        poi.description_paras = self.fields['desc']
 
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
@@ -1506,8 +1506,7 @@ def add_to_description(oi, sentence):
 
     # stderr('atd>', oi.name, ':', sentence)
 
-    if oi.description is None:
-        oi.description = []
+    if oi.description_paras == []:
         desc = sub_many(sentence, [
             ('^OP is an ', 'an '),
             ('^OP,? ', ''),
@@ -1524,7 +1523,7 @@ def add_to_description(oi, sentence):
             (' OP ', ' this operation '),
             (' by performing the following steps:$', '.'),
         ])
-    oi.description.append(desc)
+    oi.description_paras.append(desc)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1922,8 +1921,8 @@ def resolve_oi(hoi, poi):
     assert hoi.return_nature_abrupt is None
     oi.return_nature_abrupt = poi.return_nature_abrupt
 
-    assert hoi.description is None
-    oi.description = poi.description
+    assert hoi.description_paras == []
+    oi.description_paras = poi.description_paras
 
     return oi
 
@@ -2515,7 +2514,7 @@ class AlgHeader:
         self.also = None
         self.return_nature_normal = None
         self.return_nature_abrupt = None
-        self.description = None
+        self.description_paras = []
         self.u_defns = []
         self.line_num = None
 
@@ -2924,11 +2923,11 @@ class AlgHeader:
 
         # -------------------------
 
-        if self.description:
+        if self.description_paras:
             _.dt("description")
-            assert isinstance(self.description, list)
-            assert len(self.description) > 0
-            desc = ' '.join(self.description)
+            assert isinstance(self.description_paras, list)
+            assert len(self.description_paras) > 0
+            desc = ' '.join(self.description_paras)
             desc = re.sub(r'^(!OP|!FUNC|!CM) ', '', desc)
             desc = re.sub(r'^(It|This operation|The job) ', '', desc)
             desc = (desc
@@ -2937,7 +2936,7 @@ class AlgHeader:
             )
             _.dd(desc)
 
-            # if len(self.description) > 1: make separate <p> elements?
+            # if len(self.description_paras) > 1: make separate <p> elements?
 
         lines = _.end()
 
