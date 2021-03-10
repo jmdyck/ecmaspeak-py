@@ -2626,6 +2626,19 @@ class AlgHeader:
 
         # -------------------------
 
+        assert isinstance(self.description_paras, list)
+        desc = ' '.join(self.description_paras)
+        desc = re.sub(r'^(!OP|!FUNC|!CM) ', '', desc)
+        desc = re.sub(r'^(It|This operation|The job) ', '', desc)
+        desc = (desc
+            .replace('!OP', 'This operation')
+            .replace('!FUNC', 'This function')
+        )
+        self.description = desc
+        # Alternatively: if len(self.description_paras) > 1: make separate <p> elements?
+
+        # -------------------------
+
         if self.kind in ['function property', 'accessor property', 'anonymous built-in function']:
             bif_or_op = 'bif'
         else:
@@ -2923,20 +2936,9 @@ class AlgHeader:
 
         # -------------------------
 
-        if self.description_paras:
+        if self.description:
             _.dt("description")
-            assert isinstance(self.description_paras, list)
-            assert len(self.description_paras) > 0
-            desc = ' '.join(self.description_paras)
-            desc = re.sub(r'^(!OP|!FUNC|!CM) ', '', desc)
-            desc = re.sub(r'^(It|This operation|The job) ', '', desc)
-            desc = (desc
-                .replace('!OP', 'This operation')
-                .replace('!FUNC', 'This function')
-            )
-            _.dd(desc)
-
-            # if len(self.description_paras) > 1: make separate <p> elements?
+            _.dd(self.description)
 
         lines = _.end()
 
