@@ -2345,7 +2345,7 @@ def prep_for_STA():
     for bif_or_op in ['bif', 'op']:
         for alg in spec.alg_info_[bif_or_op].values():
             for header in alg.headers:
-                header.prep_for_STA()
+                header.tah = TypedAlgHeader(header)
 
     un_f.close()
     print_unused_type_tweaks()
@@ -2473,22 +2473,22 @@ def summarize_headers(alg):
         print("no headers for", alg.species, alg.name)
     elif len(alg.headers) == 1:
         [header] = alg.headers
-        alg.parameters_with_types = header.parameter_types.items()
-        alg.return_type = header.return_type
+        alg.parameters_with_types = header.tah.parameter_types.items()
+        alg.return_type = header.tah.return_type
 
     else:
         assert alg.species in ['op: concrete method: env rec', 'op: internal method', 'op: numeric method'], alg.species
-        n_params = len(alg.headers[0].parameter_types)
-        assert all(len(header.parameter_types) == n_params for header in alg.headers)
+        n_params = len(alg.headers[0].tah.parameter_types)
+        assert all(len(header.tah.parameter_types) == n_params for header in alg.headers)
 
         param_names_ = [set() for i in range(n_params)]
         param_types_ = [set() for i in range(n_params)]
         return_types = set()
         for header in alg.headers:
-            for (i, (param_name, param_type)) in enumerate(header.parameter_types.items()):
+            for (i, (param_name, param_type)) in enumerate(header.tah.parameter_types.items()):
                 param_names_[i].add(param_name)
                 param_types_[i].add(param_type)
-            return_types.add(header.return_type)
+            return_types.add(header.tah.return_type)
 
         alg.parameters_with_types = [
             (
@@ -2517,6 +2517,25 @@ class AlgHeader:
         self.description_paras = []
         self.u_defns = []
         self.line_num = None
+
+    # --------------------------------------------------------------------------
+
+    def __str__(self):
+        return f"""
+            AlgHeader:
+                name: {self.name}
+                kind: {self.kind}
+                for : {self.for_phrase}
+                params: {', '.join(
+                    pn + ' : ' + self.param_nature_.get(pn, 'TBD')
+                    for pn in self.param_names
+                    )
+                }
+                returns: {self.return_nature_normal}
+                # defns: {len(self.u_defns)}
+        """
+
+    # --------------------------------------------------------------------------
 
     def finish_initialization(self):
 
@@ -2648,25 +2667,103 @@ class AlgHeader:
 
     # --------------------------------------------------------------------------
 
-    def prep_for_STA(self):
+    def lines(self, indentation, mode):
+        assert mode in ['dls w initial info', 'messages in algs and dls', 'dls w revised info']
+        if mode != 'dls w initial info':
+            # kludge
+            return self.tah.lines(indentation, mode)
+
+        _ = DL(indentation)
+
+        # ---------------------------------------
+
+        _.start()
+        _.dt("op kind")
+        _.dd(self.kind)
+        _.dt("name")
+        _.dd(self.name_w_markup)
+
+        if self.for_phrase:
+            _.dt("for")
+            _.dd(self.for_phrase)
+
+        assert self.param_names is not None
+        if len(self.param_names) == 0:
+            _.dt("parameters")
+            _.dd("none")
+
+        else:
+            _.dt("parameters")
+            _.dd_ul_start(self.param_names)
+
+            for param_name in self.param_names:
+                optionality = '(optional) ' if param_name in self.optional_params else ''
+                param_nature = self.param_nature_.get(param_name, 'TBD')
+                _.dd_ul_li(param_name, optionality + param_nature)
+
+            _.dd_ul_end()
+
+        # -------------------------
+
+        if self.also:
+            _.dt("also has access to")
+            _.dd_ul_start(var_name for (var_name,_) in self.also)
+
+            for (var_name, expl) in self.also:
+                _.dd_ul_li(var_name, expl)
+
+            _.dd_ul_end()
+
+        # -------------------------
+
+        _.dt("returns")
+        _.dd_ul_start(["normal", "abrupt"])
+
+        _.dd_ul_li("normal", self.return_nature_normal)
+        _.dd_ul_li("abrupt", self.return_nature_abrupt)
+
+        _.dd_ul_end()
+
+        # -------------------------
+
+        if self.description:
+            _.dt("description")
+            _.dd(self.description)
+
+        lines = _.end()
+
+        return lines
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class TypedAlgHeader:
+
+    def __init__(self, header):
+
+        self.kind = header.kind
+        self.name = header.name
+        self.name_w_markup = header.name_w_markup
+        self.param_names = header.param_names
+        self.description = header.description
 
         self.param_tipes = OrderedDict()
         for param_name in self.param_names:
-            optionality = '(optional) ' if param_name in self.optional_params else ''
+            optionality = '(optional) ' if param_name in header.optional_params else ''
 
-            if param_name in self.rest_params:
-                assert param_name not in self.optional_params
+            if param_name in header.rest_params:
+                assert param_name not in header.optional_params
 
-            nature = self.param_nature_.get(param_name, 'TBD')
+            nature = header.param_nature_.get(param_name, 'TBD')
             tipe = convert_nature_to_tipe(nature)
 
             param_tipe = optionality + tipe
 
             self.param_tipes[param_name] = param_tipe
 
-        self.return_tipe_normal = convert_nature_to_tipe(self.return_nature_normal)
-        self.return_tipe_abrupt = convert_nature_to_tipe(self.return_nature_abrupt)
+        self.return_tipe_normal = convert_nature_to_tipe(header.return_nature_normal)
+        self.return_tipe_abrupt = convert_nature_to_tipe(header.return_nature_abrupt)
 
+        self.for_phrase = header.for_phrase
         if self.for_phrase is None:
             self.for_param_type = None
             self.for_param_name = None
@@ -2705,12 +2802,12 @@ class AlgHeader:
 
         self.parameter_types = self.initial_parameter_types.copy()
 
-        if self.also is None:
+        if header.also is None:
             self.typed_alsos = {}
         else:
             self.typed_alsos = dict(
                 (pn, parse_type_string(ahat_[(pn, pt)]))
-                for (pn, pt) in self.also
+                for (pn, pt) in header.also
             )
 
         if self.return_tipe_normal == 'TBD' and self.return_tipe_abrupt == 'TBD':
@@ -2760,7 +2857,7 @@ class AlgHeader:
 
         self.t_defns = []
 
-        for alg_defn in self.u_defns:
+        for alg_defn in header.u_defns:
             if self.kind == 'syntax-directed operation':
                 discriminator = alg_defn.discriminator
             else:
@@ -2801,9 +2898,9 @@ class AlgHeader:
 
     # ------------------------------------------------------
 
-    def __repr__(self):
+    def __str__(self):
         return f"""
-            AlgHeader:
+            TypedAlgHeader:
                 name: {self.name}
                 kind: {self.kind}
                 for : {self.for_param_type}
@@ -2811,13 +2908,13 @@ class AlgHeader:
                     pn + ' : ' + str(pt)
                     for (pn, pt) in self.parameter_types.items())}
                 returns: {self.return_type}
-                # defns: {len(self.u_defns)}
+                # defns: {len(self.t_defns)}
         """
 
     # ------------------------------------------------------
 
     def lines(self, indentation, mode):
-        assert mode in ['dls w initial info', 'messages in algs and dls', 'dls w revised info']
+        assert mode in ['messages in algs and dls', 'dls w revised info']
 
         _ = DL(indentation)
 
@@ -2854,13 +2951,7 @@ class AlgHeader:
             _.dt("parameters")
             _.dd_ul_start(self.param_names)
 
-            if mode == 'dls w initial info':
-                for param_name in self.param_names:
-                    optionality = '(optional) ' if param_name in self.optional_params else ''
-                    param_nature = self.param_nature_.get(param_name, 'TBD')
-                    _.dd_ul_li(param_name, optionality + param_nature)
-
-            else:
+            if True:
                 if mode == 'messages in algs and dls':
                     params = self.initial_parameter_types
                 else:
@@ -2889,14 +2980,11 @@ class AlgHeader:
 
         # -------------------------
 
-        if self.also:
+        if self.typed_alsos:
             _.dt("also has access to")
-            _.dd_ul_start(var_name for (var_name,_) in self.also)
+            _.dd_ul_start(self.typed_alsos.keys())
 
-            if mode == 'dls w initial info':
-                for (var_name, expl) in self.also:
-                    _.dd_ul_li(var_name, expl)
-            else:
+            if True:
                 for (var_name, vt) in self.typed_alsos.items():
                     _.dd_ul_li(var_name, vt)
 
@@ -2907,11 +2995,7 @@ class AlgHeader:
         _.dt("returns")
         _.dd_ul_start(["normal", "abrupt"])
 
-        if mode == 'dls w initial info':
-            _.dd_ul_li("normal", self.return_nature_normal)
-            _.dd_ul_li("abrupt", self.return_nature_abrupt)
-
-        else:
+        if True:
             if mode == 'messages in algs and dls':
                 rt = self.initial_return_type
             else:
@@ -5179,7 +5263,7 @@ def tc_alg(alg):
 
     any_change = False
     for header in alg.headers:
-        c = tc_header(header)
+        c = tc_header(header.tah)
         if c: any_change = True
     
     if any_change:
@@ -5196,19 +5280,19 @@ def tc_alg(alg):
 
 # --------------------------------
 
-def tc_header(header):
+def tc_header(tah):
 
-    init_env = header.make_env()
+    init_env = tah.make_env()
 
-    if header.t_defns == []:
+    if tah.t_defns == []:
         return False
 
-    # Eventually, `header` will also contain (ahead of time)
+    # Eventually, `tah` will also contain (ahead of time)
     # an indication of the operation's expected return type.
     # We should complain about any return-points
     # that do not conform.
     # In the meantime, ...
-    if header.kind in ['anonymous built-in function', 'accessor property', 'function property']:
+    if tah.kind in ['anonymous built-in function', 'accessor property', 'function property']:
         expected_return_type = T_Tangible_ | T_throw_ | T_empty_
         # T_empty_ shouldn't really be allowed,
         # but if I leave it out,
@@ -5216,14 +5300,14 @@ def tc_header(header):
     else:
         expected_return_type = T_Top_
 
-    final_env = tc_proc(header.name, header.t_defns, init_env, expected_return_type)
+    final_env = tc_proc(tah.name, tah.t_defns, init_env, expected_return_type)
 
     assert final_env is not None
 
     for (pn, final_t) in final_env.vars.items():
         if final_t == T_TBD:
             add_pass_error(
-                header.fake_node_for_[pn],
+                tah.fake_node_for_[pn],
                 "after STA, the type of `%s` is still TBD" % pn
             )
 
@@ -5242,16 +5326,16 @@ def tc_header(header):
 
             # if init_t == T_TBD and final_t == T_TBD:
             #     add_pass_error(
-            #         header.fake_node_for_[pn],
+            #         tah.fake_node_for_[pn],
             #         'param %r is still TBD' % (pn,)
             #     )
 
             # if isinstance(final_t, UnionType) and len(final_t.member_types) >= 12:
-            #     print("%s : %s : # member_types = %d" % (header.name, pn, len(final_t.member_types)))
+            #     print("%s : %s : # member_types = %d" % (tah.name, pn, len(final_t.member_types)))
 
             if init_t == final_t: continue
 
-            # if header.name == 'RequireInternalSlot': pdb.set_trace()
+            # if tah.name == 'RequireInternalSlot': pdb.set_trace()
             if (
                 # cases in which we don't want to change header types:
                 init_t == ListType(T_code_unit_) and final_t == T_code_unit_ | ListType(T_code_unit_)
@@ -5266,44 +5350,44 @@ def tc_header(header):
                 init_t == T_Abrupt | T_Tangible_ | T_empty_ and final_t == ListType(T_code_unit_) | T_Top_
                 # Evaluation
                 or
-                header.name == 'GetMethod'
+                tah.name == 'GetMethod'
                 or
-                header.name == 'SetRealmGlobalObject' and pn == '_thisValue_' and init_t == T_Tangible_
+                tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_' and init_t == T_Tangible_
                 or
-                header.name == 'SetRealmGlobalObject' and pn == '_globalObj_' and init_t == T_Object | T_Undefined
+                tah.name == 'SetRealmGlobalObject' and pn == '_globalObj_' and init_t == T_Object | T_Undefined
                 or
-                header.name == 'UTF16EncodeCodePoint' and pn == '*return*' and init_t == ListType(T_code_unit_)
+                tah.name == 'UTF16EncodeCodePoint' and pn == '*return*' and init_t == ListType(T_code_unit_)
                 or
-                header.name == 'PerformPromiseThen' and pn in ['_onFulfilled_', '_onRejected_'] and init_t == T_Tangible_
+                tah.name == 'PerformPromiseThen' and pn in ['_onFulfilled_', '_onRejected_'] and init_t == T_Tangible_
                 or
-                header.name == 'TemplateStrings' and pn == '*return*' and init_t == ListType(T_String)
+                tah.name == 'TemplateStrings' and pn == '*return*' and init_t == ListType(T_String)
                 or
-                header.name == 'Construct' and pn == '_newTarget_' and init_t == T_Tangible_ | T_not_passed
+                tah.name == 'Construct' and pn == '_newTarget_' and init_t == T_Tangible_ | T_not_passed
                 or
-                header.name == 'OrdinaryHasInstance' and pn == '_O_'
+                tah.name == 'OrdinaryHasInstance' and pn == '_O_'
                 or
-                header.name == 'GetIterator' and pn == '_method_'
+                tah.name == 'GetIterator' and pn == '_method_'
                 or
-                header.name == 'ResolveBinding' and pn == '_env_'
+                tah.name == 'ResolveBinding' and pn == '_env_'
                 or
-                header.name == 'ToLength' and pn == '*return*' and init_t == T_IntegralNumber_ | ThrowType(T_TypeError)
+                tah.name == 'ToLength' and pn == '*return*' and init_t == T_IntegralNumber_ | ThrowType(T_TypeError)
                 # STA isn't smart enough to detect that the normal return is always integer,
                 # wants to change it to Number
                 or
-                header.name == 'PerformPromiseThen' and pn == '_resultCapability_'
+                tah.name == 'PerformPromiseThen' and pn == '_resultCapability_'
                 # STA wants to add T_Undefined, which is in the body type, but not the param type
                 or
-                header.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_MathInteger_ | T_throw_ and final_t == T_throw_
+                tah.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_MathInteger_ | T_throw_ and final_t == T_throw_
                 # not sure why STA isn't picking up Integer
                 or
                 # PR 1668
-                header.name == 'SetFunctionName' and pn == '_name_' and init_t == T_Private_Name | T_String | T_Symbol and final_t == T_String
+                tah.name == 'SetFunctionName' and pn == '_name_' and init_t == T_Private_Name | T_String | T_Symbol and final_t == T_String
                 or
                 # PR 1668?
                 (
                     # This is a somewhat hacky way to prevent 'throw_' being widened to 'Abrupt'
                     # in the return type of various evaluation-relevant SDOs.
-                    header.name in [
+                    tah.name in [
                         'BindingClassDeclarationEvaluation',
                         'ClassDefinitionEvaluation',
                         'ClassElementEvaluation',
@@ -5322,44 +5406,44 @@ def tc_header(header):
                     T_continue_.is_a_subtype_of_or_equal_to(final_t)
                 )
                 or
-                header.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ 
+                tah.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ 
                 or
-                header.name == 'String.prototype.localeCompare' and pn == '*return*'
+                tah.name == 'String.prototype.localeCompare' and pn == '*return*'
                 # The algo is incomplete, so doesn't result in a reasonable return type.
                 or
-                header.name == '[[Call]]' and pn == '*return*'
+                tah.name == '[[Call]]' and pn == '*return*'
                 or
-                header.name == '[[Construct]]' and pn == '*return*'
+                tah.name == '[[Construct]]' and pn == '*return*'
                 or
-                header.name == 'StringToCodePoints' and pn == '*return*'
+                tah.name == 'StringToCodePoints' and pn == '*return*'
                 or
-                header.name == 'UTF16EncodeCodePoint' and pn == '_cp_'
+                tah.name == 'UTF16EncodeCodePoint' and pn == '_cp_'
                 or
-                header.name == 'UTF16Encoding' and pn == '_cp_'
+                tah.name == 'UTF16Encoding' and pn == '_cp_'
                 or
-                header.name == 'BigIntBitwiseOp' and pn in ['_x_', '_y_']
+                tah.name == 'BigIntBitwiseOp' and pn in ['_x_', '_y_']
                 # algo just overwrites them with different types
                 or
-                header.name == 'LocalTime' and pn == '*return*' and init_t == T_MathInteger_ and  final_t == T_Number
+                tah.name == 'LocalTime' and pn == '*return*' and init_t == T_MathInteger_ and  final_t == T_Number
                 # mess
                 or
-                header.name == 'ToInteger'
+                tah.name == 'ToInteger'
                 or
-                header.name == 'Math.fround' and pn == '_x_'
+                tah.name == 'Math.fround' and pn == '_x_'
                 or
-                header.name == 'Number.isFinite' and pn == '_number_'
+                tah.name == 'Number.isFinite' and pn == '_number_'
                 or
-                header.name == 'IsIntegralNumber' and pn == '_argument_'
+                tah.name == 'IsIntegralNumber' and pn == '_argument_'
                 or
-                header.name == 'AdvanceStringIndex' and pn == '_index_'
+                tah.name == 'AdvanceStringIndex' and pn == '_index_'
                 or
-                header.name == 'ArrayAccumulation' and pn == '_nextIndex_'
+                tah.name == 'ArrayAccumulation' and pn == '_nextIndex_'
                 or
-                header.name == 'BigInt.asIntN' and pn == '_bits_'
+                tah.name == 'BigInt.asIntN' and pn == '_bits_'
                 or
-                header.name == 'BigInt.asUintN' and pn == '_bits_'
+                tah.name == 'BigInt.asUintN' and pn == '_bits_'
                 or
-                header.name == 'CreateBuiltinFunction' and pn == '_realm_'
+                tah.name == 'CreateBuiltinFunction' and pn == '_realm_'
             ):
                 # -------------------------
                 # Don't change header types
@@ -5382,87 +5466,87 @@ def tc_header(header):
                 # ------
                 or
                 final_t.is_a_subtype_of_or_equal_to(init_t) and (
-                    header.name == 'InstantiateFunctionObject'
+                    tah.name == 'InstantiateFunctionObject'
                     or
-                    header.name == 'GetThisBinding' and init_t == T_Tangible_ | ThrowType(T_ReferenceError)
+                    tah.name == 'GetThisBinding' and init_t == T_Tangible_ | ThrowType(T_ReferenceError)
                     or
-                    header.name == 'WithBaseObject' and init_t == T_Object | T_Undefined
+                    tah.name == 'WithBaseObject' and init_t == T_Object | T_Undefined
                     or
-                    header.name == 'SameValueNonNumeric' and init_t == T_Tangible_
+                    tah.name == 'SameValueNonNumeric' and init_t == T_Tangible_
                     or
-                    header.name == 'SetMutableBinding' and pn == '*return*'
+                    tah.name == 'SetMutableBinding' and pn == '*return*'
                     or
-                    header.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
+                    tah.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
                     or
-                    header.name in ['::divide','::exponentiate','::remainder'] and pn == '*return*' and init_t == T_Number | ThrowType(T_RangeError) and final_t == T_Number
+                    tah.name in ['::divide','::exponentiate','::remainder'] and pn == '*return*' and init_t == T_Number | ThrowType(T_RangeError) and final_t == T_Number
                     or
-                    header.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
+                    tah.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
                     or
-                    header.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
+                    tah.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
                     or
-                    header.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::leftShift', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
+                    tah.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::leftShift', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
                 )
                 # This pass just narrowed the type.
                 # ----
                 or
-                init_t == T_Tangible_ and header.name == 'SameValueNonNumber'
+                init_t == T_Tangible_ and tah.name == 'SameValueNonNumber'
                 or
-                init_t == T_Tangible_ and final_t == T_Object | T_Undefined and header.name == 'PrepareForOrdinaryCall'
+                init_t == T_Tangible_ and final_t == T_Object | T_Undefined and tah.name == 'PrepareForOrdinaryCall'
                 # eoh is just wrong
                 or
-                init_t == T_Tangible_ and final_t == T_Null | T_Object and header.name == 'OrdinarySetPrototypeOf'
+                init_t == T_Tangible_ and final_t == T_Null | T_Object and tah.name == 'OrdinarySetPrototypeOf'
                 # eoh is just wrong
                 or
                 init_t == T_Normal and final_t == T_function_object_
                 or
-                header.name == 'BindingClassDeclarationEvaluation' and pn == '*return*' and init_t == T_Object and final_t == T_function_object_ | T_throw_
+                tah.name == 'BindingClassDeclarationEvaluation' and pn == '*return*' and init_t == T_Object and final_t == T_function_object_ | T_throw_
                 or
-                header.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
+                tah.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
                 or
-                header.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_MathInteger_
+                tah.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_MathInteger_
                 or
-                header.name == 'RequireInternalSlot' and pn == '*return*' and init_t == T_throw_ and final_t == T_not_returned | ThrowType(T_TypeError)
+                tah.name == 'RequireInternalSlot' and pn == '*return*' and init_t == T_throw_ and final_t == T_not_returned | ThrowType(T_TypeError)
                 or
-                header.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_ | ThrowType(T_TypeError)
+                tah.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_ | ThrowType(T_TypeError)
                 or
-                header.name == 'NewPromiseReactionJob' and pn == '*return*' and init_t == T_Job and final_t == T_Record
+                tah.name == 'NewPromiseReactionJob' and pn == '*return*' and init_t == T_Job and final_t == T_Record
                 or
-                header.name == 'CodePointsToString' and pn == '_text_' and init_t == T_Unicode_code_points_ and final_t == ListType(T_code_point_)
+                tah.name == 'CodePointsToString' and pn == '_text_' and init_t == T_Unicode_code_points_ and final_t == ListType(T_code_point_)
 
                 # eoh is just wrong, because preamble is misleading
                 or
-                header.name == 'Math.imul' and pn == '*return*'
+                tah.name == 'Math.imul' and pn == '*return*'
                 or
-                header.name == 'parseFloat' and pn == '*return*'
+                tah.name == 'parseFloat' and pn == '*return*'
                 or
-                header.name == 'Math.sign' and pn == '*return*'
+                tah.name == 'Math.sign' and pn == '*return*'
                 or
-                header.name == 'ObjectDefineProperties' and pn == '_O_'
+                tah.name == 'ObjectDefineProperties' and pn == '_O_'
 
 
                 # or
-                # header.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
+                # tah.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
                 # # cheater artifact
                 # or
-                # header.name == 'InitializeReferencedBinding' and init_t == T_Boolean | T_empty_ | T_throw_ and final_t == T_empty_ | T_throw_
+                # tah.name == 'InitializeReferencedBinding' and init_t == T_Boolean | T_empty_ | T_throw_ and final_t == T_empty_ | T_throw_
                 # # cheater artifact
                 # or
-                # header.name == 'PutValue' and init_t == T_Boolean | T_Undefined | T_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
+                # tah.name == 'PutValue' and init_t == T_Boolean | T_Undefined | T_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
                 # # cheater artifact
                 # or
-                # header.name == 'InitializeBoundName' and init_t == T_Boolean | T_Undefined | T_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
+                # tah.name == 'InitializeBoundName' and init_t == T_Boolean | T_Undefined | T_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
             ):
                 # fall through to change the header types
                 pass
             else:
-                assert 0, (header.name, pn, str(init_t), str(final_t))
+                assert 0, (tah.name, pn, str(init_t), str(final_t))
                 # We should deal with this case above.
 
             if trace_this_op:
                 print(f"About to change the declared_type of {pn} to {final_t}")
                 input('hit return to continue ')
 
-            header.change_declared_type(pn, final_t)
+            tah.change_declared_type(pn, final_t)
 
             changed_op_info = True
 
@@ -10647,7 +10731,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             assert len(callee_op.headers) > 0
             forp_types = [
-                header.for_param_type
+                header.tah.for_param_type
                 for header in callee_op.headers
             ]
             if callee_op_name in ['Link', 'Evaluate']:
@@ -10712,9 +10796,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert len(callee_op.headers) == 2
 
             for header in callee_op.headers:
-                if for_type is None or header.for_param_type == for_type:
-                    params = header.parameter_types.items()
-                    return_type = header.return_type
+                if for_type is None or header.tah.for_param_type == for_type:
+                    params = header.tah.parameter_types.items()
+                    return_type = header.tah.return_type
                     break
             else:
                 assert 0
