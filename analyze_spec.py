@@ -8,7 +8,7 @@
 import sys, re, pdb
 from collections import defaultdict, OrderedDict
 
-import HTML, Section, emu_grammars, Pseudocode
+import HTML, Section, emu_grammars, Pseudocode, headers
 import shared
 from shared import stderr, header, msg_at_posn, spec
 
@@ -49,6 +49,8 @@ def main():
     Pseudocode.do_stuff_with_pseudocode()
 
     shared.msg_at_posn_finish()
+
+    headers.generate_spec_for_PR_545()
 
     spec.save()
 

@@ -11,7 +11,7 @@ from collections import OrderedDict, defaultdict
 from itertools import zip_longest
 from pprint import pprint
 
-import shared, HTML, headers
+import shared, HTML
 from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
 from Graph import Graph
@@ -19,18 +19,10 @@ from Graph import Graph
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def main():
-    if sys.argv[1] == '-just_initial_headers':
-        stop_after_initial_headers = True
-        outdir = sys.argv[2]
-    else:
-        stop_after_initial_headers = False
-        outdir = sys.argv[1]
+    outdir = sys.argv[1]
 
     shared.register_output_dir(outdir)
     spec.restore()
-
-    headers.generate_spec_for_PR_545()
-    if stop_after_initial_headers: return
 
     prep_for_STA()
     gather_nonterminals()
