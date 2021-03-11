@@ -526,7 +526,7 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
-                oi.u_defns.append(algo._parent_algdefn)
+                oi.add_defn(algo._parent_algdefn)
             else:
                 assert algo.element_name in ['emu-table']
                 assert not hasattr(algo, '_parent_algdefn')
@@ -609,7 +609,7 @@ def declare_sdo(op_name, param_dict, also=[]):
         for alg_defn in op_info.definitions:
             if alg_defn.section.section_num.startswith('B'): continue
             if alg_defn.discriminator is None: continue # XXX for now
-            oi.u_defns.append(alg_defn)
+            oi.add_defn(alg_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1950,6 +1950,11 @@ class AlgHeader:
                 returns: {self.return_nature_normal}
                 # defns: {len(self.u_defns)}
         """
+
+    # --------------------------------------------------------------------------
+
+    def add_defn(self, alg_defn):
+        self.u_defns.append(alg_defn)
 
     # --------------------------------------------------------------------------
 
