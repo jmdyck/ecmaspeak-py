@@ -290,11 +290,6 @@ def create_operation_info_for_section(s):
         # we put one at the end, in annex C.
         something_sdo(s)
         return
-    elif s.section_id == 'sec-static-semantic-rules':
-        # It has the default definition for 'Contains',
-        # but that's an SDO, so it only gets a header at the end.
-        # (But we can't call something_sdo(s).)
-        return
 
     elif s.section_num == 'C':
         ln = get_last_ln(s)
