@@ -1634,6 +1634,7 @@ class AlgDefn:
         self.the_alg_to_which_this_belongs = alg_info
         self.discriminator = discriminator
         self.section = section
+        self.header = None
 
         assert (
             discriminator is None

@@ -1955,6 +1955,8 @@ class AlgHeader:
 
     def add_defn(self, alg_defn):
         self.u_defns.append(alg_defn)
+        assert alg_defn.header is None
+        alg_defn.header = self
 
     # --------------------------------------------------------------------------
 
