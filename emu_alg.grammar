@@ -312,7 +312,6 @@
     append {LITERAL} to {var}
     append {code_unit_lit} as the last code unit of {var}
     append {var} to {var}
-    apply the early error rules for {h_emu_grammar} to {var}
     change its bound value to {var}
     convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
     create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
@@ -342,6 +341,9 @@
 
     # obsoleted by merge of PR #2142:
     # store the individual bytes of {var} into {var}, in order, starting at {var}[{var}]
+
+    # obsoleted by merge of PR #2348:
+    # apply the early error rules for {h_emu_grammar} to {var}
 
     # PR 1732 GetSubstitution
     the replacement is {EXPR}
@@ -504,7 +506,6 @@
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When {SETTABLE} is instantiated it will have a direct binding for {var}
     an implementation-defined debugging facility is available and enabled
-    any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
     both {EX} and {EX} are absent
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
@@ -606,7 +607,6 @@
     {LOCAL_REF} is {h_emu_grammar} 
     {NUM_COMPARISON}
     {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
-    {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
     {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
@@ -964,6 +964,10 @@
     # obsoleted by the merge of PR #2258:
     # there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
 
+    # obsoleted by the merge of PR #2348:
+    # any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
+    # {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements
+
     # PR 1477 scope-records:
     it must be in the object Scope Record
     the base of {var} is a Scope Record
@@ -1279,6 +1283,7 @@
     the character value of character {var}
     the character whose character value is {var}
     the character {SETTABLE}
+    the child of {var} that is an instance of {var}
     the code point matched by {PROD_REF}
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the code point value according to {h_emu_xref}

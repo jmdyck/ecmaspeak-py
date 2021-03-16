@@ -5185,10 +5185,11 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
         result = env0
 
-    elif p == r"{SMALL_COMMAND} : apply the early error rules for {h_emu_grammar} to {var}":
-        [_, subject_var] = children
-        env0.assert_expr_is_of_type(subject_var, T_Parse_Node)
-        result = env0
+#    elif p == r"{SMALL_COMMAND} : apply the early error rules for {h_emu_grammar} to {var}":
+#        [_, subject_var] = children
+#        env0.assert_expr_is_of_type(subject_var, T_Parse_Node)
+#        result = env0
+# ^ obsoleted by PR 2348
 
     elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that completion.":
         [var] = children
@@ -7379,16 +7380,17 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(bvar, T_Realm_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}":
-        [anoi, bnoi] = children
-        env0.assert_expr_is_of_type(anoi, ListType(T_String)) # T_String not justified, but always correct (currently)
-        env0.assert_expr_is_of_type(bnoi, ListType(T_String))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements":
-        [noi] = children
-        env0.assert_expr_is_of_type(noi, T_List)
-        return (env0, env0)
+#    elif p == r"{CONDITION_1} : any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}":
+#        [anoi, bnoi] = children
+#        env0.assert_expr_is_of_type(anoi, ListType(T_String)) # T_String not justified, but always correct (currently)
+#        env0.assert_expr_is_of_type(bnoi, ListType(T_String))
+#        return (env0, env0)
+#
+#    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements":
+#        [noi] = children
+#        env0.assert_expr_is_of_type(noi, T_List)
+#        return (env0, env0)
+# ^ obsoleted by PR 2348
 
     elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
         [var] = children
@@ -12604,6 +12606,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var, _] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Tangible_, env0)
+
+    elif p == r"{EXPR} : the child of {var} that is an instance of {var}":
+        [node_var, sym_var] = children
+        env0.assert_expr_is_of_type(node_var, T_Parse_Node)
+        env0.assert_expr_is_of_type(sym_var, T_grammar_symbol_)
+        return (T_Parse_Node, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
