@@ -626,11 +626,6 @@ multi_sentence_rules_str = r'''
         v= \1
         # A bit kludgey: Insert a space to prevent later match against /`(?P<name>[\w.]+)` (.+)/
 
-        ((%TypedArray%)`([^`]+)` is an accessor property whose set accessor function is \*undefined\*.) Its get accessor function performs the following steps:
-        name=get \2\3
-        v= \1
-        # Ditto re space
-
         (.+) In addition to (_x_ and _y_) the algorithm takes (a Boolean flag named _LeftFirst_) as a parameter. The flag is (.+)
         pl=\2 and \3
         v=\1 The _LeftFirst_ flag is \4
@@ -666,7 +661,12 @@ single_sentence_rules_str = r'''
 
         It performs the following steps when called:
 
+        Its get accessor function performs the following steps when called:
+
     # ==========================================================================
+
+        (Returns (?P<retn>an array) containing .+)
+        v=\1
 
         Such a comparison is performed as follows:
 
@@ -701,7 +701,7 @@ single_sentence_rules_str = r'''
 
         The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object) that (?P<desc>is defined once for each realm.)
 
-        The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps:
+        The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps when called:
 
         # ------------
 
@@ -711,14 +711,10 @@ single_sentence_rules_str = r'''
         `(?P<name>[\w.]+)` (.+)
         v=!FUNC \2
 
-            !FUNC is called with (?P<pl>.+).
-
             !FUNC takes (?P<pl>.+), and performs the following steps:
 
             !FUNC takes (?P<pl>.+), and (returns .+)
             v=!FUNC \2
-
-            !FUNC takes (?P<pl>.+).
 
             !FUNC performs the following steps:
 
