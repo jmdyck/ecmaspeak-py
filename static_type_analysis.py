@@ -13450,7 +13450,7 @@ type_of_internal_thing_ = {
     'WeakRefTarget' : T_Object,
 
     # 25.2.1.1 FinalizationRegistry ( cleanupCallback ) NO TABLE
-    'CleanupCallback' : T_function_object_,
+    'CleanupCallback' : T_JobCallback_Record,
     'Cells'           : ListType(T_FinalizationRegistryCellRecord_),
 
     # 38914: 25.4.1.3.1 ish, NO TABLE
