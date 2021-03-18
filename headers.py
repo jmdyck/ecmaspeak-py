@@ -526,7 +526,10 @@ def create_operation_info_for_section(s):
         spec.info_for_line_[ln].afters.append(oi)
         if algo:
             if algo.element_name == 'emu-alg':
-                oi.add_defn(algo._parent_algdefn)
+                if hasattr(algo, '_parent_algdefn'):
+                    oi.add_defn(algo._parent_algdefn)
+                else:
+                    stderr(f"No _parent_algdefn for {algo}")
             else:
                 assert algo.element_name in ['emu-table']
                 assert not hasattr(algo, '_parent_algdefn')
