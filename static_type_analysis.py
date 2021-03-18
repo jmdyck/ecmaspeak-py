@@ -9702,7 +9702,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #        return (T_MathNonNegativeInteger_, env0)
 # ^ obsoleted by PR 2029
 
-    elif p == r"{EXPR} : the mathematical value that is the same sign as {var} and whose magnitude is {EX}":
+    elif p == r"{EXPR} : the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}":
         [var, ex] = children
         env0.assert_expr_is_of_type(var, T_Number)
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
@@ -13101,7 +13101,6 @@ fields_for_record_type_named_ = {
     # 21832: Script Record Fields
     'Script Record': {
         'Realm'         : T_Realm_Record | T_Undefined,
-        'Environment'   : T_Environment_Record | T_Undefined,
         'ECMAScriptCode': T_PTN_Script,
         'HostDefined'   : T_host_defined_ | T_Undefined,
     },

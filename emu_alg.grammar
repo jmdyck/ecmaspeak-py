@@ -1312,7 +1312,7 @@
     the last element in {var}
     the length of {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
-    the mathematical value that is the same sign as {var} and whose magnitude is {EX}
+    the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
     the number of bytes in {var}
     the number of characters contained in {var}
     the number of code points in {PROD_REF}
