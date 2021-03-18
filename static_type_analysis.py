@@ -891,10 +891,12 @@ class TypedAlgHeader:
         if self.for_param_name is not None:
             assert self.for_param_type is not None
             e.vars[self.for_param_name] = self.for_param_type
+            e.parameter_names.add(self.for_param_name)
 
         for (pn, pt) in self.parameter_types.items():
             assert isinstance(pt, Type)
             e.vars[pn] = pt
+            e.parameter_names.add(pn)
 
         for (vn, vt) in self.typed_alsos.items():
             assert isinstance(vt, Type)
@@ -2194,6 +2196,7 @@ def union_of_other_memtypes(memtypes):
 class Env:
     def __init__(self):
         self.vars = {}
+        self.parameter_names = set()
 
     def __str__(self):
         return str(self.vars)
@@ -2201,6 +2204,7 @@ class Env:
     def copy(self):
         e = Env()
         e.vars = self.vars.copy()
+        e.parameter_names = self.parameter_names.copy()
         return e
 
     def equals(self, other):
@@ -2681,6 +2685,12 @@ class Env:
         (settable_type, env1) = tc_expr(settable, self)
         (expr_type,     env2) = tc_expr(expr,     env1)
 
+        if settable.source_text() in self.parameter_names:
+            add_pass_error(
+                settable,
+                "Error: setting a parameter"
+            )
+
         if settable_type == T_TBD and expr_type == T_TBD:
             return env2
 
@@ -2882,6 +2892,8 @@ class Env:
         for (vn, vt) in self.vars.items():
             if vn in header_names:
                 e.vars[vn] = vt
+
+        e.parameter_names = self.parameter_names
         return e
 
 # ------------------------------------------------------------------------------
@@ -2932,6 +2944,11 @@ def envs_or(envs):
             env.vars[var_name] if var_name in env.vars else T_not_set
             for env in envs
         ])
+
+    all_param_names = set()
+    for env in envs:
+        all_param_names.update(env.parameter_names)
+    e.parameter_names = all_param_names
 
     return e
 
