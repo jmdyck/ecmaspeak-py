@@ -10838,12 +10838,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # return T_Object
 
-    elif p == r'{EXPR} : the binding object for {var}':
-        [var] = children
-        (t, env1) = tc_expr(var, env0)
-        assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_object_Environment_Record)
-        return (T_Object, env0)
+#    elif p == r'{EXPR} : the binding object for {var}':
+#        [var] = children
+#        (t, env1) = tc_expr(var, env0)
+#        assert env1 is env0
+#        assert t.is_a_subtype_of_or_equal_to(T_object_Environment_Record)
+#        return (T_Object, env0)
+# ^ obsoleted by PR 2287
 
     elif p == r'{EXPR} : a newly created object with an internal slot for each name in {var}':
         [var] = children
@@ -11350,10 +11351,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         t = type_for_environment_record_kind(kind)
         return (t, env0)
 
-    elif p == r'{EXPR} : a new object Environment Record containing {var} as the binding object':
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        return (T_object_Environment_Record, env1)
+#    elif p == r'{EXPR} : a new object Environment Record containing {var} as the binding object':
+#        [var] = children
+#        env1 = env0.ensure_expr_is_of_type(var, T_Object)
+#        return (T_object_Environment_Record, env1)
+# ^ obsoleted by PR 2287
 
     # -------------------------------------------------
     # return T_Realm_Record
@@ -11777,10 +11779,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             list_type = ListType(element_type)
         return (list_type, env0)
 
-    elif p == r"{SETTABLE} : the _withEnvironment_ flag of {var}":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_object_Environment_Record)
-        return (T_Boolean, env1)
+#    elif p == r"{SETTABLE} : the _withEnvironment_ flag of {var}":
+#        [var] = children
+#        env1 = env0.ensure_expr_is_of_type(var, T_object_Environment_Record)
+#        return (T_Boolean, env1)
+# ^ obsoleted by PR 2287
 
     elif p == r"{EXPR} : {var}'s _captures_ List":
         [var] = children
@@ -12993,7 +12996,9 @@ fields_for_record_type_named_ = {
     },
 
     'object Environment Record': {
-        'OuterEnv'         : T_Environment_Record,
+        'OuterEnv'           : T_Environment_Record,
+        'BindingObject'      : T_Object,
+        'IsWithEnvironment'  : T_Boolean,
     },
 
     # 8.1.1.3 Table 16: Additional Fields of Function Environment Records

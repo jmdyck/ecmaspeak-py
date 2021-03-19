@@ -1179,7 +1179,6 @@
     a new built-in function object that when called performs the action described by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
     a new empty List
     a new execution context
-    a new object Environment Record containing {var} as the binding object
     a new unique Symbol value whose {DSBN} value is {var}
     a new {ENVIRONMENT_RECORD_KIND} Environment Record
     a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
@@ -1266,7 +1265,6 @@
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
     the active function object
     the algorithm steps defined in {h_emu_xref}
-    the binding object for {var}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
@@ -1578,6 +1576,10 @@
 
     # obsoleted by the merge of PR #2258:
     # the smallest (closest to -&infin;) such integer
+
+    # obsoleted by the merge of PR #2287:
+    # a new object Environment Record containing {var} as the binding object
+    # the binding object for {var}
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object
@@ -1900,7 +1902,6 @@
 {SETTABLE} :
     The {EXECUTION_CONTEXT_COMPONENT} of {var}
     the Synchronize event in {var}
-    the _withEnvironment_ flag of {var}
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the {DSBN} field of the calling surrounding's Agent Record
@@ -1927,6 +1928,9 @@
 
     # obsoleted by the merge of PR #1743:
     # {var}'s {EXECUTION_CONTEXT_COMPONENT} component
+
+    # obsoleted by the merge of PR #2287:
+    # the _withEnvironment_ flag of {var}
 
     # PR 1477 scope-records:
     the _withEnvironment_ flag of {var}.{dsb_word}
