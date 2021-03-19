@@ -681,6 +681,7 @@
     {var} has no further use. It will never be activated as the running execution context
     {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}
     {var} has {DSBN} and {DSBN} internal slots
+    {var} has {DSBN}, {DSBN}, and {DSBN} internal slots
     {var} has {var} in its range
     {var} imports a specific binding for this export
     {var} is a Completion Record
@@ -1018,8 +1019,6 @@
 
 {TYPE_TEST} :
     Both Type({var}) and Type({var}) are Number or both are BigInt
-    Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot
-    Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots
     Type({TYPE_ARG}) is an ECMAScript language type
     Type({TYPE_ARG}) is different from Type({TYPE_ARG})
     Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}
@@ -1038,6 +1037,10 @@
 
     # obsoleted by the merge of PR #2085:
     # Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
+
+    # obsoleted by the merge of PR #2341:
+    # Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot
+    # Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots
 
 {TYPE_ARG} :
     {DOTTING}

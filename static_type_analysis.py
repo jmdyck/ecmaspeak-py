@@ -5378,13 +5378,14 @@ def tc_cond_(cond, env0, asserting):
         [type_arg] = children
         return env0.with_type_test(type_arg, 'is a', T_Tangible_, asserting)
 
-    elif p in [
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot',
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots',
-    ]:
-        [type_arg, *dsbn_] = children
-        return env0.with_type_test(type_arg, 'is a', T_Object, asserting)
-        # XXX ignore the part about the internal slot(s)?
+#    elif p in [
+#        r'{TYPE_TEST} : Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot',
+#        r'{TYPE_TEST} : Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots',
+#    ]:
+#        [type_arg, *dsbn_] = children
+#        return env0.with_type_test(type_arg, 'is a', T_Object, asserting)
+#        # XXX ignore the part about the internal slot(s)?
+# ^ obsoleted by PR 2341
 
     elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not Number or BigInt":
         [type_arg] = children
@@ -5421,9 +5422,12 @@ def tc_cond_(cond, env0, asserting):
         assert dsbnb.source_text() == '[[NumberData]]'
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots":
+    elif p in [
+        r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots",
+        r"{CONDITION_1} : {var} has {DSBN}, {DSBN}, and {DSBN} internal slots",
+    ]:
         # XXX could be a type-test
-        [var, dsbna, dsbnb] = children
+        [var, *dsbn_] = children
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
