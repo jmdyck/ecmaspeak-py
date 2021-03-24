@@ -60,6 +60,7 @@ C_lookahead   = mynamedtuple('C_lookahead', 'matches tss')
 X_eor         = mynamedtuple('X_eor', '')  # end-of-RHS (Doesn't appear in grammars, is only used in EarleySet.)
 
 END_OF_INPUT  = T_named('_EOI_')
+ACCEPTANCE    = T_named('_ACCEPTANCE_')
 
 # -----------
 
@@ -702,7 +703,7 @@ class _Earley:
 
             def get_items_expecting_symbol(this_set, symbol):
                 items = this_set.items_with_dot_before_[symbol]
-                assert len(items) > 0 or symbol == END_OF_INPUT
+                assert len(items) > 0 or symbol == ACCEPTANCE
                 return items
 
         # -------------------------------------------
@@ -752,11 +753,20 @@ class _Earley:
         trace_at(1, )
         trace_at(1, f"{this_parser.name}.run invoked at posn {start_text_posn} with goal '{goal_symname}'")
 
+        if this_parser.how_much_to_consume == 'all':
+            # We're looking for an instance of the goal symbol
+            # followed by the end of input.
+            final_symbol = END_OF_INPUT
+        else:
+            # We'll accept an instance of the goal symbol
+            # that isn't followed by the end of input.
+            final_symbol = ACCEPTANCE
+
         start_production = ExProd(
             ex_lhs = '*START*',
             ex_rhs = [
                 NT(n=goal_symname),
-                END_OF_INPUT
+                final_symbol
             ],
             og_lhs = '*START*',
             og_rhs_i = 0,
@@ -796,7 +806,7 @@ class _Earley:
                     trace_at(9, '  ', st)
 
             if this_parser.how_much_to_consume == 'as much as possible':
-                accepting_items_here = eset.get_items_expecting_symbol(END_OF_INPUT)
+                accepting_items_here = eset.get_items_expecting_symbol(ACCEPTANCE)
                 if accepting_items_here:
                     trace_at(9, )
                     trace_at(9, '(there are accepting_items_here)')
@@ -1887,7 +1897,7 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
 
     T = rsymbol.T
 
-    if rsymbol == END_OF_INPUT:
+    if rsymbol == ACCEPTANCE:
         return False
 
     elif T == 'T_lit':
