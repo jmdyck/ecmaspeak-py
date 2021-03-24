@@ -1660,7 +1660,10 @@ def parse(source_text, goal_symname, trace_level=0, trace_f=sys.stdout):
         if text_posn > len(source_text):
             assert 0
         elif text_posn == len(source_text):
-            # at end of source_text
+            if lexical_trace_level >= 2:
+                trace("|+")
+                trace("|+   posn: %d  (at end of input)" % text_posn)
+
             return None
 
         c = source_text[text_posn]
