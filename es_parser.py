@@ -702,7 +702,7 @@ class _Earley:
 
             def get_items_expecting_symbol(this_set, symbol):
                 items = this_set.items_with_dot_before_[symbol]
-                assert len(items) > 0 or symbol == this_parser.end_of_input_rsymbol
+                assert len(items) > 0 or symbol == END_OF_INPUT
                 return items
 
         # -------------------------------------------
@@ -752,14 +752,11 @@ class _Earley:
         trace_at(1, )
         trace_at(1, f"{this_parser.name}.run invoked at posn {start_text_posn} with goal '{goal_symname}'")
 
-        this_parser.end_of_input_rsymbol = END_OF_INPUT
-        # or should each _Earley have a distinct EOI symbol?
-
         start_production = ExProd(
             ex_lhs = '*START*',
             ex_rhs = [
                 NT(n=goal_symname),
-                this_parser.end_of_input_rsymbol
+                END_OF_INPUT
             ],
             og_lhs = '*START*',
             og_rhs_i = 0,
@@ -799,7 +796,7 @@ class _Earley:
                     trace_at(9, '  ', st)
 
             if this_parser.how_much_to_consume == 'as much as possible':
-                accepting_items_here = eset.get_items_expecting_symbol(this_parser.end_of_input_rsymbol)
+                accepting_items_here = eset.get_items_expecting_symbol(END_OF_INPUT)
                 if accepting_items_here:
                     trace_at(9, )
                     trace_at(9, '(there are accepting_items_here)')
@@ -887,12 +884,12 @@ class _Earley:
 
             # -------------------------------------
 
-            if len(rats) == 1 and rats[0][1].symbol == this_parser.end_of_input_rsymbol:
+            if len(rats) == 1 and rats[0][1].symbol == END_OF_INPUT:
                 trace_at(1, 'success!')
                 trace_at(1, "results:")
                 valid_trees = []
                 for end_item in next_kernel_items:
-                    assert end_item.transit_node.symbol == this_parser.end_of_input_rsymbol
+                    assert end_item.transit_node.symbol == END_OF_INPUT
                     prev_item = end_item.cause
                     assert isinstance(prev_item, Item)
                     goal_node = prev_item.transit_node
