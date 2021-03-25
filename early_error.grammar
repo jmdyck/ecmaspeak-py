@@ -14,9 +14,9 @@
 {EE_RULE} :
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
     <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>
-    All Early Error rules for {nonterminal} and its derived productions also apply to the {nonterminal} that is covered by {LOCAL_REF}.
-    All Early Error rules for {nonterminal} and its derived productions apply to the {nonterminal} that is covered by {LOCAL_REF}.
-    All early error rules for {nonterminal} and its derived productions also apply to the {nonterminal} that is covered by {LOCAL_REF}.
+    All Early Error rules for {nonterminal} and its derived productions also apply to {EX}.
+    All Early Error rules for {nonterminal} and its derived productions apply to {EX}.
+    All early error rules for {nonterminal} and its derived productions also apply to {EX}.
     Always throw a Syntax Error if code matches this production.
     For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
@@ -162,6 +162,7 @@
     with arguments {EX} and {EX}
 
 {EX} :
+    the {nonterminal} that is covered by {LOCAL_REF}
     &laquo; &raquo;
     the two code points matched by {nonterminal} and {nonterminal} respectively
     {LITERAL}
