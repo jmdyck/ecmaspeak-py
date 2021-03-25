@@ -75,8 +75,6 @@
     {LOCAL_REF} is not covering an? {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal} or a {nonterminal}
-    {LOCAL_REF} is not present
-    {LOCAL_REF} is present
     {LOCAL_REF} is {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
@@ -97,6 +95,8 @@
     {NAMED_OPERATION_INVOCATION} is {LITERAL}
     {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}
     {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
+    {PROD_REF} is not present
+    {PROD_REF} is present
 
     {var} &ge; 2<sup>32</sup> - 1
 
