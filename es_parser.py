@@ -1988,7 +1988,7 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
 if __name__ == '__main__':
     # test
 
-    script_text = 'await'
+    script_text = '(10) => 0'
 
     tree = parse(script_text, 'Script', trace_level=9, trace_f=open('/home/michael/tmp/trace.new', 'w'))
     print()
