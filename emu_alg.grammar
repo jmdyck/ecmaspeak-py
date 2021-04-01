@@ -2090,12 +2090,12 @@
     {starred_nan_lit}
 
 {ERROR_TYPE} :
+    *AggregateError*
     *RangeError*
     *ReferenceError*
     *SyntaxError*
     *TypeError*
     *URIError*
-    `AggregateError`
 
 {TYPE_NAME} :
     BigInt
