@@ -232,16 +232,8 @@ def create_operation_info_for_section(s):
     # ------------------------------------------------------
 
     if s.section_kind == 'syntax_directed_operation':
-        # Rather than putting an EOH here
-        # (one for every defn of the SDO),
-        # we put one at the end, in annex C.
         something_sdo(s)
         return
-
-    elif s.section_num == 'C':
-        ln = get_last_ln(s)
-
-        spec.info_for_line_[ln].afters.append(AnnexForSDOs())
 
     # ------------------------------------------------------
 
@@ -252,7 +244,7 @@ def create_operation_info_for_section(s):
             child.element_name == 'emu-alg'
             or
             (
-                # Conversions are often prsented in a table
+                # Conversions are often presented in a table
                 # broken down by type.
                 # The <emu-table> is roughly equivalent to an <emu-alg>
                 # (or several of them).
@@ -558,12 +550,12 @@ def something_sdo(s):
 
     if op_name == 'TV and TRV':
         # defines two sdo's in the same section, hrm
-        declare_sdo('TV', param_dict)
-        declare_sdo('TRV', param_dict)
+        declare_sdo(s, 'TV', param_dict)
+        declare_sdo(s, 'TRV', param_dict)
     elif op_name == 'regexp-Evaluate':
-        declare_sdo(op_name, param_dict, regexp_also)
+        declare_sdo(s, op_name, param_dict, regexp_also)
     else:
-        declare_sdo(op_name, param_dict)
+        declare_sdo(s, op_name, param_dict)
 
 regexp_also = [
     # 21.2.2.1 Notation says:
@@ -582,7 +574,7 @@ regexp_also = [
 
 spec.oi_for_sdo_ = {}
 
-def declare_sdo(op_name, param_dict, also=[]):
+def declare_sdo(section, op_name, param_dict, also=[]):
     oi = AlgHeader()
     oi.kind = 'syntax-directed operation'
     oi.name = op_name
@@ -613,6 +605,9 @@ def declare_sdo(op_name, param_dict, also=[]):
             if alg_defn.section.section_num.startswith('B'): continue
             if alg_defn.discriminator is None: continue # XXX for now
             oi.add_defn(alg_defn)
+
+        ln = get_last_ln(section.heading_child)
+        spec.info_for_line_[ln].afters.append(oi)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2156,21 +2151,6 @@ class AlgHeader:
         lines = _.end()
 
         return lines
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-class AnnexForSDOs:
-
-    def lines(self, ind, mode):
-        # ignore `ind`
-        yield ''
-        yield '<emu-annex id="sec-headers-for-sdos">'
-        yield '  <h1>Headers for Syntax-Directed Operations</h1>'
-        yield '  <p>blah</p>'
-        for (_, header) in sorted(spec.oi_for_sdo_.items()):
-            for line in header.lines(2, mode):
-                yield line
-        yield '</emu-annex>'
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
