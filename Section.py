@@ -222,14 +222,8 @@ def _handle_sdo_section(section):
         # So there are various clauses that don't get `type="sdo"`
         # that we neverthless want to mark as SDO sections...
 
-        # A clause that defines *multiple* SDOs:
-        if section.section_title in [
-            'Static Semantics: TV and TRV',
-        ]:
-            sdo_name = 'TV and TRV'
-
         # A clause that only *partially* defines an SDO:
-        elif section.section_title in [
+        if section.section_title in [
             'Runtime Semantics: MV',
             'Static Semantics: MV',
             'Runtime Semantics: Evaluation',
@@ -1021,7 +1015,6 @@ def _check_aoids(section):
             elif section.section_kind == 'syntax_directed_operation':
                 if op_name in [
                     'MV',
-                    'TV and TRV',
                     'Evaluation',
                     'HasCallInTailPosition',
                     'regexp-Evaluate',

@@ -520,11 +520,7 @@ def something_sdo(s):
 
     op_name = s.ste['op_name']
 
-    if op_name == 'TV and TRV':
-        # defines two sdo's in the same section, hrm
-        declare_sdo(s, 'TV', param_dict)
-        declare_sdo(s, 'TRV', param_dict)
-    elif op_name == 'regexp-Evaluate':
+    if op_name == 'regexp-Evaluate':
         declare_sdo(s, op_name, param_dict, regexp_also)
     else:
         declare_sdo(s, op_name, param_dict)

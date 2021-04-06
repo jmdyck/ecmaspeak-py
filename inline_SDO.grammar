@@ -11,7 +11,6 @@
     <li>{nlai}{ISDO_RULE}{nlai}</li>
 
 {ISDO_RULE} :
-    The {ISDO_NAME} and {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.

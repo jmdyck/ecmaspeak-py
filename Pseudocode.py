@@ -1265,10 +1265,7 @@ def handle_inline_sdo(li, section_sdo_name, section):
         if cl == '{ISDO_NAME}':
             [cap_word] = child.children
             [rule_sdo_name] = cap_word.children
-            if section_sdo_name == 'TV and TRV':
-                assert rule_sdo_name in ['TV', 'TRV']
-            else:
-                assert rule_sdo_name == section_sdo_name
+            assert rule_sdo_name == section_sdo_name
             rule_sdo_names.append(rule_sdo_name)
         elif cl == '{h_emu_grammar}':
             rule_grammars.append(child._hnode)
@@ -1287,7 +1284,7 @@ def handle_inline_sdo(li, section_sdo_name, section):
         else:
             assert 0, cl
 
-    assert 0 < len(rule_sdo_names) <= 2
+    assert len(rule_sdo_names) == 1 # and so could simplify
     assert 0 < len(rule_grammars) <= 5
     for rule_sdo_name in rule_sdo_names:
         for rule_grammar in rule_grammars:
@@ -1856,11 +1853,7 @@ def analyze_static_dependencies():
         op_name = section.ste['op_name']
 
         if section.section_title.startswith('Static Semantics:'):
-            if op_name == 'TV and TRV':
-                op_names_labelled_ss.add('TV')
-                op_names_labelled_ss.add('TRV')
-            else:
-                op_names_labelled_ss.add(op_name)
+            op_names_labelled_ss.add(op_name)
 
         elif section.section_title in ['Statement Rules', 'Expression Rules']:
             assert op_name == 'HasCallInTailPosition'
