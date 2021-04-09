@@ -1745,7 +1745,6 @@ def maybe_NamedType(name):
         return NamedType(name)
 
 type_tweaks_str = '''
-Abstract Relational Comparison           ; _LeftFirst_            ; Boolean             ; Boolean | not_passed
 AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
 ArrayAccumulation                        ; _nextIndex_            ; TBD                 ; MathInteger_
 # AsyncFunctionAwait                       ; _value_                ; TBD                 ; Tangible_
@@ -9336,27 +9335,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # context = 'in call to `%s`' % opn_before_paren.source_text()
         env2 = tc_args(params, args, env0, expr)
         return (return_type, env2)
-
-    # -----
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : Strict Equality Comparison {var} === {EX}":
-        [lhs, rhs] = children
-        return tc_ao_invocation('Strict Equality Comparison', [lhs, rhs], expr, env0)
-
-    elif p in [
-        r"{EXPR} : the result of the comparison {EX} == {EX}",
-        r"{NAMED_OPERATION_INVOCATION} : Abstract Equality Comparison {var} == {var}",
-    ]:
-        [lhs, rhs] = children
-        return tc_ao_invocation('Abstract Equality Comparison', [lhs, rhs], expr, env0)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : Abstract Relational Comparison {var} &lt; {var}":
-        [lhs, rhs] = children
-        return tc_ao_invocation('Abstract Relational Comparison', [lhs, rhs], expr, env0)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}":
-        [lhs, rhs, param, lit] = children
-        return tc_ao_invocation('Abstract Relational Comparison', [lhs, rhs, lit], expr, env0)
 
     # --------------------------------------------------------
 

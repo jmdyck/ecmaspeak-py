@@ -110,12 +110,12 @@ def each_step_ref():
                 yield (referring_section, referring_line, step_ref, refd_line)
             continue
 
-        elif ref_is_followed_by(' of the <emu-xref href="#sec-abstract-equality-comparison">Abstract Equality Comparison</emu-xref> algorithm'):
-            refd_alg_name = 'Abstract Equality Comparison'
-            refd_section_id = 'sec-abstract-equality-comparison'
-        elif ref_is_followed_by(' of the Abstract Relational Comparison algorithm'):
-            refd_alg_name = 'Abstract Relational Comparison'
-            refd_section_id = 'sec-abstract-relational-comparison'
+        elif ref_is_followed_by(' of the IsLooselyEqual algorithm'):
+            refd_alg_name = 'IsLooselyEqual'
+            refd_section_id = 'sec-islooselyequal'
+        elif ref_is_followed_by(' of the IsLessThan algorithm'):
+            refd_alg_name = 'IsLessThan'
+            refd_section_id = 'sec-islessthan'
         elif ref_is_followed_by(' in the algorithm for the addition operator `+`'):
             refd_alg_name = 'evaluation of the `+` operator'
             refd_section_id = 'sec-addition-operator-plus-runtime-semantics-evaluation'
@@ -314,7 +314,7 @@ def get_step_line(emu_alg_n, step_id):
     # ----------
 
     if step_id not in labelled_steps:
-        return f"XXX index error: step_id {step_id} does not exist in this alg"
+        return (f"XXX index error: step_id {step_id} does not exist in this alg", 'xxx')
 
     (path_to_step, step_line) = labelled_steps[step_id]
     return ('.'.join(path_to_step), '1. ' + step_line)
@@ -896,8 +896,8 @@ def analyze_changes_section(section):
                 re.fullmatch(pattern, p_ist)
                 for pattern in [
                     f"During {op_name} the following steps are performed in place of step <emu-xref .+:",
-                    f"The following steps are inserted after step <emu-xref.+ of the .+{op_name}.+ algorithm:",
-                    f"The following steps replace step <emu-xref.+ of the .+>{op_name}.+ algorithm:",
+                    f"The following steps are inserted after step <emu-xref.+ of the {op_name} algorithm:",
+                    f"The following steps replace step <emu-xref.+ of the {op_name} algorithm:",
                     f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
                 ]
             ), p_ist

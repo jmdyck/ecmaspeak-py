@@ -209,7 +209,7 @@ def create_operation_info_for_section(s):
         'Changes to EvalDeclarationInstantiation',
         'Changes to BlockDeclarationInstantiation',
         'VariableStatements in Catch Blocks',
-        'Changes to Abstract Equality Comparison',
+        'Changes to IsLooselyEqual',
     ]:
         # Its emu-algs aren't complete, they just replace a step in another emu-alg.
         # XXX: We could analyze them if we made the replacement.
@@ -596,10 +596,6 @@ multi_sentence_rules_str = r'''
         name=get \2
         v= \1
         # A bit kludgey: Insert a space to prevent later match against /`(?P<name>[\w.]+)` (.+)/
-
-        (.+) In addition to (_x_ and _y_) the algorithm takes (a Boolean flag named _LeftFirst_) as a parameter. The flag is (.+)
-        pl=\2 and \3
-        v=\1 The _LeftFirst_ flag is \4
 '''
 
 single_sentence_rules_str = r'''
@@ -639,15 +635,10 @@ single_sentence_rules_str = r'''
         (Returns (?P<retn>an array) containing .+)
         v=\1
 
-        Such a comparison is performed as follows:
-
     # ==========================================================================
     # Sentences that start with "The"
 
         # --------------
-
-        The (comparison .+), where (?P<ps>_x_ and _y_ are values), produces (.+)
-        v=!OP performs the \1, returning \3
 
         The following steps are performed:
 
@@ -795,12 +786,6 @@ single_sentence_rules_str = r'''
 
         # ----------
         # returns ...
-
-        (.+ returning (?P<retn>\*true\*, \*false\*, or \*undefined\*) .+)
-        v=\1
-
-        (.+ returning (?P<retn>\*true\* or \*false\*)\.)
-        v=\1
 
         (Return (?P<retn>a String) .+)
         v=\1
@@ -1366,6 +1351,12 @@ def extract_info_from_standard_preamble(preamble_node):
                     break
             else:
                 assert 0, sentence
+
+        elif 'returning *true*, *false*, or *undefined*' in sentence:
+            info_holder.add('retn', 'a Boolean or *undefined*')
+
+        elif 'returning *true* or *false*' in sentence:
+            info_holder.add('retn', 'a Boolean')
 
         elif sentence == 'Otherwise, it returns *undefined*.':
             info_holder.add('retn', '*undefined*'),

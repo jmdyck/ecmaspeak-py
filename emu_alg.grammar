@@ -1356,7 +1356,6 @@
     the result of raising {EX} to the {EX} power
     the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of subtracting 1 from the exponential function of {EX}
-    the result of the comparison {EX} == {EX}
     the result of the {MATH_FUNC} of {EX}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
     the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm
@@ -1739,10 +1738,6 @@
     {NAMED_OPERATION_INVOCATION}
 
 {NAMED_OPERATION_INVOCATION} :
-    Abstract Equality Comparison {var} == {var}
-    Abstract Relational Comparison {var} &lt; {var}
-    Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}
-    Strict Equality Comparison {var} === {EX}
     evaluating {LOCAL_REF}
     evaluating {LOCAL_REF} with argument {var}
     evaluating {LOCAL_REF}. This may be of type Reference
