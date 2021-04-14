@@ -518,8 +518,6 @@ built_in_ops = [
 
     # defined as shorthands:
     'Completion',
-    'NormalCompletion',
-    'ThrowCompletion',
     # 'IfAbruptRejectPromise',
 
     # not built-in at all,
@@ -2694,7 +2692,6 @@ class Env:
                 '\u211d(_lastIndex_)', # RegExpBuiltinExec
                 '\u211d(_ny_)', # Math.atan2
                 '\u211d(_nx_)', # Math.atan2
-                'NormalCompletion(_value_)', # GeneratorResume
                 '\u211d(_exponent_)', # Number::exponentiate
                 '\u211d(_d_)', # Number::remainder
                 'the StringValue of |IdentifierName|', # StringValue
@@ -8108,6 +8105,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
+
+            # NormalCompletion and ThrowCompletion are regular abstract operations now,
+            # so you might expect that we'd use their deduced return types.
+            # However, that would lose information, so we don't.
 
             if callee_op_name == 'NormalCompletion':
                 assert len(args) == 1

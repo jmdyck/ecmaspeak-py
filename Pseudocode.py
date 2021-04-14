@@ -1069,8 +1069,6 @@ def analyze_other_section(section):
             elif section.section_title in [
                 'ReturnIfAbrupt',
                 'Await',
-                'NormalCompletion',
-                'ThrowCompletion',
             ]:
                 ensure_alg('shorthand', section.section_title)
             elif section.section_title == 'IfAbruptRejectPromise ( _value_, _capability_ )':

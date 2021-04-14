@@ -335,13 +335,6 @@ def _handle_other_op_section(section):
         section.ste = {}
         return True
 
-    if section.section_id in ['sec-normalcompletion', 'sec-throwcompletion']:
-        # The preambles say "The abstract operation NormalCompletion ..."
-        # and "The abstract operation ThrowCompletion ..."
-        # but currently, they're not defined as abstract operations,
-        # they're defined as shorthands.
-        return False
-
     if section.section_id == 'sec-weakref-execution':
         # 9.10.3
         section.section_kind = 'abstract_operation'
@@ -767,8 +760,6 @@ def _handle_other_section(section):
             (r'ReturnIfAbrupt',                                    'shorthand'),
             (r'ReturnIfAbrupt Shorthands',                         'shorthand'),
             (r'Await',                                             'shorthand'),
-            (r'NormalCompletion',                                  'shorthand'),
-            (r'ThrowCompletion',                                   'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
 
             (r'.+ Instances',             'properties_of_instances'),
