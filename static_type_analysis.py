@@ -193,7 +193,7 @@ nature_to_tipe = {
         'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
-        'a List of Unicode code points'        : 'List of MathInteger_',
+        'a List of Unicode code points'        : 'List of code_point_',
         'List of Tangible_'                    : 'List of Tangible_',
         'a List of values'                     : 'List of Tangible_',
         'a list of arguments'                  : 'List of Tangible_',
@@ -5697,7 +5697,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is not an empty List":
@@ -7535,28 +7535,28 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [va, vb, emu_xref1, emu_xref2] = children
-        env0.assert_expr_is_of_type(va, ListType(T_MathInteger_))
-        env0.assert_expr_is_of_type(vb, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(va, ListType(T_code_point_))
+        env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
         return (env0, env0)
     
     elif p == r"{CONDITION_1} : {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}":
         [noi, emu_xref] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(noi, ListType(T_code_point_))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} does not have a Generator component":
@@ -10993,18 +10993,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}":
         [va, vb] = children
-        env0.assert_expr_is_of_type(va, ListType(T_MathInteger_))
-        env0.assert_expr_is_of_type(vb, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(va, ListType(T_code_point_))
+        env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
         return (T_CharSet, env0)
 
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
 
     elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
 
     elif p in [
@@ -11974,22 +11974,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row":
         [_, v, _] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
-        return (ListType(T_MathInteger_), env0)
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
 
     elif p == r"{EXPR} : the List of Unicode code points of {var}":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
-        return (ListType(T_MathInteger_), env0)
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
 
     elif p == r"{EXPR} : the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row":
         [v] = children
-        env0.assert_expr_is_of_type(v, ListType(T_MathInteger_))
-        return (ListType(T_MathInteger_), env0)
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
 
     elif p == r"{EXPR} : the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}":
         [prod_ref] = children
-        return (ListType(T_MathInteger_), env0)
+        return (ListType(T_code_point_), env0)
 
     # ----
 
