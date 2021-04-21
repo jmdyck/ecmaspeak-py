@@ -746,6 +746,8 @@ class TypedAlgHeader:
                 '{EMU_ALG_BODY}',
                 '{IAO_BODY}',
                 '{EXPR}',
+                '{ONE_LINE_ALG}',
+                '{EE_RULE}',
                 '{NAMED_OPERATION_INVOCATION}',
             ], alg_defn.anode.prod.lhs_s
 
@@ -2585,6 +2587,7 @@ class Env:
                 # assert 0
                 # sys.exit(0)
         else:
+            # expr_text not in self.vars
             assert expr_text in [
                 '! UTF16EncodeCodePoint(_cp_)',
                 '? CaseClauseIsSelected(_C_, _input_)', # Evaluation (CaseBlock)
@@ -3159,6 +3162,10 @@ def tc_header(tah):
 
     final_env = tc_proc(tah.name, tah.t_defns, init_env, expected_return_type)
 
+    if tah.name == 'Early Errors':
+        assert final_env is None
+        return False
+
     assert final_env is not None
 
     for (pn, final_t) in final_env.vars.items():
@@ -3443,7 +3450,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
             print('(no discriminator)')
         print()
 
-        if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IAO_BODY}', '{IND_COMMANDS}']:
+        if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IAO_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
             assert tc_nonvalue(body, init_env) is None
         elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
             (out_t, out_env) = tc_expr(body, init_env)
@@ -3459,6 +3466,10 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
     for return_env in proc_return_envs:
         rr_envs.append(return_env.reduce(header_names))
     final_env = envs_or(rr_envs)
+
+    if op_name == 'Early Errors':
+        assert final_env is None
+        return None
 
     assert final_env is not None
 
@@ -3551,6 +3562,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
 
         r"{COMMAND} : Optionally, {SMALL_COMMAND}.",
+        r"{ONE_LINE_ALG} : {nlai}{COMMAND}{nlai}",
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
@@ -5195,6 +5207,72 @@ def tc_nonvalue(anode, env0):
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         result = env1
+
+    elif p in [
+        r"{EE_RULE} : It is a Syntax Error if {CONDITION}.",
+        r"{EE_RULE} : It is an early Syntax Error if {CONDITION}.",
+    ]:
+        [cond] = children
+        tc_cond(cond, env0, False)
+        result = None
+
+    elif p == r"{EE_RULE} : Always throw a Syntax Error if code matches this production.":
+        [] = children
+        result = None
+
+    elif p == r"{EE_RULE} : All Early Error rules for {nonterminal} and its derived productions also apply to {EX}.":
+        [nont, ex] = children
+        env0.assert_expr_is_of_type(ex, T_Parse_Node)
+        result = None
+
+    elif p == r"{EE_RULE} : <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>":
+        [local_ref1, h_emu_grammar, local_ref2, local_ref3] = children
+        env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
+        env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
+        env0.assert_expr_is_of_type(local_ref3, T_Parse_Node)
+        result = None
+
+    elif p == r"{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
+        [cond, h_emu_grammar] = children
+        tc_cond(cond, env0, False)
+        result = None
+
+    elif p == r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.":
+        [conda, condb] = children
+        (tenv, fenv) = tc_cond(conda, env0, False)
+        tc_cond(condb, tenv, False)
+        result = None
+
+    elif p in [
+        r"{EE_RULE} : All early error rules for {nonterminal} and its derived productions also apply to {EX}.",
+        r"{EE_RULE} : All Early Error rules for {nonterminal} and its derived productions apply to {EX}.",
+    ]:
+        [nonta, ex] = children
+        env0.assert_expr_is_of_type(ex, T_Parse_Node)
+        result = None
+
+    elif p == r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}":
+        [cond, bool_lit, h_emu_alg] = children
+        tc_cond(cond, env0)
+        # XXX should check h_emu_alg
+        result = None
+
+    elif p in [
+        r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.",
+        r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.",
+    ]:
+        [cond, g_sym, h_emu_xref] = children    
+        tc_cond(cond, env0)
+        result = None
+
+    elif p == r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.":
+        [nont, var, noi, cond] = children
+        t = ptn_type_for(nont)
+        env0.assert_expr_is_of_type(noi, ListType(t))
+        env1 = env0.plus_new_entry(var, t)
+        tc_cond(cond, env1)
+        result = None
+
 
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
@@ -8010,6 +8088,253 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production":
+        [noi, ssa, ssb, noi2, var, nont] = children
+        env0.assert_expr_is_of_type(noi, T_String)
+        env1 = env0.plus_new_entry(var, T_code_point_)
+        env1.assert_expr_is_of_type(noi2, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, {starred_str}, ! {NAMED_OPERATION_INVOCATION}, ! {NAMED_OPERATION_INVOCATION}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} that would be matched by the {nonterminal} lexical grammar production":
+        [noi, ssa, ssb, noi2, noi3, noi4, var, nont] = children
+        env0.assert_expr_is_of_type(noi, T_String)
+        env0.assert_expr_is_of_type(noi2, T_String)
+        env0.assert_expr_is_of_type(noi3, T_String)
+        env1 = env0.plus_new_entry(var, T_code_point_)
+        env1.assert_expr_is_of_type(noi4, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}":
+        [noi, ssa, ssb] = children
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}":
+        [nont] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}":
+        [nont] = children    
+        return (env0, env0)
+
+    elif p in [
+        r"{CONDITION_1} : this production has an? <sub>[{cap_word}]</sub> parameter",
+    ]:
+        [cap_word] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set":
+        [] = children
+        return (env0, env0)
+
+    elif p in [
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {LITERAL}",
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not {LITERAL}",
+    ]:
+        [noi, literal] = children
+        (t_lit, env1) = tc_expr(literal, env0); assert env1 is env0
+        (t_noi, env1) = tc_expr(noi, env0)
+        assert t_lit.is_a_subtype_of_or_equal_to(t_noi)
+        return (env1, env1)
+
+    elif p in [
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}",
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}",
+    ]:
+        [noi, *ss_] = children
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`":
+        [noi] = children
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1":
+        [noi] = children
+        env0.assert_expr_is_of_type(noi, T_List)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} contains a Unicode escape sequence":
+        [local_ref] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p in [
+        r"{CONDITION_1} : the code matched by {PROD_REF} is contained in strict mode code",
+        r"{CONDITION_1} : the code that matches {PROD_REF} is contained in strict mode code",
+    ]:
+        [prod_ref] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code":
+        [local_ref] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p in [
+        r"{CONDITION_1} : any code matches this production",
+        r"{CONDITION_1} : any source text matches this rule",
+    ]:
+        [] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}":
+        [local_ref, g_sym] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is not covering an? {nonterminal}":
+        [local_ref, nont] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}":
+        [local_ref, h_emu_grammar] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is a {nonterminal}":
+        [noi, nont] = children
+        # env0.assert_expr_is_of_type(noi, T_Parse_Node)
+        assert nont.source_text() == '|ReservedWord|'
+        # This isn't asking if {noi} is a Parse Node that is an instance of |ReservedWord|.
+        # Rather, it's asking if {noi} is a String that could match |ReservedWord|.
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is an {nonterminal} or an {nonterminal}":
+        [local_ref, nonta, nontb] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p in [
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries",
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements",
+    ]:
+        [noi] = children
+        env0.assert_expr_is_of_type(noi, T_List)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}":
+        [noi1, noi2] = children
+        env0.assert_expr_is_of_type(noi1, T_List)
+        env0.assert_expr_is_of_type(noi2, T_List)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains {starred_str}":
+        [noi, ss] = children
+        env0.assert_expr_is_of_type(noi, ListType(T_String))
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}":
+        [noi, ss] = children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
+        return (env1, env1)
+
+    elif p in [
+        r"{CONDITION_1} : {PROD_REF} is not present",
+        r"{CONDITION_1} : {PROD_REF} is present",
+    ]:
+        [prod_ref] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal}":
+        [local_ref, nont] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal} or a {nonterminal}":
+        [local_ref, nonta, nontb] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}":
+        [local_ref, g_sym, bool_lit] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}":
+        [conda, condb] = children
+        tc_cond(conda, env0)
+        tc_cond(condb, env0)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the source code containing {G_SYM} is eval code that is being processed by a direct eval":
+        [g_sym] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}":
+        [noia, noib, noic] = children
+        env0.assert_expr_is_of_type(noia, T_List)
+        env0.assert_expr_is_of_type(noib, T_List)
+        env0.assert_expr_is_of_type(noic, T_List)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} &ge; 2<sup>32</sup> - 1":
+        [var] = children
+        assert var.source_text() == '_NcapturingParens_'
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}":
+        [local_ref, nonta, nontb, cap_word] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        # XXX cap_word
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}":
+        [noia, noib] = children
+        env0.assert_expr_is_of_type(noia, T_MathInteger_)
+        env0.assert_expr_is_of_type(noib, T_MathInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals the {cap_word} of the {nonterminal} of {PROD_REF}":
+        [nonta, nontb, nontc, cap_worda, cap_wordb, nontd, prod_ref] = children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        # XXX cap_word
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})":
+        [noi, var, h_emu_xref] = children
+        assert var.source_text() == '_NcapturingParens_'
+        env0.assert_expr_is_of_type(noi, T_MathInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, or some code point matched by the {nonterminal} lexical grammar production":
+        [noi, ssa, ssb, nont] = children
+        env0.assert_expr_is_of_type(noi, T_MathInteger_)
+        add_pass_error(ssa, "has type T_String, expected T_code_point_")
+        add_pass_error(ssb, "has type T_String, expected T_code_point_")
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production":
+        [noi, nont] = children
+        env0.assert_expr_is_of_type(noi, T_code_point_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, {named_char}, {named_char}, or some code point matched by the {nonterminal} lexical grammar production":
+        [noi, ssa, ssb, ncc, ncd, nont] = children
+        env0.assert_expr_is_of_type(noi, T_MathInteger_)
+        add_pass_error(ssa, "has type T_String, expected T_code_point_")
+        add_pass_error(ssb, "has type T_String, expected T_code_point_")
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+        [noi, h_emu_xref] = children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
+        return (env1, env1)
+
+    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}":
+        [noia, noib, h_emu_xref_a, h_emu_xref_b] = children
+        env1 = env0.ensure_expr_is_of_type(noia, ListType(T_code_point_))
+        env2 = env1.ensure_expr_is_of_type(noib, ListType(T_code_point_))
+        return (env2, env2)
+
+    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+        [noi, h_emu_xref_a, h_emu_xref_b] = children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
+        return (env1, env1)
+
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
@@ -8177,6 +8502,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the result of performing {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
+        r"{EXPR} : {LITERAL}",
         r"{EX} : ({EX})",
         # r"{EX} : the previous value of {var}", # PR 2138
         r"{EX} : the value of {SETTABLE}",
@@ -8244,6 +8570,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         "{LITERAL} : *false*",
         "{LITERAL} : *true*",
     ]:
+        return (T_Boolean, env0)
+
+    elif p == r"{LITERAL} : {BOOL_LITERAL}":
         return (T_Boolean, env0)
 
     elif p == r'{LITERAL} : *undefined*':
@@ -8475,11 +8804,20 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [callee, local_ref] = children[0:2]
         callee_op_name = callee.source_text()
-        if callee_op_name == 'UTF16EncodeCodePoint':
+        if callee_op_name in ['UTF16EncodeCodePoint', 'UTF16SurrogatePairToCodePoint']:
             # An abstract operation that uses SDO-style invocation.
             return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
         else:
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
+
+    elif p in [
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({var})",
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({named_char})",
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({PROD_REF})",
+    ]:
+        [callee, local_ref] = children
+        callee_op_name = callee.source_text()
+        return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}",
@@ -8500,6 +8838,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             args = with_args.children[1:]
         elif with_args.prod.rhs_s == '{PASSING} arguments {EX} and {EX} as the optional {var} argument':
             args = with_args.children[1:3]
+        elif with_args.prod.rhs_s in [
+            'with argument {EX}',
+            'with arguments {EX} and {EX}',
+        ]:
+            args = with_args.children
         else:
             assert 0, with_args.prod.rhs_s
         return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
@@ -9981,6 +10324,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r'{LITERAL} : {STR_LITERAL}',
+        r'{LITERAL} : {starred_str}',
         r'{STR_LITERAL} : {code_unit_lit}',
         r'{STR_LITERAL} : `"[^`"]*"`',
     ]:
@@ -10415,6 +10759,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_code_point_, env0)
 
+    elif p == r"{named_char} : &lt; ([A-Z]+) &gt;":
+        return (T_code_point_, env0)
+
     # ----------------------------------------------------------
     # return T_Unicode_code_points_
 
@@ -10839,6 +11186,36 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LOCAL_REF} : the parsed code that is {DOTTING}":
         [dotting] = children
         env0.assert_expr_is_of_type(dotting, T_Parse_Node)
+        return (T_Parse_Node, env0)
+
+    elif p == r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_grammar_symbol_)
+        return (T_Parse_Node, env0)
+
+    elif p == r"{EXPR} : the child of {var} that is an instance of {var}":
+        [node_var, sym_var] = children
+        env0.assert_expr_is_of_type(node_var, T_Parse_Node)
+        env0.assert_expr_is_of_type(sym_var, T_grammar_symbol_)
+        return (T_Parse_Node, env0)
+
+    elif p == r"{PROD_REF} : this phrase":
+        return (T_Parse_Node, env0)
+
+    elif p in [
+        r"{PROD_REF} : the derived {nonterminal}",
+        r"{PROD_REF} : this production's {nonterminal}",
+    ]:
+        [nont] = children
+        return (T_Parse_Node, env0)
+
+    elif p == r"{EX} : the {nonterminal} that is covered by {LOCAL_REF}":
+        [nont, local_ref] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (T_Parse_Node, env0)
+
+    elif p == r"{PROD_REF} : the {nonterminal} containing this {nonterminal}":
+        [nonta, nontb] = children
         return (T_Parse_Node, env0)
 
     # --------------------------------------------------------
@@ -12588,11 +12965,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             return (T_MathReal_, env0)
 
-    elif p == r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_grammar_symbol_)
-        return (T_Parse_Node, env0)
-
     elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present":
         [error_type] = children
         error_type_name = error_type.source_text()[1:-1]
@@ -12607,11 +12979,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Tangible_, env0)
 
-    elif p == r"{EXPR} : the child of {var} that is an instance of {var}":
-        [node_var, sym_var] = children
-        env0.assert_expr_is_of_type(node_var, T_Parse_Node)
-        env0.assert_expr_is_of_type(sym_var, T_grammar_symbol_)
-        return (T_Parse_Node, env0)
+    elif p == r"{EX} : the two code points matched by {nonterminal} and {nonterminal} respectively":
+        [nonta, nontb] = children
+        return (T_code_point_, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":

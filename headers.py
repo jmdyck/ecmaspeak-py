@@ -231,7 +231,7 @@ def create_operation_info_for_section(s):
 
     # ------------------------------------------------------
 
-    if s.section_kind == 'syntax_directed_operation':
+    if s.section_kind in ['syntax_directed_operation', 'early_errors']:
         something_sdo(s)
         return
 
@@ -522,14 +522,19 @@ def create_operation_info_for_section(s):
                     oi.add_defn(algo._parent_algdefn)
                 else:
                     stderr(f"No _parent_algdefn for {algo}")
-            else:
-                assert algo.element_name in ['emu-table']
+            elif algo.element_name == 'emu-table':
                 assert not hasattr(algo, '_parent_algdefn')
+                assert oi.kind == 'abstract operation'
+                # op = spec.alg_info_['op'][oi.name]
+                # for alg_defn in op.definitions:
+                #     oi.add_defn(alg_defn)
+            else:
+                assert 0, algo.element_name
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def something_sdo(s):
-    assert s.section_kind == 'syntax_directed_operation'
+    assert s.section_kind in ['syntax_directed_operation', 'early_errors']
 
     # get parameters
     param_dict = OrderedDict()
@@ -600,7 +605,7 @@ def declare_sdo(section, op_name, param_dict, also=[]):
 
         op_info = spec.alg_info_['op'][op_name]
         assert op_info.name == op_name
-        assert op_info.species == 'op: syntax-directed'
+        assert op_info.species in ['op: syntax-directed', 'op: early error']
         for alg_defn in op_info.definitions:
             if alg_defn.section.section_num.startswith('B'): continue
             if alg_defn.discriminator is None: continue # XXX for now

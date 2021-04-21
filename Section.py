@@ -302,6 +302,11 @@ def _infer_section_kinds(section):
                             parameters[param_name] = param_punct
             section.ste['parameters'] = parameters
 
+    elif section.section_kind == 'early_errors':
+        assert section.ste['op_name'] == 'Early Errors'
+        assert 'parameters' not in section.ste
+        section.ste['parameters'] = OrderedDict()
+
     elif (
         section.parent.section_title in ['Pattern Semantics', 'Runtime Semantics for Patterns']
         and
