@@ -8940,6 +8940,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(factor1, T_MathInteger_)
         return (T_MathInteger_, env1)
 
+    elif p == r"{NUM_LITERAL} : 64 (that is, 8<sup>2</sup>)":
+        [] = children
+        return (T_MathInteger_, env0)
+
     # ----
 
     elif p in [
@@ -9752,7 +9756,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
         return (T_Parse_Node, env0)
 
-    elif p == r"{PROD_REF} : this phrase":
+    elif p in [
+        r"{PROD_REF} : this phrase",
+        r"{PROD_REF} : this production",
+    ]:
         return (T_Parse_Node, env0)
 
     elif p in [

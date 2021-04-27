@@ -99,6 +99,7 @@
     {var}
 
 {NUM_LITERAL} :
+    64 (that is, 8<sup>2</sup>)
     {dec_int_lit}
     {hex_int_lit}
 

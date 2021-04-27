@@ -318,7 +318,7 @@ metagrammar = {
     'LAC_SINGLE'           : ('_', 'n', r'\[lookahead ', 'LAC_SINGLE_OP', ' ', 'TERMINAL_SEQ', r'\]'),
     'LAC_SINGLE_OP'        : ('/', 'n', '==|!='),
     'LAC_SET'              : ('_', 'n', r'\[lookahead ', 'LAC_SET_OP', ' ', 'LAC_SET_OPERAND', r'\]'),
-    'LAC_SET_OP'           : ('/', 'n', '&notin;'),
+    'LAC_SET_OP'           : ('/', 'n', '&isin;|&notin;'),
     'LAC_SET_OPERAND'      : ('|', '^', 'NT', 'SET_OF_TERMINAL_SEQ'),
     'SET_OF_TERMINAL_SEQ'  : ('+', 'n', 'TERMINAL_SEQ', ', ', '{', '}'),
     'TERMINAL_SEQ'         : ('+', 'n', 'TERMINAL_ITEM', ' '),

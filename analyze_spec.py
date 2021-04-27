@@ -477,16 +477,6 @@ def check_ids():
                     # Those ids are declared in emu-imported files.
                     pass
 
-                elif refid in [
-                    'prod-annexB-LegacyOctalEscapeSequence',
-                    'prod-annexB-LegacyOctalIntegerLiteral',
-                    'prod-annexB-NonOctalDecimalIntegerLiteral',
-                    'prod-annexB-NonOctalDecimalEscapeSequence',
-                ]:
-                    # These don't exist in the source file,
-                    # but are generated during the rendering process?
-                    pass
-
                 else:
                     msg_at_posn(refnode.start_posn, f"emu-xref refers to nonexistent id: {refid}")
 

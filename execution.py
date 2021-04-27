@@ -551,6 +551,7 @@ class Frame:
                         ('TemplateMiddleList', 'TemplateMiddleList TemplateMiddle Expression', ''),
                         ('PropertyDefinitionList', 'PropertyDefinitionList `,` PropertyDefinition', ''),
                         ('DecimalDigits', 'DecimalDigits DecimalDigit', ''),
+                        ('LegacyOctalIntegerLiteral', 'LegacyOctalIntegerLiteral OctalDigit', '')
                     ]:
                         referent = referents[1]
 
@@ -1396,19 +1397,6 @@ def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
                     # (Other rules should prevent us getting here.)
                     return EL_String([])
 
-                if sdo_name == 'NumericValue' and focus_node.puk == ('LegacyOctalIntegerLiteral', 'LegacyOctalIntegerLiteral OctalDigit', ''):
-                    # Way back when LegacyOctalIntegerLiteral (LOIL) was introduced,
-                    # the definition of the value of a numeric literal was general enough
-                    # that it defined the value of a LOIL.
-                    #
-                    # But this definition was superseded by the SDO `NumericValue`,
-                    # which is only defined on main-body NumericLiterals.
-                    # Technically, when PR #1515 introduced NumericValue,
-                    # it should have added a clause to B.1.1 that defined the NumericValue of a LOIL.
-                    #
-                    # This will be fixed when PR #1867 is merged. Until then ...
-                    return EL_Number(('+', 0))
-
                 if sdo_name == 'SV':
                     return EL_String([])
 
@@ -1735,7 +1723,7 @@ def _(de, randA, rator, randB):
     a = de.exec(randA, ES_Mathnum)
     b = de.exec(randB, ES_Mathnum)
     if op in ['+', 'plus']: return a + b
-    elif op == '&times;': return a * b
+    elif op in ['&times;', 'times']: return a * b
     elif op == '-': return a - b
     elif op == '/': return a / b
     else:
@@ -1913,6 +1901,10 @@ class EL_Undefined(EL_Value):
 @efd.put('{U_LITERAL} : *undefined*')
 def _(de):
     return EL_Undefined()
+
+@efd.put('{EX} : {U_LITERAL}')
+def _(de, literal):
+    return de.exec(literal, EL_Undefined)
 
 # ------------------------------------------------------------------------------
 # 6.1.3 The Boolean Type
