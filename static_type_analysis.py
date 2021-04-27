@@ -9075,6 +9075,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
                     return (T_MathReal_, env0)
                 elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_):
+                    # This isn't correct: fancy_r is "mathematical value",
+                    # which is not defined on non-finite values.
+                    # However, it makes lots of invalid complaints go away.
                     return (T_ExtendedMathReal_, env0)
                 else:
                     add_pass_error(
