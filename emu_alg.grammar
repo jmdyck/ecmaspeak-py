@@ -1283,7 +1283,6 @@
     the character value of character {var}
     the character whose character value is {var}
     the character {SETTABLE}
-    the child of {var} that is an instance of {var}
     the code point matched by {PROD_REF}
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the code point value according to {h_emu_xref}
@@ -1588,6 +1587,9 @@
     # obsoleted by the merge of PR #2287:
     # a new object Environment Record containing {var} as the binding object
     # the binding object for {var}
+
+    # obsoleted by the merge of PR #2374
+    # the child of {var} that is an instance of {var}
 
     # PR 1477 scope-records:
     a new object Scope Record containing {var} as the binding object

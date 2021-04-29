@@ -11196,11 +11196,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
         return (T_Parse_Node, env0)
 
-    elif p == r"{EXPR} : the child of {var} that is an instance of {var}":
-        [node_var, sym_var] = children
-        env0.assert_expr_is_of_type(node_var, T_Parse_Node)
-        env0.assert_expr_is_of_type(sym_var, T_grammar_symbol_)
-        return (T_Parse_Node, env0)
+#    elif p == r"{EXPR} : the child of {var} that is an instance of {var}":
+#        [node_var, sym_var] = children
+#        env0.assert_expr_is_of_type(node_var, T_Parse_Node)
+#        env0.assert_expr_is_of_type(sym_var, T_grammar_symbol_)
+#        return (T_Parse_Node, env0)
+# ^ obsoleted by PR #2374
 
     elif p == r"{PROD_REF} : this phrase":
         return (T_Parse_Node, env0)
