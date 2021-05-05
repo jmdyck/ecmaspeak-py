@@ -2091,6 +2091,10 @@ def analyze_sdo_coverage_info():
             # we could check for conflicting defs
             continue
 
+        if sdo_name == 'Early Errors':
+            # Early Error rules are not invoked explicitly (for the most part).
+            continue
+
         # print()
         # print(sdo_name)
 
@@ -2110,10 +2114,6 @@ def analyze_sdo_coverage_info():
             # For each invocation, figure out the nonterminal
             # of the parse node that is the 'target'? (primary argument) of the invocation.
             # Make sure those nonterminals are covered.
-
-            # TODO: We should also detect when SDO rules don't appear to be used.
-            # (which might be a spec mistake,
-            # or might indicate that the code below has missed some invocations)
 
             nt_set = set()
             for opcall in spec.alg_info_['op'][sdo_name].invocations:
@@ -2187,6 +2187,8 @@ def analyze_sdo_coverage_info():
                     # {var} or {DOTTING} results in a Parse Node.
                     # What *kind* of Parse Node should properly be determined via static type analysis.
                     nts = nts_behind_var_in_sdo_call.get((sdo_name, u_st), [])
+                    if nts == []:
+                        put(f"nts_etc missing entry for ({sdo_name!r}, {u_st!r})")
 
                 else:
                     assert 0, (u_lhs, opcall.source_text())
@@ -2199,6 +2201,11 @@ def analyze_sdo_coverage_info():
                     pass
                     # print(f" ?? {' ':36} from {opcall.source_text()}")
 
+            if sdo_name == 'MV':
+                # Currently, there isn't an explicit application of MV to |StringNumericLiteral|,
+                # but it's clear that has to happen. (PR #1554 will make this explicit.)
+                nt_set.add('StringNumericLiteral')
+
             nt_queue = sorted(nt_set)
 
         # for nt in nt_queue: print('   ', nt)
@@ -2206,6 +2213,7 @@ def analyze_sdo_coverage_info():
         def queue_ensure(nt):
             if nt not in nt_queue: nt_queue.append(nt)
 
+        used_keys = set()
 
         debug = False # (sdo_name == 'HasName')
         # {debug} creates a lot of output, but it's really useful
@@ -2235,6 +2243,7 @@ def analyze_sdo_coverage_info():
                     )
 
                     key = (lhs_nt, def_i, optbits)
+                    used_keys.add(key)
                     rules = coverage_info_for_this_sdo.get(key, [])
 
                     if len(rules) == 1:
@@ -2263,7 +2272,13 @@ def analyze_sdo_coverage_info():
                         else:
                             put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} {opt_combo_str} needs a rule")
 
+        unused_keys = coverage_info_for_this_sdo.keys() - used_keys
+        for unused_key in sorted(unused_keys):
+            put(f"{sdo_name} has unused rule for: {unused_key}")
+
     coverage_f.close()
+
+# -------------------------------
 
 def each_opt_combo(oGNTs):
     N = len(oGNTs)
@@ -2297,50 +2312,37 @@ def required_nts_in(opt_combo):
 
 nts_behind_var_in_sdo_call = {
 
-#     ('BindingInitialization',  '_lhs_'      ): ['ForBinding', 'ForDeclaration'],
-#     ('BindingInstantiation',   '_lhs_'      ): ['ForDeclaration'],
-
-    # ('BindingInitialization', '_lhs_'): [],
-    # ('BodyText', '_literal_'): [],
-    # ('BoundNames', '_d_'): [],
-    # ('BoundNames', '_f_'): [],
-    # ('BoundNames', '_head_'): [],
-    # ('BoundNames', '_lhs_'): [],
-    # ('ChainEvaluation', '_optionalChain_'): [],
-    # ('DefineMethod', '_constructor_'): [],
-    # ('Evaluation', '_C_'): [],
-    # ('Evaluation', '_asyncFunctionBody_'): [],
-    # ('Evaluation', '_body_'): [],
-    # ('Evaluation', '_constructExpr_'): [],
-    # ('Evaluation', '_expr_'): [],
-    # ('Evaluation', '_expression_'): [],
-    # ('Evaluation', '_generatorBody_'): [],
-    # ('Evaluation', '_increment_'): [],
-    # ('Evaluation', '_leftOperand_'): [],
-    # ('Evaluation', '_lhs_'): [],
-    # ('Evaluation', '_memberExpr_'): [],
-    # ('Evaluation', '_rightOperand_'): [],
-    # ('Evaluation', '_stmt_'): [],
-    # ('Evaluation', '_test_'): [],
-    # ('FlagText', '_literal_'): [],
-    # ('HasDirectSuper', '_constructor_'): [],
-    # ('IsSimpleParameterList', '_head_'): [],
-    # ('IsStatic', '_m_'): [],
-    # ('PropertyDefinitionEvaluation', '_m_'): [],
-    # ('StringValue', '_identifierName_'): [],
-    # ('StringValue', '_n_'): [],
-    # ('TemplateStrings', '_templateLiteral_'): [],
-
-    # 5 places
-    ('IsConstantDeclaration', '_d_'): [
+    # 5715 BoundNames
+    ('BoundNames', '_head_'): ['AsyncArrowHead'],
+    # 11005 FunctionDeclarationInstantiation
+    # 21588 GlobalDeclarationInstantiation
+    # 23713 EvalDeclarationInstantiation
+    ('BoundNames', '_f_'): [
         'FunctionDeclaration',
-        'ClassDeclaration',
-        'ExportDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
         'AsyncGeneratorDeclaration',
+    ],
+    # 11005 FunctionDeclarationInstantiation +
+    # 17667 BlockDeclarationInstantiation
+    # 21588 GlobalDeclarationInstantiation
+    # 22788 InitializeEnvironment
+    # 23713 EvalDeclarationInstantiation
+    ('BoundNames', '_d_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        #
+        'VariableDeclaration',
+        'ForBinding',
+        'BindingIdentifier',
+        #
+        'ClassDeclaration',
         'LexicalDeclaration',
     ],
+    # 18548 ForIn/OfBodyEvaluation
+    ('BoundNames', '_lhs_'): ['ForDeclaration'],
 
     # 7333 HasName
     # 7386 IsFunctionDefinition
@@ -2414,6 +2416,21 @@ nts_behind_var_in_sdo_call = {
     ('ExpectedArgumentCount', '_formals_'): ['ArrowFormalParameters'],
 
     # 11005 FunctionDeclarationInstantiation
+    # 17667 BlockDeclarationInstantiation
+    # 21588 GlobalDeclarationInstantiation
+    # 22788 InitializeEnvironment
+    # 23713 EvalDeclarationInstantiation
+    ('IsConstantDeclaration', '_d_'): [
+        'FunctionDeclaration',
+        'ClassDeclaration',
+        'ExportDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        'LexicalDeclaration',
+    ],
+
+    # 11005 FunctionDeclarationInstantiation
     # 21746 GlobalDeclarationInstantiation
     # 23865 EvalDeclarationInstantiation
     ('InstantiateFunctionObject', '_f_'): [
@@ -2468,10 +2485,75 @@ nts_behind_var_in_sdo_call = {
         'Module',
     ],
 
+    # 15190 IsValidRegularExpressionLiteral
+    ('FlagText', '_literal_'): ['RegularExpressionLiteral'],
+    ('BodyText', '_literal_'): ['RegularExpressionLiteral'],
+
+    # 15344 GetTemplateObject
+    ('TemplateStrings', '_templateLiteral_'): ['TemplateLiteral'],
+
+    # 15483 Evaluation
+    # 18519 ForIn/OfHeadEvaluation
+    ('Evaluation', '_expr_'): ['ParenthesizedExpression', 'Expression', 'AssignmentExpression'],
+    # 15697 EvaluatePropertyAccessWithExpressionKey
+    ('Evaluation', '_expression_'): ['Expression'],
+    # 15733 EvaluateNew
+    ('Evaluation', '_constructExpr_'): ['NewExpression', 'MemberExpression'],
+    # 15754 Evaluation
+    ('Evaluation', '_memberExpr_'): ['MemberExpression'],
+    # 17157 EvaluateStringOrNumericBinaryExpression
+    ('Evaluation', '_leftOperand_'): [
+        'UpdateExpression',
+        'MultiplicativeExpression',
+        'AdditiveExpression',
+        'ShiftExpression',
+        'BitwiseANDExpression',
+        'BitwiseXORExpression',
+        'BitwiseORExpression',
+    ],
+    ('Evaluation', '_rightOperand_'): [
+        'ExponentiationExpression',
+        'MultiplicativeExpression',
+        'AdditiveExpression',
+        'EqualityExpression',
+        'BitwiseANDExpression',
+        'BitwiseXORExpression',
+    ],
+    # 18263 ForBodyEvaluation
+    ('Evaluation', '_test_'): ['Expression'],
+    ('Evaluation', '_increment_'): ['Expression'],
+    # 18263 ForBodyEvaluation
+    # 18548 ForIn/OfBodyEvaluation
+    ('Evaluation', '_stmt_'): ['Statement'],
+    # 18548 ForIn/OfBodyEvaluation
+    ('Evaluation', '_lhs_'): [
+        'LeftHandSideExpression',
+        'ForBinding',
+        # 'ForDeclaration', always invoked with _lhsKind_ = ~lexicalBinding~
+        'BindingIdentifier',
+    ],
+    # 18965 CaseBlockEvaluation
+    ('Evaluation', '_C_'): ['CaseClause'],
+    # 23648 PerformEval
+    ('Evaluation', '_body_'): ['ScriptBody'],
+    # 38884 GeneratorStart
+    # 39144 AsyncGeneratorStart
+    ('Evaluation', '_generatorBody_'): ['FunctionBody'],
+    # 39454 AsyncFunctionStart
+    ('Evaluation', '_asyncFunctionBody_'): ['FunctionBody', 'ExpressionBody'],
+
+    # 15708 EvaluatePropertyAccessWithIdentifierKey
+    ('StringValue', '_identifierName_'): ['IdentifierName'],
+    # 23175 Early Errors
+    ('StringValue', '_n_'): ['IdentifierName'],
+
     # 15879 EvaluateNew
     # 15900 Evaluation
     # 15932 EvaluateCall
     ('ArgumentListEvaluation', '_arguments_'): ['Arguments', 'TemplateLiteral'],
+
+    # 15986 ChainEvaluation
+    ('ChainEvaluation', '_optionalChain_'): ['OptionalChain'],
 
     # 17157 Evaluation
     # 17627 KeyedDestructuringAssignmentEvaluation
@@ -2479,6 +2561,9 @@ nts_behind_var_in_sdo_call = {
     ('DestructuringAssignmentEvaluation', '_assignmentPattern_'): ['AssignmentPattern'],
     # 17532 IteratorDestructuringAssignmentEvaluation
     ('DestructuringAssignmentEvaluation', '_nestedAssignmentPattern_'): ['AssignmentPattern'],
+
+    # 18548 ForIn/OfBodyEvaluation
+    ('BindingInitialization', '_lhs_'): ['ForBinding'],
 
     # 18694 ForIn/OfBodyEvaluation
     ('IsDestructuring', '_lhs_'): [
@@ -2489,6 +2574,21 @@ nts_behind_var_in_sdo_call = {
     ],
     ('ForDeclarationBindingInstantiation',  '_lhs_'): ['ForDeclaration'],
     ('ForDeclarationBindingInitialization', '_lhs_'): ['ForDeclaration'],
+
+    # 19484 IsSimpleParameterList
+    ('IsSimpleParameterList', '_head_'): ['AsyncArrowHead'],
+
+    # 20531 Early Errors
+    ('HasDirectSuper', '_constructor_'): ['ClassElement'],
+
+    # 20657 ClassDefinitionEvaluation
+    ('DefineMethod', '_constructor_'): ['ClassElement'],
+
+    # 20657 ClassDefinitionEvaluation
+    ('IsStatic', '_m_'): ['ClassElement'],
+
+    # 20657 ClassDefinitionEvaluation
+    ('PropertyDefinitionEvaluation', '_m_'): ['ClassElement'],
 
     # 21229 IsInTailPosition
     ('HasCallInTailPosition', '_body_'): ['FunctionBody', 'ConciseBody'],
@@ -2569,27 +2669,22 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # only occurs as part of an |ExportDeclaration| and is never directly evaluated."
         return True
 
-    if sdo_name == 'HasName':
-        # Invocations of this SDO are guarded by `IsFunctionDefinition of _expr_ is *true*`,
-        # so the SDO doesn't need to be defined for most kinds of expr.
-        # Assume that it's defined for all that need it.
+    if sdo_name == 'Evaluation' and lhs_nt == 'ForBinding' and def_i == 1:
+        # ForIn/OfBodyEvaluation invokes Evaluation on ForBinding,
+        # but only if IsDestructuring of it is *false*,
+        # which s only the case for `ForBinding : BindingIdentifier`.
+        # So `ForBinding : BindingPattern` is an exception.
         return True
 
-    if sdo_name == 'NamedEvaluation':
-        # NamedEvaluation is invoked on |Initializer| and |AssignmentExpression|,
-        # which are fairly general, except that it's only invoked on nodes
-        # for which IsAnonymousFunctionDefinition() is true,
-        # which implies that IsFunctionDefition is true and HasName is false.
-        # return lhs_nt not in [
-        #     'ArrowFunction',
-        #     'AsyncArrowFunction',
-        #     'FunctionExpression',
-        #     'GeneratorExpression',
-        #     'AsyncGeneratorExpression',
-        #     'ClassExpression',
-        #     'AsyncFunctionExpression',
-        # ]
-        # As above, assume it's defined for all that need it.
+    if sdo_name == 'HasDirectSuper' and lhs_nt == 'ClassElement' and def_i != 0:
+        # HasDirectSuper is only invoked on ConstructorMethod of |ClassBody|,
+        # which is a |ClassElement| for which ClassElementKind is ~ConstructorMethod~,
+        # which can only be `ClassElement : MethodDefinition`
+        return True
+
+    if sdo_name == 'DefineMethod' and lhs_nt == 'ClassElement' and def_i != 0:
+        # DefineMethod is invoked on |ClassElement| only if
+        # it's ConstructorMethod of |ClassBody| ...
         return True
 
     if sdo_name == 'IsConstantDeclaration' and lhs_nt == 'ExportDeclaration' and def_i in [0,1,2,3]:
@@ -2623,6 +2718,13 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # So no SDO will be invoked on them.
         return True
 
+    if sdo_name == 'PropertyDefinitionEvaluation' and lhs_nt == 'ClassElement' and def_i == 2:
+        # SDO is only applied to |ClassElement|s...
+        # that are in NonConstructorMethodDefinitions of |ClassBody|,
+        # i.e. those for which ClassElementKind is ~NonConstructorMethod~,
+        # i.e. those which are not ClassElement : `;`
+        return True
+
     if sdo_name == 'EvaluateConciseBody' and lhs_nt == 'ConciseBody' and def_i != 0:
         # EvaluateConciseBody is invoked on ConciseBody *only* when it's of the form
         # `ConciseBody : ExpressionBody` (i.e. def_i == 0)
@@ -2639,6 +2741,53 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # PR 1668 private fields:
         # "For all other grammatical productions, ..."
         return True
+
+    if sdo_name in ['HasName', 'NamedEvaluation']:
+        # Invocations of HasName are guarded by `IsFunctionDefinition of _expr_ is *true*`,
+        # so the SDO doesn't need to be defined for most kinds of expr.
+
+        # NamedEvaluation is invoked on |Initializer| and |AssignmentExpression|,
+        # which are fairly general, except that it's only invoked on nodes
+        # for which IsAnonymousFunctionDefinition() is true,
+        # which implies that IsFunctionDefinition is true (and HasName is false).
+
+        if (
+            # These are the cases where it *does* need to be defined (explicitly or implicitly):
+            lhs_nt in [
+                'ParenthesizedExpression', # chain to Expression
+                'Initializer',             # chain to AssignmentExpression
+            ]
+            or
+            lhs_nt == 'Expression' and def_i == 0 # AssignmentExpression
+            or
+            lhs_nt == 'AssignmentExpression' and def_i in [0, 2, 3] # ConditionalExpr + ArrowFunction + AsyncArrowFunction
+            or
+            lhs_nt in [
+                    'ConditionalExpression',
+                    'ShortCircuitExpression',
+                    'LogicalORExpression',
+                    'LogicalANDExpression',
+                    'BitwiseORExpression',
+                    'BitwiseXORExpression',
+                    'BitwiseANDExpression',
+                    'EqualityExpression',
+                    'RelationalExpression',
+                    'ShiftExpression',
+                    'AdditiveExpression',
+                    'MultiplicativeExpression',
+                    'ExponentiationExpression',
+                    'UnaryExpression',
+                    'UpdateExpression',
+                    'LeftHandSideExpression',
+                    'NewExpression',
+                    'MemberExpression',
+                ] and def_i == 0
+            or
+            lhs_nt == 'PrimaryExpression' and def_i in [5, 6, 7, 8, 9]
+        ):
+            return False
+        else:
+            return True
 
     return False
 
