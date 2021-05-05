@@ -2186,19 +2186,7 @@ def analyze_sdo_coverage_info():
                 elif u_lhs in ['{var}', '{DOTTING}']:
                     # {var} or {DOTTING} results in a Parse Node.
                     # What *kind* of Parse Node should properly be determined via static type analysis.
-                    # I started to hard-code some info:
-                    #
-                    # nts = {
-                    #     ('ArgumentListEvaluation', '_arguments_'): ['Arguments'],
-                    #     ('BindingInitialization',  '_lhs_'      ): ['ForBinding', 'ForDeclaration'],
-                    #     ('BindingInstantiation',   '_lhs_'      ): ['ForDeclaration'],
-                    #     # ...
-                    # }.get((sdo_name, u_st), [])
-                    #
-                    # but then I found that I got useful results
-                    # by simply ignoring these cases.
-
-                    nts = []
+                    nts = nts_behind_var_in_sdo_call.get((sdo_name, u_st), [])
 
                 else:
                     assert 0, (u_lhs, opcall.source_text())
@@ -2306,6 +2294,240 @@ def each_opt_combo(oGNTs):
 
 def required_nts_in(opt_combo):
     return [nt for (nt, omreq) in opt_combo if omreq == 'required']
+
+nts_behind_var_in_sdo_call = {
+
+#     ('BindingInitialization',  '_lhs_'      ): ['ForBinding', 'ForDeclaration'],
+#     ('BindingInstantiation',   '_lhs_'      ): ['ForDeclaration'],
+
+    # ('BindingInitialization', '_lhs_'): [],
+    # ('BodyText', '_literal_'): [],
+    # ('BoundNames', '_d_'): [],
+    # ('BoundNames', '_f_'): [],
+    # ('BoundNames', '_head_'): [],
+    # ('BoundNames', '_lhs_'): [],
+    # ('ChainEvaluation', '_optionalChain_'): [],
+    # ('DefineMethod', '_constructor_'): [],
+    # ('Evaluation', '_C_'): [],
+    # ('Evaluation', '_asyncFunctionBody_'): [],
+    # ('Evaluation', '_body_'): [],
+    # ('Evaluation', '_constructExpr_'): [],
+    # ('Evaluation', '_expr_'): [],
+    # ('Evaluation', '_expression_'): [],
+    # ('Evaluation', '_generatorBody_'): [],
+    # ('Evaluation', '_increment_'): [],
+    # ('Evaluation', '_leftOperand_'): [],
+    # ('Evaluation', '_lhs_'): [],
+    # ('Evaluation', '_memberExpr_'): [],
+    # ('Evaluation', '_rightOperand_'): [],
+    # ('Evaluation', '_stmt_'): [],
+    # ('Evaluation', '_test_'): [],
+    # ('FlagText', '_literal_'): [],
+    # ('HasDirectSuper', '_constructor_'): [],
+    # ('IsSimpleParameterList', '_head_'): [],
+    # ('IsStatic', '_m_'): [],
+    # ('PropertyDefinitionEvaluation', '_m_'): [],
+    # ('StringValue', '_identifierName_'): [],
+    # ('StringValue', '_n_'): [],
+    # ('TemplateStrings', '_templateLiteral_'): [],
+
+    # 5 places
+    ('IsConstantDeclaration', '_d_'): [
+        'FunctionDeclaration',
+        'ClassDeclaration',
+        'ExportDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        'LexicalDeclaration',
+    ],
+
+    # 7333 HasName
+    # 7386 IsFunctionDefinition
+    # 7522 IsAnonymousFunctionDefinition
+    ('IsFunctionDefinition', '_expr_'): [
+        'ParenthesizedExpression',
+        'Expression',
+        'Initializer',
+        'AssignmentExpression',
+    ],
+    # 7333 HasName
+    # 7522 IsAnonymousFunctionDefinition
+    ('HasName', '_expr_'): [
+        'ParenthesizedExpression',
+        'Expression',
+        'Initializer',
+        'AssignmentExpression',
+    ],
+
+    # 7574 NamedEvaluation
+    ('NamedEvaluation', '_expr_'): ['ParenthesizedExpression'],
+
+    # 7913 IteratorBindingInitialization
+    # 11005 FunctionDeclarationInstantiation
+    ('IteratorBindingInitialization', '_formals_'): [
+        'FormalParameters',
+        'ArrowParameters',
+        'UniqueFormalParameters',
+        'PropertySetParameterList',
+        'AsyncArrowBindingIdentifier',
+        'ArrowFormalParameters',
+    ],
+    ('BoundNames',            '_formals_'): [
+        'FormalParameters',
+        'ArrowParameters',
+        'UniqueFormalParameters',
+        'PropertySetParameterList',
+        'AsyncArrowBindingIdentifier',
+        'ArrowFormalParameters',
+    ],
+    ('IsSimpleParameterList', '_formals_'): [
+        'FormalParameters',
+        'ArrowParameters',
+        'UniqueFormalParameters',
+        'PropertySetParameterList',
+        'AsyncArrowBindingIdentifier',
+        'ArrowFormalParameters',
+    ],
+    ('ContainsExpression',    '_formals_'): [
+        'FormalParameters',
+        'ArrowParameters',
+        'UniqueFormalParameters',
+        'PropertySetParameterList',
+        'AsyncArrowBindingIdentifier',
+        'ArrowFormalParameters',
+    ],
+
+    # 8084 AssignmentTargetType
+    ('AssignmentTargetType', '_expr_'): ['ParenthesizedExpression'],
+
+    # 10885 OrdinaryFunctionCreate
+    ('ExpectedArgumentCount', '_ParameterList_'): [
+        'FormalParameters',
+        'ArrowParameters',
+        'UniqueFormalParameters',
+        'PropertySetParameterList',
+        'AsyncArrowBindingIdentifier',
+        'ArrowFormalParameters',
+    ],
+    # 19718 ExpectedArgumentCount
+    ('ExpectedArgumentCount', '_formals_'): ['ArrowFormalParameters'],
+
+    # 11005 FunctionDeclarationInstantiation
+    # 21746 GlobalDeclarationInstantiation
+    # 23865 EvalDeclarationInstantiation
+    ('InstantiateFunctionObject', '_f_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+    ],
+    # 17813 BlockDeclarationInstantiation
+    # 22946 InitializeEnvironment
+    ('InstantiateFunctionObject', '_d_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+    ],
+
+    # 11005 FunctionDeclarationInstantiation
+    # 22946 InitializeEnvironment
+    ('VarDeclaredNames', '_code_'): [
+        'FunctionBody',
+        'ConciseBody',
+        'GeneratorBody',
+        'AsyncFunctionBody',
+        'AsyncConciseBody',
+        'AsyncGeneratorBody',
+    ],
+    ('VarScopedDeclarations', '_code_'  ): [
+        'FunctionBody',
+        'ConciseBody',
+        'GeneratorBody',
+        'AsyncFunctionBody',
+        'AsyncConciseBody',
+        'AsyncGeneratorBody',
+        'Module',
+    ],
+    ('LexicallyDeclaredNames', '_code_'): [
+        'FunctionBody',
+        'ConciseBody',
+        'GeneratorBody',
+        'AsyncFunctionBody',
+        'AsyncConciseBody',
+        'AsyncGeneratorBody',
+    ],
+    ('LexicallyScopedDeclarations', '_code_'): [
+        'FunctionBody',
+        'ConciseBody',
+        'GeneratorBody',
+        'AsyncFunctionBody',
+        'AsyncConciseBody',
+        'AsyncGeneratorBody',
+        'Module',
+    ],
+
+    # 15879 EvaluateNew
+    # 15900 Evaluation
+    # 15932 EvaluateCall
+    ('ArgumentListEvaluation', '_arguments_'): ['Arguments', 'TemplateLiteral'],
+
+    # 17157 Evaluation
+    # 17627 KeyedDestructuringAssignmentEvaluation
+    # 18694 ForIn/OfBodyEvaluation
+    ('DestructuringAssignmentEvaluation', '_assignmentPattern_'): ['AssignmentPattern'],
+    # 17532 IteratorDestructuringAssignmentEvaluation
+    ('DestructuringAssignmentEvaluation', '_nestedAssignmentPattern_'): ['AssignmentPattern'],
+
+    # 18694 ForIn/OfBodyEvaluation
+    ('IsDestructuring', '_lhs_'): [
+        'LeftHandSideExpression',
+        'ForBinding',
+        'ForDeclaration',
+        # 'BindingIdentifier', Annex B
+    ],
+    ('ForDeclarationBindingInstantiation',  '_lhs_'): ['ForDeclaration'],
+    ('ForDeclarationBindingInitialization', '_lhs_'): ['ForDeclaration'],
+
+    # 21229 IsInTailPosition
+    ('HasCallInTailPosition', '_body_'): ['FunctionBody', 'ConciseBody'],
+    ('HasCallInTailPosition', '_expr_'): ['ParenthesizedExpression'],
+
+    # 15629 Evaluation
+    # 18665 ForIn/OfHeadEvaluation
+    ('Evaluation', '_expr_'): ['ParenthesizedExpression', 'Expression', 'AssignmentExpression'],
+    # 21719 ScriptEvaluation
+    ('Evaluation', '_scriptBody_'): ['Script'],
+
+    # 21746 GlobalDeclarationInstantiation
+    ('LexicallyDeclaredNames',      '_script_'): ['Script'],
+    ('VarDeclaredNames',            '_script_'): ['Script'],
+    ('VarScopedDeclarations',       '_script_'): ['Script'],
+    ('LexicallyScopedDeclarations', '_script_'): ['Script'],
+
+    # 22831 ParseModule
+    ('ModuleRequests', '_body_'): ['Module'],
+    ('ImportEntries',  '_body_'): ['Module'],
+    ('ExportEntries',  '_body_'): ['Module'],
+
+    # 23009 ExecuteModule
+    ('Evaluation', '_module_.[[ECMAScriptCode]]'): ['Module'],
+
+    # 23800 PerformEval
+    ('IsStrict', '_script_'): ['Script'],
+
+    # 23865 EvalDeclarationInstantiation
+    ('VarDeclaredNames',            '_body_'): ['ScriptBody'],
+    ('VarScopedDeclarations',       '_body_'): ['ScriptBody'],
+    ('LexicallyScopedDeclarations', '_body_'): ['ScriptBody'],
+
+    # 23979
+    ('MV', '_numberString_'): ['StrDecimalLiteral'],
+
+    # 30931 RegExpInitialize
+    ('regexp-Evaluate', '_parseResult_'): ['Pattern'],
+}
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
     # Looking at the productions that share a LHS
