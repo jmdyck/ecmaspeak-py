@@ -2238,7 +2238,17 @@ def analyze_sdo_coverage_info():
 
                 for opt_combo in each_opt_combo(oGNTs):
                     opt_combo_str = ''.join(omreq[0] for (nt, omreq) in opt_combo)
-                    rules = sdo_rules_that_handle(sdo_name, lhs_nt, def_i, opt_combo)
+                    optbits = ''.join(
+                        {
+                            'omitted': '0',
+                            'required': '1'
+                        } [optionality]
+                        for (_, optionality) in opt_combo
+                    )
+
+                    key = (lhs_nt, def_i, optbits)
+                    rules = coverage_info_for_this_sdo.get(key, [])
+
                     if len(rules) == 1:
                         # great
                         if debug:
@@ -2296,17 +2306,6 @@ def each_opt_combo(oGNTs):
 
 def required_nts_in(opt_combo):
     return [nt for (nt, omreq) in opt_combo if omreq == 'required']
-
-def sdo_rules_that_handle(sdo_name, lhs_nt, def_i, opt_combo):
-    optbits = ''.join(
-        {
-            'omitted': '0',
-            'required': '1'
-        } [optionality]
-        for (_, optionality) in opt_combo
-    )
-    key = (lhs_nt, def_i, optbits)
-    return spec.sdo_coverage_map[sdo_name].get(key, [])
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
     # Looking at the productions that share a LHS
