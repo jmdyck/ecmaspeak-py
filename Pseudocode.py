@@ -1414,12 +1414,14 @@ def annotate_invocations(anode):
                 # depending on the argument.
                 [local_ref] = d.children
                 if local_ref.source_text() in [
+                    '|Assertion|',
                     '|NonemptyClassRanges|',
                     '|ClassAtom|',
                     '|ClassAtomNoDash|',
                     '|ClassEscape|',
                     '|CharacterClassEscape|',
                 ]:
+                    # A better criterion would be the containing clause
                     op_names = ['regexp-Evaluate']
                 else:
                     op_names = ['Evaluation']
