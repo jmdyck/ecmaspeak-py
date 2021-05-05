@@ -2200,11 +2200,6 @@ def analyze_sdo_coverage_info():
 
                     nts = []
 
-                elif u_lhs == '{h_emu_xref}':
-                    # bug from "the internal procedure that evaluates the above parse"
-                    # hack:
-                    nts = ['Pattern']
-
                 else:
                     assert 0, (u_lhs, opcall.source_text())
 
