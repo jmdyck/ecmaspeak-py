@@ -2218,6 +2218,11 @@ def analyze_sdo_coverage_info():
         def queue_ensure(nt):
             if nt not in nt_queue: nt_queue.append(nt)
 
+
+        debug = False # (sdo_name == 'HasName')
+        # {debug} creates a lot of output, but it's really useful
+        # when you're trying to figure out why "needs a rule" messages appear.
+
         for lhs_nt in nt_queue:
             # print('    ', lhs_nt)
 
@@ -2236,11 +2241,15 @@ def analyze_sdo_coverage_info():
                     rules = sdo_rules_that_handle(sdo_name, lhs_nt, def_i, opt_combo)
                     if len(rules) == 1:
                         # great
+                        if debug:
+                            put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} has an explicit rule")
                         pass
                     elif len(rules) > 1:
                         put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} {opt_combo_str} is handled by {len(rules)} rules!")
                     elif is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
                         # okay
+                        if debug:
+                            put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} is a coverage exception")
                         pass
                     else:
                         nts = [gnt._nt_name for gnt in nGNTs] + required_nts_in(opt_combo)
@@ -2249,10 +2258,8 @@ def analyze_sdo_coverage_info():
                             # So recurse on the rhs non-terminal.
                             [nt] = nts
 
-                            # DEBUG:
-                            # put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} chains to {nt}")
-                            # That creates a lot of output, but it's really useful
-                            # when you're trying to figure out why "needs a rule" messages appear.
+                            if debug:
+                                put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} chains to {nt}")
 
                             queue_ensure(nt)
                         else:
