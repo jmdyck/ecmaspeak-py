@@ -11350,8 +11350,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all characters not in the CharSet returned by {h_emu_grammar} ":
-        [emu_grammar] = children
+    elif p == r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}":
+        [noi] = children
+        env0.assert_expr_is_of_type(noi, T_CharSet)
         return (T_CharSet, env0)
 
     elif p == r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions":
@@ -11385,10 +11386,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_CharSet, env0)
 
     elif p in [
-        r"{EXPR} : the CharSet containing all Unicode code points included in the CharSet returned by {PROD_REF}",
-        r"{EXPR} : the CharSet containing all Unicode code points not included in the CharSet returned by {PROD_REF}",
+        r"{EXPR} : the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}",
     ]:
-        [nont] = children
+        [noi] = children
+        env0.assert_expr_is_of_type(noi, T_CharSet)
+        return (T_CharSet, env0)
+
+    elif p == "{NAMED_OPERATION_INVOCATION} : the CharSet returned by {PROD_REF}":
+        [prod_ref] = children
+        return (T_CharSet, env0)
+
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar} ":
+        [emu_grammar] = children
         return (T_CharSet, env0)
 
     # -------------------------------------------------

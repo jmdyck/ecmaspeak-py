@@ -1209,13 +1209,13 @@
     the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
     the BigInt value that corresponds to {var}
     the BigInt value that represents {EX}
-    the CharSet containing all Unicode code points included in the CharSet returned by {PROD_REF}
-    the CharSet containing all Unicode code points not included in the CharSet returned by {PROD_REF}
+    the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}
+    the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
-    the CharSet containing all characters not in the CharSet returned by {h_emu_grammar} 
+    the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}
     the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the single character {code_point_lit}
@@ -1754,6 +1754,8 @@
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
     the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
+    the CharSet returned by {PROD_REF}
+    the CharSet returned by {h_emu_grammar} 
     the {cap_word} of {LOCAL_REF}
     the {cap_word} of {LOCAL_REF} (see {h_emu_xref})
     the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}

@@ -1442,6 +1442,8 @@ def annotate_invocations(anode):
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
                     "the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     "the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
+                    "the CharSet returned by {PROD_REF}"               : 'regexp-Evaluate',
+                    "the CharSet returned by {h_emu_grammar} "         : 'regexp-Evaluate',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
                 }[rhs]
@@ -2189,6 +2191,11 @@ def analyze_sdo_coverage_info():
                     nts = nts_behind_var_in_sdo_call.get((sdo_name, u_st), [])
                     if nts == []:
                         put(f"nts_etc missing entry for ({sdo_name!r}, {u_st!r})")
+
+                elif u_lhs == '{h_emu_grammar}':
+                    # "the CharSet returned by <emu-grammar>CharacterClassEscape :: ...</emu-grammar>"
+                    assert u_st.startswith('<emu-grammar>CharacterClassEscape :: ')
+                    nts = ['CharacterClassEscape']
 
                 else:
                     assert 0, (u_lhs, opcall.source_text())
