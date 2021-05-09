@@ -2544,7 +2544,7 @@ nts_behind_var_in_sdo_call = {
         'LeftHandSideExpression',
         'ForBinding',
         # 'ForDeclaration', always invoked with _lhsKind_ = ~lexicalBinding~
-        'BindingIdentifier',
+        # 'BindingIdentifier', only in Annex B, which we're not handling yet.
     ],
     # 18965 CaseBlockEvaluation
     ('Evaluation', '_C_'): ['CaseClause'],
