@@ -978,7 +978,7 @@ def analyze_changes_section(section):
                 mo = (
                     re.fullmatch(fr'In {emu_xref_re} the (PropertyDefinitionEvaluation) algorithm (.|\n)+ is replaced with the following definition:', p_ist)
                     or
-                    re.fullmatch(fr'The (?:static|runtime) semantics of (\w+) in {emu_xref_re} are augmented with the following:', p_ist)
+                    re.fullmatch(fr'The (?:static|runtime) semantics of (\w+)( in {emu_xref_re})? are augmented with the following:', p_ist)
                 )
                 if mo:
                     op_name = mo.group(1)
