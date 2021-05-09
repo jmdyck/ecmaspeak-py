@@ -2456,7 +2456,6 @@ nts_behind_var_in_sdo_call = {
     ],
 
     # 11005 FunctionDeclarationInstantiation
-    # 22946 InitializeEnvironment
     ('VarDeclaredNames', '_code_'): [
         'FunctionBody',
         'ConciseBody',
@@ -2465,6 +2464,8 @@ nts_behind_var_in_sdo_call = {
         'AsyncConciseBody',
         'AsyncGeneratorBody',
     ],
+    # 11005 FunctionDeclarationInstantiation
+    # 22946 InitializeEnvironment
     ('VarScopedDeclarations', '_code_'  ): [
         'FunctionBody',
         'ConciseBody',
@@ -2474,6 +2475,7 @@ nts_behind_var_in_sdo_call = {
         'AsyncGeneratorBody',
         'Module',
     ],
+    # 11005 FunctionDeclarationInstantiation
     ('LexicallyDeclaredNames', '_code_'): [
         'FunctionBody',
         'ConciseBody',
@@ -2482,6 +2484,9 @@ nts_behind_var_in_sdo_call = {
         'AsyncConciseBody',
         'AsyncGeneratorBody',
     ],
+    # 11005 FunctionDeclarationInstantiation
+    # 17813 BlockDeclarationInstantiation
+    # 22946 InitializeEnvironment
     ('LexicallyScopedDeclarations', '_code_'): [
         'FunctionBody',
         'ConciseBody',
@@ -2489,6 +2494,8 @@ nts_behind_var_in_sdo_call = {
         'AsyncFunctionBody',
         'AsyncConciseBody',
         'AsyncGeneratorBody',
+        'StatementList',
+        'CaseBlock',
         'Module',
     ],
 
