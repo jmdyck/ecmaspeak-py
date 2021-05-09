@@ -11346,10 +11346,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all characters not in the CharSet returned by {h_emu_grammar}":
-        [nonterminal] = children
-        return (T_CharSet, env0)
-
     elif p == r"{EXPR} : the ten-element CharSet containing the characters `0` through `9` inclusive":
         [] = children
         return (T_CharSet, env0)
