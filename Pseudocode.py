@@ -1169,8 +1169,7 @@ def handle_composite_sdo(sdo_name, grammar_arg, code_hnode, section):
         emu_grammar = grammar_arg
 
     elif grammar_arg.element_name == 'p':
-        if sdo_name == 'Contains':
-            assert grammar_arg.inner_source_text() == "Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of Contains:"
+        if grammar_arg.inner_source_text() == f"Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of {sdo_name}:":
             # This is the default definition,
             # which isn't associated with a particular production.
             emu_grammar = None
@@ -2028,6 +2027,8 @@ def analyze_static_dependencies():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+ops_with_implicit_defns = ['Contains', 'AllPrivateIdentifiersValid', 'ContainsArguments']
+
 def check_sdo_coverage():
     stderr('check_sdo_coverage...')
     spec.sdo_coverage_map = {}
@@ -2046,7 +2047,7 @@ def check_sdo_coverage():
                 discriminator = alg_defn.discriminator
 
                 if discriminator is None:
-                    assert op_name == 'Contains'
+                    assert op_name in ops_with_implicit_defns
                     continue
 
                 if not discriminator.puk_set:
@@ -2088,7 +2089,7 @@ def analyze_sdo_coverage_info():
 
     for (sdo_name, coverage_info_for_this_sdo) in sorted(spec.sdo_coverage_map.items()):
 
-        if sdo_name == 'Contains':
+        if sdo_name in ops_with_implicit_defns:
             # XXX can we do anything useful here?
             # we could check for conflicting defs
             continue
@@ -2181,6 +2182,7 @@ def analyze_sdo_coverage_info():
                             'AsyncGeneratorBody',
                             'AsyncFunctionBody',
                             'AsyncConciseBody',
+                            'Initializer',
                         ]
                     else:
                         assert 0
@@ -2599,10 +2601,10 @@ nts_behind_var_in_sdo_call = {
     ('DefineMethod', '_constructor_'): ['ClassElement'],
 
     # 20657 ClassDefinitionEvaluation
-    ('IsStatic', '_m_'): ['ClassElement'],
+    ('IsStatic', '_e_'): ['ClassElement'],
 
     # 20657 ClassDefinitionEvaluation
-    ('PropertyDefinitionEvaluation', '_m_'): ['ClassElement'],
+    ('ClassElementEvaluation', '_e_'): ['ClassElement'],
 
     # 21229 IsInTailPosition
     ('HasCallInTailPosition', '_body_'): ['FunctionBody', 'ConciseBody'],
@@ -2727,7 +2729,10 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # which suppresses its 3rd RHS.
         return True
 
-    if lhs_nt == 'OptionalChain' and def_i in [3,7]:
+    if lhs_nt == 'OptionalChain' and def_i in [3,8]:
+        # OptionalChain :
+        #   `?.` TemplateLiteral
+        #   OptionalChain TemplateLiteral
         # "It is a Syntax Error if any code matches this production."
         # So no SDO will be invoked on them.
         return True

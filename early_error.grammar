@@ -36,11 +36,10 @@
     {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>
     {CONDITION_1} unless {CONDITION_1}
+    {CONDITION_1}, unless {CONDITION_1}
 
     {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
 
-    # PR 1668 
-    {CONDITION_1}, unless {CONDITION_1}
 
     # obsoleted by the merge of PR #1658:
     # {CONDITION_1} and if {CONDITION_1}
@@ -60,6 +59,7 @@
     the duplicate entries are only bound by {cap_word}
     the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals the {cap_word} of the {nonterminal} of {PROD_REF}
     the goal symbol of the syntactic grammar is {nonterminal}
+    the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the source code containing {G_SYM} is eval code that is being processed by a direct eval
     the source code matching {PROD_REF} is not strict mode code
@@ -76,6 +76,7 @@
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal} or a {nonterminal}
     {LOCAL_REF} is {h_emu_grammar}
+    {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}
@@ -86,6 +87,7 @@
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
     {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is none of {starred_str}, {starred_str}, ! {NAMED_OPERATION_INVOCATION}, ! {NAMED_OPERATION_INVOCATION}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} that would be matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is not empty
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, or some code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, {named_char}, {named_char}, or some code point matched by the {nonterminal} lexical grammar production
@@ -117,11 +119,6 @@
 
     # PR 1651 one-grammar
     a {nonterminal} contains the source code matching {PROD_REF}
-
-    # PR 1668 private fields
-    the name is used once for a getter and once for a setter and in no other entries
-    {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
-    {NAMED_OPERATION_INVOCATION} is not empty
 
 {NAMED_OPERATION_INVOCATION} :
     the result of performing {cap_word} on {EX}

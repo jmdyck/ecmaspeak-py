@@ -117,6 +117,7 @@
     Repeat, while {CONDITION},{IND_COMMANDS}
     Repeat,{IND_COMMANDS}
     Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.
+    Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
     Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it.
     Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.
@@ -309,6 +310,7 @@
     ReturnIfAbrupt({var})
     add {var} to {var}
     append each of its elements to {var}
+    append {DOTTING} to {var}
     append {LITERAL} to {var}
     append {code_unit_lit} as the last code unit of {var}
     append {var} to {var}
@@ -370,9 +372,6 @@
     # PR 1623 index_strings
     own property key {var} of {var} that is a Uint32-string, whose numeric value is greater than or equal to {var}, in descending numeric index order
 
-    # PR 1668 private fields
-    binding named {var} in {EX}
-
 {ITEM_NATURE} :
     Agent Events Record
     Cyclic Module Record
@@ -380,6 +379,8 @@
     FinalizationRegistry
     ImportEntry Record
     Parse Node
+    Private Name
+    PrivateElement
     ReadSharedMemory or ReadModifyWriteSharedMemory event
     Record { {DSBN}, {DSBN} }
     Record { {DSBN}, {DSBN}, {DSBN} }
@@ -486,6 +487,7 @@
     A unique such {nonterminal} is found
     All named exports from {var} are resolvable
     Evaluate has already been invoked on {var} and successfully completed
+    Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     GlobalSymbolRegistry does not currently contain an entry for {var}
     The calling agent is in the critical section for {var}
     The calling agent is not in the critical section for any WaiterList
@@ -501,6 +503,7 @@
     This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent
     This is a circular import request
     This is an attempt to change the value of an immutable binding
+    This is only possible for getter/setter pairs
     We've reached the starting point of an `export *` circularity
     When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
@@ -564,9 +567,12 @@
     {EX} and {EX} are distinct {TYPE_NAME} or {TYPE_NAME} values
     {EX} and {EX} are the same Shared Data Block values
     {EX} and {EX} are valid byte offsets within the memory of {var}
+    {EX} contains a Private Name whose {dsb_word} is {var}
+    {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} does not contain {starred_str}
     {EX} has the value {LITERAL}
     {EX} is -1
+    {EX} is a Private Name
     {EX} is a sequence of Unicode code points
     {EX} is absent
     {EX} is absent or has the value {LITERAL}
@@ -638,6 +644,7 @@
     {var} binds a single name
     {var} can be interpreted as an expansion of {nonterminal}
     {var} can be the string-concatenation of {var} and some other String {var}
+    {var} contains a PrivateElement whose {dsb_word} is {DOTTING}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
     {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
@@ -646,12 +653,14 @@
     {var} contains no duplicate entries
     {var} contains {DSBN}
     {var} contains {LITERAL}
+    {var} contains {NAMED_OPERATION_INVOCATION}
     {var} contains {var}
     {var} does not already have a binding for {var}
     {var} does not consist of a single code unit
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
     {var} does not contain a valid UTF-8 encoding of a Unicode code point
     {var} does not contain exactly one character
+    {var} does not contain {DOTTING}
     {var} does not contain {var}
     {var} does not currently have a property {var}
     {var} does not have a Generator component
@@ -684,6 +693,7 @@
     {var} has {DSBN}, {DSBN}, and {DSBN} internal slots
     {var} has {var} in its range
     {var} imports a specific binding for this export
+    {var} is a ClassFieldDefinition Record
     {var} is a Completion Record
     {var} is a Continuation
     {var} is a Cyclic Module Record
@@ -707,6 +717,7 @@
     {var} is a Module Record
     {var} is a Parse Node
     {var} is a Parse Node for {nonterminal}
+    {var} is a PrivateElement
     {var} is a PromiseCapability Record
     {var} is a PromiseReaction Record
     {var} is a Property Descriptor
@@ -998,13 +1009,6 @@
     {var} is not a Uint32-string
     {var} is not a Uint53-string
 
-    # PR 1668 private fields:
-    {EX} contains a Private Name {var} such that {CONDITION_1}
-    {EX} contains an entry {var} such that {CONDITION_1}
-    {EX} does not contain an entry {var} such that {CONDITION_1}
-    {EX} is a Private Name
-    {var} is a ClassFieldDefinition Record
-
     # PR 1739:
     the Directive Prologue of {PROD_REF} contains a Sensitive Directive
     the Directive Prologue of {PROD_REF} contains a Sensitive Directive or a Hidden Implementation Directive
@@ -1178,6 +1182,7 @@
     a copy of {var}'s _captures_ List
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
+    a new Private Name whose {dsb_word} value is {var}
     a new Property Descriptor that initially has no fields
     a new Realm Record
     a new Record
@@ -1202,6 +1207,8 @@
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
     such an object created in a host-defined manner
+    that Private Name
+    that PrivateElement
     the 32-bit two's complement bit string representing {EX}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
@@ -1238,6 +1245,7 @@
     the Number value that corresponds to {var}
     the Number value that results from rounding {EX} as described below
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
+    the Private Name in {var} whose {dsb_word} is {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({EX}, {var})
     the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}
@@ -1296,6 +1304,7 @@
     the element of {DOTTING} whose {DSBN} field is {var}
     the element of {var} whose {DSBN} is the same as {DOTTING}
     the empty CharSet
+    the empty sequence of Unicode code points
     the enclosed {h_emu_not_ref_substring}
     the first agent in {var}
     the first element of {var}
@@ -1352,8 +1361,8 @@
     the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
-    the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of raising {EX} to the {EX} power
+    the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of subtracting 1 from the exponential function of {EX}
     the result of the comparison {EX} == {EX}
     the result of the {MATH_FUNC} of {EX}
@@ -1600,10 +1609,6 @@
     # PR 1554 NumericValue:
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
 
-    # PR 1668 private fields:
-    a new unique Private Name whose {dsb_word} value is {var}
-    the concatenation of {var} with {EX}
-
     # PR 1732 GetSubstitution
     the String value whose code units are the code units of {var}
     the longest sequence of consecutive code units from {var} beginning with the code unit at index {var} such that {var} matches the &ldquo;Code units&rdquo; column of a row in {h_emu_xref}
@@ -1702,9 +1707,6 @@
     # obsoleted by the merge of PR #2177:
     # hint Number
     # hint String
-
-    # PR 1668 private fields
-    \u00ab \u00bb
 
 {MATH_FUNC} :
     base 10 logarithm
@@ -1875,6 +1877,7 @@
     AsyncGeneratorRequest
     Chosen Value Record
     Completion
+    PrivateElement
     PropertyDescriptor
     ReadModifyWriteSharedMemory
     ReadSharedMemory
@@ -1883,9 +1886,11 @@
     Script Record
     Source Text Module Record
     WriteSharedMemory
+    the ClassFieldDefinition Record
     the ExportEntry Record
     the ImportEntry Record
     the JobCallback Record
+    the PrivateEnvironment Record
     the PromiseCapability Record
     the PromiseReaction
     the PropertyDescriptor
@@ -1897,10 +1902,6 @@
 
     # PR 1477 scope-records:
     Lexical Environment
-
-    # PR 1668 private fields:
-    PrivateField
-    the ClassFieldDefinition Record
 
 {FIELDS} :
     {FIELDS}, {FIELD}
@@ -1951,13 +1952,11 @@
     Function
     Generator
     LexicalEnvironment
+    PrivateEnvironment
     Realm
     ScriptOrModule
     VariableEnvironment
     code evaluation state
-
-    # PR 1668 private fields:
-    PrivateEnvironment
 
 # obsoleted by the merge of PR #1697:
 # {LEXICAL_ENVIRONMENT_COMPONENT} :
@@ -2134,7 +2133,5 @@
     # obsoleted by the merge of PR #2085:
     # Reference
 
-    # PR 1668 privates:
-    Private Name
 
 # -----------------------

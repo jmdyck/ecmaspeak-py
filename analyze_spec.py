@@ -577,13 +577,18 @@ def check_tables():
                 'Field Name; Value Type; Meaning',
                 'Field Name; Value; Meaning',
                 'Field Name; Value; Usage',
+                'Field Name; Values of the [[Kind]] field for which it is present; Value; Meaning',
             ], header_line
             for tr in et.each_descendant_named('tr'):
                 if tr == header_tr: continue
-                [field_name, value_type, meaning] = [
+                td_texts = [
                     td.inner_source_text().strip()
                     for td in tr.each_descendant_named('td')
                 ]
+                if header_line == 'Field Name; Values of the [[Kind]] field for which it is present; Value; Meaning':
+                    [field_name, _, value_type, meaning] = td_texts
+                else:
+                    [field_name, value_type, meaning] = td_texts
                 assert re.fullmatch(r'\[\[[A-Z][A-Za-z0-9]+\]\]', field_name), field_name
                 # `value_type` is limited, could be checked, but format is ad hoc
                 # `meaning` is arbitrary prose

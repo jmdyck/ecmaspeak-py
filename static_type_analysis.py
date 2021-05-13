@@ -128,6 +128,7 @@ nature_to_tipe = {
         'the function object' : 'function_object_',
         'a built-in function object'   : 'function_object_',
         'a function that takes two parameters, _key_ and _value_': 'function_object_',
+        'an ECMAScript function object': 'function_object_',
 
         # constructor_: an object with a [[Construct]] internal method
         'a constructor function' : 'constructor_object_',
@@ -201,26 +202,35 @@ nature_to_tipe = {
         'a possibly empty List of ECMAScript language values': 'List of Tangible_',
         'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
 
-        # Completion
+        # 6.2.3 Completion
         'an abrupt completion': 'Abrupt',
         'a Completion Record': 'Abrupt | Normal',
         'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
 
-        # Property Descriptor
+        # 6.2.5 Property Descriptor
         'Property Descriptor'   : 'Property Descriptor',
         'a Property Descriptor' : 'Property Descriptor',
 
-        # Environment Record
+        # 6.2.6 Environment Record
         'Environment Record' : 'Environment Record',
         'an Environment Record' : 'Environment Record',
         'Scope Record' : 'Scope Record', # PR 1477 scope-records
 
-        # Abstract Closure
+        # 6.2.7 Abstract Closure
         'an Abstract Closure with no parameters': '() -> Top_',
 
-        # Data Block
+        # 6.2.8 Data Block
         'a Shared Data Block' : 'Shared Data Block',
         # is it a subtype of Data Block? Doesn't seem to be treated that way
+
+        # 6.2.9 The PrivateElement Specification Type
+        'a PrivateElement': 'PrivateElement',
+
+        # 6.2.10 The ClassFieldDefinition Record Specification Type
+        'a ClassFieldDefinition Record': 'ClassFieldDefinition Record',
+
+        # 6.2.11 Private Name
+        'a Private Name': 'Private Name',
 
     # official 'subtypes' of the above:
         # Object Environment Record
@@ -241,6 +251,9 @@ nature_to_tipe = {
 
         # 8.4.1 JobCallback Record
         'a JobCallback Record': 'JobCallback Record',
+
+        # 9.2 PrivateEnvironment Records
+        'a PrivateEnvironment Record': 'PrivateEnvironment Record',
 
         # 15.1.8 Script Records: Script Record
 
@@ -404,6 +417,7 @@ nature_to_tipe = {
     'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
     'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
     'a Parse Node or an Abstract Closure with no parameters'     : 'Parse Node | () -> Top_',
+    'a PrivateEnvironment Record or *null*'                      : 'PrivateEnvironment Record | Null',
     'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
     'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'a Realm Record or *null*'                                   : 'Realm Record | Null',
@@ -414,7 +428,7 @@ nature_to_tipe = {
     'a Script Record or Module Record; may also be Null'         : 'Script Record | Module Record | Null',
     'a String or Number'                                         : 'String | Number',
     'a String or Symbol'                                         : 'String | Symbol',
-    'a String or Symbol or Private Name'                         : 'String | Symbol | Private Name', # PR 1668
+    'a property key or Private Name'                             : 'String | Symbol | Private Name',
     'property key'                                               : 'String | Symbol',
     'a property key'                                             : 'String | Symbol',
     'the property key'                                           : 'String | Symbol',
@@ -1223,7 +1237,7 @@ class NamedType(Type):
     def __new__(cls, name):
         assert isinstance(name, str)
         assert re.fullmatch(r'[\w -]+', name), name
-        assert not name.startswith('a ')
+        assert not name.startswith('a '), name
         return tuple.__new__(cls, ('NamedType', name))
     def __repr__(self): return "%s(%r)" % self
     def __str__(self): return self.name
@@ -1516,13 +1530,15 @@ named_type_hierarchy = {
                     'PTN_Pattern': {},
                 },
                 'PreferredTypeHint_': {},
+                'Private Name': {},
+                'PrivateElementKind_': {},
                 'PropertyKeyKind_': {},
                 'Record': {
                     'Agent Record': {},
                     'Agent Events Record': {},
                     'AsyncGeneratorRequest Record': {},
                     'Chosen Value Record': {},
-                    'ClassFieldDefinition Record': {}, # PR 1668
+                    'ClassFieldDefinition Record': {},
                     'Environment Record': {
                         'declarative Environment Record': {
                             'function Environment Record': {},
@@ -1549,8 +1565,8 @@ named_type_hierarchy = {
                         'other Module Record': {},
                     },
                     # 'PendingJob': {}, # PR 1597
-                    'PrivateField': {}, # PR 1668
-                    'Private Name': {}, # PR 1668
+                    'PrivateElement': {},
+                    'PrivateEnvironment Record': {},
                     'PromiseCapability Record': {},
                     'PromiseReaction Record': {},
                     'Property Descriptor': {
@@ -1724,7 +1740,7 @@ def maybe_NamedType(name):
 
 type_tweaks_str = '''
 Abstract Relational Comparison           ; _LeftFirst_            ; Boolean             ; Boolean | not_passed
-# AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
+AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
 ArrayAccumulation                        ; _nextIndex_            ; TBD                 ; MathInteger_
 # AsyncFunctionAwait                       ; _value_                ; TBD                 ; Tangible_
 AsyncFunctionStart                       ; _asyncFunctionBody_    ; TBD                 ; Parse Node
@@ -1760,7 +1776,7 @@ DetachArrayBuffer                        ; _arrayBuffer_          ; TBD         
 DetachArrayBuffer                        ; _key_                  ; (optional) TBD      ; (optional) Tangible_
 EvalDeclarationInstantiation             ; _varEnv_               ; TBD                 ; Environment Record
 EvalDeclarationInstantiation             ; _lexEnv_               ; TBD                 ; Environment Record
-# 1668 + 2290: EvalDeclarationInstantiation             ; _privateEnv_           ; TBD                 ; Environment Record
+EvalDeclarationInstantiation             ; _privateEnv_           ; TBD                 ; PrivateEnvironment Record
 Evaluation                               ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
 ExportEntriesForModule                   ; _module_               ; TBD                 ; String | Null
 FinishDynamicImport                      ; _referencingScriptOrModule_ ; TBD            ; Script Record | Module Record | Null
@@ -2678,6 +2694,8 @@ class Env:
                 'NormalCompletion(_value_)', # GeneratorResume
                 '\u211d(_exponent_)', # Number::exponentiate
                 '\u211d(_d_)', # Number::remainder
+                'the StringValue of |IdentifierName|', # StringValue
+                'PropName of |FieldDefinition|', # Early Errors
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -2995,7 +3013,7 @@ def do_static_type_analysis(levels):
                 print("=" * 40)
                 print("level %d : cluster %d/%d : pass #%d..."
                     % (L, c, n_clusters_this_level, pass_num))
-                if pass_num == 5:
+                if pass_num == 6:
                     print("giving up")
                     sys.exit(1)
                 global pass_errors
@@ -3244,10 +3262,8 @@ def tc_header(tah):
                 tah.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_MathInteger_ | T_throw_ and final_t == T_throw_
                 # not sure why STA isn't picking up Integer
                 or
-                # PR 1668
                 tah.name == 'SetFunctionName' and pn == '_name_' and init_t == T_Private_Name | T_String | T_Symbol and final_t == T_String
                 or
-                # PR 1668?
                 (
                     # This is a somewhat hacky way to prevent 'throw_' being widened to 'Abrupt'
                     # in the return type of various evaluation-relevant SDOs.
@@ -4304,6 +4320,8 @@ def tc_nonvalue(anode, env0):
                     "ExportEntry Record"  : T_ExportEntry_Record,
                     "ImportEntry Record"  : T_ImportEntry_Record,
                     "Parse Node"          : T_Parse_Node,
+                    "Private Name"        : T_Private_Name,
+                    "PrivateElement"      : T_PrivateElement,
                     "String"              : T_String,
                 }[item_nature.prod.rhs_s]
                 collection_type = ListType(item_type)
@@ -4348,15 +4366,6 @@ def tc_nonvalue(anode, env0):
             loop_var = None # todo: no loop variable!
             env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
             env_for_commands = env0
-
-        elif each_thing.prod.rhs_s == r"binding named {var} in {EX}":
-            # PR 1668
-            # XXX Really, it's more like:
-            # For each binding _B_ in {EX}, do
-            #     Let _N_ be the name for which _B_ is a binding.
-            [name_var, envrec_ex] = each_thing.children
-            env0.assert_expr_is_of_type(envrec_ex, T_Environment_Record)
-            env_for_commands = env0.plus_new_entry(name_var, T_String)
 
         # --------------------------------------------------
         # things from a large (possibly infinite) set, those that satisfy a condition:
@@ -5274,6 +5283,19 @@ def tc_nonvalue(anode, env0):
         result = None
 
 
+    elif p == r"{COMMAND} : Replace {var} in {var} with {var}.":
+        [ex_var, list_var, rep_var] = children
+        env0.assert_expr_is_of_type(list_var, ListType(T_PrivateElement))
+        env0.assert_expr_is_of_type(ex_var, T_PrivateElement)
+        env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
+        result = env0
+
+    elif p == r"{SMALL_COMMAND} : append {DOTTING} to {var}":
+        [dotting, var] = children
+        env0.assert_expr_is_of_type(dotting, T_String)
+        env0.assert_expr_is_of_type(var, ListType(T_String))
+        result = env0
+
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
     # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
     # elif p == r"{COMMAND} : For each {EACH_THING}, if {CONDITION}, then {SMALL_COMMAND}.":
@@ -5621,7 +5643,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
 
-    # PR 1668:
     elif p == r"{CONDITION_1} : {var} is a ClassFieldDefinition Record":
         [var] = children
         return env0.with_type_test(var, 'is a', T_ClassFieldDefinition_Record, asserting)
@@ -5862,10 +5883,13 @@ def tc_cond_(cond, env0, asserting):
 #        return env0.with_type_test(var, 'is a', T_proc_, asserting)
 # ^ obsoleted by PR 1597
 
-    # PR 1668 privates:
     elif p == r"{CONDITION_1} : {EX} is a Private Name":
         [ex] = children
         return env0.with_type_test(ex, 'is a', T_Private_Name, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is a PrivateElement":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_PrivateElement, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a PromiseCapability Record":
         [var] = children
@@ -6659,7 +6683,6 @@ def tc_cond_(cond, env0, asserting):
     # -------------------------------------------------
     # introduce metavariable:
 
-    # PR 1668 privates:
     elif p in [
         r"{CONDITION_1} : {EX} contains an entry {var} such that {CONDITION_1}",
         r"{CONDITION_1} : {EX} does not contain an entry {var} such that {CONDITION_1}",
@@ -6676,7 +6699,6 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0, p
 
-    # PR 1668 privates:
     elif p == r"{CONDITION_1} : {EX} contains a Private Name {var} such that {CONDITION_1}":
         [ex, var, cond] = children
         env0.assert_expr_is_of_type(ex, ListType(T_String))
@@ -7116,8 +7138,6 @@ def tc_cond_(cond, env0, asserting):
                 # but _requiredModule_ might be a non-C MR:
                 env0.assert_expr_is_of_type(item_var, T_Module_Record)
                 # It's still reasonable to ask if _requiredModule_ is in the stack.
-            elif el_type == T_String: # PR 1668
-                env0.assert_expr_is_of_type(item_var, el_type)
             else:
                 assert 0, container_t
         else:
@@ -7184,6 +7204,11 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
         # XXX For String, change spec to "is [not] the empty String" ?
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not empty":
+        [noi] = children
+        env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : We've reached the starting point of an `export *` circularity":
@@ -8106,8 +8131,8 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}":
         [noi, ssa, ssb] = children
-        env0.assert_expr_is_of_type(noi, T_String)
-        return (env0, env0)
+        env1 = env0.ensure_expr_is_of_type(noi, T_String)
+        return (env1, env1)
 
     elif p == r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}":
         [nont] = children
@@ -8194,6 +8219,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}":
+        [local_ref, *h_emu_grammar_] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is a {nonterminal}":
         [noi, nont] = children
         # env0.assert_expr_is_of_type(noi, T_Parse_Node)
@@ -8232,6 +8262,12 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
+    elif p == r"{CONDITION_1} : {var} contains {NAMED_OPERATION_INVOCATION}":
+        [var, noi] = children
+        env0.assert_expr_is_of_type(var, ListType(T_String))
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
     elif p in [
         r"{CONDITION_1} : {PROD_REF} is not present",
         r"{CONDITION_1} : {PROD_REF} is present",
@@ -8254,7 +8290,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}":
+    elif p in [
+        r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, unless {CONDITION_1}",
+    ]:
         [conda, condb] = children
         tc_cond(conda, env0)
         tc_cond(condb, env0)
@@ -8334,6 +8373,48 @@ def tc_cond_(cond, env0, asserting):
         [noi, h_emu_xref_a, h_emu_xref_b] = children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
         return (env1, env1)
+
+    elif p == r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static":
+        [] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {EX} contains a PrivateElement whose {dsb_word} is {var}":
+        [ex, dsb_word, var] = children
+        env0.assert_expr_is_of_type(ex, ListType(T_PrivateElement))
+        assert dsb_word.source_text() == '[[Key]]'
+        env0.assert_expr_is_of_type(var, T_Private_Name)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} contains a PrivateElement whose {dsb_word} is {DOTTING}":
+        [var, dsb_word, dotting] = children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_PrivateElement))
+        assert dsb_word.source_text() == '[[Key]]'
+        env1.assert_expr_is_of_type(dotting, T_Private_Name)
+        return (env1, env1)
+
+    elif p == r"{CONDITION_1} : {EX} contains a Private Name whose {dsb_word} is {var}":
+        [ex, dsb_word, var] = children
+        env0.assert_expr_is_of_type(ex, ListType(T_Private_Name))
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : Exactly one element of {var} is a Private Name whose {dsb_word} is {var}":
+        [list_var, dsb_word, var] = children
+        env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : This is only possible for getter/setter pairs":
+        [] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} does not contain {DOTTING}":
+        [var, dotting] = children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
+        env2 = env1.ensure_expr_is_of_type(dotting, T_String)
+        return (env2, env2)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
@@ -8757,6 +8838,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_NotMatched_, env0)
         elif chars == 'unresolvable':
             return (T_Unresolvable_, env0)
+        elif chars in ['field', 'method', 'accessor']:
+            return (T_PrivateElementKind_, env0)
         else:
             assert 0, chars
 
@@ -9297,14 +9380,20 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype == T_Realm_Record:
                         # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
                         result_memtype = memtype
+                    elif memtype == T_ClassFieldDefinition_Record:
+                        # ClassDefinitionEvaluation: `Set _field_ to _field_.[[Value]].`
+                        result_memtype = memtype
                     elif memtype in [T_not_returned, ListType(T_code_unit_), T_Top_]:
                         # hm.
                         result_memtype = memtype
+
                     elif memtype.is_a_subtype_of_or_equal_to(T_Private_Name):
                         result_memtype = T_function_object_
                     elif memtype == T_Record:
                         # All we know is that it's a Record with a [[Value]] field.
                         result_memtype = T_TBD
+                    elif memtype == T_PrivateElement:
+                        result_memtype = T_Tangible_
                     else:
                         assert 0, memtype
 
@@ -9361,6 +9450,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif lhs_text == '_ref_':
                 # EvaluateCall
                 lhs_t = T_Reference_Record
+            elif lhs_text == '_field_':
+                lhs_t = T_PrivateElement
             else:
                 assert 0, expr.source_text()
             add_pass_error(
@@ -9385,9 +9476,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t in [
-            T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
-            T_Reference_Record | T_Tangible_ | T_empty_,
-            T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
+            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
+            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned | T_not_set,
+            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned,
+            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned | T_Abrupt,
+            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
+            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_,
         ]:
             lhs_t =  T_Reference_Record 
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
@@ -9479,6 +9573,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         elif lhs_t == T_Symbol:
             assert dsbn_name == 'Description'
             return (T_String | T_Undefined, env2)
+
+        elif lhs_t == T_Private_Name:
+            assert dsbn_name == 'Description'
+            return (T_String, env2)
 
         elif lhs_t.is_a_subtype_of_or_equal_to(T_Abrupt):
             # Handle "Completion Records" specially.
@@ -10359,7 +10457,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 #    elif p == r'{EX} : the referenced name component of {var}':
 #        [v] = children
 #        env0.assert_expr_is_of_type(v, T_Reference)
-#        return (T_String | T_Symbol | T_Private_Name, env0) # PR 1668 privates
+#        return (T_String | T_Symbol | T_Private_Name, env0)
 # ^ obsoleted by PR 2085
 
     elif p == r'{EXPR} : the string result of converting {EX} to a String of four lowercase hexadecimal digits':
@@ -11577,8 +11675,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             # 7159: Table 23: Additional State Components for ECMAScript Code Execution Contexts
             'LexicalEnvironment' : T_Environment_Record,
             'VariableEnvironment': T_Environment_Record,
-            # PR 1668 privates:
-            'PrivateEnvironment' : T_Environment_Record,
+            'PrivateEnvironment' : T_PrivateEnvironment_Record,
 
             # 7191: Table 24: Additional State Components for Generator Execution Contexts
             'Generator' : T_Object,
@@ -11882,7 +11979,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif field_names == ['CodePoint', 'CodeUnitCount', 'IsUnpairedSurrogate']:
                 record_type_name = 'CodePointAt_record_'
             elif field_names == ['Initializer', 'IsAnonymousFunctionDefinition', 'Name']:
-                record_type_name = 'ClassFieldDefinition Record' # PR 1668
+                record_type_name = 'ClassFieldDefinition Record'
             elif field_names == ['Gap', 'Indent', 'PropertyList', 'ReplacerFunction', 'Stack']:
                 record_type_name = 'JSON_Stringify_state_record_'
             elif field_names == ['HeldValue', 'UnregisterToken', 'WeakRefTarget']:
@@ -12090,7 +12187,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         t = {
             'LexicalEnvironment' : T_Environment_Record,
             'VariableEnvironment': T_Environment_Record,
-            'PrivateEnvironment' : T_Environment_Record, # PR 1668 privates
+            'PrivateEnvironment' : T_PrivateEnvironment_Record, # | T_Null
         }[component_name.source_text()]
         return (t, env0)
 
@@ -12151,7 +12248,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EX} : &laquo; &raquo;",
-        r"{EX} : \u00ab \u00bb", # PR 1668
     ]:
         [] = children
         return (T_List, env0)
@@ -12878,13 +12974,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         proc_add_return(env0, T_Number, numlit)
         return (T_Parse_Node, env0)
 
-    # PR 1668 privates:
-    elif p == r"{EXPR} : a new unique Private Name whose {dsb_word} value is {var}":
-        [dsb_word, var] = children
-        assert dsb_word.source_text() == '[[Description]]'
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Private_Name, env0)
-
     # PR 1515 BigInt:
     elif p == r"{EX} : {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number":
         [ex] = children
@@ -12992,6 +13081,31 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EX} : the two code points matched by {nonterminal} and {nonterminal} respectively":
         [nonta, nontb] = children
         return (T_code_point_, env0)
+
+    elif p == r"{EXPR} : that PrivateElement":
+        [] = children
+        return (T_PrivateElement, env0)
+
+    elif p == r"{EXPR} : that Private Name":
+        [] = children
+        return (T_Private_Name, env0)
+
+    elif p == r"{EXPR} : a new Private Name whose {dsb_word} value is {var}":
+        [dsb_word, var] = children
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Private_Name, env0)
+
+    elif p == r"{EXPR} : the Private Name in {var} whose {dsb_word} is {var}":
+        [list_var, dsb_word, var] = children
+        env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Private_Name, env0)
+
+    elif p == r"{EXPR} : the empty sequence of Unicode code points":
+        [] = children
+        return (T_Unicode_code_points_, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
@@ -13331,7 +13445,7 @@ fields_for_record_type_named_ = {
     # 6.2.4
     'Reference Record': {
         'Base'           : T_Tangible_ | T_Environment_Record | T_Unresolvable_,
-        'ReferencedName' : T_String | T_Symbol,
+        'ReferencedName' : T_String | T_Symbol | T_Private_Name,
         'Strict'         : T_Boolean,
         'ThisValue'      : T_Tangible_ | T_empty_,
     },
@@ -13356,26 +13470,19 @@ fields_for_record_type_named_ = {
     #?     'Target' : T_String | T_empty_,
     #? },
 
-    # PR 1668 privates:
-    # Table 9:
-    'PrivateField' : {
-        'PrivateName'      : T_Private_Name,
-        'PrivateFieldValue': T_Tangible_,
+    # 6.2.9 The PrivateElement Specification Type
+    'PrivateElement': {
+        'Key'  : T_Private_Name,
+        'Kind' : T_PrivateElementKind_,
+        'Value': T_Tangible_,
+        'Get'  : T_Undefined | T_function_object_,
+        'Set'  : T_Undefined | T_function_object_,
     },
-    # Table 10:
+    # 6.2.10 The ClassFieldDefinition Record Specification Type
     'ClassFieldDefinition Record' : {
         'Name'                          : T_Private_Name | T_String | T_Symbol,
         'Initializer'                   : T_function_object_ | T_empty_,
         'IsAnonymousFunctionDefinition' : T_Boolean,
-    },
-    # Table 11:
-    'Private Name' : {
-        'Description': T_String,
-        'Kind'       : T_String,
-        'Brand'      : T_Object, # T_Tangible_, XXX
-        'Value'      : T_function_object_,
-        'Get'        : T_function_object_,
-        'Set'        : T_function_object_,
     },
 
     # 8.1
@@ -13447,6 +13554,12 @@ fields_for_record_type_named_ = {
         'IsLockFree8' : T_Boolean,
         'CandidateExecution': T_candidate_execution,
         'KeptAlive'   : ListType(T_Object),
+    },
+
+    # 9.2
+    'PrivateEnvironment Record': {
+        'OuterPrivateEnvironment': T_PrivateEnvironment_Record | T_Null,
+        'Names'                  : ListType(T_Private_Name),
     },
 
 #    # 7343: Table 25: PendingJob Record Fields
@@ -13716,9 +13829,7 @@ type_of_internal_thing_ = {
     'Prototype'  : T_Object | T_Null,
     'Extensible' : T_Boolean,
 
-    # PR 1668 privates:
-    'PrivateFieldValues' : ListType(T_PrivateField),
-    'PrivateBrands'      : ListType(T_Tangible_),
+    'PrivateElements'   : ListType(T_PrivateElement),
 
     # 1188: Table 5: Essential Internal Methods
     # (Properly, this info *should* be taken from the results of STA.)
@@ -13751,7 +13862,7 @@ type_of_internal_thing_ = {
 
     # 8329: Table 30: Internal Slots of ECMAScript Function Objects
     'Environment'      : T_Environment_Record,
-    'PrivateEnvironment' : T_Environment_Record, # PR 1668 privates
+    'PrivateEnvironment' : T_PrivateEnvironment_Record | T_Null,
     'FormalParameters' : T_Parse_Node,
     'FunctionKind'     : T_FunctionKind2_, # T_String, # could be more specific
     'IsClassConstructor': T_Boolean, # PR 15xx re FunctionKind
@@ -13763,9 +13874,9 @@ type_of_internal_thing_ = {
     'Strict'           : T_Boolean,
     'HomeObject'       : T_Object,
     'SourceText'       : T_Unicode_code_points_,
-    'Fields'           : ListType(T_ClassFieldDefinition_Record), # PR 1668 privates
-    'ClassFieldInitializer': T_Boolean, # PR 1668
-    'PrivateBrand'     : T_Object, # PR 1668: XXX not in table 
+    'Fields'           : ListType(T_ClassFieldDefinition_Record),
+    'PrivateMethods'   : ListType(T_PrivateElement),
+    'ClassFieldInitializerName': T_String | T_Symbol | T_Private_Name | T_empty_,
 
     # 8860: 
     'InitialName' : T_Null | T_String,
