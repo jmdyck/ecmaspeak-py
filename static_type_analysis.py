@@ -2369,7 +2369,11 @@ class Env:
         (list_type, list_env) = tc_expr(list_ex, self)
         (item_type, item_env) = tc_expr(item_ex, list_env)
 
-        if (list_type == T_List or list_type == ListType(T_TBD)) and item_type == T_TBD:
+        if list_type == T_String and item_type.is_a_subtype_of_or_equal_to(T_String | T_code_unit_):
+            # String-contains rather than List-contains
+            result = item_env
+
+        elif (list_type == T_List or list_type == ListType(T_TBD)) and item_type == T_TBD:
             # shrug
             result = item_env
 
@@ -4605,8 +4609,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Append {EX} to {EX}.",
         r"{COMMAND} : Insert {var} as the first element of {var}.",
         r"{COMMAND} : Prepend {var} to {var}.",
-        r"{SMALL_COMMAND} : append {LITERAL} to {var}",
-        r"{SMALL_COMMAND} : append {var} to {var}",
+        r"{SMALL_COMMAND} : append {EX} to {var}",
     ]:
         [value_ex, list_ex] = children
         result = env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
@@ -5288,12 +5291,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(list_var, ListType(T_PrivateElement))
         env0.assert_expr_is_of_type(ex_var, T_PrivateElement)
         env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
-        result = env0
-
-    elif p == r"{SMALL_COMMAND} : append {DOTTING} to {var}":
-        [dotting, var] = children
-        env0.assert_expr_is_of_type(dotting, T_String)
-        env0.assert_expr_is_of_type(var, ListType(T_String))
         result = env0
 
     # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
@@ -6973,9 +6970,8 @@ def tc_cond_(cond, env0, asserting):
         return (env1, env1)
 
     elif p in [
-        r"{CONDITION_1} : {DOTTING} contains {var}",
-        r'{CONDITION_1} : {var} contains {var}',
-        r"{CONDITION_1} : {var} does not contain {var}",
+        r"{CONDITION_1} : {SETTABLE} contains {EX}",
+        r"{CONDITION_1} : {EX} does not contain {EX}",
     ]:
         [list_var, value_var] = children
         env1 = env0.ensure_A_can_be_element_of_list_B(value_var, list_var)
@@ -7426,12 +7422,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} contains {LITERAL}":
-        [var, lit] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(lit, T_String | T_code_unit_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : This is an attempt to change the value of an immutable binding":
@@ -7935,11 +7925,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains {DSBN}":
-        [var, dsbn] = children
-        env0.assert_expr_is_of_type(var, ListType(T_SlotName_))
-        return (env0, env0)
-
     # PR 1554 NumericValue
     elif p == r"{CONDITION_1} : {nonterminal} has more than 20 significant digits":
         [nont] = children
@@ -8020,11 +8005,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} does not provide the direct binding for this export":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Module_Record)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {EX} does not contain {starred_str}":
-        [ex, starred_str] = children
-        env0.assert_expr_is_of_type(ex, T_String)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once":
@@ -8262,12 +8242,6 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {var} contains {NAMED_OPERATION_INVOCATION}":
-        [var, noi] = children
-        env0.assert_expr_is_of_type(var, ListType(T_String))
-        env0.assert_expr_is_of_type(noi, T_String)
-        return (env0, env0)
-
     elif p in [
         r"{CONDITION_1} : {PROD_REF} is not present",
         r"{CONDITION_1} : {PROD_REF} is present",
@@ -8409,12 +8383,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : This is only possible for getter/setter pairs":
         [] = children
         return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} does not contain {DOTTING}":
-        [var, dotting] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
-        env2 = env1.ensure_expr_is_of_type(dotting, T_String)
-        return (env2, env2)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
@@ -13106,6 +13074,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the empty sequence of Unicode code points":
         [] = children
         return (T_Unicode_code_points_, env0)
+
+    elif p == '{starred_str} : \\* " ( [^"*] | \\\\ \\* )* " \\*':
+        return (T_String, env0)
 
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":

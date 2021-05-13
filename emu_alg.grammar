@@ -310,10 +310,8 @@
     ReturnIfAbrupt({var})
     add {var} to {var}
     append each of its elements to {var}
-    append {DOTTING} to {var}
-    append {LITERAL} to {var}
+    append {EX} to {var}
     append {code_unit_lit} as the last code unit of {var}
-    append {var} to {var}
     change its bound value to {var}
     convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
     create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
@@ -559,7 +557,6 @@
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
     {DOTTING} contains a Record {var} such that {CONDITION_1}
-    {DOTTING} contains {var}
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {EX} and {EX} are both {LITERAL}
@@ -569,7 +566,7 @@
     {EX} and {EX} are valid byte offsets within the memory of {var}
     {EX} contains a Private Name whose {dsb_word} is {var}
     {EX} contains a PrivateElement whose {dsb_word} is {var}
-    {EX} does not contain {starred_str}
+    {EX} does not contain {EX}
     {EX} has the value {LITERAL}
     {EX} is -1
     {EX} is a Private Name
@@ -621,6 +618,7 @@
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
+    {SETTABLE} contains {EX}
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
     {var} also has a {DSBN} internal slot
@@ -651,17 +649,11 @@
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
-    {var} contains {DSBN}
-    {var} contains {LITERAL}
-    {var} contains {NAMED_OPERATION_INVOCATION}
-    {var} contains {var}
     {var} does not already have a binding for {var}
     {var} does not consist of a single code unit
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
     {var} does not contain a valid UTF-8 encoding of a Unicode code point
     {var} does not contain exactly one character
-    {var} does not contain {DOTTING}
-    {var} does not contain {var}
     {var} does not currently have a property {var}
     {var} does not have a Generator component
     {var} does not have a binding for {var}
