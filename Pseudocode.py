@@ -2153,7 +2153,9 @@ def analyze_sdo_coverage_info():
                     u_rhs = uprimary.prod.rhs_s
                     if u_rhs in [
                         'this {nonterminal}',
+                        'the {nonterminal} contained in {PROD_REF}',
                         'the {nonterminal} containing this {nonterminal}',
+                        'the {nonterminal} of {PROD_REF}',
                         'the {nonterminal} that is that single code point',
                         'the {nonterminal} that is that {nonterminal}',
                         'the corresponding {nonterminal}',
@@ -2162,7 +2164,7 @@ def analyze_sdo_coverage_info():
                     elif u_rhs == 'the {ORDINAL} {nonterminal}':
                         nonterminal = uprimary.children[1]
                     else:
-                        assert 0
+                        assert 0, u_rhs
                     nts = [nonterminal.source_text()[1:-1]]
 
                 elif u_lhs == '{LOCAL_REF}':

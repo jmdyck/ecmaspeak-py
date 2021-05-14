@@ -129,7 +129,7 @@
     Return.
     ReturnIfAbrupt({EX}).
     Scan until the next {code_point_lit}.
-    Search the enclosing {nonterminal} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to the {cap_word} of the {nonterminal} contained in {PROD_REF}.
+    Search {PROD_REF} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to {NAMED_OPERATION_INVOCATION}.
     Set all of the bytes of {var} to 0.
     Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
     Set {DOTTING} as described in {h_emu_xref}.
@@ -1004,9 +1004,9 @@
     # PR 1739:
     the Directive Prologue of {PROD_REF} contains a Sensitive Directive
     the Directive Prologue of {PROD_REF} contains a Sensitive Directive or a Hidden Implementation Directive
-    the source text matched by {nonterminal} is eval code resulting from a direct eval
-    {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive
-    {nonterminal} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive or a Hidden Implementation Directive
+    the source text matched by {PROD_REF} is eval code resulting from a direct eval
+    {PROD_REF} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive
+    {PROD_REF} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive or a Hidden Implementation Directive
     {var} has a {DSBN} internal slot with the value {LITERAL}
 
     # PR 2109:
@@ -1790,9 +1790,11 @@
 
 {PROD_REF} :
     the corresponding {nonterminal}
+    the enclosing {nonterminal}
     the located {nonterminal}
     the {ORDINAL} {nonterminal}
     the {nonterminal}
+    the {nonterminal} contained in {PROD_REF}
     this production
     this {nonterminal}
     {nonterminal}

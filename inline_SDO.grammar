@@ -56,7 +56,7 @@
 
 {EX} :
     #pre-1135: the number of code points in {PROD_REF}
-    the code point value of {nonterminal}
+    the code point value of {PROD_REF}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the single code point matched by this production

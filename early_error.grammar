@@ -57,7 +57,6 @@
     the code matched by {PROD_REF} is contained in strict mode code
     the code that matches {PROD_REF} is contained in strict mode code
     the duplicate entries are only bound by {cap_word}
-    the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals the {cap_word} of the {nonterminal} of {PROD_REF}
     the goal symbol of the syntactic grammar is {nonterminal}
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
     the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
@@ -65,7 +64,6 @@
     the source code matching {PROD_REF} is not strict mode code
     the source code matching {PROD_REF} is strict mode code
     the syntactic goal symbol is not {nonterminal}
-    this production has an? <sub>[{cap_word}]</sub> parameter
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
     {LOCAL_REF} contains a Unicode escape sequence
@@ -97,6 +95,8 @@
     {NAMED_OPERATION_INVOCATION} is {LITERAL}
     {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}
     {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
+    {PROD_REF} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals {NAMED_OPERATION_INVOCATION}
+    {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is not present
     {PROD_REF} is present
 
@@ -141,9 +141,11 @@
 
 {PROD_REF} :
     the derived {nonterminal}
+    the enclosing {nonterminal}
     the {ORDINAL} {nonterminal}
     the {nonterminal}
     the {nonterminal} containing this {nonterminal}
+    the {nonterminal} of {PROD_REF}
     this phrase
     this production
     this production's {nonterminal}
@@ -161,7 +163,7 @@
 {EX} :
     the {nonterminal} that is covered by {LOCAL_REF}
     &laquo; &raquo;
-    the two code points matched by {nonterminal} and {nonterminal} respectively
+    the two code points matched by {PROD_REF} and {PROD_REF} respectively
     {LITERAL}
 
 {LITERAL} :

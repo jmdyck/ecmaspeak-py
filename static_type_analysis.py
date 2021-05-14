@@ -5041,8 +5041,8 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
-    elif p == r"{COMMAND} : Search the enclosing {nonterminal} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to the {cap_word} of the {nonterminal} contained in {PROD_REF}.":
-        [nont1, nont2, nont3, cw1, cw2, nont4, prod_ref] = children
+    elif p == r"{COMMAND} : Search {PROD_REF} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to {NAMED_OPERATION_INVOCATION}.":
+        [prod_ref1, nont2, nont3, cw4, noi5] = children
         result = env0
 
     elif p == r"{COMMAND} : Create any host-defined global object properties on {var}.":
@@ -8123,9 +8123,9 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : this production has an? <sub>[{cap_word}]</sub> parameter",
+        r"{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter",
     ]:
-        [cap_word] = children
+        [prod_ref, cap_word] = children
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set":
@@ -8301,9 +8301,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noib, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the enclosing {nonterminal} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals the {cap_word} of the {nonterminal} of {PROD_REF}":
-        [nonta, nontb, nontc, cap_worda, cap_wordb, nontd, prod_ref] = children
-        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+    elif p == r"{CONDITION_1} : {PROD_REF} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals {NAMED_OPERATION_INVOCATION}":
+        [prod_ref1, nont2, nont3, cap_word4, noi5] = children
+        env0.assert_expr_is_of_type(prod_ref1, T_Parse_Node)
+        env0.assert_expr_is_of_type(noi5, T_String) # over-specific
         # XXX cap_word
         return (env0, env0)
 
@@ -10159,9 +10160,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EX} : the code point value of {nonterminal}":
-        [nont] = children
-        assert nont.source_text() == '|SourceCharacter|'
+    elif p == r"{EX} : the code point value of {PROD_REF}":
+        [prod_ref] = children
+        assert prod_ref.source_text() == '|SourceCharacter|'
         return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
@@ -11200,7 +11201,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # ----
 
-    elif p == r'{LOCAL_REF} : the {nonterminal} of {var}':
+    elif p in [
+        r'{LOCAL_REF} : the {nonterminal} of {var}',
+        r"{PROD_REF} : the {nonterminal} of {PROD_REF}",
+    ]:
         [nonterminal, var] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         # XXX could check that t is a nonterminal that actually has a child of that type
@@ -11229,6 +11233,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ptn_type_for(nonterminal), env0)
 
     elif p == r"{PROD_REF} : the corresponding {nonterminal}":
+        [nont] = children
+        return (ptn_type_for(nont), env0)
+
+    elif p == r"{PROD_REF} : the enclosing {nonterminal}":
         [nont] = children
         return (ptn_type_for(nont), env0)
 
@@ -13046,8 +13054,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Tangible_, env0)
 
-    elif p == r"{EX} : the two code points matched by {nonterminal} and {nonterminal} respectively":
-        [nonta, nontb] = children
+    elif p == r"{EX} : the two code points matched by {PROD_REF} and {PROD_REF} respectively":
+        [prod_refa, prod_refb] = children
         return (T_code_point_, env0)
 
     elif p == r"{EXPR} : that PrivateElement":
