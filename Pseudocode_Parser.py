@@ -188,7 +188,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)
     {code_unit_lit}  : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)
 
-    {note}           : \b NOTE: \x20 .+ \.
+    {note}           : \b NOTE: \x20 .+
 
     {wordish}        : \b (don't | doesn't | We've) \b
     {wordish}        : 's \b

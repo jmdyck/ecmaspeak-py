@@ -857,6 +857,12 @@ class ExtractionRules:
         assert orig_subject != ''
         have_shown_a_trace_for_this_subject = False
 
+        if trace:
+            stderr('--------------------------')
+            stderr(f"subject: {orig_subject}")
+            stderr()
+            have_shown_a_trace_for_this_subject = True
+
         subject = orig_subject
 
         for rule in self.rules:
@@ -946,6 +952,11 @@ def extract_info_from_preamble(preamble_nodes, section):
         'CallConstruct',
     ]:
         # no standard yet
+        pass
+    elif section.section_title in ['ExecuteAsyncModule ( _module_ )', 'FinishDynamicImport ( _referencingScriptOrModule_, _specifier_, _promiseCapability_, _completion_ )']:
+        # The section has multiple preambles.
+        # The AO's preamble is standard.
+        # The other ones are for functions, so no standard yet.
         pass
     else:
         oh_warn()
@@ -1182,7 +1193,7 @@ rec_method_declarations = '''
 
     # Table 41: Additional Abstract Methods of Cyclic Module Record
     InitializeEnvironment() -> TBD
-    ExecuteModule()         -> TBD
+    ExecuteModule(capability) -> TBD
 '''
 
 rec_method_param_nature_ = {
@@ -1195,6 +1206,7 @@ rec_method_param_nature_ = {
     '_exportStarSet_' : 'TBD',
     '_exportName_'    : 'a String',
     '_resolveSet_'    : 'TBD',
+    '_capability_'    : 'an optional PromiseCapability',
 }
 
 predeclared_rec_method_info = {}
@@ -1670,6 +1682,8 @@ def resolve_oi(hoi, poi):
     # kind
     if hoi.kind is None and poi.kind is None:
         assert 0
+        oh_warn()
+        oh_warn(f'resolve_oi: {hoi.name}/{poi.name}: kind is None in both hoi and poi')
     elif hoi.kind is None:
         oi.kind = poi.kind
     elif poi.kind is None:
@@ -1960,6 +1974,12 @@ class AlgHeader:
             bif_or_op = 'bif'
         else:
             bif_or_op = 'op'
+
+        if self.name not in spec.alg_info_[bif_or_op]:
+            oh_warn()
+            oh_warn(f"finish_initialization: spec.alg_info_[{bif_or_op!r}] has no entry for {self.name!r}")
+            return
+            
         alg = spec.alg_info_[bif_or_op][self.name]
         alg.headers.append(self)
 

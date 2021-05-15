@@ -200,6 +200,7 @@ nature_to_tipe = {
         'a list of arguments'                  : 'List of Tangible_',
         'a List of ECMAScript language values' : 'List of Tangible_',
         'a possibly empty List of ECMAScript language values': 'List of Tangible_',
+        'a List of Cyclic Module Records'      : 'List of Cyclic Module Record',
         'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
 
         # 6.2.3 Completion
@@ -1777,7 +1778,7 @@ Evaluation                               ; *return*               ; TBD         
 ExportEntriesForModule                   ; _module_               ; TBD                 ; String | Null
 FinishDynamicImport                      ; _referencingScriptOrModule_ ; TBD            ; Script Record | Module Record | Null
 FinishDynamicImport                      ; _specifier_            ; TBD                 ; String
-FinishDynamicImport                      ; _completion_           ; TBD                 ; Tangible_ | throw_
+FinishDynamicImport                      ; _innerPromise_         ; TBD                 ; Promise_object_
 FlattenIntoArray                         ; *return*               ; TBD                 ; MathNonNegativeInteger_ | throw_
 GeneratorResume                          ; _value_                ; TBD                 ; Tangible_ | empty_
 GeneratorValidate                        ; _generator_            ; TBD                 ; Tangible_
@@ -2354,6 +2355,8 @@ class Env:
             if expr_text == '*null*':
                 # Don't try to change the type of *null*!
                 result_env = expr_env
+            elif expr_text == '&laquo; &raquo;':
+                result_env = expr_env
             elif expr_text == '_len_' and expr_type == T_MathInteger_ and expected_t == T_Tangible_:
                 # skip this for now
                 result_env = expr_env
@@ -2697,6 +2700,9 @@ class Env:
                 'the StringValue of |IdentifierName|', # StringValue
                 'PropName of |FieldDefinition|', # Early Errors
                 '_generator_.[[AsyncGeneratorState]]', # AsyncGeneratorResume
+                '_m_.[[CycleRoot]]', # GatherAsyncParentCompletions
+                '_promiseCapability_.[[Reject]]', # CallDynamicImportFulfilled
+                '_promiseCapability_.[[Resolve]]', # CallDynamicImportFulfilled
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -3370,6 +3376,8 @@ def tc_header(tah):
                     tah.name == 'AsyncGeneratorResume' and pn == '_completion_'
                     or
                     tah.name == 'AsyncGeneratorCompleteStep' and pn == '_completion_'
+                    or
+                    tah.name == 'CallDynamicImportFulfilled' and pn == '_result_' and init_t == T_Tangible_ and final_t == T_Undefined
                 )
                 # This pass just narrowed the type.
                 # ----
@@ -4089,7 +4097,10 @@ def tc_nonvalue(anode, env0):
 
         # ---------------------
 
-        elif each_thing.prod.rhs_s == "{ITEM_NATURE} {var} of {EX}":
+        elif each_thing.prod.rhs_s in [
+            "{ITEM_NATURE} {var} of {EX}",
+            "{ITEM_NATURE} {var} that is an element of {EX}",
+        ]:
             [item_nature, loop_var, collection_expr] = each_thing.children
 
             if item_nature.prod.rhs_s == "code point":
@@ -4140,6 +4151,7 @@ def tc_nonvalue(anode, env0):
                     "Cyclic Module Record": T_Cyclic_Module_Record,
                     "ExportEntry Record"  : T_ExportEntry_Record,
                     "ImportEntry Record"  : T_ImportEntry_Record,
+                    "Module Record"       : T_Module_Record,
                     "Parse Node"          : T_Parse_Node,
                     "Private Name"        : T_Private_Name,
                     "PrivateElement"      : T_PrivateElement,
@@ -5850,8 +5862,12 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}",
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
@@ -6019,7 +6035,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{CONDITION_1} : When {SETTABLE} is instantiated it will have a direct binding for {var}':
         [settable, var] = children
-        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_Undefined)
+        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_empty_)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
@@ -7463,6 +7479,27 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}":
+        [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = children
+        assert dsb1.source_text() == '[[AsyncEvaluation]]'
+        assert dsb2.source_text() == '[[PendingAsyncDependencies]]'
+        assert dsb3.source_text() == '[[EvaluationError]]'
+        # could check that the lits have the right type.
+        env0.assert_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}":
+        [dotting, lita, litb] = children
+        assert lita.source_text() == '*false*'
+        assert litb.source_text() == '*true*'
+        env0.assert_expr_is_of_type(dotting, T_Boolean)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
+        return (env0, env0)
+
     else:
         stderr()
         stderr("tc_cond:")
@@ -7806,7 +7843,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_settlement_type_, env0)
         elif chars in ['pending', 'fulfilled', 'rejected']:
             return (T_promise_state_, env0)
-        elif chars in ['unlinked', 'linking', 'linked', 'evaluating', 'evaluated']:
+        elif chars in ['unlinked', 'linking', 'linked', 'evaluating', 'evaluating-async', 'evaluated']:
             return (T_module_record_status_, env0)
         elif chars in ['frozen', 'sealed']:
             return (T_integrity_level_, env0)
@@ -7953,6 +7990,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}",
         r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {nonterminal}",
+        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {TERMINAL}",
     ]:
         [lhs, rhs] = children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
@@ -8178,7 +8216,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         add_pass_error(arg,
                             f"arg is of type {t} but param requires ExtendedMathReal"
                         )
-                        if t == T_MathInteger_ | T_Undefined:
+                        if t == T_MathInteger_ | T_empty_:
                             # InnerModuleEvaluation
                             t = T_MathInteger_
                     argtypes.append(t)
@@ -8453,6 +8491,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             lhs_t = T_Realm_Record
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
+        elif lhs_t == T_Cyclic_Module_Record | T_empty_:
+            assert lhs_text in ['_m_.[[CycleRoot]]', '_module_', '_requiredModule_']
+            lhs_t = T_Cyclic_Module_Record
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
         elif lhs_t in [
             T_TBD,
             T_Top_,
@@ -8487,20 +8530,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     lhs_t = T_Source_Text_Module_Record
                 else:
                     assert 0
-            elif dsbn_name == 'Status':
-                assert candidate_type_names == ['Module Record', 'Source Text Module Record', 'other Module Record']
+            elif dsbn_name in ['Status', 'AsyncEvaluation']:
+                assert candidate_type_names == ['Cyclic Module Record', 'Source Text Module Record']
                 assert lhs_text == '_module_'
-                lhs_t = T_Module_Record
+                lhs_t = T_Cyclic_Module_Record
             elif dsbn_name == 'Done':
                 assert candidate_type_names == ['iterator_record_', 'Object']
                 assert lhs_text == '_iteratorRecord_'
                 lhs_t = T_iterator_record_
             elif dsbn_name in ['Reject', 'Resolve']:
                 assert candidate_type_names == ['PromiseCapability Record', 'ResolvingFunctions_record_']
-                assert lhs_text == '_promiseCapability_'
-                lhs_t = T_PromiseCapability_Record
-            elif dsbn_name == 'Promise':
-                assert candidate_type_names == ['PromiseCapability Record', 'Object']
                 assert lhs_text == '_promiseCapability_'
                 lhs_t = T_PromiseCapability_Record
             else:
@@ -8517,9 +8556,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         if lhs_t.is_a_subtype_of_or_equal_to(T_Object):
             # _foo_.[[Bar]] references an object's internal method or internal slot.
-            assert dsbn_name in type_of_internal_thing_, dsbn_name
-            it_type = type_of_internal_thing_[dsbn_name]
-            # XXX We should require that lhs_t is allowed to have this internal thing.
+            if dsbn_name not in type_of_internal_thing_:
+                add_pass_error(
+                    dsbn,
+                    f"unknown internal slot/method: {dsbn_name}"
+                )
+                it_type = T_TBD
+            else:
+                it_type = type_of_internal_thing_[dsbn_name]
+                # XXX We should require that lhs_t is allowed to have this internal thing.
 
             # But for some subtypes of Object, we can give a narrower type for the slot
             if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == 'ArrayBufferData':
@@ -8594,8 +8639,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         field_type = {
                             (T_Environment_Record, 'NewTarget')        : T_Object | T_Undefined,
                             (T_Module_Record,      'DFSAncestorIndex') : T_MathInteger_,
-                            (T_Module_Record,      'DFSIndex')         : T_MathInteger_ | T_Undefined,
-                            (T_Module_Record,      'EvaluationError')  : T_throw_ | T_Undefined,
+                            (T_Module_Record,      'DFSIndex')         : T_MathInteger_ | T_empty_,
+                            (T_Module_Record,      'EvaluationError')  : T_throw_ | T_empty_,
                         }[(lhs_t, dsbn_name)]
                         # KeyError here might mean you need to add something to
                         # fields_for_record_type_named_
@@ -8617,7 +8662,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert 0, (expr.source_text(), lhs_t)
 
         else:
-            assert 0, (expr.source_text(), str(lhs_t))
+            # assert 0, (expr.source_text(), str(lhs_t))
+            add_pass_error(
+                lhs_var,
+                f"How does something of type {lhs_t} support a dot-operator?"
+            )
+            return (T_TBD, env2)
 
     # -------------------------------------------------
 
@@ -9921,6 +9971,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref] = children
         return (T_alg_steps, env0)
 
+    elif p == r"{EXPR} : the algorithm steps defined in (.+) ({h_emu_xref})":
+        [_, emu_xref] = children
+        return (T_alg_steps, env0)
+
+    elif p in [
+        r"{EXPR} : the steps of an? {cap_word} function as specified below",
+    ]:
+        [cap_word] = children
+        return (T_alg_steps, env0)
+
     # ------------------------------------------------
     # return T_execution_context
 
@@ -11055,6 +11115,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(varb, T_MathReal_)
         return (T_MathReal_, env0)
 
+    elif p == r"{TERMINAL} : {backticked_word}":
+        return (T_grammar_symbol_, env0)
+
+    elif p == r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}":
+        [var, dsb_word, literal, cap_word] = children
+        assert dsb_word.source_text() == '[[AsyncEvaluation]]'
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
+        return (ListType(T_Cyclic_Module_Record), env1)
+
     else:
         stderr()
         stderr("tc_expr:")
@@ -11464,48 +11533,60 @@ fields_for_record_type_named_ = {
     # 22437: Table 36: Module Record Fields
     'Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_Undefined,
-        'Namespace'       : T_Object | T_Undefined,
+        'Environment'     : T_Environment_Record | T_empty_,
+        'Namespace'       : T_Object | T_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
-        'Status'          : T_module_record_status_, # T_String, # see Issue 1455
     },
 
     'other Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_Undefined,
-        'Namespace'       : T_Object | T_Undefined,
+        'Environment'     : T_Environment_Record | T_empty_,
+        'Namespace'       : T_Object | T_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
     },
 
     #
     'Cyclic Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_Undefined,
-        'Namespace'       : T_Object | T_Undefined,
+        'Environment'     : T_Environment_Record | T_empty_,
+        'Namespace'       : T_Object | T_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
         'Status'          : T_module_record_status_, # T_String,
-        'EvaluationError'  : T_throw_ | T_Undefined,
-        'DFSIndex'         : T_MathInteger_ | T_Undefined,
-        'DFSAncestorIndex' : T_MathInteger_ | T_Undefined,
+        'EvaluationError'  : T_throw_ | T_empty_,
+        'DFSIndex'         : T_MathInteger_ | T_empty_,
+        'DFSAncestorIndex' : T_MathInteger_ | T_empty_,
         'RequestedModules' : ListType(T_String),
+        'CycleRoot'        : T_Cyclic_Module_Record | T_empty_,
+        'HasTLA'           : T_Boolean,
+        'AsyncEvaluation'  : T_Boolean,
+        'TopLevelCapability': T_PromiseCapability_Record | T_empty_,
+        'AsyncParentModules': ListType(T_Cyclic_Module_Record),
+        'PendingAsyncDependencies': T_MathInteger_ | T_empty_,
     },
 
     # 23406: Table 38: Additional Fields of Source Text Module Records
     'Source Text Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_Undefined,
-        'Namespace'       : T_Object | T_Undefined,
+        'Environment'     : T_Environment_Record | T_empty_,
+        'Namespace'       : T_Object | T_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
         'Status'          : T_module_record_status_, # T_String,
-        'EvaluationError'  : T_throw_ | T_Undefined,
-        'DFSIndex'         : T_MathInteger_ | T_Undefined,
-        'DFSAncestorIndex' : T_MathInteger_ | T_Undefined,
+        'EvaluationError'  : T_throw_ | T_empty_,
+        'DFSIndex'         : T_MathInteger_ | T_empty_,
+        'DFSAncestorIndex' : T_MathInteger_ | T_empty_,
         'RequestedModules' : ListType(T_String),
+        'CycleRoot'        : T_Cyclic_Module_Record | T_empty_,
+        'HasTLA'           : T_Boolean,
+        'AsyncEvaluation'  : T_Boolean,
+        'TopLevelCapability': T_PromiseCapability_Record | T_empty_,
+        'AsyncParentModules': ListType(T_Cyclic_Module_Record),
+        'PendingAsyncDependencies': T_MathInteger_ | T_empty_,
         #
         'Context'              : T_execution_context | T_empty_,
         'ECMAScriptCode'       : T_Parse_Node,
+        'Context'              : T_execution_context | T_empty_, # PR 1670
         'ImportMeta'           : T_Object | T_empty_, # PR 1892
         'ImportEntries'        : ListType(T_ImportEntry_Record),
         'LocalExportEntries'   : ListType(T_ExportEntry_Record),
@@ -11759,7 +11840,7 @@ type_of_internal_thing_ = {
     'TypedArrayName'    : T_String,
 
     # 10066: Table 29: Internal Slots of Module Namespace Exotic Objects
-    'Module'     : T_Module_Record,
+    'Module'     : T_Module_Record, # T_Cyclic_Module_Record ?
     'Exports'    : ListType(T_String),
 
     # 9.5 Proxy Object Internal Methods and Internal Slots
@@ -11771,6 +11852,11 @@ type_of_internal_thing_ = {
     'ObjectWasVisited': T_Boolean,
     'VisitedKeys'     : ListType(T_String),
     'RemainingKeys'   : ListType(T_String),
+
+    # 24411
+    'ReferencingScriptOrModule': T_Script_Record | T_Module_Record | T_Null,
+    'Specifier'                : T_String,
+    'PromiseCapability'        : T_PromiseCapability_Record,
 
     # 27137: Properties of Boolean Instances NO TABLE
     'BooleanData' : T_Boolean,

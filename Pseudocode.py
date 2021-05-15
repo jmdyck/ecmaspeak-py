@@ -1440,6 +1440,7 @@ def annotate_invocations(anode):
                     "the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
                     "the CharSet returned by {PROD_REF}"               : 'regexp-Evaluate',
                     "the CharSet returned by {h_emu_grammar} "         : 'regexp-Evaluate',
+                    '{LOCAL_REF} Contains {TERMINAL}'                  : 'Contains',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
                 }[rhs]
@@ -2532,6 +2533,8 @@ nts_behind_var_in_sdo_call = {
     ('Evaluation', '_generatorBody_'): ['FunctionBody'],
     # 39454 AsyncFunctionStart
     ('Evaluation', '_asyncFunctionBody_'): ['FunctionBody', 'ExpressionBody'],
+    # 40958 AsyncBlockStart
+    ('Evaluation', '_asyncBody_'): ['FunctionBody', 'ExpressionBody', 'Module'],
 
     # 15708 EvaluatePropertyAccessWithIdentifierKey
     ('StringValue', '_identifierName_'): ['IdentifierName'],
