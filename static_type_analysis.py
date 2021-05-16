@@ -9064,7 +9064,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             else:
                 assert 0
 
-        else:
+        elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
 
             if callee_op_name == 'NormalCompletion':
@@ -9244,6 +9244,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # fall through to tc_args etc
 
                 # if callee_op_name == 'ResolveBinding': pdb.set_trace()
+
+        else:
+            assert 0, opn_before_paren.prod.rhs_s
 
         # context = 'in call to `%s`' % opn_before_paren.source_text()
         env2 = tc_args(params, args, env0, expr)

@@ -1826,6 +1826,13 @@
     {OPN_BEFORE_PAREN}({EXLIST_OPT}) (see {h_emu_xref})
 
 {OPN_BEFORE_PAREN} :
+    {DOTTING}
+    {NUMERIC_TYPE_INDICATOR}::{low_word}
+    {SIMPLE_OPERATION_NAME}
+    {var}
+    {var}.{cap_word}
+
+{SIMPLE_OPERATION_NAME} :
     ForIn/OfBodyEvaluation
     ForIn/OfHeadEvaluation
     abs
@@ -1839,14 +1846,10 @@
     thisStringValue
     thisSymbolValue
     thisTimeValue
-    {DOTTING}
-    {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}
     {fancy_f}
     {fancy_r}
     {fancy_z}
-    {var}
-    {var}.{cap_word}
 
 {NUMERIC_TYPE_INDICATOR} :
     BigInt

@@ -1453,7 +1453,9 @@ def annotate_invocations(anode):
             [opn_before_paren, arg_list] = d.children[0:2]
             assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
 
-            if opn_before_paren.prod.rhs_s == '{DOTTING}':
+            if opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
+                op_names = [opn_before_paren.source_text()]
+            elif opn_before_paren.prod.rhs_s == '{DOTTING}':
                 [dotting] = opn_before_paren.children
                 [lhs, dsbn] = dotting.children
                 op_name = dsbn.source_text()
@@ -1508,7 +1510,7 @@ def annotate_invocations(anode):
                 [_, low_word] = opn_before_paren.children
                 op_names = ['::' + low_word.source_text()]
             else:
-                op_names = [opn_before_paren.source_text()]
+                assert 0, opn_before_paren.prod.rhs_s
 
             if arg_list.prod.lhs_s == '{EXLIST_OPT}':
                 args = exes_in_exlist_opt(arg_list)

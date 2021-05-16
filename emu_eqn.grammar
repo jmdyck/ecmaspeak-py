@@ -69,15 +69,6 @@
     {starred_int_lit}{h_sub_fancy_f}
     {var}
 
-{PREFIX_PAREN} :
-    {OPN_BEFORE_PAREN}({EXPR})
-
-{OPN_BEFORE_PAREN} :
-    floor
-    {OP_NAME}
-    {fancy_f}
-    {fancy_r}
-
 {CONSTANT_NAME} :
     HoursPerDay
     MinutesPerHour
@@ -86,6 +77,18 @@
     msPerHour
     msPerMinute
     msPerSecond
+
+{PREFIX_PAREN} :
+    {OPN_BEFORE_PAREN}({EXPR})
+
+{OPN_BEFORE_PAREN} :
+    {SIMPLE_OPERATION_NAME}
+
+{SIMPLE_OPERATION_NAME} :
+    floor
+    {OP_NAME}
+    {fancy_f}
+    {fancy_r}
 
 {OP_NAME} :
     DateFromTime
