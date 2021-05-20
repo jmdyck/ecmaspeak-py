@@ -2240,10 +2240,12 @@ def analyze_sdo_coverage_info():
             if 'A' not in nt_info.def_occs: continue
             d_production_n = nt_info.def_occs['A']
 
-            for (def_i, def_rhs_n) in enumerate(d_production_n._rhss):
+            for def_rhs_n in d_production_n._rhss:
                 GNTs = [r for r in def_rhs_n._rhs_items if r.kind in ['GNT', 'NT_BUT_NOT']]
                 oGNTs = [gnt for gnt in GNTs if gnt._is_optional]
                 nGNTs = [gnt for gnt in GNTs if not gnt._is_optional]
+
+                reduced_prod_string = f"{lhs_nt} -> {def_rhs_n._reduced}"
 
                 for opt_combo in each_opt_combo(oGNTs):
                     opt_combo_str = ''.join(omreq[0] for (nt, omreq) in opt_combo)
@@ -2262,14 +2264,14 @@ def analyze_sdo_coverage_info():
                     if len(rules) == 1:
                         # great
                         if debug:
-                            put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} has an explicit rule")
+                            put(f"{sdo_name} for {reduced_prod_string} has an explicit rule")
                         pass
                     elif len(rules) > 1:
-                        put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} {opt_combo_str} is handled by {len(rules)} rules!")
-                    elif is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
+                        put(f"{sdo_name} for {reduced_prod_string} {opt_combo_str} is handled by {len(rules)} rules!")
+                    elif is_sdo_coverage_exception(sdo_name, lhs_nt, def_rhs_n._reduced):
                         # okay
                         if debug:
-                            put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} is a coverage exception")
+                            put(f"{sdo_name} for {reduced_prod_string} is a coverage exception")
                         pass
                     else:
                         nts = [gnt._nt_name for gnt in nGNTs] + required_nts_in(opt_combo)
@@ -2279,11 +2281,11 @@ def analyze_sdo_coverage_info():
                             [nt] = nts
 
                             if debug:
-                                put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} chains to {nt}")
+                                put(f"{sdo_name} for {reduced_prod_string} chains to {nt}")
 
                             queue_ensure(nt)
                         else:
-                            put(f"{sdo_name} for {lhs_nt} rhs+{def_i+1} {opt_combo_str} needs a rule")
+                            put(f"{sdo_name} for {reduced_prod_string} {opt_combo_str} needs a rule")
 
         unused_keys = coverage_info_for_this_sdo.keys() - used_keys
         for unused_key in sorted(unused_keys):
@@ -2649,7 +2651,7 @@ nts_behind_var_in_sdo_call = {
     ('regexp-Evaluate', '_parseResult_'): ['Pattern'],
 }
 
-def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
+def is_sdo_coverage_exception(sdo_name, lhs_nt, rhs_reduced):
     # Looking at the productions that share a LHS
     # (or equivalently, the RHSs of a multi-production),
     # it's typically the case that if an SDO can be invoked on one,
@@ -2660,7 +2662,7 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
     #
     # This function identifies exceptions to that rule of thumb.
 
-    if sdo_name == 'CharacterValue' and lhs_nt == 'ClassEscape' and def_i == (3 if shared.g_outdir == '_one-grammar' else 2):
+    if sdo_name == 'CharacterValue' and lhs_nt == 'ClassEscape' and rhs_reduced == 'CharacterClassEscape':
         # Invocations of this SDO on ClassAtom and ClassAtomNoDash
         # are guarded by `IsCharacterClass ... is *false*`.
         # This excludes the `ClassEscape :: CharacterClassEscape` production.
@@ -2671,43 +2673,43 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         and
         lhs_nt == 'CoverParenthesizedExpressionAndArrowParameterList'
         and
-        def_i != 0
+        rhs_reduced != "`(` Expression `)`"
     ):
-        # For this SDO, we're guaranteed (by early error) that rhs must be def_i == 0,
-        # so the SDO doesn't need to be defined for def_i != 0.
+        # For this SDO, we're guaranteed (by early error) that rhs must be `(` Expression `)`
+        # so the SDO doesn't need to be defined for any other RHS.
         return True
 
-    if sdo_name == 'DefineMethod' and lhs_nt == 'MethodDefinition' and def_i != 0:
+    if sdo_name == 'DefineMethod' and lhs_nt == 'MethodDefinition' and not rhs_reduced.startswith('ClassElementName'):
         # "Early Error rules ensure that there is only one method definition named `"constructor"`
         # and that it is not an accessor property or generator definition."
         # (or AsyncMethod)
         # See SpecialMethod.
         return True
 
-    if sdo_name == 'Evaluation' and lhs_nt == 'ClassDeclaration' and def_i == 1:
-        # "ClassDeclaration : `class` ClassTail</emu-grammar>
+    if sdo_name == 'Evaluation' and lhs_nt == 'ClassDeclaration' and rhs_reduced == "`class` ClassTail":
+        # "ClassDeclaration : `class` ClassTail
         # only occurs as part of an |ExportDeclaration| and is never directly evaluated."
         return True
 
-    if sdo_name == 'Evaluation' and lhs_nt == 'ForBinding' and def_i == 1:
+    if sdo_name == 'Evaluation' and lhs_nt == 'ForBinding' and rhs_reduced == 'BindingPattern':
         # ForIn/OfBodyEvaluation invokes Evaluation on ForBinding,
         # but only if IsDestructuring of it is *false*,
-        # which s only the case for `ForBinding : BindingIdentifier`.
+        # which is only the case for `ForBinding : BindingIdentifier`.
         # So `ForBinding : BindingPattern` is an exception.
         return True
 
-    if sdo_name == 'HasDirectSuper' and lhs_nt == 'ClassElement' and def_i != 0:
+    if sdo_name == 'HasDirectSuper' and lhs_nt == 'ClassElement' and rhs_reduced != 'MethodDefinition':
         # HasDirectSuper is only invoked on ConstructorMethod of |ClassBody|,
         # which is a |ClassElement| for which ClassElementKind is ~ConstructorMethod~,
         # which can only be `ClassElement : MethodDefinition`
         return True
 
-    if sdo_name == 'DefineMethod' and lhs_nt == 'ClassElement' and def_i != 0:
+    if sdo_name == 'DefineMethod' and lhs_nt == 'ClassElement' and rhs_reduced != 'MethodDefinition':
         # DefineMethod is invoked on |ClassElement| only if
         # it's ConstructorMethod of |ClassBody| ...
         return True
 
-    if sdo_name == 'IsConstantDeclaration' and lhs_nt == 'ExportDeclaration' and def_i in [0,1,2,3]:
+    if sdo_name == 'IsConstantDeclaration' and lhs_nt == 'ExportDeclaration' and not rhs_reduced.startswith("`export` `default`"):
         # LexicallyScopedDeclarations skips these, so IsConstantDeclaration won't be invoked on them.
         return True
 
@@ -2716,24 +2718,24 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         and 
         lhs_nt == 'PropertyDefinition'
         and
-        def_i == 1
+        rhs_reduced == "CoverInitializedName"
     ):
         # "Use of |CoverInitializedName| results in an early Syntax Error in normal contexts..."
         return True
 
-    if sdo_name in ['HasSourceTextAvailable', 'PresentInStackTraces'] and lhs_nt == 'CallExpression' and def_i != 0:
+    if sdo_name in ['HasSourceTextAvailable', 'PresentInStackTraces'] and lhs_nt == 'CallExpression' and rhs_reduced != 'CoverCallExpressionAndAsyncArrowHead':
         # When invoked on a CallExpression, can only be one whose evaluation is a direct eval,
         # which can only be an instance of CallExpression : CoverCallExpressionAndAsyncArrowHead
         return True
 
-    if sdo_name == 'TRV' and lhs_nt == 'HexDigits' and def_i == 2:
+    if sdo_name == 'TRV' and lhs_nt == 'HexDigits' and rhs_reduced == "HexDigits NumericLiteralSeparator HexDigit":
         # TRV applies to Template stuff,
         # which derives HexDigits only via [Not]CodePoint,
         # which passes ~Sep to HexDigits,
         # which suppresses its 3rd RHS.
         return True
 
-    if lhs_nt == 'OptionalChain' and def_i in [3,8]:
+    if lhs_nt == 'OptionalChain' and 'TemplateLiteral' in rhs_reduced:
         # OptionalChain :
         #   `?.` TemplateLiteral
         #   OptionalChain TemplateLiteral
@@ -2741,21 +2743,14 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
         # So no SDO will be invoked on them.
         return True
 
-    if sdo_name == 'PropertyDefinitionEvaluation' and lhs_nt == 'ClassElement' and def_i == 2:
-        # SDO is only applied to |ClassElement|s...
-        # that are in NonConstructorMethodDefinitions of |ClassBody|,
-        # i.e. those for which ClassElementKind is ~NonConstructorMethod~,
-        # i.e. those which are not ClassElement : `;`
-        return True
-
-    if sdo_name == 'EvaluateConciseBody' and lhs_nt == 'ConciseBody' and def_i != 0:
+    if sdo_name == 'EvaluateConciseBody' and lhs_nt == 'ConciseBody' and rhs_reduced != 'ExpressionBody':
         # EvaluateConciseBody is invoked on ConciseBody *only* when it's of the form
-        # `ConciseBody : ExpressionBody` (i.e. def_i == 0)
+        # `ConciseBody : ExpressionBody`
         return True
 
-    if sdo_name == 'EvaluateAsyncConciseBody' and lhs_nt == 'AsyncConciseBody' and def_i != 0:
+    if sdo_name == 'EvaluateAsyncConciseBody' and lhs_nt == 'AsyncConciseBody' and rhs_reduced != 'ExpressionBody':
         # EvaluateAsyncConciseBody is invoked on AsyncConciseBody *only* when it's of the form
-        # `AsyncConciseBody : ExpressionBody` (i.e. def_i == 0)
+        # `AsyncConciseBody : ExpressionBody`
         return True
 
     # ----------
@@ -2781,32 +2776,38 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, def_i):
                 'Initializer',             # chain to AssignmentExpression
             ]
             or
-            lhs_nt == 'Expression' and def_i == 0 # AssignmentExpression
-            or
-            lhs_nt == 'AssignmentExpression' and def_i in [0, 2, 3] # ConditionalExpr + ArrowFunction + AsyncArrowFunction
-            or
-            lhs_nt in [
-                    'ConditionalExpression',
-                    'ShortCircuitExpression',
-                    'LogicalORExpression',
-                    'LogicalANDExpression',
-                    'BitwiseORExpression',
-                    'BitwiseXORExpression',
-                    'BitwiseANDExpression',
-                    'EqualityExpression',
-                    'RelationalExpression',
-                    'ShiftExpression',
-                    'AdditiveExpression',
-                    'MultiplicativeExpression',
-                    'ExponentiationExpression',
-                    'UnaryExpression',
-                    'UpdateExpression',
-                    'LeftHandSideExpression',
-                    'NewExpression',
-                    'MemberExpression',
-                ] and def_i == 0
-            or
-            lhs_nt == 'PrimaryExpression' and def_i in [5, 6, 7, 8, 9]
+            (lhs_nt, rhs_reduced) in [
+                    ('Expression',               'AssignmentExpression'    ),
+                    #
+                    ('AssignmentExpression',     'ConditionalExpression'   ),
+                    ('AssignmentExpression',     'ArrowFunction'           ),
+                    ('AssignmentExpression',     'AsyncArrowFunction'      ),
+                    #
+                    ('ConditionalExpression',    'ShortCircuitExpression'  ),
+                    ('ShortCircuitExpression',   'LogicalORExpression'     ),
+                    ('LogicalORExpression',      'LogicalANDExpression'    ),
+                    ('LogicalANDExpression',     'BitwiseORExpression'     ),
+                    ('BitwiseORExpression',      'BitwiseXORExpression'    ),
+                    ('BitwiseXORExpression',     'BitwiseANDExpression'    ),
+                    ('BitwiseANDExpression',     'EqualityExpression'      ),
+                    ('EqualityExpression',       'RelationalExpression'    ),
+                    ('RelationalExpression',     'ShiftExpression'         ),
+                    ('ShiftExpression',          'AdditiveExpression'      ),
+                    ('AdditiveExpression',       'MultiplicativeExpression'),
+                    ('MultiplicativeExpression', 'ExponentiationExpression'),
+                    ('ExponentiationExpression', 'UnaryExpression'         ),
+                    ('UnaryExpression',          'UpdateExpression'        ),
+                    ('UpdateExpression',         'LeftHandSideExpression'  ),
+                    ('LeftHandSideExpression',   'NewExpression'           ),
+                    ('NewExpression',            'MemberExpression'        ),
+                    ('MemberExpression',         'PrimaryExpression'       ),
+                    #
+                    ('PrimaryExpression',        'FunctionExpression'      ),
+                    ('PrimaryExpression',        'ClassExpression'         ),
+                    ('PrimaryExpression',        'GeneratorExpression'     ),
+                    ('PrimaryExpression',        'AsyncFunctionExpression' ),
+                    ('PrimaryExpression',        'AsyncGeneratorExpression'),
+                ]
         ):
             return False
         else:
