@@ -118,8 +118,8 @@ def simplify_grammar(grammar):
                 print('        ', rhs_n)
 
         for params_setting in each_params_setting(production_n._param_names):
-            for (rhs_i, rhs_n) in enumerate(production_n._rhss):
-                simplify_prod(grammar, params_setting, lhs_symbol, rhs_i, rhs_n)
+            for rhs_n in production_n._rhss:
+                simplify_prod(grammar, params_setting, lhs_symbol, rhs_n)
 
     if grammar.level == 'lexical': make_InputElement_common(grammar)
 
@@ -184,7 +184,7 @@ def expand_nt_wrt_params_setting(nt, params_setting):
 
 # --------------------------------------------------------------------------
 
-def simplify_prod(grammar, params_setting, lhs_symbol, rhs_i, rhs_n):
+def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
     exp_lhs_symbol = lhs_symbol + ''.join(params_setting)
     assert rhs_n.kind in ['RHS_LINE', 'BACKTICKED_THING'], rhs_n.kind
 
@@ -235,8 +235,8 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_i, rhs_n):
                 if opt_exp_name not in grammar.exp_prodns:
                     o_lhs = rhs_item_n._nt_name + '?'
                     o_params_setting = params_setting # XXX should be subset
-                    add_exp_prod1(grammar, opt_exp_name, [exp_thing], o_lhs, 0, o_params_setting)
-                    add_exp_prod1(grammar, opt_exp_name, [         ], o_lhs, 1, o_params_setting)
+                    add_exp_prod1(grammar, opt_exp_name, [exp_thing], o_lhs, rhs_item_n._nt_name, o_params_setting)
+                    add_exp_prod1(grammar, opt_exp_name, [         ], o_lhs,                  '', o_params_setting)
                     # Conceivably, the parser could infer these rules.
                 exp_rhs.append(NT(opt_exp_name))
             else:
@@ -363,7 +363,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_i, rhs_n):
         else:
             assert 0, rhs_item_n
 
-    add_exp_prod1(grammar, exp_lhs_symbol, exp_rhs, lhs_symbol, rhs_i, params_setting)
+    add_exp_prod1(grammar, exp_lhs_symbol, exp_rhs, lhs_symbol, rhs_n._reduced, params_setting)
 
 # --------------------------------------------------------------------------
 
@@ -371,17 +371,17 @@ def make_InputElement_common(grammar):
     assert grammar.level == 'lexical'
     lhs = 'InputElement_common'
     for (i, nt_name) in enumerate(['WhiteSpace', 'LineTerminator', 'Comment', 'CommonToken']):
-        add_exp_prod1(grammar, lhs, [NT(nt_name)], lhs, i, [])
+        add_exp_prod1(grammar, lhs, [NT(nt_name)], lhs, nt_name, [])
 
 # --------------------------------------------------------------------------
 
-def add_exp_prod1(grammar, exp_lhs, exp_rhs, og_lhs, og_rhs_i, og_params_setting):
+def add_exp_prod1(grammar, exp_lhs, exp_rhs, og_lhs, og_rhs_reduced, og_params_setting):
     if exp_lhs not in grammar.exp_prodns:
         grammar.exp_prodns[exp_lhs] = []
-    exprod = ExProd(exp_lhs, exp_rhs, og_lhs, og_rhs_i, og_params_setting)
+    exprod = ExProd(exp_lhs, exp_rhs, og_lhs, og_rhs_reduced, og_params_setting)
     grammar.exp_prodns[exp_lhs].append(exprod)
 
-class ExProd(namedtuple('ExProd', 'ex_lhs ex_rhs og_lhs og_rhs_i og_params_setting')): pass
+class ExProd(namedtuple('ExProd', 'ex_lhs ex_rhs og_lhs og_rhs_reduced og_params_setting')): pass
 
 # --------------------------------------------------------------------------
 
@@ -769,7 +769,7 @@ class _Earley:
                 final_symbol
             ],
             og_lhs = '*START*',
-            og_rhs_i = 0,
+            og_rhs_reduced = f"{goal_symname} {final_symbol}",
             og_params_setting = []
         )
         this_parser.productions_with_lhs_['*START*'] = [start_production]
@@ -1814,7 +1814,7 @@ class ParseNode:
             self.symbol = self.production.og_lhs
             assert type(self.symbol) == str
             self.is_terminal = False
-            self.puk = (self.symbol, self.production.og_rhs_i, self.option_bits)
+            self.puk = (self.symbol, self.production.og_rhs_reduced, self.option_bits)
             # "production use key"
         elif type(shape) in [T_lit, T_named, T_u_p, T_u_r]:
             self.symbol = shape

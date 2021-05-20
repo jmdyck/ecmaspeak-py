@@ -195,7 +195,44 @@ def parse_emu_grammar(emu_grammar):
         else:
             assert 0, production_n.kind
 
+        for rhs in rhss:
+            rhs._reduced = reduce_rhs(rhs)
+
         production_n._rhss = rhss
+
+def reduce_rhs(rhs_n):
+    pieces = []
+    for r_item in rhs_n._rhs_items:
+        if r_item.kind in [
+            'BACKTICKED_THING',
+            'NAMED_CHAR',
+            'NT_BUT_NOT',
+            'U_ANY',
+            'U_PROP',
+            'U_RANGE',
+        ]:
+            pieces.append(r_item.source_text())
+
+        elif r_item.kind == 'GNT':
+            # Drop the params
+            (nt_n, params_n, opt_n) = r_item.children
+            pieces.append(nt_n.source_text() + opt_n.source_text())
+
+        elif r_item.kind in [
+            'BUT_ONLY',
+            'LABEL',
+            'LAC_SET',
+            'LAC_SINGLE',
+            'NLTH',
+            'PARAMS',
+        ]:
+            pass
+
+        else:
+            assert 0, r_item.kind
+
+    rr = ' '.join(pieces)
+    return rr
 
 def decorate_misc(node):
     if node.kind == 'GNT':
@@ -1031,7 +1068,7 @@ def check_non_defining_prodns(emu_grammars):
 
                     for optbits in each_optbits_covered_by(notes['optional-GNT']):
                         # Production Use Key
-                        puk = (lhs_nt, d_i, optbits)
+                        puk = (lhs_nt, d_rhs_n._reduced, optbits)
                         emu_grammar.puk_set.add(puk)
 
             # --------------------------

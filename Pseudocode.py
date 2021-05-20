@@ -2255,9 +2255,9 @@ def analyze_sdo_coverage_info():
                         for (_, optionality) in opt_combo
                     )
 
-                    key = (lhs_nt, def_i, optbits)
-                    used_keys.add(key)
-                    rules = coverage_info_for_this_sdo.get(key, [])
+                    puk = (lhs_nt, def_rhs_n._reduced, optbits)
+                    used_keys.add(puk)
+                    rules = coverage_info_for_this_sdo.get(puk, [])
 
                     if len(rules) == 1:
                         # great
