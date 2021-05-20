@@ -31,6 +31,8 @@ def generate_spec_for_PR_545():
     write_modified_spec()
     note_unused_rules()
 
+    write_header_info()
+
 # ------------------------------------------------------------------------------
 
 def oh_warn(*args):
@@ -2167,6 +2169,64 @@ def write_modified_spec():
     f = shared.open_for_output(filename)
 
     shared.write_spec_with_extras(mode, show_targeted_msgs, f)
+
+    f.close()
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def write_header_info():
+    stderr("write_header_info ...")
+
+    f = shared.open_for_output('header_info')
+
+    def put(*args): print(*args, file=f)
+
+    for bif_or_op in ['op', 'bif']:
+        put('X'*40)
+        put(bif_or_op)
+        for (alg_name, alg_info) in sorted(spec.alg_info_[bif_or_op].items()):
+            n_defns_via_headers = 0
+            assert alg_info.name == alg_name
+            assert alg_info.bif_or_op == bif_or_op
+            put()
+            put(f"  {alg_info.name}")
+            put(f"    {alg_info.species}")
+            put(f"    {len(alg_info.headers)} headers:")
+            for alg_header in alg_info.headers:
+                assert alg_header.name == alg_name
+                assert (alg_info.species, alg_header.kind) in [
+                  ('bif: * per realm'               , 'anonymous built-in function'    ),
+                  ('bif: accessor function'         , 'accessor property'              ),
+                  ('bif: value of data property'    , 'function property'              ),
+                  ('op: concrete method: env rec'   , 'concrete method'                ),
+                  ('op: concrete method: module rec', 'concrete method'                ),
+                  ('op: early error'                , 'syntax-directed operation'      ),
+                  ('op: host-defined'               , 'abstract operation'             ),
+                  ('op: host-defined'               , 'host-defined abstract operation'),
+                  ('op: internal method'            , 'internal method'                ),
+                  ('op: numeric method'             , 'numeric method'                 ),
+                  ('op: solo'                       , 'abstract operation'             ),
+                  ('op: solo'                       , 'host-defined abstract operation'),
+                  ('op: syntax-directed'            , 'syntax-directed operation'      ),
+                ]
+                put(f"      --")
+                put(f"        {alg_header.kind}")
+                if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
+                # alg_header.param_names, .optional_params, .rest_params, .param_nature_
+                # alg_header.also
+                # alg_header.return_nature_{normal,abrupt}
+                # alg_header.description_paras
+                put(f"        {len(alg_header.u_defns)} defns")
+                n_defns_via_headers += len(alg_header.u_defns)
+                for alg_defn in alg_header.u_defns:
+                    assert alg_defn.header is alg_header
+            n_defns = len(alg_info.definitions)
+            if n_defns_via_headers != n_defns:
+                put(f"    ERROR: n_defns_via_headers = {n_defns_via_headers}, but n_defns = {n_defns}, so {n_defns-n_defns_via_headers} missing")
+            # alg_info.invocations
+            # alg_info.callees
+            # alg_info.callers
+        put()
 
     f.close()
 
