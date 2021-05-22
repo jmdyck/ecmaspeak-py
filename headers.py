@@ -527,9 +527,13 @@ def create_operation_info_for_section(s):
             elif algo.element_name == 'emu-table':
                 assert not hasattr(algo, '_parent_algdefn')
                 assert oi.kind == 'abstract operation'
-                # op = spec.alg_info_['op'][oi.name]
-                # for alg_defn in op.definitions:
-                #     oi.add_defn(alg_defn)
+                op = spec.alg_info_['op'][oi.name]
+                for alg_defn in op.definitions:
+                    if alg_defn.section is s:
+                        oi.add_defn(alg_defn)
+                    else:
+                        assert alg_defn.section.section_title == 'Changes to ToBoolean'
+                        # skip it for now
             else:
                 assert 0, algo.element_name
 

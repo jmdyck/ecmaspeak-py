@@ -729,8 +729,12 @@ class TypedAlgHeader:
         for alg_defn in header.u_defns:
             if self.kind == 'syntax-directed operation':
                 discriminator = alg_defn.discriminator
-            else:
+            elif self.for_param_type:
                 discriminator = self.for_param_type
+            elif alg_defn.discriminator:
+                discriminator = NamedType(alg_defn.discriminator)
+            else:
+                discriminator = None
 
             if self.kind == 'syntax-directed operation':
                 assert (
@@ -745,7 +749,7 @@ class TypedAlgHeader:
             elif self.kind in ['concrete method', 'internal method', 'numeric method']:
                 assert isinstance(discriminator, Type)
             elif self.kind == 'abstract operation':
-                assert discriminator is None
+                assert discriminator is None or isinstance(discriminator, Type)
             elif self.kind in [
                 'function property',
                 'accessor property',
@@ -3472,10 +3476,20 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
             print('(no discriminator)')
         print()
 
+        # kludge:
+        if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
+            # not ToBigInt
+            assert isinstance(discriminator, NamedType)
+            # in_env = init_env.with_expr_type_narrowed('_argument_', discriminator)
+            in_env = init_env.copy()
+            in_env.vars['_argument_'] = discriminator
+        else:
+            in_env = init_env
+        
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IAO_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
-            assert tc_nonvalue(body, init_env) is None
+            assert tc_nonvalue(body, in_env) is None
         elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
-            (out_t, out_env) = tc_expr(body, init_env)
+            (out_t, out_env) = tc_expr(body, in_env)
             proc_add_return(out_env, out_t, body)
         else:
             assert 0, body.prod.lhs_s
@@ -3588,6 +3602,17 @@ def tc_nonvalue(anode, env0):
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
+
+    elif p == r"{ONE_LINE_ALG} : {nlai}{COMMAND}{nlai}{h_emu_note}{nlai}":
+        [command, note] = children
+        tc_nonvalue(command, env0)
+        result = None
+
+    elif p == r"{ONE_LINE_ALG} : {nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{nlai}":
+        [com1, com2] = children
+        env1 = tc_nonvalue(com1, env0)
+        tc_nonvalue(com2, env1)
+        result = None
 
     elif p == r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}":
         [cond, comm] = children
@@ -4043,12 +4068,27 @@ def tc_nonvalue(anode, env0):
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.',
+        r'{COMMAND} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.',
     ]:
         [cond, t_command, f_command] = children
         (t_env, f_env) = tc_cond(cond, env0)
         t_benv = tc_nonvalue(t_command, t_env)
         f_benv = tc_nonvalue(f_command, f_env)
         result = env_or(t_benv, f_benv)
+
+    elif p == r"{COMMAND} : If {CONDITION}, {SMALL_COMMAND}.":
+        [condition, then_part] = children
+        (t_env, f_env) = tc_cond(condition, env0)
+        benv = tc_nonvalue(then_part, t_env)
+        result = envs_or([benv, f_env])
+
+    elif p == r"{COMMAND} : If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.":
+        [cond_a, command_a, cond_b, command_b] = children
+        (a_t_env, a_f_env) = tc_cond(cond_a, env0)
+        a_benv = tc_nonvalue(command_a, a_t_env)
+        (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
+        b_benv = tc_nonvalue(command_b, b_t_env)
+        result = envs_or([a_benv, b_benv])
 
     elif p == r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.':
         [cond_a, command_a, cond_b, command_b, command_c] = children
@@ -4137,11 +4177,13 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         # r"{COMMAND} : Return {EXPR}. This call will always return *true*.", # PR #1924
+        r"{COMMAND} : Return {EXPR} (no conversion).",
         r"{COMMAND} : Return {EXPR}.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
         r"{MULTILINE_SMALL_COMMAND} : return {MULTILINE_EXPR}",
         r"{IAO_BODY} : Returns {EXPR}.",
         r"{SMALL_COMMAND} : return {EXPR}",
+        r"{SMALL_COMMAND} : return {LITERAL}",
     ]:
         [expr] = children
         (t1, env1) = tc_expr(expr, env0)
@@ -4156,6 +4198,12 @@ def tc_nonvalue(anode, env0):
         # A "return" statement without a value in an algorithm step
         # means the same thing as: Return NormalCompletion(*undefined*).
         proc_add_return(env0, T_Undefined, anode)
+        result = None
+
+    elif p == r"{COMMAND} : See grammar and conversion algorithm below.":
+        # ToNumber's case for String
+        [] = children
+        proc_add_return(env0, T_Number, anode)
         result = None
 
 
@@ -6234,6 +6282,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is also {LITERAL}",
         r"{CONDITION_1} : {var} is the value {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL} because formal parameters mapped by argument objects are always writable",
+        r"{CONDITION} : {var} is {LITERAL}",
     ]:
         [ex, literal] = children
 
@@ -6468,6 +6517,7 @@ def tc_cond_(cond, env0, asserting):
         # r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}", # PR 1546 obsoleted
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION} : {var} is {LITERAL}, {LITERAL}, or {LITERAL}",
     ]:
         [var, *lit_] = children
         assert len(lit_) in [3,4,5,6]
@@ -8403,6 +8453,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
+    elif p == r"{CONDITION} : {var} is the empty String (its length is 0)":
+        [var] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (env1, env1)
+
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
     # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
     # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
@@ -8571,6 +8626,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
         r"{EXPR} : {LITERAL}",
+        r"{EXPR} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{EX} : ({EX})",
         # r"{EX} : the previous value of {var}", # PR 2138
         r"{EX} : the value of {SETTABLE}",
@@ -13107,6 +13163,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == '{starred_str} : \\* " ( [^"*] | \\\\ \\* )* " \\*':
         return (T_String, env0)
 
+    elif p == r"{EXPR} : a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects":
+        [cap_word, dsb_word, var, emu_xref, cap_word2] = children
+        T = cap_word.source_text()
+        assert T in ['Boolean', 'Number', 'String', 'Symbol', 'BigInt']
+        assert dsb_word.source_text() == f"[[{T}Data]]"
+        assert var.source_text() == '_argument_'
+        assert cap_word2.source_text() == T
+        return (T_Object, env0)
+
     # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
     # elif p == r"{EXPR} : an implementation-dependent String value that represents {var} as a date and time in the current time zone using a convenient, human-readable form":
@@ -13220,6 +13285,9 @@ def exes_in_exlist_opt(exlist_opt):
     elif exlist_opt.prod.rhs_s == '{EXLIST}':
         [exlist] = exlist_opt.children
         return exes_in_exlist(exlist)
+    elif exlist_opt.prod.rhs_s == '{var}':
+        [var] = exlist_opt.children
+        return [var]
     else:
         assert 0, exlist_opt.prod.rhs_s
 
