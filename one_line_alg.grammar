@@ -12,8 +12,8 @@
     {nlai}{COMMAND}{nlai}{h_emu_note}{nlai}
 
 {COMMAND} :
-    If {CONDITION}, return {LITERAL}. If {CONDITION}, return {LITERAL}.
-    If {CONDITION}, return {LITERAL}; otherwise return {LITERAL}.
+    If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.
+    If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     Return {EXPR} (no conversion).
     Return {EXPR}.
     See grammar and conversion algorithm below.
@@ -23,6 +23,9 @@
     {var} is the empty String (its length is 0)
     {var} is {LITERAL}
     {var} is {LITERAL}, {LITERAL}, or {LITERAL}
+
+{SMALL_COMMAND} :
+    return {LITERAL}
 
 {EXPR} :
     a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects
