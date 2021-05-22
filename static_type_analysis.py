@@ -734,6 +734,8 @@ class TypedAlgHeader:
 
             if self.kind == 'syntax-directed operation':
                 assert (
+                    discriminator is None
+                    or
                     isinstance(discriminator, HTML.HNode)
                         and discriminator.element_name in ['emu-grammar', 'p']
                     or
@@ -4401,6 +4403,11 @@ def tc_nonvalue(anode, env0):
         elif each_thing.prod.rhs_s == r"character {var} in the CharSet of all characters":
             [loop_var] = each_thing.children
             env1 = env0.plus_new_entry(loop_var, T_character_)
+            env_for_commands = env1
+
+        elif each_thing.prod.rhs_s == r"child node {var} of this Parse Node":
+            [loop_var] = each_thing.children
+            env1 = env0.plus_new_entry(loop_var, T_Parse_Node)
             env_for_commands = env1
 
         else:
@@ -8383,6 +8390,17 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : This is only possible for getter/setter pairs":
         [] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is an instance of {var}":
+        [vara, varb] = children
+        env0.assert_expr_is_of_type(vara, T_Parse_Node)
+        env0.assert_expr_is_of_type(varb, T_grammar_symbol_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is an instance of a nonterminal":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
     # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":

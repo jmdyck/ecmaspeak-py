@@ -610,7 +610,6 @@ def declare_sdo(section, op_name, param_dict, also=[]):
         assert op_info.species in ['op: syntax-directed', 'op: early error']
         for alg_defn in op_info.definitions:
             if alg_defn.section.section_num.startswith('B'): continue
-            if alg_defn.discriminator is None: continue # XXX for now
             oi.add_defn(alg_defn)
 
         ln = get_last_ln(section.heading_child)
