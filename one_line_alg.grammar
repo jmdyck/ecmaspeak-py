@@ -10,8 +10,10 @@
 {ONE_LINE_ALG} :
     {nlai}{COMMAND}{nlai}
     {nlai}{COMMAND}{nlai}{h_emu_note}{nlai}
+    {nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{nlai}
 
 {COMMAND} :
+    If {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     Return {EXPR} (no conversion).

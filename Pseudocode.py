@@ -1119,9 +1119,7 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
 
     elif x == '#LITERAL p #LITERAL p #LITERAL':
         (_, p1, _, p2, _) = tdb.children
-        # XXX:
-        # print(p1.inner_source_text())
-        # print(p2.inner_source_text())
+        alg_add_defn('op: solo', op_name, discriminator, tdb, section)
         pass
 
     elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
