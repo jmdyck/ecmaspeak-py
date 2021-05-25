@@ -331,7 +331,7 @@ metagrammar = {
     'NLAI'             : ('/', ' ', r'\n +'),
 
     'COLONS'           : ('/', 'n', r':+'),
-    'PARAM'            : ('/', 'n', r'([~+?]?)([A-Z][a-z]*)'),
+    'PARAM'            : ('/', 'n', r'([~+?]?)([A-Z][a-zA-Z]*)'),
     'NT'               : ('/', 'n', r'[A-Z]\w*|uri\w*|@'),
     'LABEL'            : ('/', 'n', r'#\w+'),
     'EMPTY'            : ('/', 'n', r'\[empty\]'),
