@@ -1526,6 +1526,8 @@ def approximate_annex_A():
         before_i = find(before)
         after_i  = find(after)
         if before_i + 1 != after_i:
+            stderr()
+            stderr("move-to point is ill-defined, because `before` and `after` are not adjacent:")
             stderr(f"{before} matches:")
             stderr(f"  {before_i:2d}: {lines[before_i]}")
             stderr(f"{after} matches:")
