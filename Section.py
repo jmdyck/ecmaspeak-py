@@ -277,29 +277,26 @@ def _infer_section_kinds(section):
             if c0.element_name == 'p':
                 p_text = c0.source_text()
                 if p_text.startswith('<p>With '):
-                    mo = re.match(r'^<p>With(?: parameters?)? (.+)\.</p>$', p_text)
+                    mo = re.match(r'^<p>With (.+)\.</p>$', p_text)
                     assert mo, p_text
                     params_s = mo.group(1)
-                    if params_s == '_object_ and optional parameters _functionPrototype_ and _name_':
-                        # kludge for my 'SetFunctionName' branch
-                        # ("optional parameters" applies to two params, but splitting on 'and' will lose the second)
-                        parameters['_object_'] = ''
-                        parameters['_name_'] = '[]'
-                        parameters['_functionPrototype_'] = '[]'
+                    if mo := re.match(r'(.+?),? and (optional .+)', params_s):
+                        parts = mo.groups()
                     else:
-                        for param in re.split(r', and |, | and ', params_s):
-                            if (mo := re.fullmatch(r'optional parameter (_\w+_)', param)):
-                                param_name = mo.group(1)
-                                param_punct = '[]'
-                            elif param == '_argumentsList_ (a List)':
+                        parts = [params_s]
+
+                    for part in parts:
+                        part_punct = '[]' if part.startswith('optional') else ''
+                        part_params_s = re.sub('^(optional )?parameters? ', '', part)
+
+                        for param in re.split(r', and |, | and ', part_params_s):
+                            if param == '_argumentsList_ (a List)':
                                 param_name = '_argumentsList_'
-                                param_punct = ''
                             else:
                                 assert re.match(r'^_[a-zA-Z]+_$', param), param
                                 param_name = param
-                                param_punct = ''
                             assert param_name not in parameters
-                            parameters[param_name] = param_punct
+                            parameters[param_name] = part_punct
             section.ste['parameters'] = parameters
 
     elif section.section_kind == 'early_errors':
