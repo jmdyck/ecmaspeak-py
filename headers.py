@@ -294,8 +294,6 @@ def create_operation_info_for_section(s):
 
     if len(pre_algo_spans) > 1:
         assert (
-            s.section_kind == 'syntax_directed_operation'
-            or
             s.section_title in [
                 'MakeArgGetter ( _name_, _env_ )',
                 'MakeArgSetter ( _name_, _env_ )',
@@ -442,8 +440,6 @@ def create_operation_info_for_section(s):
                 or
                 s.section_title == 'Array.prototype [ @@unscopables ]'
             )
-            or
-            s.section_kind == 'syntax_directed_operation'
         ):
             # The op is the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'is', span_end_i)
