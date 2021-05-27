@@ -12456,16 +12456,20 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Tangible_ | T_empty_ | T_throw_, env0)
 
-    elif p == r"{EXPR} : the element of {var} whose {DSBN} is the same as {DOTTING}":
-        [list_var, dsbn, dotting] = children
+    elif p in [
+        r"{EXPR} : the element in {EX} whose {DSBN} is {EX}",
+        r"{EXPR} : the element of {EX} whose {DSBN} field is {var}",
+        r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}",
+    ]:
+        [list_ex, dsbn, val_ex] = children
         dsbn_name = dsbn.source_text()[2:-2]
-        (list_type, env1) = tc_expr(list_var, env0); assert env1 is env0
+        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
         assert isinstance(et, NamedType)
         fields = fields_for_record_type_named_[et.name]
         whose_type = fields[dsbn_name]
-        env1.assert_expr_is_of_type(dotting, whose_type)
+        env1.assert_expr_is_of_type(val_ex, whose_type)
         return (et, env1)
 
     elif p == r"{EXPR} : the three results {var}, {var}, and {LITERAL}":
@@ -12936,25 +12940,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor":
         [emu_xref] = children
         return (T_String, env0)
-
-    elif p in [
-        r"{EXPR} : the element in {DOTTING} whose {DSBN} is {EX}",
-        r"{EXPR} : the element of {DOTTING} whose {DSBN} field is {var}",
-    ]:
-        [dotting, dsbn, e] = children
-        # over-specific:
-        if ' in ' in p:
-            env0.assert_expr_is_of_type(dotting, ListType(T_Agent_Events_Record))
-            assert dsbn.source_text() == '[[AgentSignifier]]'
-            env0.assert_expr_is_of_type(e, T_agent_signifier_)
-            return (T_Agent_Events_Record, env0)
-        elif ' of ' in p:
-            env0.assert_expr_is_of_type(dotting, ListType(T_Chosen_Value_Record))
-            assert dsbn.source_text() == '[[Event]]'
-            env0.assert_expr_is_of_type(e, T_Shared_Data_Block_event)
-            return (T_Chosen_Value_Record, env0)
-        else:
-            assert 0
 
     elif p == r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}":
         [dotting, dsbn, e] = children

@@ -1292,9 +1292,9 @@
     the code point {var}
     the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}
     the code unit whose numeric value is that of {var}
-    the element in {DOTTING} whose {DSBN} is {EX}
-    the element of {DOTTING} whose {DSBN} field is {var}
-    the element of {var} whose {DSBN} is the same as {DOTTING}
+    the element in {EX} whose {DSBN} is {EX}
+    the element of {EX} whose {DSBN} field is {var}
+    the element of {EX} whose {DSBN} is the same as {EX}
     the empty CharSet
     the empty sequence of Unicode code points
     the enclosed {h_emu_not_ref_substring}
