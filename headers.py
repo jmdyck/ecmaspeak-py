@@ -1029,8 +1029,8 @@ def extract_info_from_preamble(preamble_nodes, section):
         pass
     else:
         oh_warn()
-        oh_warn(f"non-standard preamble for {section.section_kind}:")
-        oh_warn(section.section_num, section.section_title, section.section_id)
+        oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
+        oh_warn(f"there is a non-standard preamble")
 
     info_holder = PreambleInfoHolder()
 
