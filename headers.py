@@ -290,19 +290,6 @@ def create_operation_info_for_section(s):
         # so use both pre_algo_spans.
         pass
 
-    # ------------
-
-    if len(pre_algo_spans) > 1:
-        assert (
-            s.section_title in [
-                'MakeArgGetter ( _name_, _env_ )',
-                'MakeArgSetter ( _name_, _env_ )',
-                'MakeArgGetter ( _name_, _scope_ )', # PR 1477 scope-records
-                'MakeArgSetter ( _name_, _scope_ )', # PR 1477 scope-records
-                '%TypedArray%.prototype.sort ( _comparefn_ )',
-            ]
-        ), s.section_title
-
     # ==========================================================================
 
     def isnt_preamble(child):
