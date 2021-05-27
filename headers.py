@@ -301,11 +301,6 @@ def create_operation_info_for_section(s):
                 'MakeArgSetter ( _name_, _scope_ )', # PR 1477 scope-records
                 '%TypedArray%.prototype.sort ( _comparefn_ )',
             ]
-            or
-            s.section_id in [
-                'sec-regular-expression-patterns-semantics',
-                'sec-initializers-in-forin-statement-heads',
-            ] # in annex B
         ), s.section_title
 
     # ==========================================================================
@@ -461,12 +456,6 @@ def create_operation_info_for_section(s):
                 hoi.name = 'initializer for @@unscopables'
                 hoi.kind = 'abstract operation'
                 hoi.param_names = []
-            elif s.section_id in [
-                'sec-regular-expression-patterns-semantics',
-                'sec-initializers-in-forin-statement-heads',
-            ]:
-                # print('347', s.section_num, s.section_title)
-                continue # XXX
             else:
                 assert 0, s.section_title
 
