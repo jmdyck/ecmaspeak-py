@@ -431,20 +431,14 @@ def create_operation_info_for_section(s):
             # The op is *not* the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
             hoi = AlgHeader()
-            if s.section_title.startswith('MakeArgGetter'):
-                pass
-            elif s.section_title.startswith('MakeArgSetter'):
-                pass
-            elif s.section_title.startswith('%TypedArray%.prototype.sort'):
-                pass
-            elif s.section_title.startswith('Properties of the'):
-                pass
-            elif s.section_title == 'Array.prototype [ @@unscopables ]':
+            if s.section_title == 'Array.prototype [ @@unscopables ]':
                 hoi.name = 'initializer for @@unscopables'
                 hoi.kind = 'abstract operation'
                 hoi.param_names = []
             else:
-                assert 0, s.section_title
+                oh_warn()
+                oh_warn(f"In {s.section_num} {s.section_title},")
+                oh_warn(f"    an algorithm gets no info from heading")
 
         # -----------------------------------
 
