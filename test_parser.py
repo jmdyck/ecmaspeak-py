@@ -157,6 +157,29 @@ corrections = {
 
     # ------------
 
+    # In 'fail', should be in 'pass':
+    # PR #1668 Added |ClassElement : FieldDefinition `;`|
+    # test262-parser-tests hasn't been updated re class fields
+    # See https://freenode.logbot.info/tc39/20210515
+    'fail/98204d734f8c72b3.js': 'pass',
+    'fail/ef81b93cf9bdb4ec.js': 'pass',
+
+    # In 'fail', should be in 'pass':
+    # PR #614 "Normative: Allow initializers in ForInStatement heads"
+    'fail/e3fbcf63d7e43ead.js': 'pass',
+
+    # ---
+
+    # These should be a parse error,
+    # not due to the grammar, or an early error,
+    # but rather a statement in prose.
+    # So how should they be categorized?
+    # 'fail/3c644395035bbe46.js': '?',
+    # 'fail/534dac338ea83de6.js': '?',
+    # 'fail/a5370cb0412d7c8a.js': '?',
+
+    # ---
+
     # In 'fail', should be in 'early':
     'fail/abc46381e4e6bcca.js': 'early', # var \uD83B\uDE00 (early error is 11.6.1.1)
 
@@ -300,7 +323,6 @@ corrections = {
     'fail/328fddc7bdffb499.js': 'early',
     'fail/38816d56f582672f.js': 'early',
     'fail/3bc2b27a7430f818.js': 'early',
-    'fail/3c644395035bbe46.js': 'early',
     'fail/4485930b35bf8cb6.js': 'early',
     'fail/4882f5db31935a04.js': 'early',
     'fail/4a887c2761eb95fb.js': 'early',
@@ -308,7 +330,6 @@ corrections = {
     'fail/4f0b15bd78646107.js': 'early',
     'fail/5301846f80919b63.js': 'early',
     'fail/531ee852cc8ed0a7.js': 'early',
-    'fail/534dac338ea83de6.js': 'early',
     'fail/5c63ac420337d014.js': 'early',
     'fail/5d42f9f543d5f55c.js': 'early',
     'fail/5e6f67a0e748cc42.js': 'early',
@@ -330,7 +351,6 @@ corrections = {
     'fail/9f5a6dae7645976a.js': 'early',
     'fail/9fa56398be8a1769.js': 'early',
     'fail/a0998570a3bf9869.js': 'early',
-    'fail/a5370cb0412d7c8a.js': 'early',
     'fail/aa232c1eb3da8805.js': 'early',
     'fail/ab35979364766bf0.js': 'early',
     'fail/ae0a7ac275bc9f5c.js': 'early',
@@ -348,7 +368,6 @@ corrections = {
     'fail/d28e80d99f819136.js': 'early',
     'fail/d4cf8ae9018f6a28.js': 'early',
     'fail/d5bc0fb6d6e472cb.js': 'early',
-    'fail/e3fbcf63d7e43ead.js': 'early',
     'fail/ea4d962dac83e2a1.js': 'early',
     'fail/f0f16b655e08b92c.js': 'early',
     'fail/f4c0cdc8d5782f3f.js': 'early',
