@@ -165,11 +165,6 @@ corrections = {
     'pass/ba00173ff473e7da.js': 'fail',
     'pass/e03ae54743348d7d.js': 'fail',
 
-    # [fixed by PR #30:]
-    # In 'fail', should be in 'pass'.
-    'fail/647e21f8f157c338.js': 'pass',
-    'fail/8af69d8f15295ed2.js': 'pass',
-
     # [fixed by PR #31:]
     # In 'fail', should be in 'pass'.
     'fail/0d5e450f1da8a92a.js': 'pass',
