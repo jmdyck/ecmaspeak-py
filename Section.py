@@ -218,6 +218,8 @@ def _infer_section_kinds(section):
 
             (r'(Number|BigInt)(?P<op_name>::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'numeric_method'), # PR 1515 BigInt
 
+            (r'(?P<op_name>Link|Evaluate|GetExportedNames|ResolveExport|InitializeEnvironment|ExecuteModule) <PARAMETER_LIST>', 'module_rec_method'),
+
             (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
             (r'(Static|Runtime) Semantics: (?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>', 'abstract_operation'),
             (r'(?P<op_name>.+ Comparison)',                                             'abstract_operation'),
@@ -234,8 +236,6 @@ def _infer_section_kinds(section):
             (r'Expression Rules',                          'syntax_directed_operation'),
 
             (r'_NativeError_ Object Structure', 'loop'),
-
-            (r'(?P<op_name>\w+) <PARAMETER_LIST> Concrete Method',                'module_rec_method'),
 
             (r'Non-ECMAScript Functions',          'catchall'),
             (r'(?P<prop_path>.+) Functions',                       'anonymous_built_in_function'),
@@ -413,7 +413,8 @@ def _set_section_kind_for_properties(section):
                 (r'(?P<prop_path>[\w.%]+( ?\[ ?@@\w+ ?\])?) ?<PARAMETER_LIST>', 'function_property'),
                 (             r'([\w.%]+( ?\[ ?@@\w+ ?\])?)',                   'other_property'),
                 (                           r'(@@\w+)',                         'other_property'), # 26.3.1
-                (r'Abstract Operations for Atomics',                   'catchall'), # 24.4.1
+                (r'WaiterList Objects',                                'catchall'), # 25.4.1
+                (r'Abstract Operations for Atomics',                   'catchall'), # 25.4.2
                 (r'(?P<prop_path>Async-from-Sync Iterator Value Unwrap) Functions', 'anonymous_built_in_function'), # 25.1.4.2.5
             ]
         )

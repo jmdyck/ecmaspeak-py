@@ -607,7 +607,7 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "A" or "An"
 
-        A (candidate execution (_\w+_)) (has .+) if the following (?P<kind>abstract operation) (returns \*true\*).
+        A (candidate execution (_\w+_)) (has .+) if the following (?P<kind>algorithm) (returns \*true\*).
         pl=a \1
         v=\2 \3 if this operation \5.
 
@@ -621,7 +621,7 @@ single_sentence_rules_str = r'''
 
     # ==========================================================================
 
-        For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>abstract operation) (returns \*true\*).
+        For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>algorithm) (returns \*true\*).
         v=\2 \3 if this operation \5.
 
     # ==========================================================================
@@ -754,12 +754,6 @@ single_sentence_rules_str = r'''
         v=It returns \1
 
     # ==========================================================================
-    # Sentences that start with the operation/function name:
-
-        (?P<name>LocalTZA)\( _t_, _isUTC_ \) is an (?P<kind>implementation-defined algorithm) that (returns .+)
-        v=!OP \3
-
-    # ==========================================================================
     # Sentences that (now) start with "!OP":
 
         # !OP (.+)
@@ -863,9 +857,6 @@ single_sentence_rules_str = r'''
 
         (.+ returns either a new promise .+ or the argument itself if the argument is a promise .+)
         retn=a promise
-        v=\1
-
-        (.+ returns (?P<retn>an integral Number) representing the local time zone adjustment, .+)
         v=\1
 
         # -----------
@@ -1072,11 +1063,12 @@ class PreambleInfoHolder:
             'concrete method'                           : 'concrete method',
             'concrete method & abstract method'         : 'concrete method', # spec bug?
             'host-defined abstract operation'           : 'host-defined abstract operation',
-            'implementation-defined algorithm'          : 'implementation-defined abstract operation',
+            'implementation-defined abstract operation' : 'implementation-defined abstract operation',
             'internal comparison abstract operation'    : 'abstract operation',
             'job'                                       : 'abstract operation',
             'internal method'                           : 'internal method',
             'numeric method'                            : 'numeric method',
+            'algorithm'                                 : 'abstract operation',
             #
             'anonymous built-in function object'        : 'anonymous built-in function',
             'anonymous built-in function'               : 'anonymous built-in function',
@@ -1302,7 +1294,7 @@ def extract_info_from_standard_preamble(preamble_node):
         r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
         r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
         r'The (?P<kind>abstract operation) (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
-        r'The (?P<kind>host-defined abstract operation) (?P<name>\w+) takes (?P<pl>.+)\.',
+        r'The (?P<kind>(host|implementation)-defined abstract operation) (?P<name>\w+) takes (?P<pl>.+)\.',
         r'The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>.+) takes (?P<pl>.+)\.',
         r'The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>.+) takes (?P<pl>.+)\.',
     ]:
@@ -1357,6 +1349,7 @@ def extract_info_from_standard_preamble(preamble_node):
                 ('It returns a new Job Abstract Closure .+', 'a Job Abstract Closure'),
                 ('It returns a new promise resolved with _x_.', 'a promise'),
                 ('It returns an implementation-approximated value .+', 'a Number'),
+                ('It returns an integral Number representing .+', 'an integral Number'),
                 ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
                 ('It returns either ~not-matched~ or the end index of a match.', '~not-matched~ or a non-negative integer'),
                 ('It returns the BigInt value that .+', 'a BigInt'),
