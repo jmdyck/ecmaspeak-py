@@ -9323,7 +9323,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.species in ['op: solo', 'op: host-defined'], callee_op.species
+                    assert callee_op.species in ['op: solo', 'op: host-defined', 'op: implementation-defined'], callee_op.species
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc

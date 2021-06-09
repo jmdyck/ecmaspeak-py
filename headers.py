@@ -1072,7 +1072,7 @@ class PreambleInfoHolder:
             'concrete method'                           : 'concrete method',
             'concrete method & abstract method'         : 'concrete method', # spec bug?
             'host-defined abstract operation'           : 'host-defined abstract operation',
-            'implementation-defined algorithm'          : 'host-defined abstract operation',
+            'implementation-defined algorithm'          : 'implementation-defined abstract operation',
             'internal comparison abstract operation'    : 'abstract operation',
             'job'                                       : 'abstract operation',
             'internal method'                           : 'internal method',
@@ -1772,7 +1772,7 @@ def resolve_oi(hoi, poi):
     else:
         if hoi.kind == poi.kind:
             oi.kind = hoi.kind
-        elif hoi.kind == 'abstract operation' and poi.kind == 'host-defined abstract operation':
+        elif hoi.kind == 'abstract operation' and poi.kind in ['host-defined abstract operation', 'implementation-defined abstract operation']:
             oi.kind = poi.kind
         elif hoi.kind == 'numeric method' and poi.kind == 'abstract operation':
             oi.kind = hoi.kind
@@ -2172,6 +2172,7 @@ def write_header_info():
                   ('op: early error'                , 'syntax-directed operation'      ),
                   ('op: host-defined'               , 'abstract operation'             ),
                   ('op: host-defined'               , 'host-defined abstract operation'),
+                  ('op: implementation-defined'     , 'implementation-defined abstract operation'),
                   ('op: internal method'            , 'internal method'                ),
                   ('op: numeric method'             , 'numeric method'                 ),
                   ('op: solo'                       , 'abstract operation'             ),

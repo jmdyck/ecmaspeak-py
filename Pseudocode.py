@@ -717,9 +717,13 @@ def analyze_other_op_section(section):
             # handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg, section)
             pass
 
-        elif op_name.startswith('Host') or op_name == 'LocalTZA':
+        elif op_name.startswith('Host'):
             # These are host-defined ops, so we expect no alg.
             ensure_alg('op: host-defined', op_name)
+            pass
+
+        elif op_name == 'LocalTZA':
+            ensure_alg('op: implementation-defined', op_name)
             pass
 
         elif section.section_kind == 'numeric_method':
