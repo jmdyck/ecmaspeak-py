@@ -109,6 +109,7 @@
     Remove the own property with name {var} from {var}.
     Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
     Remove {var} from the execution context stack and restore {var} as the running execution context.
+    Remove {var} from the execution context stack.
     Remove {var} from the front of {var}.
     Remove {var} from the list of waiters in {var}.
     Remove {var} from {DOTTING}.
@@ -247,9 +248,6 @@
 
     # PR 1612 sort_algo:
     Let {var} be {LITERAL} if any of the following conditions are satisfied, and let it be {LITERAL} otherwise:{I_BULLETS}
-
-    # PR 1670 fix null [[ScriptOrModule]]
-    Remove {var} from the execution context stack.
 
     # PR 1732 GetSubstitution
     The replacement is {EXPR}.
@@ -1063,9 +1061,6 @@
     {SUM}
     {var}'s _endIndex_
 
-    # PR 2045:
-    the number of elements of {var}
-
 {NUM_COMPARATOR} :
     &ge;
     &gt;
@@ -1604,9 +1599,6 @@
     the String value whose code units are the code units of {var}
     the longest sequence of consecutive code units from {var} beginning with the code unit at index {var} such that {var} matches the &ldquo;Code units&rdquo; column of a row in {h_emu_xref}
     the result of the &ldquo;Replacement text&rdquo; column of the corresponding row
-
-    # PR 2018
-    the string-concatenation of the Strings that are the UTF16Encoding of each code point in {var}, in order
 
     # PR 2109:
     the number of parameters taken by {var}

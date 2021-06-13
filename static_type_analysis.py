@@ -4550,7 +4550,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(bvar, T_execution_context)
         result = env0
 
-    # PR 1670:
     elif p == r"{COMMAND} : Remove {var} from the execution context stack.":
         [avar] = children    
         env0.assert_expr_is_of_type(avar, T_execution_context)
@@ -10083,7 +10082,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the number of characters contained in {var}",
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : the number of elements in {var}",
-        r"{NUM_COMPARAND} : the number of elements of {var}",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
@@ -13690,7 +13688,7 @@ fields_for_record_type_named_ = {
         'DFSAncestorIndex' : T_MathInteger_ | T_Undefined,
         'RequestedModules' : ListType(T_String),
         #
-        'Context'              : T_execution_context | T_empty_, # PR 1670
+        'Context'              : T_execution_context | T_empty_,
         'ECMAScriptCode'       : T_Parse_Node,
         'ImportMeta'           : T_Object | T_empty_, # PR 1892
         'ImportEntries'        : ListType(T_ImportEntry_Record),
@@ -14009,7 +14007,7 @@ type_of_internal_thing_ = {
     # 38581: Table 56: Internal Slots of Generator Instances
     'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
     'GeneratorContext': T_execution_context,
-    'GeneratorBrand'  : T_String | T_empty_, # 2045
+    'GeneratorBrand'  : T_String | T_empty_,
 
     # 25.1.1.1 WeakRef ( _target_ ) NO TABLE
     'WeakRefTarget' : T_Object,
