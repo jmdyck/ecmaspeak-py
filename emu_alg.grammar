@@ -246,9 +246,6 @@
     # obsoleted by the merge of PR #2152:
     # Append in list order the elements of {var} to the end of the List {var}.
 
-    # PR 1612 sort_algo:
-    Let {var} be {LITERAL} if any of the following conditions are satisfied, and let it be {LITERAL} otherwise:{I_BULLETS}
-
     # PR 1732 GetSubstitution
     The replacement is {EXPR}.
 
@@ -434,10 +431,6 @@
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit
     {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position
     {B} {PROD_REF}
-
-    # PR 1612 sort_algo:
-    {B} If {var} is *false* then DeletePropertyOrThrow must not be called.
-    {B} {CONDITION}.
 
 {B} :
     {nlai}*
@@ -969,30 +962,10 @@
     # any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
     # {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements
 
-    # PR 1477 scope-records:
-    it must be in the object Scope Record
-    the base of {var} is a Scope Record
-    {var} is a Reference to a Scope Record binding
-    {var} is a Scope Record
-    {var} is an? {ENVIRONMENT_RECORD_KIND} Scope Record
-    {var} is not an? {ENVIRONMENT_RECORD_KIND} Scope Record
-    {var} is not the Scope Record for a |Catch| clause
-    {var} must be a Scope Record
-
     # PR 1554 NumericValue:
     the first non white space code point in {var} is `"-"`
     {var} contains a {nonterminal}
     {var} has more than 20 significant digits
-
-    # PR 1612 sort_algo
-    SortCompare does not act as a consistent comparison function
-    all applications of ToString, to any specific value passed as an argument to SortCompare, do not produce the same result
-    any index property of {var} whose name is a nonnegative integer less than {var} is an accessor property or is a data property whose {dsb_word} attribute is {LITERAL}
-    any integer index property of {var} whose name is a nonnegative integer less than {var} is a data property whose {dsb_word} attribute is {LITERAL}
-    the application of ToString to any value passed as an argument to SortCompare modifies {var} or any object on {var}'s prototype chain
-    there exists a nonnegative integer {var} less than {var} such that {CONDITION_1}
-    {var} is an exotic object (including Proxy exotic objects) whose behaviour for {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} is not the ordinary object implementation of these internal methods
-    {var} is not *undefined* and is not a consistent comparison function for the elements of this array (see below)
 
     # PR 1623 index_strings
     {var} is a Uint32-string
@@ -1586,12 +1559,6 @@
     # obsoleted by the merge of PR #2374
     # the child of {var} that is an instance of {var}
 
-    # PR 1477 scope-records:
-    a new object Scope Record containing {var} as the binding object
-    a new {ENVIRONMENT_RECORD_KIND} Scope Record
-    a new {ENVIRONMENT_RECORD_KIND} Scope Record containing no bindings
-    the {ENVIRONMENT_RECORD_KIND} Scope Record for which the method was invoked
-
     # PR 1554 NumericValue:
     the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
 
@@ -1880,9 +1847,6 @@
     # obsoleted by the merge of PR #1597:
     # PendingJob
 
-    # PR 1477 scope-records:
-    Lexical Environment
-
 {FIELDS} :
     {FIELDS}, {FIELD}
     {FIELD}
@@ -1924,9 +1888,6 @@
 
     # obsoleted by the merge of PR #2287:
     # the _withEnvironment_ flag of {var}
-
-    # PR 1477 scope-records:
-    the _withEnvironment_ flag of {var}.{dsb_word}
 
 {EXECUTION_CONTEXT_COMPONENT} :
     Function

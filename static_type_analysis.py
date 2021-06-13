@@ -214,7 +214,6 @@ nature_to_tipe = {
         # 6.2.6 Environment Record
         'Environment Record' : 'Environment Record',
         'an Environment Record' : 'Environment Record',
-        'Scope Record' : 'Scope Record', # PR 1477 scope-records
 
         # 6.2.7 Abstract Closure
         'an Abstract Closure with no parameters': '() -> Top_',
