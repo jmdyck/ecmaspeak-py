@@ -117,9 +117,6 @@
     ## directed-operations:
     ## {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
 
-    # PR 1651 one-grammar
-    a {nonterminal} contains the source code matching {PROD_REF}
-
 {NAMED_OPERATION_INVOCATION} :
     the result of performing {cap_word} on {EX}
     the {cap_word} of {LOCAL_REF}

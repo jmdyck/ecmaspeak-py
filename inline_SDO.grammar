@@ -145,9 +145,6 @@
     {dec_int_lit}
     {hex_int_lit}
 
-    # PR 1651 one-grammar:
-    64{h_sub_fancy_r} (that is, 8<sup>2</sup>)
-
 {STR_LITERAL} :
     the empty String
 
