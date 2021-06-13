@@ -33,6 +33,7 @@
     Append the code unit elements of {var} to the end of {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} each element of {var} that is not already an element of {var}.
+    Append to {var} the elements of {var}.
     Append {EX} and {EX} to {var}.
     Append {EX} as an element of {var}.
     Append {EX} as the last element of the List that is {DOTTING}.
@@ -763,6 +764,7 @@
 {EXPR} :
     (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
     Type({var})
+    a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
     a List of length {var} whose elements are nondeterministically chosen byte values
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present

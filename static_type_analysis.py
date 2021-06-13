@@ -4428,6 +4428,12 @@ def tc_nonvalue(anode, env0):
         assert list_type == T_List
         result = env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
 
+    elif p == r"{COMMAND} : Append to {var} the elements of {var}.":
+        [lista, listb] = children
+        env0.assert_expr_is_of_type(lista, ListType(T_SlotName_))
+        env0.assert_expr_is_of_type(listb, ListType(T_SlotName_))
+        result = env0
+
     elif p == r'{COMMAND} : Append to {var} each element of {var} that is not already an element of {var}.':
         [vara, varb, varc] = children
         (vara_type, enva) = tc_expr(vara, env0); assert enva is env0
@@ -9673,6 +9679,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1.assert_expr_is_of_type(lo_var, T_MathNonNegativeInteger_)
         env1.assert_expr_is_of_type(hi_ex, T_MathNonNegativeInteger_)
         return (ListType(T_MathNonNegativeInteger_), env1)
+
+    elif p == r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created":
+        [xref] = children
+        return (ListType(T_SlotName_), env0)
 
     # --------------------------------------------------------
     # return T_Parse_Node
