@@ -1328,7 +1328,6 @@ def extract_info_from_standard_preamble(preamble_node):
                 ('It returns \*true\* if .+ and \*false\* otherwise.', 'a Boolean'),
                 ('It returns _argument_ converted to a Number value .+.', 'a Number'),
                 ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
-                ('It returns _value_ argument converted to a non-negative integer if it is a valid Uint53-string value.', 'a non-negative integer'), # PR 1623
                 ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
                 ('It returns _value_ converted to a Number or a BigInt.', 'a Number or a BigInt'),
                 ('It returns a new Job Abstract Closure .+', 'a Job Abstract Closure'),

@@ -2193,9 +2193,6 @@ def analyze_sdo_coverage_info():
                     if u_rhs == 'the {nonterminal} of {var}':
                         nonterminal = uprimary.children[0]
                         nts = [nonterminal.source_text()[1:-1]]
-                    elif u_rhs == 'the {nonterminal} whose evaluation is the direct eval': # PR 1739
-                        nonterminal = uprimary.children[0]
-                        nts = [nonterminal.source_text()[1:-1]]
                     elif u_st == 'the parsed code that is _F_.[[ECMAScriptCode]]':
                         nts = [
                             'FunctionBody',

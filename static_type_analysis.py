@@ -5656,17 +5656,7 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_alg_steps, asserting)
 
-    # PR 2109:
-    elif p == r"{CONDITION_1} : {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_proc_ | T_alg_steps, asserting)
-
     elif p == r"{CONDITION_1} : {var} is an Abstract Closure with no parameters":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_proc_, asserting)
-
-    # PR 2109:
-    elif p == r"{CONDITION_1} : {var} is an Abstract Closure":
         [var] = children
         return env0.with_type_test(var, 'is a', T_proc_, asserting)
 
@@ -7978,29 +7968,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    # PR 1554 NumericValue
-    elif p == r"{CONDITION_1} : {nonterminal} has more than 20 significant digits":
-        [nont] = children
-        env0.assert_expr_is_of_type(nont, T_grammar_symbol_) # but really T_Parse_Node. Should use {PROD_REF}.
-        return (env0, env0)
-
-    # PR 1554 NumericValue:
-    elif p == r"{CONDITION_1} : {var} has more than 20 significant digits":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
-    # PR 1554 NumericValue
     elif p == r"{CONDITION_1} : {var} contains a {nonterminal}":
         [var, nont] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         env0.assert_expr_is_of_type(nont, T_grammar_symbol_)
-        return (env0, env0)
-
-    # PR 1554 NumericValue
-    elif p == r'{CONDITION_1} : the first non white space code point in {var} is `"-"`':
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (env0, env0)
 
     # PR ? function-strictness
@@ -10520,12 +10491,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # Should check the bullets
         return (T_String, env0)
 
-    # PR 1554 NumericValue:
-    elif p == r"{MULTILINE_EXPR} : an implementation-dependent choice of:{I_BULLETS}":
-        [bullets] = children
-        # Should check the bullets
-        return (T_Parse_Node, env0)
-
     elif p in [
         r"{EXPR} : the string-concatenation of {EX} and {EX}",
         r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}",
@@ -12987,16 +12952,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # XXX really, the *names* of the internal slots...
         return (ListType(T_SlotName_), env0)
 
-    # PR 1554 NumericValue:
-    elif p == r"{EXPR} : the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}":
-        [var, nont, var2, var3, numlit] = children
-        assert var.children == var2.children
-        assert var.children == var3.children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(numlit, T_Number)
-        proc_add_return(env0, T_Number, numlit)
-        return (T_Parse_Node, env0)
-
     # PR 1515 BigInt:
     elif p == r"{EX} : {PP_NAMED_OPERATION_INVOCATION} treated as a mathematical value, whether the result is a BigInt or Number":
         [ex] = children
@@ -13062,12 +13017,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
-
-    # PR 2109:
-    elif p == r"{EXPR} : the number of parameters taken by {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ProcType)
-        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : an implementation-approximated value representing {EXPR}":
         [ex] = children

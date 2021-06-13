@@ -246,9 +246,6 @@
     # obsoleted by the merge of PR #2152:
     # Append in list order the elements of {var} to the end of the List {var}.
 
-    # PR 1732 GetSubstitution
-    The replacement is {EXPR}.
-
 # ----------------------------------------------
 
 {IF_CLOSED} :
@@ -340,9 +337,6 @@
     # obsoleted by merge of PR #2348:
     # apply the early error rules for {h_emu_grammar} to {var}
 
-    # PR 1732 GetSubstitution
-    the replacement is {EXPR}
-
 # ------------------------------------------------------
 
 {EACH_THING} :
@@ -361,9 +355,6 @@
     {ITEM_NATURE} {var} such that {CONDITION}, in ascending order
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
-
-    # PR 1623 index_strings
-    own property key {var} of {var} that is a Uint32-string, whose numeric value is greater than or equal to {var}, in descending numeric index order
 
 {ITEM_NATURE} :
     Agent Events Record
@@ -426,11 +417,6 @@
 
     # oboleted by the merge of PR #2138:
     # {B} the previous value of {var}
-
-    # PR 1554 NumericValue:
-    {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit
-    {B} a literal produced from {LOCAL_REF} by replacing each significant digit after the 20th with a `0` digit and then incrementing the literal at the 20th significant digit position
-    {B} {PROD_REF}
 
 {B} :
     {nlai}*
@@ -636,6 +622,7 @@
     {var} contains a PrivateElement whose {dsb_word} is {DOTTING}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
+    {var} contains a {nonterminal}
     {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
@@ -962,28 +949,6 @@
     # any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
     # {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements
 
-    # PR 1554 NumericValue:
-    the first non white space code point in {var} is `"-"`
-    {var} contains a {nonterminal}
-    {var} has more than 20 significant digits
-
-    # PR 1623 index_strings
-    {var} is a Uint32-string
-    {var} is not a Uint32-string
-    {var} is not a Uint53-string
-
-    # PR 1739:
-    the Directive Prologue of {PROD_REF} contains a Sensitive Directive
-    the Directive Prologue of {PROD_REF} contains a Sensitive Directive or a Hidden Implementation Directive
-    the source text matched by {PROD_REF} is eval code resulting from a direct eval
-    {PROD_REF} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive
-    {PROD_REF} occurs within a {nonterminal}, {nonterminal}, or {nonterminal} that has a Directive Prologue that contains a Sensitive Directive or a Hidden Implementation Directive
-    {var} has a {DSBN} internal slot with the value {LITERAL}
-
-    # PR 2109:
-    {var} is an Abstract Closure
-    {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification
-
 {PROPERTY_KIND} :
     accessor
     data
@@ -1069,9 +1034,6 @@
 
     # obsoleted by the merge of PR #2216:
     # the source text{_indent_}{nlai}{h_pre_code}{_outdent_}
-
-    # PR 1554 NumericValue
-    an implementation-dependent choice of:{I_BULLETS}
 
 {CLOSURE_KIND} :
     Abstract Closure
@@ -1559,17 +1521,6 @@
     # obsoleted by the merge of PR #2374
     # the child of {var} that is an instance of {var}
 
-    # PR 1554 NumericValue:
-    the result of parsing {var} using the goal symbol {nonterminal}. If {var} does not conform to the grammar, or if any elements of {var} were not matched by the parse, return {NUM_LITERAL}
-
-    # PR 1732 GetSubstitution
-    the String value whose code units are the code units of {var}
-    the longest sequence of consecutive code units from {var} beginning with the code unit at index {var} such that {var} matches the &ldquo;Code units&rdquo; column of a row in {h_emu_xref}
-    the result of the &ldquo;Replacement text&rdquo; column of the corresponding row
-
-    # PR 2109:
-    the number of parameters taken by {var}
-
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
@@ -1734,9 +1685,6 @@
     the {nonterminal} of {var}
     {PROD_REF}
     {SETTABLE}
-
-    # PR 1739:
-    the {nonterminal} whose evaluation is the direct eval
 
 {PROD_REF} :
     the corresponding {nonterminal}
