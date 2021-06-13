@@ -25,7 +25,6 @@
     It is a Syntax Error if {CONDITION}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.
-    It is an early Reference Error if {CONDITION}.
     It is an early Syntax Error if {CONDITION}.
 
 {CONDITION} :
@@ -37,8 +36,6 @@
     {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>
     {CONDITION_1} unless {CONDITION_1}
     {CONDITION_1}, unless {CONDITION_1}
-
-    {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
 
 
     # obsoleted by the merge of PR #1658:

@@ -5456,7 +5456,6 @@ def tc_cond_(cond, env0, asserting):
         return tc_logical(logical, env0, asserting)
 
     elif p in [
-        # r"{CONDITION} : {CONDITION_1} or {CONDITION_1} and {CONDITION_1}", # obsoleted by PR 2111
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
     ]:
         [conda, condb, condc] = children
