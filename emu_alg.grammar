@@ -29,18 +29,18 @@
     Add {var} to the end of the list of waiters in {var}.
     Add {var} to the end of {var}.
     Add {var} to {var}.
-    Append all the entries of {var} to the end of {var}.
-    Append each item in {var} to the end of {var}.
+    #2382 Append all the entries of {var} to the end of {var}.
+    #2382 Append each item in {var} to the end of {var}.
     Append in List order the elements of {var} to the end of the List {var}.
     Append the code unit elements of {var} to the end of {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} each element of {var} that is not already an element of {var}.
-    Append to {var} the elements of {EXPR}.
-    Append to {var} {EXPR}.
+    #2382 Append to {var} the elements of {EXPR}.
+    #2382 Append to {var} {EXPR}.
     Append {EX} and {EX} to {var}.
     Append {EX} as an element of {var}.
     Append {EX} as the last element of the List that is {DOTTING}.
-    Append {EX} as the last element of the List {var}.
+    #2382 Append {EX} as the last element of the List {var}.
     Append {EX} as the last element of {var}.
     Append {EX} to the end of the List {var}.
     Append {EX} to the end of {EX}.
@@ -532,7 +532,7 @@
     {var} is a Continuation
     {var} is a Cyclic Module Record
     {var} is a Data Block
-    {var} is a List
+    #2382 {var} is a List
     {var} is a List of Record { {DSBN}, {DSBN} }
     {var} is a List of Source Text Module Records
     {var} is a List of String values
@@ -579,6 +579,7 @@
     {var} is a non-negative integral Number
     {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above
+    {var} is a possibly empty List
     {var} is a possibly empty List of Strings
     {var} is a {h_emu_xref}
     {var} is also {LITERAL}
@@ -777,15 +778,15 @@
     a List whose elements are the code unit elements of {var}
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
-    a List whose elements are the elements of {var} followed by {var}
+    #2382 a List whose elements are the elements of {var} followed by {var}
     a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}
-    a List whose elements are the elements of {var}, followed by the elements of {var}
-    a List whose elements are the elements of {var}, followed by {LITERAL}
+    #2382 a List whose elements are the elements of {var}, followed by the elements of {var}
+    #2382 a List whose elements are the elements of {var}, followed by {LITERAL}
     a List whose elements are the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
-    a List whose elements are {var} followed by the elements of {var}
-    a List whose first element is {var} and whose subsequent elements are the elements of {var}
-    a List whose first element is {var} and whose subsequent elements are the elements of {var}. {var} may contain no elements
+    #2382 a List whose elements are {var} followed by the elements of {var}
+    #2382 a List whose first element is {var} and whose subsequent elements are the elements of {var}
+    #2382 a List whose first element is {var} and whose subsequent elements are the elements of {var}. {var} may contain no elements
     a List whose sole element is {EX}
     a String according to {h_emu_xref}
     a String containing one instance of each code unit valid in {nonterminal}
@@ -793,10 +794,10 @@
     a String containing one instance of each code unit valid in {nonterminal} plus {STR_LITERAL}
     a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
-    a copy of {DOTTING}
+    #2382 a copy of {DOTTING}
     a copy of {var}
-    a copy of {var} with all the elements of {var} appended
-    a copy of {var} with {var} appended
+    #2382 a copy of {var} with all the elements of {var} appended
+    #2382 a copy of {var} with {var} appended
     a copy of {var}'s _captures_ List
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
@@ -943,6 +944,8 @@
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the last element in {var}
     the length of {var}
+    the list-concatenation of {EX} and {EX}
+    the list-concatenation of {var}, {var}, and {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
     the number of bytes in {var}
@@ -963,7 +966,7 @@
     the other {EX} code units of {var}
     the parse of some source text
     the prefix associated with {var} in {h_emu_xref}
-    the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
+    #2382 the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}
     the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of applying that mapping to {var}
     the result of applying the bitwise AND operation to {var} and {var}

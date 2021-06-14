@@ -4406,7 +4406,6 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Add {var} as an element of the list {var}.",
         r"{COMMAND} : Append {EX} as an element of {var}.",
         r"{COMMAND} : Append {EX} as the last element of the List that is {DOTTING}.",
-        r"{COMMAND} : Append {EX} as the last element of the List {var}.",
         r"{COMMAND} : Append {EX} as the last element of {var}.",
         r"{COMMAND} : Append {EX} to the end of the List {var}.",
         r"{COMMAND} : Append {EX} to the end of {EX}.",
@@ -4417,41 +4416,6 @@ def tc_nonvalue(anode, env0):
     ]:
         [value_ex, list_ex] = children
         result = env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
-
-    elif p in [
-        r'{COMMAND} : Append to {var} the elements of {EXPR}.',
-        r"{COMMAND} : Append to {var} {EXPR}.",
-        r"{COMMAND} : Append all the entries of {var} to the end of {var}.",
-        r"{COMMAND} : Append each item in {var} to the end of {var}.",
-    ]:
-        [ex1, ex2] = children
-        (t1, env1) = tc_expr(ex1,  env0); assert env1 is env0
-        (t2, env2) = tc_expr(ex2, env0); assert env2 is env0
-        if t1 == T_TBD and t2 == T_TBD:
-            pass
-        elif t1 == T_List and t2 == T_TBD:
-            pass
-        elif t1 == T_List and t2 == T_List:
-            pass
-        elif isinstance(t1, ListType) and t2 == T_TBD:
-            env0 = env0.with_expr_type_replaced(ex2, t1)
-        elif t1 == T_List and isinstance(t2, ListType):
-            env0 = env0.with_expr_type_replaced(ex1, t2)
-        elif isinstance(t1, ListType) and isinstance(t2, ListType):
-            if t1 == t2:
-                pass
-            elif 'Append to' in p and t1.is_a_subtype_of_or_equal_to(t2):
-                # widen ex1 to be able to accept ex2
-                env0 = env0.with_expr_type_replaced(ex1, t2)
-            elif ('Append all' in p or 'Append each' in p) and t2.is_a_subtype_of_or_equal_to(t1):
-                env0 = env0.with_expr_type_replaced(ex2, t1)
-            else:
-                assert 0
-        else:
-            assert t1.is_a_subtype_of_or_equal_to(T_List)
-            assert t2.is_a_subtype_of_or_equal_to(T_List)
-            assert t1 == t2
-        result = env0
 
     elif p == r"{COMMAND} : Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.":
         [avar, bvar, list_var] = children
@@ -5269,7 +5233,7 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Integer_Indexed_object_, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a List":
+    elif p == r"{CONDITION_1} : {var} is a possibly empty List":
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', T_List, asserting)
 
@@ -9590,14 +9554,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ---------------
     # ListType(T_String)
 
-    elif p == r"{EXPR} : a List whose elements are {var} followed by the elements of {var}":
-        # once, in TemplateStrings
-        # This is over-specific to that case.
-        [item_var, list_var] = children
-        env1 = env0.ensure_expr_is_of_type(item_var, ListType(T_code_unit_))
-        env2 = env1.ensure_expr_is_of_type(list_var, ListType(T_String))
-        return (ListType(T_String), env2)
-
     # ---------------
     # ListType(other)
 
@@ -9613,31 +9569,47 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ListType(element_type), env0)
 
     elif p in [
-        r"{EXPR} : the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : a copy of {var} with all the elements of {var} appended",
+        r"{EXPR} : the list-concatenation of {EX} and {EX}",
     ]:
         [var, noi] = children
         (t1, env1) = tc_expr(var, env0); assert env1 is env0
         (t2, env2) = tc_expr(noi, env0); assert env2 is env0
         if t1 == T_TBD and t2 == T_TBD:
             list_type = T_List
-        elif t1 == T_List and t2 == T_TBD:
+        elif t1 == T_TBD and (t2 == T_List or isinstance(t2, ListType)):
+            list_type = t2
+        elif t2 == T_TBD and (t1 == T_List or isinstance(t1, ListType)):
             list_type = t1
-        elif isinstance(t1, ListType) and t1 == t2:
+
+        elif isinstance(t1, ListType) and t2 == T_List:
             list_type = t1
+
+        elif isinstance(t1, ListType) and isinstance(t2, ListType):
+            if t1.is_a_subtype_of_or_equal_to(t2):
+                list_type = t2
+            elif t2.is_a_subtype_of_or_equal_to(t1):
+                list_type = t1
+            else:
+                assert 0
         else:
             assert 0
             # assert t1.element_type == t2.element_type
         return (list_type, env0)
 
-    elif p in [
-        r"{EXPR} : a copy of {var} with {var} appended",
-        r"{EXPR} : a List whose elements are the elements of {var} followed by {var}",
-    ]:
-        [list_var, item_var] = children
-        env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
-        list_type = env1.lookup(list_var)
-        return (list_type, env1)
+    elif p == r"{EXPR} : the list-concatenation of {var}, {var}, and {var}":
+        [exa, exb, exc] = children
+        # kludge
+        if exa.source_text() == '_names1_':
+            et = T_String
+        elif exa.source_text() == '_declarations1_':
+            et = T_Parse_Node
+        else:
+            assert 0, exa
+        lt = ListType(et)
+        env1 = env0.ensure_expr_is_of_type(exa, lt)
+        env2 = env1.ensure_expr_is_of_type(exb, lt)
+        env3 = env2.ensure_expr_is_of_type(exc, lt)
+        return (lt, env3)
 
     elif p == r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}':
         [var, _, _, _] = children
@@ -9648,12 +9620,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the List of {nonterminal} items in {PROD_REF}, in source text order":
         [nont, prod_ref] = children
         return (ListType(T_Parse_Node), env0)
-
-    elif p == r"{EXPR} : a List whose elements are the elements of {var}, followed by the elements of {var}":
-        [avar, bvar] = children
-        env0.assert_expr_is_of_type(avar, ListType(T_Tangible_))
-        env0.assert_expr_is_of_type(bvar, ListType(T_Tangible_))
-        return (ListType(T_Tangible_), env0)
 
     elif p == r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}":
         [dsbwa, dsbwb] = children
@@ -10547,7 +10513,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : a copy of {var}",
-        r"{EXPR} : a copy of {DOTTING}",
     ]:
         [var] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
@@ -10559,12 +10524,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [var] = children
         t = env0.assert_expr_is_of_type(var, T_List)
-        return (t, env0)
-
-    elif p == r"{EXPR} : a List whose elements are the elements of {var}, followed by {LITERAL}":
-        [list_var, element] = children
-        t = env0.assert_expr_is_of_type(list_var, T_List)
-        env0.assert_expr_is_of_type(element, t.element_type)
         return (t, env0)
 
     elif p in [
@@ -10831,15 +10790,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the intrinsic function {percent_word}":
         [percent_word] = children
         return (T_function_object_, env0)
-
-    elif p in [
-        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}",
-        r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}. {var} may contain no elements",
-    ]:
-        [head_var, tail_var] = children[0:2]
-        env0.assert_expr_is_of_type(head_var, T_Tangible_)
-        env1 = env0.ensure_expr_is_of_type(tail_var, ListType(T_Tangible_))
-        return (ListType(T_Tangible_), env1)
 
     elif p == r"{EXPR} : the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)":
         [] = children
