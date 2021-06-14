@@ -1067,7 +1067,7 @@ def parse(subject, goal_symname, trace_level=0, trace_f=sys.stdout):
             raise ParseError(node.end_posn, [f"found a valid {goal_symname}, but it did not consume all of subject"])
 
     else:
-        assert 0, "Unknown goal symbol {goal_symname!r}"
+        assert 0, f"Unknown goal symbol {goal_symname!r}"
 
     node.parent = None
     add_parent_links(node)
