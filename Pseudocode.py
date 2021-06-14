@@ -1700,7 +1700,7 @@ nts_behind_var_in_sdo_call = {
     # 18665 ForIn/OfHeadEvaluation
     ('Evaluation', '_expr_'): ['ParenthesizedExpression', 'Expression', 'AssignmentExpression'],
     # 21719 ScriptEvaluation
-    ('Evaluation', '_scriptBody_'): ['Script'],
+    ('Evaluation', '_script_'): ['Script'],
 
     # 21746 GlobalDeclarationInstantiation
     ('LexicallyDeclaredNames',      '_script_'): ['Script'],
