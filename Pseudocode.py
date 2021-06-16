@@ -618,9 +618,6 @@ def analyze_sdo_section(section):
                 if c.element_name == 'emu-note':
                     # lots, ignore.
                     pass
-                elif c.element_name == 'ul':
-                    # definition of significant digit
-                    pass
                 elif c.element_name == 'p':
                     # lots, ignore for now, but worth looking at.
                     pass
