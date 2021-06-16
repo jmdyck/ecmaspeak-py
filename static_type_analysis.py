@@ -237,6 +237,9 @@ nature_to_tipe = {
 
     # other 'declared' spec types:
 
+        # 5.2.5
+        'a mathematical value': 'MathReal_',
+
         # 8.2 Realms: Realm Record
         'Realm Record' : 'Realm Record',
         'a Realm Record' : 'Realm Record',
@@ -7425,6 +7428,11 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (env1, env1)
 
+    elif p == r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_MathReal_)
+        return (env0, env0)
+
     else:
         stderr()
         stderr("tc_cond:")
@@ -8700,11 +8708,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1.assert_expr_is_of_type(bvar, T_MathInteger_)
         return (T_IntegralNumber_, env1)
 
-    elif p == r"{EXPR} : the Number value that results from rounding {EX} as described below":
-        [ex] = children
-        env0.assert_expr_is_of_type(ex, T_MathReal_)
-        return (T_Number, env0)
-
     elif p in [
         r"{EXPR} : the smallest (closest to -&infin;) integral Number value that is not less than {var}",
         r"{EXPR} : the greatest (closest to +&infin;) integral Number value that is not greater than {var}",
@@ -8721,16 +8724,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # --------------------------------------------------------
     # return T_MathInteger_
-
-    elif p == r"{EXPR} : {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})":
-        [factor, _] = children
-        return (T_MathInteger_, env0)
-
-    elif p in [
-        r"{EXPR} : the number of code points in {PROD_REF}",
-    ]:
-        [prod_ref] = children
-        return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
         r"{EXPR} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
@@ -9141,6 +9134,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         ex = children[-1]
         (t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert (
+            t == T_TBD
+            or
             t.is_a_subtype_of_or_equal_to(T_MathReal_)
             or
             t.is_a_subtype_of_or_equal_to(T_Number)
@@ -11014,6 +11009,20 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert var.source_text() == '_argument_'
         assert cap_word2.source_text() == T
         return (T_Object, env0)
+
+    elif p in [
+        r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit",
+        r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)",
+    ]:
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_MathReal_)
+        return (T_MathReal_, env0)
+
+    elif p == r"{EXPR} : an implementation-defined choice of either {var} or {var}":
+        [vara, varb] = children
+        env0.assert_expr_is_of_type(vara, T_MathReal_)
+        env0.assert_expr_is_of_type(varb, T_MathReal_)
+        return (T_MathReal_, env0)
 
     else:
         stderr()

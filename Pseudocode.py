@@ -597,11 +597,7 @@ def analyze_sdo_section(section):
     # ------------------------------------------------------------------------------
 
     if 'emu-grammar' in section.bcen_set:
-        if section.section_title == 'Static Semantics: NumericValue':
-            # It has a <ul> defining "significant digit"
-            assert section.bcen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
-        else:
-            assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-table', 'p'])
+        assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-table', 'p'])
         # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
 
         used_indexes = set()
@@ -2250,8 +2246,8 @@ def analyze_sdo_coverage_info():
                     pass
                     # print(f" ?? {' ':36} from {opcall.source_text()}")
 
-            if sdo_name == 'MV':
-                # Currently, there isn't an explicit application of MV to |StringNumericLiteral|,
+            if sdo_name == 'StringNumericValue':
+                # Currently, there isn't an explicit application of StringNumericValue to |StringNumericLiteral|,
                 # but it's clear that has to happen. (PR #1554 will make this explicit.)
                 nt_set.add('StringNumericLiteral')
 
@@ -2668,7 +2664,7 @@ nts_behind_var_in_sdo_call = {
     ('LexicallyScopedDeclarations', '_body_'): ['ScriptBody'],
 
     # 23979
-    ('MV', '_numberString_'): ['StrDecimalLiteral'],
+    ('StringNumericValue', '_parsedNumber_') : ['StrDecimalLiteral'],
 
     # 30931 RegExpInitialize
     ('regexp-Evaluate', '_parseResult_'): ['Pattern'],

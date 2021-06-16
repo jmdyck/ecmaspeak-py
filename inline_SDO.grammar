@@ -12,9 +12,7 @@
 
 {ISDO_RULE} :
     The {ISDO_NAME} and {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
-    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}, no matter whether white space is present or not.
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}.
-    The {ISDO_NAME} of {h_emu_grammar} is {EXPR}. (Note that if {NAMED_OPERATION_INVOCATION} is 0, the negative of this MV is also 0. The rounding rule described below handles the conversion of this signless mathematical zero to a floating-point *+0*{h_sub_fancy_f} or *-0*{h_sub_fancy_f} as appropriate.)
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
@@ -33,7 +31,6 @@
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
     {EX}, where {var} is {EX}, and {var} is {EX}
-    {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})
 
 {CONDITION} :
     either {CONDITION_1} or {CONDITION_1}
@@ -43,7 +40,6 @@
 
 {EX} :
     the code point value of {PROD_REF}
-    the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the single code point matched by this production
     {NAMED_OPERATION_INVOCATION}

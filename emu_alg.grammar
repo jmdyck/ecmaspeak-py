@@ -378,6 +378,7 @@
     the code matched by {PROD_REF} is strict mode code
     the code matching the syntactic production that is being evaluated is contained in strict mode code
     the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits
+    the decimal representation of {var} has 20 or fewer significant digits
     the execution context stack is empty
     the file CaseFolding.txt of the Unicode Character Database provides a simple or common case folding mapping for {var}
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
@@ -823,6 +824,7 @@
     an implementation-defined Completion value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
+    an implementation-defined choice of either {var} or {var}
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
     such an object created in a host-defined manner
@@ -863,7 +865,6 @@
     the Matcher that is {EXPR}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
-    the Number value that results from rounding {EX} as described below
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
@@ -947,6 +948,8 @@
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {var}, {var}, and {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
+    the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
+    the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
     the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
     the number of bytes in {var}
     the number of characters contained in {var}

@@ -59,7 +59,7 @@ def parse_emu_grammar(emu_grammar):
         goal = 'EMU_GRAMMAR_CONTENT_2'
         line_start_posn = 1 + shared.spec_text.rfind('\n', 0, emu_grammar.start_posn)
         emu_grammar_indent = emu_grammar.start_posn - line_start_posn
-        assert emu_grammar_indent in [2, 4, 6, 8]
+        assert emu_grammar_indent in [2, 4, 6, 8, 10]
 
     else:
         # a single one-line production (no line-breaks)
