@@ -9209,7 +9209,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 elif t == T_TBD:
                     result_type = T_IntegralNumber_ # hm
                 else:
-                    assert 0, t
+                    add_pass_error(arg,
+                        f"ERROR: arg is of type {t} but fancy_f requires MathReal"
+                    )
+                    result_type = T_Number
                 return (result_type, env1)
 
             elif callee_op_name in ['min', 'max']:
