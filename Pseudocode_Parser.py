@@ -104,6 +104,9 @@ class Production:
 indent_prod  = Production(True, '{_indent_}', '')
 outdent_prod = Production(True, '{_outdent_}', '')
 
+# This is for tokenizing the pseudocode text.
+# But before that we have to tokenize the pseudocode-grammars, see below at
+# reo_for_rhs_piece_in_pseudocode_grammar.
 tokenizer_for_pseudocode = Tokenizer(r'''
     {_eos_}          : $
 
@@ -591,4 +594,4 @@ def literalize(s):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-# vim: sw=4 ts=4 expandtab columns=85
+# vim: sw=4 ts=4 expandtab
