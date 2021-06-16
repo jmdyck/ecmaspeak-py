@@ -380,7 +380,7 @@ element_info = {
         'head'              : ('B', '',          '',           '#WS;meta;#WS;((link;|script;|style;)#WS;)+'),
         'body'              : ('B', '',          '',           '#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
-        'emu-clause'        : ('B', '', 'aoid example id namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-see-also-para;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
+        'emu-clause'        : ('B', '', 'aoid example id namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', 'id', 'aoid namespace normative', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
         'emu-table'         : ('B', 'caption id', 'informative oldids', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', 'caption id', 'informative', '#WS;(object;|img;)#WS;'),
@@ -421,7 +421,6 @@ element_info = {
         'meta'              : ('B', 'charset',   '',           ''),
         'link'              : ('B', 'href rel',  '',           ''),
         'img'               : ('B', 'src',       'alt height id width', ''),
-        'emu-see-also-para' : ('B', 'op',        '',           ''),
         'emu-import'        : ('B', 'href',      '',           ''),
 
     # ---------------------------------------------

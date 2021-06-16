@@ -602,7 +602,7 @@ def analyze_sdo_section(section):
             # It has a <ul> defining "significant digit"
             assert section.bcen_set == {'emu-grammar', 'emu-alg', 'ul', 'p'}
         else:
-            assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-see-also-para', 'emu-table', 'p'])
+            assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-table', 'p'])
         # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
 
         for (i,c) in enumerate(section.block_children):

@@ -309,7 +309,7 @@ def create_operation_info_for_section(s):
         elif child.element_name == 'emu-table':
             # e.g. ControlEscape Code Point Values
             return True
-        elif child.element_name in ['emu-grammar', 'emu-see-also-para']:
+        elif child.element_name == 'emu-grammar':
             return True
 
         assert child.element_name == 'p', child.element_name
