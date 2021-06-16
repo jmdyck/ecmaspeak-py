@@ -605,10 +605,43 @@ def analyze_sdo_section(section):
             assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-table', 'p'])
         # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
 
+        used_indexes = set()
         for (i,c) in enumerate(section.block_children):
             if c.element_name == 'emu-alg':
                 prev_c = section.block_children[i-1]
                 handle_composite_sdo(sdo_name, prev_c, c, section)
+                used_indexes.add(i)
+                used_indexes.add(i-1)
+
+        for i in range(len(section.block_children)):
+            if i not in used_indexes:
+                c = section.block_children[i]
+                if c.element_name == 'emu-note':
+                    # lots, ignore.
+                    pass
+                elif c.element_name == 'ul':
+                    # definition of significant digit
+                    pass
+                elif c.element_name == 'p':
+                    # lots, ignore for now, but worth looking at.
+                    pass
+                elif c.element_name == 'emu-table':
+                    # 13.5.3.1
+                    # Evaluation of |UnaryExpression : `typeof` UnaryExpression|
+                    # ends with "Return a String according to <reference to emu-table>."
+                    # and then the emu-alg is followed by an emu-table.
+                    #
+                    # 22.2.1.4
+                    # CharacterValue of |CharacterEscape :: ControlEscape| is
+                    # "Return the code point value according to Table 59."
+                    # and then the emu-alg is followed by an emu-table.
+                    #
+                    # So I'll have to get that info eventually.
+                    pass
+                else:
+                    stderr(f"\nERROR: {section.section_num} {section.section_title} has unexpected/unused <{c.element_name}> element")
+                    sys.exit(1)
+
 
     elif 'ul' in section.bcen_set:
         assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
