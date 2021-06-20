@@ -405,7 +405,7 @@ nature_to_tipe = {
     'Boolean or Undefined'                                       : 'Boolean | Undefined',
     'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
     'Boolean | empty_'                                           : 'Boolean | empty_',
-    'a Boolean or *empty*'                                       : 'Boolean | empty_',
+    'a Boolean or ~empty~'                                       : 'Boolean | empty_',
     'a non-negative integer or +&infin;'                          : 'MathNonNegativeInteger_ | MathPosInfinity_',
     'an Environment Record or *null*'                            : 'Environment Record | Null',
     'an object or null'                                          : 'Object | Null',

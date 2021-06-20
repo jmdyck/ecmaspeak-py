@@ -1182,7 +1182,7 @@ rec_method_declarations = '''
     CreateMutableBinding(N, D)   -> TBD
     CreateImmutableBinding(N, S) -> TBD
     InitializeBinding(N, V)      -> TBD
-    SetMutableBinding(N, V, S)   -> a Boolean or *empty* | throw
+    SetMutableBinding(N, V, S)   -> a Boolean or ~empty~ | throw
     GetBindingValue(N, S)        -> an ECMAScript language value | throw *ReferenceError*
     DeleteBinding(N)             -> a Boolean
     HasThisBinding()             -> a Boolean
