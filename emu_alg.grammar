@@ -74,8 +74,6 @@
     Let {var} and {var} be the indirection values provided when this binding for {var} was created.
     Let {var} and {var} be {LITERAL}.
     Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
-    Let {var} be equivalent to a function that returns {var}.
-    Let {var} be equivalent to a function that throws {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
     Let {var} be the largest possible non-negative integer not larger than {var} such that {CONDITION}; but if there is no such integer, let {var} be {EXPR}.
     Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
@@ -649,7 +647,6 @@
     {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
     {var} has an? {DSBN} internal method
     {var} has an? {DSBN} internal slot
-    {var} has an? {DSBN} internal slot whose value is a PromiseCapability Record
     {var} has an? {DSBN} internal slot whose value is an Object
     {var} has an? {DSBN} or {DSBN} internal slot
     {var} has any duplicate entries
@@ -1157,6 +1154,7 @@
     the Element Size value specified in {h_emu_xref} for {var}
     the Element Type value in {h_emu_xref} for {EX}
     the List of Unicode code points of {var}
+    the List of arguments that was passed to this function by {dsb_word} or {dsb_word}
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
@@ -1260,7 +1258,6 @@
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
-    the number of non-optional parameters of an {cap_word} function as specified below
     the number of non-optional parameters of the function definition in {h_emu_xref}
     the one character in CharSet {var}
     the other {EX} code units of {var}
@@ -1299,7 +1296,6 @@
     the source text matched by {PROD_REF}
     the source text that was recognized as {PROD_REF}
     the square root of the sum of squares of the mathematical values of the elements of {var}
-    the steps of an {cap_word} function as specified below
     the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
     the string-concatenation of {EX} and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}

@@ -3703,14 +3703,6 @@ def tc_nonvalue(anode, env0):
         (t, env1) = tc_expr(expr, env0)
         result = env1.plus_new_entry(let_var, t)
 
-    elif p in [
-        r"{COMMAND} : Let {var} be equivalent to a function that throws {var}.",
-        r"{COMMAND} : Let {var} be equivalent to a function that returns {var}.",
-    ]:
-        [let_var, rvar] = children
-        env0.assert_expr_is_of_type(rvar, T_Tangible_)
-        result = env0.plus_new_entry(let_var, T_function_object_)
-
     elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the integer value that is represented by {var} in radix-{var} notation.)":
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = children
         assert same_source_text(let_var, let_var2)
@@ -7898,7 +7890,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is a PromiseCapability Record",
         r"{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object",
     ]:
         [var, dsbn] = children
@@ -9129,6 +9120,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert len(args) == 1
                 [arg] = args
                 (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+                if arg_type == T_TBD: arg_type = T_Normal
                 assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
                 return_type = ThrowType(arg_type)
                 return (return_type, env0)
@@ -10082,10 +10074,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}":
         [xref] = children
-        return (T_MathNonNegativeInteger_, env0)
-
-    elif p == r"{EXPR} : the number of non-optional parameters of an {cap_word} function as specified below":
-        [cap_word] = children
         return (T_MathNonNegativeInteger_, env0)
 
     # ----
@@ -11129,6 +11117,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(bvar, ListType(T_Tangible_))
         return (ListType(T_Tangible_), env0)
 
+    elif p == r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}":
+        [dsbwa, dsbwb] = children
+        assert dsbwa.source_text() == '[[Call]]'
+        assert dsbwb.source_text() == '[[Construct]]'
+        return (ListType(T_Tangible_), env0)
+
     elif p == r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List":
         [n_var, state_var] = children
         env0.assert_expr_is_of_type(n_var, T_MathInteger_)
@@ -11512,7 +11506,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot':
         [var1, var2, var3, dsbn] = children
-        env1 = env0.ensure_expr_is_of_type(var1, T_alg_steps)
+        env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
         # env1 = env0.ensure_expr_is_of_type(var2, )
         return (T_function_object_, env1)
 
@@ -11525,12 +11519,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the algorithm steps defined in (.+) ({h_emu_xref})":
         [_, emu_xref] = children
-        return (T_alg_steps, env0)
-
-    elif p in [
-        r"{EXPR} : the steps of an {cap_word} function as specified below",
-    ]:
-        [cap_word] = children
         return (T_alg_steps, env0)
 
 # PR 1635 obsoleted

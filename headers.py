@@ -610,9 +610,6 @@ single_sentence_rules_str = r'''
         (An? (?P<name>.+) function) is an (?P<kind>anonymous built-in function) that ((has|is) .+)
         v=!FUNC \4
 
-        (An (?P<name>.+) function) is an (?P<kind>anonymous built-in function) with (\[\[.+)
-        v=\1 has \4
-
     # ==========================================================================
 
         For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>algorithm) (returns \*true\*).
@@ -714,10 +711,6 @@ single_sentence_rules_str = r'''
 
         When an? (?P<name>.+) function is called(.+)
         v=When it is called\2
-
-        When an? (?P<name>.+) function that expects (?P<pl>.+) is called it performs the following steps:
-
-        When a (?P<name>Default Constructor) Function is called with (?P<pl>zero or more arguments which form the rest parameter \.\.\._args_), the following steps are taken:
 
         # -----------------------------------------------------
 
