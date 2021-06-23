@@ -2227,15 +2227,7 @@ def analyze_sdo_coverage_info():
                         nonterminal = uprimary.children[0]
                         nts = [nonterminal.source_text()[1:-1]]
                     elif u_st == 'the parsed code that is _F_.[[ECMAScriptCode]]':
-                        nts = [
-                            'FunctionBody',
-                            'ConciseBody',
-                            'GeneratorBody',
-                            'AsyncGeneratorBody',
-                            'AsyncFunctionBody',
-                            'AsyncConciseBody',
-                            'Initializer',
-                        ]
+                        nts = all_possibilities_for_func_ECMAScriptCode
                     else:
                         assert 0
 
@@ -2372,6 +2364,21 @@ def each_opt_combo(oGNTs):
 
 def required_nts_in(opt_combo):
     return [nt for (nt, omreq) in opt_combo if omreq == 'required']
+
+# a function object's [[ECMAScriptCode]] internal slot
+
+# The ones where FunctionDeclarationInstantiation is called:
+FDI_possibilities_for_func_ECMAScriptCode = [
+    'FunctionBody',       # FDI called from EvaluateFunctionBody
+    'ConciseBody',        # FDI called from EvaluateConciseBody
+    'GeneratorBody',      # FDI called from EvaluateGeneratorBody
+    'AsyncGeneratorBody', # FDI called from EvaluateAsyncGeneratorBody
+    'AsyncFunctionBody',  # FDI called from EvaluateAsyncFunctionBody
+    'AsyncConciseBody',   # FDI called from EvaluateAsyncConciseBody
+]
+all_possibilities_for_func_ECMAScriptCode = FDI_possibilities_for_func_ECMAScriptCode + [
+    'Initializer',
+]
 
 nts_behind_var_in_sdo_call = {
 
@@ -2512,44 +2519,16 @@ nts_behind_var_in_sdo_call = {
     ],
 
     # 11005 FunctionDeclarationInstantiation
-    ('VarDeclaredNames', '_code_'): [
-        'FunctionBody',
-        'ConciseBody',
-        'GeneratorBody',
-        'AsyncFunctionBody',
-        'AsyncConciseBody',
-        'AsyncGeneratorBody',
-    ],
+    ('VarDeclaredNames', '_code_'): FDI_possibilities_for_func_ECMAScriptCode,
     # 11005 FunctionDeclarationInstantiation
     # 22946 InitializeEnvironment
-    ('VarScopedDeclarations', '_code_'  ): [
-        'FunctionBody',
-        'ConciseBody',
-        'GeneratorBody',
-        'AsyncFunctionBody',
-        'AsyncConciseBody',
-        'AsyncGeneratorBody',
-        'Module',
-    ],
+    ('VarScopedDeclarations', '_code_'  ): FDI_possibilities_for_func_ECMAScriptCode + ['Module'],
     # 11005 FunctionDeclarationInstantiation
-    ('LexicallyDeclaredNames', '_code_'): [
-        'FunctionBody',
-        'ConciseBody',
-        'GeneratorBody',
-        'AsyncFunctionBody',
-        'AsyncConciseBody',
-        'AsyncGeneratorBody',
-    ],
+    ('LexicallyDeclaredNames', '_code_'): FDI_possibilities_for_func_ECMAScriptCode,
     # 11005 FunctionDeclarationInstantiation
     # 17813 BlockDeclarationInstantiation
     # 22946 InitializeEnvironment
-    ('LexicallyScopedDeclarations', '_code_'): [
-        'FunctionBody',
-        'ConciseBody',
-        'GeneratorBody',
-        'AsyncFunctionBody',
-        'AsyncConciseBody',
-        'AsyncGeneratorBody',
+    ('LexicallyScopedDeclarations', '_code_'): FDI_possibilities_for_func_ECMAScriptCode + [
         'StatementList',
         'CaseBlock',
         'Module',
