@@ -714,7 +714,6 @@
     {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is a possibly empty List of Strings
     {var} is a {h_emu_xref}
-    {var} is a {h_emu_xref} or a {h_emu_xref}
     {var} is also {LITERAL}
     {var} is an Abstract Closure with no parameters
     {var} is an Array exotic object
@@ -1303,8 +1302,6 @@
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
-    the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
-    the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the surrounding agent's Agent Record
     the ten-element CharSet containing the characters `0` through `9` inclusive
@@ -1655,7 +1652,6 @@
     {PREFIX_PAREN}
     {cap_word} for {LOCAL_REF} {WITH_ARGS}
     {cap_word} of {LOCAL_REF}
-    {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
 
     # obsoleted by the merge of PR #1124:

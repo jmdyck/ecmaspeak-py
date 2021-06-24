@@ -6123,18 +6123,6 @@ def tc_cond_(cond, env0, asserting):
             env0
         )
 
-    elif p == r"{CONDITION_1} : {var} is a {h_emu_xref} or a {h_emu_xref}":
-        [var, xrefa, xrefb] = children
-        assert xrefa.source_text() in [
-            '<emu-xref href="#sec-bound-function-exotic-objects">Bound Function exotic object</emu-xref>',
-            '<emu-xref href="#sec-bound-function-exotic-objects">bound function exotic object</emu-xref>', # PR 1460
-        ]
-        assert xrefb.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>'
-        return (
-            env0.with_expr_type_narrowed(var, T_function_object_),
-            env0
-        )
-
 #    elif p in [
 #        r"{CONDITION_1} : {var} is hint String",
 #        r"{CONDITION_1} : {var} is hint Number",
