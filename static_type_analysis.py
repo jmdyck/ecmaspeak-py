@@ -4995,28 +4995,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
         result = env0
 
-    # elif p == r"{COMMAND} : Append {EX} and {EX} as the last two elements of {var}.":
-    # elif p == r"{COMMAND} : For all {var}, {var}, and {var} in {var}'s domain:{IND_COMMANDS}":
-    # elif p == r"{COMMAND} : For each {EACH_THING}, if {CONDITION}, then {SMALL_COMMAND}.":
-    # elif p == r"{COMMAND} : Let {SAB_RELATION} be {EX}.":
-    # elif p == r"{COMMAND} : Let {var} be {EXPR}. If {CONDITION}, {var} will be the execution context that performed the direct eval. If {CONDITION}, {var} will be the execution context for the invocation of the `eval` function.":
-    # elif p == r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even.":
-    # elif p == r"{COMMAND} : Order the elements of {var} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method was invoked with {var}.":
-    # elif p == r"{COMMAND} : Repeat, while {var} is less than the total number of elements of {var}. The number of elements must be redetermined each time this method is evaluated.{IND_COMMANDS}":
-    # elif p == r"{COMMAND} : Return {LITERAL},? if {CONDITION}.":
-    # elif p == r"{COMMAND} : Return {LITERAL},? if {CONDITION}. Otherwise, return {LITERAL}.":
-    # elif p == r"{COMMAND} : Return {var} as the Completion Record of this abstract operation.":
-    # elif p == r"{COMMAND} : When the {nonterminal} {var} is evaluated, perform the following steps in place of the {nonterminal} Evaluation algorithm provided in {h_emu_xref}:{IND_COMMANDS}":
-    # elif p == r"{COMMAND} : While {CONDITION} repeat,{IND_COMMANDS}":
-    # elif p == r"{COMMAND} : While {CONDITION},{IND_COMMANDS}":
-    # elif p == r"{COMMAND} : {CONDITION_AS_COMMAND}":
-    # elif p == r"{SMALL_COMMAND} : append to {var} the elements of {NAMED_OPERATION_INVOCATION}":
-    # elif p == r"{SMALL_COMMAND} : let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {var}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the decimal representation of {var} and that {var} is not divisible by 10":
-    # elif p == r"{SMALL_COMMAND} : pass its value as the {var} optional argument of FunctionCreate":
-    # elif p == r"{SMALL_COMMAND} : replace {var} in {var} with that equivalent code point(s)":
-    # elif p == r"{SMALL_COMMAND} : throw a {ERROR_TYPE} or a {ERROR_TYPE} exception, depending on the type of the error":
-    # elif p == r"{SMALL_COMMAND} : {CONDITION_AS_SMALL_COMMAND}":
-
     else:
         stderr()
         stderr("tc_nonvalue:")
@@ -5113,8 +5091,6 @@ def tc_cond_(cond, env0, asserting):
             ]
         )
         return tc_logical(logical, env0, asserting)
-
-    # elif p == r"{CONDITION} : {CONDITION_1}, when {CONDITION_1}":
 
     elif p in [
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}",
@@ -7746,54 +7722,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (env1, env1)
-
-    # elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
-    # elif p == r"{CONDITION_1} : any static semantics errors are detected for {var} or {var}":
-    # elif p == r"{CONDITION_1} : either {EX} or {EX} is present":
-    # elif p == r"{CONDITION_1} : either {EX} or {EX} is {LITERAL}":
-    # elif p == r"{CONDITION_1} : replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}":
-    # elif p == r"{CONDITION_1} : the Unicode Character Database provides a language insensitive lower case equivalent of {var}":
-    # elif p == r"{CONDITION_1} : there is an infinite number of ReadSharedMemory or ReadModifyWriteSharedMemory events in SharedDataBlockEventSet({var}) with equal range that {SAB_RELATION} {var}":
-    # elif p == r"{CONDITION_1} : there is no such integer {var}":
-    # elif p == r"{CONDITION_1} : {var} _R_ {var}":
-    # elif p == r"{CONDITION_1} : {var} and {var} are in {EX}":
-    # elif p == r"{CONDITION_1} : {var} and {var} have equal range":
-    # elif p == r"{CONDITION_1} : {var} has _order_ `"Init"`":
-    # elif p == r"{CONDITION_1} : {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events":
-    # elif p == r"{CONDITION_1} : {var} is a WriteSharedMemory or ReadModifyWriteSharedMemory event":
-    # elif p == r"{CONDITION_1} : {var} is an exotic String object":
-    # elif p == r"{CONDITION_1} : {var} is an instance of a nonterminal":
-    # elif p == r"{CONDITION_1} : {var} is an instance of {var}":
-    # elif p == r"{CONDITION_1} : {var} is any ECMAScript language value other than an Object with an? {DSBN} internal slot":
-    # elif p == r"{CONDITION_1} : {var} is before {var} in List order of {EX}":
-    # elif p == r"{CONDITION_1} : {var} is bound by any syntactic form other than an? {nonterminal}, an? {nonterminal}, the {nonterminal} of a for statement, the {nonterminal} of a for-in statement, or the {nonterminal} of a for-in statement":
-    # elif p == r"{CONDITION_1} : {var} is not the Environment Record for a |Catch| clause":
-    # elif p == r"{CONDITION_1} : {EX} is not {LITERAL} or {LITERAL}":
-    # elif p == r"{CONDITION_1} : {var} is not {var}":
-    # elif p == r"{CONDITION_1} : {var} {SAB_RELATION} {var}":
-    # elif p == r"{CONDITION_AS_COMMAND} : At least one of {var} or {var} does not have {DSBN} {STR_LITERAL} or {var} and {var} have overlapping ranges.":
-    # elif p == r"{CONDITION_AS_COMMAND} : It is not the case that {CONDITION}, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : The host provides a {SAB_RELATION} Relation for {DOTTING}, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : There is a List of length equal to {DOTTING} of WriteSharedMemory or ReadModifyWriteSharedMemory events {var} such that {PREFIX_PAREN} is {var}.":
-    # elif p == r"{CONDITION_AS_COMMAND} : There is no WriteSharedMemory or ReadModifyWriteSharedMemory event {var} in SharedDataBlockEventSet({var}) with equal range as {var} such that {var} is not {var}, {var} {SAB_RELATION} {var}, and {var} {SAB_RELATION} {var}.":
-    # elif p == r"{CONDITION_AS_COMMAND} : There is no WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION}.":
-    # elif p == r"{CONDITION_AS_COMMAND} : There is no cycle in the union of {SAB_RELATION} and {SAB_RELATION}.":
-    # elif p == r"{CONDITION_AS_COMMAND} : {DOTTING} is a strict partial order, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} _R_ {var} or {var} _R_ {var}, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} has coherent reads, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} has sequentially consistent atomics.":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} has tear free reads, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} has valid chosen reads, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} has {var} in its range.":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} is equal to {var} and {SETTABLE} is equal to {SETTABLE} for all integer values {var} in the range {NUM_LITERAL} through {var}, exclusive.":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} is not {var}, and":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} is not {var}.":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} {SAB_RELATION} {var} or {var} {SAB_RELATION} {var}.":
-    # elif p == r"{CONDITION_AS_COMMAND} : {var} {SAB_RELATION} {var}.":
-    # elif p == r"{CONDITION_AS_SMALL_COMMAND} : it is not the case that {CONDITION}":
-    # elif p == r"{CONDITION_AS_SMALL_COMMAND} : there is no {var} such that {CONDITION}":
-    # elif p == r"{CONDITION_AS_SMALL_COMMAND} : {var} _R_ {var}":
-    # elif p == r"{CONDITION_AS_SMALL_COMMAND} : {var} {SAB_RELATION} {var}":
 
     else:
         stderr()
@@ -11692,92 +11620,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert var.source_text() == '_argument_'
         assert cap_word2.source_text() == T
         return (T_Object, env0)
-
-    # elif p == r"{EXPR} : a List containing the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using &ldquo;Round to nearest, ties to even&rdquo; rounding mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
-    # elif p == r"{EXPR} : a List containing the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value":
-    # elif p == r"{EXPR} : an implementation-dependent String value that represents {var} as a date and time in the current time zone using a convenient, human-readable form":
-    # elif p == r"{EXPR} : the CharSet containing the single character that is {EXPR}":
-    # elif p == r"{EXPR} : the CharSet containing the single character {var}":
-    # elif p == r"{EXPR} : the ECMAScript Number value corresponding to {var}":
-    # elif p == r"{EXPR} : the List (containing the|of) {nonterminal} items in {PROD_REF}, in source text order. If {PROD_REF} is not present, {var} is &laquo; &raquo;":
-    # elif p == r"{EXPR} : the List of events {PREFIX_PAREN}":
-    # elif p == r"{EXPR} : the String value computed by the concatenation of {EX} and {EX}":
-    # elif p == r"{EXPR} : the String value consisting of {EX} followed by {EX}":
-    # elif p == r"{EXPR} : the String value consisting solely of {code_unit_lit}":
-    # elif p == r"{EXPR} : the String value containing the two code units {var} and {var}":
-    # elif p == r"{EXPR} : the String value produced by concatenating {EX} and {EX}":
-    # elif p == r"{EXPR} : the String value that is the concatenation of {EX} and {EX}":
-    # elif p == r"{EXPR} : the String value that is the result of concatenating {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the String value whose elements are, in order, the elements of {var}":
-    # elif p == r"{EXPR} : the character represented by {PROD_REF}":
-    # elif p == r"{EXPR} : the character {code_point_lit}":
-    # elif p == r"{EXPR} : the concatenation of Strings {EX} and {EX}":
-    # elif p == r"{EXPR} : the concatenation of the Strings {EX} and {EX}":
-    # elif p == r"{EXPR} : the concatenation of {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the concatenation of the four Strings {EX}, {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the concatenation of the three Strings {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the result of applying the subtraction operation to {var} and {var}. See the note below {h_emu_xref}":
-    # elif p == r"{EXPR} : the result of concatenating the strings {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the result of concatenating {EX}, {EX}, {EX}, and {EX}":
-    # elif p == r"{EXPR} : the string consisting of the code unit {var} followed by the code unit {var}":
-    # elif p == r"{EXPR} : the string consisting of the single code unit {var}":
-    # elif p == r"{EXPR} : the string that is the concatenation of {EX} and {EX}":
-    # elif p == r"{EXPR} : the two results {EX} and {EX}":
-    # elif p == r"{EXPR} : the {nonterminal} component of {var}":
-    # elif p == r"{FIELDS} : {FIELDS}, {FIELD}":
-    # elif p == r"{FIELDS} : {FIELD}":
-    # elif p == r"{FIGURE} : {nlai}<figure>{I_TABLE}{nlai}</figure>":
-    # elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. However, an implementation is permitted to extend the behaviour of `\w+` for values of {var} less than {NUM_LITERAL} or greater than {NUM_LITERAL}. In this case `\w+` would not necessarily throw {ERROR_TYPE} for such values.":
-    # elif p == r"{IF_OPEN} : If {CONDITION}, then {SMALL_COMMAND}.":
-    # elif p == r"{IF_OPEN} : If {CONDITION}, then{IND_COMMANDS}":
-    # elif p == r"{IF_OPEN} : If {CONDITION}, {SMALL_COMMAND}.":
-    # elif p == r"{I_BULLETS} : {_indent_}{BULLETS}{_outdent_}":
-    # elif p == r"{I_TABLE} : {_indent_}{nlai}<table class="lightweight(?:-table)?">(?:.|\n)+?</table>{_outdent_}":
-    # elif p == r"{NAMED_OPERATION_INVOCATION} : StringValue of the {nonterminal} of {nonterminal} {var}":
-    # elif p == r"{NUM_COMPARAND} : -1":
-    # elif p == r"{NUM_COMPARAND} : ({SUM})":
-    # elif p == r"{OPN_BEFORE_PAREN} : (ForIn/Of(?:Head|Body)Evaluation|(?!Type\b)[A-Za-z]\w+)":
-    # elif p == r"{OPN_BEFORE_PAREN} : {DOTTING}":
-    # elif p == r"{OPN_BEFORE_PAREN} : {SAB_FUNCTION}":
-    # elif p == r"{OPN_BEFORE_PAREN} : {var}":
-    # elif p == r"{OPN_BEFORE_PAREN} : {var}.([A-Z][A-Za-z]+)":
-    # elif p == r"{RECORD_CONSTRUCTOR} : (?:the |a |a new )?(Record|Chosen Value Record|ExportEntry Record|ImportEntry Record|Completion|PropertyDescriptor|PendingJob|PromiseCapability|PromiseReaction|ReadModifyWriteSharedMemory|ReadSharedMemory|ResolvedBinding Record|Script Record|Source Text Module Record|WriteSharedMemory) ?{ ?{FIELDS} ?}":
-    # elif p == r"{SAB_FUNCTION} : reads-bytes-from":
-    # elif p == r"{SAB_RELATION} : agent-order":
-    # elif p == r"{SAB_RELATION} : happens-before":
-    # elif p == r"{SAB_RELATION} : host-synchronizes-with":
-    # elif p == r"{SAB_RELATION} : is agent-order before":
-    # elif p == r"{SAB_RELATION} : is memory-order before":
-    # elif p == r"{SAB_RELATION} : reads-from":
-    # elif p == r"{SAB_RELATION} : synchronizes-with":
-    # elif p == r"{SETTABLE} : the {DSBN} field of {var}":
-    # elif p == r"{STR_LITERAL} : *"[^*"]*"*":
-    # elif p == r"{STR_LITERAL} : the String `","` (a comma)":
-    # elif p == r"{STR_LITERAL} : the String `"-"`":
-    # elif p == r"{STR_LITERAL} : the empty String":
-    # elif p == r"{STR_LITERAL} : the empty String `""`":
-    # elif p == r"{STR_LITERAL} : the empty String value":
-    # elif p == r"{STR_LITERAL} : the empty string":
-    # elif p == r"{STR_LITERAL} : the single-element String `","`": # todo: element of String
-    # elif p == r"{STR_LITERAL} : the string `"(not-equal|ok|timed-out)"`":
-    # elif p == r"{STR_LITERAL} : the string `":"`":
-    # elif p == r"{TERMINAL} : `[a-z]+`":
-    # elif p == r"{TERMINAL} : `\\\\`":
-    # elif p == r"{TERM} : the number of code units in {var}":
-    # elif p == r"{TYPE_NAME} : Boolean":
-    # elif p == r"{TYPE_NAME} : Data Block":
-    # elif p == r"{TYPE_NAME} : Null":
-    # elif p == r"{TYPE_NAME} : Number":
-    # elif p == r"{TYPE_NAME} : Object":
-    # elif p == r"{TYPE_NAME} : Reference":
-    # elif p == r"{TYPE_NAME} : Shared Data Block":
-    # elif p == r"{TYPE_NAME} : String":
-    # elif p == r"{TYPE_NAME} : Symbol":
-    # elif p == r"{TYPE_NAME} : Undefined":
-    # elif p == r"{code_point_lit} : &lt;BS&gt; U+0008 (BACKSPACE)":
-    # elif p == r"{code_point_lit} : U+0000 (NULL)":
-    # elif p == r"{ERROR_TYPE} : *(TypeError|SyntaxError|RangeError|ReferenceError|URIError)*":
 
     else:
         stderr()
