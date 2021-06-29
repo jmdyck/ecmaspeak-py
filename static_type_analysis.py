@@ -299,7 +299,7 @@ nature_to_tipe = {
         'a Shared Data Block event': 'Shared Data Block event',
         'an event in SharedDataBlockEventSet(_execution_)': 'Shared Data Block event',
 
-        # 25.4.1.1: PromiseCapability Record 
+        # 25.4.1.1: PromiseCapability Record
         'a PromiseCapability Record'    : 'PromiseCapability Record',
         'a new PromiseCapability Record': 'PromiseCapability Record',
 
@@ -390,7 +390,7 @@ nature_to_tipe = {
     # -----------------------------
     # union of named types
 
-    'a character'                                                : 'code_unit_ | code_point_', 
+    'a character'                                                : 'code_unit_ | code_point_',
     'a function or an array of Strings and Numbers'              : 'function_object_ | Array_object_',
     'a BigInt or a Number'                                       : 'BigInt | Number',
     'Number or BigInt'                                           : 'Number | BigInt',
@@ -998,7 +998,7 @@ class Type(tuple):
 
         if (A,B) in subtype_memo:
             return subtype_memo[(A,B)]
-        # No speed-up? 
+        # No speed-up?
 
         if B == T_Top_: return True
 
@@ -3136,7 +3136,7 @@ def tc_alg(alg):
     for header in alg.headers:
         c = tc_header(header.tah)
         if c: any_change = True
-    
+
     if any_change:
         summarize_headers(alg)
 
@@ -3279,7 +3279,7 @@ def tc_header(tah):
                     T_continue_.is_a_subtype_of_or_equal_to(final_t)
                 )
                 or
-                tah.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_ 
+                tah.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_
                 or
                 tah.name == 'String.prototype.localeCompare' and pn == '*return*'
                 # The algo is incomplete, so doesn't result in a reasonable return type.
@@ -3468,7 +3468,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
             in_env.vars['_argument_'] = discriminator
         else:
             in_env = init_env
-        
+
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IAO_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
             assert tc_nonvalue(body, in_env) is None
         elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
@@ -3818,7 +3818,7 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.":
         [prod_ref, a_type, a_var, b_var] = children
-        result = ( 
+        result = (
             env0
             .plus_new_entry(a_var, parse_type_string(a_type.source_text()))
             .plus_new_entry(b_var, T_Boolean)
@@ -4310,7 +4310,7 @@ def tc_nonvalue(anode, env0):
         result = env0
 
     elif p == r"{COMMAND} : Remove {var} from the execution context stack.":
-        [avar] = children    
+        [avar] = children
         env0.assert_expr_is_of_type(avar, T_execution_context)
         result = env0
 
@@ -4976,7 +4976,7 @@ def tc_nonvalue(anode, env0):
         r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.",
         r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.",
     ]:
-        [cond, g_sym, h_emu_xref] = children    
+        [cond, g_sym, h_emu_xref] = children
         tc_cond(cond, env0)
         result = None
 
@@ -5122,7 +5122,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}",
     ]:
-        [a, b, c, d] = children    
+        [a, b, c, d] = children
         logical = (
             'or',
             [
@@ -7070,7 +7070,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(va, ListType(T_code_point_))
         env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
         return (env0, env0)
-    
+
     elif p == r"{CONDITION_1} : {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
@@ -7095,7 +7095,7 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_AsyncGenerator_object_)
         return (env1, env1)
-    
+
     elif p == r"{CONDITION_1} : {EX} is listed in the Code Unit Value column of {h_emu_xref}":
         [ex, emu_xref] = children
         assert emu_xref.source_text() == '<emu-xref href="#table-json-single-character-escapes"></emu-xref>'
@@ -7466,7 +7466,7 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}":
-        [nont] = children    
+        [nont] = children
         return (env0, env0)
 
     elif p in [
@@ -7994,7 +7994,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Null, env0)
 
     elif p == r"{LITERAL} : {atat_word}":
-        return (T_Symbol, env0)    
+        return (T_Symbol, env0)
 
     elif p == r"{NUM_LITERAL} : +&infin;":
         return (T_MathPosInfinity_, env0)
@@ -8787,7 +8787,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
             T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_,
         ]:
-            lhs_t =  T_Reference_Record 
+            lhs_t =  T_Reference_Record
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t == T_boolean_value_record_ | T_Boolean:
@@ -8989,7 +8989,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_BigInt, env0)
 
     elif p == r"{EXPR} : the BigInt value that corresponds to {var}":
-        [var] = children    
+        [var] = children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_BigInt, env0)
 
@@ -9113,7 +9113,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the result of applying the addition operation to {var} and {var}. See the Note below {h_emu_xref}",
-        r"{EXPR} : the result of applying the subtraction operation to {var} and {var}. See the note below {h_emu_xref}",        
+        r"{EXPR} : the result of applying the subtraction operation to {var} and {var}. See the note below {h_emu_xref}",
     ]:
         [avar, bvar, emu_xref] = children
         env0.assert_expr_is_of_type(avar, T_Number)
@@ -9215,7 +9215,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EX} : {var} rounded towards 0 to the next integer value":
-        [var] = children    
+        [var] = children
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathInteger_, env0)
 
@@ -9569,7 +9569,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         elif (
             a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_)
-            and 
+            and
             b_t.is_a_subtype_of_or_equal_to(T_Number)
         ):
             add_pass_error(expr,
@@ -9580,7 +9580,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         elif (
             a_t.is_a_subtype_of_or_equal_to(T_Number)
-            and 
+            and
             b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_)
         ):
             add_pass_error(expr,
@@ -9620,7 +9620,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 return (T_MathInteger_, env2)
             else:
                 return (T_MathReal_, env2)
-                
+
 
         elif a_t.is_a_subtype_of_or_equal_to(T_Number) and b_t.is_a_subtype_of_or_equal_to(T_Number):
 
@@ -9983,7 +9983,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EX} : the code unit whose value is {EX}",
-        r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}", 
+        r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}",
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
@@ -10783,7 +10783,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # and the static type of _value_ is T_Tangible_ | T_empty_
 
                 return (T_Tangible_ | T_empty_ | T_continue_ | T_break_, env0)
-                
+
             else:
                 env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_empty_)
                 (value_type, _) = tc_expr(value_ex, env1) # bleah
@@ -11479,7 +11479,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == "{EX} : {h_code_quote}":
         [h_code_quote] = children
         return (T_String, env0)
-        
+
     elif p == r"{EXPR} : the {var} that was passed to this function by {DSBN} or {DSBN}":
         [var, dsbna, dsbnb] = children
         assert var.source_text() == '_argumentsList_'
@@ -11612,9 +11612,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             result_type = T_Unicode_code_points_
         elif table_result_type_str == 'abstract operation':
             # result_type = (
-            #     ProcType([T_Number, T_Number], T_Number | T_throw_) 
+            #     ProcType([T_Number, T_Number], T_Number | T_throw_)
             #     |
-            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_) 
+            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_)
             # )
             result_type = ProcType([T_Number|T_BigInt, T_Number|T_BigInt], T_Number|T_BigInt | T_throw_)
         else:
@@ -11859,7 +11859,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
         mast = main_arg.source_text()
         if mast in [
             '|AsyncArrowFunction|',
-            'this |FunctionExpression|', 
+            'this |FunctionExpression|',
             'this |ArrowFunction|',
             'this |GeneratorExpression|',
             'this |AsyncGeneratorExpression|',
@@ -11878,7 +11878,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
         elif mast in [
             '_scriptBody_',
             '_body_', # |ScriptBody|
-            '_lhs_', 
+            '_lhs_',
             '_module_.[[ECMAScriptCode]]',
             '|DestructuringAssignmentTarget|',
             '|PropertyName|',
@@ -11894,7 +11894,7 @@ def with_fake_param_names(param_types):
         ('$%d' % (i+1), t )
         for (i, t) in enumerate(param_types)
     ]
-        
+
 def type_corresponding_to_comptype_literal(comptype_literal):
     assert isinstance(comptype_literal, ANode)
     return {
@@ -12202,7 +12202,7 @@ fields_for_record_type_named_ = {
         'HostDefined'     : T_host_defined_ | T_Undefined,
     },
 
-    # 
+    #
     'Cyclic Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
         'Environment'     : T_Environment_Record | T_Undefined,
@@ -12458,7 +12458,7 @@ type_of_internal_thing_ = {
     'PrivateMethods'   : ListType(T_PrivateElement),
     'ClassFieldInitializerName': T_String | T_Symbol | T_Private_Name | T_empty_,
 
-    # 8860: 
+    # 8860:
     'InitialName' : T_Null | T_String,
 
     # 9078: Table 28: Internal Slots of Exotic Bound Function Objects
