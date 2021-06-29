@@ -4583,7 +4583,6 @@ def tc_nonvalue(anode, env0):
     elif p in [
         r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]",
         r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].",
-
     ]:
         [var1, var2, var3, var4] = children
         env0.assert_expr_is_of_type(var1, ListType(T_MathInteger_))
@@ -9097,7 +9096,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the result of adding the value {NUM_LITERAL} to {var}, using the same rules as for the `+` operator (see {h_emu_xref})",
-        r"{EXPR} : the result of subtracting the value {NUM_LITERAL} from {var}, using the same rules as for the `-` operator (see {h_emu_xref})"
+        r"{EXPR} : the result of subtracting the value {NUM_LITERAL} from {var}, using the same rules as for the `-` operator (see {h_emu_xref})",
     ]:
         [num_lit, var, emu_xref] = children
         env0.assert_expr_is_of_type(var, T_Number)
@@ -9173,10 +9172,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathInteger_, env0)
 
     elif p in [
-        u"{EX} : \\d+{h_sub_fancy_r}",
-        u"{FACTOR} : \\d+{h_sub_fancy_r}",
-        u"{BASE} : 10{h_sub_fancy_r}",
-        u"{FACTOR} : 0x[0-9A-F]+{h_sub_fancy_r}",
+        "{EX} : \\d+{h_sub_fancy_r}",
+        "{FACTOR} : \\d+{h_sub_fancy_r}",
+        "{BASE} : 10{h_sub_fancy_r}",
+        "{FACTOR} : 0x[0-9A-F]+{h_sub_fancy_r}",
     ]:
         [_] = children
         return (T_MathInteger_, env0)
@@ -9262,9 +9261,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathReal_, env0)
 
     elif p in [
-        u"{PRODUCT} : {FACTOR} &times;{h_sub_fancy_r} {FACTOR}",
-        u"{SUM} : {var}-{h_sub_fancy_r}{var}",
-        u"{SUM} : {TERM} -{h_sub_fancy_r} {TERM}",
+        "{PRODUCT} : {FACTOR} &times;{h_sub_fancy_r} {FACTOR}",
+        "{SUM} : {var}-{h_sub_fancy_r}{var}",
+        "{SUM} : {TERM} -{h_sub_fancy_r} {TERM}",
     ]:
         [left, _, right] = children
         env0.assert_expr_is_of_type(left, T_MathReal_)
@@ -11464,7 +11463,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(lit, T_code_unit_)
         return (T_String, env0)
 
-    elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
+    elif p == '''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''':
         # XXX
         return (T_String, env0)
 
