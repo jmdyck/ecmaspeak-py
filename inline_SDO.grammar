@@ -20,9 +20,6 @@
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
     The {ISDO_NAME} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
 
-    # obsoleted by the merge of PR 1301:
-    # The {ISDO_NAME} of a {nonterminal} is {NAMED_OPERATION_INVOCATION}.
-
 {EXPR} :
     the String value consisting of {EXPR}
     the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
@@ -38,16 +35,6 @@
     {EX}, where {var} is {EX}, and {var} is {EX}
     {FACTOR} (a value so large that it will round to *+&infin;*{h_sub_fancy_f})
 
-    # obsoleted by the merge of PR 2018:
-    # a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}
-    # the code unit whose value is {SUM}
-    # the empty code unit sequence
-    # the sequence consisting of {EX} followed by {EX}
-    # the sequence consisting of {EX} followed by {EX} followed by {EX}
-    # the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}
-    # the sequence consisting of {code_unit_lit}
-    # {EX} followed by {EX}
-
 {CONDITION} :
     either {CONDITION_1} or {CONDITION_1}
 
@@ -55,7 +42,6 @@
     {NAMED_OPERATION_INVOCATION} is {U_LITERAL}
 
 {EX} :
-    #pre-1135: the number of code points in {PROD_REF}
     the code point value of {PROD_REF}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
@@ -69,22 +55,9 @@
     {code_unit_lit}
     {var}
 
-    # obsoleted by the merge of PR #2151:
-    # the mathematical integer number of code points in {PROD_REF}
-
-    # obsoleted by the merge of PR #2142:
-    # the code units of {NAMED_OPERATION_INVOCATION} in order
-
-    # obsoleted by the merge of PR #2018:
-    # a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}
-    # the code units of {NAMED_OPERATION_INVOCATION}
-
 {NAMED_OPERATION_INVOCATION} :
     the result of performing {cap_word} on {EX}
     the {ISDO_NAME} of {PROD_REF}
-
-    # obsoleted by the merge of PR #2018:
-    # {ISDO_NAME} of {PROD_REF}
 
 {ISDO_NAME} :
     {cap_word}
@@ -93,13 +66,6 @@
     the {ORDINAL} {nonterminal}
     the {nonterminal}
     {nonterminal}
-
-    # obsoleted by merge of PR #1571
-    # the {nonterminal}
-
-    # obsoleted by the merge of PR #1301:
-    # the {nonterminal} that is that single code point
-    # the {nonterminal} that is that {nonterminal}
 
 {ORDINAL} :
     first
@@ -115,7 +81,6 @@
     {TERM} {SUM_OPERATOR} {TERM}
 
 {SUM_OPERATOR} :
-    #pre-1135: -
     -
     plus
 
@@ -124,7 +89,6 @@
     {FACTOR}
 
 {PRODUCT} :
-    #pre-1135: -{var}
     -{var}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
 
@@ -140,8 +104,6 @@
     {var}
 
 {NUM_LITERAL} :
-    #pre-1135: {dec_int_lit}
-    #pre-1135: {hex_int_lit}
     {dec_int_lit}
     {hex_int_lit}
 
@@ -149,5 +111,4 @@
     the empty String
 
 {BASE} :
-    #pre-1135: 10
     10

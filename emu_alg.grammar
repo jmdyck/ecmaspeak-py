@@ -158,92 +158,6 @@
     {note}
     {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
 
-    # obsoleted by the merge of PR #1180:
-    # Perform an implementation-dependent sequence of calls to the {DSBN} and {DSBN} internal methods of {var}, to the DeletePropertyOrThrow and HasOwnProperty abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
-
-    # obsoleted by the merge of PR #1460:
-    # Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.
-
-    # obsoleted by the merge of PR #1585
-    # Perform an implementation-defined sequence of calls to the {cap_word}, {h_emu_xref}, {cap_word}, and {cap_word} abstract operation with {var} as the first argument, and to SortCompare (described below), such that:{I_BULLETS}
-
-    # obsoleted by the merge of PR #1597:
-    # Add {var} at the back of the Job Queue named by {var}.
-    # In an implementation-dependent manner, obtain the ECMAScript source texts (see clause {h_emu_xref}) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {var} and {var}, do{IND_COMMANDS}
-    # Let {var} be {EXPR}. Remove that record from {var}.
-    # Perform any implementation or host environment defined job initialization using {var}.
-    # Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.
-    # Suspend the running execution context and remove it from the execution context stack.
-
-    # obsoleted by the merge of PR #1604:
-    # Add 1 to {var}.
-    # Subtract {NUM_LITERAL} from {var}.
-
-    # obsoleted by the merge of PR #1692:
-    # Let {var} and {var} be new Synchronize events.
-
-    # obsoleted by the merge of PR #1793:
-    # Order the elements of {var} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method were invoked with {var}.
-
-    # obsoleted by the merge of PR #1797:
-    # Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.
-
-    # obsoleted by the merge of PR #1831:
-    # Let {var} be {EXPR}. {note}
-    # Set {SETTABLE} to {EXPR}. {note}
-
-    # obsoleted by the merge of PR #1866:
-    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
-    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
-    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.
-    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.
-
-    # obsoleted by the merge of PR #1924:
-    # Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.
-    # Return {EXPR}. This call will always return *true*.
-
-    # obsoleted by the merge of PR #1985:
-    # Repeat, while {CONDITION}{IND_COMMANDS}
-
-    # obsoleted by the merge of PR #1907:
-    # Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.
-
-    # obsoleted by the merge of PR #2013:
-    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.
-    # Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.
-    # Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.
-
-    # obsoleted by the merge of PR #2018:
-    # Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.
-    # Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.
-
-    # obsoleted by the merge of PR #2021:
-    # Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.
-
-    # obsoleted by the merge of PR #2029:
-    # Let {var} be the smallest nonnegative integer such that {CONDITION}.
-
-    # obsoleted by the merge of PR #2112:
-    # Add the characters in set {var} to set {var}.
-    # Assert: Unless {CONDITION_1}, {CONDITION}.
-    # Call {PREFIX_PAREN} and let {var} be its result.
-    # Call {PREFIX_PAREN} and let {var} be the Boolean result.
-    # Call {PREFIX_PAREN} and let {var} be the resulting CharSet.
-    # Call {PREFIX_PAREN} and return its Matcher result.
-    # Call {PREFIX_PAREN} and return its result.
-
-    # obsoleted by the merge of PR #2137:
-    # Let {var} be {EXPR}, and let {var} be {EXPR}.
-    # Remove the first element from {var} and let {var} be the value of that element.
-    # Remove the first element from {var} and let {var} be the value of the element.
-
-    # obsoleted by the merge of PR #2142:
-    # Append in order the code unit elements of {var} to the end of {var}.
-    # Store the individual bytes of {var} into {var}, in order, starting at {var}[{var}].
-
-    # obsoleted by the merge of PR #2152:
-    # Append in list order the elements of {var} to the end of the List {var}.
-
 # ----------------------------------------------
 
 {IF_CLOSED} :
@@ -255,15 +169,6 @@
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.
 
-    # obsoleted by the merge of #1596:
-    # If {CONDITION}, {SMALL_COMMAND}; else, {SMALL_COMMAND}.
-
-    # obsoleted by the merge of #2009:
-    # If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.
-
-    # obsoleted by the merge of PR #2013:
-    # If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
-
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
 
@@ -271,9 +176,6 @@
     If {CONDITION}, then{IND_COMMANDS}
     If {CONDITION}, {MULTILINE_SMALL_COMMAND}
     If {CONDITION}, {SMALL_COMMAND}.
-
-    # obsoleted by the merge of PR #2218
-    # If {CONDITION}, then {SMALL_COMMAND}.
 
 {IF_TAIL} :
     {EPSILON}
@@ -322,18 +224,6 @@
     the replacement text is {EXPR}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
-
-    # obsoleted by merge of PR #1614:
-    # no further validation is required
-
-    # obsoleted by merge of PR #2139:
-    # in left to right order, starting with the second argument, append each argument as the last element of {var}
-
-    # obsoleted by merge of PR #2142:
-    # store the individual bytes of {var} into {var}, in order, starting at {var}[{var}]
-
-    # obsoleted by merge of PR #2348:
-    # apply the early error rules for {h_emu_grammar} to {var}
 
 # ------------------------------------------------------
 
@@ -401,21 +291,6 @@
     {B} {code_unit_lit} or {code_unit_lit} according to whether {var} - 1 is positive or negative
     {B} {var}
 
-    # obsoleted by the merge of PR #1180.
-    # {B} If any {DSBN} call returns {LITERAL} a {ERROR_TYPE} exception is thrown.
-    # {B} The arguments for calls to SortCompare are values returned by a previous call to the {DSBN} internal method, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent use +1. If only the second prospective argument is non-existent use -1.
-    # {B} The property key argument for each call to {DSBN}, {DSBN}, HasOwnProperty, or DeletePropertyOrThrow is the string representation of a nonnegative integer less than {var}.
-
-    # obsoleted by the merge of PR #1585:
-    # {B} If an abrupt completion is returned from any of these operations, it is immediately returned as the value of this function.
-    # {B} If {var} is not sparse then DeletePropertyOrThrow must not be called.
-    # {B} The `Throw` argument for every call to {h_emu_xref} is {LITERAL}.
-    # {B} The arguments for calls to SortCompare are values returned by a previous call to the {cap_word} abstract operation, unless the properties accessed by those previous calls did not exist according to HasOwnProperty. If both prospective arguments to SortCompare correspond to non-existent properties, use {NUM_LITERAL} instead of calling SortCompare. If only the first prospective argument is non-existent, use {NUM_LITERAL}. If only the second prospective argument is non-existent, use {NUM_LITERAL}.
-    # {B} The property key argument for each call to {cap_word}, {h_emu_xref}, {cap_word}, or {cap_word} is the string representation of a non-negative integer less than {var}.
-
-    # oboleted by the merge of PR #2138:
-    # {B} the previous value of {var}
-
 {B} :
     {nlai}*
 
@@ -445,15 +320,6 @@
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
-
-    # obsoleted by PR #2085: 
-    # either {CONDITION_1} or {CONDITION_1}
-
-    # obsoleted by the merge of PR #2013:
-    # {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}
-
-    # obsoleted by PR #2111: 
-    # {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
@@ -813,137 +679,6 @@
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
     {var}, {var}, and {var} have the same number of elements
 
-    # obsoleted by the merge of PR #1046
-    # The VariableEnvironment and LexicalEnvironment of {var} are the same
-    # {var} and {var} are the same
-
-    # obsoleted by the merge of PR # 1411 (not-present parameters):
-    # no arguments were passed to this function invocation
-    # {EX} is either not present or {LITERAL}
-    # {EX} is not present, or is either {LITERAL} or {LITERAL}
-    # {var} is {LITERAL}, {LITERAL} or not supplied
-
-    # obsoleted by the merge of PR #1460
-    # {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}
-    # {var} is a Bound Function exotic object
-
-    # obsoleted by the merge of PR #1546:
-    # {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-
-    # obsoleted by the merge of PR #1567:
-    # {CONDITION_1} : {var} is a nonnegative integer
-    # {CONDITION_1} : {var} is an integer Number &ge; 0
-    # {CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}
-    # {CONDITION_1} : {var} is an integer such that {CONDITION_1}
-    # {CONDITION_1} : {var} is an integer value &ge; 0
-
-    # obsoleted by the merge of PR #1597:
-    # All dependencies of {var} have been transitively resolved and {var} is ready for evaluation
-    # The execution context stack is now empty
-    # its value is the name of a Job Queue recognized by this implementation
-    # {var} is a List that has the same number of elements as the number of parameters required by {var}
-    # {var} is the name of a Job
-    # {var} is the source code of a module
-    # {var} is the source code of a script
-
-    # obsoleted by the merge of PR #1614:
-    # the {DSBN} fields of {var} and {var} are the Boolean negation of each other
-    # {EX} and {EX} have different results
-
-    # obsoleted by the merge of PR #1670:
-    # {var} has been linked and declarations in its module environment have been instantiated
-
-    # obsoleted by the merge of PR #1676
-    # All of the above CreateDataProperty operations return {LITERAL}
-    # Each of the above calls returns {LITERAL}
-
-    # obsoleted by the merge of PR #1692
-    # {var} is a Synchronize event
-
-    # obsoleted by the merge of PR #1697:
-    # {var} is a Lexical Environment
-
-    # obsoleted by the merge of PR #1302
-    # {var} is an extensible object that does not have a {backticked_word} own property
-
-    # obsoleted by the merge of PR #1752 (index-checking for IIEOs)
-    # {var} is an Object that has {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN} internal slots
-
-    # obsoleted by the merge of PR #1827
-    # {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-
-    # obsoleted by the merge of PR #1923
-    # {var} is a String
-
-    # obsoleted by the merge of PR #1924:
-    # {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured
-
-    # obsoleted by the merge of PR #1961:
-    # @ is {EX}
-
-    # obsoleted by the merge of PR #1965:
-    # {var} is present as a parameter
-
-    # obsoleted by the merge of PR #1994:
-    # This method is never invoked. See {h_emu_xref}
-
-    # obsoleted by the merge of PR #2009:
-    # there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}
-    # there is no such integer {var}
-
-    # obsoleted by the merge of PR #2013:
-    # any Early Error conditions exist
-    # any elements of {var} were not matched by the parse
-    # {var} did not conform to the grammar
-
-    # obsoleted by the merge of PR #2021:
-    # the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits
-    # the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}
-    # the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits
-
-    # obsoleted by the merge of PR #2022:
-    # {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}
-
-    # obsoleted by the merge of PR #2029:
-    # the most significant bit in {var} is {NUM_LITERAL}
-    # the two most significant bits in {var} are not 10
-
-    # obsoleted by the merge of PR #2045:
-    # {var} does not have all of the internal slots of a RegExp String Iterator Object Instance (see {h_emu_xref})
-    # {var} does not have all of the internal slots of an? {TYPE_NAME} Iterator Instance ({h_emu_xref})
-
-    # obsoleted by the merge of PR #2085:
-    # In this case, {var} will never be {LITERAL} or {LITERAL}
-    # the base of {var} is an Environment Record
-    # {EX} is an Object
-    # {var} has a thisValue component
-    # {var} is a Reference to an Environment Record binding
-
-    # obsoleted by the merge of PR #2112:
-    # there does not exist a member {var} of set {var} such that {CONDITION_1}
-    # there exists a member {var} of set {var} such that {CONDITION_1}
-
-    # obsoleted by the merge of PR #2139:
-    # the number of actual arguments is {NUM_LITERAL}
-    # this method was called with more than one argument
-
-    # obsoleted by the merge of PR #2176:
-    # {var} has a {DSBN} internal slot. If it does not, the definition in {h_emu_xref} applies
-    # {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot. If it is such an Object, the definition in {h_emu_xref} applies
-
-    # obsoleted by the merge of PR #2177:
-    # its value is either {LITERAL} or {LITERAL}
-    # {var} is hint Number
-    # {var} is hint String
-    # {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}
-
-    # obsoleted by the merge of PR #2258:
-    # there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}
-
-    # obsoleted by the merge of PR #2348:
-    # any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}
-    # {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements
-
 {PROPERTY_KIND} :
     accessor
     data
@@ -963,22 +698,9 @@
     Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}
     Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
 
-    # obsoleted by the merge of PR #1918:
-    # Type({TYPE_ARG}) is {var}
-
-    # obsoleted by the merge of PR #2085:
-    # Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
-
-    # obsoleted by the merge of PR #2341:
-    # Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot
-    # Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots
-
 {TYPE_ARG} :
     {DOTTING}
     {var}
-
-    # obsoleted by the merge of PR #2085:
-    # {var}'s base value component
 
 {NUM_COMPARISON} :
     {NUM_COMPARAND} is 10 or less
@@ -1003,32 +725,12 @@
     =
     is at least
 
-    # obsoleted by the merge of PR #2029:
-    # is greater than
-
 # ---------------------------------------------------------------
 
 {MULTILINE_EXPR} :
     a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
     the string-concatenation of:{I_BULLETS}
     the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
-
-    # obsoleted by the merge of PR #1797:
-    # an internal AssertionTester closure that takes a State argument {var} and performs the following steps:{IND_COMMANDS}
-
-    # obsoleted by the merge of PR #1899:
-    # an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}
-    # an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}
-    # an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}
-
-    # obsoleted by the merge of PR #2013:
-    # the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}
-
-    # obsoleted by the merge of PR #2112:
-    # a set of characters containing the sixty-three characters:{nlai}{h_figure}
-
-    # obsoleted by the merge of PR #2216:
-    # the source text{_indent_}{nlai}{h_pre_code}{_outdent_}
 
 {CLOSURE_KIND} :
     Abstract Closure
@@ -1330,189 +1032,6 @@
     {var}'s {DSBN} value
     {var}<sup>th</sup> element of {var}'s _captures_ List
 
-    # obsoleted by the merge of PR #1124:
-    # the numeric value 1
-
-    # obsoleted by the merge of PR #1135:
-    # the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}
-    # the Number value of the Element Size value in {h_emu_xref} for {var}
-    # the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}
-    # the Number value of the Element Size value specified in {h_emu_xref} for {var}
-    # the mathematical value that is the same sign as {var} and whose magnitude is floor(abs({var}))
-    # the number of code points in {PROD_REF}
-    # the number value that is the same sign as {var} and whose magnitude is {EX}
-    # the number whose value is {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
-
-    # obsoleted by the merge of PR #1376:
-    # the intrinsic object {percent_word}
-
-    # obsoleted by the merge of PR #1402:
-    # a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
-
-    # obsoleted by the merge of PR #1460:
-    # a newly created Array exotic object
-    # a newly created ECMAScript function object with the internal slots listed in {h_emu_xref}
-    # a newly created Integer-Indexed exotic object with an internal slot for each name in {var}
-    # a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}
-    # a newly created String exotic object with a {DSBN} internal slot
-    # a newly created arguments exotic object with a {DSBN} internal slot
-    # a newly created bound function exotic object with the internal slots listed in {h_emu_xref}
-    # a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}
-
-    # obsoleted by the merge of PR #1523:
-    # the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
-    # the Completion Record that is the result of evaluating {var} in an implementation-defined manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
-
-    # obsoleted by the merge of PR #1597:
-    # a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined
-    # the PendingJob record at the front of {var}
-
-    # obsoleted by the merge of PR #1602:
-    # a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string
-    # a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string
-
-    # obsoleted by the merge of PR #1635
-    # an empty sequence of algorithm steps
-    # the algorithm steps specified in {h_emu_xref} for the {percent_word} function
-
-    # obsoleted by the merge of PR #1697:
-    # a new Lexical Environment
-
-    # obsoleted by the merge of PR #1725:
-    # the String value of the Element Type value in {h_emu_xref} for {EX}
-
-    # obsoleted by the merge of PR #1734:
-    # the Element Size specified in {h_emu_xref} for Element Type {var}
-    # the Element Size value in {h_emu_xref} for {var}
-
-    # obsoleted by the merge of PR #1889:
-    # a Continuation that always returns its State argument as a successful MatchResult
-    # a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}
-    # a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}
-
-    # obsoleted by the merge of PR #1961:
-    # the `@` where |AssignmentOperator| is `@=`
-    # the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}
-
-    # obsoleted by the merge of PR #1994:
-    # the arguments object
-    # the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked
-    # this Cyclic Module Record
-    # this Source Text Module Record
-
-    # obsoleted by the merge of PR #2009:
-    # the smallest possible integer {var} not smaller than {var} such that {CONDITION}; but if there is no such integer {var}, return the value {NUM_EXPR}
-
-    # obsoleted by the merge of PR #2013:
-    # a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors
-    # the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})
-    # the Parse Node resulting from the parse
-    # the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
-    # the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails
-
-    # obsoleted by the merge of PR #2018:
-    # the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}
-    # the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}
-    # the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}
-    # the code unit sequence consisting of {var} followed by {var}
-    # the sequence of code units consisting of the code units of {var} followed by the elements of {var}
-    # the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}
-
-    # obsoleted by the merge of PR #2021:
-    # the String value consisting of the first 10 code units of {var}
-    # the String value containing {DOTTING} consecutive code units from {var} beginning with the code unit at index {var}
-    # the String value containing {var} consecutive code units from {var} beginning with the code unit at index {var}
-    # the String value equal to the substring of {var} consisting of the code units at indices {var} (inclusive) through {var} (exclusive)
-    # the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order
-    # the enclosed substring
-    # the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}
-    # the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}
-    # the matched substring (i.e. the portion of {var} between offset {var} inclusive and offset {var} exclusive)
-    # the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String
-    # the substring of {var} consisting of all code units before the first such code unit
-    # the substring of {var} from index {var} to index {var} inclusive
-
-    # obsoleted by the merge of PR #2029:
-    # a List of 8-bit integers of size {var}
-    # the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}
-
-    # obsoleted by the merge of PR #2085:
-    # a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}
-    # a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}
-    # the value of the thisValue component of the reference {var}
-
-    # obsoleted by the merge of PR #2112:
-    # an empty set
-    # the String value consisting of the single code unit {var}
-    # the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value
-    # the set containing all characters numbered {var} through {var}, inclusive
-    # the set of all characters
-    # the set of all characters except {nonterminal}
-    # the set of all characters not included in the set returned by {h_emu_grammar} 
-    # the set of all characters returned by {PREFIX_PAREN}
-    # the set of characters containing the characters that are on the right-hand side of the {nonterminal} or {nonterminal} productions
-    # the ten-element set of characters containing the characters `0` through `9` inclusive
-
-    # obsoleted by the merge of PR #2139:
-    # a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty
-    # a List containing the arguments passed to this function
-    # a List whose elements are the arguments passed to this function
-    # a List whose elements are, in left to right order, the arguments that were passed to this function invocation
-    # a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed
-    # a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation
-    # a new (possibly empty) List consisting of all of the argument values provided after {var} in order
-    # a zero-origined List containing the argument items in order
-    # the List of argument values starting with the second argument
-    # the List of arguments passed to this function
-    # the actual number of arguments passed to this function
-    # the number of actual arguments
-    # the number of actual arguments minus 2
-
-    # obsoleted by the merge of PR #2142:
-    # a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}
-    # a List consisting of the sequence of code units that are the elements of {var}
-    # a List containing the elements, in order, of {var} followed by {var}
-    # a List containing {var} followed by the elements, in order, of {var}
-    # a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order
-    # a List whose first element is {var} and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements
-    # a new List containing the same values as the list {var} where the values are ordered as if an Array of the same values had been sorted using `Array.prototype.sort` using *undefined* as {var}
-    # a new List of {var} with {LITERAL} appended
-    # a new List which is a copy of {var}
-    # a new List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)
-    # a new list containing the same values as the list {var} in the same order followed by the same values as the list {var} in the same order
-    # the String value whose code units are, in order, the elements in the List {var}. If {var} has no elements, the empty String is returned
-    # the String value whose code units are, in order, the elements in the List {var}. If {var} is empty, the empty String is returned
-    # the String value whose code units are, in order, the elements in {PP_NAMED_OPERATION_INVOCATION}
-
-    # obsoleted by the merge of PR #2146:
-    # the larger of 0 and the result of {var} minus the number of elements of {var}
-
-    # obsoleted by the merge of PR #2152:
-    # the String value whose code units are, in order, the elements in the List {var}. If {var} is 0, the empty String is returned
-
-    # obsoleted by the merge of PR #2176:
-    # the number of arguments passed to this function call
-
-    # obsoleted by the merge of PR #2201:
-    # a List containing only {var}
-    # a List containing the one element which is {var}
-    # a List containing the single element, {var}
-    # a List containing {PP_NAMED_OPERATION_INVOCATION}
-    # a List containing {PROD_REF}
-    # a List of length 1 that contains a nondeterministically chosen byte value
-    # a List whose sole item is {var}
-    # a new List containing {EXPR}
-
-    # obsoleted by the merge of PR #2258:
-    # the smallest (closest to -&infin;) such integer
-
-    # obsoleted by the merge of PR #2287:
-    # a new object Environment Record containing {var} as the binding object
-    # the binding object for {var}
-
-    # obsoleted by the merge of PR #2374
-    # the child of {var} that is an instance of {var}
-
 {EX} :
     &laquo; &raquo;
     &laquo; {EXLIST} &raquo;
@@ -1565,37 +1084,6 @@
     {var} rounded towards 0 to the next integer value
     {var}'s _endIndex_
     {var}'s _endIndex_ value
-
-    # obsoleted by the merge of PR #1597:
-    # PromiseReactionJob
-    # PromiseResolveThenableJob
-    # ScriptEvaluationJob
-    # TopLevelModuleEvaluationJob
-
-    # obsoleted by the merge of PR #2018:
-    # the code unit that is {PP_NAMED_OPERATION_INVOCATION}
-
-    # obsoleted by the merge of PR #2021:
-    # the current value of {var}
-    # the first {var} code units of {var}
-    # the substring of {var} consisting of the code units from {var} (inclusive) up through the final code unit of {var} (inclusive)
-    # the substring of {var} consisting of the code units from {var} (inclusive) up to {var} (exclusive)
-    # the trailing substring of {var} starting at index {var}
-
-    # obsoleted by the merge of PR #2085:
-    # the base value component of {var}
-    # the referenced name component of {var}
-    # the strict reference flag of {var}
-
-    # obsoleted by the merge of PR #2138:
-    # the previous value of {var}
-
-    # obsoleted by the merge of PR #2149:
-    # \u00ab {EXLIST} \u00bb
-
-    # obsoleted by the merge of PR #2177:
-    # hint Number
-    # hint String
 
 {MATH_FUNC} :
     base 10 logarithm
@@ -1654,23 +1142,6 @@
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
 
-    # obsoleted by the merge of PR #1124:
-    # the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero
-
-    # obsoleted by the merge of PR #1571:
-    # StringValue of the {nonterminal} of {nonterminal} {var}
-
-    # obsoleted by the merge of PR #1597:
-    # the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments
-
-    # obsoleted by the merge of PR #1866:
-    # the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-
-    ## directed-operations:
-    ## {nonterminal}.\w+() as defined in {h_emu_xref}
-    ## {nonterminal}.\w+(); if {nonterminal} is not present, use the numeric value zero
-    ## {nonterminal}.\w+({EXLIST_OPT})
-
 {LOCAL_REF} :
     the parsed code that is {DOTTING}
     the {nonterminal} of {var}
@@ -1701,9 +1172,6 @@
     {PASSING} {var} and {EX} as arguments
     {PASSING} {var} and {EX} as the arguments
     {PASSING} {var}, {var}, and {var} as the arguments
-
-    # obsoleted by the merge of PR #1571:
-    # {PASSING} arguments {EX} and {EX} as the optional {var} argument
 
 {PASSING} :
     passing
@@ -1783,9 +1251,6 @@
     the Record
     the Reference Record
 
-    # obsoleted by the merge of PR #1597:
-    # PendingJob
-
 {FIELDS} :
     {FIELDS}, {FIELD}
     {FIELD}
@@ -1813,21 +1278,6 @@
     {var}'s {EXECUTION_CONTEXT_COMPONENT}
     {var}[{EX}]
 
-    # obsoleted by the merge of PR #1697:
-    # the _withEnvironment_ flag of {var}'s EnvironmentRecord
-    # the {LEXICAL_ENVIRONMENT_COMPONENT} component of {var}
-    # the {LEXICAL_ENVIRONMENT_COMPONENT} of {var}
-    # {var}'s {LEXICAL_ENVIRONMENT_COMPONENT}
-
-    # obsoleted by the merge of PR #1740:
-    # the {var}'s {EXECUTION_CONTEXT_COMPONENT}
-
-    # obsoleted by the merge of PR #1743:
-    # {var}'s {EXECUTION_CONTEXT_COMPONENT} component
-
-    # obsoleted by the merge of PR #2287:
-    # the _withEnvironment_ flag of {var}
-
 {EXECUTION_CONTEXT_COMPONENT} :
     Function
     Generator
@@ -1838,16 +1288,9 @@
     VariableEnvironment
     code evaluation state
 
-# obsoleted by the merge of PR #1697:
-# {LEXICAL_ENVIRONMENT_COMPONENT} :
-#     EnvironmentRecord
-#     outer lexical environment reference
-#     outer environment reference
-
 # --------------------------------
 
 {NUM_EXPR} :
-    #pre-1135: the exact mathematical value of {SUM}
     &pi;
     &pi; / 2
     &pi; / 4
@@ -1861,9 +1304,6 @@
     {SUM}
 # Note that this is not trying to capture every expression that has a numeric result,
 # merely those that involve mathematical operators/forms.
-
-    # obsoleted by the merge of PR #2029:
-    # {BIT_EX}
 
 # {BIT_EX} :
 #     {FACTOR} {BIT_OPERATOR} {FACTOR}
@@ -1879,15 +1319,11 @@
 {SUM_OPERATOR} :
     +
     -
-    #? -{h_sub_fancy_r}
     plus
 
 {TERM} :
     {FACTOR}
     {PRODUCT}
-
-    # obsoleted by the merge of PR #2021:
-    # the number of code units in {var}
 
 {PRODUCT} :
     the negation of {EX}
@@ -1902,9 +1338,6 @@
 {PRODUCT_OPERATOR} :
     &times;
     /
-
-    # obsoleted by the merge of PR #2270:
-    # &divide;
 
 {FACTOR} :
     ({NUM_EXPR})
@@ -1954,15 +1387,7 @@
     the single-element String *","*
     {starred_str}
 
-    # obsoleted by PR #1780
-    # the empty String *""*
-    # the empty string
-
-    # obsoleted by the merge of PR #2017:
-    # the empty String value
-
 {NUM_LITERAL} :
-    #! (2|10)<sup>[0-9]+</sup>
     *-0.5*{h_sub_fancy_f}
     *0.5*{h_sub_fancy_f}
     +&infin;
@@ -2001,17 +1426,5 @@
     Matcher
     character
     integer
-
-    # obsoleted by the merge of PR #1797:
-    # AssertionTester
-
-    # obsoleted by the merge of PR #2045:
-    # Array
-    # Map
-    # Set
-
-    # obsoleted by the merge of PR #2085:
-    # Reference
-
 
 # -----------------------

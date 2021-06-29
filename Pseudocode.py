@@ -525,7 +525,6 @@ def analyze_sections():
                         # This is just showing the format of algorithms,
                         # so it's not meant to be parsable.
 
-                        '\n            5. Otherwise, let ', # PR 1515 BigInt obsoleted
                         '\n              1. Otherwise, let ',
                         # 7.1.12.1 NumberToString
                         # The is unparsable because the grammar doesn't

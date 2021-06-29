@@ -1101,18 +1101,6 @@ class PreambleInfoHolder:
                 # 'preambles' PR:
                 'the _comparefn_ and _buffer_ values of the current invocation of the `sort` method':
                     (['_comparefn_', '_buffer_'], 'from the `sort` method'),
-
-                # '_reviver_ that was originally passed to the above parse function':
-                #     (['_reviver_'], 'from the above parse function'),
-                # ^ obsoleted by the merge of PR #1879
-
-                # '_ReplacerFunction_ from the invocation of the `stringify` method':
-                #     (['_ReplacerFunction_'], 'from the invocation of the `stringify` method'),
-                # 'the _stack_, _indent_, _gap_, and _PropertyList_ values of the current invocation of the `stringify` method':
-                #     (['_stack_', '_indent_', '_gap_', '_PropertyList_'], 'from the current invocation of the `stringify` method'),
-                # 'the _stack_, _indent_, and _gap_ values of the current invocation of the `stringify` method':
-                #     (['_stack_', '_indent_', '_gap_'], 'from the current invocation of the `stringify` method'),
-                # ^ obsoleted by the merge of PR #1890
             }[also]
             poi.also = [
                 (varname, where)

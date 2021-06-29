@@ -37,10 +37,6 @@
     {CONDITION_1} unless {CONDITION_1}
     {CONDITION_1}, unless {CONDITION_1}
 
-
-    # obsoleted by the merge of PR #1658:
-    # {CONDITION_1} and if {CONDITION_1}
-
 {CONDITION_1} :
     any code matches this production
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
@@ -99,21 +95,6 @@
 
     {var} &ge; 2<sup>32</sup> - 1
 
-    # obsoleted by the merge of PR #1464:
-    # {NAMED_OPERATION_INVOCATION} cannot be recognized using the goal symbol {nonterminal} of the ECMAScript RegExp grammar specified in {h_emu_xref}
-    # {NAMED_OPERATION_INVOCATION} contains any code points other than `g`, `i`, `m`, `s`, `u`, or `y`, or if it contains the same code point more than once
-
-    # obsoleted by the merge of PR #1658:
-    # {LOCAL_REF} derives a phrase that would produce a Syntax Error according to these rules if that phrase were substituted for {PROD_REF}. This rule is recursively applied
-    # {LOCAL_REF} is either an {nonterminal} or an {nonterminal}
-    # {LOCAL_REF} is neither an {nonterminal} nor an {nonterminal}
-
-    # obsoleted by the merge of PR #1724:
-    # {NAMED_OPERATION_INVOCATION} contains any code points other than `"g"`, `"i"`, `"m"`, `"s"`, `"u"`, or `"y"`, or if it contains the same code point more than once
-
-    ## directed-operations:
-    ## {NAMED_OPERATION_INVOCATION} is `"eval"` or `"arguments"`
-
 {NAMED_OPERATION_INVOCATION} :
     the result of performing {cap_word} on {EX}
     the {cap_word} of {LOCAL_REF}
@@ -122,12 +103,6 @@
     {cap_word}({PROD_REF})
     {cap_word}({named_char})
     {cap_word}({var})
-
-    ## directed-operations:
-    ## {var}.\w+()
-    ## {nonterminal}.\w+()
-    ## {nonterminal}.\w+({G_SYM})
-
 
 {LOCAL_REF} :
     {PROD_REF}

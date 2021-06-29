@@ -956,18 +956,6 @@ ahat_ = {
     ('_comparefn_', 'from the current invocation of the `sort` method'):
         'Undefined | function_object_',
 
-    # ('_reviver_', 'from the above parse function'):
-    #     'function_object_',
-    # ^ obsoleted by the merge of PR #1879
-
-    # ('_ReplacerFunction_', 'from the invocation of the `stringify` method'):
-    #     'function_object_ | Undefined',
-    # ('_stack_'       , 'from the current invocation of the `stringify` method'): 'List of Object',
-    # ('_indent_'      , 'from the current invocation of the `stringify` method'): 'String',
-    # ('_gap_'         , 'from the current invocation of the `stringify` method'): 'String',
-    # ('_PropertyList_', 'from the current invocation of the `stringify` method'): 'Undefined | List',
-    # ^ obsoleted by the merge of PR #1890
-
     ('_IgnoreCase_', 'Boolean'): 'Boolean',
 
     ('_Input_'           , 'from somewhere'): 'List of character_',
@@ -1569,7 +1557,6 @@ named_type_hierarchy = {
                         },
                         'other Module Record': {},
                     },
-                    # 'PendingJob': {}, # PR 1597
                     'PrivateElement': {},
                     'PrivateEnvironment Record': {},
                     'PromiseCapability Record': {},
@@ -3640,9 +3627,7 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)",
-        # r"{COMMAND} : Let {var} be {EXPR}. Remove that record from {var}.", # PR 1597
         r"{COMMAND} : Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.",
-        # r"{COMMAND} : Let {var} be {EXPR}. {note}", # obsoleted by PR 1831
         r"{COMMAND} : Let {var} be {EXPR}.",
         r"{COMMAND} : Let {var} be {MULTILINE_EXPR}",
         r"{SMALL_COMMAND} : let {var} be {EXPR}",
@@ -3712,20 +3697,6 @@ def tc_nonvalue(anode, env0):
         (t, env1) = tc_expr(expr, env0)
         result = env1.plus_new_entry(let_var, t)
 
-#    elif p == r'{COMMAND} : Let {var} be {EXPR}, and let {var} be {EXPR}.':
-#        [let_var1, expr1, let_var2, expr2] = children
-#        (t1, env1) = tc_expr(expr1, env0) # ; assert env1 is env0 disable assert due to toFixed
-#        (t2, env2) = tc_expr(expr2, env1) # ; assert env2 is env0 disable assert due to toExponential
-#        result = env2.plus_new_entry(let_var1, t1).plus_new_entry(let_var2, t2)
-# ^ obsoleted by PR 2137
-
-#    elif p == r"{COMMAND} : Let {var} be the smallest nonnegative integer such that {CONDITION}.":
-#        [var, cond] = children
-#        env_for_cond = env0.plus_new_entry(var, T_MathNonNegativeInteger_)
-#        (t_env, f_env) = tc_cond(cond, env_for_cond); assert t_env.equals(env_for_cond); assert f_env.equals(env_for_cond)
-#        result = t_env
-# ^ obsoleted by PR 2029
-
     elif p in [
         r"{COMMAND} : Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)",
     ]:
@@ -3742,23 +3713,12 @@ def tc_nonvalue(anode, env0):
         new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
         result = new_env
 
-#    elif p == r'{COMMAND} : Let {SAB_FUNCTION} be {EX}.':
-#        [sab_fn, ex] = children
-#        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
-#        # result = env0.plus_new_entry(sab_fn, ex_t) # XXX doesn't work
-#        result = env1
-
     # Let {var} and {var} ... be ...
 
     elif p == r"{COMMAND} : Let {var} and {var} be {LITERAL}.":
         [alet, blet, lit] = children
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
         result = env0.plus_new_entry(alet, lit_type).plus_new_entry(blet, lit_type)
-
-# PR 1692 obsoleted
-#    elif p == r"{COMMAND} : Let {var} and {var} be new Synchronize events.":
-#        [alet, blet] = children
-#        result = env0.plus_new_entry(alet, T_Synchronize_event).plus_new_entry(blet, T_Synchronize_event)
 
     elif p == r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.":
         [m_var, n2_var, n_var] = children
@@ -3800,15 +3760,6 @@ def tc_nonvalue(anode, env0):
         result = env_for_cond
 
     # ---
-
-#    elif p in [
-#        r"{COMMAND} : Remove the first element from {var} and let {var} be the value of that element.",
-#        r"{COMMAND} : Remove the first element from {var} and let {var} be the value of the element.",
-#    ]:
-#        [list_var, item_var] = children
-#        list_type = env0.assert_expr_is_of_type(list_var, T_List)
-#        result = env0.plus_new_entry(item_var, list_type.element_type)
-# ^ obsoleted by PR 2137
 
     elif p == r"{COMMAND} : Let {var} be the first element of {var} and remove that element from {var}.":
         [item_var, list_var, list_var2] = children
@@ -3900,152 +3851,13 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env1, T_Number, literal)
         result = env1
 
-#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be its result.':
-#        [prefix_paren, let_var] = children
-#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-#        result = env1.plus_new_entry(let_var, t)
-#
-#    elif p in [
-#        # r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting Boolean value.', obs by PR 1797
-#        r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the Boolean result.',
-#    ]:
-#        [prefix_paren, let_var] = children
-#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-#        assert t == T_Boolean
-#        result = env1.plus_new_entry(let_var, t)
-#
-#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and let {var} be the resulting CharSet.':
-#        [prefix_paren, let_var] = children
-#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-#        assert t == T_CharSet
-#        result = env1.plus_new_entry(let_var, t)
-# ^ obsoleted by PR 2112
-
-#    elif p == r"{COMMAND} : Search {var} for the first occurrence of {var} and let {var} be the index within {var} of the first code unit of the matched substring and let {var} be {var}. If no occurrences of {var} were found, return {var}.":
-#        [s_var, needle, leta_var, s_var2, letb_var, needle2, needle3, s_var3] = children
-#        assert same_source_text(s_var, s_var2)
-#        assert same_source_text(s_var, s_var3)
-#        assert same_source_text(needle, needle2)
-#        assert same_source_text(needle, needle3)
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(needle, T_String)
-#        proc_add_return(env0, T_String, s_var3)
-#        result = env0.plus_new_entry(leta_var, T_MathInteger_).plus_new_entry(letb_var, T_String)
-# ^ obsoleted by PR 2021
-
-#    elif p == r"{COMMAND} : Evaluate {PP_NAMED_OPERATION_INVOCATION} to obtain a code unit {var}.":
-#        [noi, v] = children
-#        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
-#        result = env0.plus_new_entry(v, T_code_unit_)
-# ^ obsoleted by PR 2018
-
     # ---
     # parse
-
-#    elif p == r'{COMMAND} : Parse {var} using {nonterminal} as the goal symbol and analyse the parse result for any Early Error conditions. If the parse was successful and no early errors were found, let {var} be the resulting parse tree. Otherwise, let {var} be a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. Parsing and early error detection may be interweaved in an implementation-defined manner. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present.':
-#        [source_var, nonterminal, result_var1, result_var2, error_type1] = children
-#        env1 = env0.ensure_expr_is_of_type(source_var, T_Unicode_code_points_)
-#        assert env1 is env0
-#        assert result_var1.children == result_var2.children
-#        error_type1_name = error_type1.source_text()[1:-1]
-#        result_type = ptn_type_for(nonterminal) | ListType(NamedType(error_type1_name))
-#        result = env1.plus_new_entry(result_var1, result_type)
-#        # but no result variable, hm.
-# ^ obsoleted by PR 2013
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting each of its 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-#        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
-#        assert var.children == var2.children
-#        assert var.children == var3.children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        error_type_name = error_type.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-#        result = env0
-#        # but no result variable, hm.
-# ^ obsoleted by PR 1552
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-#        [var, emu_xref, goal_nont, other_nont, goal_nont2, error_type, var2, var3] = children
-#        assert var.children == var2.children
-#        assert var.children == var3.children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        error_type_name = error_type.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-#        result = env0
-#        # but no result variable, hm.
-# ^ obsoleted by PR 1866
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal} and use this result instead.":
-#        [var, emu_xref, goal_nont, other_nont, goal_nont2] = children
-#        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
-#        result = env1
-#        # but no result variable, hm.
-# ^ obsoleted by PR 2013
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref} and interpreting {var} as UTF-16 encoded Unicode code points ({h_emu_xref}). The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-#        [var, emu_xref, var2, emu_xref2, goal_nont, error_type, var3, var4] = children
-#        assert var.children == var2.children
-#        assert var.children == var3.children
-#        assert var.children == var4.children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        error_type_name = error_type.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-#        result = env0
-#        # but no result variable, hm.
-# ^ obsoleted by PR 1552
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. Throw a {ERROR_TYPE} exception if {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist.":
-#        [var, emu_xref, goal_nont, error_type, var3, var4] = children
-#        assert var.children == var3.children
-#        assert var.children == var4.children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        error_type_name = error_type.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
-#        result = env0
-#        # but no result variable, hm.
-# ^ obsoleted by PR 1866
-
-#    elif p == r"{COMMAND} : Parse {var} interpreted as UTF-16 encoded Unicode points ({h_emu_xref}) as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if {var} is not a valid JSON text as defined in that specification.":
-#        [svar, emu_xref, error_type, svar2] = children
-#        assert same_source_text(svar, svar2)
-#        env0.assert_expr_is_of_type(svar, T_String)
-#        result = env0
-# ^ obsoleted by PR 1552
 
     elif p == r"{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.":
         [noi, error_type] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         result = env0
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If the result of parsing contains a {nonterminal}, reparse with the goal symbol {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
-#        [var, emu_xref, goal_nont, contained_nont, foal_nont2, var2, var3, lita, litb] = children
-#        assert var.children == var2.children
-#        assert var.children == var3.children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        env0.assert_expr_is_of_type(lita, T_Boolean)
-#        env0.assert_expr_is_of_type(litb, T_Boolean)
-#        proc_add_return(env0, T_Boolean, lita)
-#        proc_add_return(env0, T_Boolean, litb)
-#        result = None
-# ^ obsoleted by PR 1866
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}. If {var} did not conform to the grammar, if any elements of {var} were not matched by the parse, or if any Early Error conditions exist, return {LITERAL}. Otherwise, return {LITERAL}.":
-#        [var, emu_xref, goal_nont, var2, var3, lita, litb] = children
-#        assert var.children == var2.children
-#        assert var.children == var3.children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        env0.assert_expr_is_of_type(lita, T_Boolean)
-#        env0.assert_expr_is_of_type(litb, T_Boolean)
-#        proc_add_return(env0, T_Boolean, lita)
-#        proc_add_return(env0, T_Boolean, litb)
-#        result = None
-# ^ obsoleted by PR 1866
-
-#    elif p == r"{COMMAND} : Parse {var} using the grammars in {h_emu_xref}. The goal symbol for the parse is {nonterminal}.":
-#        [var, emu_xref, goal_nont] = children
-#        env1 = env0.ensure_expr_is_of_type(var, T_Unicode_code_points_)
-#        result = env1
-# ^ obsoleted by PR 2013
 
     # ----------------------------------
     # IF stuff
@@ -4086,16 +3898,6 @@ def tc_nonvalue(anode, env0):
         b_benv = tc_nonvalue(command_b, b_t_env)
         c_benv = tc_nonvalue(command_c, b_f_env)
         result = envs_or([a_benv, b_benv, c_benv])
-
-#    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; but if {CONDITION}, {SMALL_COMMAND}.":
-#        [cond, t_command, cond2, f_command] = children
-#        assert cond2.source_text() == 'there is no such integer _k_'
-#        # so "but if {CONDITION}" = "else"
-#        (t_env, f_env) = tc_cond(cond, env0)
-#        t_benv = tc_nonvalue(t_command, t_env)
-#        f_benv = tc_nonvalue(f_command, f_env)
-#        result = env_or(t_benv, f_benv)
-# ^ obsoleted by PR #2009
 
     elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.":
         [cond, t_command, f_command, _, _, _] = children
@@ -4151,20 +3953,10 @@ def tc_nonvalue(anode, env0):
             # todo: change "If" to "Else"?
             result = None
 
-#    elif p in [
-#        r'{ELSE_PART} : Else {CONDITION},{IND_COMMANDS}',
-#        r"{ELSE_PART} : Else {CONDITION}, {SMALL_COMMAND}.",
-#    ]:
-#        [cond, commands] = children
-#        (t_env, f_env) = tc_cond(cond, env0, asserting=True)
-#        # throw away f_env
-#        result = tc_nonvalue(commands, t_env)
-
     # ----------------------------------
     # Returning (normally or abruptly)
 
     elif p in [
-        # r"{COMMAND} : Return {EXPR}. This call will always return *true*.", # PR #1924
         r"{COMMAND} : Return {EXPR} (no conversion).",
         r"{COMMAND} : Return {EXPR}.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
@@ -4193,21 +3985,6 @@ def tc_nonvalue(anode, env0):
         [] = children
         proc_add_return(env0, T_Number, anode)
         result = None
-
-
-#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and return its result.':
-#        [prefix_paren] = children
-#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-#        proc_add_return(env1, t, anode)
-#        result = None
-#
-#    elif p == r'{COMMAND} : Call {PREFIX_PAREN} and return its Matcher result.':
-#        [prefix_paren] = children
-#        (t, env1) = tc_expr(prefix_paren, env0); assert env1 is env0
-#        assert t == T_Matcher
-#        proc_add_return(env1, t, anode)
-#        result = None
-# ^ obsoleted by PR 2112
 
     elif p == r'{IAO_BODY} : Returns {LITERAL} if {CONDITION}; otherwise returns {LITERAL}.':
         [t_lit, cond, f_lit] = children
@@ -4492,13 +4269,6 @@ def tc_nonvalue(anode, env0):
         (t2_env, f2_env) = tc_cond(cond2, t1_env, asserting=True)
         result = env_or(f1_env, t2_env)
 
-#    elif p == r"{COMMAND} : Assert: Unless {CONDITION_1}, {CONDITION}.":
-#        [cond1, cond2] = children
-#        (t1_env, f1_env) = tc_cond(cond1, env0)
-#        (t2_env, f2_env) = tc_cond(cond2, f1_env, asserting=True)
-#        result = env_or(t1_env, t2_env)
-# ^ obsoleted by PR 2112
-
     elif p == r"{COMMAND} : Assert: {CONDITION_1} if and only if {CONDITION_1}.":
         [cond1, cond2] = children
         (t1_env, f1_env) = tc_cond(cond1, env0)
@@ -4561,7 +4331,6 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Suspend the currently running execution context.",
-        # r"{COMMAND} : Suspend the running execution context and remove it from the execution context stack.", # PR 1597
     ]:
         [] = children
         result = env0
@@ -4612,11 +4381,6 @@ def tc_nonvalue(anode, env0):
     ]:
         [settable, expr] = children
         result = env0.set_A_to_B(settable, expr)
-
-# obsoleted by PR 1831
-#    elif p == r'{COMMAND} : Set {SETTABLE} to {EXPR}. {note}':
-#        [settable, expr, note] = children
-#        result = env0.set_A_to_B(settable, expr)
 
     elif p == r'{COMMAND} : Set all of the bytes of {var} to 0.':
         [var] = children
@@ -4805,27 +4569,6 @@ def tc_nonvalue(anode, env0):
             assert 0
         result = env0
 
-#    elif p == r"{COMMAND} : Increment {var}.":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_MathInteger_)
-#        result = env0
-#
-#    elif p in [
-#        r'{COMMAND} : Increment {var} by {NUM_LITERAL}.',
-#        r'{COMMAND} : Decrement {var} by {NUM_LITERAL}.',
-#        r'{COMMAND} : Increase {var} by {NUM_LITERAL}.',
-#        r"{COMMAND} : Decrease {var} by {NUM_LITERAL}.",
-#        r"{SMALL_COMMAND} : increase {var} by {NUM_LITERAL}",
-#    ]:
-#        [var, num_literal] = children
-#        env0.assert_expr_is_of_type(num_literal, T_MathInteger_)
-#        result = env0.ensure_expr_is_of_type(var, T_MathInteger_)
-#
-#    elif p == r'{COMMAND} : Increment {var} and {var} each by {NUM_LITERAL}.':
-#        [vara, varb, num_literal] = children
-#        env0.assert_expr_is_of_type(num_literal, T_MathInteger_)
-#        result = env0.ensure_expr_is_of_type(vara, T_MathInteger_).ensure_expr_is_of_type(varb, T_MathInteger_)
-
     elif p == r'{COMMAND} : {note}':
         result = env0
 
@@ -4836,30 +4579,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(m_var, T_Module_Record)
         env0.assert_expr_is_of_type(n2_var, T_String)
         result = env0
-
-#    elif p == r'{COMMAND} : Perform any implementation or host environment defined processing of {var}. This may include modifying the {DSBN} field or any other field of {var}.':
-#        [var1, dsbn, var2] = children
-#        assert var1.children == var2.children
-#        env0.assert_expr_is_of_type(var1, T_PendingJob)
-#        result = env0
-#
-#    elif p == r"{COMMAND} : Perform any implementation or host environment defined job initialization using {var}.":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_PendingJob)
-#        result = env0
-#
-#    elif p == r'{COMMAND} : Add {var} at the back of the Job Queue named by {var}.':
-#        [job_var, queue_var] = children
-#        env0.assert_expr_is_of_type(job_var, T_PendingJob)
-#        env0.assert_expr_is_of_type(queue_var, T_String)
-#        result = env0
-# ^ obsoleted by PR 1597
-
-#    elif p == r"{COMMAND} : Set {var}'s essential internal methods (except for {DSBN} and {DSBN}) to the definitions specified in {h_emu_xref}.":
-#        [var, dsbn1, dsbn2, emu_xref] = children
-#        env0.assert_expr_is_of_type(var, T_Object)
-#        result = env0
-# ^ obsoleted by PR 1460
 
     elif p in [
         r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]",
@@ -4899,13 +4618,6 @@ def tc_nonvalue(anode, env0):
                     % str(noi_t)
                 )
         result = env1
-
-#    elif p == r"{COMMAND} : Add the characters in set {var} to set {var}.":
-#        [var1, var2] = children
-#        env0.assert_expr_is_of_type(var1, T_CharSet)
-#        env0.assert_expr_is_of_type(var2, T_CharSet)
-#        result = env0
-# ^ obsoleted by PR 2112
 
     elif p == r"{SMALL_COMMAND} : create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}":
         [kind, name_var, obj_var, *dsbn_, desc_var, desc_var2, emu_xref] = children
@@ -4975,11 +4687,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
 
-#    elif p == r"{COMMAND} : Need to defer setting the {DSBN} attribute to {LITERAL} in case any elements cannot be deleted.":
-#        [dsbn, literal] = children
-#        result = env0
-# ^ obsoleted by PR 1924
-
     elif p == r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.":
         [_, key_var, oer_var] = children
         env0.assert_expr_is_of_type(key_var, T_String)
@@ -5046,16 +4753,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         result = env0
 
-#    elif p == r"{IF_CLOSED} : If any static semantics errors are detected for {var} or {var}, throw a {ERROR_TYPE} exception. If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
-#        [avar, bvar, error_type1, cond, emu_grammar] = children
-#        env0.assert_expr_is_of_type(avar, T_Parse_Node)
-#        env0.assert_expr_is_of_type(bvar, T_Parse_Node)
-#        error_type_name1 = error_type1.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
-#        (t_env, f_env) = tc_cond(cond, env0); assert t_env.equals(env0); assert f_env.equals(env0)
-#        result = env0
-# ^ obsoleted by PR 2013
-
     elif p == r"{COMMAND} : Order the elements of {var} so they are in the same relative order as would be produced by the Iterator that would be returned if the EnumerateObjectProperties internal method were invoked with {var}.":
         [avar, bvar] = children
         env0.assert_expr_is_of_type(avar, ListType(T_Tangible_))
@@ -5091,16 +4788,6 @@ def tc_nonvalue(anode, env0):
         [var] = children
         env0.assert_expr_is_of_type(var, T_Object)
         result = env0
-
-#    elif p == r"{COMMAND} : In an implementation-dependent manner, obtain the ECMAScript source texts (see clause {h_emu_xref}) and any associated host-defined values for zero or more ECMAScript scripts and/or ECMAScript modules. For each such {var} and {var}, do{IND_COMMANDS}":
-#        [emu_xref, avar, bvar, commands] = children
-#        env_for_commands = (
-#            env0
-#            .plus_new_entry(avar, T_Unicode_code_points_)
-#            .plus_new_entry(bvar, T_host_defined_)
-#        )
-#        result = tc_nonvalue(commands, env_for_commands)
-# ^ obsoleted by PR 1597
 
     # -----
 
@@ -5138,14 +4825,6 @@ def tc_nonvalue(anode, env0):
         env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
         result = env2
 
-#    elif p == r"{COMMAND} : Append the elements of {PP_NAMED_OPERATION_INVOCATION} to the end of {var}.":
-#        [noi, var] = children
-#        # over-specific, but it only occurs once, in String.fromCodePoint:
-#        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
-#        env1 = env0.ensure_expr_is_of_type(var, ListType(T_code_unit_))
-#        result = env1
-# ^ obsoleted by PR 2018
-
     elif p == r"{SMALL_COMMAND} : remove the first code unit from {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
@@ -5161,22 +4840,10 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
-#    elif p == r"{COMMAND} : Let `compareExchange` denote a semantic function of two List of byte values arguments that returns the second argument if the first argument is element-wise equal to {var}.":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
-#        result = env0
-# ^ obsoleted by PR 1907
-
     elif p == r"{COMMAND} : Remove {var} from the front of {var}.":
         [el_var, list_var] = children
         env1 = env0.ensure_A_can_be_element_of_list_B(el_var, list_var)
         result = env1
-
-#    elif p == r"{SMALL_COMMAND} : in left to right order, starting with the second argument, append each argument as the last element of {var}":
-#        [var] = children
-#        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
-#        result = env1
-# ^ obsoleted by PR 2139
 
     elif p == r"{COMMAND} : Append the code unit elements of {var} to the end of {var}.":
         [a, b] = children
@@ -5250,12 +4917,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(text_var, T_Unicode_code_points_)
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
         result = env0
-
-#    elif p == r"{SMALL_COMMAND} : apply the early error rules for {h_emu_grammar} to {var}":
-#        [_, subject_var] = children
-#        env0.assert_expr_is_of_type(subject_var, T_Parse_Node)
-#        result = env0
-# ^ obsoleted by PR 2348
 
     elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that completion.":
         [var] = children
@@ -5374,7 +5035,6 @@ def tc_nonvalue(anode, env0):
 
 # ------------------------------------------------------------------------------
 
-
 def tc_cond(cond, env0, asserting=False):
     # returns a tuple of two envs, one for true and one for false
 
@@ -5423,7 +5083,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
-        # r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}, or {CONDITION_1}", # PR 2013
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
@@ -5516,15 +5175,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is an ECMAScript language type":
         [type_arg] = children
         return env0.with_type_test(type_arg, 'is a', T_Tangible_, asserting)
-
-#    elif p in [
-#        r'{TYPE_TEST} : Type({TYPE_ARG}) is Object and it has an {DSBN} internal slot',
-#        r'{TYPE_TEST} : Type({TYPE_ARG}) is Object and it has {DSBN}, {DSBN}, and {DSBN} internal slots',
-#    ]:
-#        [type_arg, *dsbn_] = children
-#        return env0.with_type_test(type_arg, 'is a', T_Object, asserting)
-#        # XXX ignore the part about the internal slot(s)?
-# ^ obsoleted by PR 2341
 
     elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not Number or BigInt":
         [type_arg] = children
@@ -5662,11 +5312,6 @@ def tc_cond_(cond, env0, asserting):
         [expr] = children
         return env0.with_type_test(expr, 'is a', T_Boolean | T_String | T_Symbol | T_Number, asserting)
 
-#    elif p == r'{CONDITION_1} : {var} is a Bound Function exotic object':
-#        [var] = children
-#        return env0.with_type_test(var, 'is a', T_bound_function_exotic_object_, asserting)
-# ^ obsoleted by PR 1460
-
     elif p == r'{CONDITION_1} : {var} is a UTF-16 code unit':
         [var] = children
         return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
@@ -5711,7 +5356,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {var} is an Environment Record",
-        # r"{CONDITION_1} : {var} must be an Environment Record",
     ]:
         [var] = children
         return env0.with_type_test(var, 'is a', T_Environment_Record, asserting)
@@ -5778,12 +5422,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', ListType(T_SyntaxError | T_ReferenceError), asserting)
 
-#    elif p == r'{CONDITION_1} : {var} is a List that has the same number of elements as the number of parameters required by {var}':
-#        [list_var, proc_var] = children
-#        env0.assert_expr_is_of_type(proc_var, T_proc_)
-#        return env0.with_type_test(list_var, 'is a', T_List, asserting)
-# ^ obsoleted by PR 1597
-
     elif p == r'{CONDITION_1} : {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}':
         [var, ex] = children
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
@@ -5844,13 +5482,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Module_Record, asserting)
 
-#    elif p in [
-#        r"{CONDITION_1} : {var} is present as a parameter",
-#    ]:
-#        [var] = children
-#        return env0.with_type_test(var, 'isnt a', T_not_passed, asserting)
-# ^ obsoleted by PR 1965
-
     elif p in [
         r'{CONDITION_1} : {EX} is present',
         r'{CONDITION_1} : {EX} is not present',
@@ -5874,22 +5505,8 @@ def tc_cond_(cond, env0, asserting):
         assert ex.is_a('{DOTTING}')
         return env0.with_type_test(ex, 'is a', T_not_in_record, asserting)
 
-# PR 1567 obsoleted:
-#    elif p == r'{CONDITION_1} : {var} is an integer value &ge; 0':
-#        [var] = children
-#        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
-#
-#    elif p == r"{CONDITION_1} : {var} is an integer Number &ge; 0":
-#        [var] = children
-#        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
-#
-#    elif p == r"{CONDITION_1} : {var} is an integer Number, {NUM_LITERAL}, or {NUM_LITERAL}":
-#        [var, lita, litb] = children
-#        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
-
     elif p in [
         r'{CONDITION_1} : {EXPR} is an object',
-        # r"{CONDITION_1} : {EX} is an Object", # 2085
     ]:
         [expr] = children
         return env0.with_type_test(expr, 'is a', T_Object, asserting)
@@ -5905,11 +5522,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a Parse Node for {nonterminal}":
         [var, nont] = children
         return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
-
-#    elif p == r'{CONDITION_1} : {var} is the name of a Job':
-#        [var] = children
-#        return env0.with_type_test(var, 'is a', T_proc_, asserting)
-# ^ obsoleted by PR 1597
 
     elif p == r"{CONDITION_1} : {EX} is a Private Name":
         [ex] = children
@@ -5937,7 +5549,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r'{CONDITION_1} : {var} is a Property Descriptor',
-        # r"{CONDITION_1} : {var} must be an accessor Property Descriptor",
     ]:
         [var] = children
         return env0.with_type_test(var, 'is a', T_Property_Descriptor, asserting)
@@ -5999,7 +5610,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r'{CONDITION_1} : {EX} is a String value',
-        # r"{CONDITION_1} : {var} is a String", # obsoleted by PR #1923
     ]:
         [ex] = children
         if ex.prod.lhs_s == '{var}':
@@ -6052,18 +5662,9 @@ def tc_cond_(cond, env0, asserting):
         env2 = env1.ensure_expr_is_of_type(varb, T_Number | T_BigInt)
         return (env2, env2)
 
-#    elif p == r"{CONDITION_1} : {var} is a String exotic object":
-#        [var] = children
-#        return env0.with_type_test(var, 'is a', T_String_exotic_object_, asserting)
-
     elif p == r"{CONDITION_1} : {var} is an ECMAScript language value":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Tangible_, asserting)
-
-#    elif p == r"{CONDITION_1} : {var} will never be *undefined* or an accessor descriptor because Array objects are created with a length data property that cannot be deleted or reconfigured":
-#        [var] = children
-#        return env0.with_type_test(var, 'isnt a', T_Undefined, asserting)
-# ^ obsoleted by PR 1924
 
     elif p in [
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
@@ -6100,11 +5701,6 @@ def tc_cond_(cond, env0, asserting):
         [ex] = children
         return env0.with_type_test(ex, 'is a', T_Symbol, asserting)
 
-# PR 1692 obsoleted
-#    elif p == r"{CONDITION_1} : {var} is a Synchronize event":
-#        [v] = children
-#        return env0.with_type_test(v, 'is a', T_Synchronize_event, asserting)
-
     elif p == r"{CONDITION_1} : {var} is a bound function exotic object":
         [var] = children
         return env0.with_type_test(var, 'is a', T_bound_function_exotic_object_, asserting)
@@ -6122,15 +5718,6 @@ def tc_cond_(cond, env0, asserting):
             env0.with_expr_type_narrowed(var, ListType(T_Number)),
             env0
         )
-
-#    elif p in [
-#        r"{CONDITION_1} : {var} is hint String",
-#        r"{CONDITION_1} : {var} is hint Number",
-#    ]:
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_LangTypeName_)
-#        return (env0, env0)
-# ~ obsoleted by PR 2177
 
     elif p in [
         r'{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar} ',
@@ -6150,9 +5737,6 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {var} is an Object that has an? {DSBN} internal slot",
         r'{CONDITION_1} : {var} is an extensible object that does not have a {starred_str} own property',
-
-        # PR 1302 obsoleted:
-        # r'{CONDITION_1} : {var} is an extensible object that does not have a {backticked_word} own property',
     ]:
         [var, _] = children
         return (
@@ -6328,7 +5912,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is not {LITERAL} or {LITERAL}",
         r"{CONDITION_1} : {EX} is neither {LITERAL} nor {LITERAL}",
         r"{CONDITION_1} : {EX} is present, and is neither {LITERAL} nor {LITERAL}",
-        # r"{CONDITION_1} : In this case, {var} will never be {LITERAL} or {LITERAL}", # 2085
     ]:
         [ex, lita, litb] = children
 
@@ -6379,31 +5962,6 @@ def tc_cond_(cond, env0, asserting):
 
         else:
             assert 0, (lita_type, litb_type)
-
-# 1411 obsoleted:
-#    elif p == r"{CONDITION_1} : {EX} is either not present or {LITERAL}":
-#        [ex, lit] = children
-#        (t_lit, env1) = tc_expr(lit, env0); assert env1 is env0
-#        assert t_lit == T_Undefined
-#        return env0.with_type_test(ex, 'is a', T_not_passed | t_lit, asserting)
-
-# 1411 obsoleted:
-#     elif p == r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL} or not supplied":
-#         [ex, lita, litb] = children
-#         (t_lita, env1) = tc_expr(lita, env0); assert env1 is env0
-#         (t_litb, env1) = tc_expr(litb, env0); assert env1 is env0
-#         assert t_lita == T_Null
-#         assert t_litb == T_Undefined
-#         return env0.with_type_test(ex, 'is a', t_lita | t_litb | T_not_passed, asserting)
-
-# 1411 obsoleted:
-#    elif p == r"{CONDITION_1} : {EX} is not present, or is either {LITERAL} or {LITERAL}":
-#        [ex, lita, litb] = children
-#        (t_lita, env1) = tc_expr(lita, env0); assert env1 is env0
-#        (t_litb, env1) = tc_expr(litb, env0); assert env1 is env0
-#        assert t_lita == T_Undefined
-#        assert t_litb == T_Null
-#        return env0.with_type_test(ex, 'is a', T_not_passed | t_lita | t_litb, asserting)
 
     elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}':
         [exa, exb, lit] = children
@@ -6477,7 +6035,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        # r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}", # PR 1546 obsoleted
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION} : {var} is {LITERAL}, {LITERAL}, or {LITERAL}",
@@ -6504,22 +6061,6 @@ def tc_cond_(cond, env0, asserting):
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
         assert lit.source_text() == '*"ambiguous"*'
         return env0.with_type_test(var, 'is a', T_String | T_Module_Record, asserting)
-
-# PR 1567 obsoleted:
-#    elif p == r'{CONDITION_1} : {var} is an integer such that {CONDITION_1}':
-#        [var, cond] = children
-#        (t_env, f_env) = tc_cond(cond, env0)
-#        return (
-#            t_env.with_expr_type_narrowed(var, T_MathInteger_),
-#            t_env
-#        )
-#
-#    elif p == r"{CONDITION_1} : {var} is a nonnegative integer":
-#        [var] = children
-#        return (
-#            env0.with_expr_type_narrowed(var, T_MathInteger_),
-#            env0
-#        )
 
     elif p == r'{CONDITION_1} : {var} has an? {DSBN} internal method':
         [var, dsbn] = children
@@ -6617,14 +6158,6 @@ def tc_cond_(cond, env0, asserting):
         [var, nont] = children
         env1 = env0.ensure_expr_is_of_type(var, T_grammar_symbol_)
         return (env1, env1)
-
-#    elif p == r"{CONDITION_1} : {EX} is the same value as {PP_NAMED_OPERATION_INVOCATION}":
-#        [ex, noi] = children
-#        assert ex.source_text() == 'StringValue of _symbol_'
-#        assert noi.source_text() == 'the StringValue of |IdentifierName|'
-#        # For now, just return the env unchanged.
-#        return (env0, env0)
-# ^ obsoleted by PR 1519 + PR 2022
 
     elif p in [
         r"{CONDITION_1} : {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super` or `this`",
@@ -6753,15 +6286,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(m_var, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(cond, env_for_cond)
-
-#    elif p == r"{CONDITION_1} : there exists any integer {var} not smaller than {var} such that {CONDITION_1}, and {CONDITION_1}":
-#        [i_var, min_var, conda, condb] = children
-#        env0.assert_expr_is_of_type(min_var, T_MathInteger_)
-#        env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
-#        (at_env, af_env) = tc_cond(conda, env_for_cond)
-#        (bt_env, bf_env) = tc_cond(condb, env_for_cond)
-#        return (env_and(at_env, bt_env), env_or(af_env, bf_env))
-# ^ obsoleted by PR #2009
 
     elif p == r"{CONDITION_1} : there exists any integer {var} such that {CONDITION_1} and {CONDITION_1}":
         [i_var, conda, condb] = children
@@ -6926,7 +6450,6 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : The execution context stack has at least two elements",
         r"{CONDITION_1} : The execution context stack is not empty",
-        # r"{CONDITION_1} : The execution context stack is now empty", # PR 1597
         r"{CONDITION_1} : the execution context stack is empty",
     ]:
         [] = children
@@ -6943,7 +6466,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        # r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, and {DSBN}", # obsoleted by PR 1460
         r"{CONDITION_1} : {var} contains the names {DSBN}, {DSBN}, {DSBN}, {DSBN}, and {DSBN}",
     ]:
         [var, *dsbn_] = children
@@ -6964,17 +6486,6 @@ def tc_cond_(cond, env0, asserting):
         # (because the form only appears in IsAccessorDescriptor and IsDataDescriptor,
         # which are tiny)
         return (env0, env0)
-
-#    elif p == r'{CONDITION_1} : {var} has a thisValue component':
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Reference)
-#        return (env0, env0)
-#
-#    elif p == r"{CONDITION_1} : {var} is a Reference to an Environment Record binding":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Reference)
-#        return (env0, env0)
-# ^ obsoleted by PR 2085
 
     elif p == r'{CONDITION_1} : The calling agent is in the critical section for {var}':
         [var] = children
@@ -7017,7 +6528,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is different from {EX}",
         r"{CONDITION_1} : {EX} is equal to {EX}",
         r"{CONDITION_1} : {EX} is the same as {EX}",
-        # r"{CONDITION_1} : {var} and {var} are the same", # obsoleted by PR #1046
         r"{CONDITION_1} : {var} is not the same as {var}",
         r"{CONDITION_1} : {EX} is not the same value as {var}",
         r"{CONDITION_1} : {EX} is {PREFIX_PAREN}",
@@ -7160,12 +6670,6 @@ def tc_cond_(cond, env0, asserting):
             assert 0, container_t
         return (env0, env0)
 
-#    elif p == r'{CONDITION_1} : its value is the name of a Job Queue recognized by this implementation':
-#        # Once, in EnqueueJob
-#        [] = children
-#        return (env0, env0)
-# ^ obsoleted by PR 1597
-
     elif p == r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}':
         [ab_var, st_var, t_var] = children
         env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
@@ -7305,10 +6809,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(item_lit, T_String)
         return (env1, env1)
 
-#    elif p == r"{CONDITION_1} : the order of evaluation needs to be reversed to preserve left to right evaluation":
-#        [] = children
-#        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} is a prefix of {var}":
         [a_var, b_var] = children
         env0.assert_expr_is_of_type(a_var, T_String)
@@ -7334,12 +6834,6 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-#    elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is {var}":
-#        [type_arg, var] = children
-#        env0.assert_expr_is_of_type(var, T_LangTypeName_)
-#        return (env0, env0)
-# ^ obsoleted by the merge of PR #1918
-
     elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}":
         # once, in CreateListFromArrayLike
         [type_arg, var] = children
@@ -7360,11 +6854,6 @@ def tc_cond_(cond, env0, asserting):
         # elliptical
         [] = children
         return (env0, env0)
- 
-#    elif p == r"{CONDITION_1} : This method is never invoked. See {h_emu_xref}":
-#        [emu_xref] = children
-#        return (None, env0)
-# ^ obsoleted by PR 1994
 
     # for PR #1961 compound_assignment
     elif p == r"{CONDITION_1} : Execution cannot reach this step":
@@ -7373,12 +6862,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : The following loop will terminate":
         [] = children
         return (env0, env0)
-
-#    elif p == r"{CONDITION_1} : the base of {var} is an Environment Record":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Reference)
-#        return (env0, env0)
-# ^ obsoleted by PR 2085
 
     elif p == r"{CONDITION_1} : the above call will not return here, but instead evaluation will continue as if the following return has already occurred":
         [] = children
@@ -7399,11 +6882,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-# PR 1676 obsoleted
-#    elif p == r"{CONDITION_1} : All of the above CreateDataProperty operations return {LITERAL}":
-#        [literal] = children
-#        return (env0, env0)
-
     elif p == r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return":
         [] = children
         return (env0, env0)
@@ -7420,24 +6898,11 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(b_ex, ListType(T_String))
         return (env0, env0)
 
-# obsoleted by PR #1046:
-#    elif p == r"{CONDITION_1} : The VariableEnvironment and LexicalEnvironment of {var} are the same":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_execution_context)
-#        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} does not currently have a property {var}":
         [obj_var, pn_var] = children
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(pn_var, T_String | T_Symbol)
         return (env0, env0)
-
-#    elif p == r"{CONDITION_1} : its value is either {LITERAL} or {LITERAL}":
-#        # once, in OrdinaryToPrimitive
-#        # elliptical    
-#        [alit, blit] = children
-#        return (env0, env0)
-# ^ obsoleted by PR 2177
 
     elif p == r'{CONDITION_1} : {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
         [var] = children
@@ -7476,13 +6941,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(bvar, T_String | T_Symbol)
         return (env0, env0)
 
-#    elif p in [
-#        r"{CONDITION_1} : This is a re-export of an imported module namespace object",
-#        r"{CONDITION_1} : this is a re-export of a single name",
-#    ]:
-#        [] = children
-#        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {DOTTING} exists and has been initialized":
         [dotting] = children
         return (env0, env0)
@@ -7493,27 +6951,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(bvar, T_Realm_Record)
         return (env0, env0)
 
-#    elif p == r"{CONDITION_1} : any element of {PP_NAMED_OPERATION_INVOCATION} also occurs in {PP_NAMED_OPERATION_INVOCATION}":
-#        [anoi, bnoi] = children
-#        env0.assert_expr_is_of_type(anoi, ListType(T_String)) # T_String not justified, but always correct (currently)
-#        env0.assert_expr_is_of_type(bnoi, ListType(T_String))
-#        return (env0, env0)
-#
-#    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any duplicate elements":
-#        [noi] = children
-#        env0.assert_expr_is_of_type(noi, T_List)
-#        return (env0, env0)
-# ^ obsoleted by PR 2348
-
     elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
-
-#    elif p == r"{CONDITION_1} : ModuleDeclarationInstantiation has already been invoked on {var} and successfully completed":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Module_Record)
-#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed":
         [var] = children
@@ -7562,13 +7003,6 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
         return (env1, env1)
 
-#    elif p == r"{CONDITION_1} : All dependencies of {var} have been transitively resolved and {var} is ready for evaluation":
-#        [var, var2] = children
-#        assert var.children == var2.children
-#        env0.assert_expr_is_of_type(var, T_Module_Record)
-#        return (env0, env0)
-# ^ obsoleted by PR 1597
-
     elif p == r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
@@ -7579,32 +7013,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (env0, env0)
 
-#    elif p in [
-#        r"{CONDITION_1} : {var} is the source code of a script",
-#        r"{CONDITION_1} : {var} is the source code of a module",
-#    ]:
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        return (env0, env0)
-# ^ obsoleted by PR 1597
-
     elif p == r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits":
         [posa, posb, var] = children
         env0.assert_expr_is_of_type(posa, T_MathInteger_)
         env0.assert_expr_is_of_type(posb, T_MathInteger_)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
-
-#    elif p == r"{CONDITION_1} : the most significant bit in {var} is {NUM_LITERAL}":
-#        [var, lit] = children
-#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
-#        return (env0, env0)
-#
-#    elif p == r"{CONDITION_1} : the two most significant bits in {var} are not 10":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
-#        return (env0, env0)
-# ^ obsoleted by PR 2029
 
     elif p == r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point":
         [var] = children
@@ -7739,23 +7153,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var1, T_String)
         return (env0, env0)
 
-#    elif p == r"{CONDITION_1} : the four code units at indices {SUM}, {SUM}, {SUM}, and {SUM} within {var} are all hexadecimal digits":
-#        [e1, e2, e3, e4, var] = children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        env0.assert_expr_is_of_type(e1, T_MathInteger_)
-#        env0.assert_expr_is_of_type(e2, T_MathInteger_)
-#        env0.assert_expr_is_of_type(e3, T_MathInteger_)
-#        env0.assert_expr_is_of_type(e4, T_MathInteger_)
-#        return (env0, env0)
-#
-#    elif p == r"{CONDITION_1} : the two code units at indices {SUM} and {SUM} within {var} are both hexadecimal digits":
-#        [i1, i2, var] = children
-#        env0.assert_expr_is_of_type(i1, T_MathInteger_)
-#        env0.assert_expr_is_of_type(i2, T_MathInteger_)
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (env0, env0)
-# ^ obsoleted by PR 2021
-
     elif p == r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String | T_Symbol)
@@ -7784,14 +7181,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-#    elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL} or the String value {STR_LITERAL}":
-#        [var, lita, litb] = children
-#        env0.assert_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
-#        env0.assert_expr_is_of_type(lita, T_String)
-#        env0.assert_expr_is_of_type(litb, T_String)
-#        return (env0, env0)
-# ^ obsoleted by PR 2177
-
     elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL}":
         [var, lit] = children
         env0.assert_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
@@ -7799,7 +7188,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        # r"{CONDITION_1} : this method was called with more than one argument", # PR 2139
         r"{CONDITION_1} : only one argument was passed",
     ]:
         [] = children
@@ -7814,32 +7202,12 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(a, T_MathInteger_)
         return (env1, env1)
 
-#    elif p == r"{CONDITION_1} : {var} is added as a single item rather than spread":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Tangible_)
-#        return (env0, env0)
-
     elif p == r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}":
         [exa, exb, lit] = children
         (t, env1) = tc_expr(lit, env0); assert env1 is env0
         env1.assert_expr_is_of_type(exa, t)
         env1.assert_expr_is_of_type(exb, t)
         return (env1, env1)
-
-#    elif p == r"{CONDITION_1} : the number of actual arguments is {NUM_LITERAL}":
-#        [lit] = children
-#        env0.assert_expr_is_of_type(lit, T_MathNonNegativeInteger_)
-#        return (env0, env0)
-# ^ obsoleted by PR 2139
-
-#    elif p == r"{CONDITION_1} : the sequence of code units of {var} starting at {var} of length {var} is the same as the full code unit sequence of {var}":
-#        [sa, k, n, sb] = children
-#        env0.assert_expr_is_of_type(sa, T_String)
-#        env0.assert_expr_is_of_type(k, T_MathInteger_)
-#        env0.assert_expr_is_of_type(n, T_MathInteger_)
-#        env0.assert_expr_is_of_type(sb, T_String)
-#        return (env0, env0)
-# ^ obsoleted by PR 2021
 
     elif p == r"{CONDITION_1} : {var} is not currently an element of {var}":
         [item_var, list_var] = children
@@ -7850,11 +7218,6 @@ def tc_cond_(cond, env0, asserting):
         [x] = children
         env0.assert_expr_is_of_type(x, T_MathInteger_)
         return (env0, env0)
-
-# 1411 obsoleted:
-#    elif p == r"{CONDITION_1} : no arguments were passed to this function invocation":
-#        [] = children
-#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {EX} is neither {LITERAL} nor the active function":
         [ex, lit] = children
@@ -7894,12 +7257,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(pairb, T_event_pair_)
         env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
-
-# PR 1676 obsoleted
-#    elif p == r"{CONDITION_1} : Each of the above calls returns {LITERAL}":
-#        [lit] = children
-#        assert lit.source_text() == '*true*'
-#        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} and {var} are in a race in {var}":
         [ea, eb, exe] = children
@@ -7991,12 +7348,6 @@ def tc_cond_(cond, env0, asserting):
         [prod_ref, oth] = children
         return (env0, env0)
 
-#    elif p == r"{CONDITION_1} : @ is {EX}":
-#        [ex] = children
-#        env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
-#        return (env0, env0)
-# ^ obsoleted by PR 1961
-
     elif p == r"{CONDITION_1} : {var} has a Synchronize event":
         [var] = children
         env0.assert_expr_is_of_type(var, T_WaiterList)
@@ -8024,21 +7375,6 @@ def tc_cond_(cond, env0, asserting):
         [var, emu_xref] = children
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
-
-#    elif p == r"{CONDITION_1} : {var} did not conform to the grammar":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        return (env0, env0)
-#
-#    elif p == r"{CONDITION_1} : any elements of {var} were not matched by the parse": 
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-#        return (env0, env0)
-#
-#    elif p == r"{CONDITION_1} : any Early Error conditions exist":
-#        [] = children
-#        return (env0, env0)
-# ^ obsoleted by PR 2013
 
     elif p == r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent":
         [] = children
@@ -8582,7 +7918,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : {LITERAL}",
         r"{EXPR} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{EX} : ({EX})",
-        # r"{EX} : the previous value of {var}", # PR 2138
         r"{EX} : the value of {SETTABLE}",
         r"{EX} : the {var} flag",
         r"{EX} : {code_unit_lit}",
@@ -8618,7 +7953,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_COMPARAND} : {PRODUCT}",
         r"{NUM_EXPR} : {PRODUCT}",
         r"{NUM_EXPR} : {SUM}",
-        # r"{NUM_EXPR} : {BIT_EX}", # 2029
         r"{SETTABLE} : {DOTTING}",
         r"{TERM} : ({PRODUCT})",
         r"{TERM} : {DOTTING}",
@@ -8671,14 +8005,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LITERAL} : {TYPE_NAME}":
         [type_name] = children
         return (T_LangTypeName_, env0)
-
-#    elif p in [
-#        r"{EX} : hint Number",
-#        r"{EX} : hint String",
-#    ]:
-#        [] = children
-#        return (T_LangTypeName_, env0)
-# ^ obsoleted by PR 2177
 
     elif p in [
         r"{LITERAL} : the value *undefined*",
@@ -8874,7 +8200,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}",
-        # r"{NAMED_OPERATION_INVOCATION} : {ISDO_NAME} of {PROD_REF}", # PR 2018
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}",
@@ -8968,10 +8293,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert nont.source_text() == '|CaseClause|'
         env0.assert_expr_is_of_type(var, ptn_type_for(nont))
         return tc_sdo_invocation('Evaluation', var, [], expr, env0)
-
-#?    elif p == r"{EXPR} : the result of evaluating {DOTTING}":
-#?        [dotting] = children
-#?        return tc_sdo_invocation('Evaluation', dotting, [], expr, env0)
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}",
@@ -9745,8 +9066,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}",
         r"{EXPR} : the Element Size specified in {h_emu_xref} for Element Type {var}",
-        # r"{EXPR} : the Number value of the Element Size specified in {h_emu_xref} for Element Type {var}",
-        # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for Element Type {var}",
     ]:
         [emu_xref, var] = children
         assert var.source_text() in ['_type_', '_srcType_', '_elementType_']
@@ -9756,8 +9075,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
         r"{EXPR} : the Element Size value in {h_emu_xref} for {var}",
-        # r"{EXPR} : the Number value of the Element Size value in {h_emu_xref} for {var}",
-        # r"{EXPR} : the Number value of the Element Size value specified in {h_emu_xref} for {var}",
     ]:
         [emu_xref, var] = children
         assert var.source_text() in ['_constructorName_', '_srcName_', '_arrayTypeName_', '_targetName_', '_typedArrayName_', '_srcType_']
@@ -9884,7 +9201,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the number of code points in {PROD_REF}",
-        # r"{EX} : the mathematical integer number of code points in {PROD_REF}", # PR 2151
         r"{EX} : the mathematical value of the number of code points in {PROD_REF}",
     ]:
         [prod_ref] = children
@@ -10021,7 +9337,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_COMPARAND} : the length of {var}",
         r"{EXPR} : the length of {var}",
         r"{EX} : the number of code units in {var}",
-        # r"{TERM} : the number of code units in {var}", # PR 2021
         r"{EXPR} : the number of code unit elements in {var}",
     ]:
         [var] = children
@@ -10067,13 +9382,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----
     # return T_MathInteger_: arithmetic:
 
-#    elif p == r"{EXPR} : the result of masking out all but the least significant 5 bits of {var}, that is, compute {var} &amp; {hex_int_lit}":
-#        [var, var2, _] = children
-#        assert var.children == var2.children
-#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
-#        return (T_MathNonNegativeInteger_, env0)
-# ^ obsoleted by PR 2029
-
     elif p in [
         r"{EXPR} : the numeric value 1",
         r"{EX} : [0-9]+",
@@ -10089,15 +9397,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         # [] = children
         return (T_MathInteger_, env0)
-
-#    elif p == r'{FACTOR} : 10<sup>{EX}</sup>':
-#        [ex] = children
-#        (t, env1) = tc_expr(ex, env0); assert env1 is env0
-#        if t == T_TBD:
-#            pass
-#        else:
-#            assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-#        return (T_MathInteger_, env0) # unless EX is negative!
 
     elif p in [
         r"{FACTOR} : {BASE}<sup>{NUM_LITERAL}</sup>",
@@ -10118,13 +9417,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(aex, T_MathInteger_)
         env0.assert_expr_is_of_type(bex, T_MathInteger_)
         return (T_MathInteger_, env0)
-
-#    elif  p == r"{BIT_EX} : {FACTOR} {BIT_OPERATOR} {FACTOR}":
-#        [numa, op, numb] = children
-#        env0.assert_expr_is_of_type(numa, T_MathNonNegativeInteger_)
-#        env0.assert_expr_is_of_type(numb, T_MathNonNegativeInteger_)
-#        return (T_MathNonNegativeInteger_, env0)
-# ^ obsoleted by PR 2029
 
     elif p == r"{EXPR} : the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}":
         [var, ex] = children
@@ -10426,18 +9718,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(old_var, T_code_unit_)
         return (T_String, env0)
 
-#    elif p == r'{EXPR} : the same result produced as if by performing the algorithm for `String.prototype.toUpperCase` using {var} as the *this* value':
-#        [var] = children
-#        env1 = env0.ensure_expr_is_of_type(var, T_String)
-#        return (T_String, env1)
-# ^ obsoleted by PR 2112
-
-#    elif p == r'{EX} : the referenced name component of {var}':
-#        [v] = children
-#        env0.assert_expr_is_of_type(v, T_Reference)
-#        return (T_String | T_Symbol | T_Private_Name, env0)
-# ^ obsoleted by PR 2085
-
     elif p == r'{EXPR} : the string result of converting {EX} to a String of four lowercase hexadecimal digits':
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
@@ -10446,15 +9726,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the String value consisting solely of {code_unit_lit}",
         r"{EXPR} : the String value containing only the code unit {var}",
-        # r"{EXPR} : the String value consisting of the single code unit {var}", # PR 2112
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
         return (T_String, env1)
-
-#    elif p == r"{EXPR} : the String value consisting of the sequence of code units corresponding to {PROD_REF}. In determining the sequence any occurrences of {TERMINAL} {nonterminal} are first replaced with the code point represented by the {nonterminal} and then the code points of the entire {PROD_REF} are converted to code units by UTF16EncodeCodePoint??? each code point":
-#        return (T_String, env0)
-# ^ obsoleted by PR 1552
 
     elif p == r"{EXPR} : the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}":
         [var, lita, var2, litb] = children
@@ -10483,15 +9758,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         for ex in children:
             env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
-
-#    elif p == r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}. If {var} is 0, the first element of the concatenation will be the empty String":
-#        p_var = children[3]
-#        env0.assert_expr_is_of_type(p_var, T_MathInteger_)
-#        env1 = env0
-#        for ex in children[0:3]:
-#            env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
-#        return (T_String, env1)
-# ^ obsoleted by PR 2021
 
     elif p == r'{EX} : the two uppercase hexadecimal digits encoding {var}':
         [var] = children
@@ -10534,36 +9800,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env0)
 
-#    elif p in [
-#        r"{EXPR} : the substring of {var} from index {var} to index {var} inclusive",
-#        r"{EXPR} : the matched substring (i.e. the portion of {var} between offset {var} inclusive and offset {var} exclusive)",
-#        r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up to {var} (exclusive)",
-#    ]:
-#        [s_var, start_var, end_var] = children
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(start_var, T_MathInteger_)
-#        env0.assert_expr_is_of_type(end_var, T_MathInteger_)
-#        return (T_String, env0)
-#
-#    elif p == r"{EX} : the substring of {var} consisting of the code units from {var} (inclusive) up through the final code unit of {var} (inclusive)":
-#        [s_var, start_var, s_var2] = children
-#        assert same_source_text(s_var, s_var2)
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(start_var, T_MathInteger_)
-#        return (T_String, env0)
-# ^ obsoleted by PR 2021
-
     elif p == r"{EXPR} : the String value of {DOTTING}":
         # todo: sounds like "String value" is an operation applied to the result of DOTTING
         [dotting] = children
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_String, env0)
-
-# PR 1725 obsoleted:
-#    elif p == r"{EXPR} : the String value of the Element Type value in {h_emu_xref} for {EX}":
-#        [emu_xref, ex] = children
-#        env1 = env0.ensure_expr_is_of_type(ex, T_String)
-#        return (T_String, env0)
 
     elif p == r"{EXPR} : the Element Type value in {h_emu_xref} for {EX}":
         [emu_xref, ex] = children
@@ -10598,41 +9839,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsbn.source_text() == '[[Description]]'
         return (T_String | T_Undefined, env0)
 
-#    elif p in [
-#        r"{EXPR} : the String value whose code units are {PP_NAMED_OPERATION_INVOCATION}",
-#        # r"{EXPR} : the String value whose elements are {NAMED_OPERATION_INVOCATION}",
-#    ]:
-#        [noi] = children
-#        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
-#        return (T_String, env1)
-# ^ obsoleted by PR 2018
-
     elif p in [
         r"{EXPR} : the String value consisting of {EXPR}",
-        # r"{EXPR} : the String value consisting of the code units of {var}", # PR 2018
         r"{EXPR} : the String value consisting of {EX}",
-        # r"{EXPR} : the String value consisting of {NAMED_OPERATION_INVOCATION}", # PR 2018
-        # r"{EXPR} : the String value whose code units are the elements in {PP_NAMED_OPERATION_INVOCATION}", # PR 2018
-        # r"{EXPR} : the String value whose elements are, in order, the elements in {NAMED_OPERATION_INVOCATION}",
-        # r"{EXPR} : the string consisting of the code units of {var}", # PR 2018
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
-
-#    elif p == r"{EXPR} : the String value whose code units are the elements of {PP_NAMED_OPERATION_INVOCATION} as defined in {h_emu_xref}":
-#        [noi, emu_xref] = children    
-#        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
-#        return (T_String, env1)
-#
-#    elif p in [
-#        r"{EXPR} : the String value whose code units are the elements of {var} followed by the elements of {var}",
-#        r"{EXPR} : the String value whose code units are the elements of {var} followed by the elements of {var} followed by the elements of {var}",
-#    ]:
-#        for var in children:
-#            env0 = env0.ensure_expr_is_of_type(var, T_String | ListType(T_code_unit_))
-#        return (T_String, env0)
-# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : a String according to {h_emu_xref}":
         [emu_xref] = children
@@ -10769,24 +9982,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_code_unit_, env0)
 
     elif p in [
-        # r"{EXPR} : the code unit whose value is {SUM}", # PR 2018
         r"{EX} : the code unit whose value is {EX}",
         r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}", 
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
         return (T_code_unit_, env0)
-
-#    elif p == r"{EX} : the code unit {var}":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_MathInteger_)
-#        return (T_code_unit_, env0)
-
-#    elif p == r"{EX} : the code unit that is {PP_NAMED_OPERATION_INVOCATION}":
-#        [noi] = children
-#        env0.assert_expr_is_of_type(noi, ListType(T_code_unit_))
-#        return (T_code_unit_, env0)
-# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : the code unit whose numeric value is that of {var}":
         [var] = children
@@ -10848,12 +10049,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
-#    elif p == r"{EXPR} : a List whose elements are the code points resulting from applying UTF-16 decoding to {var}'s sequence of elements":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (ListType(T_code_point_), env0)
-# ^ obsoleted by PR 1552
-
     elif p == r"{EXPR} : a List whose elements are the code points of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
@@ -10910,11 +10105,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(literal, T_Boolean)
         return (ListType(T_MathInteger_), env0)
 
-#    elif p == r"{EXPR} : a List of length 1 that contains a nondeterministically chosen byte value":
-#        [] = children
-#        return (ListType(T_MathInteger_), env0)
-# ^ obsoleted by PR 2201
-
     elif p == r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values":
         [var] = children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
@@ -10928,12 +10118,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var4, T_MathInteger_)
         return (ListType(T_MathInteger_), env1)
 
-#    elif p == r"{EXPR} : a List of 8-bit integers of size {var}":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
-#        return (ListType(T_MathNonNegativeInteger_), env0)
-# ^ obsoleted by PR 2029
-
     elif p == r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}":
         [dotting] = children
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
@@ -10942,66 +10126,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----------------------
     # ListType(T_code_unit_)
 
-#    elif p == r"{EXPR} : the empty code unit sequence":
-#        [] = children
-#        return (ListType(T_code_unit_), env0)
-#
-#    elif p == r"{EXPR} : the sequence consisting of {code_unit_lit}":
-#        [lit] = children
-#        return (ListType(T_code_unit_), env0)
-# ^ obsoleted by PR 2018
-
     elif p in [
-        # r"{EX} : a sequence of up to two code units that is {NAMED_OPERATION_INVOCATION}", # PR 2018
-        # r"{EX} : the code units of {NAMED_OPERATION_INVOCATION}", # PR 2018
-        # r"{EX} : the code units of {NAMED_OPERATION_INVOCATION} in order", # PR 2142
         r"{EX} : the code units of {var}",
     ]:
         [noi] = children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
         return (ListType(T_code_unit_), env1)
 
-#    elif p in [
-#        r"{EXPR} : {EX} followed by {EX}",
-#        r"{EXPR} : the sequence consisting of {EX} followed by {EX}",
-#        r"{EXPR} : the sequence consisting of {EX} followed by {EX} followed by {EX}",
-#        r"{EXPR} : the sequence consisting of {EX} followed by {EX} followed by {EX} followed by {EX}",
-#    ]:
-#        env1 = env0
-#        for ex in children:
-#            env1 = env1.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
-#        return (ListType(T_code_unit_), env1)
-#
-#    elif p in [
-#        r"{EXPR} : a sequence consisting of the code units of {NAMED_OPERATION_INVOCATION} followed by the code units of {NAMED_OPERATION_INVOCATION}",
-#    ]:
-#        [ex1, ex2] = children
-#        env1 = (
-#            env0.ensure_expr_is_of_type(ex1, ListType(T_code_unit_))
-#                .ensure_expr_is_of_type(ex2, ListType(T_code_unit_))
-#        )
-#        return (ListType(T_code_unit_), env1)
-# ^ obsoleted by PR 2018
-
     elif p == r"{EXPR} : a List whose elements are the code unit elements of {var}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_unit_), env0)
-
-#    elif p in [
-#        r"{EXPR} : the sequence of code units consisting of the code units of {var} followed by the elements of {var}",
-#        r"{EXPR} : the sequence of code units consisting of the elements of {var} followed by the code units of {var} followed by the elements of {var}",
-#    ]:
-#        for var in children:
-#            env0.ensure_expr_is_of_type(var, T_String | ListType(T_code_unit_))
-#        return (ListType(T_code_unit_), env0)
-#
-#    elif p == r"{EXPR} : the code unit sequence consisting of {var} followed by {var}":
-#        [var1, var2] = children
-#        env0.assert_expr_is_of_type(var1, T_MathInteger_)
-#        env0.assert_expr_is_of_type(var2, T_MathInteger_)
-#        return (ListType(T_code_unit_), env0)
-# ^ obsoleted by PR 2018
 
     elif p == r"{EXPR} : a List whose elements are the code units that are the elements of {var}":
         [var] = children
@@ -11017,8 +10152,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [item_var, list_var] = children
         env1 = env0.ensure_expr_is_of_type(item_var, ListType(T_code_unit_))
         env2 = env1.ensure_expr_is_of_type(list_var, ListType(T_String))
-        #PR2018 env1 = env0.ensure_expr_is_of_type(item_var, T_String | T_Undefined)
-        #PR2018 env2 = env1.ensure_expr_is_of_type(list_var, ListType(T_String | T_Undefined))
         return (ListType(T_String), env2)
 
     # ---------------
@@ -11029,14 +10162,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_List, env0) # (ListType(T_0), env0)
 
     elif p in [
-#        r"{EXPR} : a List containing only {var}",
-#        r"{EXPR} : a List containing the one element which is {var}",
-#        r"{EXPR} : a List containing the single element, {var}",
-#        r"{EXPR} : a List containing {PP_NAMED_OPERATION_INVOCATION}",
-#        r"{EXPR} : a List containing {PROD_REF}",
-#        r"{EXPR} : a List whose sole item is {var}",
-#        r"{EXPR} : a new List containing {EXPR}",
-# ^ obsoleted by PR 2201
         r"{EXPR} : a List whose sole element is {EX}",
     ]:
         [element_expr] = children
@@ -11070,25 +10195,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         list_type = env1.lookup(list_var)
         return (list_type, env1)
 
-#    elif p == r"{EXPR} : a List whose first element is {var}, whose second elements is {var}, and whose subsequent elements are the elements of {var}, in order. {var} may contain no elements":
-#        [e1_var, e2_var, rest_var, _] = children
-#        (t1, env1) = tc_expr(e1_var, env0); assert env1 is env0
-#        (t2, env2) = tc_expr(e2_var, env0); assert env2 is env0
-#        (rest_t, rest_env) = tc_expr(rest_var, env0); assert rest_env is env0
-#        if t1 == T_TBD and t2 == T_TBD and rest_t == T_List:
-#            # can't really do much
-#            pass
-#        elif t1 == T_TBD and t2 == T_Tangible_:
-#            pass
-#        elif t1 == T_Object and t2 == T_Tangible_ and rest_t == ListType(T_Tangible_):
-#            pass
-#        else:
-#            assert t1 == t2
-#            assert isinstance(rest_t, ListType)
-#            assert t1 == rest_t.element_type
-#        return (rest_t, rest_env)
-# ^ obsoleted by PR #1402
-
     elif p == r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}':
         [var, _, _, _] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
@@ -11116,12 +10222,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(n_var, T_MathInteger_)
         env0.assert_expr_is_of_type(state_var, T_State)
         return (T_captures_entry_, env0)
-
-#    elif p == r"{EXPR} : a List consisting of the sequence of code points of {var} interpreted as a UTF-16 encoded ({h_emu_xref}) Unicode string":
-#        [var, emu_xref] = children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (ListType(T_code_point_), env0)
-# obsoleted by 1552
 
     elif p == r"{EXPR} : a List consisting of the sequence of code points of {PP_NAMED_OPERATION_INVOCATION}":
         [noi] = children
@@ -11152,61 +10252,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # return T_Parse_Node
 
-#    elif p == r'{MULTILINE_EXPR} : the result of parsing the source text{_indent_}{nlai}{h_pre_code}{nlai}using the syntactic grammar with the goal symbol {nonterminal}.{_outdent_}':
-#        [_, nonterminal] = children
-#        return (ptn_type_for(nonterminal), env0)
-# ^ obsoleted by PR 2013
-
     elif p == r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}":
         [nonterminal, local_ref] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (ptn_type_for(nonterminal), env0)
-
-#    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
-#        [s_var, emu_xref, goal_nont,
-#        error_type1,
-#        error_type2, emu_xref4] = children
-#        #
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        error_type_name1 = error_type1.source_text()[1:-1]
-#        error_type_name2 = error_type2.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
-#        return (ptn_type_for(goal_nont), env0)
-# ^ obsoleted by PR 1552
-
-#    elif p == r"{EXPR} : the ECMAScript code that is the result of parsing {PP_NAMED_OPERATION_INVOCATION}, for the goal symbol {nonterminal}. If the parse fails, throw a {ERROR_TYPE} exception. If any early errors are detected, throw a {ERROR_TYPE} exception (but see also clause {h_emu_xref})":
-#        [s_noi, goal_nont,
-#        error_type1,
-#        error_type2, emu_xref4] = children
-#        #
-#        env0.assert_expr_is_of_type(s_noi, T_Unicode_code_points_)
-#        error_type_name1 = error_type1.source_text()[1:-1]
-#        error_type_name2 = error_type2.source_text()[1:-1]
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name1)), error_type1)
-#        proc_add_return(env0, ThrowType(NamedType(error_type_name2)), error_type2)
-#        return (ptn_type_for(goal_nont), env0)
-# ^ obsoleted by PR 2013
-
-
-#    elif p == r"{EXPR} : the result of parsing {var}, interpreted as UTF-16 encoded Unicode text as described in {h_emu_xref}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
-#        [var, emu_xref, goal_var, error_type] = children    
-#        env0.assert_expr_is_of_type(var, T_String)
-#        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
-#        error_type_name = error_type.source_text()[1:-1]
-#        proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
-#        return (T_Parse_Node, env0)
-# ^ obsoleted by PR 1552
-
-#    elif p == r"{EXPR} : the result of parsing {PP_NAMED_OPERATION_INVOCATION}, using {var} as the goal symbol. Throw a {ERROR_TYPE} exception if the parse fails":
-#        [noi, goal_var, error_type] = children    
-#        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-#        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
-#        error_type_name = error_type.source_text()[1:-1]
-#        proc_add_return( env0, ThrowType(NamedType(error_type_name)), error_type)
-#        return (T_Parse_Node, env0)
-# ^ obsoleted by PR 2013
-
 
     # ----
 
@@ -11249,11 +10298,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (ptn_type_for(nont), env0)
 
-#    elif p == r"{PROD_REF} : the {nonterminal} that is that {nonterminal}":
-#        [a_nont, b_nont] = children
-#        return (ptn_type_for(a_nont), env0)
-# ^ obsoleted by PR #1301
-
     elif p == r"{EXPR} : an instance of the production {h_emu_grammar}":
         [emu_grammar] = children
         assert emu_grammar.source_text() == '<emu-grammar>FormalParameters : [empty]</emu-grammar>'
@@ -11264,11 +10308,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Parse_Node, env0)
 
-#    elif p == r"{PROD_REF} : the {nonterminal} that is that single code point":
-#        [nont] = children
-#        return (T_Parse_Node, env0)
-# ^ obsoleted by PR #1301
-
     elif p == r"{LOCAL_REF} : the parsed code that is {DOTTING}":
         [dotting] = children
         env0.assert_expr_is_of_type(dotting, T_Parse_Node)
@@ -11278,13 +10317,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
         return (T_Parse_Node, env0)
-
-#    elif p == r"{EXPR} : the child of {var} that is an instance of {var}":
-#        [node_var, sym_var] = children
-#        env0.assert_expr_is_of_type(node_var, T_Parse_Node)
-#        env0.assert_expr_is_of_type(sym_var, T_grammar_symbol_)
-#        return (T_Parse_Node, env0)
-# ^ obsoleted by PR #2374
 
     elif p == r"{PROD_REF} : this phrase":
         return (T_Parse_Node, env0)
@@ -11308,31 +10340,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # return T_Object
 
-#    elif p == r'{EXPR} : the binding object for {var}':
-#        [var] = children
-#        (t, env1) = tc_expr(var, env0)
-#        assert env1 is env0
-#        assert t.is_a_subtype_of_or_equal_to(T_object_Environment_Record)
-#        return (T_Object, env0)
-# ^ obsoleted by PR 2287
-
     elif p == r'{EXPR} : a newly created object with an internal slot for each name in {var}':
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
         return (T_Object, env1)
-
-#    elif p == r"{EXPR} : a newly created module namespace exotic object with the internal slots listed in {h_emu_xref}":
-#        [emu_xref] = children
-#        return (T_Object, env0)
-#
-#    elif p == r"{EXPR} : a newly created Proxy exotic object with internal slots {DSBN} and {DSBN}":
-#        [dsbn1, dsbn2] = children
-#        return (T_Object, env0)
-#
-#    elif p == r"{EXPR} : a newly created arguments exotic object with a {DSBN} internal slot":
-#        [dsbn] = children
-#        return (T_Object, env0)
-# ^ obsoleted by PR #1460
 
     elif p == r'{EXPR} : a newly created object':
         [] = children
@@ -11360,11 +10371,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (T_Object, env0)
-
-#    elif p == r"{EXPR} : the arguments object":
-#        [] = children
-#        return (T_Object, env0)
-# ^ obsoleted by PR 1994
 
     elif p == r"{EXPR} : {var}'s intrinsic object named {var}":
         [r_var, n_var] = children
@@ -11442,12 +10448,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont1, nont2] = children
         return (T_CharSet, env0)
 
-#    elif p == r"{EXPR} : the set of all characters returned by {PREFIX_PAREN}":
-#        [pp] = children
-#        env0.assert_expr_is_of_type(pp, T_CharSet)
-#        return (T_CharSet, env0)
-# ^ obsoleted by PR 2112
-
     elif p == r"{EXPR} : the empty CharSet":
         [] = children
         return (T_CharSet, env0)
@@ -11487,11 +10487,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_function_object_
 
-#    elif p == r'{EXPR} : a newly created ECMAScript function object with the internal slots listed in {h_emu_xref}':
-#        [emu_xref] = children
-#        return (T_function_object_, env0)
-# ^ obsoleted by PR #1460
-
     elif p == r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot':
         [var1, var2, var3, dsbn] = children
         env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
@@ -11508,16 +10503,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the algorithm steps defined in (.+) ({h_emu_xref})":
         [_, emu_xref] = children
         return (T_alg_steps, env0)
-
-# PR 1635 obsoleted
-#    elif p == r"{EXPR} : the algorithm steps specified in {h_emu_xref} for the {percent_word} function":
-#        [emu_xref, percent_word] = children
-#        return (T_alg_steps, env0)
-
-# PR 1635 obsoleted
-#    elif p == r"{EXPR} : an empty sequence of algorithm steps":
-#        [] = children
-#        return (T_alg_steps, env0)
 
     # ------------------------------------------------
     # return T_execution_context
@@ -11542,43 +10527,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_execution_context, env0)
 
-#    # -------------------------------------------------
-#    # return T_Reference
-#
-#    elif p == r'{EXPR} : a value of type Reference whose base value component is {EX}, whose referenced name component is {var}, and whose strict reference flag is {EX}':
-#        [bv_ex, rn_var, srf_var] = children
-#
-#        env1 = env0.ensure_expr_is_of_type(bv_ex, T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record)
-#        env2 = env1.ensure_expr_is_of_type(rn_var, T_String | T_Symbol)
-#        env3 = env2.ensure_expr_is_of_type(srf_var, T_Boolean)
-#
-#        return (T_Reference, env3)
-#
-#    elif p in [
-#        r'{V} : the reference (_V_)',
-#        r'{V} : (_V_)',
-#    ]:
-#        [v_name] = children
-#        assert v_name == '_V_'
-#        assert env0.vars[v_name] == T_Reference
-#        return (T_Reference, env0)
-#
-#    elif p == r"{EXPR} : a value of type Reference that is a Super Reference whose base value component is {var}, whose referenced name component is {var}, whose thisValue component is {var}, and whose strict reference flag is {var}":
-#        [b_var, n_var, t_var, s_var] = children
-#        env0.assert_expr_is_of_type(b_var, T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number)
-#        env0.assert_expr_is_of_type(n_var, T_String | T_Symbol)
-#        env0.assert_expr_is_of_type(t_var, T_Tangible_)
-#        env0.assert_expr_is_of_type(s_var, T_Boolean)
-#        return (T_Reference, env0)
-# ^ obsoleted by PR 2085
-
     # -------------------------------------------------
-
-#    elif p == r"{EXPR} : the value of the thisValue component of the reference {var}":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Reference)
-#        return (T_Tangible_, env0)
-# ^ obsoleted by PR 2085
 
     elif p in [
         r"{EXPR} : the value currently bound to {var} in {var}",
@@ -11588,17 +10537,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(n_var, T_String)
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return (T_Tangible_, env0)
-
-#    elif p == r"{EXPR} : the result of applying {var} to {var} and {var} as if evaluating the expression {var} {var} {var}":
-#        [op_var, avar, bvar, avar2, op_var2, bvar2] = children
-#        assert op_var.children == op_var2.children
-#        assert avar.children == avar2.children
-#        assert bvar.children == bvar2.children
-#        env0.assert_expr_is_of_type(op_var, T_proc_)
-#        env1 = env0.ensure_expr_is_of_type(avar, T_Tangible_)
-#        env2 = env1.ensure_expr_is_of_type(bvar, T_Tangible_)
-#        return (T_Tangible_, env2)
-# ^ obsoleted by PR 1961
 
     elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*":
         [avar, bvar, cvar, dvar] = children
@@ -11624,8 +10562,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{SETTABLE} : The {EXECUTION_CONTEXT_COMPONENT} of {var}",
         r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}",
         r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}",
-        # r"{SETTABLE} : the {var}'s {EXECUTION_CONTEXT_COMPONENT}", # PR 1740 obsoleted
-        # r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT} component", # PR 1743 obsoleted
     ]:
         if p.endswith('{var}'):
             [component_name, var] = children
@@ -11670,25 +10606,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
         return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
 
-#    elif p == r"{EXPR} : the `@` where |AssignmentOperator| is `@=`":
-#        return (ProcType([T_Number, T_Number], T_Number), env0)
-# ^ obsoleted by PR 1961
-
-#    elif p == r"{NAMED_OPERATION_INVOCATION} : the internal procedure that evaluates the above parse of {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
-#        [source_var, emu_xref, chars_var, nont, f_var] = children
-#        env0.assert_expr_is_of_type(source_var, T_String)
-#        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
-#        env0.assert_expr_is_of_type(f_var, T_String)
-#        return (T_RegExpMatcher_, env0)
-# ^ obsoleted by PR 1552
-
-#    elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
-#        [emu_xref, chars_var, nont, f_var] = children
-#        env0.assert_expr_is_of_type(chars_var, ListType(T_character_))
-#        env0.assert_expr_is_of_type(f_var, T_String)
-#        return (T_RegExpMatcher_, env0)
-# ^ obsoleted by PR 1866
-
     elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
         [p_var, emu_xref, chars_var, nont, f_var] = children
         env1 = env0.ensure_expr_is_of_type(p_var, T_PTN_Pattern)
@@ -11699,51 +10616,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : a Continuation that always returns its State argument as a successful MatchResult":
         [] = children
         return (T_Continuation, env0)
-
-#    elif p == r"{EXPR} : a Continuation that takes a State argument {var} and returns the result of calling {PREFIX_PAREN}":
-#        [state_param, pp] = children
-#        env_for_body = env0.plus_new_entry(state_param, T_State)
-#        (pp_type, env1) = tc_expr(pp, env_for_body)
-#        assert pp_type == T_MatchResult
-#        return (T_Continuation, env0)
-#
-#    elif p in [
-#        r"{MULTILINE_EXPR} : an internal Continuation closure that takes one State argument {var} and performs the following steps:{IND_COMMANDS}",
-#    ]:
-#        [state_param, commands] = children
-#        env_for_commands = env0.plus_new_entry(state_param, T_State)
-#        defns = [(None, commands)]
-#        env_after_commands = tc_proc(None, defns, env_for_commands)
-#        closure_t = T_Continuation
-#        assert env_after_commands.vars['*return*'].is_a_subtype_of_or_equal_to(closure_t.return_type)
-#        return (closure_t, env0)
-#
-#    elif p == r"{MULTILINE_EXPR} : an internal Matcher closure that takes two arguments, a State {var} and a Continuation {var}, and performs the following steps:{IND_COMMANDS}":
-#        [state_param, cont_param, commands] = children
-#        env_for_commands = env0.plus_new_entry(state_param, T_State).plus_new_entry(cont_param, T_Continuation)
-#        defns = [(None, commands)]
-#        env_after_commands = tc_proc(None, defns, env_for_commands)
-#        # returns from within `commands`
-#        # contribute to the matcher's return type,
-#        # not to the current operation's.
-#        assert env_after_commands.vars['*return*'] == T_MatchResult
-#        return (T_Matcher, env0)
-#
-#    elif p == r"{EXPR} : a Matcher that takes two arguments, a State {var} and a Continuation {var}, and returns the result of calling {PREFIX_PAREN}":
-#        [state_param, cont_param, prefix_paren] = children
-#        env_for_pp = env0.plus_new_entry(state_param, T_State).plus_new_entry(cont_param, T_Continuation)
-#        (t, env1) = tc_expr(prefix_paren, env_for_pp)
-#        assert t == T_MatchResult
-#        return (T_Matcher, env0)
-#
-#    elif p == r"{MULTILINE_EXPR} : an internal closure that takes two arguments, a String {var} and an integer {var}, and performs the following steps:{IND_COMMANDS}":
-#        [s_param, i_param, commands] = children
-#        env_for_commands = env0.plus_new_entry(s_param, T_String).plus_new_entry(i_param, T_MathInteger_)
-#        defns = [(None, commands)]
-#        env_after_commands = tc_proc(None, defns, env_for_commands)
-#        t  = ProcType([T_String, T_MathInteger_], T_MatchResult)
-#        return (t, env0)
-# ^ obsoleted by PR #1889
 
     elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}":
         [clo_kind, clo_parameters, clo_captures, _, commands] = children
@@ -11812,19 +10684,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # return Environment_Record
 
     elif p in [
-        # r'{EXPR} : the {ENVIRONMENT_RECORD_KIND} Environment Record for which the method was invoked', # PR 1994
         r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings',
         r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record',
     ]:
         [kind] = children
         t = type_for_environment_record_kind(kind)
         return (t, env0)
-
-#    elif p == r'{EXPR} : a new object Environment Record containing {var} as the binding object':
-#        [var] = children
-#        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-#        return (T_object_Environment_Record, env1)
-# ^ obsoleted by PR 2287
 
     # -------------------------------------------------
     # return T_Realm_Record
@@ -12051,12 +10916,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         return (T_Iterator_object_, env1)
 
-#    elif p == r'{EX} : the base value component of {var}':
-#        [var] = children
-#        env1 = env0.ensure_expr_is_of_type(var, T_Reference)
-#        return (T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record, env1)
-# ^ obsoleted by PR 2085
-
     elif p == r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}":
         [noi] = children
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded)
@@ -12146,18 +11005,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return (normal_part_of_type, env2)
 
-#    elif p == r"{TYPE_ARG} : {var}'s base value component":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Reference)
-#        return_type = T_Undefined | T_Object | T_Boolean | T_String | T_Symbol | T_Number | T_Environment_Record
-#        return (return_type, env0)
-#
-#    elif p == r'{EX} : the strict reference flag of {var}':
-#        [v] = children
-#        env0.assert_expr_is_of_type(v, T_Reference)
-#        return (T_Boolean, env0)
-# ^ obsoleted by PR 2085
-
     elif p in [
         r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}",
         r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context",
@@ -12233,7 +11080,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EX} : &laquo; {EXLIST} &raquo;",
-        # r"{EX} : \u00ab {EXLIST} \u00bb", # PR 2149
     ]:
         [exlist] = children
         ex_types = set()
@@ -12246,12 +11092,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             element_type = union_of_types(ex_types)
             list_type = ListType(element_type)
         return (list_type, env0)
-
-#    elif p == r"{SETTABLE} : the _withEnvironment_ flag of {var}":
-#        [var] = children
-#        env1 = env0.ensure_expr_is_of_type(var, T_object_Environment_Record)
-#        return (T_Boolean, env1)
-# ^ obsoleted by PR 2287
 
     elif p == r"{EXPR} : {var}'s _captures_ List":
         [var] = children
@@ -12302,48 +11142,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsbn_name == 'DateValue'
         return (T_Number, env0)
 
-#    elif p == r"{EXPR} : this Source Text Module Record":
-#        [] = children
-#        return (T_Source_Text_Module_Record, env0)
-#
-#    elif p == r"{EXPR} : this Cyclic Module Record":
-#        [] = children
-#        return (T_Cyclic_Module_Record, env0)
-# ^ obsoleted by PR 1994
-
-#    elif p in [
-#        r"{EX} : ScriptEvaluationJob",
-#        r"{EX} : TopLevelModuleEvaluationJob",
-#        r"{EX} : PromiseResolveThenableJob",
-#        r"{EX} : PromiseReactionJob",
-#    ]:
-#        [] = children
-#        return (T_proc_, env0)
-# ^ obsoleted by PR 1597
-
-#    elif p == r"{EXPR} : a newly created Array exotic object":
-#        [] = children
-#        return (T_Array_object_, env0)
-#
-#    elif p == r"{EXPR} : a newly created Integer-Indexed exotic object with an internal slot for each name in {var}":
-#        [var] = children
-#        env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
-#        return (T_Integer_Indexed_object_, env1)
-# ^ obsoleted by PR #1460
-
     elif p == r"{EX} : a newly created {ERROR_TYPE} object":
         [error_type] = children
         error_type_name = error_type.source_text()[1:-1]
         return (NamedType(error_type_name), env0)
-
-#    elif p == r"{EXPR} : a newly created bound function exotic object with the internal slots listed in {h_emu_xref}":
-#        [emu_xref] = children
-#        return (T_bound_function_exotic_object_, env0)
-
-#    elif p == r"{EXPR} : a newly created String exotic object with a {DSBN} internal slot":
-#        [dsbn] = children
-#        return (T_String_exotic_object_, env0)
-# ^ obsoleted by PR #1460
 
     elif p in [
         r"{EXPR} : a copy of {var}",
@@ -12422,22 +11224,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Object, env0)
 
-#    elif p == r"{EXPR} : a non-empty Job Queue chosen in an implementation-defined manner. If all Job Queues are empty, the result is implementation-defined":
-#        [] = children
-#        return (ListType(T_PendingJob), env0)
-#
-#    elif p == r"{EXPR} : the PendingJob record at the front of {var}":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, ListType(T_PendingJob))
-#        return (T_PendingJob, env0)
-#
-#    elif p == r"{NAMED_OPERATION_INVOCATION} : the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments":
-#        [adotting, bdotting] = children
-#        env0.assert_expr_is_of_type(adotting, T_proc_)
-#        env0.assert_expr_is_of_type(bdotting, T_List)
-#        return (T_Tangible_ | T_empty_ | T_Abrupt, env0)
-# ^ obsoleted by PR 1597
-
     elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row":
         [_, v, _] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
@@ -12489,20 +11275,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         return (T_Tangible_, env0)
 
-#    elif p in [
-#        r"{EXPR} : a List consisting of all of the arguments passed to this function, starting with the second argument. If fewer than two arguments were passed, the List is empty",
-#        r"{EXPR} : a List containing the arguments passed to this function",
-#        r"{EXPR} : a List whose elements are the arguments passed to this function",
-#        r"{EXPR} : a List whose elements are, in left to right order, the arguments that were passed to this function invocation",
-#        r"{EXPR} : a List whose elements are, in left to right order, the portion of the actual argument list starting with the third argument. The list is empty if fewer than three arguments were passed",
-#        r"{EXPR} : a zero-origined List containing the argument items in order",
-#        r"{EXPR} : the List of argument values starting with the second argument",
-#        r"{EXPR} : the List of arguments passed to this function",
-#    ]:
-#        [] = children
-#        return (ListType(T_Tangible_), env0)
-# ^ obsoleted by PR 2139
-
     elif p == r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}":
         [s_var, nf_var, h_a] = children
         env0.assert_expr_is_of_type(s_var, T_String)
@@ -12523,35 +11295,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_code_unit_)
         return (T_String, env0)
 
-# obsoleted by merge of PR #1602:
-#    elif p == r"{EXPR} : a substring of {var} consisting of the leftmost code unit that is not a |StrWhiteSpaceChar| and all code units to the right of that code unit. (In other words, remove leading white space.) If {var} does not contain any such code units, let {var} be the empty string":
-#        [var1, var2, var3] = children
-#        assert same_source_text(var1, var2)
-#        env0.assert_expr_is_of_type(var1, T_String)
-#        return (T_String, env0)
-
     elif p == r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}":
         [var1, var2, nont] = children
         assert same_source_text(var1, var2)
         env0.assert_expr_is_of_type(var1, T_String)
         return (T_String, env0)
-
-#    elif p == r"{EXPR} : the integer represented by the four hexadecimal digits at indices {NUM_EXPR}, {NUM_EXPR}, {NUM_EXPR}, and {NUM_EXPR} within {var}":
-#        [e1, e2, e3, e4, var] = children
-#        env0.assert_expr_is_of_type(e1, T_MathInteger_)
-#        env0.assert_expr_is_of_type(e2, T_MathInteger_)
-#        env0.assert_expr_is_of_type(e3, T_MathInteger_)
-#        env0.assert_expr_is_of_type(e4, T_MathInteger_)
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (T_MathInteger_, env0)
-#
-#    elif p == r"{EXPR} : the integer represented by two zeroes plus the two hexadecimal digits at indices {NUM_EXPR} and {NUM_EXPR} within {var}":
-#        [i1, i2, var] = children
-#        env0.assert_expr_is_of_type(i1, T_MathInteger_)
-#        env0.assert_expr_is_of_type(i2, T_MathInteger_)
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (T_MathInteger_, env0)
-# ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : this Date object":
         [] = children
@@ -12616,42 +11364,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(n_var, T_MathInteger_)
         return (T_String, env1)
 
-#    elif p in [
-#        r"{EXPR} : the String value containing {var} consecutive code units from {var} beginning with the code unit at index {var}",
-#        r"{EXPR} : the String value containing {DOTTING} consecutive code units from {var} beginning with the code unit at index {var}",
-#    ]:
-#        [len_expr, s_var, k_var] = children
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(len_expr, T_MathInteger_)
-#        env1 = env0.ensure_expr_is_of_type(k_var, T_MathInteger_)
-#        return (T_String, env1)
-#
-#    elif p == r"{EXPR} : the String value whose length is {EX}, containing code units from {var}, namely the code units with indices {var} through {EX}, in ascending order":
-#        [len_ex, s_var, start_var, end_var] = children
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        env0.assert_expr_is_of_type(start_var, T_MathInteger_)
-#        env0.assert_expr_is_of_type(end_var, T_MathInteger_)
-#        env0.assert_expr_is_of_type(len_ex, T_MathInteger_)
-#        return (T_String, env0)
-# ^ obsoleted by PR 2021
-
-#    elif p == r"{EXPR} : a List containing in order the code points as defined in {h_emu_xref} of {var}, starting at the first element of {var}":
-#        [emu_xref, s_var, s_var2] = children
-#        assert same_source_text(s_var2, s_var)
-#        env0.assert_expr_is_of_type(s_var, T_String)
-#        return (ListType(T_code_point_), env0)
-#
-#    elif p == r"{EXPR} : a List containing in order the code points of {var} when interpreted as a sequence of UTF-16 encoded code points as described in {h_emu_xref}":
-#        [var, emu_xref] = children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (ListType(T_code_point_), env0)
-#
-#    elif p == r"{EXPR} : a List where the elements are the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, ListType(T_code_point_))
-#        return (ListType(T_code_point_), env0)
-# ^ obsoleted by PR 1552
-
     elif p in [
         r"{EX} : the GlobalSymbolRegistry List",
         r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})",
@@ -12677,19 +11389,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nonta, nontb, strlit] = children
         env0.assert_expr_is_of_type(strlit, T_String)
         return (T_String, env0)
-
-# obsoleted by merge of PR #1602:
-#    elif p == r"{EXPR} : a newly created substring of {var} consisting of the first code unit that is not a {nonterminal} and all code units following that code unit. (In other words, remove leading white space.) If {var} does not contain any such code unit, let {var} be the empty string":
-#        [var, nont, var2, x] = children
-#        assert same_source_text(var2, var)
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (T_String, env0)
-
-#    elif p == r"{EXPR} : the substring of {var} consisting of all code units before the first such code unit":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_String)
-#        return (T_String, env0)
-# ^ obsoleted by PR 2021
 
     elif p == r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35":
         [zvar, rvar] = children
@@ -12737,26 +11436,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [percent_word] = children
         return (T_function_object_, env0)
 
-#    elif p == r"{EX} : the first {var} code units of {var}":
-#        [n, s] = children
-#        env0.assert_expr_is_of_type(n, T_MathInteger_)
-#        env0.assert_expr_is_of_type(s, T_String)
-#        return (ListType(T_code_unit_), env0)
-#
-#    elif p == r"{EX} : the trailing substring of {var} starting at index {var}":
-#        [s, n] = children
-#        env0.assert_expr_is_of_type(s, T_String)
-#        env0.assert_expr_is_of_type(n, T_MathInteger_)
-#        return (T_String, env0)
-#
-#    elif p == r"{EXPR} : the String value equal to the substring of {var} consisting of the code units at indices {var} (inclusive) through {var} (exclusive)":
-#        [s, start, end] = children
-#        env0.assert_expr_is_of_type(s, T_String)
-#        env0.assert_expr_is_of_type(start, T_MathInteger_)
-#        env0.assert_expr_is_of_type(end, T_MathInteger_)
-#        return (T_String, env0)
-# ^ obsoleted by PR 2021
-
     elif p in [
         r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}",
         r"{EXPR} : a List whose first element is {var} and whose subsequent elements are the elements of {var}. {var} may contain no elements",
@@ -12765,17 +11444,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(head_var, T_Tangible_)
         env1 = env0.ensure_expr_is_of_type(tail_var, ListType(T_Tangible_))
         return (ListType(T_Tangible_), env1)
-
-#    elif p == r"{EXPR} : a List whose first element is {var} and whose subsequent elements are, in left to right order, the arguments that were passed to this function invocation":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Tangible_)
-#        return (ListType(T_Tangible_), env0)
-#
-#    elif p == r"{EXPR} : a new (possibly empty) List consisting of all of the argument values provided after {var} in order":
-#        [var] = children
-#        env0.assert_expr_is_of_type(var, T_Tangible_)
-#        return (ListType(T_Tangible_), env0)
-# ^ obsoleted by PR 2139
 
     elif p == r"{EXPR} : the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)":
         [] = children
@@ -12786,45 +11454,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_String)
         return (T_MathNonNegativeInteger_, env0)
 
-#    elif p == r"{EXPR} : the larger of 0 and the result of {var} minus the number of elements of {var}":
-#        [num_var, list_var] = children
-#        env0.assert_expr_is_of_type(list_var, T_List)
-#        env1 = env0.ensure_expr_is_of_type(num_var, T_MathNonNegativeInteger_)
-#        return (T_MathNonNegativeInteger_, env1)
-# ^ obsoleted by PR 2146
-
     elif p == r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}":
         [emu_xref, dotting] = children
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_function_object_, env0)
 
-#    elif p == r"{EXPR} : the result of parsing and evaluating {var} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
-#        [svar, nont, emu_xref] = children
-#        env0.assert_expr_is_of_type(svar, T_String)
-#        return (T_Tangible_ | T_throw_, env0)
-# ^ obsoleted by PR 1552
-
-#    elif p == r"{EXPR} : the result of parsing and evaluating {PP_NAMED_OPERATION_INVOCATION} as if it was the source text of an ECMAScript {nonterminal}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
-#        [noi, nont, emu_xref] = children
-#        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-#        return (T_Tangible_ | T_throw_, env0)
-# ^ obsoleted by PR 2013
-
     elif p == r"{EXPR} : the String value containing {var} occurrences of {code_unit_lit}":
         [n, lit] = children
         env0.assert_expr_is_of_type(lit, T_code_unit_)
         return (T_String, env0)
-
-#    elif p == r"{EXPR} : the String value consisting of the first 10 code units of {var}":
-#        [v] = children
-#        env0.assert_expr_is_of_type(v, T_String)
-#        return (T_String, env0)
-#
-#    elif p == r"{EX} : the current value of {var}":
-#        [var] = children
-#        (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
-#        return (var_t, env0)
-# ^ obsoleted by PR 2021
 
     elif p == "{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *\"u\"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results":
         # XXX
@@ -12961,21 +11599,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
-#    elif p == r"{EXPR} : the Parse Node resulting from the parse":
-#        [] = children
-#        return (T_Parse_Node, env0)
-# ^ obsoleted by PR 2013
-
     elif p == r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements":
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
-
-#    elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors":
-#        [error_type] = children
-#        error_type_name = error_type.source_text()[1:-1]
-#        return (ListType(NamedType(error_type_name)), env0)
-# ^ obsoleted by PR 2013
 
     # for PR #1961 compound_assignment
     elif p == r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}":
@@ -13524,16 +12151,6 @@ fields_for_record_type_named_ = {
         'OuterPrivateEnvironment': T_PrivateEnvironment_Record | T_Null,
         'Names'                  : ListType(T_Private_Name),
     },
-
-#    # 7343: Table 25: PendingJob Record Fields
-#    'PendingJob': {
-#        'Job'           : T_proc_,
-#        'Arguments'     : T_List,
-#        'Realm'         : T_Realm_Record,
-#        'ScriptOrModule': T_Script_Record | T_Module_Record,
-#        'HostDefined'   : T_host_defined_ | T_Undefined,
-#    },
-# ^ obsoleted by PR 1597
 
     # 5515+5660: NO TABLE, not even a mention
     'iterator_record_': {
