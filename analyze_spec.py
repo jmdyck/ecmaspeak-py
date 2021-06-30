@@ -620,9 +620,7 @@ def check_tables():
                 'Well-Known Intrinsic Objects',
                 'Additional Well-known Intrinsic Objects',
             ]
-            well_known_intrinsics_table_spans.append( (et.start_posn, et.end_posn) )
             
-            new_names = {}
             assert header_line == 'Intrinsic Name; Global Name; ECMAScript Language Association'
             for tr in et.each_descendant_named('tr'):
                 if tr == header_tr: continue
@@ -633,39 +631,18 @@ def check_tables():
 
                 assert re.fullmatch(r'%\w+%', oname)
                 assert oname not in well_known_intrinsics
+                well_known_intrinsics[oname] = True
 
-                assert re.fullmatch(r"|`\w+(\.\w+)*`", global_name)
+                assert re.fullmatch(r"|`\w+`", global_name)
 
-                if ';' in assoc or 'i.e.' in assoc:
-                    mo = re.search(r'; i.e., (%\w+(\.\w+)+%)$', assoc)
-                    assert mo
-                    new_name = mo.group(1)
-                    assert new_name not in well_known_intrinsics
-                    assert new_name not in new_names
-                    new_names[new_name] = tr.start_posn
-
-                    assert new_name != oname
-                    well_known_intrinsics[oname] = f"old name;  2950,$s/{oname}/{new_name}/gc"
-                    well_known_intrinsics[new_name] = "new name"
-                else:
-                    well_known_intrinsics[oname] = "only name"
-
-            # Have to do this after processing the table,
-            # because of possible forward references.
-            # (E.g., on the row for %AsyncGenerator%,
-            # column 3 mentions %AsyncGeneratorFunction.prototype%,
-            # which implies the existence of %AsyncGeneratorFunction%,
-            # which is declared in column 1 of the *next* row.)
-            for (new_name, tr_posn) in new_names.items():
-                base_of_new_name = re.sub(r'\..*', '%', new_name)
-                if base_of_new_name not in well_known_intrinsics:
-                    msg_at_posn(tr_posn, f"Implied intrinsic doesn't exist: {base_of_new_name}")
+                assert ';' not in assoc
+                assert 'i.e.' not in assoc
+                # Those were used before the merge of PR #2056.
 
         else:
             # print('>>>', header_line, '---', caption)
             pass
 
-well_known_intrinsics_table_spans = []
 well_known_intrinsics = {}
 
 def check_intrinsics():
@@ -687,19 +664,10 @@ def check_intrinsics():
                 # metavariable interpolation
                 continue
 
-            is_in_table = any(
-                table_start < itext_start < table_end
-                for (table_start, table_end) in well_known_intrinsics_table_spans 
-            )
-
             base_intrinsic = re.sub(r'\.[^%]+', '', itext)
 
-            status = well_known_intrinsics.get(base_intrinsic, "doesn't exist")
-            if status == "doesn't exist":
+            if base_intrinsic not in well_known_intrinsics:
                 msg_at_posn(itext_start, f"Intrinsic doesn't exist: {base_intrinsic}")
-            elif status.startswith("old name"):
-                if not is_in_table:
-                    msg_at_posn(itext_start, f"Using {status}")
 
              # XXX We should also check that any ".foo.bar" appended to the base intrinsic
              # also makes sense, but we don't have the necessary info readily available.
