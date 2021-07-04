@@ -436,9 +436,11 @@ def _extract_info_from_section_title(section, pattern_results):
 
     assert isinstance(result, str)
     section.section_kind = result
+    _start_ste(section, mo.groupdict())
 
+def _start_ste(section, initial_ste):
     # "ste" = section-title extractions
-    section.ste = mo.groupdict()
+    section.ste = initial_ste
 
     # ---------------------------------
 
