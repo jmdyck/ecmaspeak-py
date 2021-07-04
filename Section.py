@@ -285,11 +285,106 @@ def _handle_sdo_section(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def _handle_other_op_section(section):
+
+    if section.section_id in ['sec-normalcompletion', 'sec-throwcompletion']:
+        # The preambles say "The abstract operation NormalCompletion ..."
+        # and "The abstract operation ThrowCompletion ..."
+        # but currently, they're not defined as abstract operations,
+        # they're defined as shorthands.
+        return False
+
+    if section.section_title == 'StringToBigInt ( _argument_ )':
+        # 7.1.14
+        # First <p> isn't a proper preamble, so has to be handled specially.
+        p_dict = {
+            'kind': 'abstract operation',
+            'op_name': 'StringToBigInt',
+            'params_str': '_argument_',
+        }
+
+    elif section.section_id == 'sec-weakref-execution':
+        # 9.10.3
+        p_dict = {
+            'kind': 'abstract operation',
+            'op_name': 'WeakRef emptying thing',
+            'params_str': '_S_',
+        }
+
+    elif section.section_title in [
+        'Valid Chosen Reads',
+        'Coherent Reads',
+        'Tear Free Reads',
+        'Races',
+        'Data Races',
+    ]:
+        # 29.7.*, 29.8, 29.9
+        p_dict = {
+            'kind': 'abstract operation',
+            'op_name': section.section_title,
+        }
+
+    else:
+        # Over the course of various PRs (latest #2427),
+        # the first para ('preamble') of non-SDO operations
+        # has become standardized.
+        s_ist = section.inner_source_text()
+        h1_pattern = r'\n +<h1>(\S+ Semantics: )?(?P<op_name>\S+) \((?P<params_str>[^()]*)\)</h1>'
+        for p_pattern in [
+            r'\n +<p>The ((host|implementation)-defined )?(?P<kind>abstract operation)',
+            r'\n +<p>The (?P=op_name) (?P<kind>(internal|concrete) method)',
+        ]:
+            pattern = h1_pattern + p_pattern
+            mo = re.match(pattern, s_ist)
+            if mo:
+                p_dict = mo.groupdict()
+                break
+        else:
+            return False
+
+    # -------------------------------
+    # At this point, we're committed.
+
+    if p_dict['kind'] == 'abstract operation':
+        if '::' in p_dict['op_name']:
+            section.section_kind = 'numeric_method'
+            p_dict['op_name'] = re.sub(r'^\w+', '', p_dict['op_name'])
+        else:
+            section.section_kind = 'abstract_operation'
+
+    elif p_dict['kind'] in ['host-defined abstract operation', 'implementation-defined abstract operation']:
+        assert 0
+        section.section_kind = 'abstract_operation'
+
+    elif p_dict['kind'] == 'internal method':
+        section.section_kind = 'internal_method'
+
+    elif p_dict['kind'] == 'concrete method':
+        if section.parent.parent.section_title == "The Environment Record Type Hierarchy":
+            section.section_kind = 'env_rec_method'
+        elif section.parent.parent.section_title == "Module Semantics":
+            section.section_kind = 'module_rec_method'
+        else:
+            assert 0
+
+    else:
+        assert 0
+
+    _start_ste(section, p_dict)
+
+    for child in section.section_children:
+        _infer_section_kinds(child)
+
+    return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def _infer_section_kinds(section):
     # We infer a section's kind almost entirely based on its title.
 
     if _handle_root_section(section): return
     if _handle_sdo_section(section): return
+    if _handle_other_op_section(section): return
 
     _extract_info_from_section_title( section,
         [
@@ -302,7 +397,6 @@ def _infer_section_kinds(section):
             (r'ThrowCompletion',                                   'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
 
-            (r'(?P<op_name>\[\[\w+\]\]) ?<PARAMETER_LIST>',        'internal_method'),
             (r'Static Semantics: (?P<op_name>Early Errors)', 'early_errors'),
 
             (r'.+ Instances',             'properties_of_instances'),
@@ -322,17 +416,6 @@ def _infer_section_kinds(section):
             (r'VariableStatements in Catch Blocks',              'changes'),
             (r'Initializers in ForIn Statement Heads',           'changes'),
 
-            (r'(Number|BigInt)(?P<op_name>::[a-z][a-zA-Z]+) <PARAMETER_LIST>',          'numeric_method'), # PR 1515 BigInt
-
-            (r'(?P<op_name>Link|Evaluate|GetExportedNames|ResolveExport|InitializeEnvironment|ExecuteModule) <PARAMETER_LIST>', 'module_rec_method'),
-
-            (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
-            (r'(Static|Runtime) Semantics: (?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>', 'abstract_operation'),
-
-            (r'(?P<op_name>(Valid Chosen|Coherent|Tear Free) Reads)',                   'abstract_operation'),
-            (r'(?P<op_name>Races|Data Races)',                                          'abstract_operation'),
-            (r'Execution',                                                              'abstract_operation'), # odd case
-
             (r'_NativeError_ Object Structure', 'loop'),
 
             (r'Non-ECMAScript Functions',          'catchall'),
@@ -342,13 +425,6 @@ def _infer_section_kinds(section):
             (r'.*',                                'catchall'),
         ]
     )
-
-    # Resolve ambiguous cases:
-    if section.section_kind == 'abstract_operation|env_rec_method':
-        if section.parent.section_title.endswith(' Environment Records'):
-            section.section_kind = 'env_rec_method'
-        else:
-            section.section_kind = 'abstract_operation'
 
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
@@ -362,13 +438,6 @@ def _infer_section_kinds(section):
         assert section.ste['op_name'] == 'Early Errors'
         assert 'parameters' not in section.ste
         section.ste['parameters'] = OrderedDict()
-
-    elif section.section_title == 'Execution':
-        assert section.section_kind == 'abstract_operation'
-        assert section.section_id == 'sec-weakref-execution'
-        assert 'op_name' not in section.ste
-        section.ste['op_name'] = 'WeakRef emptying thing'
-        section.ste['parameters'] = OrderedDict([('_S_', '')])
 
     # ======================================================
 
