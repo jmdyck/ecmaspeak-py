@@ -173,14 +173,17 @@ def check_section_title(h1, node):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _infer_section_kinds(section):
-    # We infer a section's kind almost entirely based on its title.
-
+def _handle_root_section(section):
     if section.section_title is None:
         stderr("_infer_section_kinds...")
         for child in section.section_children:
             _infer_section_kinds(child)
-        return
+        return True
+
+def _infer_section_kinds(section):
+    # We infer a section's kind almost entirely based on its title.
+
+    if _handle_root_section(section): return
 
     _extract_info_from_section_title( section,
         [
