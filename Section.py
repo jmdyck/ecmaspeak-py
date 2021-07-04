@@ -180,10 +180,116 @@ def _handle_root_section(section):
             _infer_section_kinds(child)
         return True
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _handle_sdo_section(section):
+
+    # Since the merge of PR #2271,
+    # almost all SDO sections are identified by `type="sdo"`.
+    if section.attrs.get('type') == 'sdo':
+        sdo_name = section.attrs['aoid']
+
+    else:
+        # But `type="sdo"` really means more like:
+        # "This clause is the complete definition of exactly one SDO."
+        # So there are various clauses that don't get `type="sdo"`
+        # that we neverthless want to mark as SDO sections...
+
+        # A clause that defines *multiple* SDOs:
+        if section.section_title in [
+            'Static Semantics: TV and TRV',
+        ]:
+            sdo_name = 'TV and TRV'
+
+        # A clause that only *partially* defines an SDO:
+        elif section.section_title in [
+            'Runtime Semantics: MV',
+            'Static Semantics: MV',
+            'Runtime Semantics: Evaluation',
+        ]:
+            sdo_name = re.sub('.*: ', '', section.section_title)
+
+        elif section.parent.section_title == 'Static Semantics: HasCallInTailPosition':
+            # 15.10.2.1 Statement Rules
+            # 15.10.2.2 Expression Rules
+            sdo_name = 'HasCallInTailPosition'
+
+        elif (
+            section.parent.section_id == 'sec-pattern-semantics'
+            and
+            section.section_title != 'Notation'
+        ):
+            # 22.2.2.*
+            sdo_name = 'regexp-Evaluate'
+            #! assert 'op_name' not in section.ste
+            #! section.ste['op_name'] = 'regexp-Evaluate'
+            #! section.ste['parameters'] = OrderedDict()
+
+        # An Annex B clause that extends the semantics of a main-body SDO:
+        elif section.section_title in [
+            'Static Semantics: IsCharacterClass',
+            'Static Semantics: CharacterValue',
+        ]:
+            # B.1.4.2
+            # B.1.4.3
+            sdo_name = re.sub('.*: ', '', section.section_title)
+
+        else:
+            # Anything else isn't an SDO section.
+            return False
+
+    # -------------------------------------------
+    # At this point, we know it's an SDO section.
+
+    section.section_kind = 'syntax_directed_operation'
+
+    _start_ste(section, {'op_name': sdo_name})
+
+    if section.section_title in ['Statement Rules', 'Expression Rules']:
+        section.ste = section.parent.ste.copy()
+
+    else:
+        # Parameters, if any, are stated in the section's first paragraph.
+        assert 'parameters' not in section.ste
+        parameters = OrderedDict()
+        c0 = section.block_children[0]
+        if c0.element_name == 'p':
+            p_text = c0.source_text()
+            if p_text.startswith('<p>With '):
+                mo = re.match(r'^<p>With (.+)\.</p>$', p_text)
+                assert mo, p_text
+                params_s = mo.group(1)
+                if mo := re.match(r'(.+?),? and (optional .+)', params_s):
+                    parts = mo.groups()
+                else:
+                    parts = [params_s]
+
+                for part in parts:
+                    part_punct = '[]' if part.startswith('optional') else ''
+                    part_params_s = re.sub('^(optional )?parameters? ', '', part)
+
+                    for param in re.split(r', and |, | and ', part_params_s):
+                        if param == '_argumentsList_ (a List)':
+                            param_name = '_argumentsList_'
+                        else:
+                            assert re.match(r'^_[a-zA-Z]+_$', param), param
+                            param_name = param
+                        assert param_name not in parameters
+                        parameters[param_name] = part_punct
+        section.ste['parameters'] = parameters
+
+    for child in section.section_children:
+        _infer_section_kinds(child)
+
+    return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def _infer_section_kinds(section):
     # We infer a section's kind almost entirely based on its title.
 
     if _handle_root_section(section): return
+    if _handle_sdo_section(section): return
 
     _extract_info_from_section_title( section,
         [
@@ -227,12 +333,6 @@ def _infer_section_kinds(section):
             (r'(?P<op_name>Races|Data Races)',                                          'abstract_operation'),
             (r'Execution',                                                              'abstract_operation'), # odd case
 
-            (r'Static Semantics: (?P<op_name>TV and TRV)', 'syntax_directed_operation'),
-            (r'Static Semantics: (?P<op_name>\w+)',        'syntax_directed_operation'),
-            (r'Runtime Semantics: (?P<op_name>\w+)',       'syntax_directed_operation'),
-            (r'Statement Rules',                           'syntax_directed_operation'),
-            (r'Expression Rules',                          'syntax_directed_operation'),
-
             (r'_NativeError_ Object Structure', 'loop'),
 
             (r'Non-ECMAScript Functions',          'catchall'),
@@ -258,55 +358,9 @@ def _infer_section_kinds(section):
 
     # Some stuff that isn't in the section_title, but should be?
 
-    if section.section_kind == 'syntax_directed_operation':
-        if section.section_title in ['Statement Rules', 'Expression Rules']:
-            assert section.ste == {}
-            section.ste = section.parent.ste.copy()
-
-        else:
-            # Parameters, if any, are stated in the section's first paragraph.
-            assert 'parameters' not in section.ste
-            parameters = OrderedDict()
-            c0 = section.block_children[0]
-            if c0.element_name == 'p':
-                p_text = c0.source_text()
-                if p_text.startswith('<p>With '):
-                    mo = re.match(r'^<p>With (.+)\.</p>$', p_text)
-                    assert mo, p_text
-                    params_s = mo.group(1)
-                    if mo := re.match(r'(.+?),? and (optional .+)', params_s):
-                        parts = mo.groups()
-                    else:
-                        parts = [params_s]
-
-                    for part in parts:
-                        part_punct = '[]' if part.startswith('optional') else ''
-                        part_params_s = re.sub('^(optional )?parameters? ', '', part)
-
-                        for param in re.split(r', and |, | and ', part_params_s):
-                            if param == '_argumentsList_ (a List)':
-                                param_name = '_argumentsList_'
-                            else:
-                                assert re.match(r'^_[a-zA-Z]+_$', param), param
-                                param_name = param
-                            assert param_name not in parameters
-                            parameters[param_name] = part_punct
-            section.ste['parameters'] = parameters
-
-    elif section.section_kind == 'early_errors':
+    if section.section_kind == 'early_errors':
         assert section.ste['op_name'] == 'Early Errors'
         assert 'parameters' not in section.ste
-        section.ste['parameters'] = OrderedDict()
-
-    elif (
-        section.parent.section_title in ['Pattern Semantics', 'Runtime Semantics for Patterns']
-        and
-        section.section_title not in ['Notation', 'CharacterRangeOrUnion ( _A_, _B_ )']
-    ):
-        assert section.section_kind == 'catchall'
-        section.section_kind = 'syntax_directed_operation'
-        assert 'op_name' not in section.ste
-        section.ste['op_name'] = 'regexp-Evaluate'
         section.ste['parameters'] = OrderedDict()
 
     elif section.section_title == 'Execution':
@@ -315,29 +369,6 @@ def _infer_section_kinds(section):
         assert 'op_name' not in section.ste
         section.ste['op_name'] = 'WeakRef emptying thing'
         section.ste['parameters'] = OrderedDict([('_S_', '')])
-
-    # ======================================================
-
-    expect_attr_type_is_sdo = (
-        section.section_kind == 'syntax_directed_operation'
-        and
-        section.ste['op_name'] not in [
-            'MV',
-            'TV and TRV',
-            'Evaluation',
-            'regexp-Evaluate'
-        ]
-    )
-    type_is_sdo = (section.attrs.get('type') == 'sdo')
-
-    if type_is_sdo and not expect_attr_type_is_sdo:
-        msg_at_posn(section.start_posn,
-            f'Did not expect `type="sdo"` for this section'
-        )
-    elif not type_is_sdo and expect_attr_type_is_sdo:
-        msg_at_posn(section.start_posn,
-            f'Expected `type="sdo"` for this section'
-        )
 
     # ======================================================
 
