@@ -192,12 +192,9 @@ def _infer_section_kinds(section):
             (r'NormalCompletion',                                  'shorthand'),
             (r'ThrowCompletion',                                   'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
-            (r'Shorthands Relating to Completion Records',         'shorthand'), # PR 1573
 
             (r'(?P<op_name>\[\[\w+\]\]) ?<PARAMETER_LIST>',        'internal_method'),
             (r'Static Semantics: (?P<op_name>Early Errors)', 'early_errors'),
-
-            (r'The Reference Specification Type', 'abstract_operations'), # plural!
 
             (r'.+ Instances',             'properties_of_instances'),
             (r'Module Namespace Objects', 'properties_of_instances'),
@@ -222,7 +219,6 @@ def _infer_section_kinds(section):
 
             (r'(?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>',                             'abstract_operation|env_rec_method'),
             (r'(Static|Runtime) Semantics: (?P<op_name>[A-Z][\w/]+) ?<PARAMETER_LIST>', 'abstract_operation'),
-            (r'(?P<op_name>.+ Comparison)',                                             'abstract_operation'),
 
             (r'(?P<op_name>(Valid Chosen|Coherent|Tear Free) Reads)',                   'abstract_operation'),
             (r'(?P<op_name>Races|Data Races)',                                          'abstract_operation'),
@@ -230,7 +226,6 @@ def _infer_section_kinds(section):
 
             (r'Static Semantics: (?P<op_name>TV and TRV)', 'syntax_directed_operation'),
             (r'Static Semantics: (?P<op_name>\w+)',        'syntax_directed_operation'),
-            (r'Static Semantics: (?P<op_name>(Number|BigInt) Value)', 'syntax_directed_operation'), # PR 1515 BigInt
             (r'Runtime Semantics: (?P<op_name>\w+)',       'syntax_directed_operation'),
             (r'Statement Rules',                           'syntax_directed_operation'),
             (r'Expression Rules',                          'syntax_directed_operation'),
@@ -239,10 +234,7 @@ def _infer_section_kinds(section):
 
             (r'Non-ECMAScript Functions',          'catchall'),
             (r'(?P<prop_path>.+) Functions',                       'anonymous_built_in_function'),
-            (r'(?P<prop_path>ListIterator next) <PARAMETER_LIST>', 'anonymous_built_in_function'),
             (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>',  'anonymous_built_in_function'),
-            # ArgGetter
-            # ArgSetter
 
             (r'.*',                                'catchall'),
         ]
@@ -250,8 +242,7 @@ def _infer_section_kinds(section):
 
     # Resolve ambiguous cases:
     if section.section_kind == 'abstract_operation|env_rec_method':
-        if section.parent.section_title.endswith(' Environment Records') or section.parent.section_title.endswith(' Scope Records'):
-            # PR 1477 scope-records:
+        if section.parent.section_title.endswith(' Environment Records'):
             section.section_kind = 'env_rec_method'
         else:
             section.section_kind = 'abstract_operation'
@@ -363,7 +354,6 @@ def _set_section_kind_for_constructor(section):
     mo = re.fullmatch(r'The (\S+) (Constructors?|Intrinsic Object)', section.section_title)
     assert mo
     thing = mo.group(1)
-    # if thing == '_NativeError_': thing = 'NativeError' # Looks like a spec bug. Fixed in 'preambles' branch
 
     for child in section.section_children: # constructor_alg_children:
         _extract_info_from_section_title( child,
@@ -382,11 +372,7 @@ def _set_section_kind_for_constructor(section):
         for child in section.section_children
         if child.section_kind == 'CallConstruct'
     )
-    assert n > 0
-    if n > 1:
-        for child in section.section_children:
-            if child.section_kind == 'CallConstruct':
-                child.section_kind = 'CallConstruct_overload'
+    assert n == 1
 
 def _set_section_kind_for_properties(section):
     # `section` contains clauses that declare (some of) the properties of some object.
@@ -429,17 +415,6 @@ def _set_section_kind_for_properties(section):
 
         if child.section_kind.startswith('group_of_properties') or child.section_title == 'Object.prototype.__proto__' :
             _set_section_kind_for_properties(child)
-
-        elif child.section_title == '%TypedArray%.prototype.set ( _overloaded_ [ , _offset_ ] )':
-            assert child.section_kind == 'function_property'
-            assert len(child.section_children) == 2
-            for gchild in child.section_children:
-                _extract_info_from_section_title( gchild,
-                    [
-                        (r'(?P<prop_path>[\w.%]+) <PARAMETER_LIST>', 'function_property_overload'),
-                    ]
-                )
-                assert len(gchild.section_children) == 0
 
         else:
             for gchild in child.section_children:
