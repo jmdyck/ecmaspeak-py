@@ -14,7 +14,7 @@ from shared import stderr, header, msg_at_posn, spec
 
 def make_and_check_sections():
     spec.root_section = _establish_sections(spec.doc_node)
-    _infer_section_kinds(spec.root_section)
+    _set_section_kind_r(spec.root_section)
     _print_section_kinds(spec.root_section)
     _check_aoids(spec.root_section)
     _check_section_order(spec.root_section)
@@ -172,12 +172,22 @@ def check_section_title(h1, node):
             )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _set_section_kind_r(section):
+    if _handle_root_section(section): return
+    if _handle_sdo_section(section): return
+    if _handle_other_op_section(section): return
+    if _handle_other_section(section): return
+    assert 0
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _handle_root_section(section):
     if section.section_title is None:
-        stderr("_infer_section_kinds...")
+        stderr("_set_section_kind_r...")
         for child in section.section_children:
-            _infer_section_kinds(child)
+            _set_section_kind_r(child)
         return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -279,7 +289,7 @@ def _handle_sdo_section(section):
         section.ste['parameters'] = parameters
 
     for child in section.section_children:
-        _infer_section_kinds(child)
+        _set_section_kind_r(child)
 
     return True
 
@@ -373,7 +383,7 @@ def _handle_other_op_section(section):
     _start_ste(section, p_dict)
 
     for child in section.section_children:
-        _infer_section_kinds(child)
+        _set_section_kind_r(child)
 
     return True
 
@@ -486,18 +496,9 @@ def _handle_other_section(section):
 
     if True:
         for child in section.section_children:
-            _infer_section_kinds(child)
+            _set_section_kind_r(child)
 
     return True
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def _infer_section_kinds(section):
-    if _handle_root_section(section): return
-    if _handle_sdo_section(section): return
-    if _handle_other_op_section(section): return
-    if _handle_other_section(section): return
-    assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -562,6 +563,7 @@ def _start_ste(section, initial_ste):
 
             section.ste['parameters'] = params_info
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _print_section_kinds(section):
