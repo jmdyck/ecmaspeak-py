@@ -418,13 +418,28 @@ def _infer_section_kinds(section):
 
             (r'_NativeError_ Object Structure', 'loop'),
 
-            (r'Non-ECMAScript Functions',          'catchall'),
+            (r'Non-ECMAScript Functions',                          'catchall'),
+            (r'URI Handling Functions',                            'group_of_properties2'),
             (r'(?P<prop_path>.+) Functions',                       'anonymous_built_in_function'),
             (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>',  'anonymous_built_in_function'),
+            (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
+
+            (r'(?P<prop_path>[A-Z]\w+) \((?P<params_str> \. \. \. )\)', 'function_property_xref'),
 
             (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',   'CallConstruct'),
             (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>', 'CallConstruct'),
             (r'(?P<prop_path>%[A-Z]\w+%) <PARAMETER_LIST>', 'CallConstruct'),
+
+            (r'(?P<prop_path>get <PROP_PATH>)',              'accessor_property'),
+            (r'(?P<prop_path>set <PROP_PATH>)',              'accessor_property'),
+            (r'(?P<prop_path>Object.prototype.__proto__)',   'accessor_property'),
+
+            (r'(?P<prop_path><PROP_PATH>) <PARAMETER_LIST>', 'function_property'),
+            (r'(?P<prop_path>\w+) <PARAMETER_LIST>',         'function_property'),
+
+            (r'<PROP_PATH>',                                 'other_property'),
+            (r'[a-z]\w+|Infinity|NaN',                       'other_property'),
+            (r'@@\w+',                                       'other_property'),
 
             (r'.*',                                'catchall'),
         ]
@@ -433,6 +448,13 @@ def _infer_section_kinds(section):
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
             section.section_kind = 'changes'
+
+    if section.parent.section_title == 'Terms and Definitions' and section.section_kind == 'other_property':
+        section.section_kind = 'catchall'
+
+    if section.parent.section_title == 'Other Properties of the Global Object':
+        assert section.section_kind == 'catchall'
+        section.section_kind = 'other_property_xref'
 
     # -----------
 
@@ -443,60 +465,18 @@ def _infer_section_kinds(section):
         assert 'parameters' not in section.ste
         section.ste['parameters'] = OrderedDict()
 
+    if section.section_title.startswith('get '):
+        assert section.section_kind == 'accessor_property'
+        # The spec leaves off the empty parameter list
+        assert 'params_str' not in section.ste
+        section.ste['params_str'] = ''
+        section.ste['parameters'] = OrderedDict()
+
     # ======================================================
 
-    if section.section_kind.startswith('properties_of_'):
-        _set_section_kind_for_properties(section)
-
-    else:
+    if True:
         for child in section.section_children:
             _infer_section_kinds(child)
-
-def _set_section_kind_for_properties(section):
-    # `section` contains clauses that declare (some of) the properties of some object.
-
-    # This test is a little kludgey.
-    # Properly, you'd look at the body of the section
-    # to check whether it's just a cross-reference.
-    if re.fullmatch(r'(Constructor|Other) Properties of the Global Object', section.section_title):
-        suffix = '_xref'
-    else:
-        suffix = ''
-
-    for child in section.section_children:
-        _extract_info_from_section_title( child,
-            [
-                (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
-                (r'URI Handling Functions',                            'group_of_properties2'),
-                (r'URI Syntax and Semantics',                          'catchall'),
-
-                (r'(?P<prop_path>get [\w.%]+( ?\[ ?@@\w+ ?\])?)',      'accessor_property'),
-                (r'(?P<prop_path>set [\w.%]+)',                        'accessor_property'),
-                (r'(?P<prop_path>Object.prototype.__proto__)',         'accessor_property'),
-
-                (r'(?P<prop_path>[\w.%]+( ?\[ ?@@\w+ ?\])?) ?<PARAMETER_LIST>', 'function_property'),
-                (             r'([\w.%]+( ?\[ ?@@\w+ ?\])?)',                   'other_property'),
-                (                           r'(@@\w+)',                         'other_property'), # 26.3.1
-                (r'WaiterList Objects',                                'catchall'), # 25.4.1
-                (r'Abstract Operations for Atomics',                   'catchall'), # 25.4.2
-                (r'(?P<prop_path>Async-from-Sync Iterator Value Unwrap) Functions', 'anonymous_built_in_function'), # 25.1.4.2.5
-            ]
-        )
-        child.section_kind += suffix
-
-        if child.section_title.startswith('get '):
-            assert child.section_kind == 'accessor_property'
-            # The spec leaves off the empty parameter list
-            assert 'params_str' not in child.ste
-            child.ste['params_str'] = ''
-            child.ste['parameters'] = OrderedDict()
-
-        if child.section_kind.startswith('group_of_properties') or child.section_title == 'Object.prototype.__proto__' :
-            _set_section_kind_for_properties(child)
-
-        else:
-            for gchild in child.section_children:
-                _infer_section_kinds(gchild)
 
 # ----------------------------------------------------------
 
@@ -505,7 +485,11 @@ def _extract_info_from_section_title(section, pattern_results):
     # Look for the first pattern in `pattern_results`
     # that matches (via re.fullmatch) `section.section_title`.
     for (pattern, result) in pattern_results:
-        pattern = pattern.replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
+        pattern = (
+            pattern
+            .replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
+            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
+        )
         mo = re.fullmatch(pattern, section.section_title)
         if mo:
             break
@@ -526,7 +510,7 @@ def _start_ste(section, initial_ste):
         parameter_listing = section.ste['params_str'].strip()
 
         if parameter_listing == '. . .':
-            assert section.section_kind == 'function_property' # _xref
+            assert section.section_kind == 'function_property_xref'
             # Doesn't mean anything, might as wel not be there.
             del section.ste['params_str']
 
