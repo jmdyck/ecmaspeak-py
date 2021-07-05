@@ -186,13 +186,14 @@ def _set_section_kind_r(section):
     )
     assert r
 
+    for child in section.section_children:
+        _set_section_kind_r(child)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _handle_root_section(section):
     if section.section_title is None:
         stderr("_set_section_kind_r...")
-        for child in section.section_children:
-            _set_section_kind_r(child)
         return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -293,9 +294,6 @@ def _handle_sdo_section(section):
                         parameters[param_name] = part_punct
         section.ste['parameters'] = parameters
 
-    for child in section.section_children:
-        _set_section_kind_r(child)
-
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -386,9 +384,6 @@ def _handle_other_op_section(section):
         assert 0
 
     _start_ste(section, p_dict)
-
-    for child in section.section_children:
-        _set_section_kind_r(child)
 
     return True
 
@@ -496,12 +491,6 @@ def _handle_other_section(section):
         assert 'params_str' not in section.ste
         section.ste['params_str'] = ''
         section.ste['parameters'] = OrderedDict()
-
-    # ======================================================
-
-    if True:
-        for child in section.section_children:
-            _set_section_kind_r(child)
 
     return True
 
