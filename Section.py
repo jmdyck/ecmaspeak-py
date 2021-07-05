@@ -25,6 +25,24 @@ def make_and_check_sections():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _make_section_tree(doc_node):
+    # We traverse the spec's doc-tree to find all the sections.
+    # Each section is a pre-existing HNode --
+    # mainly every <emu-clause>, but also every <emu-annex>,
+    # one <emu-intro>, and the <body> element.
+    #
+    # Each HNode is already connected to its HNode children,
+    # but we connect each section to its children in a different way.
+    # Thus, we establish an alternative tree by which to traverse the document.
+    # (The <body> node becomes the root of the section-tree.)
+
+    # Set section attributes:
+    # .section_level
+    # .block_children
+    # .numless_children
+    # .section_children
+    # .heading_child
+    # .bcen_{list,str,set}
+
     assert doc_node.element_name == '#DOC'
     [html_node] = [
         child
@@ -198,6 +216,11 @@ def check_section_title(h1, node):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _set_section_kind_r(section):
+    # Set section attributes:
+    # .section_kind
+    # .section_title
+    # .ste
+
     r = (
         _handle_root_section(section)
         or
