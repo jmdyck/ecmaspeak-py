@@ -422,6 +422,10 @@ def _infer_section_kinds(section):
             (r'(?P<prop_path>.+) Functions',                       'anonymous_built_in_function'),
             (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>',  'anonymous_built_in_function'),
 
+            (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',   'CallConstruct'),
+            (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>', 'CallConstruct'),
+            (r'(?P<prop_path>%[A-Z]\w+%) <PARAMETER_LIST>', 'CallConstruct'),
+
             (r'.*',                                'catchall'),
         ]
     )
@@ -444,38 +448,9 @@ def _infer_section_kinds(section):
     if section.section_kind.startswith('properties_of_'):
         _set_section_kind_for_properties(section)
 
-    elif section.section_kind == 'Call_and_Construct_ims_of_an_intrinsic_object':
-        _set_section_kind_for_constructor(section)
-
     else:
         for child in section.section_children:
             _infer_section_kinds(child)
-
-def _set_section_kind_for_constructor(section):
-    # `section` contains clauses that declare the behavior of a built-in constructor
-
-    mo = re.fullmatch(r'The (\S+) (Constructors?|Intrinsic Object)', section.section_title)
-    assert mo
-    thing = mo.group(1)
-
-    for child in section.section_children: # constructor_alg_children:
-        _extract_info_from_section_title( child,
-            [
-                (f'(?P<prop_path>{thing}) <PARAMETER_LIST>', 'CallConstruct'),
-                (r'(?P<op_name>\w+) <PARAMETER_LIST>',       'abstract_operation'),
-                (r'Abstract Operations .+',                  'catchall'),
-            ]
-        )
-        
-        for gchild in child.section_children:
-            _infer_section_kinds(gchild)
-
-    n = sum(
-        1
-        for child in section.section_children
-        if child.section_kind == 'CallConstruct'
-    )
-    assert n == 1
 
 def _set_section_kind_for_properties(section):
     # `section` contains clauses that declare (some of) the properties of some object.
