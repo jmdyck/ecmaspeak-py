@@ -259,14 +259,13 @@ def _handle_sdo_section(section):
 
     section.section_kind = 'syntax_directed_operation'
 
-    _start_ste(section, {'op_name': sdo_name})
-
     if section.section_title in ['Statement Rules', 'Expression Rules']:
         section.ste = section.parent.ste.copy()
 
     else:
+        section.ste = {'op_name': sdo_name}
+
         # Parameters, if any, are stated in the section's first paragraph.
-        assert 'parameters' not in section.ste
         parameters = OrderedDict()
         c0 = section.block_children[0]
         if c0.element_name == 'p':
