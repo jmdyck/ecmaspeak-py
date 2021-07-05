@@ -14,6 +14,7 @@ from shared import stderr, header, msg_at_posn, spec
 
 def make_and_check_sections():
     spec.root_section = _establish_sections(spec.doc_node)
+    _set_section_identification_r(spec.root_section, None)
     _set_section_kind_r(spec.root_section)
     _print_section_kinds(spec.root_section)
     _check_aoids(spec.root_section)
@@ -24,11 +25,10 @@ def make_and_check_sections():
 def _establish_sections(doc_node):
     stderr("_establish_sections...")
     header("checking clause titles...")
-    return establish_section_r(doc_node, 0, None)
+    return establish_section_r(doc_node, 0)
 
-def establish_section_r(node, section_level, section_num):
+def establish_section_r(node, section_level):
     node.section_level = section_level
-    node.section_num = section_num
 
     if node.element_name == '#DOC':
         [html_node] = [
@@ -41,8 +41,6 @@ def establish_section_r(node, section_level, section_num):
             for child in html_node.children
             if child.element_name == 'body'
         ]
-        body_node.section_id = None
-        body_node.section_title = None
         body_node.block_children = []
         body_node.numless_children = []
         body_node.section_children = [
@@ -51,20 +49,8 @@ def establish_section_r(node, section_level, section_num):
             if child.is_a_section()
         ]
 
-        clause_counter = 0
-        annex_counter = 0
         for child in body_node.section_children:
-            if child.element_name == 'emu-intro':
-                sn = '0'
-            elif child.element_name == 'emu-clause':
-                clause_counter += 1
-                sn = str(clause_counter)
-            elif child.element_name == 'emu-annex':
-                sn = string.ascii_uppercase[annex_counter]
-                annex_counter += 1
-            else:
-                assert 0, child.element_name
-            establish_section_r(child, section_level+1, sn)
+            establish_section_r(child, section_level+1)
 
         return body_node
 
@@ -76,19 +62,14 @@ def establish_section_r(node, section_level, section_num):
         #         "'section' node contains inline items"
         #     )
 
-        node.section_id = node.attrs['id']
-
         assert node.children[0].is_whitespace()
         h1 = node.children[1]
         assert h1.element_name == 'h1'
         node.heading_child = h1
-        check_section_title(h1, node)
-        node.section_title = h1.inner_source_text()
 
         node.block_children = []
         node.numless_children = []
         node.section_children = []
-        child_clause_counter = 0
         for child in node.children[2:]:
             if child.is_whitespace():
                 pass
@@ -96,9 +77,7 @@ def establish_section_r(node, section_level, section_num):
                 pass
             elif child.is_a_section():
                 node.section_children.append(child)
-                child_clause_counter += 1
-                sn = section_num + '.' + str(child_clause_counter)
-                establish_section_r(child, section_level+1, sn)
+                establish_section_r(child, section_level+1)
             elif child.element_name == 'h2':
                 numless = Numless( child.inner_source_text() )
                 node.numless_children.append(numless)
@@ -129,6 +108,48 @@ class Numless:
     def __init__(self, title):
         self.title = title
         self.block_children = []
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _set_section_identification_r(section, section_num):
+    # Set section attributes:
+    # .section_num
+    # .section_id
+    # .section_title
+
+    section.section_num = section_num
+
+    if section.element_name == 'body':
+        section.section_id = None
+        section.section_title = None
+
+        clause_counter = 0
+        annex_counter = 0
+        for child in section.section_children:
+            if child.element_name == 'emu-intro':
+                sn = '0'
+            elif child.element_name == 'emu-clause':
+                clause_counter += 1
+                sn = str(clause_counter)
+            elif child.element_name == 'emu-annex':
+                sn = string.ascii_uppercase[annex_counter]
+                annex_counter += 1
+            else:
+                assert 0, child.element_name
+            _set_section_identification_r(child, sn)
+
+    else:
+        section.section_id = section.attrs['id']
+        section.section_title = section.heading_child.inner_source_text()
+        check_section_title(section.heading_child, section)
+
+        child_clause_counter = 0
+        for child in section.section_children:
+            child_clause_counter += 1
+            sn = section_num + '.' + str(child_clause_counter)
+            _set_section_identification_r(child, sn)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_section_title(h1, node):
     title = h1.inner_source_text()
