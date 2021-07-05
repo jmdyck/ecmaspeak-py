@@ -175,11 +175,16 @@ def check_section_title(h1, node):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _set_section_kind_r(section):
-    if _handle_root_section(section): return
-    if _handle_sdo_section(section): return
-    if _handle_other_op_section(section): return
-    if _handle_other_section(section): return
-    assert 0
+    r = (
+        _handle_root_section(section)
+        or
+        _handle_sdo_section(section)
+        or
+        _handle_other_op_section(section)
+        or
+        _handle_other_section(section)
+    )
+    assert r
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
