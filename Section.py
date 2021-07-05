@@ -13,7 +13,7 @@ from shared import stderr, header, msg_at_posn, spec
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def make_and_check_sections():
-    spec.root_section = _establish_sections(spec.doc_node)
+    spec.root_section = _make_section_tree(spec.doc_node)
     _set_section_identification_r(spec.root_section, None)
     _set_section_kind_r(spec.root_section)
     _print_section_kinds(spec.root_section)
@@ -22,12 +22,12 @@ def make_and_check_sections():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _establish_sections(doc_node):
-    stderr("_establish_sections...")
+def _make_section_tree(doc_node):
+    stderr("_make_section_tree...")
     header("checking clause titles...")
-    return establish_section_r(doc_node, 0)
+    return _make_section_tree_r(doc_node, 0)
 
-def establish_section_r(node, section_level):
+def _make_section_tree_r(node, section_level):
     node.section_level = section_level
 
     if node.element_name == '#DOC':
@@ -50,7 +50,7 @@ def establish_section_r(node, section_level):
         ]
 
         for child in body_node.section_children:
-            establish_section_r(child, section_level+1)
+            _make_section_tree_r(child, section_level+1)
 
         return body_node
 
@@ -77,7 +77,7 @@ def establish_section_r(node, section_level):
                 pass
             elif child.is_a_section():
                 node.section_children.append(child)
-                establish_section_r(child, section_level+1)
+                _make_section_tree_r(child, section_level+1)
             elif child.element_name == 'h2':
                 numless = Numless( child.inner_source_text() )
                 node.numless_children.append(numless)
