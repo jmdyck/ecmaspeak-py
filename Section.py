@@ -42,67 +42,68 @@ def _make_section_tree(doc_node):
 def _make_section_tree_r(section, section_level):
     section.section_level = section_level
 
+    assert not section.inline_child_element_names
+    # if section.inline_child_element_names:
+    #     msg_at_posn(
+    #         section.inner_start_posn,
+    #         "'section' node contains inline items"
+    #     )
+
+    section.block_children = []
+    section.numless_children = []
+    section.section_children = []
+
+    for child in section.children:
+        if child.is_whitespace():
+            pass
+
+        elif child.element_name == '#COMMENT':
+            pass
+
+        elif child.is_a_section():
+            section.section_children.append(child)
+
+        elif child.element_name == 'h2':
+            numless = Numless( child.inner_source_text() )
+            section.numless_children.append(numless)
+
+        elif section.numless_children:
+            section.numless_children[-1].block_children.append(child)
+
+        else:
+            section.block_children.append(child)
+
     if section.element_name == 'body':
-
-        section.block_children = []
-        section.numless_children = []
-        section.section_children = [
-            child
-            for child in section.children
-            if child.is_a_section()
-        ]
-
-        for child in section.section_children:
-            _make_section_tree_r(child, section_level+1)
-
-    elif section.is_a_section():
-        assert not section.inline_child_element_names
-        # if section.inline_child_element_names:
-        #     msg_at_posn(
-        #         section.inner_start_posn,
-        #         "'section' section contains inline items"
-        #     )
-
-        assert section.children[0].is_whitespace()
-        h1 = section.children[1]
+        section.heading_child = None
+    else:
+        h1 = section.block_children.pop(0)
         assert h1.element_name == 'h1'
         section.heading_child = h1
 
-        section.block_children = []
-        section.numless_children = []
-        section.section_children = []
-        for child in section.children[2:]:
-            if child.is_whitespace():
-                pass
-            elif child.element_name == '#COMMENT':
-                pass
-            elif child.is_a_section():
-                section.section_children.append(child)
-                _make_section_tree_r(child, section_level+1)
-            elif child.element_name == 'h2':
-                numless = Numless( child.inner_source_text() )
-                section.numless_children.append(numless)
-            elif section.numless_children:
-                section.numless_children[-1].block_children.append(child)
-            else:
-                section.block_children.append(child)
+    if (
+        len(section.block_children) == 0
+        and
+        len(section.numless_children) == 0
+        and
+        len(section.section_children) == 0
+    ):
+        msg_at_posn(
+            section.start_posn,
+            "section is empty!"
+        )
 
-        if len(section.block_children) == 0 and len(section.numless_children) == 0 and len(section.section_children) == 0:
-            msg_at_posn(
-                section.start_posn,
-                "section is empty!"
-            )
+    # "bcen" = "block children element names"
+    section.bcen_list = [
+        c.element_name
+        for c in section.block_children
+    ]
+    section.bcen_str = ' '.join(section.bcen_list)
+    section.bcen_set = set(section.bcen_list)
 
-        # "bcen" = "block children element names"
-        section.bcen_list = [
-            c.element_name
-            for c in section.block_children
-        ]
-        section.bcen_str = ' '.join(section.bcen_list)
-        section.bcen_set = set(section.bcen_list)
+    for child in section.section_children:
+        _make_section_tree_r(child, section_level+1)
 
-    else:
-        assert 0, section.element_name
+# -------------
 
 class Numless:
     # A numberless part of a section. Starts with an h2.
