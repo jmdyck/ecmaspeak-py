@@ -386,8 +386,7 @@ def _infer_section_kinds(section):
     if _handle_sdo_section(section): return
     if _handle_other_op_section(section): return
 
-    _extract_info_from_section_title( section,
-        [
+    pattern_results = [
             (r'Implicit Completion Values',                        'shorthand'),
             (r'Throw an Exception',                                'shorthand'),
             (r'ReturnIfAbrupt',                                    'shorthand'),
@@ -443,7 +442,23 @@ def _infer_section_kinds(section):
 
             (r'.*',                                'catchall'),
         ]
-    )
+    # Look for the first pattern in `pattern_results`
+    # that matches (via re.fullmatch) `section.section_title`.
+    for (pattern, result) in pattern_results:
+        pattern = (
+            pattern
+            .replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
+            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
+        )
+        mo = re.fullmatch(pattern, section.section_title)
+        if mo:
+            break
+    else:
+        assert 0, section.section_title
+
+    assert isinstance(result, str)
+    section.section_kind = result
+    _start_ste(section, mo.groupdict())
 
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
@@ -478,27 +493,7 @@ def _infer_section_kinds(section):
         for child in section.section_children:
             _infer_section_kinds(child)
 
-# ----------------------------------------------------------
-
-def _extract_info_from_section_title(section, pattern_results):
-
-    # Look for the first pattern in `pattern_results`
-    # that matches (via re.fullmatch) `section.section_title`.
-    for (pattern, result) in pattern_results:
-        pattern = (
-            pattern
-            .replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
-            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
-        )
-        mo = re.fullmatch(pattern, section.section_title)
-        if mo:
-            break
-    else:
-        assert 0, section.section_title
-
-    assert isinstance(result, str)
-    section.section_kind = result
-    _start_ste(section, mo.groupdict())
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _start_ste(section, initial_ste):
     # "ste" = section-title extractions
