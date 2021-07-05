@@ -25,34 +25,35 @@ def make_and_check_sections():
 def _make_section_tree(doc_node):
     stderr("_make_section_tree...")
     header("checking clause titles...")
-    return _make_section_tree_r(doc_node, 0)
+    assert doc_node.element_name == '#DOC'
+    [html_node] = [
+        child
+        for child in doc_node.children
+        if child.element_name == 'html'
+    ]
+    [body_node] = [
+        child
+        for child in html_node.children
+        if child.element_name == 'body'
+    ]
+    _make_section_tree_r(body_node, 0)
+    return body_node
 
 def _make_section_tree_r(node, section_level):
     node.section_level = section_level
 
-    if node.element_name == '#DOC':
-        [html_node] = [
+    if node.element_name == 'body':
+
+        node.block_children = []
+        node.numless_children = []
+        node.section_children = [
             child
             for child in node.children
-            if child.element_name == 'html'
-        ]
-        [body_node] = [
-            child
-            for child in html_node.children
-            if child.element_name == 'body'
-        ]
-        body_node.block_children = []
-        body_node.numless_children = []
-        body_node.section_children = [
-            child
-            for child in body_node.children
             if child.is_a_section()
         ]
 
-        for child in body_node.section_children:
+        for child in node.section_children:
             _make_section_tree_r(child, section_level+1)
-
-        return body_node
 
     elif node.is_a_section():
         assert not node.inline_child_element_names
