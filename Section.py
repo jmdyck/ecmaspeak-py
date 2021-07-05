@@ -379,13 +379,8 @@ def _handle_other_op_section(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _infer_section_kinds(section):
+def _handle_other_section(section):
     # We infer a section's kind almost entirely based on its title.
-
-    if _handle_root_section(section): return
-    if _handle_sdo_section(section): return
-    if _handle_other_op_section(section): return
-
     pattern_results = [
             (r'Implicit Completion Values',                        'shorthand'),
             (r'Throw an Exception',                                'shorthand'),
@@ -492,6 +487,17 @@ def _infer_section_kinds(section):
     if True:
         for child in section.section_children:
             _infer_section_kinds(child)
+
+    return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _infer_section_kinds(section):
+    if _handle_root_section(section): return
+    if _handle_sdo_section(section): return
+    if _handle_other_op_section(section): return
+    if _handle_other_section(section): return
+    assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
