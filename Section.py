@@ -13,6 +13,8 @@ from shared import stderr, header, msg_at_posn, spec
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def make_and_check_sections():
+    stderr("make_and_check_sections ...")
+
     spec.root_section = _make_section_tree(spec.doc_node)
     _set_section_identification_r(spec.root_section, None)
     _set_section_kind_r(spec.root_section)
@@ -23,8 +25,6 @@ def make_and_check_sections():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _make_section_tree(doc_node):
-    stderr("_make_section_tree...")
-    header("checking clause titles...")
     assert doc_node.element_name == '#DOC'
     [html_node] = [
         child
@@ -216,7 +216,6 @@ def _set_section_kind_r(section):
 
 def _handle_root_section(section):
     if section.section_title is None:
-        stderr("_set_section_kind_r...")
         return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -604,7 +603,7 @@ def _print_section_kinds(section):
 
 def _check_aoids(section):
     if section.section_title is None:
-        stderr("_check_aoids...")
+        pass
 
     else:
         aoid = section.attrs.get('aoid', None)
@@ -679,7 +678,7 @@ def _check_section_order(section):
     # In some sections, the subsections should be in "alphabetical order".
 
     if section.section_title is None:
-        stderr("_check_section_order...")
+        pass
     else:
 
         if section.section_kind in [
