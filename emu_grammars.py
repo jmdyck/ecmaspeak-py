@@ -38,7 +38,8 @@ def do_stuff_with_emu_grammars():
     check_reachability() # not that useful?
 
     check_non_defining_prodns(emu_grammars_of_type_['reference'])
-    check_order_of_RHSs_within_each_SDO_clause()
+    # check_order_of_RHSs_within_each_SDO_clause()
+    # too many complaints
 
     check_emu_prodrefs(spec.doc_node)
     approximate_annex_A()
