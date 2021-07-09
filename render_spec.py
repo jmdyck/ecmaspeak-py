@@ -282,8 +282,8 @@ def render_node(node):
         # Handled under emu-table
 
     elif node.element_name == 'pre' and node.attrs.get('class', '') == 'metadata':
-        pubyear = '2020'
-        today = time.strftime("%B %d, %Y")
+        pubyear = '202x'
+        today = 'today' # time.strftime("%B %d, %Y")
         put(f'''
 <title>ECMAScript® {pubyear} Language&nbsp;Specification</title>
 </head>
