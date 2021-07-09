@@ -267,6 +267,10 @@ nature_to_tipe = {
         # ImportEntry Record
         # ExportEntry Record
 
+        # 15.6 Async Generator Function Definitions
+        # 27.4 AsyncGeneratorFunction Objects
+            'an AsyncGenerator': 'AsyncGenerator_object_',
+
         # 21.2.2.1 Notation:
         # CharSet
             'CharSet'        : 'CharSet',
@@ -1735,6 +1739,7 @@ ArrayAccumulation                        ; _nextIndex_            ; TBD         
 # AsyncFunctionAwait                       ; _value_                ; TBD                 ; Tangible_
 AsyncFunctionStart                       ; _asyncFunctionBody_    ; TBD                 ; Parse Node
 AsyncGeneratorEnqueue                    ; _completion_           ; Abrupt | Normal     ; Tangible_ | return_ | throw_
+AsyncGeneratorUnwrapYieldResumption      ; _resumptionValue_      ; Abrupt | Normal     ; Tangible_ | return_ | throw_
 AsyncIteratorClose                       ; _completion_           ; TBD                 ; Tangible_ | empty_ | throw_
 BindingClassDeclarationEvaluation        ; *return*               ; TBD                 ; function_object_ | throw_
 BindingInitialization                    ; _environment_          ; TBD                 ; Environment Record | Undefined
@@ -2688,6 +2693,7 @@ class Env:
                 '\u211d(_d_)', # Number::remainder
                 'the StringValue of |IdentifierName|', # StringValue
                 'PropName of |FieldDefinition|', # Early Errors
+                '_generator_.[[AsyncGeneratorState]]', # AsyncGeneratorResume
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -3357,6 +3363,10 @@ def tc_header(tah):
                     tah.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
                     or
                     tah.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::leftShift', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
+                    or
+                    tah.name == 'AsyncGeneratorResume' and pn == '_completion_'
+                    or
+                    tah.name == 'AsyncGeneratorCompleteStep' and pn == '_completion_'
                 )
                 # This pass just narrowed the type.
                 # ----
@@ -3970,7 +3980,10 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env1, t1, anode)
         result = None
 
-    elif p == r"{COMMAND} : Return.":
+    elif p in [
+        r"{COMMAND} : Return.",
+        r"{SMALL_COMMAND} : return",
+    ]:
         [] = children
         # A "return" statement without a value in an algorithm step
         # means the same thing as: Return NormalCompletion(*undefined*).
@@ -4396,7 +4409,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Append {EX} as the last element of the List {var}.",
         r"{COMMAND} : Append {EX} as the last element of {var}.",
         r"{COMMAND} : Append {EX} to the end of the List {var}.",
-        r"{COMMAND} : Append {EX} to the end of {var}.",
+        r"{COMMAND} : Append {EX} to the end of {EX}.",
         r"{COMMAND} : Append {EX} to {EX}.",
         r"{COMMAND} : Insert {var} as the first element of {var}.",
         r"{COMMAND} : Prepend {var} to {var}.",
@@ -5196,10 +5209,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Array_object_, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is an AsyncGeneratorRequest record':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_AsyncGeneratorRequest_Record, asserting)
-
     elif p == r'{CONDITION_1} : {var} is a UTF-16 code unit':
         [var] = children
         return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
@@ -5323,7 +5332,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : {var} is an empty List",
         r"{CONDITION_1} : {var} is now an empty List",
     ]:
         [var] = children
@@ -8065,7 +8073,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert len(args) == 1
                 [arg] = args
                 (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
+                assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
                 return_type = arg_type
                 return (return_type, env0)
                 # don't call tc_args etc
@@ -10403,6 +10411,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             'LexicalEnvironment' : T_Environment_Record,
             'VariableEnvironment': T_Environment_Record,
             'PrivateEnvironment' : T_PrivateEnvironment_Record, # | T_Null
+            'Realm'              : T_Realm_Record,
         }[component_name.source_text()]
         return (t, env0)
 
@@ -10559,7 +10568,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (t, env0)
 
     elif p in [
-        r"{EXPR} : the value of the first element of {var}",
         r"{EXPR} : the first element of {var}",
         r"{EXPR} : the second element of {var}",
         r"{EXPR} : the last element in {var}",

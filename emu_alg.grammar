@@ -43,7 +43,7 @@
     Append {EX} as the last element of the List {var}.
     Append {EX} as the last element of {var}.
     Append {EX} to the end of the List {var}.
-    Append {EX} to the end of {var}.
+    Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
     Assert: If {CONDITION}, {CONDITION}.
@@ -215,6 +215,7 @@
     remove that element from the {var}
     remove the first code unit from {var}
     replace the text through `>` with {EXPR}
+    return
     return {EXPR}
     reverse the order of the elements of {var}
     set the corresponding attribute of the property named {var} of object {var} to the value of the field
@@ -584,7 +585,6 @@
     {var} is an Abstract Closure with no parameters
     {var} is an Array exotic object
     {var} is an AsyncGenerator instance
-    {var} is an AsyncGeneratorRequest record
     {var} is an ECMAScript function
     {var} is an ECMAScript function object
     {var} is an ECMAScript function object or a built-in function object
@@ -599,7 +599,6 @@
     {var} is an Object that implements the <i>IteratorResult</i> interface
     {var} is an abrupt completion
     {var} is an array index
-    {var} is an empty List
     {var} is an extensible object that does not have a {starred_str} own property
     {var} is an extensible ordinary object with no own properties
     {var} is an initialized RegExp instance
@@ -1015,7 +1014,6 @@
     the union of CharSets {var}, {var} and {var}
     the union of {var} and {var}
     the value currently bound to {var} in {var}
-    the value of the first element of {var}
     the value that {var} corresponds to in {h_emu_xref}
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
