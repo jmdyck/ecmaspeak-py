@@ -83,7 +83,7 @@
     Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)
     Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.
     Let {var} be {MULTILINE_EXPR}
-    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {PRODUCT} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
+    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
     Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     No action is required.
     Notify the agent {var}.
