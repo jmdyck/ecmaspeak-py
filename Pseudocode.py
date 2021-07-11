@@ -125,6 +125,9 @@ def each_step_ref():
         elif ref_is_followed_by(' in <emu-xref href="#sec-array.prototype.sort"></emu-xref>'):
             refd_alg_name = 'Array.prototype.sort'
             refd_section_id = 'sec-array.prototype.sort'
+        elif ref_is_followed_by(' of <emu-xref href="#sec-json.parse">JSON.parse</emu-xref>'):
+            refd_alg_name = 'JSON.parse'
+            refd_section_id = 'sec-json.parse'
         elif ref_is_preceded_by('the same as [[Call]] (see <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>) except that '):
             refd_alg_name = '[[Call]] for built-in functions'
             refd_section_id = 'sec-built-in-function-objects-call-thisargument-argumentslist'
@@ -2665,6 +2668,9 @@ nts_behind_var_in_sdo_call = {
 
     # 30931 RegExpInitialize
     ('regexp-Evaluate', '_parseResult_'): ['Pattern'],
+
+    # 37399 JSON.parse
+    ('Evaluation', '_script_'): ['Script'],
 }
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, rhs_reduced):

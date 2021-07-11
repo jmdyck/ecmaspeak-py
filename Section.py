@@ -1053,6 +1053,7 @@ def _check_section_order(section):
                     t = t.lower()
                     t = t.replace('int8', 'int08')
                     t = re.sub(r'^get ', '', t)
+                    t = re.sub(r'(^|\.)__', r'\1zz__', t) # to put __proto__ last
                     if section.section_title == 'Properties of the RegExp Prototype Object':
                         t = re.sub(r' \[ @@(\w+) \]', r'.\1', t)
                     else:

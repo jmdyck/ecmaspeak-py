@@ -4894,6 +4894,12 @@ def tc_nonvalue(anode, env0):
         tc_cond(cond, env0)
         result = None
 
+    elif p == r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.":
+        [conda, condb] = children
+        (t_env, f_env) = tc_cond(condb, env0)
+        tc_cond(conda, f_env)
+        result = None
+
     elif p == r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.":
         [nont, var, noi, cond] = children
         t = ptn_type_for(nont)
@@ -6874,9 +6880,9 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL}":
         [var, lit] = children
-        env0.assert_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
         env0.assert_expr_is_of_type(lit, T_String)
-        return (env0, env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
+        return (env1, env1)
 
     elif p in [
         r"{CONDITION_1} : only one argument was passed",
@@ -7268,10 +7274,17 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, ListType(T_String))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}":
+    elif p in [
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}",
+        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}",
+    ]:
         [noi, ss] = children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
+
+    elif p == r"{CONDITION_1} : at least two of those entries were obtained from productions of the form {h_emu_grammar}":
+        [emu_grammar] = children
+        return (env0, env0)
 
     elif p in [
         r"{CONDITION_1} : {PROD_REF} is not present",
@@ -7337,6 +7350,14 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(prod_ref1, T_Parse_Node)
         env0.assert_expr_is_of_type(noi5, T_String) # over-specific
         # XXX cap_word
+        return (env0, env0)
+
+    elif p in [
+        r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})",
+        r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})",
+    ]:
+        [prod_ref, nont, step_xref, alg_xref] = children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})":
@@ -10965,11 +10986,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [error_type] = children
         error_type_name = error_type.source_text()[1:-1]
         return (ListType(NamedType(error_type_name)), env0)
-
-    elif p == r"{EXPR} : the result of evaluating {var}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation":
-        [var, _] = children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (T_Tangible_, env0)
 
     elif p == r"{EX} : the two code points matched by {PROD_REF} and {PROD_REF} respectively":
         [prod_refa, prod_refb] = children

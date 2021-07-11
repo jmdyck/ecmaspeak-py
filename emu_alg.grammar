@@ -454,6 +454,7 @@
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {PROD_REF} is `export` {nonterminal}
     {PROD_REF} is contained in strict mode code
+    {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
@@ -962,7 +963,6 @@
     the result of clamping {var} between 0 and {EX}
     the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to a value in IEEE 754-2019 binary64 format
-    the result of evaluating {var}. The extended PropertyDefinitionEvaluation semantics defined in {h_emu_xref} must not be used during the evaluation
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
