@@ -37,6 +37,7 @@ def _make_section_tree(doc_node):
 
     # Set section attributes:
     # .section_level
+    # .is_root_section
     # .block_children
     # .numless_children
     # .section_children
@@ -59,6 +60,7 @@ def _make_section_tree(doc_node):
 
 def _make_section_tree_r(section, section_level):
     section.section_level = section_level
+    section.is_root_section = (section_level == 0)
 
     assert not section.inline_child_element_names
     # if section.inline_child_element_names:
@@ -91,7 +93,7 @@ def _make_section_tree_r(section, section_level):
         else:
             section.block_children.append(child)
 
-    if section.element_name == 'body':
+    if section.is_root_section:
         section.heading_child = None
     else:
         h1 = section.block_children.pop(0)
@@ -139,7 +141,7 @@ def _set_section_identification_r(section, section_num):
 
     section.section_num = section_num
 
-    if section.element_name == 'body':
+    if section.is_root_section:
         section.section_id = None
         section.section_title = None
 
@@ -238,7 +240,7 @@ def _set_section_kind_r(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _handle_root_section(section):
-    if section.section_title is None:
+    if section.is_root_section:
         return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -606,7 +608,7 @@ def _start_ste(section, initial_ste):
 
 def _print_section_kinds(section):
     global g_sections_f
-    if section.section_title is None:
+    if section.is_root_section:
         g_sections_f = shared.open_for_output('sections')
     else:
         if not(hasattr(section, 'section_kind')): section.section_kind = 'UNSET!'
@@ -625,7 +627,7 @@ def _print_section_kinds(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _check_aoids(section):
-    if section.section_title is None:
+    if section.is_root_section:
         pass
 
     else:
@@ -700,7 +702,7 @@ def _check_aoids(section):
 def _check_section_order(section):
     # In some sections, the subsections should be in "alphabetical order".
 
-    if section.section_title is None:
+    if section.is_root_section:
         pass
     else:
 
