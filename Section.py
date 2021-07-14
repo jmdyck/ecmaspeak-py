@@ -163,56 +163,12 @@ def _set_section_identification_r(section, section_num):
     else:
         section.section_id = section.attrs['id']
         section.section_title = section.heading_child.inner_source_text()
-        check_section_title(section.heading_child, section)
 
         child_clause_counter = 0
         for child in section.section_children:
             child_clause_counter += 1
             sn = section_num + '.' + str(child_clause_counter)
             _set_section_identification_r(child, sn)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def check_section_title(h1, node):
-    title = h1.inner_source_text()
-
-    # Check capitalization.
-    if node.parent.section_title != 'Terms and Definitions':
-        mo = re.search(r' \b(?!(an|and|for|in|of|on|the|to|with))([a-z]\w+)', title)
-        if mo:
-            msg_at_posn(
-                h1.inner_start_posn + mo.start() + 1,
-                "title word '%s' should be capitalized?" % mo.group(2)
-            )
-
-    # Check references to well-known symbols.
-    mo1 = re.search('\[ *@', title)
-    if mo1:
-        mo2 = re.search(r'( |^)\[ @@\w+ \]( |$)', title)
-        if not mo2:
-            msg_at_posn(
-                h1.inner_start_posn + mo1.start(),
-                "Title's reference to well-known symbol does not conform to expected pattern"
-            )
-
-    # Check parentheses and spaces
-    assert title.count('(') <= 1
-    assert title.count(')') <= 1
-    lpp = title.find('(')
-    if lpp >= 0:
-        if re.search(r' \(( .+)? \)( Concrete Method)?$', title):
-            # space before and after '('
-            # space before ")"
-            # If param list is empty, just one space between parens.
-            pass
-        elif title == 'RegExp (Regular Expression) Objects':
-            # Use of parens that isn't a parameter list.
-            pass
-        else:
-            msg_at_posn(
-                h1.inner_start_posn + lpp,
-                "Something odd here wrt parens + spaces"
-            )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -436,6 +392,9 @@ def _handle_other_op_section(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _handle_other_section(section):
+
+    check_section_title(section.heading_child, section)
+
     # We infer a section's kind almost entirely based on its title.
     pattern_results = [
             (r'Implicit Completion Values',                        'shorthand'),
@@ -602,6 +561,49 @@ def _start_ste(section, initial_ste):
                         assert 0, (section.section_title, repr(param_str))
 
             section.ste['parameters'] = params_info
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_section_title(h1, node):
+    title = h1.inner_source_text()
+
+    # Check capitalization.
+    if node.parent.section_title != 'Terms and Definitions':
+        mo = re.search(r' \b(?!(an|and|for|in|of|on|the|to|with))([a-z]\w+)', title)
+        if mo:
+            msg_at_posn(
+                h1.inner_start_posn + mo.start() + 1,
+                "title word '%s' should be capitalized?" % mo.group(2)
+            )
+
+    # Check references to well-known symbols.
+    mo1 = re.search('\[ *@', title)
+    if mo1:
+        mo2 = re.search(r'( |^)\[ @@\w+ \]( |$)', title)
+        if not mo2:
+            msg_at_posn(
+                h1.inner_start_posn + mo1.start(),
+                "Title's reference to well-known symbol does not conform to expected pattern"
+            )
+
+    # Check parentheses and spaces
+    assert title.count('(') <= 1
+    assert title.count(')') <= 1
+    lpp = title.find('(')
+    if lpp >= 0:
+        if re.search(r' \(( .+)? \)( Concrete Method)?$', title):
+            # space before and after '('
+            # space before ")"
+            # If param list is empty, just one space between parens.
+            pass
+        elif title == 'RegExp (Regular Expression) Objects':
+            # Use of parens that isn't a parameter list.
+            pass
+        else:
+            msg_at_posn(
+                h1.inner_start_posn + lpp,
+                "Something odd here wrt parens + spaces"
+            )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
