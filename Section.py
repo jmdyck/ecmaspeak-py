@@ -393,7 +393,7 @@ def _handle_other_op_section(section):
 
 def _handle_other_section(section):
 
-    check_section_title(section.heading_child, section)
+    check_section_title(section)
 
     # We infer a section's kind almost entirely based on its title.
     pattern_results = [
@@ -564,11 +564,12 @@ def _start_ste(section, initial_ste):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def check_section_title(h1, node):
-    title = h1.inner_source_text()
+def check_section_title(section):
+    h1 = section.heading_child
+    title = section.section_title
 
     # Check capitalization.
-    if node.parent.section_title != 'Terms and Definitions':
+    if section.parent.section_title != 'Terms and Definitions':
         mo = re.search(r' \b(?!(an|and|for|in|of|on|the|to|with))([a-z]\w+)', title)
         if mo:
             msg_at_posn(
