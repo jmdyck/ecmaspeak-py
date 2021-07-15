@@ -112,13 +112,7 @@ def _make_section_tree_r(section, section_level):
             "section is empty!"
         )
 
-    # "bcen" = "block children element names"
-    section.bcen_list = [
-        c.element_name
-        for c in section.block_children
-    ]
-    section.bcen_str = ' '.join(section.bcen_list)
-    section.bcen_set = set(section.bcen_list)
+    _set_bcen_attributes(section)
 
     for child in section.section_children:
         _make_section_tree_r(child, section_level+1)
@@ -605,6 +599,20 @@ def check_section_title(section):
                 h1.inner_start_posn + lpp,
                 "Something odd here wrt parens + spaces"
             )
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _set_bcen_attributes(section):
+    # Set section attributes:
+    # .bcen_{list,str,set}
+
+    # "bcen" = "block children element names"
+    section.bcen_list = [
+        c.element_name
+        for c in section.block_children
+    ]
+    section.bcen_str = ' '.join(section.bcen_list)
+    section.bcen_set = set(section.bcen_list)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
