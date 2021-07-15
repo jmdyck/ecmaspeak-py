@@ -288,6 +288,8 @@ def _handle_sdo_section(section):
                             param_name = param
                         assert param_name not in parameters
                         parameters[param_name] = part_punct
+                section.block_children.pop(0)
+                _set_bcen_attributes(section)
         section.ste['parameters'] = parameters
 
     return True

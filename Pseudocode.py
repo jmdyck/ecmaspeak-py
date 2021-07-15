@@ -586,9 +586,8 @@ def analyze_sdo_section(section):
     # Merge them somehow?
 
     if section.section_title == 'Static Semantics: HasCallInTailPosition':
-        assert len(section.block_children) == 2
-        assert section.block_children[0].element_name == 'p'
-        assert section.block_children[1].element_name == 'emu-note'
+        assert len(section.block_children) == 1
+        assert section.block_children[0].element_name == 'emu-note'
         assert len(section.section_children) == 2
         return
 
