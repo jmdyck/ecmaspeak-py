@@ -70,7 +70,7 @@ def each_step_ref():
         referring_line = spec.text[spec.text.rindex('\n', 0, st)+1:spec.text.index('\n', st)].strip()
 
         text_n = find_deepest_node_covering_posn(st)
-        assert text_n.parent.element_name in ['p', 'li', 'emu-alg']
+        assert text_n.parent.element_name in ['p', 'li', 'emu-alg', 'dd']
 
         referring_section = text_n.closest_containing_section()
 
@@ -710,11 +710,11 @@ def analyze_other_op_section(section):
         # 13 cases
 
         if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
-            assert section.bcen_str == 'p emu-table'
+            assert section.bcen_str == 'emu-table'
             # The op is defined by a table that splits on argument type.
             # The second cell in each row is a little algorithm,
             # but it's generally not marked as an emu-alg.
-            emu_table = section.block_children[1]
+            emu_table = section.block_children[0]
             assert emu_table.element_name == 'emu-table'
             (_, table, _) = emu_table.children
             assert table.element_name == 'table'

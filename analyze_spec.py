@@ -373,6 +373,10 @@ def check_ids():
             # its id should be ...
 
             if 'aoid' in node.attrs:
+                # TODO: After the merge of #545, most abstract ops don't have an 'aoid' attribute;
+                # instead it's generated at 'render' time.
+                # (But SDOs, emu-eqns, and a few others do, so this code is still being executed,
+                # just not as much as we want.)
                 aoid = node.attrs['aoid']
                 assert node.element_name in ['emu-clause', 'emu-annex', 'emu-eqn', 'dfn']
                 if id_prefix_expectation is None:

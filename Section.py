@@ -173,6 +173,8 @@ def _set_section_kind_r(section):
     # .section_title
     # .ste
 
+    section.has_structured_header = False
+
     r = (
         _handle_root_section(section)
         or
@@ -298,6 +300,18 @@ def _handle_sdo_section(section):
 
 def _handle_other_op_section(section):
 
+    section_type = section.attrs.get('type')
+    if section_type == 'sdo':
+        assert 0 # Would have been handled already
+        return False
+    elif section_type is not None:
+        # type="sdo" has been around for a while,
+        # but all the other type="..." attributes were introduced in PR #545.
+        # So we can assume that this section has a structured header?
+        # (Or might authors add a `type` attribute but use an old-style header?)
+        _handle_structured_header(section)
+        return True
+
     if section.section_id in ['sec-normalcompletion', 'sec-throwcompletion']:
         # The preambles say "The abstract operation NormalCompletion ..."
         # and "The abstract operation ThrowCompletion ..."
@@ -305,22 +319,12 @@ def _handle_other_op_section(section):
         # they're defined as shorthands.
         return False
 
-    if section.section_title == 'StringToBigInt ( _argument_ )':
-        # 7.1.14
-        # First <p> isn't a proper preamble, so has to be handled specially.
-
-        section.section_kind = 'abstract_operation'
-        section.ste = {
-            'op_name': 'StringToBigInt',
-            'parameters': {'_argument_': ''},
-        }
-        return True
-
     if section.section_id == 'sec-weakref-execution':
         # 9.10.3
         section.section_kind = 'abstract_operation'
         section.ste = {
             'op_name': 'WeakRef emptying thing',
+            'type': 'abstract operation',
             'parameters': {'_S_': ''},
         }
         return True
@@ -361,6 +365,65 @@ def _handle_other_op_section(section):
     # -------------------------------
     # At this point, we're committed.
 
+    if 1:
+        # Complain about the old header, suggest a structured one.
+
+        param_names = [] #XXX
+
+        posn_of_linestart_before_section = 1 + spec.text.rfind('\n', 0, section.start_posn)
+        section_indent = section.start_posn - posn_of_linestart_before_section
+        
+        ind = ' ' * section_indent
+
+        lines = []
+        lines.append('vvvvvvvv')
+
+        clause_start_tag = '<' + section.element_name
+        for (attr_name, attr_val) in section.attrs.items():
+            # suppress 'aoid' attr, because ecmarkup can generate it:
+            if attr_name == 'aoid': continue
+
+            clause_start_tag += f' {attr_name}="{attr_val}"'
+
+            # insert 'type' attr immediately after 'id' attr:
+            if attr_name == 'id':
+                clause_start_tag += f''' type="{p_dict['kind']}"'''
+
+        clause_start_tag += '>'
+        lines.append(f"{ind}{clause_start_tag}")
+
+        name_for_heading = p_dict['op_name']
+
+        if section.section_title.startswith('Static Semantics:'):
+            name_for_heading = 'Static Semantics: ' + name_for_heading
+
+        if param_names == []:
+            lines.append(f"{ind}  <h1>{name_for_heading} ( )</h1>")
+        else:
+            lines.append(f"{ind}  <h1>")
+            lines.append(f"{ind}    {name_for_heading} (")
+            for param_name in param_names:
+                optionality = 'optional ' if param_name in optional_params else ''
+                param_nature = param_nature_.get(param_name, 'TBD')
+                if param_nature == 'TBD': param_nature = 'unknown'
+                lines.append(f"{ind}      {optionality}{param_name}: {param_nature},")
+            lines.append(f"{ind}    )")
+            lines.append(f"{ind}  </h1>")
+
+        lines.append(f'{ind}  <dl class="header">')
+
+        if False and for_phrase and kind != 'numeric method':
+            _.dt("for")
+            _.dd(self.for_phrase)
+        
+        lines.append(f'{ind}  </dl>')
+        lines.append("^^^^^^^^")
+        suggestion = '\n'.join(lines)
+
+        msg_at_posn(section.inner_start_posn, f"Should use a structured header? e.g.:\n{suggestion}")
+
+    # --------------------------------------------------------------------------------------------------
+
     if p_dict['kind'] == 'abstract operation':
         if '::' in p_dict['op_name']:
             section.section_kind = 'numeric_method'
@@ -389,6 +452,251 @@ def _handle_other_op_section(section):
     _start_ste(section, p_dict)
 
     return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _handle_structured_header(section):
+    section.has_structured_header = True
+
+    dl = section.block_children.pop(0)
+    assert dl.element_name == 'dl'
+    assert dl.attrs.get('class') == 'header'
+    section.dl_child = dl
+    _set_bcen_attributes(section)
+
+    section_type = section.attrs.get('type')
+
+    if section_type == 'concrete method':
+        if section.parent.parent.section_id == 'sec-the-environment-record-type-hierarchy':
+            section.section_kind = 'env_rec_method'
+        elif section.parent.parent.section_id == 'sec-module-semantics':
+            section.section_kind = 'module_rec_method'
+        else:
+            assert 0, section.section_id
+            
+    else:
+        section.section_kind = {
+            'abstract operation': 'abstract_operation',
+            'numeric method'    : 'numeric_method',
+            'internal method'   : 'internal_method',
+            'host-defined abstract operation'          : 'abstract_operation',
+            'implementation-defined abstract operation': 'abstract_operation',
+        }[section_type]
+
+    h1 = section.heading_child
+    h1_ist = h1.inner_source_text()
+
+    if '\n' not in h1_ist:
+        # single-line h1:
+        mo = re.fullmatch(r'([A-Z][a-zA-Z]+|\[\[[A-Z][a-zA-Z]+\]\]) \( \)', h1_ist)
+        assert mo
+        op_name = mo.group(1)
+        params_info = OrderedDict()
+        param_nature_ = {}
+
+    else:
+        # multi-line h1:
+        posn_of_linestart_before_h1 = 1 + spec.text.rfind('\n', 0, h1.start_posn)
+        h1_indent = h1.start_posn - posn_of_linestart_before_h1
+
+        reo = re.compile(r'(?m)( +)(.*)')
+        posns_for_line_ = []
+        for mo in reo.finditer(spec.text, posn_of_linestart_before_h1, h1.end_posn):
+            assert mo.end(1) == mo.start(2)
+            posns_for_line_.append( (mo.start(1), mo.end(1), mo.end(2)) )
+
+        if section.section_kind == 'numeric_method':
+            op_name_pattern = r'[A-Z][a-zA-Z]+::[a-z][a-zA-Z]+'
+        elif section.section_kind == 'internal_method':
+            op_name_pattern = r'\[\[[A-Z][a-zA-Z]+\]\]'
+        else:
+            op_name_pattern = r'[A-Z][a-zA-Z0-9/]+'
+
+        patterns = [
+            (0, '<h1>'),
+            (2, fr'(Static Semantics: )?({op_name_pattern}) \('),
+            (4, r'(optional )?(_\w+_): (.+),'),
+            (2, fr'\)'),
+            (0, '</h1>'),
+        ]
+        which_semantics = 'UNSET'
+        op_name = 'UNSET'
+        params_info = OrderedDict()
+        param_nature_ = {}
+        n_lines = len(posns_for_line_)
+        for (line_i, (a,b,c)) in enumerate(posns_for_line_):
+            if line_i in [0, 1]:
+                pattern_i = line_i
+            elif line_i in [n_lines-2, n_lines-1]:
+                pattern_i = line_i - n_lines
+            else:
+                pattern_i = 2
+            (expected_indent_add, expected_pattern) = patterns[pattern_i]
+
+            actual_indent = b - a
+            assert actual_indent == h1_indent + expected_indent_add
+
+            mo = re.compile(expected_pattern).fullmatch(spec.text, b, c)
+            if mo:
+                d = mo.groupdict()
+                if pattern_i == 1:
+                    [which_semantics, op_name] = mo.groups()
+                    if which_semantics is None: which_semantics = ''
+                elif pattern_i == 2:
+                    [optionality, param_name, param_nature] = mo.groups()
+                    is_optional = (optionality == 'optional ')
+                    # params.append( (param_name, param_nature, is_optional) )
+                    params_info[param_name] = '[]' if is_optional else ''
+                    param_nature_[param_name] = 'TBD' if param_nature == 'unknown' else param_nature
+                else:
+                    assert mo.groups() == ()
+            else:
+                msg_at_posn(b, f"line doesn't match pattern /{expected_pattern}/")
+
+        params = [* params_info.items() ]
+        def brief_params(param_i):
+            if param_i == len(params):
+                return ''
+            else:
+                rest = brief_params(param_i + 1)
+                (param_name, param_punct) = params[param_i]
+                if param_punct == '[]':
+                    comma = ' ' if param_i == 0 else ' , '
+                    return f" [{comma}{param_name}{rest} ]"
+                else:
+                    comma = ' ' if param_i == 0 else ', '
+                    return f"{comma}{param_name}{rest}"
+
+        # overwrite section.section_title
+        section.section_title = f"{which_semantics}{op_name} ({brief_params(0)} )"
+
+    if '::' in op_name:
+        (num_type, op_name) = re.fullmatch(r'(\w+)(::\w+)', op_name).groups()
+
+    section.ste = {
+        'op_name': op_name,
+        'type': section_type,
+        'parameters': params_info,
+        'param_nature_': param_nature_,
+    }
+
+    # --------------------------------------------------------------------------
+    # Extract info from the <dl>
+
+    dl_dict = {}
+    dl_nw_children = [
+        child 
+        for child in dl.children
+        if not child.is_whitespace()
+    ]
+    children_names = ''.join(
+        child.element_name + ';'
+        for child in dl_nw_children
+    )
+    assert re.fullmatch(r'(dt;dd;)*', children_names)
+    for i in range(0, len(dl_nw_children), 2):
+        dt = dl_nw_children[0]
+        dd = dl_nw_children[1]
+        # This will need to be generalized, but is okay for now:
+        dt_s = dt.inner_source_text()
+        dd_s = dd.inner_source_text()
+        dl_dict[dt_s] = dd_s
+
+    # ----------------------------------
+
+    if 'for' in dl_dict:
+        section.ste['for_phrase'] = dl_dict['for']
+
+    if 'description' in dl_dict:
+        retn = []
+        reta = []
+        sentences = re.split('(?<=\.) +', dl_dict['description'])
+        for sentence in sentences:
+            if sentence.startswith('It returns '):
+                # Maybe if it's a numeric method, we shouldn't bother?
+                for (pattern, nature) in [
+                    ("It returns \*true\* if .+ and \*false\* otherwise.", 'a Boolean'),
+                    ("It returns _argument_ converted to a Number value .+.", 'a Number'),
+                    ("It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.", 'a non-negative integer'),
+                    ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
+                    ("It returns _value_ converted to a numeric value of type Number or BigInt.", 'a Number or a BigInt'),
+                    ("It returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is a Boolean.", 'a Boolean'),
+                    ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean.", 'a Boolean'),
+                    ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
+                    ("It returns a new promise resolved with _x_.", 'a promise'),
+                    ("It returns an implementation-approximated value .+", 'a Number'),
+                    ("It returns an integral Number representing .+", 'an integral Number'),
+                    ("It returns either \*false\* or the end index of a match.", '*false* or a non-negative integer'),
+                    ("It returns either ~not-matched~ or the end index of a match.", '~not-matched~ or a non-negative integer'),
+                    ("It returns the BigInt value that .+", 'a BigInt'),
+                    ("It returns the global object used by the currently running execution context.", 'an object'),
+                    ("It returns the loaded value.", 'TBD'),
+                    ("It returns the one's complement of _x_.+", 'TBD'),
+                    ("It returns the sequence of Unicode code points that .+", 'a sequence of Unicode code points'),
+                    ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
+                    ("It returns the value of its bound identifier whose name is the value of the argument _N_.", 'an ECMAScript language value'),
+                    ("It returns the value of the \*\"length\"\* property of an array-like object \(as a non-negative integer\).", 'a non-negative integer'),
+                    ("It returns the value of the \*\"length\"\* property of an array-like object.", 'a non-negative integer'),
+                ]:
+                    if re.fullmatch(pattern, sentence):
+                        retn.append(nature)
+                        break
+                else:
+                    assert 0, sentence
+
+            elif 'returning *true*, *false*, or *undefined*' in sentence:
+                retn.append('a Boolean or *undefined*')
+
+            elif 'returning *true* or *false*' in sentence:
+                retn.append('a Boolean')
+
+            elif sentence == 'Otherwise, it returns *undefined*.':
+                retn.append('*undefined*'),
+
+            elif sentence.startswith('It throws'):
+                for (pattern, nature) in [
+                    ('It throws an error .+',     'throw'),
+                    ('It throws an exception .+', 'throw'),
+                    ('It throws a \*TypeError\* exception .+', 'throw *TypeError*'),
+                ]:
+                    if re.fullmatch(pattern, sentence):
+                        reta.append(nature)
+                        break
+                else:
+                    assert 0, sentence
+
+            # kludgey:
+            if sentence == "It returns a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean.":
+                reta.append('N/A')
+
+        if retn: section.ste['return_nature_normal'] = ' or '.join(retn)
+        if reta: section.ste['return_nature_abrupt'] = ' or '.join(reta)
+
+    # --------------------------------------------------------------------------
+
+    # Hack this for now:
+    if section.ste['op_name'] == 'SortCompare':
+        section.ste['also'] = [
+            ('_comparefn_', 'from the current invocation of the `sort` method')
+        ]
+    elif section.ste['op_name'] in [
+        'IsWordChar',
+        'CharacterSetMatcher',
+        'Canonicalize',
+        'BackreferenceMatcher',
+        'RegExpBuiltinExec',
+        'CharacterRangeOrUnion',
+    ]:
+        section.ste['also'] = [
+            ('_Input_'            , 'from somewhere'),
+            ('_DotAll_'           , 'from somewhere'),
+            ('_InputLength_'      , 'from somewhere'),
+            ('_NcapturingParens_' , 'from somewhere'),
+            ('_IgnoreCase_'       , 'from somewhere'),
+            ('_Multiline_'        , 'from somewhere'),
+            ('_Unicode_'          , 'from somewhere'),
+            ('_WordCharacters_'   , 'from somewhere'),
+        ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -678,7 +986,7 @@ def _check_aoids(section):
                     # (The Memory Model clauses are weird.)
                     expected_aoid = None
                 else:
-                    expected_aoid = op_name
+                    expected_aoid = None # since #545
 
             elif section.section_kind == 'syntax_directed_operation':
                 if op_name in [

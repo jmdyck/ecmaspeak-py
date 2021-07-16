@@ -466,7 +466,7 @@ def create_operation_info_for_section(s):
             prev = s.block_children[p_start_i-1]
         ln = get_last_ln(prev)
 
-        if p_start_i == p_end_i:
+        if p_start_i == p_end_i or (span_start_i == 0 and s.has_structured_header):
             # no children in preamble, so no lines to suppress
             poi = None
         else:
@@ -654,8 +654,6 @@ single_sentence_rules_str = r'''
 
         # ---------
 
-        The (?P<name>ResolveExport) (?P<kind>concrete method) of (?P<for>.+) takes (?P<pl>.+)\.
-
         The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object) that (?P<desc>is defined once for each realm.)
 
         The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps when called:
@@ -684,8 +682,6 @@ single_sentence_rules_str = r'''
 
         This function (.+)
         v=!FUNC \1
-
-        This concrete method performs the following steps when called:
 
     # ==========================================================================
     # Sentences that start with "When"
@@ -1292,64 +1288,7 @@ def extract_info_from_standard_preamble(preamble_node):
     # ----------------------------------------
     # Any remaining sentences are description:
     
-    if sentences:
-        description = ' '.join(sentences)
-        info_holder.add('desc', description)
-
-    # -------------------------------------
-    # But some of those sentences may give (additional) info about what's returned.
-
-    for sentence in sentences:
-        if sentence.startswith('It returns '):
-            # Maybe if it's a numeric method, we shouldn't bother?
-            for (pattern, nature) in [
-                ("It returns the one's complement of _x_.+", 'TBD'),
-                ('It returns \*true\* if .+ and \*false\* otherwise.', 'a Boolean'),
-                ('It returns _argument_ converted to a Number value .+.', 'a Number'),
-                ('It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.', 'a non-negative integer'),
-                ('It returns _value_ converted to a numeric value of type Number or BigInt.', 'a Number or a BigInt'),
-                ('It returns _value_ converted to a Number or a BigInt.', 'a Number or a BigInt'),
-                ('It returns a new Job Abstract Closure .+', 'a Job Abstract Closure'),
-                ('It returns a new promise resolved with _x_.', 'a promise'),
-                ('It returns an implementation-approximated value .+', 'a Number'),
-                ('It returns an integral Number representing .+', 'an integral Number'),
-                ('It returns either \*false\* or the end index of a match.', '*false* or a non-negative integer'),
-                ('It returns either ~not-matched~ or the end index of a match.', '~not-matched~ or a non-negative integer'),
-                ('It returns the BigInt value that .+', 'a BigInt'),
-                ('It returns the global object used by the currently running execution context.', 'an object'),
-                ('It returns the loaded value.', 'TBD'),
-                ('It returns the sequence of Unicode code points that .+', 'a sequence of Unicode code points'),
-                ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
-                ('It returns the value of its bound identifier whose name is the value of the argument _N_.', 'an ECMAScript language value'),
-                ('It returns the value of the \*"length"\* property of an array-like object.', 'a non-negative integer'),
-                ('It returns the value of the \*"length"\* property of an array-like object \(as a non-negative integer\).', 'a non-negative integer'),
-            ]:
-                if re.fullmatch(pattern, sentence):
-                    info_holder.add('retn', nature)
-                    break
-            else:
-                assert 0, sentence
-
-        elif 'returning *true*, *false*, or *undefined*' in sentence:
-            info_holder.add('retn', 'a Boolean or *undefined*')
-
-        elif 'returning *true* or *false*' in sentence:
-            info_holder.add('retn', 'a Boolean')
-
-        elif sentence == 'Otherwise, it returns *undefined*.':
-            info_holder.add('retn', '*undefined*'),
-
-        elif sentence.startswith('It throws'):
-            for (pattern, nature) in [
-                ('It throws an error .+',     'throw'),
-                ('It throws an exception .+', 'throw'),
-                ('It throws a \*TypeError\* exception .+', 'throw *TypeError*'),
-            ]:
-                if re.fullmatch(pattern, sentence):
-                    info_holder.add('reta', nature)
-                    break
-            else:
-                assert 0, sentence
+    assert sentences == [] # since the merge of PR 545
 
     return info_holder
 
@@ -1456,6 +1395,8 @@ def get_info_from_heading(section):
         .replace('module rec method',          'concrete method')
         .replace('CallConstruct',              'function property')
     )
+    if 'type' in section.ste:
+        oi.kind = section.ste['type']
 
     if section.section_kind in [
         'abstract_operation',
@@ -1504,6 +1445,17 @@ def get_info_from_heading(section):
             pass
         else:
             assert 0, param_punct
+
+    if 'for_phrase' in section.ste:
+        oi.for_phrase = section.ste['for_phrase']
+
+    oi.param_nature_ = section.ste.get('param_nature_', {})
+
+    oi.return_nature_normal = section.ste.get('return_nature_normal', None)
+    oi.return_nature_abrupt = section.ste.get('return_nature_abrupt', None)
+
+    if 'also' in section.ste:
+        oi.also = section.ste['also']
 
     return oi
 
