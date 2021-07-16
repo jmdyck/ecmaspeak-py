@@ -308,21 +308,24 @@ def _handle_other_op_section(section):
     if section.section_title == 'StringToBigInt ( _argument_ )':
         # 7.1.14
         # First <p> isn't a proper preamble, so has to be handled specially.
-        p_dict = {
-            'kind': 'abstract operation',
+
+        section.section_kind = 'abstract_operation'
+        section.ste = {
             'op_name': 'StringToBigInt',
-            'params_str': '_argument_',
+            'parameters': {'_argument_': ''},
         }
+        return True
 
-    elif section.section_id == 'sec-weakref-execution':
+    if section.section_id == 'sec-weakref-execution':
         # 9.10.3
-        p_dict = {
-            'kind': 'abstract operation',
+        section.section_kind = 'abstract_operation'
+        section.ste = {
             'op_name': 'WeakRef emptying thing',
-            'params_str': '_S_',
+            'parameters': {'_S_': ''},
         }
+        return True
 
-    elif section.section_title in [
+    if section.section_title in [
         'Valid Chosen Reads',
         'Coherent Reads',
         'Tear Free Reads',
@@ -330,28 +333,30 @@ def _handle_other_op_section(section):
         'Data Races',
     ]:
         # 29.7.*, 29.8, 29.9
-        p_dict = {
-            'kind': 'abstract operation',
+        section.section_kind = 'abstract_operation'
+        section.ste = {
             'op_name': section.section_title,
         }
+        return True
 
+    # --------------------------------------------------------------------------
+
+    # Over the course of various PRs (latest #2427),
+    # the first para ('preamble') of non-SDO operations
+    # has become standardized.
+    s_ist = section.inner_source_text()
+    h1_pattern = r'\n +<h1>(\S+ Semantics: )?(?P<op_name>\S+) \((?P<params_str>[^()]*)\)</h1>'
+    for p_pattern in [
+        r'\n +<p>The ((host|implementation)-defined )?(?P<kind>abstract operation)',
+        r'\n +<p>The (?P=op_name) (?P<kind>(internal|concrete) method)',
+    ]:
+        pattern = h1_pattern + p_pattern
+        mo = re.match(pattern, s_ist)
+        if mo:
+            p_dict = mo.groupdict()
+            break
     else:
-        # Over the course of various PRs (latest #2427),
-        # the first para ('preamble') of non-SDO operations
-        # has become standardized.
-        s_ist = section.inner_source_text()
-        h1_pattern = r'\n +<h1>(\S+ Semantics: )?(?P<op_name>\S+) \((?P<params_str>[^()]*)\)</h1>'
-        for p_pattern in [
-            r'\n +<p>The ((host|implementation)-defined )?(?P<kind>abstract operation)',
-            r'\n +<p>The (?P=op_name) (?P<kind>(internal|concrete) method)',
-        ]:
-            pattern = h1_pattern + p_pattern
-            mo = re.match(pattern, s_ist)
-            if mo:
-                p_dict = mo.groupdict()
-                break
-        else:
-            return False
+        return False
 
     # -------------------------------
     # At this point, we're committed.
