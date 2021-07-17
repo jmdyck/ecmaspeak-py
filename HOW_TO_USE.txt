@@ -15,7 +15,6 @@
 # In this chart, each script is a 'child' of the script that it must follow:
 #
 #    analyze_spec.py
-#     |- render_spec.py
 #     |- static_type_analysis.py
 
 # You might wonder why there are multiple scripts.
@@ -86,25 +85,6 @@ D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D msgs_in_spec.html ids
 # If emu_alg has ambiguites:
 csplit $D/emu_alg_ambig.new '/^(/' '{*}'
 # then compare xx* to see where the problem is.
-
-# --------------------------------------------------------------------
-D=_`gcbn` && $EK/render_spec.py $D && car -d $D index.html
-# (~ 3s)
-
-# Commands to help compare my rendering to the official rendering:
-git checkout upstream/gh-pages
-cp index.html _master/ref.index.html.new
-git checkout master
-# delete line 41
-# %s/ id="_ref_[0-9]*"//g
-# g/<emu-alg/,/<\/emu-alg>/ s!<\(ol\|ul\|li\|/ol\|/ul\)>!&!g
-# g/<emu-eqn/ s!</div><div!</div><div!g
-# %s/ ? / ?\&nbsp;/g
-# %s!\n  *</li>\n</ol>!</li></ol>!
-# %s!<emu-rhs a="\w\+"!<emu-rhs!g
-# %s/ title=""/ title/g
-car _master/ref.index.html
-gdiff -R _master/ref.index.html _master/\index.html
 
 # --------------------------------------------------------------------
 
