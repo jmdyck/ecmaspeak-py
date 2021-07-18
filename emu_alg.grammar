@@ -953,7 +953,6 @@
     the one character in CharSet {var}
     the other {EX} code units of {var}
     the parse of some source text
-    the prefix associated with {var} in {h_emu_xref}
     the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of applying that mapping to {var}
     the result of applying the bitwise AND operation to {var} and {var}

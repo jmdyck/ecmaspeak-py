@@ -10882,11 +10882,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the prefix associated with {var} in {h_emu_xref}":
-        [var, xref] = children
-        env0.assert_expr_is_of_type(var, T_FunctionKind2_)
-        return (T_String, env0)
-
     # explicit-exotics:
     elif p in [
         r"{EXPR} : the internal slots listed in {h_emu_xref}",
