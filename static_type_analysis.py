@@ -5065,7 +5065,6 @@ def tc_cond_(cond, env0, asserting):
         r"{TYPE_TEST} : Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}",
         r"{TYPE_TEST} : Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
         r"{TYPE_TEST} : Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}",
-        r"{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
         r'{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}',
     ]:
         [type_arg, *type_name_] = children
@@ -5227,7 +5226,7 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(var, 'is a', T_execution_context, asserting)
 
     elif p in [
-        r"{CONDITION_1} : {var} is an Environment Record",
+        r"{CONDITION_1} : {EX} is an Environment Record",
     ]:
         [var] = children
         return env0.with_type_test(var, 'is a', T_Environment_Record, asserting)
