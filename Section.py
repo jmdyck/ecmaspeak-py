@@ -620,6 +620,7 @@ def _handle_structured_header(section):
                     ("It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.", 'a non-negative integer'),
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
                     ("It returns _value_ converted to a numeric value of type Number or BigInt.", 'a Number or a BigInt'),
+                    ("It returns a Number.", 'a Number'),
                     ("It returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is a Boolean.", 'a Boolean'),
                     ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean.", 'a Boolean'),
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),

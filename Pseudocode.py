@@ -2245,11 +2245,6 @@ def analyze_sdo_coverage_info():
                     pass
                     # print(f" ?? {' ':36} from {opcall.source_text()}")
 
-            if sdo_name == 'StringNumericValue':
-                # Currently, there isn't an explicit application of StringNumericValue to |StringNumericLiteral|,
-                # but it's clear that has to happen. (PR #1554 will make this explicit.)
-                nt_set.add('StringNumericLiteral')
-
             nt_queue = sorted(nt_set)
 
         # for nt in nt_queue: print('   ', nt)
@@ -2372,6 +2367,9 @@ all_possibilities_for_func_ECMAScriptCode = FDI_possibilities_for_func_ECMAScrip
 ]
 
 nts_behind_var_in_sdo_call = {
+
+    # 4529 StringToNumber
+    ('StringNumericValue', '_literal_'): ['StringNumericLiteral'],
 
     # 5715 BoundNames
     ('BoundNames', '_head_'): ['AsyncArrowHead'],

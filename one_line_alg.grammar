@@ -18,7 +18,6 @@
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
     Return {EXPR} (no conversion).
     Return {EXPR}.
-    See grammar and conversion algorithm below.
     Throw a {ERROR_TYPE} exception.
 
 {CONDITION} :
@@ -46,6 +45,10 @@
 
 {OPN_BEFORE_PAREN} :
     {NUMERIC_TYPE_INDICATOR}::{low_word}
+    {SIMPLE_OPERATION_NAME}
+
+{SIMPLE_OPERATION_NAME} :
+    {cap_word}
 
 {NUMERIC_TYPE_INDICATOR} :
     BigInt
