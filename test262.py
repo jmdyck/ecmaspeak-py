@@ -98,7 +98,12 @@ def test_one(file_relpath):
         assert 0, file_relpath
 
     # frontmatter
-    d = parse_frontmatter(frontmatter)
+    try:
+        d = parse_frontmatter(frontmatter)
+    except AssertionError:
+        print(f"... failed to parse frontmatter in {file_relpath}")
+        return
+
     assert isinstance(d, dict)
     keys_here = d.keys()
     all_valid_keys = {
@@ -229,9 +234,14 @@ def parse_frontmatter(frontmatter):
         if frontmatter[b] == '-':
             kind_of_collection = 'sequence'
             collection = []
-        else:
+        elif ': ' in frontmatter[b:c]:
             kind_of_collection = 'mapping'
             collection = {}
+        else:
+            print()
+            print("Expected a collection in block notation, but got a scalar in flow notation starting on the line after the key?")
+            print(f"    {frontmatter[b:c]}")
+            assert 0
 
         # --------
 
@@ -328,6 +338,14 @@ def parse_frontmatter(frontmatter):
                     value = yaml_parse_block_collection(s_line_i+1, e_line_i)
 
                 else:
+                    text = frontmatter[
+                        mo.start(2)
+                        :
+                        line_posns[e_line_i-1][2]
+                    ]
+                    print()
+                    print(f"Value for key {key!r} is a multi-line scalar in flow notation:")
+                    print(f"    {text!r}")
                     assert 0
 
                 collection[key] = value
