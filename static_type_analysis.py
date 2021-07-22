@@ -4910,6 +4910,10 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
         result = env0
 
+    elif p == r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error":
+        [] = children
+        result = env0
+
     else:
         stderr()
         stderr("tc_nonvalue:")

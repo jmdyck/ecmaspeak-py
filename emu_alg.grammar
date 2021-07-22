@@ -206,6 +206,7 @@
     let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria
+    perform any host-defined steps for reporting the error
     perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
     remove the first code unit from {var}
