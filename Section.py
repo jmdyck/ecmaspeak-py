@@ -352,8 +352,12 @@ def _handle_other_op_section(section):
     ]:
         # 29.7.*
         section.section_kind = 'abstract_operation'
+        assert section.block_children[0].source_text().startswith(
+            "<p>A candidate execution _execution_ has "
+        )
         section.ste = {
             'op_name': section.section_title,
+            'parameters': {'_execution_': ''},
         }
         return True
 
@@ -363,8 +367,17 @@ def _handle_other_op_section(section):
     ]:
         # 29.8, 29.9
         section.section_kind = 'abstract_operation'
+        assert section.block_children[0].source_text().startswith(
+            "<p>For an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_) are in a "
+        )
+        parameters = {
+            '_execution_': '',
+            '_E_'        : '',
+            '_D_'        : '',
+        }
         section.ste = {
             'op_name': section.section_title,
+            'parameters': parameters,
         }
         return True
 
