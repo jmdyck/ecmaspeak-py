@@ -312,6 +312,22 @@ def _handle_other_op_section(section):
         _handle_structured_header(section)
         return True
 
+    if section.section_id in [
+        'sec-object-environment-records-createimmutablebinding-n-s',
+        'sec-module-environment-records-deletebinding-n',
+    ]:
+        # These are odd cases.
+        # The clause exists only to tell us that the concrete method is never used.
+        assert 'is never used' in section.block_children[0].inner_source_text()
+        # There's roughly two approaches:
+        # - Create the thing, but make the body of it be (effectively) "Assert: False."
+        # - Don't create the thing. (So if there *is* an attempt to use it, the lookup will fail.)
+        # Let's try the latter.
+        # I.e., don't create anything, but return True to indicate that we've handled this section.
+        section.section_kind = 'env_rec_method_unused'
+        section.ste = {}
+        return True
+
     if section.section_id in ['sec-normalcompletion', 'sec-throwcompletion']:
         # The preambles say "The abstract operation NormalCompletion ..."
         # and "The abstract operation ThrowCompletion ..."

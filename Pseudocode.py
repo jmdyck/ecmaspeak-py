@@ -732,16 +732,7 @@ def analyze_other_op_section(section):
 
                 handle_tabular_op_defn(op_name, a, b, section)
 
-        elif op_name in ['CreateImmutableBinding', 'DeleteBinding']:
-            assert section.section_id in [
-                'sec-object-environment-records-createimmutablebinding-n-s',
-                'sec-module-environment-records-deletebinding-n', # PR 1994
-            ]
-            # This is a bit odd.
-            # The clause exists just to say that this definition doesn't exist.
-            # discriminator = None # XXX get the discriminator!
-            # emu_alg = None ?
-            # handle_type_discriminated_op(op_name, section.section_kind, discriminator, emu_alg, section)
+        elif section.section_kind == 'env_rec_method_unused':
             pass
 
         elif op_name.startswith('Host'):

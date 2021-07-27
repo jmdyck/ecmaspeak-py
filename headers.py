@@ -70,6 +70,8 @@ def should_create_op_info_for_algoless_section(s):
     # It's the kind of section that we never want to create op info for:
 
     if s.section_kind in [
+        'env_rec_method_unused',
+        #
         'properties_of_an_intrinsic_object',
         'catchall',
         'other_property',
@@ -121,13 +123,6 @@ def should_create_op_info_for_algoless_section(s):
 
     # It's the kind of section that we usually want to create op info for,
     # but with some exceptions:
-
-    if s.section_kind == 'env_rec_method':
-        assert s.section_id in [
-            'sec-object-environment-records-createimmutablebinding-n-s',
-            'sec-module-environment-records-deletebinding-n',
-        ]
-        return False
 
     if s.section_kind == 'accessor_property':
         if s.section_title == 'Object.prototype.__proto__':
