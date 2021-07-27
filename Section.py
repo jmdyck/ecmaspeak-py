@@ -993,18 +993,6 @@ def _check_aoids(section):
                 else:
                     expected_aoid = None
 
-            elif section.section_kind == 'abstract_operation':
-                if (
-                    section.parent.section_title == 'Properties of Valid Executions'
-                    or
-                    section.parent.section_title == 'Memory Model'
-                ):
-                    # This isn't an abstract operation in the usual sense.
-                    # (The Memory Model clauses are weird.)
-                    expected_aoid = None
-                else:
-                    expected_aoid = None # since #545
-
             elif section.section_kind == 'syntax_directed_operation':
                 if op_name in [
                     'MV',
