@@ -349,10 +349,19 @@ def _handle_other_op_section(section):
         'Valid Chosen Reads',
         'Coherent Reads',
         'Tear Free Reads',
+    ]:
+        # 29.7.*
+        section.section_kind = 'abstract_operation'
+        section.ste = {
+            'op_name': section.section_title,
+        }
+        return True
+
+    if section.section_title in [
         'Races',
         'Data Races',
     ]:
-        # 29.7.*, 29.8, 29.9
+        # 29.8, 29.9
         section.section_kind = 'abstract_operation'
         section.ste = {
             'op_name': section.section_title,
