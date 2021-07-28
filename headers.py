@@ -1423,7 +1423,7 @@ def get_info_from_heading(section):
         oi.for_phrase = re.sub(':.*', '', section.section_title)
         # Should this be in section.ste?
 
-    if 'parameters' not in section.ste:
+    if 'parameters' not in section.ste or section.ste['parameters'] is None:
         return oi
 
     oi.param_names = []

@@ -440,8 +440,11 @@ def _handle_other_op_section(section):
     else:
         assert 0
 
-    section.ste = p_dict
-    section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'])
+    section.ste = {
+        'op_name'   : p_dict['op_name'],
+        'kind'      : p_dict['kind'],
+        'parameters': convert_param_listing_to_dict(p_dict['params_str'])
+    }
 
     # --------------------------------------------------------------------------------------------------
 
@@ -828,9 +831,14 @@ def _handle_other_section(section):
     assert isinstance(result, str)
     section.section_kind = result
     p_dict = mo.groupdict()
-    section.ste = p_dict
-    if 'params_str' in p_dict:
-        section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'])
+    section.ste = {
+        'prop_path': p_dict.get('prop_path', None),
+        'parameters': (
+            convert_param_listing_to_dict(p_dict['params_str'])
+            if 'params_str' in p_dict
+            else None
+        ),
+    }
 
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
