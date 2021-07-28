@@ -178,6 +178,8 @@ def _set_section_kind_r(section):
     r = (
         _handle_root_section(section)
         or
+        _handle_early_errors_section(section)
+        or
         _handle_sdo_section(section)
         or
         _handle_other_op_section(section)
@@ -194,6 +196,16 @@ def _set_section_kind_r(section):
 def _handle_root_section(section):
     if section.is_root_section:
         return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _handle_early_errors_section(section):
+    if section.section_title != 'Static Semantics: Early Errors':
+        return False
+
+    section.section_kind = 'early_errors'
+    section.ste = {'op_name': 'Early Errors', 'parameters': OrderedDict()}
+    return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -755,8 +767,6 @@ def _handle_other_section(section):
             (r'ThrowCompletion',                                   'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
 
-            (r'Static Semantics: (?P<op_name>Early Errors)', 'early_errors'),
-
             (r'.+ Instances',             'properties_of_instances'),
             (r'Module Namespace Objects', 'properties_of_instances'),
 
@@ -836,11 +846,6 @@ def _handle_other_section(section):
     # -----------
 
     # Some stuff that isn't in the section_title, but should be?
-
-    if section.section_kind == 'early_errors':
-        assert section.ste['op_name'] == 'Early Errors'
-        assert 'parameters' not in section.ste
-        section.ste['parameters'] = OrderedDict()
 
     if section.section_title.startswith('get '):
         assert section.section_kind == 'accessor_property'
