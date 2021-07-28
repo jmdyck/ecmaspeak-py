@@ -429,7 +429,7 @@ def _handle_other_op_section(section):
         assert 0
 
     section.ste = p_dict
-    section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'].strip())
+    section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'])
 
     # --------------------------------------------------------------------------------------------------
 
@@ -820,7 +820,7 @@ def _handle_other_section(section):
     p_dict = mo.groupdict()
     section.ste = p_dict
     if 'params_str' in p_dict:
-        section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'].strip())
+        section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'])
 
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
@@ -855,6 +855,7 @@ def _handle_other_section(section):
 
 def convert_param_listing_to_dict(parameter_listing):
     params_info = OrderedDict()
+    parameter_listing = parameter_listing.strip()
     if parameter_listing != '':
         if parameter_listing == '_value1_, _value2_, ..._values_':
             # Math.{hypot,max,min}
