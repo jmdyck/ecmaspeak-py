@@ -403,6 +403,35 @@ def _handle_other_op_section(section):
     # -------------------------------
     # At this point, we're committed.
 
+    if p_dict['kind'] == 'abstract operation':
+        if '::' in p_dict['op_name']:
+            section.section_kind = 'numeric_method'
+            p_dict['op_name'] = re.sub(r'^\w+', '', p_dict['op_name'])
+        else:
+            section.section_kind = 'abstract_operation'
+
+    elif p_dict['kind'] in ['host-defined abstract operation', 'implementation-defined abstract operation']:
+        assert 0
+        section.section_kind = 'abstract_operation'
+
+    elif p_dict['kind'] == 'internal method':
+        section.section_kind = 'internal_method'
+
+    elif p_dict['kind'] == 'concrete method':
+        if section.parent.parent.section_title == "The Environment Record Type Hierarchy":
+            section.section_kind = 'env_rec_method'
+        elif section.parent.parent.section_title == "Module Semantics":
+            section.section_kind = 'module_rec_method'
+        else:
+            assert 0
+
+    else:
+        assert 0
+
+    _start_ste(section, p_dict)
+
+    # --------------------------------------------------------------------------------------------------
+
     if 1:
         # Complain about the old header, suggest a structured one.
 
@@ -459,35 +488,6 @@ def _handle_other_op_section(section):
         suggestion = '\n'.join(lines)
 
         msg_at_posn(section.inner_start_posn, f"Should use a structured header? e.g.:\n{suggestion}")
-
-    # --------------------------------------------------------------------------------------------------
-
-    if p_dict['kind'] == 'abstract operation':
-        if '::' in p_dict['op_name']:
-            section.section_kind = 'numeric_method'
-            p_dict['op_name'] = re.sub(r'^\w+', '', p_dict['op_name'])
-        else:
-            section.section_kind = 'abstract_operation'
-
-    elif p_dict['kind'] in ['host-defined abstract operation', 'implementation-defined abstract operation']:
-        assert 0
-        section.section_kind = 'abstract_operation'
-
-    elif p_dict['kind'] == 'internal method':
-        section.section_kind = 'internal_method'
-
-    elif p_dict['kind'] == 'concrete method':
-        if section.parent.parent.section_title == "The Environment Record Type Hierarchy":
-            section.section_kind = 'env_rec_method'
-        elif section.parent.parent.section_title == "Module Semantics":
-            section.section_kind = 'module_rec_method'
-        else:
-            assert 0
-
-    else:
-        assert 0
-
-    _start_ste(section, p_dict)
 
     return True
 
