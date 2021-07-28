@@ -782,7 +782,7 @@ def _handle_other_section(section):
             (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>',  'anonymous_built_in_function'),
             (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
 
-            (r'(?P<prop_path>[A-Z]\w+) \((?P<params_str> \. \. \. )\)', 'function_property_xref'),
+            (r'(?P<prop_path>[A-Z]\w+) \( \. \. \. \)', 'function_property_xref'),
 
             (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',   'CallConstruct'),
             (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>', 'CallConstruct'),
@@ -820,13 +820,7 @@ def _handle_other_section(section):
     p_dict = mo.groupdict()
     section.ste = p_dict
     if 'params_str' in p_dict:
-        parameter_listing = p_dict['params_str'].strip()
-        if parameter_listing == '. . .':
-            assert section.section_kind == 'function_property_xref'
-            # Doesn't mean anything, might as wel not be there.
-            del section.ste['params_str']
-        else:
-            section.ste['parameters'] = convert_param_listing_to_dict(parameter_listing)
+        section.ste['parameters'] = convert_param_listing_to_dict(p_dict['params_str'].strip())
 
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
