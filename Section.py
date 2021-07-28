@@ -864,51 +864,53 @@ def _start_ste(section, initial_ste):
             del section.ste['params_str']
 
         else:
+            section.ste['parameters'] = convert_param_listing_to_dict(parameter_listing)
 
-            params_info = OrderedDict()
-            if parameter_listing != '':
-                if parameter_listing == '_value1_, _value2_, ..._values_':
-                    # Math.{hypot,max,min}
-                    parameter_listing = '..._values_'
-                elif parameter_listing in [
-                    '_p1_, _p2_, ..., _pn_, _body_', # old
-                    '_p1_, _p2_, &hellip; , _pn_, _body_' # new
-                ]:
-                    # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction
-                    parameter_listing = '..._args_ [ , _body_ ]'
+def convert_param_listing_to_dict(parameter_listing):
+    params_info = OrderedDict()
+    if parameter_listing != '':
+        if parameter_listing == '_value1_, _value2_, ..._values_':
+            # Math.{hypot,max,min}
+            parameter_listing = '..._values_'
+        elif parameter_listing in [
+            '_p1_, _p2_, ..., _pn_, _body_', # old
+            '_p1_, _p2_, &hellip; , _pn_, _body_' # new
+        ]:
+            # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction
+            parameter_listing = '..._args_ [ , _body_ ]'
 
-                param_strs = parameter_listing.split(', ')
-                subsequent_are_optional = False
-                for param_str in param_strs:
-                    if param_str.startswith('[ '):
-                        subsequent_are_optional = True
-                        param_str = param_str[2:]
+        param_strs = parameter_listing.split(', ')
+        subsequent_are_optional = False
+        for param_str in param_strs:
+            if param_str.startswith('[ '):
+                subsequent_are_optional = True
+                param_str = param_str[2:]
 
-                    mo = re.match(r'^(\.\.\.)?(_\w+_)(.*)$', param_str)
-                    assert mo, section.section_title
-                    (opt_dots, param_name, rest) = mo.groups()
+            mo = re.match(r'^(\.\.\.)?(_\w+_)(.*)$', param_str)
+            assert mo, section.section_title
+            (opt_dots, param_name, rest) = mo.groups()
 
-                    assert param_name not in params_info
+            assert param_name not in params_info
 
-                    assert not (opt_dots and subsequent_are_optional)
+            assert not (opt_dots and subsequent_are_optional)
 
-                    if opt_dots:
-                        param_punct = '...'
-                    elif subsequent_are_optional:
-                        param_punct = '[]'
-                    else:
-                        param_punct = ''
+            if opt_dots:
+                param_punct = '...'
+            elif subsequent_are_optional:
+                param_punct = '[]'
+            else:
+                param_punct = ''
 
-                    params_info[param_name] = param_punct
+            params_info[param_name] = param_punct
 
-                    if re.match(r'^( \])*$', rest):
-                        pass
-                    elif rest == ' [ ':
-                        subsequent_are_optional = True
-                    else:
-                        assert 0, (section.section_title, repr(param_str))
+            if re.match(r'^( \])*$', rest):
+                pass
+            elif rest == ' [ ':
+                subsequent_are_optional = True
+            else:
+                assert 0, (section.section_title, repr(param_str))
 
-            section.ste['parameters'] = params_info
+    return params_info
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
