@@ -21,7 +21,9 @@ import execution
 root_test_dirpath = "../test262-parser-tests"
 
 def main():
-    if sys.argv[1] == '--all':
+    if len(sys.argv) == 1:
+        print(f"usage: {sys.argv[0]} [ --all | --all-dir=<dir> | <relpath> ... ]")
+    elif sys.argv[1] == '--all':
         test_all()
     else:
         mo = re.fullmatch(r'--all-dir=([\w-]+)', sys.argv[1])
