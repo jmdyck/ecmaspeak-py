@@ -175,7 +175,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     # tokens that begin with a digit:
     {code_unit_lit}  : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)
     {hex_int_lit}    : \b 0x [0-9A-F]{2,6} \b
-    {dec_int_lit}    : \b -? [0-9]+ \b
+    {dec_int_lit}    : \b [0-9]+ \b
     {wordish}        : \b 20th \b
 
     # single-character punctuation:
@@ -487,7 +487,7 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | _endIndex_
     | _withEnvironment_
 
-    | \b -? [0-9]+ \b
+    | \b [0-9]+ \b
 
     | [-!()*+,./:;=?@{}]
     | \[
