@@ -39,6 +39,7 @@ def test_all():
     test_all_in_dir('early')
     test_all_in_dir('pass')
     test_all_in_dir('pass-explicit')
+    execution.report_unused_things()
 
 def test_all_in_dir(test_dirname):
     print(test_dirname, file=sys.stderr)

@@ -582,6 +582,25 @@ eachd = DecoratedFuncDict()
 
 predefined_operations = DecoratedFuncDict()
 
+def report_unused_things():
+    def dfd_report_unused_entries(dfd_name, dfd):
+        print(f"unused entries in {dfd_name}:")
+        unused_keys = [
+            key
+            for (key, count) in dfd.access_counts()
+            if count == 0
+        ]
+        if unused_keys == []:
+            print(f"    (none)")
+        else:
+            for key in unused_keys:
+                print(f"    {key}")
+        print()
+
+    dfd_report_unused_entries('efd', efd)
+    dfd_report_unused_entries('eachd', eachd)
+    dfd_report_unused_entries('predefined_operations', predefined_operations)
+
 # Have to declare these up here, otherwise there would be forward references.
 class E_Value: pass # ECMAScript value
 class EL_Value(E_Value): pass # ECMAScript language value
