@@ -1643,6 +1643,10 @@ def _(de, randA, rator, randB):
 #> to a Number is denoted as "the Number value for _x_" or {fancy_f}(_x_),
 #> and is defined in <emu-xref href="#sec-ecmascript-language-types-number-type"></emu-xref>.
 
+@predefined_operations.put('\U0001d53d')
+def _(de, mathnum):
+    return the_Number_value_for(mathnum)
+
 #> A conversion from an integer _x_ to a BigInt
 #> is denoted as "the BigInt value for _x_" or {fancy_z}(_x_).
 
@@ -1712,6 +1716,18 @@ def _(de, child):
 @efd.put('{NUM_LITERAL} : {hex_int_lit}')
 def _(de, child):
     return de.exec(child, ES_Mathnum)
+
+# decimal representation
+
+@efd.put('{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits')
+def _(de, var):
+    mathnum = de.exec(var, ES_Mathnum)
+    return number_of_significant_digits_in_decimal_representation_of(mathnum) <= 20
+
+def number_of_significant_digits_in_decimal_representation_of(mathnum: ES_Mathnum):
+    s = str(mathnum.val).replace('.', '')
+    assert s.isdigit()
+    return len(s.strip('0'))
 
 # ------------------------------------------------------------------------------
 # 5.2.6 Value Notation
@@ -1982,6 +1998,22 @@ def _(de, chars):
 @efd.put('{NUM_LITERAL} : {starred_nan_lit}')
 def _(de, child):
     return de.exec(child, EL_Number)
+
+#> In this specification, the phrase "the Number value for _x_"
+#> where _x_ represents an exact real mathematical quantity
+#> (which might even be an irrational number such as &pi;)
+#> means a Number value chosen in the following manner. ...
+
+def the_Number_value_for(mathnum: ES_Mathnum):
+    max_safe_integer = 2**53 - 1
+    if isinstance(mathnum.val, int):
+        if 0 <= mathnum.val < max_safe_integer:
+            return EL_Number(('+', mathnum.val))
+        
+    if mathnum.val >= 2**1024:
+        return EL_Number('positive infinity')
+
+    assert NYI, mathnum
 
 # ------------------------------------------------------------------------------
 # 6.1.7 The Object Type
@@ -2721,16 +2753,6 @@ def each_item_in_left_recursive_list(list_node):
 def _(de, local_ref):
     node = de.exec(local_ref, ParseNode)
     return node.contains_a('UnicodeEscapeSequence')
-
-# 12.8.3.2 Static Semantics: NumericValue
-
-@efd.put('{EXPR} : the Number value that results from rounding {EX} as described below')
-def _(de, ex):
-    mv = de.exec(ex, ES_Mathnum)
-    # kludge:
-    if mv == ES_Mathnum(3):
-        return EL_Number(('+', 3))
-    assert NYI
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
