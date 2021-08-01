@@ -1462,6 +1462,11 @@ def _(de, cond1, cond2):
     if de.exec(cond1, bool) and de.exec(cond2, bool):
         de.it_is_a_syntax_error(cond2.parent)
 
+@efd.put('{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.')
+def _(de, conda, condb):
+    if not de.exec(condb, bool) and de.exec(conda, bool):
+        de.it_is_a_syntax_error(conda.parent)
+
 @efd.put('{EE_RULE} : Always throw a Syntax Error if code matches this production.')
 def _(de):
     de.it_is_a_syntax_error('code matches this production')
@@ -2196,6 +2201,7 @@ def _(de, ex, var):
     return not L.contains(v)
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}')
+@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}')
 def _(de, noi, ss):
     L = de.exec(noi, ES_List)
     v = de.exec(ss, E_Value)
@@ -2756,6 +2762,16 @@ def _(de, local_ref):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+# 13.2.5.1 Static Semantics: Early Errors
+
+@efd.put('{CONDITION_1} : at least two of those entries were obtained from productions of the form {h_emu_grammar}')
+def _(de, h_emu_grammar):
+    # This one's weird, because it's asking "after the fact"
+    # about how the results of PropertyNameList were obtained.
+    return False # TODO
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 # 22.2 RegExp (Regular Expression) Objects
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}')
@@ -2771,5 +2787,18 @@ def _(de, local_ref, nonta, nontb, cap_word):
     if len(something) <= 1:
         return False
     assert NYI
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# 25.5.1 JSON.parse
+
+@efd.put('{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})')
+def _(de, prod_ref, nont, step_xref, alg_xref):
+    node = de.exec(prod_ref, ParseNode)
+    container_nt = nt_name_from_nonterminal_node(nont)
+    assert container_nt == 'Script'
+    if node.root().symbol != container_nt: return False
+    # TODO: detect whether the Script is being parsed for JSON.parse
+    return False
 
 # vim: sw=4 ts=4 expandtab
