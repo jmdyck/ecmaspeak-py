@@ -2017,10 +2017,12 @@ class ES_List(ES_Value):
         return ES_List(self._elements[:])
 
     @staticmethod
-    def concat(lista, listb):
-        assert isinstance(lista, ES_List)
-        assert isinstance(listb, ES_List)
-        return ES_List(lista._elements + listb._elements)
+    def concat(*lists):
+        all_elements = []
+        for alist in lists:
+            assert isinstance(alist, ES_List)
+            all_elements.extend(alist._elements)
+        return ES_List(all_elements)
 
     # modify:
 
@@ -2096,43 +2098,20 @@ def _(de, var):
     L = de.exec(var, ES_List)
     return L.copy()
 
-@efd.put('{EXPR} : a copy of {var} with all the elements of {var} appended')
-@efd.put('{EXPR} : the result of appending to {var} the elements of {PP_NAMED_OPERATION_INVOCATION}')
+@efd.put('{EXPR} : the list-concatenation of {EX} and {EX}')
 def _(de, vara, varb):
     lista = de.exec(vara, ES_List)
     listb = de.exec(varb, ES_List)
     return ES_List.concat(lista, listb)
 
-@efd.put('{EXPR} : a List whose elements are {var} followed by the elements of {var}')
-def _(de, vara, varb):
-    itema = de.exec(vara, E_Value)
-    listb = de.exec(varb, ES_List)
-    result = ES_List([itema])
-    result.append_many(listb)
-    return result
-
-@efd.put('{EXPR} : a List whose elements are the elements of {var} followed by {var}')
-def _(de, vara, varb):
+@efd.put('{EXPR} : the list-concatenation of {var}, {var}, and {var}')
+def _(de, vara, varb, varc):
     lista = de.exec(vara, ES_List)
-    itemb = de.exec(varb, E_Value)
-    return ES_List.concat(lista, ES_List([itemb]))
-
-@efd.put('{EXPR} : a copy of {var} with {var} appended')
-def _(de, vara, varb):
-    L = de.exec(vara, ES_List)
-    v = de.exec(varb, E_Value)
-    result = L.copy()
-    result.append_one(v)
-    return result
+    listb = de.exec(varb, ES_List)
+    listc = de.exec(varc, ES_List)
+    return ES_List.concat(lista, listb, listc)
 
 # modify a List:
-
-@efd.put('{COMMAND} : Append to {var} {EXPR}.') # SPEC BUG: The syntax suggests adding a single thing, but it's actually many.
-def _(de, var, expr):
-    assert expr.source_text().startswith('the BoundNames of')
-    L1 = de.exec(var, ES_List)
-    L2 = de.exec(expr, ES_List)
-    L1.append_many(L2)
 
 @efd.put('{COMMAND} : Append to {var} the elements of {EXPR}.')
 def _(de, var, expr):
@@ -2140,7 +2119,6 @@ def _(de, var, expr):
     L2 = de.exec(expr, ES_List)
     L1.append_many(L2)
 
-@efd.put('{COMMAND} : Append {EX} as the last element of the List {var}.')
 @efd.put('{COMMAND} : Append {EX} to the end of {var}.')
 @efd.put('{SMALL_COMMAND} : append {EX} to {var}')
 def _(de, item_ex, list_var):
