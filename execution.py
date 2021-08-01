@@ -1617,6 +1617,29 @@ def _(de, randA, rator, randB):
     else:
         assert NYI, op
 
+#> Conversions between mathematical values and Numbers or BigInts
+#> are always explicit in this document.
+#> A conversion from a mathematical value or extended mathematical value _x_
+#> to a Number is denoted as "the Number value for _x_" or {fancy_f}(_x_),
+#> and is defined in <emu-xref href="#sec-ecmascript-language-types-number-type"></emu-xref>.
+
+#> A conversion from an integer _x_ to a BigInt
+#> is denoted as "the BigInt value for _x_" or {fancy_z}(_x_).
+
+#> A conversion from a Number or BigInt _x_ to a mathematical value
+#> is denoted as "the mathematical value of _x_", or {fancy_R}(_x_).
+#> The mathematical value of *+0*<sub>{fancy_f}</sub> and *-0*<sub>{fancy_f}</sub>
+#> is the mathematical value 0.
+#> The mathematical value of non-finite values is not defined.
+#> The extended mathematical value of _x_
+#> is the mathematical value of _x_ for finite values,
+#> and is +&infin; and -&infin; for *+&infin;*<sub>{fancy_f}</sub> and *-&infin;*<sub>{fancy_f}</sub> respectively;
+#> it is not defined for *NaN*.
+
+#> The mathematical function abs(_x_) ...
+#> The mathematical function min(_x1_, _x2_, &hellip; , _xN_) ...
+#> The mathematical function max(_x1_, _x2_, ..., _xN_) ...
+
 #> The notation "_x_ modulo _y_" (_y_ must be finite and non-zero)
 #> computes a value _k_ of the same sign as _y_ (or zero) such that
 #> abs(_k_) < abs(_y_) and _x_ - _k_ = _q_ * _y_ for some integer _q_.
@@ -1625,6 +1648,18 @@ def _(de, randA, randB):
     a = de.exec(randA, ES_Mathnum)
     b = de.exec(randB, ES_Mathnum)
     return a % b
+
+#> The mathematical function floor(_x_) produces the largest integer
+#> (closest to +&infin;) that is not larger than _x_.
+@predefined_operations.put('floor')
+def _(de, mathnum):
+    assert isinstance(mathnum, ES_Mathnum)
+    return ES_Mathnum(math.floor(mathnum.val))
+
+#> Mathematical functions min, max, abs, and floor
+#> are not defined for Numbers and BigInts,
+#> and any usage of those methods that have non-mathematical value arguments
+#> would be an editorial error in this specification.
 
 @efd.put('{FACTOR} : {BASE}<sup>{EX}</sup>')
 def _(de, base_expr, exponent_expr):
@@ -1657,13 +1692,6 @@ def _(de, child):
 @efd.put('{NUM_LITERAL} : {hex_int_lit}')
 def _(de, child):
     return de.exec(child, ES_Mathnum)
-
-#> The mathematical function floor(_x_) produces the largest integer
-#> (closest to +&infin;) that is not larger than _x_.
-@predefined_operations.put('floor')
-def _(de, mathnum):
-    assert isinstance(mathnum, ES_Mathnum)
-    return ES_Mathnum(math.floor(mathnum.val))
 
 # ------------------------------------------------------------------------------
 # 5.2.6 Value Notation
