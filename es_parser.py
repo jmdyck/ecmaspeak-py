@@ -986,7 +986,7 @@ def gather_ReservedWords(productions_with_lhs_):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-g_outdir = '../ecma262/_editorial' # XXX Should be able to set this dynamically.
+g_outdir = '../ecma262/_for_execution' # XXX Should be able to set this dynamically.
 shared.register_output_dir(g_outdir)
 spec.restore()
 

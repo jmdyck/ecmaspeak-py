@@ -14,6 +14,7 @@ import resource
 
 import shared
 from shared import spec, stderr, print_tree
+from HTML import HNode
 from Pseudocode_Parser import ANode
 from es_parser import ParseNode, ParseError, T_lit, parse
 from DecoratedFuncDict import DecoratedFuncDict
@@ -548,6 +549,8 @@ class Frame:
                         ('TemplateCharacters', 'TemplateCharacter TemplateCharacters?', '1'),
                         ('SingleStringCharacters', 'SingleStringCharacter SingleStringCharacters?', '1'),
                         ('TemplateMiddleList', 'TemplateMiddleList TemplateMiddle Expression', ''),
+                        ('PropertyDefinitionList', 'PropertyDefinitionList `,` PropertyDefinition', ''),
+                        ('DecimalDigits', 'DecimalDigits DecimalDigit', ''),
                     ]:
                         referent = referents[1]
 
@@ -666,6 +669,66 @@ def _(de, conda, condb):
 @efd.put('{SETTABLE} : {var}')
 def _(de, child):
     return de.exec(child, E_Value)
+
+# ==============================================================================
+
+# Functions for dealing with spec markup?
+
+def dereference_emu_xref(emu_xref):
+    assert isinstance(emu_xref, ANode)
+    assert emu_xref.prod.lhs_s == '{h_emu_xref}'
+    st = emu_xref.source_text()
+    mo = re.fullmatch('<emu-xref href="#([^"]+)"></emu-xref>', st)
+    assert mo
+    id = mo.group(1)
+    return spec.node_with_id_[id]
+
+def emu_table_get_unique_row_satisfying(emu_table, predicate):
+    assert isinstance(emu_table, HNode)
+    assert emu_table.element_name == 'emu-table'
+
+    if not hasattr(emu_table, '_data_rows'):
+        emu_table._data_rows = []
+        (_, table, _) = emu_table.children
+        assert table.element_name == 'table'
+        (_, tbody, _) = table.children
+        th_values = None
+        for tr in tbody.each_child_named('tr'):
+            if th_values is None:
+                # This is the first <tr>, should be a header.
+                th_values = [
+                    th.inner_source_text().strip()
+                    for th in tr.each_child_named('th')
+                ]
+            else:
+                # This is a subsequent <tr>, should be data.
+                td_values = [
+                    quasi_ecmarkdown(td.inner_source_text().strip())
+                    for td in tr.each_child_named('td')
+                ]
+                assert len(td_values) == len(th_values)
+                row = dict(zip(th_values, td_values))
+                emu_table._data_rows.append(row)
+                # print(f"{row = }")
+
+    rows_selected_by_predicate = [
+        row
+        for row in emu_table._data_rows
+        if predicate(row)
+    ]
+    assert len(rows_selected_by_predicate) == 1
+    [row] = rows_selected_by_predicate
+    return row
+
+# I'm not sure about applying this,
+# versus using the literal spec text.
+# But it does seem to simplify things.
+def quasi_ecmarkdown(text):
+    if re.fullmatch(r'`[^`]*`', text):
+        text = text[1:-1]
+    text = re.sub(r'\\(.)', r'\1', text)
+    text = text.replace('&lt;', '<').replace('&gt;', '>')
+    return text
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1060,6 +1123,15 @@ def _(de, var, expr):
     value = de.exec(expr, E_Value)
     de.curr_frame().let_var_be_value(var, value)
 
+@efd.put('{EXPR} : {EX}, where {var} is {EX}')
+def _(de, exa, var, exb):
+    value = de.exec(exb, E_Value)
+    de.curr_frame().start_contour()
+    de.curr_frame().let_var_be_value(var, value)
+    result = de.exec(exa, E_Value)
+    de.curr_frame().end_contour()
+    return result
+
 @efd.put('{LOCAL_REF} : {var}')
 def _(de, var):
     return de.exec(var, E_Value)
@@ -1318,8 +1390,35 @@ def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
                 stderr(f"SPEC BUG: {sdo_name} not defined on {focus_node.puk}")
                 stderr(f"  for {focus_node.text()}")
 
-                # probably not a spec bug, but I don't want to deal with it right now.
-                return ES_List([])
+                if sdo_name == 'PropName' and focus_node.puk == ('CoverInitializedName', 'IdentifierReference Initializer', ''):
+                    # This isn't a spec bug per se, but the spec expresses itself
+                    # in a way that's hard for me to mechanize.
+                    # (Other rules should prevent us getting here.)
+                    return EL_String([])
+
+                if sdo_name == 'NumericValue' and focus_node.puk == ('LegacyOctalIntegerLiteral', 'LegacyOctalIntegerLiteral OctalDigit', ''):
+                    # Way back when LegacyOctalIntegerLiteral (LOIL) was introduced,
+                    # the definition of the value of a numeric literal was general enough
+                    # that it defined the value of a LOIL.
+                    #
+                    # But this definition was superseded by the SDO `NumericValue`,
+                    # which is only defined on main-body NumericLiterals.
+                    # Technically, when PR #1515 introduced NumericValue,
+                    # it should have added a clause to B.1.1 that defined the NumericValue of a LOIL.
+                    #
+                    # This will be fixed when PR #1867 is merged. Until then ...
+                    return EL_Number(('+', 0))
+
+                if sdo_name == 'SV':
+                    return EL_String([])
+
+                if sdo_name == 'VarDeclaredNames':
+                    return ES_List([])
+
+                if sdo_name.startswith('Contains'):
+                    return EL_Boolean(False)
+
+                # return ES_List([])
                 assert 0
 
     sdo_defns = sdo_map[puk]
@@ -1694,7 +1793,7 @@ def _(de, mathnum):
 def _(de, base_expr, exponent_expr):
     base_val = de.exec(base_expr, ES_Mathnum)
     exponent_val = de.exec(exponent_expr, ES_Mathnum)
-    return ES_Mathnum(math.pow(base_val.val, exponent_val.val))
+    return ES_Mathnum(base_val.val ** exponent_val.val)
 
 @efd.put('{BASE} : 10')
 def _(de):
@@ -1702,7 +1801,9 @@ def _(de):
 
 @efd.put('{EX} : {NUM_EXPR}')
 @efd.put('{EX} : {NUM_LITERAL}')
+@efd.put('{EX} : {PRODUCT}')
 @efd.put('{EX} : {SUM}')
+@efd.put('{EX} : {var}')
 @efd.put('{FACTOR} : ({NUM_EXPR})')
 @efd.put('{FACTOR} : {NAMED_OPERATION_INVOCATION}')
 @efd.put('{FACTOR} : {NUM_LITERAL}')
@@ -1856,6 +1957,22 @@ def _(de, chars):
     mo = re.fullmatch(r'the code unit 0x([0-9A-F]{4}) \([A-Z -]+\)', chars)
     assert mo
     cu_hex = mo.group(1)
+    cu_int = int(cu_hex, 16)
+    return ES_CodeUnit(cu_int)
+
+@efd.put('{EXPR} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}')
+def _(de, prod_ref, emu_xref):
+    pnode = de.exec(prod_ref, ParseNode)
+    assert pnode.symbol == 'SingleEscapeCharacter'
+    pnode_text = pnode.text()
+    assert len(pnode_text) == 1
+    escape_seq = '\\' + pnode_text
+
+    emu_table = dereference_emu_xref(emu_xref)
+    assert emu_table.element_name == 'emu-table'
+    assert emu_table.attrs['caption'] == 'String Single Character Escape Sequences'
+    row = emu_table_get_unique_row_satisfying(emu_table, lambda row: row['Escape Sequence'] == escape_seq)
+    cu_hex = row['Code Unit Value']
     cu_int = int(cu_hex, 16)
     return ES_CodeUnit(cu_int)
 
@@ -2325,6 +2442,12 @@ def _(de, prod_ref):
 def _(de, prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     return ES_Mathnum(len(pnode.text()))
+
+@efd.put('{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}')
+def _(de, prod_ref, nont):
+    pnode = de.exec(prod_ref, ParseNode)
+    assert nont.source_text() == '|NumericLiteralSeparator|'
+    return ES_Mathnum(len(pnode.text().replace('_', '')))
 
 @efd.put('{EXPR} : the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}')
 def _(de, terminal, nonterminal, var, nonterminal2):

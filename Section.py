@@ -250,6 +250,7 @@ def _handle_sdo_section(section):
         elif section.section_title in [
             'Static Semantics: IsCharacterClass',
             'Static Semantics: CharacterValue',
+            'Static Semantics: NumericValue',
         ]:
             # B.1.4.2
             # B.1.4.3
