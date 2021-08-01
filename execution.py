@@ -1256,37 +1256,48 @@ def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
     else:
         assert 0
 
+    trace_this = False
+    if trace_this:
+        stderr('-' * 40)
+        stderr(f"Applying {sdo_name} to a {focus_node.puk}")
+
     sdo_map = spec.sdo_coverage_map[sdo_name]
 
     if sdo_name == 'Early Errors':
         assert 0 # handled elsewhere
 
     elif sdo_name == 'Contains':
+        if trace_this:
+            stderr(f"{sdo_name} is a default-and-explicits style of SDO,")
+            stderr(f"    so check for an explicit definition that is associated with that production.")
         if focus_node.puk in sdo_map:
+            if trace_this: stderr("There is one, so we use it.")
             puk = focus_node.puk
         else:
-            # No definition explicitly associated with this production,
-            # so use the default definition:
+            if trace_this: stderr("There isn't one, so we use the default definition.")
             puk = ('*default*', '', '')
 
     else:
         # The chain rule applies
+        if trace_this:
+            stderr(f"{sdo_name} is an explicits-plus-chaining style of SDO.")
+            stderr(f"Looking for a defn...")
 
-        # stderr()
-        # stderr(f"Looking for a defn of {sdo_name}...")
         while True:
-            # stderr(f"    key {focus_node.puk}")
+            if trace_this: stderr(f"    key {focus_node.puk}")
             if focus_node.puk in sdo_map:
-                # stderr(f"    has a defn!")
+                if trace_this: stderr(f"    has a defn!")
                 puk = focus_node.puk
                 break
-            # stderr(f"    no defn")
+            if trace_this: stderr(f"    no defn")
             if focus_node.is_instance_of_chain_prod:
-                # stderr(f"    but we can chain to {focus_node.direct_chain}")
+                if trace_this: stderr(f"    but we can chain to {focus_node.direct_chain}")
                 focus_node = focus_node.direct_chain
             else:
-                # stderr(f"    and the chain rule doesn't apply, so ERROR")
+                if trace_this: stderr(f"    and the chain rule doesn't apply, so ERROR")
                 stderr(f"SPEC BUG: {sdo_name} not defined on {focus_node.puk}")
+                stderr(f"  for {focus_node.text()}")
+
                 # probably not a spec bug, but I don't want to deal with it right now.
                 return ES_List([])
                 assert 0
