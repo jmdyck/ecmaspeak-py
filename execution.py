@@ -25,17 +25,18 @@ from DecoratedFuncDict import DecoratedFuncDict
 # ((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))
 #
 # That's 50 pairs of parens, each of which produces a chain of 22 Parse Nodes,
-# so that's 1100 levels of Parse Nodes, plus another 34 for a total of 1134 levels.
+# so that's 1100 levels of Parse Nodes, plus another 26 for a total of 1126 levels.
 #
-# When executing the 'Contains' SDO, each Parse Node level
-# generates about 35 Python stack frames.
+# When executing the 'AllPrivateIdentifiersValid' SDO,
+# each Parse Node level generates about 39 Python stack frames.
+# (For 'Contains', it's only about 35.)
 #
-# 1134 * 35 = 39690
+# 1126 * 39 = 43914
 
-sys.setrecursionlimit(40_000)
+sys.setrecursionlimit(44_000)
 
 # and maybe 455 bytes per Python stack frame
-resource.setrlimit(resource.RLIMIT_STACK, (40_000 * 455, resource.RLIM_INFINITY))
+resource.setrlimit(resource.RLIMIT_STACK, (44_000 * 455, resource.RLIM_INFINITY))
 
 # ----
 
@@ -1285,7 +1286,7 @@ def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
     if sdo_name == 'Early Errors':
         assert 0 # handled elsewhere
 
-    elif sdo_name == 'Contains':
+    elif sdo_name in ['Contains', 'AllPrivateIdentifiersValid', 'ContainsArguments']:
         if trace_this:
             stderr(f"{sdo_name} is a default-and-explicits style of SDO,")
             stderr(f"    so check for an explicit definition that is associated with that production.")
