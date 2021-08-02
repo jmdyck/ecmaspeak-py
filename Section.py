@@ -689,18 +689,17 @@ def _handle_header_with_std_preamble(section):
     else:
         assert 0
 
+    parameters = convert_param_listing_to_dict(p_dict['params_str'])
     section.ste = {
         'op_name'   : p_dict['op_name'],
         'kind'      : p_dict['kind'],
-        'parameters': convert_param_listing_to_dict(p_dict['params_str'])
+        'parameters': parameters,
     }
 
     # --------------------------------------------------------------------------
 
     if 1:
         # Complain about the old header, suggest a structured one.
-
-        param_names = [] #XXX
 
         posn_of_linestart_before_section = 1 + spec.text.rfind('\n', 0, section.start_posn)
         section_indent = section.start_posn - posn_of_linestart_before_section
@@ -729,15 +728,14 @@ def _handle_header_with_std_preamble(section):
         if section.section_title.startswith('Static Semantics:'):
             name_for_heading = 'Static Semantics: ' + name_for_heading
 
-        if param_names == []:
+        if len(parameters) == 0:
             lines.append(f"{ind}  <h1>{name_for_heading} ( )</h1>")
         else:
             lines.append(f"{ind}  <h1>")
             lines.append(f"{ind}    {name_for_heading} (")
-            for param_name in param_names:
-                optionality = 'optional ' if param_name in optional_params else ''
-                param_nature = param_nature_.get(param_name, 'TBD')
-                if param_nature == 'TBD': param_nature = 'unknown'
+            for (param_name, param_punct) in parameters.items():
+                optionality = 'optional ' if param_punct == '[]' else ''
+                param_nature = 'unknown'
                 lines.append(f"{ind}      {optionality}{param_name}: {param_nature},")
             lines.append(f"{ind}    )")
             lines.append(f"{ind}  </h1>")
