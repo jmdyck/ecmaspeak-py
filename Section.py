@@ -388,117 +388,9 @@ def _handle_other_op_section(section):
         }
         return True
 
-    # --------------------------------------------------------------------------
-
-    # Over the course of various PRs (latest #2427),
-    # the first para ('preamble') of non-SDO operations
-    # has become standardized.
-    s_ist = section.inner_source_text()
-    h1_pattern = r'\n +<h1>(\S+ Semantics: )?(?P<op_name>\S+) \((?P<params_str>[^()]*)\)</h1>'
-    for p_pattern in [
-        r'\n +<p>The ((host|implementation)-defined )?(?P<kind>abstract operation)',
-        r'\n +<p>The (?P=op_name) (?P<kind>(internal|concrete) method)',
-    ]:
-        pattern = h1_pattern + p_pattern
-        mo = re.match(pattern, s_ist)
-        if mo:
-            p_dict = mo.groupdict()
-            break
-    else:
+    handled = _handle_header_with_std_preamble(section)
+    if not handled:
         return False
-
-    # -------------------------------
-    # At this point, we're committed.
-
-    if p_dict['kind'] == 'abstract operation':
-        if '::' in p_dict['op_name']:
-            section.section_kind = 'numeric_method'
-            p_dict['op_name'] = re.sub(r'^\w+', '', p_dict['op_name'])
-        else:
-            section.section_kind = 'abstract_operation'
-
-    elif p_dict['kind'] in ['host-defined abstract operation', 'implementation-defined abstract operation']:
-        assert 0
-        section.section_kind = 'abstract_operation'
-
-    elif p_dict['kind'] == 'internal method':
-        section.section_kind = 'internal_method'
-
-    elif p_dict['kind'] == 'concrete method':
-        if section.parent.parent.section_title == "The Environment Record Type Hierarchy":
-            section.section_kind = 'env_rec_method'
-        elif section.parent.parent.section_title == "Module Semantics":
-            section.section_kind = 'module_rec_method'
-        else:
-            assert 0
-
-    else:
-        assert 0
-
-    section.ste = {
-        'op_name'   : p_dict['op_name'],
-        'kind'      : p_dict['kind'],
-        'parameters': convert_param_listing_to_dict(p_dict['params_str'])
-    }
-
-    # --------------------------------------------------------------------------------------------------
-
-    if 1:
-        # Complain about the old header, suggest a structured one.
-
-        param_names = [] #XXX
-
-        posn_of_linestart_before_section = 1 + spec.text.rfind('\n', 0, section.start_posn)
-        section_indent = section.start_posn - posn_of_linestart_before_section
-        
-        ind = ' ' * section_indent
-
-        lines = []
-        lines.append('vvvvvvvv')
-
-        clause_start_tag = '<' + section.element_name
-        for (attr_name, attr_val) in section.attrs.items():
-            # suppress 'aoid' attr, because ecmarkup can generate it:
-            if attr_name == 'aoid': continue
-
-            clause_start_tag += f' {attr_name}="{attr_val}"'
-
-            # insert 'type' attr immediately after 'id' attr:
-            if attr_name == 'id':
-                clause_start_tag += f''' type="{p_dict['kind']}"'''
-
-        clause_start_tag += '>'
-        lines.append(f"{ind}{clause_start_tag}")
-
-        name_for_heading = p_dict['op_name']
-
-        if section.section_title.startswith('Static Semantics:'):
-            name_for_heading = 'Static Semantics: ' + name_for_heading
-
-        if param_names == []:
-            lines.append(f"{ind}  <h1>{name_for_heading} ( )</h1>")
-        else:
-            lines.append(f"{ind}  <h1>")
-            lines.append(f"{ind}    {name_for_heading} (")
-            for param_name in param_names:
-                optionality = 'optional ' if param_name in optional_params else ''
-                param_nature = param_nature_.get(param_name, 'TBD')
-                if param_nature == 'TBD': param_nature = 'unknown'
-                lines.append(f"{ind}      {optionality}{param_name}: {param_nature},")
-            lines.append(f"{ind}    )")
-            lines.append(f"{ind}  </h1>")
-
-        lines.append(f'{ind}  <dl class="header">')
-
-        if False and for_phrase and kind != 'numeric method':
-            _.dt("for")
-            _.dd(self.for_phrase)
-        
-        lines.append(f'{ind}  </dl>')
-        lines.append("^^^^^^^^")
-        suggestion = '\n'.join(lines)
-
-        msg_at_posn(section.inner_start_posn, f"Should use a structured header? e.g.:\n{suggestion}")
 
     return True
 
@@ -747,6 +639,122 @@ def _handle_structured_header(section):
             ('_Unicode_'          , 'from somewhere'),
             ('_WordCharacters_'   , 'from somewhere'),
         ]
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _handle_header_with_std_preamble(section):
+
+    # Over the course of various PRs (latest #2427),
+    # the first para ('preamble') of non-SDO operations
+    # became standardized.
+    s_ist = section.inner_source_text()
+    h1_pattern = r'\n +<h1>(\S+ Semantics: )?(?P<op_name>\S+) \((?P<params_str>[^()]*)\)</h1>'
+    for p_pattern in [
+        r'\n +<p>The ((host|implementation)-defined )?(?P<kind>abstract operation)',
+        r'\n +<p>The (?P=op_name) (?P<kind>(internal|concrete) method)',
+    ]:
+        pattern = h1_pattern + p_pattern
+        mo = re.match(pattern, s_ist)
+        if mo:
+            p_dict = mo.groupdict()
+            break
+    else:
+        return False
+
+    # -------------------------------
+    # At this point, we're committed.
+
+    if p_dict['kind'] == 'abstract operation':
+        if '::' in p_dict['op_name']:
+            section.section_kind = 'numeric_method'
+            p_dict['op_name'] = re.sub(r'^\w+', '', p_dict['op_name'])
+        else:
+            section.section_kind = 'abstract_operation'
+
+    elif p_dict['kind'] in ['host-defined abstract operation', 'implementation-defined abstract operation']:
+        assert 0
+        section.section_kind = 'abstract_operation'
+
+    elif p_dict['kind'] == 'internal method':
+        section.section_kind = 'internal_method'
+
+    elif p_dict['kind'] == 'concrete method':
+        if section.parent.parent.section_title == "The Environment Record Type Hierarchy":
+            section.section_kind = 'env_rec_method'
+        elif section.parent.parent.section_title == "Module Semantics":
+            section.section_kind = 'module_rec_method'
+        else:
+            assert 0
+
+    else:
+        assert 0
+
+    section.ste = {
+        'op_name'   : p_dict['op_name'],
+        'kind'      : p_dict['kind'],
+        'parameters': convert_param_listing_to_dict(p_dict['params_str'])
+    }
+
+    # --------------------------------------------------------------------------
+
+    if 1:
+        # Complain about the old header, suggest a structured one.
+
+        param_names = [] #XXX
+
+        posn_of_linestart_before_section = 1 + spec.text.rfind('\n', 0, section.start_posn)
+        section_indent = section.start_posn - posn_of_linestart_before_section
+        
+        ind = ' ' * section_indent
+
+        lines = []
+        lines.append('vvvvvvvv')
+
+        clause_start_tag = '<' + section.element_name
+        for (attr_name, attr_val) in section.attrs.items():
+            # suppress 'aoid' attr, because ecmarkup can generate it:
+            if attr_name == 'aoid': continue
+
+            clause_start_tag += f' {attr_name}="{attr_val}"'
+
+            # insert 'type' attr immediately after 'id' attr:
+            if attr_name == 'id':
+                clause_start_tag += f''' type="{p_dict['kind']}"'''
+
+        clause_start_tag += '>'
+        lines.append(f"{ind}{clause_start_tag}")
+
+        name_for_heading = p_dict['op_name']
+
+        if section.section_title.startswith('Static Semantics:'):
+            name_for_heading = 'Static Semantics: ' + name_for_heading
+
+        if param_names == []:
+            lines.append(f"{ind}  <h1>{name_for_heading} ( )</h1>")
+        else:
+            lines.append(f"{ind}  <h1>")
+            lines.append(f"{ind}    {name_for_heading} (")
+            for param_name in param_names:
+                optionality = 'optional ' if param_name in optional_params else ''
+                param_nature = param_nature_.get(param_name, 'TBD')
+                if param_nature == 'TBD': param_nature = 'unknown'
+                lines.append(f"{ind}      {optionality}{param_name}: {param_nature},")
+            lines.append(f"{ind}    )")
+            lines.append(f"{ind}  </h1>")
+
+        lines.append(f'{ind}  <dl class="header">')
+
+        if False and for_phrase and kind != 'numeric method':
+            _.dt("for")
+            _.dd(self.for_phrase)
+        
+        lines.append(f'{ind}  </dl>')
+        lines.append("^^^^^^^^")
+        suggestion = '\n'.join(lines)
+
+        msg_at_posn(section.inner_start_posn, f"Should use a structured header? e.g.:\n{suggestion}")
+
+    return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
