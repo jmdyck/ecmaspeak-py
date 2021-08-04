@@ -485,6 +485,8 @@ def analyze_sections():
 
         elif section.section_kind in [
             'abstract_operation',
+            'host-defined_abstract_operation',
+            'implementation-defined_abstract_operation',
             'env_rec_method',
             'internal_method',
             'module_rec_method',
@@ -764,7 +766,7 @@ def analyze_other_op_section(section):
         # The emu-alg is the 'body' of
         # (this definition of) the operation named by the section_title.
 
-        if section.section_kind == 'abstract_operation':
+        if section.section_kind.endswith('abstract_operation'):
             handle_solo_op(op_name, emu_alg, section)
 
         elif section.section_kind in [

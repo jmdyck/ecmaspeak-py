@@ -528,8 +528,8 @@ def _handle_structured_header(section):
             'abstract operation': 'abstract_operation',
             'numeric method'    : 'numeric_method',
             'internal method'   : 'internal_method',
-            'host-defined abstract operation'          : 'abstract_operation',
-            'implementation-defined abstract operation': 'abstract_operation',
+            'host-defined abstract operation'          : 'host-defined_abstract_operation',
+            'implementation-defined abstract operation': 'implementation-defined_abstract_operation',
         }[section_type]
 
     h1 = section.heading_child

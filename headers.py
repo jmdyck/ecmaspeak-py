@@ -106,7 +106,7 @@ def should_create_op_info_for_algoless_section(s):
 
     # It's the kind of section that we always want to create op info for:
 
-    if s.section_kind == 'abstract_operation':
+    if s.section_kind.endswith('abstract_operation'):
         assert (
             s.section_id.startswith('sec-host')
             or
@@ -1386,11 +1386,11 @@ def get_info_from_heading(section):
         .replace('module rec method',          'concrete method')
         .replace('CallConstruct',              'function property')
     )
-    if 'type' in section.ste:
-        oi.kind = section.ste['type']
 
     if section.section_kind in [
         'abstract_operation',
+        'host-defined_abstract_operation',
+        'implementation-defined_abstract_operation',
         'syntax_directed_operation',
         'env_rec_method',
         'module_rec_method',
