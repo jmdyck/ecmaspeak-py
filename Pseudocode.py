@@ -818,29 +818,7 @@ def analyze_other_op_section(section):
 
 
     else:
-        assert section.section_kind == 'abstract_operation'
-
-        assert re.fullmatch(r'p emu-alg( p emu-alg)+( emu-note)?', section.bcen_str)
-
-        # The first emu-alg defines the operation.
-        handle_solo_op(op_name, section.block_children[1], section)
-
-        # Each subsequent emu-alg is (roughly) the [[Call]] alg for an anonymous built-in function.
-
-        for i in range(2, len(section.block_children), 2):
-            p = section.block_children[i]
-            if p.element_name == 'emu-note': break
-            emu_alg = section.block_children[i+1]
-
-            assert p.element_name == 'p'
-            assert emu_alg.element_name == 'emu-alg'
-
-            ist = p.inner_source_text()
-            mo = re.match(r'An? (\w+) function is an anonymous built-in function', ist)
-            assert mo, ist
-            name = mo.group(1)
-
-            handle_function('bif: * per realm', name, emu_alg, section)
+        assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
