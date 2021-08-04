@@ -811,11 +811,6 @@ def analyze_other_op_section(section):
                 'internal_method'  : 'op: internal method',
             }[section.section_kind]
 
-            if op_name == 'DeleteBinding' and discriminator == 'module Environment Record':
-                # "Assert: This method is never invoked"
-                # So type-checking it will not confirm the signature.
-                return
-
             handle_type_discriminated_op(op_name, op_species, discriminator, emu_alg, section)
 
         else:
