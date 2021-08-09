@@ -78,6 +78,7 @@ nature_to_tipe = {
         'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
 
         # Symbol
+        'a Symbol' : 'Symbol',
 
         # Number
         'Number'                     : 'Number',
@@ -98,6 +99,10 @@ nature_to_tipe = {
         'the argument object': 'Object',
         'an object with a *"constructor"* property whose value is _F_': 'Object', # TODO
         'an Object that is neither a TypedArray nor an ArrayBuffer': 'Object',
+        'an Object that conforms to the <i>IteratorResult</i> interface' : 'Object',
+        'an Object that has a [[StringData]] internal slot'              : 'Object',
+        'an Object, but not a TypedArray or an ArrayBuffer'              : 'Object',
+        'an initialized RegExp instance'                                 : 'Object',
 
     # unofficial 'supertypes':
         'a primitive value'             : 'Primitive',
@@ -114,6 +119,7 @@ nature_to_tipe = {
         'an ECMAScript value, which is usually an object or array, although it can also be a String, Boolean, Number or *null*': 'Tangible_',
         'not a numeric value'           : 'Tangible_', # TODO
         'an ECMAScript value other than a TypedArray': 'Tangible_', # loses info
+        'an ECMAScript language value, but not a TypedArray' : 'Tangible_',
 
     # unofficial 'subtypes' of the above:
 
@@ -129,6 +135,8 @@ nature_to_tipe = {
         'a built-in function object'   : 'function_object_',
         'a function that takes two parameters, _key_ and _value_': 'function_object_',
         'an ECMAScript function object': 'function_object_',
+        'an ECMAScript function object or a built-in function object' : 'function_object_',
+        'an ECMAScript function'                                      : 'function_object_',
 
         # constructor_: an object with a [[Construct]] internal method
         'a constructor function' : 'constructor_object_',
@@ -160,6 +168,7 @@ nature_to_tipe = {
         'a new promise': 'Promise_object_',
 
         'an Integer-Indexed object': 'Integer_Indexed_object_',
+        'an Integer-Indexed exotic object': 'Integer_Indexed_object_',
 
         # 25.1.1.3: IteratorResult_object_
 
@@ -176,6 +185,8 @@ nature_to_tipe = {
         'a non-negative integer'    : 'MathNonNegativeInteger_', # currently mapped to MathInteger_
         'a nonnegative integer'     : 'MathNonNegativeInteger_',
         'a positive integer'        : 'MathNonNegativeInteger_',
+        '0 or 1'                    : 'MathNonNegativeInteger_',
+        'a non-negative integer that is evenly divisble by 4' : 'MathNonNegativeInteger_',
 
     # ------------------------------
     # ECMAScript specification types
@@ -189,6 +200,8 @@ nature_to_tipe = {
         'a List' : 'List',
         'List of String'                       : 'List of String',
         'a List of names'                      : 'List of String',
+        'a List of property keys'              : 'List of (String | Symbol)',
+        '`&amp;`, `^`, or `|`'                 : 'Unicode_code_points_',
         'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
         'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
@@ -200,11 +213,18 @@ nature_to_tipe = {
         'a possibly empty List of ECMAScript language values': 'List of Tangible_',
         'a List of Cyclic Module Records'      : 'List of Cyclic Module Record',
         'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
+        'a List of Records that have [[Module]] and [[ExportName]] fields' : 'List of ExportResolveSet_Record_',
+        'a List of Source Text Module Records'                             : 'List of Source Text Module Record',
+        'a List of Strings'                                                : 'List of String',
+        'a possibly empty List of Strings'                                 : 'List of String',
 
         # 6.2.3 Completion
         'an abrupt completion': 'Abrupt',
         'a Completion Record': 'Abrupt | Normal',
         'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
+
+        # 6.2.4 Reference Record
+        'a Reference Record' : 'Reference Record',
 
         # 6.2.5 Property Descriptor
         'Property Descriptor'   : 'Property Descriptor',
@@ -213,6 +233,8 @@ nature_to_tipe = {
         # 6.2.6 Environment Record
         'Environment Record' : 'Environment Record',
         'an Environment Record' : 'Environment Record',
+        'a declarative Environment Record'                                      : 'declarative Environment Record',
+        'a global Environment Record'                                           : 'global Environment Record',
 
         # 6.2.7 Abstract Closure
         'an Abstract Closure with no parameters': '() -> Top_',
@@ -263,6 +285,7 @@ nature_to_tipe = {
         'Module Record'   : 'Module Record',
         'Cyclic Module Record': 'Cyclic Module Record',
         'a Cyclic Module Record': 'Cyclic Module Record',
+        'an instance of a concrete subclass of Module Record': 'Module Record',
 
         # 15.2.1.16 Source Text Module Records:
         'a Source Text Module Record': 'Source Text Module Record',
@@ -310,6 +333,7 @@ nature_to_tipe = {
         'a new PromiseCapability Record': 'PromiseCapability Record',
 
         # 25.4.1.2: PromiseReaction Records
+        'a PromiseReaction Record' : 'PromiseReaction Record',
 
         # 27.1 Memory Model Fundamentals
         'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
@@ -349,30 +373,31 @@ nature_to_tipe = {
         'the |ScriptBody|'               : 'Parse Node for |ScriptBody|',
         'a Parse Node for |ScriptBody|'  : 'Parse Node for |ScriptBody|',
         '|CaseClause|'                   : 'Parse Node for |CaseClause|',
+        'a |CallExpression| Parse Node, an |OptionalChain| Parse Node, or a |MemberExpression| Parse Node' : 'Parse Node for |CallExpression| | Parse Node for |OptionalChain| | Parse Node for |MemberExpression|',
+        'a |CaseClause| Parse Node'                                             : 'Parse Node for |CaseClause|',
+        'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : 'Parse Node for |FunctionBody| | () -> Top_',
+        'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : 'Parse Node for |NewExpression| | Parse Node for |MemberExpression|',
+        'a |RegularExpressionLiteral| Parse Node'                               : 'Parse Node for |RegularExpressionLiteral|',
+        'a |ScriptBody| Parse Node'                                             : 'Parse Node for |ScriptBody|',
+        'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
+        'an |IdentifierName| Parse Node'                                        : 'Parse Node for |IdentifierName|',
+        'an |Identifier| Parse Node'                                            : 'Parse Node for |Identifier|',
+        '~empty~ or an |Arguments| Parse Node'                                  : 'Parse Node for |Arguments| | empty_',
+
         'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
 
 
-
-        'one of (~Normal~, ~Method~, ~Arrow~)' : 'FunctionKind1_',
-        'one of (~Normal~, ~Method~)'          : 'FunctionKind1_',
-        # 'one of (Normal, Method, Arrow)'       : 'FunctionKind1_',
-        # 'one of (Normal, Method)'              : 'FunctionKind1_',
-
-        # 'either `"normal"` or `"generator"`'             : 'String', # 'FunctionKind2_',
-        # 'either `"normal"`, `"generator"`, or `"async"`' : 'String', # 'FunctionKind2_',
-        # 'either `"normal"`, `"generator"`, `"async"`, or `"async generator"`': 'String', # 'FunctionKind2_',
         'either ~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
 
         'either ~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
 
-        'either ~enumerate~ or ~iterate~' : 'IterationKind_',
         'either ~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
 
         'either ~sync~ or ~async~' : 'IteratorKind_',
+        '~sync~ or ~async~'        : 'IteratorKind_',
 
         'either ~assignment~, ~varBinding~ or ~lexicalBinding~' : 'LhsKind_',
 
-        'one of ~string~ or ~symbol~' : 'PropertyKeyKind_',
         'either ~string~ or ~symbol~' : 'PropertyKeyKind_',
 
         'throw *RangeError*'             : 'throw_ *RangeError*',
@@ -383,15 +408,17 @@ nature_to_tipe = {
         'throws a *TypeError* exception' : 'throw_ *TypeError*',
         'throws an exception'            : 'throw_',
 
-        'one of the ECMAScript specification types String or Symbol' : 'LangTypeName_',
-
         'a TypedArray element type'     : 'TypedArray_element_type_',
-        'one_of_SeqCst_Unordered'       : 'SharedMemory_ordering_',
-        'one_of_SeqCst_Unordered_Init'  : 'SharedMemory_ordering_',
         'either ~SeqCst~ or ~Unordered~': 'SharedMemory_ordering_',
-        'one of ~SeqCst~, ~Unordered~, or ~Init~': 'SharedMemory_ordering_',
-        'one_of_key_value_key+value'    : 'iteration_result_kind_',
-        'one of ~key~, ~value~, or ~key+value~': 'iteration_result_kind_',
+        '~SeqCst~, ~Unordered~, or ~Init~' : 'SharedMemory_ordering_',
+        '~key+value~ or ~value~'         : 'iteration_result_kind_',
+        '~key+value~, ~key~, or ~value~' : 'iteration_result_kind_',
+        '~key~, ~value~, or ~key+value~' : 'iteration_result_kind_',
+
+        '~sealed~ or ~frozen~'           : 'integrity_level_',
+        '~start~ or ~end~'               : 'TrimString_where_',
+        '~start~, ~end~, or ~start+end~' : 'TrimString_where_',
+        '~string~ or ~number~'           : 'PreferredTypeHint_',
 
     # -----------------------------
     # union of named types
@@ -404,6 +431,7 @@ nature_to_tipe = {
     'a Number or a BigInt'                                       : 'Number | BigInt',
     'a Number value & *undefined*'                               : 'Number | Undefined',
     'a Number or *undefined*'                                    : 'Number | Undefined',
+    'a Number, but not *NaN*'                                    : 'FiniteNumber_ | InfiniteNumber_',
     'an Array or *null*'                                         : 'Array_object_ | Null',
     '*false* or a non-negative integer'                          : 'Boolean | MathInteger_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
@@ -412,6 +440,7 @@ nature_to_tipe = {
     'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
     'Boolean | empty_'                                           : 'Boolean | empty_',
     'a Boolean or ~empty~'                                       : 'Boolean | empty_',
+    'a Data Block or a Shared Data Block'                        : 'Data Block | Shared Data Block',
     'a non-negative integer or +&infin;'                          : 'MathNonNegativeInteger_ | MathPosInfinity_',
     'an Environment Record or *null*'                            : 'Environment Record | Null',
     'an object or null'                                          : 'Object | Null',
@@ -439,6 +468,10 @@ nature_to_tipe = {
     'the property key'                                           : 'String | Symbol',
     'an ECMAScript language value or a Reference Record'         : 'Tangible_ | Reference Record',
     '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
+    'an ECMAScript language value, but not a Number or a BigInt' : 'Undefined | Null | Boolean | String | Symbol | Object',
+    'an ECMAScript language value, but not *undefined* or *null*': 'Boolean | Number | BigInt | String | Symbol | Object',
+    'an Abstract Closure, a set of algorithm steps, or some other definition of a function\'s behaviour provided in this specification' : 'proc_ | alg_steps',
+    'an Environment Record or *undefined*'                       : 'Environment Record | Undefined',
 
 }
 
@@ -1742,32 +1775,26 @@ ArrayAccumulation                        ; _nextIndex_            ; TBD         
 AsyncFunctionStart                       ; _asyncFunctionBody_    ; TBD                 ; Parse Node
 AsyncGeneratorEnqueue                    ; _completion_           ; Abrupt | Normal     ; Tangible_ | return_ | throw_
 AsyncGeneratorUnwrapYieldResumption      ; _resumptionValue_      ; Abrupt | Normal     ; Tangible_ | return_ | throw_
-AsyncIteratorClose                       ; _completion_           ; TBD                 ; Tangible_ | empty_ | throw_
+AsyncIteratorClose                       ; _completion_           ; Abrupt | Normal     ; Tangible_ | empty_ | throw_
 BindingClassDeclarationEvaluation        ; *return*               ; TBD                 ; function_object_ | throw_
 BindingInitialization                    ; _environment_          ; TBD                 ; Environment Record | Undefined
 # BitwiseOp                                ; _op_                   ; TBD                 ; (MathInteger_, MathInteger_) -> MathInteger_
 ClassDefinitionEvaluation                ; _className_            ; TBD                 ; String | Undefined
 ClassDefinitionEvaluation                ; *return*               ; TBD                 ; function_object_ | throw_
 # ClassFieldDefinitionEvaluation           ; *return*               ; TBD                 ; ClassFieldDefinition Record | throw_
-Construct                                ; _F_                    ; function_object_    ; constructor_object_
 Construct                                ; _argumentsList_        ; (optional) TBD      ; (optional) List of Tangible_
-Construct                                ; _newTarget_            ; (optional) TBD      ; (optional) constructor_object_
 ConstructorMethod                        ; *return*               ; TBD                 ; empty_ | Parse Node for |ClassElement|
 Contains                                 ; _symbol_               ; TBD                 ; grammar_symbol_
 ContainsDuplicateLabels                  ; *return*               ; TBD                 ; Boolean
 ContainsDuplicateLabels                  ; _labelSet_             ; TBD                 ; List of String
 ContainsUndefinedBreakTarget             ; *return*               ; TBD                 ; Boolean
 ContainsUndefinedContinueTarget          ; *return*               ; TBD                 ; Boolean
-CopyDataProperties                       ; _source_               ; TBD                 ; Tangible_
 CreateListFromArrayLike                  ; _obj_                  ; TBD                 ; Tangible_
-CreateMapIterator                        ; _map_                  ; TBD                 ; Tangible_
 CreateMappedArgumentsObject              ; _argumentsList_        ; List                ; List of Tangible_
 CreatePerIterationEnvironment            ; _perIterationBindings_ ; TBD                 ; List of String
-CreateSetIterator                        ; _set_                  ; TBD                 ; Tangible_
 DefineMethod                             ; _functionPrototype_    ; (optional) TBD      ; (optional) Object
 DefineMethod                             ; *return*               ; TBD                 ; methodDef_record_ | throw_
 DestructuringAssignmentEvaluation        ; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
-DetachArrayBuffer                        ; _arrayBuffer_          ; TBD                 ; ArrayBuffer_object_
 DetachArrayBuffer                        ; _key_                  ; (optional) TBD      ; (optional) Tangible_
 EvalDeclarationInstantiation             ; _varEnv_               ; TBD                 ; Environment Record
 EvalDeclarationInstantiation             ; _lexEnv_               ; TBD                 ; Environment Record
@@ -1776,18 +1803,12 @@ Evaluation                               ; *return*               ; TBD         
 ExportEntriesForModule                   ; _module_               ; TBD                 ; String | Null
 FinishDynamicImport                      ; _referencingScriptOrModule_ ; TBD            ; Script Record | Module Record | Null
 FinishDynamicImport                      ; _specifier_            ; TBD                 ; String
-FinishDynamicImport                      ; _innerPromise_         ; TBD                 ; Promise_object_
 FlattenIntoArray                         ; *return*               ; TBD                 ; MathNonNegativeInteger_ | throw_
 GeneratorResume                          ; _value_                ; TBD                 ; Tangible_ | empty_
 GeneratorValidate                        ; _generator_            ; TBD                 ; Tangible_
-GetExportedNames                         ; _exportStarSet_        ; (optional) TBD      ; (optional) List of Source Text Module Record
-GetIterator                              ; _hint_                 ; (optional) TBD      ; (optional) IteratorKind_
 GetIterator                              ; _method_               ; (optional) TBD      ; (optional) function_object_
 GetMethod                                ; *return*               ; TBD                 ; Undefined | function_object_ | throw_
 GetOwnPropertyKeys                       ; _O_                    ; TBD                 ; Tangible_
-GetPrototypeFromConstructor              ; _intrinsicDefaultProto_; TBD                 ; String
-GetSubstitution                          ; _captures_             ; TBD                 ; List of String
-GetSubstitution                          ; _namedCaptures_        ; TBD                 ; Tangible_
 GetValue                                 ; *return*               ; TBD                 ; Tangible_ | throw_
 GetValue                                 ; _V_                    ; TBD                 ; Tangible_ | Reference Record | throw_
 GetViewValue                             ; _view_                 ; TBD                 ; Tangible_
@@ -1815,7 +1836,7 @@ IsLabelledFunction                       ; _stmt_                 ; TBD         
 IsPromise                                ; _x_                    ; TBD                 ; Tangible_
 IsRegExp                                 ; _argument_             ; TBD                 ; Tangible_
 IteratorBindingInitialization            ; _environment_          ; TBD                 ; Environment Record | Undefined
-IteratorClose                            ; _completion_           ; TBD                 ; Tangible_ | empty_ | throw_
+IteratorClose                            ; _completion_           ; Normal | Abrupt     ; Tangible_ | empty_ | throw_
 IteratorDestructuringAssignmentEvaluation; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
 IteratorNext                             ; _value_                ; (optional) TBD      ; (optional) Tangible_
 IteratorStep                             ; *return*               ; TBD                 ; Boolean | Object | throw_
@@ -1834,7 +1855,6 @@ MakeSuperPropertyReference               ; _strict_               ; TBD         
 # xModuleExecution                          ; _module_               ; TBD                 ; Source Text Module Record
 NewPromiseReactionJob                    ; _argument_             ; TBD                 ; Tangible_
 # NumberToString                           ; *return*               ; TBD                 ; String
-OrdinaryCreateFromConstructor            ; _intrinsicDefaultProto_; TBD                 ; String
 OrdinaryHasInstance                      ; _O_                    ; TBD                 ; Tangible_
 ParsePattern                             ; *return*               ; TBD                 ; List of SyntaxError | Parse Node for |Pattern|
 PerformEval                              ; _x_                    ; TBD                 ; Tangible_
@@ -1847,17 +1867,12 @@ ProxyCreate                              ; _target_               ; TBD         
 PutValue                                 ; _V_                    ; TBD                 ; Tangible_ | Reference Record | throw_
 PutValue                                 ; _W_                    ; TBD                 ; Tangible_ | throw_
 QuoteJSONString                          ; _value_                ; TBD                 ; String
-RegExpInitialize                         ; _flags_                ; TBD                 ; Tangible_
-RegExpInitialize                         ; _pattern_              ; TBD                 ; Tangible_
 RepeatMatcher                            ; *return*               ; TBD                 ; MatchResult
 RequireInternalSlot                      ; _O_                    ; TBD                 ; Tangible_
 RequireInternalSlot                      ; _internalSlot_         ; TBD                 ; SlotName_
 RequireObjectCoercible                   ; *return*               ; throw_              ; Boolean | Number | String | Symbol | Object | throw_ *TypeError*
 RequireObjectCoercible                   ; _argument_             ; TBD                 ; Tangible_
-ResolveBinding                           ; _env_                  ; (optional) Environment Record; (optional) Environment Record | Undefined
-ResolveExport                            ; _resolveSet_           ; (optional) TBD      ; (optional) List of ExportResolveSet_Record_
 SV                                       ; *return*               ; TBD                 ; String
-SetRealmGlobalObject                     ; _globalObj_            ; TBD                 ; Object | Undefined
 SetRealmGlobalObject                     ; _thisValue_            ; TBD                 ; Tangible_
 SetViewValue                             ; _view_                 ; TBD                 ; Tangible_
 SetViewValue                             ; _isLittleEndian_       ; TBD                 ; Tangible_
@@ -1879,7 +1894,6 @@ ToPropertyDescriptor                     ; _Obj_                  ; TBD         
 ToString                                 ; *return*               ; TBD                 ; String | throw_ *TypeError*
 ToString                                 ; _argument_             ; TBD                 ; Tangible_
 TriggerPromiseReactions                  ; _argument_             ; TBD                 ; Tangible_
-TrimString                               ; _string_               ; TBD                 ; Tangible_
 UTC                                      ; _t_                    ; TBD                 ; Number
 # xUTF16Decode                              ; _string_               ; TBD                 ; String
 # xUTF16Encode                              ; _text_                 ; TBD                 ; Unicode_code_points_
@@ -3412,6 +3426,10 @@ def tc_header(tah):
                 tah.name == 'Math.sign' and pn == '*return*'
                 or
                 tah.name == 'ObjectDefineProperties' and pn == '_O_'
+                or
+                tah.name == 'TimeString' and pn == '_tv_'
+                or
+                tah.name == 'DateString' and pn == '_tv_'
 
 
                 # or
@@ -4995,7 +5013,6 @@ def tc_cond_(cond, env0, asserting):
     # combining conditions
 
     elif p in [
-        r"{CONDITION} : Either {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : either {CONDITION_1} or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} or if {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}",
@@ -5091,19 +5108,6 @@ def tc_cond_(cond, env0, asserting):
         [type_arg] = children
         return env0.with_type_test(type_arg, 'is a', T_Tangible_, asserting)
 
-    elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not Number or BigInt":
-        [type_arg] = children
-        return env0.with_type_test(type_arg, 'isnt a', T_Number | T_BigInt, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is an Object that has {DSBN} and {DSBN} internal slots":
-        [var, *dsbn_] = children
-        assert (
-            [dsbn.source_text() for dsbn in dsbn_]
-            ==
-            [ '[[TypedArrayName]]', '[[ContentType]]' ]
-        )
-        return env0.with_type_test(var, 'is a', T_Integer_Indexed_object_, asserting)
-
     elif p == r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot":
         [var, dsbna, dsbnb] = children
         env0.assert_expr_is_of_type(var, T_Object)
@@ -5113,7 +5117,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots",
-        r"{CONDITION_1} : {var} has {DSBN}, {DSBN}, and {DSBN} internal slots",
     ]:
         # XXX could be a type-test
         [var, *dsbn_] = children
@@ -5161,19 +5164,6 @@ def tc_cond_(cond, env0, asserting):
         target_t = ptn_type_for(nonterminal)
         return env0.with_type_test(var, 'isnt a', target_t, asserting)
 
-    elif p == r'{CONDITION_1} : {EX} and {EX} are distinct {TYPE_NAME} or {TYPE_NAME} values':
-        # XXX This means that either they're both one, or else they're both the other,
-        # but I can't handle co-ordinated types like that.
-        # LATER: Actually, that doesn't appear to be what it means.
-        [exa, exb, tnc, tnd] = children
-        t = type_for_TYPE_NAME(tnc) | type_for_TYPE_NAME(tnd)
-        (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', t, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', t, asserting)
-        return (
-            env_and(a_t_env, b_t_env),
-            env_or(a_f_env, b_f_env)
-        )
-
     # ---
 
     elif p == r"{CONDITION_1} : {var} is an abrupt completion":
@@ -5190,10 +5180,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is not an abrupt completion because of validation preceding step {h_emu_xref}":
         [var, _] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_proc_ | T_alg_steps, asserting)
 
     elif p == r"{CONDITION_1} : {var} is an Abstract Closure with no parameters":
         [var] = children
@@ -5251,17 +5237,9 @@ def tc_cond_(cond, env0, asserting):
         copula = 'isnt a' if 'not' in p else 'is a'
         return env0.with_type_test(var, copula, type_for_environment_record_kind(kind), asserting)
 
-    elif p == r"{CONDITION_1} : {var} is an Integer-Indexed exotic object":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Integer_Indexed_object_, asserting)
-
     elif p == r"{CONDITION_1} : {var} is a possibly empty List":
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', T_List, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List whose elements are all ECMAScript language values":
-        [list_var] = children
-        return env0.with_type_test(list_var, 'is a', ListType(T_Tangible_), asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of code points":
         [list_var] = children
@@ -5270,14 +5248,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a List of code units":
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', ListType(T_code_unit_), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List of internal slot names":
-        [list_var] = children
-        return env0.with_type_test(list_var, 'is a', ListType(T_SlotName_), asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a List of String values':
-        [var] = children
-        return env0.with_type_test(var, 'is a', ListType(T_String), asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of property keys":
         [var] = children
@@ -5292,29 +5262,14 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return env0.with_type_test(var, 'is a', ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event), asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a List of Source Text Module Records":
-        [var] = children
-        return env0.with_type_test(var, 'is a', ListType(T_Source_Text_Module_Record), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List of Record { {DSBN}, {DSBN} }":
-        [var, dsbn1, dsbn2] = children
-        assert dsbn1.source_text() == '[[Module]]'
-        assert dsbn2.source_text() == '[[ExportName]]'
-        return env0.with_type_test(var, 'is a', ListType(T_ExportResolveSet_Record_), asserting)
-
     elif p == r"{CONDITION_1} : {var} is a non-empty List of {ERROR_TYPE} objects":
         [var, error_type] = children
         error_type_name = error_type.source_text()[1:-1]
         return env0.with_type_test(var, 'is a', ListType(NamedType(error_type_name)), asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a List whose elements are only String and Symbol values":
+    elif p == r"{CONDITION_1} : {var} is a List in which each element is a String or a Symbol":
         [var] = children
         env0.assert_expr_is_of_type(var, ListType(T_String | T_Symbol))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is a possibly empty List of Strings":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_String))
         return (env0, env0)
 
     elif p in [
@@ -5324,7 +5279,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
+    elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
@@ -5338,13 +5293,6 @@ def tc_cond_(cond, env0, asserting):
         [ex] = children
         env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
         return (env0, env0)
-
-    elif p in [
-        r'{CONDITION_1} : {var} is a Module Record',
-        r"{CONDITION_1} : {var} is an instance of a concrete subclass of Module Record",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Module_Record, asserting)
 
     elif p in [
         r'{CONDITION_1} : {EX} is present',
@@ -5383,10 +5331,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Parse_Node, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a Parse Node for {nonterminal}":
-        [var, nont] = children
-        return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
-
     elif p == r"{CONDITION_1} : {EX} is a Private Name":
         [ex] = children
         return env0.with_type_test(ex, 'is a', T_Private_Name, asserting)
@@ -5399,10 +5343,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_PromiseCapability_Record, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a PromiseReaction Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_PromiseReaction_Record, asserting)
-
     elif p == r'{CONDITION_1} : {var} is an? {PROPERTY_KIND} property':
         [var, kind] = children
         t = {
@@ -5410,12 +5350,6 @@ def tc_cond_(cond, env0, asserting):
             'data'    : T_data_property_,
         }[kind.source_text()]
         return env0.with_type_test(var, 'is a', t, asserting)
-
-    elif p in [
-        r'{CONDITION_1} : {var} is a Property Descriptor',
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Property_Descriptor, asserting)
 
     elif p in [
         r'{CONDITION_1} : {var} is a Proxy exotic object',
@@ -5427,14 +5361,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} is a ReadModifyWriteSharedMemory event':
         [var] = children
         return env0.with_type_test(var, 'is a', T_ReadModifyWriteSharedMemory_event, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a ReadSharedMemory or ReadModifyWriteSharedMemory event':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a Realm Record':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Realm_Record, asserting)
 
     elif p == r'{CONDITION_1} : {var} is a Reference Record':
         [var] = children
@@ -5503,20 +5429,12 @@ def tc_cond_(cond, env0, asserting):
         env2 = env1.ensure_expr_is_of_type(varb, T_Number | T_BigInt)
         return (env2, env2)
 
-    elif p == r"{CONDITION_1} : {var} is an ECMAScript language value":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Tangible_, asserting)
-
     elif p in [
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
     ]:
         [var, literal, _] = children
         env0.assert_expr_is_of_type(literal, T_Undefined)
         return env0.with_type_test(var, 'is a', T_Undefined, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is an ECMAScript source text (see clause {h_emu_xref})':
-        [var, emu_xref] = children
-        return env0.with_type_test(var, 'is a', T_Unicode_code_points_, asserting)
 
     elif p == r'{CONDITION_1} : {var} is a WriteSharedMemory event':
         [var] = children
@@ -5538,9 +5456,7 @@ def tc_cond_(cond, env0, asserting):
     # quasi-type-conditions
 
     elif p in [
-        r'{CONDITION_1} : {var} is an ECMAScript function',
         r'{CONDITION_1} : {var} is an ECMAScript function object',
-        r'{CONDITION_1} : {var} is an ECMAScript function object or a built-in function object',
     ]:
         [var] = children
         return (
@@ -5583,19 +5499,10 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {var} is an ordinary, extensible object with no non-configurable properties",
         r"{CONDITION_1} : {var} is an extensible ordinary object with no own properties",
-        r"{CONDITION_1} : {var} is an initialized RegExp instance",
-        r'{CONDITION_1} : {var} is an Object that implements the <i>IteratorResult</i> interface',
     ]:
         [var] = children
         return (
             env0.with_expr_type_narrowed(var, T_Object),
-            env0
-        )
-
-    elif p == r"{CONDITION_1} : {var} is a non-negative integer":
-        [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_MathInteger_),
             env0
         )
 
@@ -5746,7 +5653,6 @@ def tc_cond_(cond, env0, asserting):
         # ---
         r"{CONDITION_1} : {EX} is not {LITERAL} or {LITERAL}",
         r"{CONDITION_1} : {EX} is neither {LITERAL} nor {LITERAL}",
-        r"{CONDITION_1} : {EX} is present, and is neither {LITERAL} nor {LITERAL}",
     ]:
         [ex, lita, litb] = children
 
@@ -5866,7 +5772,6 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}",
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
@@ -5885,13 +5790,6 @@ def tc_cond_(cond, env0, asserting):
             lit_types.append(ti)
         lt = union_of_types(lit_types)
         return env0.with_type_test(var, 'is a', lt, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is either {LITERAL} or an? {nonterminal}":
-        # Once, in EvaluateNew
-        [var, literal, nont] = children
-        assert literal.source_text() == '~empty~'
-        t = T_empty_ | ptn_type_for(nont)
-        return env0.with_type_test(var, 'is a', t, asserting)
 
     elif p == r'{CONDITION_1} : {var} has an? {DSBN} internal method':
         [var, dsbn] = children
@@ -5975,7 +5873,10 @@ def tc_cond_(cond, env0, asserting):
         env0.ensure_expr_is_of_type(var, T_grammar_symbol_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an? {nonterminal}":
+    elif p in [
+        r"{CONDITION_1} : {var} is an? {nonterminal}",
+        r"{CONDITION_1} : {var} is an? {nonterminal} Parse Node",
+    ]:
         [var, nont] = children
         if var.source_text() == '_symbol_' and nont.source_text() in ['|ReservedWord|', '|Identifier|']:
             t = T_grammar_symbol_
@@ -6641,7 +6542,7 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object":
+    elif p == r"{CONDITION_1} : {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object":
         [var, dsbn] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
@@ -6797,12 +6698,12 @@ def tc_cond_(cond, env0, asserting):
         [nonterminal] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}":
+    elif p == r"{CONDITION_1} : {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}":
         [v, emu_xref] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
+    elif p == r"{CONDITION_1} : {var} is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [va, vb, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(va, ListType(T_code_point_))
         env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
@@ -6828,11 +6729,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an AsyncGenerator instance":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_AsyncGenerator_object_)
-        return (env1, env1)
-
     # ----
 
     elif p == r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList":
@@ -6852,12 +6748,6 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(offset2, T_MathInteger_)
         env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         return (env1, env1)
-
-    elif p == r"{CONDITION_1} : {var} is divisible by {NUM_LITERAL}":
-        [var, lit] = children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        env0.assert_expr_is_of_type(lit, T_MathInteger_)
-        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}":
         [var, *lit_] = children
@@ -6942,11 +6832,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {EX} is neither {LITERAL} nor the active function":
         [ex, lit] = children
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot":
-        [var, dsbn] = children
-        env0.assert_expr_is_of_type(var, T_Tangible_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context":
@@ -7502,6 +7387,12 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {EX} and {EX} are distinct values":
+        [exa, exb] = children
+        (exa_type, env1) = tc_expr(exa, env0)
+        (exb_type, env2) = tc_expr(exb, env1)
+        return (env2, env2)
 
     else:
         stderr()
@@ -10688,7 +10579,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-    elif p == r"{EXPR} : the List of Unicode code points of {var}":
+    elif p == r"{EXPR} : the List of Unicode code points {var}":
         [v] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)

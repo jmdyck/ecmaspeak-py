@@ -296,7 +296,6 @@
 
 {CONDITION} :
     ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
-    Either {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}
     {CONDITION_1} and if {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
@@ -403,7 +402,7 @@
     {DOTTING} is {LITERAL} and was never previously set to {LITERAL}
     {EX} and {EX} are both {LITERAL}
     {EX} and {EX} are both {LITERAL} or both {LITERAL}
-    {EX} and {EX} are distinct {TYPE_NAME} or {TYPE_NAME} values
+    {EX} and {EX} are distinct values
     {EX} and {EX} are the same Shared Data Block values
     {EX} and {EX} are valid byte offsets within the memory of {var}
     {EX} contains a Private Name whose {dsb_word} is {var}
@@ -433,7 +432,6 @@
     {EX} is not {LITERAL} or {LITERAL}
     {EX} is present
     {EX} is present and has value {LITERAL}
-    {EX} is present, and is neither {LITERAL} nor {LITERAL}
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
     {EX} is {LITERAL}
@@ -441,7 +439,6 @@
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {PREFIX_PAREN}
-    {EX} is {backticked_oth}, {backticked_oth}, or {backticked_oth}
     {EX} is {var}
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
@@ -529,7 +526,6 @@
     {var} has no further use. It will never be activated as the running execution context
     {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}
     {var} has {DSBN} and {DSBN} internal slots
-    {var} has {DSBN}, {DSBN}, and {DSBN} internal slots
     {var} has {var} in its range
     {var} imports a specific binding for this export
     {var} is a ClassFieldDefinition Record
@@ -537,76 +533,51 @@
     {var} is a Continuation
     {var} is a Cyclic Module Record
     {var} is a Data Block
-    {var} is a List of Record { {DSBN}, {DSBN} }
-    {var} is a List of Source Text Module Records
-    {var} is a List of String values
-    {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
-    {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
-    {var} is a List of Unicode code points that is identical to a List of Unicode code points that is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}
     {var} is a List of a single Number
     {var} is a List of code points
     {var} is a List of code units
     {var} is a List of errors
-    {var} is a List of internal slot names
     {var} is a List of property keys
-    {var} is a List whose elements are all ECMAScript language values
-    {var} is a List whose elements are only String and Symbol values
-    {var} is a Module Record
     {var} is a Parse Node
-    {var} is a Parse Node for {nonterminal}
     {var} is a PrivateElement
     {var} is a PromiseCapability Record
-    {var} is a PromiseReaction Record
-    {var} is a Property Descriptor
     {var} is a Proxy exotic object
     {var} is a Proxy object
     {var} is a ReadModifyWriteSharedMemory event
-    {var} is a ReadSharedMemory or ReadModifyWriteSharedMemory event
     {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
-    {var} is a Realm Record
     {var} is a Reference Record
     {var} is a ResolvedBinding Record
     {var} is a Shared Data Block
     {var} is a Source Text Module Record
     {var} is a State
-    {var} is a String value that is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} is a UTF-16 code unit
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     {var} is a WriteSharedMemory event
     {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a bound function exotic object
+    {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
     {var} is a non-empty List of {ERROR_TYPE} objects
-    {var} is a non-negative integer
     {var} is a non-negative integer &le; {var}
     {var} is a non-negative integer which is &le; {EXPR}
     {var} is a non-negative integral Number
     {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is a possibly empty List
-    {var} is a possibly empty List of Strings
+    {var} is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     {var} is a {h_emu_xref}
     {var} is also {LITERAL}
     {var} is an Abstract Closure with no parameters
     {var} is an Array exotic object
-    {var} is an AsyncGenerator instance
-    {var} is an ECMAScript function
     {var} is an ECMAScript function object
-    {var} is an ECMAScript function object or a built-in function object
-    {var} is an ECMAScript language value
-    {var} is an ECMAScript source text (see clause {h_emu_xref})
     {var} is an IEEE 754-2019 binary32 NaN value
     {var} is an IEEE 754-2019 binary64 NaN value
-    {var} is an Integer-Indexed exotic object
     {var} is an Object that has an? {DSBN} internal slot
-    {var} is an Object that has {DSBN} and {DSBN} internal slots
-    {var} is an Object that implements the <i>IteratorResult</i> interface
     {var} is an abrupt completion
     {var} is an array index
     {var} is an extensible object that does not have a {starred_str} own property
     {var} is an extensible ordinary object with no own properties
-    {var} is an initialized RegExp instance
-    {var} is an instance of a concrete subclass of Module Record
     {var} is an instance of a nonterminal
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
@@ -616,12 +587,9 @@
     {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is an? {PROPERTY_KIND} property
     {var} is an? {nonterminal}
-    {var} is any ECMAScript language value other than an Object with a {DSBN} internal slot
+    {var} is an? {nonterminal} Parse Node
     {var} is as small as possible
-    {var} is divisible by {NUM_LITERAL}
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
-    {var} is either an Abstract Closure, a set of algorithm steps, or some other definition of a function's behaviour provided in this specification
-    {var} is either {LITERAL} or an? {nonterminal}
     {var} is empty
     {var} is finite
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
@@ -669,6 +637,7 @@
     {var} is the value {LITERAL}
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
+    {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} is {LITERAL} because formal parameters mapped by argument objects are always writable
     {var} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number
     {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
@@ -693,7 +662,6 @@
     Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}
     Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
     Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}
-    Type({TYPE_ARG}) is not Number or BigInt
     Type({TYPE_ARG}) is not an element of {var}
     Type({TYPE_ARG}) is not {TYPE_NAME}
     Type({TYPE_ARG}) is the same as Type({TYPE_ARG})
@@ -850,7 +818,7 @@
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {var}
     the Element Type value in {h_emu_xref} for {EX}
-    the List of Unicode code points of {var}
+    the List of Unicode code points {var}
     the List of arguments that was passed to this function by {dsb_word} or {dsb_word}
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
@@ -1409,11 +1377,9 @@
 {TYPE_NAME} :
     BigInt
     Boolean
-    Data Block
     Null
     Number
     Object
-    Shared Data Block
     String
     Symbol
     Undefined
