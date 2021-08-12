@@ -887,7 +887,6 @@ def analyze_changes_section(section):
                 re.fullmatch(pattern, p_ist)
                 for pattern in [
                     f"During {op_name} the following steps are performed in place of step <emu-xref .+:",
-                    f"The following steps are inserted after step <emu-xref.+ of the {op_name} algorithm:",
                     f"The following steps replace step <emu-xref.+ of the {op_name} algorithm:",
                     f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
                 ]
