@@ -911,13 +911,7 @@ def analyze_changes_section(section):
             assert p.element_name == 'p'
             p_ist = p.inner_source_text()
 
-            if re.fullmatch(fr'The following Early Error rule is added to those in {emu_xref_re}\. .+', p_ist):
-                ul_ex = section.block_children[i]; i += 1; assert ul_ex.element_name == 'ul'
-                emu_grammar = section.block_children[i]; i += 1
-                ul = section.block_children[i]; i += 1
-                handle_early_error(emu_grammar, ul, section)
-
-            elif (
+            if (
                 re.fullmatch(fr'The rules for the following production in {emu_xref_re} are modified with the addition of the <ins>highlighted</ins> text:', p_ist)
                 or
                 re.fullmatch(fr'The content of subclause {emu_xref_re} is replaced with the following:', p_ist)
@@ -984,8 +978,6 @@ def analyze_changes_section(section):
 
             else:
                 mo = (
-                    re.fullmatch(fr'In {emu_xref_re} the (PropertyDefinitionEvaluation) algorithm (.|\n)+ is replaced with the following definition:', p_ist)
-                    or
                     re.fullmatch(fr'The (?:static|runtime) semantics of (\w+)( in {emu_xref_re})? are augmented with the following:', p_ist)
                 )
                 if mo:
