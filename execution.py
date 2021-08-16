@@ -49,6 +49,10 @@ sys.tracebacklimit = 3
 
 # -------------------------------
 
+verbosity = 0
+
+# -------------------------------
+
 def detect_early_errors(pnode):
     assert pnode.symbol in ['Script', 'Module']
 
@@ -56,7 +60,7 @@ def detect_early_errors(pnode):
 
     de = DynamicEnvironment()
 
-    stderr("de.max_frame_stack_len:", de.max_frame_stack_len)
+    # stderr("de.max_frame_stack_len:", de.max_frame_stack_len)
 
     early_errors = de.get_early_errors_in(pnode)
     return early_errors
@@ -164,10 +168,9 @@ class DynamicEnvironment:
         # check pnode
         if pnode.puk in ee_map:
             ee_rules = ee_map[pnode.puk]
-            stderr()
-            stderr(f"There are {len(ee_rules)} Early Error rules for {pnode.puk}:")
+            if verbosity >= 1:
+                stderr(f"\nThere are {len(ee_rules)} Early Error rules for {pnode.puk}:")
             for ee_rule in ee_rules:
-                stderr()
                 de.execute_alg_defn(ee_rule, focus_node=pnode)
 
         # check pnode's descendants
@@ -207,7 +210,7 @@ class DynamicEnvironment:
         if not expectation_met:
             # Maybe we can do an implicit conversion
             if expected_return in [ES_Mathnum, (ES_Mathnum,EL_Number)] and isinstance(result, ES_UnicodeCodePoint):
-                stderr("Implicitly converting ES_UnicodeCodePoint to ES_Mathnum")
+                if verbosity >= 1: stderr("Implicitly converting ES_UnicodeCodePoint to ES_Mathnum")
                 result = ES_Mathnum(result.scalar)
                 expectation_met = True
 
@@ -226,7 +229,7 @@ class DynamicEnvironment:
 
         L = len(de.frame_stack)
         indentation = ' ' * (2 + L)
-        stderr(indentation + 'v', frame._slug)
+        if verbosity >= 2: stderr(indentation + 'v', frame._slug)
 
         frame._tracing_indentation = indentation
         frame._is_tracing = True and (
@@ -256,14 +259,14 @@ class DynamicEnvironment:
         rframe = de.frame_stack.pop()
         assert rframe is frame
 
-        stderr(indentation + '^', frame._slug, 'returns', result)
+        if verbosity >= 2: stderr(indentation + '^', frame._slug, 'returns', result)
         return result
 
     def it_is_a_syntax_error(de, rule):
         if isinstance(rule, ANode): rule = rule.source_text()
         error = EarlyError('Syntax Error', de.curr_frame()._focus_node, rule)
         de.early_errors.append(error)
-        stderr(f"Found early error: {error}")
+        if verbosity >= 1: stderr(f"Found early error: {error}")
 
 alg_species_that_require_a_focus_node = ['op: early error', 'op: syntax-directed']
 
