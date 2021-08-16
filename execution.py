@@ -2267,13 +2267,6 @@ def _(de, vara, varb, varc):
 
 # modify a List:
 
-@efd.put('{COMMAND} : Append to {var} the elements of {EXPR}.')
-def _(de, var, expr):
-    L1 = de.exec(var, ES_List)
-    L2 = de.exec(expr, ES_List)
-    L1.append_many(L2)
-
-@efd.put('{COMMAND} : Append {EX} to the end of {var}.')
 @efd.put('{SMALL_COMMAND} : append {EX} to {var}')
 def _(de, item_ex, list_var):
     v = de.exec(item_ex, E_Value)
