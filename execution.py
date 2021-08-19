@@ -1504,7 +1504,7 @@ def _(de, prod_ref, cap_word):
 def _(de):
     cap_word_str = 'Tagged'
     pnode = de.curr_frame()._focus_node
-    return (f"+{cap_word_str}" in pnode.production.og_params_setting)
+    return (f"~{cap_word_str}" in pnode.production.og_params_setting)
 
 @efd.put('{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}')
 def _(de, nont):
