@@ -1066,10 +1066,6 @@ class PreambleInfoHolder:
             assert poi.kind == 'abstract operation'
             poi.kind = 'numeric method'
 
-        # Have to do this one "out of order"
-        # because of possible calls to add_to_description(). 
-        poi.description_paras = self.fields['desc']
-
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
             poi.param_names = None
@@ -1137,6 +1133,8 @@ class PreambleInfoHolder:
                 stderr()
                 stderr(poi.name)
                 stderr(poi.return_nature_normal)
+
+        poi.description_paras = self.fields['desc']
 
         return poi
 
@@ -1254,7 +1252,6 @@ def extract_info_from_standard_preamble(preamble_node):
     # The first sentence in the preamble:
 
     for pattern in [
-        r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+) and returns (?P<retn>.+?)\.',
         r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
         r'The (?P<kind>abstract operation) (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
         r'The (?P<kind>(host|implementation)-defined abstract operation) (?P<name>\w+) takes (?P<pl>.+)\.',
@@ -1311,29 +1308,14 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
         return
 
     foo = {
-        '_x_ and _y_ are values':
-            [('_x_', 'an ECMAScript language value'), ('_y_', 'an ECMAScript language value')],
-        "_M_ is a Module Record, and _N2_ is the name of a binding that exists in _M_'s module Environment Record":
-            [('_M_', 'a Module Record'), ('_N2_', 'a String')],
-        "_argumentsList_ is a possibly empty List of ECMAScript language values":
-            [('_argumentsList_', 'a List of ECMAScript language values')],
-        "the |ModuleSpecifier| String, _specifier_":
-            [('_specifier_', 'a String')],
-        "the Script Record or Module Record _referencingScriptOrModule_":
-            [('_referencingScriptOrModule_', 'a Script Record or Module Record')],
-        "_array_":
-            [('_array_', 'TBD')],
         "The optional _offset_ value":
             [('_offset_', 'TBD')],
-        "the _typedArray_ argument object":
-            [('_typedArray_', 'TBD')],
-        '_referencingScriptOrModule_ may also be *null*':
-            [('_referencingScriptOrModule_', 'Null')]
     }[parameter_sentence]
 
     for (param_name, nature) in foo:
         if oi.param_names and param_name in oi.param_names:
             # The preamble has previously 'declared' this parameter.
+            assert 0 # since PR #1914 or so
             current_nature = oi.param_nature_[param_name]
             if current_nature == 'TBD':
                 new_nature = nature
@@ -1349,35 +1331,6 @@ def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
 
             oi.param_names.append(param_name)
             oi.param_nature_[param_name] = nature
-
-# ------------------------------------------------------------------------------
-
-def add_to_description(oi, sentence):
-    # This is only called 9 times.
-    # It would be nice to get rid of it,
-    # because it can rearrange the contents of the preamble.
-    # On the other hand, it doesn't do so in the remaining cases.
-
-    # stderr('atd>', oi.name, ':', sentence)
-
-    if oi.description_paras == []:
-        desc = sub_many(sentence, [
-            ('^OP is an ', 'an '),
-            ('^OP,? ', ''),
-            ('^It ', ''),
-            ('^This operation ', ''),
-            (' as follows:$', ''),
-            (' by performing the following steps:$', ''),
-            (' created by the following steps:$', ''),
-            (':$', '.'),
-        ])
-    else:
-        desc = sub_many(sentence, [
-            ('^OP ', 'This operation '),
-            (' OP ', ' this operation '),
-            (' by performing the following steps:$', '.'),
-        ])
-    oi.description_paras.append(desc)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1555,12 +1508,6 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         oh_warn(repr(parameter_listing))
         oh_warn(f"is of the form: ... X, X and X")
         oh_warn(f"but expected  : ... X, X, and X")
-        return
-
-    elif re.fullmatch(r'(two )?arguments _x_ and _y_ of type BigInt', parameter_listing):
-        oi.param_names = ['_x_', '_y_']
-        oi.param_nature_['_x_'] = 'a BigInt'
-        oi.param_nature_['_y_'] = 'a BigInt'
         return
 
     # --------------------
