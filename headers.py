@@ -1449,12 +1449,6 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         oi.rest_params.add('_args_')
         return
 
-    if parameter_listing == 'one or two arguments, _predicate_ and _thisArg_':
-        # 1 case
-        oi.param_names = ['_predicate_', '_thisArg_']
-        oi.optional_params.add('_thisArg_')
-        return
-
     elif parameter_listing == 'an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_)':
         # 2 cases
         oi.param_names = ['_execution_', '_E_', '_D_']
@@ -1485,25 +1479,6 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
             oi.optional_params.add('_byteLength_')
         else:
             assert 0, oi.name
-        return
-
-    elif parameter_listing == 'up to three arguments _target_, _start_ and _end_':
-        # 1 case
-        oi.param_names = ['_target_', '_start_', '_end_']
-        oh_warn()
-        oh_warn(f"`{oi.name}` preamble param list:")
-        oh_warn(repr(parameter_listing))
-        oh_warn(f"is of the form: ... X, X and X")
-        oh_warn(f"but expected  : ... X, X, and X")
-        return
-    elif parameter_listing == 'up to three arguments _value_, _start_ and _end_':
-        # 1 case
-        oi.param_names = ['_value_', '_start_', '_end_']
-        oh_warn()
-        oh_warn(f"`{oi.name}` preamble param list:")
-        oh_warn(repr(parameter_listing))
-        oh_warn(f"is of the form: ... X, X and X")
-        oh_warn(f"but expected  : ... X, X, and X")
         return
 
     # --------------------
