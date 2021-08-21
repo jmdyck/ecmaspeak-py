@@ -953,11 +953,6 @@ def extract_info_from_preamble(preamble_nodes, section):
     ]:
         # no standard yet
         pass
-    elif section.section_title in ['ExecuteAsyncModule ( _module_ )', 'FinishDynamicImport ( _referencingScriptOrModule_, _specifier_, _promiseCapability_, _completion_ )']:
-        # The section has multiple preambles.
-        # The AO's preamble is standard.
-        # The other ones are for functions, so no standard yet.
-        pass
     else:
         oh_warn()
         oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
@@ -1845,11 +1840,6 @@ class AlgHeader:
         assert len(self.rest_params) in [0,1]
 
         if self.param_names is None:
-            if self.name == 'Proxy Revocation':
-                # It has no parameters,
-                # but neither the clause-heading nor the preamble say so.
-                self.param_names = []
-            else:
                 oh_warn()
                 oh_warn(f"{self.name}: self.param_names is None")
                 self.param_names = []
