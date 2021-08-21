@@ -1477,13 +1477,9 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         return
 
     elif parameter_listing  == 'at least one argument _buffer_':
-        # 2 cases
+        # 1 case
         # kludgey
-        if oi.name == '_TypedArray_':
-            oi.param_names = ['_buffer_', '_byteOffset_', '_length_']
-            oi.optional_params.add('_byteOffset_')
-            oi.optional_params.add('_length_')
-        elif oi.name == 'DataView':
+        if oi.name == 'DataView':
             oi.param_names = ['_buffer_', '_byteOffset_', '_byteLength_']
             oi.optional_params.add('_byteOffset_')
             oi.optional_params.add('_byteLength_')
