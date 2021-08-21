@@ -1029,14 +1029,6 @@ class PreambleInfoHolder:
         vs = join_field_values('kind')
         poi.kind = {
             'abstract operation'                        : 'abstract operation',
-            'concrete method'                           : 'concrete method',
-            'concrete method & abstract method'         : 'concrete method', # spec bug?
-            'host-defined abstract operation'           : 'host-defined abstract operation',
-            'implementation-defined abstract operation' : 'implementation-defined abstract operation',
-            'internal comparison abstract operation'    : 'abstract operation',
-            'job'                                       : 'abstract operation',
-            'internal method'                           : 'internal method',
-            'numeric method'                            : 'numeric method',
             'algorithm'                                 : 'abstract operation',
             #
             'anonymous built-in function object'        : 'anonymous built-in function',
@@ -1051,15 +1043,6 @@ class PreambleInfoHolder:
         poi.name = at_most_one_value('name')
 
         poi.for_phrase = at_most_one_value('for')
-
-        if poi.name and RE.fullmatch('(.+)(::.+)', poi.name):
-            assert poi.for_phrase is None
-            poi.for_phrase = RE.group(1)
-
-            poi.name = RE.group(2)
-
-            assert poi.kind == 'abstract operation'
-            poi.kind = 'numeric method'
 
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
@@ -1084,10 +1067,6 @@ class PreambleInfoHolder:
         else:
             # move to finish_initialization ?
             (varnames, where) = {
-                'the _comparefn_ argument passed to the current invocation of the `sort` method':
-                    (['_comparefn_'], 'from the current invocation of the `sort` method'),
-
-                # 'preambles' PR:
                 'the _comparefn_ and _buffer_ values of the current invocation of the `sort` method':
                     (['_comparefn_', '_buffer_'], 'from the `sort` method'),
             }[also]
@@ -1096,38 +1075,9 @@ class PreambleInfoHolder:
                 for varname in varnames
             ]
 
-        # Cheat: Add some 'also' info that doesn't appear in the preamble.
-        # move to finish_initialization?
-
-        if poi.name in [
-            'WordCharacters',
-            'IsWordChar',
-            'CharacterSetMatcher',
-            'Canonicalize',
-            'RegExpBuiltinExec',
-            'CharacterRangeOrUnion',
-            'BackreferenceMatcher',
-        ]:
-            # 21.2.2.1 Notation says:
-            # "The descriptions below use the following variables:"
-            assert poi.also is None
-            poi.also = regexp_also
-
         poi.return_nature_normal = join_field_values('retn', ' or ')
 
         poi.return_nature_abrupt = at_most_one_value('reta')
-
-        if poi.return_nature_normal and 'a completion record' in poi.return_nature_normal:
-            assert poi.return_nature_abrupt is None
-            if poi.return_nature_normal == 'a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean':
-                poi.return_nature_normal = 'a Boolean'
-                poi.return_nature_abrupt = 'N/A'
-            elif poi.return_nature_normal == 'a completion record which, if its [[Type]] is ~normal~, has a [[Value]] which is a Boolean':
-                poi.return_nature_normal = 'a Boolean'
-            else:
-                stderr()
-                stderr(poi.name)
-                stderr(poi.return_nature_normal)
 
         poi.description_paras = self.fields['desc']
 
@@ -1249,9 +1199,6 @@ def extract_info_from_standard_preamble(preamble_node):
     for pattern in [
         r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
         r'The (?P<kind>abstract operation) (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
-        r'The (?P<kind>(host|implementation)-defined abstract operation) (?P<name>\w+) takes (?P<pl>.+)\.',
-        r'The (?P<name>\w+) (?P<kind>concrete method) of (?P<for>.+) takes (?P<pl>.+)\.',
-        r'The (?P<name>\[\[\w+\]\]) (?P<kind>internal method) of (?P<for>.+) takes (?P<pl>.+)\.',
     ]:
         mo = re.fullmatch(pattern, sentence0)
         if mo:
@@ -1292,15 +1239,6 @@ def extract_info_from_standard_preamble(preamble_node):
 def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
     # if '_C_' in parameter_sentence: stderr('gifps', parameter_sentence)
     # if 'neither' in parameter_sentence: pdb.set_trace()
-
-    if oi.name in [
-        'FunctionDeclarationInstantiation',
-        'CodePointAt',
-        'BlockDeclarationInstantiation',
-        'GlobalDeclarationInstantiation',
-        'CreateDynamicFunction',
-    ]:
-        return
 
     foo = {
         "The optional _offset_ value":
@@ -1603,10 +1541,6 @@ def resolve_oi(hoi, poi):
         oi.kind = hoi.kind
     else:
         if hoi.kind == poi.kind:
-            oi.kind = hoi.kind
-        elif hoi.kind == 'abstract operation' and poi.kind in ['host-defined abstract operation', 'implementation-defined abstract operation']:
-            oi.kind = poi.kind
-        elif hoi.kind == 'numeric method' and poi.kind == 'abstract operation':
             oi.kind = hoi.kind
         else:
             stderr(f"mismatch of 'kind' in heading/preamble for {hoi.name}: {hoi.kind!r} != {poi.kind!r}")
