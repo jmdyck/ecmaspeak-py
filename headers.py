@@ -464,11 +464,20 @@ def create_operation_info_for_section(s):
             # no children in preamble, so no lines to suppress
             poi = None
         else:
-            start_ln = get_first_ln(s.block_children[p_start_i])
-            # end_ln = get_first_ln(s.block_children[p_end_i]) node might not exist
-            end_ln = 1 + get_last_ln(s.block_children[p_end_i-1])
-            for line_info in spec.info_for_line_[start_ln:end_ln]:
-                line_info.suppress = True
+            if False:
+                # Suppress the preamble lines, since anything useful
+                # in the preamble will appear in the header.
+                #
+                # We don't do this any more (after the merge of PR #545),
+                # as the purpose is no longer to replace preambles with structured headers.
+                # But it's possible that we might have a similar purpose again
+                # (e.g., for built-in functions), so I'm keeping the code just in case.
+                #
+                start_ln = get_first_ln(s.block_children[p_start_i])
+                # end_ln = get_first_ln(s.block_children[p_end_i]) node might not exist
+                end_ln = 1 + get_last_ln(s.block_children[p_end_i-1])
+                for line_info in spec.info_for_line_[start_ln:end_ln]:
+                    line_info.suppress = True
 
             info_holder = extract_info_from_preamble(s.block_children[p_start_i:p_end_i], s)
             poi = info_holder.convert_to_header()
