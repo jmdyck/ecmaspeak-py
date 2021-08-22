@@ -28,7 +28,6 @@ def generate_spec_for_PR_545():
 
     oh_inc_f.close()
 
-    write_modified_spec()
     note_unused_rules()
 
     write_header_info()
@@ -1828,85 +1827,9 @@ class AlgHeader:
     # --------------------------------------------------------------------------
 
     def lines(self, indentation, mode):
-        if mode != 'dls w initial info':
+        if True:
             # kludge
             return self.tah.lines(indentation, mode)
-
-        _ = DL(indentation)
-
-        # ---------------------------------------
-
-        _.start()
-        _.dt("op kind")
-        _.dd(self.kind)
-        _.dt("name")
-        _.dd(self.name_w_markup)
-
-        if self.for_phrase:
-            _.dt("for")
-            _.dd(self.for_phrase)
-
-        # -------------------------
-
-        assert self.param_names is not None
-        if len(self.param_names) == 0:
-            _.dt("parameters")
-            _.dd("none")
-
-        else:
-            _.dt("parameters")
-            _.dd_ul_start(self.param_names)
-
-            for param_name in self.param_names:
-                optionality = '(optional) ' if param_name in self.optional_params else ''
-                param_nature = self.param_nature_.get(param_name, 'TBD')
-                _.dd_ul_li(param_name, optionality + param_nature)
-
-            _.dd_ul_end()
-
-        # -------------------------
-
-        if self.also:
-            _.dt("also has access to")
-            _.dd_ul_start(var_name for (var_name,_) in self.also)
-
-            for (var_name, expl) in self.also:
-                _.dd_ul_li(var_name, expl)
-
-            _.dd_ul_end()
-
-        # -------------------------
-
-        _.dt("returns")
-        _.dd_ul_start(["normal", "abrupt"])
-
-        _.dd_ul_li("normal", self.return_nature_normal)
-        _.dd_ul_li("abrupt", self.return_nature_abrupt)
-
-        _.dd_ul_end()
-
-        # -------------------------
-
-        if self.description:
-            _.dt("description")
-            _.dd(self.description)
-
-        lines = _.end()
-
-        return lines
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def write_modified_spec():
-    mode = 'dls w initial info'
-    show_targeted_msgs = False
-
-    filename = 'spec_w_eoh'
-    f = shared.open_for_output(filename)
-
-    shared.write_spec_with_extras(mode, show_targeted_msgs, f)
-
-    f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
