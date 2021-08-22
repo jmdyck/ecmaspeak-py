@@ -797,30 +797,49 @@ class TypedAlgHeader:
     def lines(self, indentation, mode):
         assert mode in ['messages in algs and dls', 'dls w revised info']
 
-        _ = DL(indentation)
-
-        _.start()
-
+        lines = []
+        latest_right_len = None
         # ---------------------------------------
-        def put_name_and_type(name, ptype):
+        def put(line):
+            lines.append(line)
+        # ---------------------------------------
+        def iput(line):
+            # "iput" = "put with indentation"
+            put(' '*indentation + line)
+        # ---------------------------------------
+        def iput_a_colon_b(left, right):
+            padded_left = left.ljust(left_max_width)
+            iput(f"    {padded_left} : {right}")
+            nonlocal latest_right_len
+            latest_right_len = len(right)
+        # ---------------------------------------
+        def iput_name_and_type(name, ptype):
             if ptype == T_0:
                 if mode == 'messages in algs and dls':
-                    _.dd_ul_li(name, "TBD")
+                    iput_a_colon_b(name, 'TBD')
                 else:
                     # show nothing
                     pass
             else:
-                _.dd_ul_li(name, ptype.unparse())
+                iput_a_colon_b(name, ptype.unparse())
         # ---------------------------------------
+        def put_msg(msg):
+            lead_up = indentation + 4 + left_max_width + 3
+            put('-' * lead_up + '^' * latest_right_len)
+            put('>>> ' + msg)
+            put('')
+        # ---------------------------------------
+
+        iput('<!--')
 
         assert self.param_names is not None
         if len(self.param_names) == 0:
-            _.dt("parameters")
-            _.dd("none")
+            iput("  parameters:")
+            iput("    (none)")
 
         else:
-            _.dt("parameters")
-            _.dd_ul_start(self.param_names)
+            iput("  parameters:")
+            left_max_width = max(len(param_name) for param_name in self.param_names)
 
             if True:
                 if mode == 'messages in algs and dls':
@@ -829,7 +848,7 @@ class TypedAlgHeader:
                     params = self.parameter_types
 
                 for (pn, pt) in params.items():
-                    put_name_and_type(pn, pt)
+                    iput_name_and_type(pn, pt)
 
                     # XXX Cases where operation_headers types the parameter as 'MathNonNegativeInteger_',
                     # but then that gets translated to 'Integer',
@@ -845,14 +864,13 @@ class TypedAlgHeader:
                         p_node = self.fake_node_for_[pn]
                         if hasattr(p_node, 'errors'):
                             for msg in p_node.errors:
-                                _.dd_ul_li_comment(msg)
-
-            _.dd_ul_end()
+                                put_msg(msg)
 
         # -------------------------
 
-        _.dt("returns")
-        _.dd_ul_start(["normal", "abrupt"])
+        put('')
+        iput("  returns:")
+        left_max_width = max(len(name) for name in ["normal", "abrupt"])
 
         if True:
             if mode == 'messages in algs and dls':
@@ -866,20 +884,18 @@ class TypedAlgHeader:
             else:
                 (abrupt_part, normal_part) = rt.split_by(T_Abrupt)
 
-            put_name_and_type('normal', normal_part)
-            put_name_and_type('abrupt', abrupt_part)
+            iput_name_and_type('normal', normal_part)
+            iput_name_and_type('abrupt', abrupt_part)
 
             if mode == 'messages in algs and dls':
                 p_node = self.fake_node_for_['*return*']
                 if hasattr(p_node, 'errors'):
                     for msg in p_node.errors:
-                        _.dd_ul_li_comment(msg)
+                        put_msg(msg)
 
-        _.dd_ul_end()
+        iput('-->')
 
         # -------------------------
-
-        lines = _.end()
 
         return lines
 
