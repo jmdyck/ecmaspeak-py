@@ -799,17 +799,7 @@ class TypedAlgHeader:
 
         _ = DL(indentation)
 
-        # ---------------------------------------
-
         _.start()
-        _.dt("op kind")
-        _.dd(self.kind)
-        _.dt("name")
-        _.dd(self.name_w_markup)
-
-        if self.for_phrase:
-            _.dt("for")
-            _.dd(self.for_phrase)
 
         # ---------------------------------------
         def put_name_and_type(name, ptype):
@@ -861,18 +851,6 @@ class TypedAlgHeader:
 
         # -------------------------
 
-        if self.typed_alsos:
-            _.dt("also has access to")
-            _.dd_ul_start(self.typed_alsos.keys())
-
-            if True:
-                for (var_name, vt) in self.typed_alsos.items():
-                    _.dd_ul_li(var_name, vt)
-
-            _.dd_ul_end()
-
-        # -------------------------
-
         _.dt("returns")
         _.dd_ul_start(["normal", "abrupt"])
 
@@ -900,10 +878,6 @@ class TypedAlgHeader:
         _.dd_ul_end()
 
         # -------------------------
-
-        if self.description:
-            _.dt("description")
-            _.dd(self.description)
 
         lines = _.end()
 
