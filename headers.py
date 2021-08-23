@@ -17,9 +17,6 @@ from shared import spec, stderr, RE, DL
 def generate_spec_for_PR_545():
     stderr("generate_spec_for_PR_545 ...")
 
-    shared.prep_for_line_info()
-    add_styling()
-
     global oh_inc_f
     oh_inc_f = shared.open_for_output('oh_warnings')
 
@@ -36,25 +33,6 @@ def generate_spec_for_PR_545():
 
 def oh_warn(*args):
     print(*args, file=oh_inc_f)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def add_styling():
-    # Hard-coding a line number is brittle,
-    # but it'll probably work for as long as we need it to.
-    spec.info_for_line_[4].afters.append(NewStyling())
-
-class NewStyling:
-    def lines(self, indentation, mode):
-        return [
-            '<style>',
-            '  /* Eventually, styling for dl.header would move to ecmarkup.css. */',
-            '  dl.header {',
-            '    background: #CFC;',
-            '  }',
-            '  dl.header dt { font-weight: bold; }',
-            '</style>',
-        ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -458,7 +436,6 @@ def create_operation_info_for_section(s):
             prev = s.heading_child
         else:
             prev = s.block_children[p_start_i-1]
-        ln = get_last_ln(prev)
 
         if p_start_i == p_end_i or (span_start_i == 0 and s.has_structured_header):
             # no children in preamble, so no lines to suppress
@@ -486,7 +463,7 @@ def create_operation_info_for_section(s):
 
         oi = resolve_oi(hoi, poi)
         oi.finish_initialization()
-        spec.info_for_line_[ln].afters.append(oi)
+        oi.node_at_end_of_header = prev
         if algo:
             if algo.element_name == 'emu-alg':
                 if hasattr(algo, '_parent_algdefn'):
@@ -581,8 +558,7 @@ def declare_sdo(section, op_name, param_dict, also=[]):
             if alg_defn.section.section_num.startswith('B'): continue
             oi.add_defn(alg_defn)
 
-        ln = get_last_ln(section.heading_child)
-        spec.info_for_line_[ln].afters.append(oi)
+        oi.node_at_end_of_header = section.heading_child
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1090,16 +1066,6 @@ class PreambleInfoHolder:
         poi.description_paras = self.fields['desc']
 
         return poi
-
-# ----------------------------------
-
-def get_first_ln(node):
-    (ln, _) = shared.convert_posn_to_linecol(node.start_posn)
-    return ln
-
-def get_last_ln(node):
-    (ln, _) = shared.convert_posn_to_linecol(node.end_posn)
-    return ln
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1832,13 +1798,6 @@ class AlgHeader:
             
         alg = spec.alg_info_[bif_or_op][self.name]
         alg.headers.append(self)
-
-    # --------------------------------------------------------------------------
-
-    def lines(self, indentation, mode):
-        if True:
-            # kludge
-            return self.tah.lines(indentation, mode)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

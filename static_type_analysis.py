@@ -452,6 +452,8 @@ def prep_for_STA():
     global un_f
     un_f = shared.open_for_output('unconverted_natures')
 
+    shared.prep_for_line_info()
+
     for bif_or_op in ['bif', 'op']:
         for alg in spec.alg_info_[bif_or_op].values():
             for header in alg.headers:
@@ -776,6 +778,9 @@ class TypedAlgHeader:
             ], alg_defn.anode.prod.lhs_s
 
             self.t_defns.append((discriminator,alg_defn.anode))
+
+        (ln, _) = shared.convert_posn_to_linecol(header.node_at_end_of_header.end_posn)
+        spec.info_for_line_[ln].afters.append(self)
 
     # ------------------------------------------------------
 
