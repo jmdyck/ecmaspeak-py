@@ -4464,30 +4464,33 @@ def tc_nonvalue(anode, env0):
         mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
         sec_id = mo.group(1)
         implied_base_t = {
-            # 9.2.*
+            # 10.2.*
             'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
             'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
 
-            # 9.4.1.*
+            # 10.3.2
+            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_function_object_,
+
+            # 10.4.1.*
             'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
             'sec-bound-function-exotic-objects-construct-argumentslist-newtarget'                    : T_bound_function_exotic_object_,
 
-            # 9.4.2.*
+            # 10.4.2.*
             'sec-array-exotic-objects-defineownproperty-p-desc'                                      : T_Array_object_,
 
-            # 9.4.3.*
+            # 10.4.3.*
             'sec-string-exotic-objects-getownproperty-p'                                             : T_String_exotic_object_,
             'sec-string-exotic-objects-defineownproperty-p-desc'                                     : T_String_exotic_object_,
             'sec-string-exotic-objects-ownpropertykeys'                                              : T_String_exotic_object_,
 
-            # 9.4.4.*
+            # 10.4.4.*
             'sec-arguments-exotic-objects-getownproperty-p'                                          : T_Object,
             'sec-arguments-exotic-objects-defineownproperty-p-desc'                                  : T_Object,
             'sec-arguments-exotic-objects-get-p-receiver'                                            : T_Object,
             'sec-arguments-exotic-objects-set-p-v-receiver'                                          : T_Object,
             'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
 
-            # 9.4.5.*
+            # 10.4.5.*
             'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
             'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
             'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
@@ -4496,7 +4499,7 @@ def tc_nonvalue(anode, env0):
             'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
             'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
 
-            # 9.5.*
+            # 10.5.*
             'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
             'sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget' : T_Proxy_exotic_object_,
 
@@ -5243,14 +5246,6 @@ def tc_cond_(cond, env0, asserting):
         copula = 'isnt a' if 'not' in p else 'is a'
         return env0.with_type_test(var, copula, type_for_environment_record_kind(kind), asserting)
 
-    elif p in [
-        r'{CONDITION_1} : {var} is an ECMAScript function',
-        r'{CONDITION_1} : {var} is an ECMAScript function object',
-        r'{CONDITION_1} : {var} is an ECMAScript function object or a built-in function object',
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_function_object_, asserting)
-
     elif p == r"{CONDITION_1} : {var} is an Integer-Indexed exotic object":
         [var] = children
         return env0.with_type_test(var, 'is a', T_Integer_Indexed_object_, asserting)
@@ -5536,6 +5531,17 @@ def tc_cond_(cond, env0, asserting):
 
     # ----------------------
     # quasi-type-conditions
+
+    elif p in [
+        r'{CONDITION_1} : {var} is an ECMAScript function',
+        r'{CONDITION_1} : {var} is an ECMAScript function object',
+        r'{CONDITION_1} : {var} is an ECMAScript function object or a built-in function object',
+    ]:
+        [var] = children
+        return (
+            env0.with_expr_type_narrowed(var, T_function_object_),
+            env0
+        )
 
     elif p == r"{CONDITION_1} : {var} is a List of a single Number":
         [var] = children
