@@ -759,10 +759,10 @@ single_sentence_rules_str = r'''
         retn=a Number
         v=\1
 
-        (Returns (?P<retn>a new _TypedArray_ object) .+)
+        (Returns (?P<retn>a new _TypedArray_) .+)
         v=\1
 
-        (Returns (?P<retn>an Array object) into .+)
+        (Returns (?P<retn>an Array) into .+)
         v=\1
 
         (Returns the .+ integral Number value .+)
@@ -789,7 +789,7 @@ single_sentence_rules_str = r'''
         retn=a String
         v=\1
 
-        (.+ returns (an Array object) containing .+, (or \*null\*) if _string_ did not match.)
+        (.+ returns (an Array) containing .+, (or \*null\*) if _string_ did not match.)
         retn=\2 \3
         v=\1
 

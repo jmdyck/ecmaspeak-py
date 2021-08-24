@@ -97,7 +97,7 @@ nature_to_tipe = {
         'the object'  : 'Object',
         'the argument object': 'Object',
         'an object with a *"constructor"* property whose value is _F_': 'Object', # TODO
-        'an Object that is neither a TypedArray object nor an ArrayBuffer object': 'Object',
+        'an Object that is neither a TypedArray nor an ArrayBuffer': 'Object',
 
     # unofficial 'supertypes':
         'a primitive value'             : 'Primitive',
@@ -113,7 +113,7 @@ nature_to_tipe = {
         'Tangible_'                     : 'Tangible_',
         'an ECMAScript value, which is usually an object or array, although it can also be a String, Boolean, Number or *null*': 'Tangible_',
         'not a numeric value'           : 'Tangible_', # TODO
-        'an ECMAScript value other than a TypedArray object': 'Tangible_', # loses info
+        'an ECMAScript value other than a TypedArray': 'Tangible_', # loses info
 
     # unofficial 'subtypes' of the above:
 
@@ -137,20 +137,18 @@ nature_to_tipe = {
 
         # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
         'an ArrayBuffer' : 'ArrayBuffer_object_',
-        'an ArrayBuffer object' : 'ArrayBuffer_object_',
         'an ArrayBuffer or SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
-        'an ArrayBuffer object or a SharedArrayBuffer object' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+        'an ArrayBuffer or a SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
         'a SharedArrayBuffer' : 'SharedArrayBuffer_object_',
-        'a SharedArrayBuffer object' : 'SharedArrayBuffer_object_',
 
         'the TypedArray instance' : 'TypedArray_object_',
         'a TypedArray instance'   : 'TypedArray_object_',
-        'a TypedArray object'     : 'TypedArray_object_',
-        'a new _TypedArray_ object' : 'TypedArray_object_',
+        'a TypedArray'            : 'TypedArray_object_',
+        'a new _TypedArray_'      : 'TypedArray_object_',
 
         # 9.4.2
         'an Array exotic object' : 'Array_object_',
-        'an Array object'        : 'Array_object_',
+        'an Array'               : 'Array_object_',
         'an array'               : 'Array_object_',
 
         'an array-like object': 'Object', # TODO
@@ -406,7 +404,7 @@ nature_to_tipe = {
     'a Number or a BigInt'                                       : 'Number | BigInt',
     'a Number value & *undefined*'                               : 'Number | Undefined',
     'a Number or *undefined*'                                    : 'Number | Undefined',
-    'an Array object or *null*'                                  : 'Array_object_ | Null',
+    'an Array or *null*'                                         : 'Array_object_ | Null',
     '*false* or a non-negative integer'                          : 'Boolean | MathInteger_',
     '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
     '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
