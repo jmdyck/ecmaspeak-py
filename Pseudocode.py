@@ -468,6 +468,7 @@ def analyze_sections():
 
     for section in spec.root_section.each_descendant_that_is_a_section():
         assert hasattr(section, 'ste')
+        section.alg_defns = []
 
         # "progress bar"
         top_level_num = section.section_num.split('.')[0]
@@ -1628,7 +1629,8 @@ def alg_add_defn(alg_species, alg_name, discriminator, hnode_or_anode, section):
         assert discriminator is None
         return
 
-    AlgDefn(alg_info, discriminator, hnode_or_anode, section)
+    alg_defn = AlgDefn(alg_info, discriminator, hnode_or_anode, section)
+    section.alg_defns.append(alg_defn)
 
 class AlgDefn:
     def __init__(self, alg_info, discriminator, hnode_or_anode, section):
