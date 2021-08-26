@@ -64,6 +64,7 @@
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
     IfAbruptRejectPromise({var}, {var}).
+    IfAbruptCloseIterator({var}, {var}).
     Insert {var} as the first element of {var}.
     Leave the critical section for {var}.
     Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.

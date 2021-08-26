@@ -4678,6 +4678,17 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env0, T_Promise_object_, anode)
         result = env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
+    elif p == r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).":
+        [vara, varb] = children
+        env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
+        env0.assert_expr_is_of_type(varb, T_iterator_record_)
+
+        proc_add_return(env0, T_Tangible_ | T_empty_ | T_throw_, anode)
+
+        (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
+        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
+        result = env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+
     elif p == r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.":
         [_, key_var, oer_var] = children
         env0.assert_expr_is_of_type(key_var, T_String)

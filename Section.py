@@ -761,6 +761,7 @@ def _handle_other_section(section):
             (r'ReturnIfAbrupt Shorthands',                         'shorthand'),
             (r'Await',                                             'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
+            (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
 
             (r'.+ Instances',             'properties_of_instances'),
             (r'Module Namespace Objects', 'properties_of_instances'),
