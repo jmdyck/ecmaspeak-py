@@ -520,8 +520,6 @@ regexp_also = [
 
 # ----------------------------
 
-spec.oi_for_sdo_ = {}
-
 def declare_sdo(section, op_name, param_dict, also=[]):
     oi = AlgHeader()
     oi.kind = 'syntax-directed operation'
@@ -537,21 +535,12 @@ def declare_sdo(section, op_name, param_dict, also=[]):
         oi.param_nature_ = OrderedDict( [('_direction_', '1 or -1')] )
         # oi.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
 
-    if op_name in spec.oi_for_sdo_:
-        pre_oi = spec.oi_for_sdo_[op_name]
-        assert pre_oi.param_names == oi.param_names
-        assert pre_oi.param_nature_ == oi.param_nature_
-        assert pre_oi.also == oi.also
-    else:
+    if True:
         oi.finish_initialization()
-        spec.oi_for_sdo_[op_name] = oi
 
-        op_info = spec.alg_info_['op'][op_name]
-        assert op_info.name == op_name
-        assert op_info.species in ['op: syntax-directed', 'op: early error']
-        for alg_defn in op_info.definitions:
-            if alg_defn.section.section_num.startswith('B'): continue
-            oi.add_defn(alg_defn)
+        if not section.section_num.startswith('B'):
+            for alg_defn in section.alg_defns:
+                oi.add_defn(alg_defn)
 
         oi.node_at_end_of_header = section.heading_child
 

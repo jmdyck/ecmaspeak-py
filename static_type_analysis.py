@@ -618,7 +618,7 @@ def summarize_headers(alg):
         alg.return_type = header.tah.return_type
 
     else:
-        assert alg.species in ['op: concrete method: env rec', 'op: internal method', 'op: numeric method'], alg.species
+        assert alg.species in ['op: concrete method: env rec', 'op: internal method', 'op: numeric method', 'op: syntax-directed', 'op: early error'], alg.species
         n_params = len(alg.headers[0].tah.parameter_types)
         assert all(len(header.tah.parameter_types) == n_params for header in alg.headers)
 
@@ -832,6 +832,10 @@ class TypedAlgHeader:
 
     def lines(self, indentation, mode):
         assert mode in ['messages in algs and dls', 'dls w revised info']
+
+        if self.name == 'Early Errors':
+            # Don't bother, it's uninformative.
+            return []
 
         lines = []
         latest_right_len = None
@@ -3430,6 +3434,8 @@ def tc_header(tah):
                 tah.name == 'TimeString' and pn == '_tv_'
                 or
                 tah.name == 'DateString' and pn == '_tv_'
+                or
+                tah.name == 'Evaluation' and pn == '*return*' and init_t == T_Abrupt | T_Tangible_ | T_empty_
 
 
                 # or
