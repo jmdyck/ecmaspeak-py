@@ -806,6 +806,7 @@ class TypedAlgHeader:
                 '{ONE_LINE_ALG}',
                 '{EE_RULE}',
                 '{NAMED_OPERATION_INVOCATION}',
+                '{RHSS}',
             ], alg_defn.anode.prod.lhs_s
 
             self.t_defns.append((discriminator,alg_defn.anode))
@@ -1910,6 +1911,19 @@ ValidateAndApplyPropertyDescriptor       ; _current_              ; Property Des
 ValidateTypedArray                       ; _O_                    ; TBD                 ; Tangible_
 [[Call]]                                 ; *return*               ; TBD                 ; Tangible_ | throw_
 [[Construct]]                            ; *return*               ; TBD                 ; Object | throw_
+Day                                      ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+TimeWithinDay                            ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+DaysInYear                               ; _y_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+DayFromYear                              ; _y_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+TimeFromYear                             ; _y_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+YearFromTime                             ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+MonthFromTime                            ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+DateFromTime                             ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+WeekDay                                  ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+HourFromTime                             ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+MinFromTime                              ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+SecFromTime                              ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
+msFromTime                               ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
 '''
 class TypeTweaks:
     def __init__(self):
@@ -2718,6 +2732,10 @@ class Env:
                 '_m_.[[CycleRoot]]', # GatherAsyncParentCompletions
                 '_promiseCapability_.[[Reject]]', # CallDynamicImportFulfilled
                 '_promiseCapability_.[[Resolve]]', # CallDynamicImportFulfilled
+                '\u211d(_t_ / msPerDay)', # Day
+                '\u211d(_t_ / msPerHour)', # HourFromTime
+                '\u211d(_t_ / msPerMinute)', # MinFromTime
+                '\u211d(_t_ / msPerSecond)', # SecFromTime
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -3512,7 +3530,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
 
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
             assert tc_nonvalue(body, in_env) is None
-        elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
+        elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}', '{RHSS}']:
             (out_t, out_env) = tc_expr(body, in_env)
             proc_add_return(out_env, out_t, body)
         else:
@@ -5020,6 +5038,7 @@ def tc_cond_(cond, env0, asserting):
 
     if p in [
         r'{CONDITION} : {CONDITION_1}',
+        r'{CONDITION} : {NUM_COMPARISON}',
         r'{CONDITION_1} : {TYPE_TEST}',
         r'{CONDITION_1} : {NUM_COMPARISON}',
     ]:
@@ -5052,6 +5071,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
+        r"{CONDITION} : {NUM_COMPARISON} and {NUM_COMPARISON}",
     ]:
         logical = ('and', children)
         return tc_logical(logical, env0, asserting)
@@ -6064,8 +6084,8 @@ def tc_cond_(cond, env0, asserting):
         r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}",
     ]:
         [a, op, b] = children
-        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
-        (b_t, env1) = tc_expr(b, env0); assert env1 is env0
+        (a_t, env1) = tc_expr(a, env0);
+        (b_t, env2) = tc_expr(b, env1);
 
         if a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) and b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
             # great!
@@ -6076,8 +6096,8 @@ def tc_cond_(cond, env0, asserting):
                 (is_t,   _) = a_t.split_by(T_MathReal_ | T_MathNegInfinity_)
                 (isnt_t, _) = a_t.split_by(T_MathReal_ | T_MathPosInfinity_)
                 return (
-                    env0.with_expr_type_narrowed(a, is_t),
-                    env0.with_expr_type_narrowed(a, isnt_t)
+                    env2.with_expr_type_narrowed(a, is_t),
+                    env2.with_expr_type_narrowed(a, isnt_t)
                 )
 
         elif a_t.is_a_subtype_of_or_equal_to(T_BigInt) and b_t.is_a_subtype_of_or_equal_to(T_BigInt):
@@ -6108,7 +6128,8 @@ def tc_cond_(cond, env0, asserting):
                 cond,
                 f"comparison has incompatible types: {a_t} vs. {b_t}"
             )
-        return (env0, env0)
+        return (env2, env2)
+        # -----------------
 
         if (
             a_t.is_a_subtype_of_or_equal_to(T_MathReal_)
@@ -7548,23 +7569,29 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : {SUM}",
         r"{EX} : {U_LITERAL}",
         r"{EX} : {STR_LITERAL}",
+        r"{EXPR} : {SUM}",
         r"{FACTOR} : ({NUM_EXPR})",
         r"{FACTOR} : ({SUM})",
         r"{FACTOR} : {NAMED_OPERATION_INVOCATION}",
         r"{FACTOR} : {NUM_LITERAL}",
         r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}",
+        r"{FACTOR} : {PREFIX_PAREN}",
         r"{FACTOR} : {SETTABLE}",
         r"{LITERAL} : {code_unit_lit}",
         r"{LITERAL} : {NUM_LITERAL}",
         r"{LOCAL_REF} : {PROD_REF}",
         r"{LOCAL_REF} : {SETTABLE}",
         r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}",
+        r"{NUM_COMPARAND} : {EXPR}",
         r"{NUM_COMPARAND} : {FACTOR}",
         r"{NUM_COMPARAND} : {SUM}",
         r"{NUM_COMPARAND} : {PRODUCT}",
         r"{NUM_EXPR} : {PRODUCT}",
         r"{NUM_EXPR} : {SUM}",
+        r"{PRODUCT} : {FACTOR}",
+        r"{RHSS} : {RHS}",
         r"{SETTABLE} : {DOTTING}",
+        r"{SUM} : {TERM}",
         r"{TERM} : ({PRODUCT})",
         r"{TERM} : {FACTOR}",
         r"{TERM} : {PRODUCT}",
@@ -7910,6 +7937,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ------
 
     elif p in [
+        r"{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXPR})",
         r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})',
         r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT}) (see {h_emu_xref})',
     ]:
@@ -8717,6 +8745,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
+    elif p == r"{PRODUCT} : {FACTOR} / {FACTOR}":
+        [vara, varb] = children
+        env1 = env0.ensure_expr_is_of_type(vara, T_FiniteNumber_)
+        env2 = env1.ensure_expr_is_of_type(varb, T_FiniteNumber_)
+        return (T_FiniteNumber_, env2)
+
     # --------------------------------------------------------
     # return T_MathInteger_
 
@@ -8860,6 +8894,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}":
         [xref] = children
         return (T_MathNonNegativeInteger_, env0)
+
+    elif p == r"{FACTOR} : {CONSTANT_NAME}":
+        [constant_name] = children
+        constant_name_str = constant_name.source_text()
+        # hack:
+        result_type = {
+            'HoursPerDay'      : T_MathNonNegativeInteger_,
+            'MinutesPerHour'   : T_MathNonNegativeInteger_,
+            'SecondsPerMinute' : T_MathNonNegativeInteger_,
+            'msPerDay'         : T_FiniteNumber_,
+            'msPerHour'        : T_FiniteNumber_,
+            'msPerMinute'      : T_FiniteNumber_,
+            'msPerSecond'      : T_FiniteNumber_,
+        }[constant_name_str]
+        return (result_type, env0)
 
     # ----
     # return T_MathInteger_: arithmetic:
@@ -11038,6 +11087,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsb_word.source_text() == '[[AsyncEvaluation]]'
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (ListType(T_Cyclic_Module_Record), env1)
+
+    elif p == r"{RHSS} : {RHSS}{RHS}":
+        [rhss, rhs] = children
+        (t1, env1) = tc_expr(rhss, env0)
+        (t2, env2) = tc_expr(rhs, env1)
+        return (t1 | t2, env2)
+
+    elif p == r"{RHS} : {nlai}= {EXPR} if {CONDITION}":
+        [expr, cond] = children
+        (t_env, f_env) = tc_cond(cond, env0)
+        (t, env1) = tc_expr(expr, t_env)
+        return (t, env1)
 
     else:
         stderr()

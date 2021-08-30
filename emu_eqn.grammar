@@ -32,14 +32,21 @@
     {nlai}= {EXPR} if {CONDITION}
 
 {CONDITION} :
-    {COND}
-    {COND} and {COND}
+    {NUM_COMPARISON}
+    {NUM_COMPARISON} and {NUM_COMPARISON}
 
-{COND} :
-    {EXPR} &le; {EXPR}
-    {EXPR} &le; {EXPR} &lt; {EXPR}
-    {EXPR} &ne; {EXPR}
-    {EXPR} = {EXPR}
+{NUM_COMPARISON} :
+    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
+    {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
+
+{NUM_COMPARAND} :
+    {EXPR}
+
+{NUM_COMPARATOR} :
+    &le;
+    &lt;
+    &ne;
+    =
 
 # ------
 
@@ -48,25 +55,30 @@
     {SUM}
 
 {SUM} :
-    {SUM} + {TERM}
-    {SUM} - {TERM}
+    {SUM} {SUM_OPERATOR} {TERM}
     {TERM}
+
+{SUM_OPERATOR} :
+    +
+    -
 
 {TERM} :
     {PRODUCT}
 
 {PRODUCT} :
     {FACTOR}
-    {FACTOR} &times; {FACTOR}
-    {FACTOR} / {FACTOR}
-    {FACTOR} modulo {FACTOR}
+    {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
+
+{PRODUCT_OPERATOR} :
+    &times;
+    /
+    modulo
 
 {FACTOR} :
     ({SUM})
     {CONSTANT_NAME}
+    {NUM_LITERAL}
     {PREFIX_PAREN}
-    {dec_int_lit}
-    {starred_int_lit}{h_sub_fancy_f}
     {var}
 
 {CONSTANT_NAME} :
@@ -77,6 +89,10 @@
     msPerHour
     msPerMinute
     msPerSecond
+
+{NUM_LITERAL} :
+    {dec_int_lit}
+    {starred_int_lit}{h_sub_fancy_f}
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}({EXPR})
