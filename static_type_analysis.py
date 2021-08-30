@@ -5089,6 +5089,17 @@ def tc_cond_(cond, env0, asserting):
         )
         return tc_logical(logical, env0, asserting)
 
+    elif p == r"{CONDITION} : {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>":
+        [a, b, c] = children
+        logical = (
+            'and',
+            [
+                ('or', [a, b]),
+                c
+            ]
+        )
+        return tc_logical(logical, env0, asserting)
+
     elif p in [
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
