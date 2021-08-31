@@ -17,7 +17,10 @@ def make_and_check_sections():
 
     spec.root_section = _make_section_tree(spec.doc_node)
     _set_section_identification_r(spec.root_section, None)
-    _set_section_kind_r(spec.root_section)
+
+    for section in spec.root_section.each_descendant_that_is_a_section():
+        _set_section_kind(section)
+
     _print_section_kinds(spec.root_section)
     _check_aoids(spec.root_section)
     _check_section_order(spec.root_section)
@@ -167,7 +170,7 @@ def _set_section_identification_r(section, section_num):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _set_section_kind_r(section):
+def _set_section_kind(section):
     # Set section attributes:
     # .section_kind
     # .section_title
@@ -187,9 +190,6 @@ def _set_section_kind_r(section):
         _handle_other_section(section)
     )
     assert r
-
-    for child in section.section_children:
-        _set_section_kind_r(child)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
