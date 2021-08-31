@@ -9,6 +9,7 @@ from collections import OrderedDict
 
 import shared
 from shared import stderr, header, msg_at_posn, spec
+from HTML import HNode
 import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -294,13 +295,31 @@ def _handle_early_errors_section(section):
         if child.element_name == 'emu-grammar':
             curr_emu_grammar = child
         elif child.element_name == 'ul':
-            Pseudocode.handle_early_error(curr_emu_grammar, child, section)
+            handle_early_error(curr_emu_grammar, child, section)
         elif child.element_name in ['p', 'emu-note']:
             pass
         else:
             assert 0, child.element_name
 
     return True
+
+# ------------------------------------------------------------------------------
+
+def handle_early_error(emu_grammar, ul, section):
+    assert emu_grammar.element_name == 'emu-grammar'
+    assert ul.element_name == 'ul'
+
+    for li in ul.children:
+        if li.element_name == '#LITERAL':
+            assert li.source_text().isspace()
+        elif li.element_name == 'li':
+            tree = Pseudocode.parse(li, 'early_error')
+            if tree is None: continue
+            [ee_rule] = tree.children
+            assert ee_rule.prod.lhs_s == '{EE_RULE}'
+            Pseudocode.alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
+        else:
+            assert 0, li.element_name
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -414,7 +433,7 @@ def _handle_sdo_section(section):
         for (i,c) in enumerate(section.block_children):
             if c.element_name == 'emu-alg':
                 prev_c = section.block_children[i-1]
-                Pseudocode.handle_composite_sdo(sdo_name, prev_c, c, section)
+                handle_composite_sdo(sdo_name, prev_c, c, section)
                 used_indexes.add(i)
                 used_indexes.add(i-1)
 
@@ -465,7 +484,7 @@ def _handle_sdo_section(section):
                 if child.element_name == '#LITERAL':
                     assert child.is_whitespace()
                 elif child.element_name == 'li':
-                    Pseudocode.handle_inline_sdo(child, sdo_name, section)
+                    handle_inline_sdo(child, sdo_name, section)
                 else:
                     assert 0, child.element_name
 
@@ -496,7 +515,7 @@ def _handle_sdo_section(section):
                 ):
                     emu_alg = section.block_children[i+1]
                     assert emu_alg.element_name == 'emu-alg'
-                    Pseudocode.handle_composite_sdo(sdo_name, c, emu_alg, section)
+                    handle_composite_sdo(sdo_name, c, emu_alg, section)
 
                 else:
                     # assert 0, p_text
@@ -510,6 +529,107 @@ def _handle_sdo_section(section):
         assert 0
 
     return True
+
+# ------------------------------------------------------------------------------
+
+def handle_composite_sdo(sdo_name, grammar_arg, code_hnode, section):
+    assert isinstance(grammar_arg, HNode)
+    assert isinstance(code_hnode, HNode)
+    assert code_hnode.element_name == 'emu-alg'
+
+    # ---------------------------
+    # grammar_arg -> emu_grammar:
+
+    if grammar_arg.element_name == 'emu-grammar':
+        emu_grammar = grammar_arg
+
+    elif grammar_arg.element_name == 'p':
+        if grammar_arg.inner_source_text() == f"Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of {sdo_name}:":
+            # This is the default definition,
+            # which isn't associated with a particular production.
+            emu_grammar = None
+
+        else:
+            (emu_grammars, text) = extract_grammars(grammar_arg)
+            assert len(emu_grammars) == 1
+            [emu_grammar] = emu_grammars
+            assert text == 'The production <G> evaluates as follows:'
+
+    else:
+        assert 0, grammar_arg.element_name
+
+    # ----------
+
+    Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, code_hnode, section)
+
+# ------------------------------------------------------------------------------
+
+def extract_grammars(x):
+    emu_grammars = []
+    text = ''
+    for c in x.children:
+        if c.element_name == 'emu-grammar':
+            emu_grammars.append(c)
+            text += '<G>'
+        else:
+            text += c.source_text()
+    return (emu_grammars, text.strip())
+
+# ------------------------------------------------------------------------------
+
+def handle_inline_sdo(li, section_sdo_name, section):
+        assert li.element_name == 'li'
+
+        LI = Pseudocode.parse(li, 'inline_sdo')
+        if LI is None: return
+
+        assert LI.prod.lhs_s == '{LI}'
+        [ISDO_RULE] = LI.children
+        assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
+
+        emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
+        emu_grammar_anodes = [
+            child
+            for child in ISDO_RULE.children
+            if child.prod.lhs_s == '{h_emu_grammar}'
+        ]
+        assert len(emu_grammar_hnodes) == len(emu_grammar_anodes)
+        for (emu_grammar_hnode, emu_grammar_anode) in zip(emu_grammar_hnodes, emu_grammar_anodes):
+            emu_grammar_anode._hnode = emu_grammar_hnode
+
+        rule_sdo_names = []
+        rule_grammars = []
+        rule_expr = None
+
+        for child in ISDO_RULE.children:
+            cl = child.prod.lhs_s
+            if cl == '{ISDO_NAME}':
+                [cap_word] = child.children
+                [rule_sdo_name] = cap_word.children
+                assert rule_sdo_name == section_sdo_name
+                rule_sdo_names.append(rule_sdo_name)
+            elif cl == '{h_emu_grammar}':
+                rule_grammars.append(child._hnode)
+            elif cl == '{nonterminal}':
+                rule_grammars.append(child)
+            elif cl == '{EXPR}':
+                assert rule_expr is None
+                rule_expr = child
+            elif cl in ['{NAMED_OPERATION_INVOCATION}', '{h_sub_fancy_f}']:
+                if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
+                    # skip it
+                    pass
+                else:
+                    assert rule_expr is None
+                    rule_expr = child
+            else:
+                assert 0, cl
+
+        assert len(rule_sdo_names) == 1 # and so could simplify
+        assert 0 < len(rule_grammars) <= 5
+        for rule_sdo_name in rule_sdo_names:
+            for rule_grammar in rule_grammars:
+                Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -651,7 +771,7 @@ def _handle_other_op_section(section):
                     assert b.inner_source_text().strip() == 'Result'
                     continue
 
-                Pseudocode.handle_tabular_op_defn(op_name, a, b, section)
+                handle_tabular_op_defn(op_name, a, b, section)
 
         elif section.section_kind == 'env_rec_method_unused':
             pass
@@ -741,6 +861,44 @@ def _handle_other_op_section(section):
         assert 0
 
     return True
+
+# ------------------------------------------------------------------------------
+
+def handle_tabular_op_defn(op_name, a, b, section):
+        assert a.element_name == 'td'
+        assert b.element_name == 'td'
+
+        at = a.inner_source_text().strip()
+        bt = b.inner_source_text().strip()
+
+        discriminator = at
+
+        x = ' '.join(c.element_name for c in b.children)
+
+        if x in [
+            '#LITERAL',
+            '#LITERAL emu-xref #LITERAL',
+            '#LITERAL sub #LITERAL',
+            '#LITERAL sub #LITERAL sub #LITERAL',
+        ]:
+            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, b, section)
+
+        elif x == '#LITERAL emu-note #LITERAL':
+            # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
+            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, b, section)
+
+        elif x == '#LITERAL p #LITERAL p #LITERAL':
+            (_, p1, _, p2, _) = b.children
+            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, b, section)
+            pass
+
+        elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
+            (_, p, _, emu_alg, _) = b.children
+            assert p.source_text() == '<p>Apply the following steps:</p>'
+            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, emu_alg, section)
+
+        else:
+            assert 0, x
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1290,7 +1448,7 @@ def _handle_other_section(section):
 
     for child in section.block_children:
         if child.element_name == 'emu-eqn':
-            Pseudocode.handle_emu_eqn(child, section)
+            handle_emu_eqn(child, section)
 
     n_emu_algs = section.bcen_list.count('emu-alg')
 
@@ -1364,6 +1522,41 @@ def _handle_other_section(section):
             assert 0, (section.section_num, section.section_title)
 
     return True
+
+# ------------------------------------------------------------------------------
+
+def handle_emu_eqn(emu_eqn, section):
+    assert emu_eqn.element_name == 'emu-eqn'
+
+    aoid = emu_eqn.attrs['aoid']
+    if aoid in ['DateFromTime', 'WeekDay']:
+        assert 'id' not in emu_eqn.attrs
+    else:
+        id = emu_eqn.attrs['id']
+        if aoid == 'DayFromYear':
+            assert id == 'eqn-DaysFromYear' # "Day" vs "Days"
+        else:
+            assert id == 'eqn-' + aoid
+
+    tree = Pseudocode.parse(emu_eqn)
+    if tree is None: return
+
+    assert tree.prod.lhs_s == '{EMU_EQN_DEF}'
+    [child] = tree.children
+
+    if child.prod.lhs_s == '{CONSTANT_DEF}':
+        [constant_name, dec_int_lit] = child.children[0:2]
+        assert constant_name.source_text() == aoid
+        # XXX Pseudocode.alg_add_defn('constant', aoid, None, dec_int_lit, section)
+
+    elif child.prod.lhs_s == '{OPERATION_DEF}':
+        [op_name, parameter, body] = child.children
+        assert op_name.source_text() == aoid
+        parameter_name = parameter.source_text()
+        Pseudocode.alg_add_defn('op: solo', aoid, None, body, section)
+
+    else:
+        assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1485,7 +1678,7 @@ def _handle_changes_section(section):
             ):
                 emu_grammar = section.block_children[i]; i += 1
                 ul = section.block_children[i]; i += 1
-                Pseudocode.handle_early_error(emu_grammar, ul, section)
+                handle_early_error(emu_grammar, ul, section)
 
             elif re.fullmatch(fr'The semantics of {emu_xref_re} is extended as follows:', p_ist):
                 p2 = section.block_children[i]; i += 1
@@ -1512,7 +1705,7 @@ def _handle_changes_section(section):
                         [emu_grammar] = [*p2.each_child_named('emu-grammar')]
                         emu_alg = section.block_children[i]; i += 1
                         assert emu_alg.element_name == 'emu-alg'
-                        Pseudocode.handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg, section)
+                        handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg, section)
                     else:
                         i -= 1
                         break
@@ -1553,7 +1746,7 @@ def _handle_changes_section(section):
                     emu_alg = section.block_children[i]; i += 1
                     assert emu_grammar.element_name == 'emu-grammar'
                     assert emu_alg.element_name == 'emu-alg'
-                    Pseudocode.handle_composite_sdo(op_name, emu_grammar, emu_alg, section)
+                    handle_composite_sdo(op_name, emu_grammar, emu_alg, section)
 
                 else:
                     print()
