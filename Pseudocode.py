@@ -452,14 +452,6 @@ def check_emu_alg_coverage():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def handle_solo_op(op_name, emu_alg, section):
-    # "solo" in the sense of having a single definition,
-    # in contrast to multiple definitions discriminated by type or syntax
-
-    alg_add_defn('op: solo', op_name, None, emu_alg, section)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 def handle_tabular_op_defn(op_name, tda, tdb, section):
     assert tda.element_name == 'td'
     assert tdb.element_name == 'td'
@@ -495,11 +487,6 @@ def handle_tabular_op_defn(op_name, tda, tdb, section):
 
     else:
         assert 0, x
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def handle_type_discriminated_op(op_name, op_species, discriminator, emu_alg, section):
-    alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -651,12 +638,6 @@ def handle_emu_eqn(emu_eqn, section):
         alg_add_defn('op: solo', aoid, None, body, section)
     else:
         assert 0
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def handle_function(bif_species, locater, emu_alg, section):
-
-    alg_add_defn(bif_species, locater, None, emu_alg, section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

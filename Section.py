@@ -598,7 +598,7 @@ def _handle_oddball_op_section(section):
 
     emu_alg = section.block_children[1]
     assert emu_alg.element_name == 'emu-alg'
-    Pseudocode.handle_solo_op(op_name, emu_alg, section)
+    Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
     return True
 
@@ -686,7 +686,7 @@ def _handle_other_op_section(section):
         # (this definition of) the operation named by the section_title.
 
         if section.section_kind.endswith('abstract_operation'):
-            Pseudocode.handle_solo_op(op_name, emu_alg, section)
+            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
         elif section.section_kind in [
             'numeric_method',
@@ -732,7 +732,7 @@ def _handle_other_op_section(section):
                 'internal_method'  : 'op: internal method',
             }[section.section_kind]
 
-            Pseudocode.handle_type_discriminated_op(op_name, op_species, discriminator, emu_alg, section)
+            Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
 
         else:
             assert 0, section.section_kind
@@ -1193,12 +1193,12 @@ def _handle_function_section(section):
         # - A Math function that we merely constrain, via a bullet-list.
         # - "This function is like that function" (except different, maybe).
         # - Other functions that we only define in prose.
-        Pseudocode.handle_function(bif_species, prop_path, None, section)
+        Pseudocode.alg_add_defn(bif_species, prop_path, None, None, section)
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        Pseudocode.handle_function(bif_species, prop_path, emu_alg, section)
+        Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg, section)
 
     else:
         assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
@@ -1206,14 +1206,14 @@ def _handle_function_section(section):
         # The first emu-alg is at least the *start* of the full algorithm.
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
-        Pseudocode.handle_function(bif_species, prop_path, emu_alg, section)
+        Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg, section)
 
         if prop_path == '%TypedArray%.prototype.sort':
             assert n_emu_algs == 2
             # The second emu-alg defines the TypedArray SortCompare.
             emu_alg_posn = section.bcen_list.index('emu-alg', emu_alg_posn+1)
             emu_alg = section.block_children[emu_alg_posn]
-            Pseudocode.handle_solo_op('TypedArraySortCompare', emu_alg, section)
+            Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg, section)
 
     return True
 
@@ -1317,7 +1317,7 @@ def _handle_other_section(section):
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
-            Pseudocode.handle_solo_op('initializer for @@unscopables', emu_alg, section)
+            Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
             # In addition to telling you about the intrinsic object,
@@ -1330,7 +1330,7 @@ def _handle_other_section(section):
             preamble = section.block_children[emu_alg_posn-1]
             assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
 
-            Pseudocode.handle_solo_op(op_name, emu_alg, section)
+            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
         elif section.section_title == 'The Abstract Closure Specification Type':
             # The emu-alg is an example showing the definition and use
@@ -1461,7 +1461,7 @@ def _handle_changes_section(section):
 
             emu_alg = section.block_children[i+1]
             assert emu_alg.element_name == 'emu-alg'
-            Pseudocode.handle_solo_op(op_name, emu_alg, section)
+            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
             # XXX debateable, since it's not a full algorithm
 
     else:
@@ -1529,7 +1529,7 @@ def _handle_changes_section(section):
 
                     emu_alg = section.block_children[i]; i += 1
                     assert emu_alg.element_name == 'emu-alg'
-                    Pseudocode.handle_solo_op('EvalDeclarationInstantiation', emu_alg, section)
+                    Pseudocode.alg_add_defn('op: solo', 'EvalDeclarationInstantiation', None, emu_alg, section)
 
             elif re.fullmatch(fr'The following augments the \|\w+\| production in {emu_xref_re}:', p_ist):
                 emu_grammar = section.block_children[i]; i += 1
