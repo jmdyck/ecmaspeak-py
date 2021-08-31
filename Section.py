@@ -823,7 +823,6 @@ def _handle_other_section(section):
 
             (r'(?P<prop_path>get <PROP_PATH>)',              'accessor_property'),
             (r'(?P<prop_path>set <PROP_PATH>)',              'accessor_property'),
-            (r'(?P<prop_path>Object.prototype.__proto__)',   'accessor_property'),
 
             (r'(?P<prop_path><PROP_PATH>) <PARAMETER_LIST>', 'function_property'),
             (r'(?P<prop_path>\w+) <PARAMETER_LIST>',         'function_property'),
