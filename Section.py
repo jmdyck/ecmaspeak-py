@@ -221,7 +221,45 @@ def _set_section_kind(section):
     )
     assert r
 
-    Pseudocode.ensure_every_emu_alg_in_section_is_parsed(section)
+    ensure_every_emu_alg_in_section_is_parsed(section)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def ensure_every_emu_alg_in_section_is_parsed(section):
+    # Ensure that we've parsed every <emu-alg>
+    # for which this is the closet-containing section.
+    # (Eventually, these should be reached by 'normal' means.)
+    for bc in section.block_children:
+        for emu_alg in bc.each_descendant_named('emu-alg'):
+
+            if hasattr(emu_alg, '_syntax_tree'):
+                # already done
+                continue
+
+            if spec.text.startswith(
+                (
+                    '\n      1. Top-level step',
+                    # 5.2 Algorithm Conventions
+                    # This is just showing the format of algorithms,
+                    # so it's not meant to be parsable.
+
+                    '\n              1. Otherwise, let ',
+                    # 7.1.12.1 NumberToString
+                    # The is unparsable because the grammar doesn't
+                    # allow an "Otherwise" without a preceding "If",
+                    # and I don't want to warp the grammar to allow it.
+                ),
+                emu_alg.inner_start_posn,
+                emu_alg.inner_end_posn
+            ):
+                # unparsable, so don't try
+                emu_alg._syntax_tree = None
+                continue
+
+            # print('\n!', section.section_num, section.section_title)
+            Pseudocode.parse(emu_alg)
+            # Most of these are involved in the definition of shorthands,
+            # which I don't handle well.
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -238,7 +276,29 @@ def _handle_early_errors_section(section):
     section.section_kind = 'early_errors'
     section.ste = {'op_name': 'Early Errors', 'parameters': OrderedDict()}
 
-    Pseudocode.analyze_early_errors_section(section)
+    # XXX prose 'superstructure' outside early error rules:
+    #
+    # 12.2.6.1
+    # sec-object-initializer-static-semantics-early-errors:
+    # extra paragraph that constrains application of subsequent emu-grammar + ul
+    #
+    # 13.7.5.1
+    # sec-for-in-and-for-of-statements-static-semantics-early-errors:
+    # extra paragraph that is logically scoped to two bullets of three,
+    #
+    # See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/
+
+    assert not section.inline_child_element_names
+
+    for child in section.block_children:
+        if child.element_name == 'emu-grammar':
+            curr_emu_grammar = child
+        elif child.element_name == 'ul':
+            Pseudocode.handle_early_error(curr_emu_grammar, child, section)
+        elif child.element_name in ['p', 'emu-note']:
+            pass
+        else:
+            assert 0, child.element_name
 
     return True
 
@@ -336,7 +396,118 @@ def _handle_sdo_section(section):
                 _set_bcen_attributes(section)
         section.ste['parameters'] = parameters
 
-    Pseudocode.analyze_sdo_section(section)
+    # -----
+
+    if section.section_title == 'Static Semantics: HasCallInTailPosition':
+        assert len(section.block_children) == 1
+        assert section.block_children[0].element_name == 'emu-note'
+        assert len(section.section_children) == 2
+        return True
+
+    # ------------------------------------------------------------------------------
+
+    if 'emu-grammar' in section.bcen_set:
+        assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-table', 'p'])
+        # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
+
+        used_indexes = set()
+        for (i,c) in enumerate(section.block_children):
+            if c.element_name == 'emu-alg':
+                prev_c = section.block_children[i-1]
+                Pseudocode.handle_composite_sdo(sdo_name, prev_c, c, section)
+                used_indexes.add(i)
+                used_indexes.add(i-1)
+
+        for i in range(len(section.block_children)):
+            if i not in used_indexes:
+                c = section.block_children[i]
+                if c.element_name == 'emu-note':
+                    # lots, ignore.
+                    pass
+                elif c.element_name == 'p':
+                    # lots, ignore for now, but worth looking at.
+                    pass
+                elif c.element_name == 'emu-table':
+                    # 13.5.3.1
+                    # Evaluation of |UnaryExpression : `typeof` UnaryExpression|
+                    # ends with "Return a String according to <reference to emu-table>."
+                    # and then the emu-alg is followed by an emu-table.
+                    #
+                    # 22.2.1.4
+                    # CharacterValue of |CharacterEscape :: ControlEscape| is
+                    # "Return the code point value according to Table 59."
+                    # and then the emu-alg is followed by an emu-table.
+                    #
+                    # So I'll have to get that info eventually.
+                    pass
+                else:
+                    stderr(f"\nERROR: {section.section_num} {section.section_title} has unexpected/unused <{c.element_name}> element")
+                    sys.exit(1)
+
+
+    elif 'ul' in section.bcen_set:
+        assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
+        # Each <li> in the <ul> is an "inline SDO".
+
+        for ul in section.block_children:
+            if ul.element_name != 'ul': continue
+
+            if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
+                # This is the <ul> for 'significant digit' at the end of 
+                # 7.1.3.1.1 Runtime Semantics: MV
+                # and
+                # 11.8.3.1 Static Semantics: MV
+                # We're not interested in it.
+                assert section.section_title in ['Runtime Semantics: MV', 'Static Semantics: MV']
+                continue
+
+            for child in ul.children:
+                if child.element_name == '#LITERAL':
+                    assert child.is_whitespace()
+                elif child.element_name == 'li':
+                    Pseudocode.handle_inline_sdo(child, sdo_name, section)
+                else:
+                    assert 0, child.element_name
+
+    elif 'emu-alg' in section.bcen_set:
+        assert section.bcen_set <= set(['emu-alg', 'p', 'emu-note'])
+        # Each <p> + <emu-alg> pair is an SDO unit.
+        assert sdo_name in ['Evaluation', 'regexp-Evaluate']
+
+        # print(section.bcen_str)
+        for (i,c) in enumerate(section.block_children):
+            if c.element_name == 'p':
+                p_text = c.inner_source_text()
+                if p_text == 'With parameter _direction_.':
+                    continue
+
+                if 'evaluates by returning' in p_text:
+                    # branch is based before the merge of PR #1596.
+                    continue
+
+                if (
+                    p_text.startswith('The production <emu-grammar')
+                    and
+                    (
+                        p_text.endswith('</emu-grammar> evaluates as follows:')
+                        or
+                        p_text.endswith('is evaluated as follows:')
+                    )
+                ):
+                    emu_alg = section.block_children[i+1]
+                    assert emu_alg.element_name == 'emu-alg'
+                    Pseudocode.handle_composite_sdo(sdo_name, c, emu_alg, section)
+
+                else:
+                    # assert 0, p_text
+                    # print('>', p_text)
+                    pass
+                    # skip it for now
+
+    else:
+        print(section.section_num, section.section_title, section.section_id)
+        print(section.bcen_str)
+        assert 0
 
     return True
 
@@ -425,7 +596,9 @@ def _handle_oddball_op_section(section):
 
     section.section_kind = 'abstract_operation'
 
-    Pseudocode.analyze_other_op_section(section)
+    emu_alg = section.block_children[1]
+    assert emu_alg.element_name == 'emu-alg'
+    Pseudocode.handle_solo_op(op_name, emu_alg, section)
 
     return True
 
@@ -452,7 +625,120 @@ def _handle_other_op_section(section):
 
     # --------------------------------------------------------------------------
 
-    Pseudocode.analyze_other_op_section(section)
+    assert 'op_name' in section.ste
+    op_name = section.ste['op_name']
+
+    n_emu_algs = section.bcen_list.count('emu-alg')
+
+    if n_emu_algs == 0:
+        # 13 cases
+
+        if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
+            assert section.bcen_str == 'emu-table'
+            # The op is defined by a table that splits on argument type.
+            # The second cell in each row is a little algorithm,
+            # but it's generally not marked as an emu-alg.
+            emu_table = section.block_children[0]
+            assert emu_table.element_name == 'emu-table'
+            (_, table, _) = emu_table.children
+            assert table.element_name == 'table'
+            (_, tbody, _) = table.children
+            for tr in tbody.each_child_named('tr'):
+                (_, a, _, b, _) = tr.children 
+
+                if a.element_name == 'th' and b.element_name == 'th':
+                    assert a.inner_source_text().strip() == 'Argument Type'
+                    assert b.inner_source_text().strip() == 'Result'
+                    continue
+
+                Pseudocode.handle_tabular_op_defn(op_name, a, b, section)
+
+        elif section.section_kind == 'env_rec_method_unused':
+            pass
+
+        elif op_name.startswith('Host'):
+            # These are host-defined ops, so we expect no alg.
+            Pseudocode.ensure_alg('op: host-defined', op_name)
+            pass
+
+        elif op_name == 'LocalTZA':
+            Pseudocode.ensure_alg('op: implementation-defined', op_name)
+            pass
+
+        elif section.section_kind == 'numeric_method':
+            # A mathematical operation that we merely constrain, via a bullet-list.
+            Pseudocode.ensure_alg('op: numeric method', op_name)
+            pass
+
+        elif op_name == 'StringToBigInt':
+            # Apply other alg with changes, ick.
+            Pseudocode.ensure_alg('op: solo', op_name)
+
+        else:
+            assert 0, (section.section_num, section.section_title)
+
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        assert emu_alg.element_name == 'emu-alg'
+
+        # The emu-alg is the 'body' of
+        # (this definition of) the operation named by the section_title.
+
+        if section.section_kind.endswith('abstract_operation'):
+            Pseudocode.handle_solo_op(op_name, emu_alg, section)
+
+        elif section.section_kind in [
+            'numeric_method',
+            'env_rec_method',
+            'module_rec_method',
+            'internal_method',
+        ]:
+            # type-discriminated operation
+            discriminator = {
+                # numeric_method:
+                'The Number Type': 'Number',
+                'The BigInt Type': 'BigInt',
+
+                # env_rec_method:
+                'Declarative Environment Records' : 'declarative Environment Record',
+                'Object Environment Records'      : 'object Environment Record',
+                'Function Environment Records'    : 'function Environment Record',
+                'Global Environment Records'      : 'global Environment Record',
+                'Module Environment Records'      : 'module Environment Record',
+
+                # module_rec_method:
+                'Cyclic Module Records'           : 'Cyclic Module Record',
+                'Source Text Module Records'      : 'Source Text Module Record',
+
+                # internal_method:
+                'Ordinary Object Internal Methods and Internal Slots': 'ordinary object',
+                'ECMAScript Function Objects'       : 'ECMAScript function object',
+                'Built-in Function Objects'         : 'built-in function object',
+                'Bound Function Exotic Objects'     : 'bound function exotic object',
+                'Array Exotic Objects'              : 'Array exotic object',
+                'String Exotic Objects'             : 'String exotic object',
+                'Arguments Exotic Objects'          : 'arguments exotic object',
+                'Integer-Indexed Exotic Objects'    : 'Integer-Indexed exotic object',
+                'Module Namespace Exotic Objects'   : 'module namespace exotic object',
+                'Immutable Prototype Exotic Objects': 'immutable prototype exotic object',
+                'Proxy Object Internal Methods and Internal Slots': 'Proxy exotic object',
+            }[section.parent.section_title]
+
+            op_species = {
+                'numeric_method'   : 'op: numeric method',
+                'env_rec_method'   : 'op: concrete method: env rec',
+                'module_rec_method': 'op: concrete method: module rec',
+                'internal_method'  : 'op: internal method',
+            }[section.section_kind]
+
+            Pseudocode.handle_type_discriminated_op(op_name, op_species, discriminator, emu_alg, section)
+
+        else:
+            assert 0, section.section_kind
+
+    else:
+        assert 0
 
     return True
 
@@ -870,8 +1156,9 @@ def _handle_function_section(section):
     section.section_kind = result
 
     p_dict = mo.groupdict()
+    prop_path = p_dict['prop_path']
     section.ste = {
-        'prop_path': p_dict['prop_path'],
+        'prop_path': prop_path,
         'parameters': (
             convert_param_listing_to_dict(p_dict['params_str'])
             if 'params_str' in p_dict
@@ -886,7 +1173,47 @@ def _handle_function_section(section):
         section.ste['params_str'] = ''
         section.ste['parameters'] = OrderedDict()
 
-    Pseudocode.analyze_built_in_section(section)
+    n_emu_algs = section.bcen_list.count('emu-alg')
+
+    if section.section_kind == 'function_property_xref':
+        assert n_emu_algs == 0
+        return True
+
+    bif_species = {
+        'CallConstruct'               : 'bif: value of data property',
+        'CallConstruct_overload'      : 'bif: value of data property: overload',
+        'accessor_property'           : 'bif: accessor function',
+        'anonymous_built_in_function' : 'bif: * per realm',
+        'function_property'           : 'bif: value of data property',
+        'function_property_overload'  : 'bif: value of data property: overload',
+    }[section.section_kind]
+
+    if n_emu_algs == 0:
+        # Various possibilities:
+        # - A Math function that we merely constrain, via a bullet-list.
+        # - "This function is like that function" (except different, maybe).
+        # - Other functions that we only define in prose.
+        Pseudocode.handle_function(bif_species, prop_path, None, section)
+
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        Pseudocode.handle_function(bif_species, prop_path, emu_alg, section)
+
+    else:
+        assert prop_path in ['Array.prototype.sort', '%TypedArray%.prototype.sort']
+        # It's an odd combination of the emu-algs in the clause.
+        # The first emu-alg is at least the *start* of the full algorithm.
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        Pseudocode.handle_function(bif_species, prop_path, emu_alg, section)
+
+        if prop_path == '%TypedArray%.prototype.sort':
+            assert n_emu_algs == 2
+            # The second emu-alg defines the TypedArray SortCompare.
+            emu_alg_posn = section.bcen_list.index('emu-alg', emu_alg_posn+1)
+            emu_alg = section.block_children[emu_alg_posn]
+            Pseudocode.handle_solo_op('TypedArraySortCompare', emu_alg, section)
 
     return True
 
@@ -957,7 +1284,84 @@ def _handle_other_section(section):
 
     # -----------
 
-    Pseudocode.analyze_other_section(section)
+    # The section_title doesn't declare an operation or a function-property,
+    # so we don't expect an algorithm.
+    # But sometimes there are some anyway.
+
+    for child in section.block_children:
+        if child.element_name == 'emu-eqn':
+            Pseudocode.handle_emu_eqn(child, section)
+
+    n_emu_algs = section.bcen_list.count('emu-alg')
+
+    if n_emu_algs == 0:
+        if section.section_title == 'Mathematical Operations':
+            Pseudocode.ensure_alg('op: solo', 'abs')
+            Pseudocode.ensure_alg('op: solo', 'min')
+            Pseudocode.ensure_alg('op: solo', 'max')
+            Pseudocode.ensure_alg('op: solo', 'floor')
+            Pseudocode.ensure_alg('op: solo', '\U0001d53d')
+            Pseudocode.ensure_alg('op: solo', '\u211d')
+            Pseudocode.ensure_alg('op: solo', '\u2124')
+
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+
+        if section.section_title == 'Algorithm Conventions':
+            # It's just the example of algorithm layout.
+            # Skip it.
+            pass
+
+        elif section.section_title == 'Array.prototype [ @@unscopables ]':
+            # The section_title identifies a data property,
+            # and the algorithm results in its initial value.
+            # So CreateIntrinsics invokes this alg, implicitly and indirectly.
+            Pseudocode.handle_solo_op('initializer for @@unscopables', emu_alg, section)
+
+        elif section.section_kind == 'properties_of_an_intrinsic_object':
+            # In addition to telling you about the intrinsic object,
+            # it also defines an abstract operation that is used
+            # by the object's function properties.
+            mo = re.fullmatch(r'Properties of the (\w+) Prototype Object', section.section_title)
+            which = mo.group(1)
+            op_name = f"this{'Time' if which == 'Date' else which}Value"
+
+            preamble = section.block_children[emu_alg_posn-1]
+            assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
+
+            Pseudocode.handle_solo_op(op_name, emu_alg, section)
+
+        elif section.section_title == 'The Abstract Closure Specification Type':
+            # The emu-alg is an example showing the definition and use
+            # of an abstract closure.
+            # Skip it.
+            pass
+
+        else:
+            assert 0, (section.section_num, section.section_title)
+
+    else:
+
+        if section.section_kind == 'shorthand':
+            if section.section_title == 'Implicit Completion Values':
+                Pseudocode.ensure_alg('shorthand', 'Completion')
+            elif section.section_title in [
+                'ReturnIfAbrupt',
+                'Await',
+            ]:
+                Pseudocode.ensure_alg('shorthand', section.section_title)
+            elif section.section_title == 'IfAbruptRejectPromise ( _value_, _capability_ )':
+                Pseudocode.ensure_alg('shorthand', 'IfAbruptRejectPromise')
+            else:
+                pass
+                # print('>', section.section_num, section.section_title)
+            pass
+        elif section.section_title == 'Syntax-Directed Operations':
+            # just examples
+            pass
+        else:
+            assert 0, (section.section_num, section.section_title)
 
     return True
 
@@ -1038,7 +1442,129 @@ def _handle_changes_section(section):
 
     section.ste = {}
 
-    Pseudocode.analyze_changes_section(section)
+    mo = re.fullmatch(r'Changes to (\w+|Abstract Equality Comparison)', section.section_title)
+    if mo:
+        op_name = mo.group(1)
+        assert section.bcen_str in ['p emu-alg', 'p emu-alg p emu-alg']
+        for i in range(0, len(section.block_children), 2):
+            p = section.block_children[i]
+            assert p.element_name == 'p'
+            p_ist = p.inner_source_text()
+            assert any(
+                re.fullmatch(pattern, p_ist)
+                for pattern in [
+                    f"During {op_name} the following steps are performed in place of step <emu-xref .+:",
+                    f"The following steps replace step <emu-xref.+ of the {op_name} algorithm:",
+                    f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
+                ]
+            ), p_ist
+
+            emu_alg = section.block_children[i+1]
+            assert emu_alg.element_name == 'emu-alg'
+            Pseudocode.handle_solo_op(op_name, emu_alg, section)
+            # XXX debateable, since it's not a full algorithm
+
+    else:
+        emu_xref_re = r'<emu-xref href="[^"<>]+"></emu-xref>'
+        emu_grammar_re = r'<emu-grammar>[^<>]+</emu-grammar>'
+        nont_re = r'\|\w+\|'
+        i = 0
+        while i < len(section.block_children):
+            p = section.block_children[i]; i += 1
+
+            if p.element_name == 'emu-note':
+                continue
+
+            assert p.element_name == 'p'
+            p_ist = p.inner_source_text()
+
+            if (
+                re.fullmatch(fr'The rules for the following production in {emu_xref_re} are modified with the addition of the <ins>highlighted</ins> text:', p_ist)
+                or
+                re.fullmatch(fr'The content of subclause {emu_xref_re} is replaced with the following:', p_ist)
+            ):
+                emu_grammar = section.block_children[i]; i += 1
+                ul = section.block_children[i]; i += 1
+                Pseudocode.handle_early_error(emu_grammar, ul, section)
+
+            elif re.fullmatch(fr'The semantics of {emu_xref_re} is extended as follows:', p_ist):
+                p2 = section.block_children[i]; i += 1
+                assert p2.element_name == 'p'
+                p2_ist = p2.inner_source_text()
+                assert re.fullmatch(fr'Within {emu_xref_re} reference to &ldquo;{emu_grammar_re} &rdquo; are to be interpreted as meaning &ldquo;{emu_grammar_re} &rdquo; or &ldquo;{emu_grammar_re} &rdquo;\.', p2_ist)
+
+            elif (
+                re.fullmatch(r'.+ includes the following additional evaluation rules?:', p_ist)
+                or 
+                re.fullmatch(r'.+ The following evaluation rules(, with parameter _direction_,)? are also added:', p_ist)
+                or
+                re.fullmatch(r'.+ modifies the following evaluation rule:', p_ist)
+            ):
+                while True:
+                    p2 = section.block_children[i]; i += 1
+                    if p2.element_name == 'emu-note':
+                        break
+                    assert p2.element_name == 'p'
+                    p2_ist = p2.inner_source_text()
+                    if re.fullmatch(fr'The production {emu_grammar_re} evaluates the same as the production {emu_grammar_re} but with {nont_re} substituted for {nont_re}\.', p2_ist):
+                        pass
+                    elif re.fullmatch(fr'The production {emu_grammar_re} evaluates as follows:', p2_ist):
+                        [emu_grammar] = [*p2.each_child_named('emu-grammar')]
+                        emu_alg = section.block_children[i]; i += 1
+                        assert emu_alg.element_name == 'emu-alg'
+                        Pseudocode.handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg, section)
+                    else:
+                        i -= 1
+                        break
+
+            elif re.fullmatch(fr'Assertion \({emu_xref_re}\) evaluation rules for the {emu_grammar_re} and {emu_grammar_re} productions are also used for the {nont_re} productions, but with {nont_re} substituted for {nont_re}\.', p_ist):
+                pass
+
+            elif re.fullmatch(fr'.+ This change is accomplished by modifying the algorithm of {emu_xref_re} as follows:', p_ist):
+                while i < len(section.block_children):
+                    p2 = section.block_children[i]; i += 1
+                    assert p2.element_name == 'p'
+                    p2_ist = p2.inner_source_text()
+                    assert re.fullmatch(r'Step <emu-xref.+></emu-xref> is replaced by:', p2_ist)
+
+                    emu_alg = section.block_children[i]; i += 1
+                    assert emu_alg.element_name == 'emu-alg'
+                    Pseudocode.handle_solo_op('EvalDeclarationInstantiation', emu_alg, section)
+
+            elif re.fullmatch(fr'The following augments the \|\w+\| production in {emu_xref_re}:', p_ist):
+                emu_grammar = section.block_children[i]; i += 1
+                assert emu_grammar.element_name == 'emu-grammar'
+                p2 = section.block_children[i]; i += 1
+                assert p2.element_name == 'p'
+                p2_ist = p2.inner_source_text()
+                assert p2_ist == 'This production only applies when parsing non-strict code.'
+
+            elif re.fullmatch(fr'The following table entry is inserted into {emu_xref_re} .+', p_ist):
+                emu_table = section.block_children[i]; i += 1
+                assert emu_table.element_name == 'emu-table'
+
+            else:
+                mo = (
+                    re.fullmatch(fr'The (?:static|runtime) semantics of (\w+)( in {emu_xref_re})? are augmented with the following:', p_ist)
+                )
+                if mo:
+                    op_name = mo.group(1)
+                    emu_grammar = section.block_children[i]; i += 1
+                    emu_alg = section.block_children[i]; i += 1
+                    assert emu_grammar.element_name == 'emu-grammar'
+                    assert emu_alg.element_name == 'emu-alg'
+                    Pseudocode.handle_composite_sdo(op_name, emu_grammar, emu_alg, section)
+
+                else:
+                    print()
+                    print('--------------------------------------')
+                    print(section.section_num, section.section_title)
+                    print(section.bcen_str)
+                    print()
+                    print(p_ist)
+                    print(section.block_children[i].source_text())
+                    assert 0
+                    break
 
     return True
 
