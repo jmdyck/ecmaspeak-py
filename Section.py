@@ -191,6 +191,8 @@ def _set_section_kind(section):
         or
         _handle_function_section(section)
         or
+        _handle_changes_section(section)
+        or
         _handle_other_section(section)
     )
     assert r
@@ -876,11 +878,6 @@ def _handle_other_section(section):
             (r'The _TypedArray_ Constructors',     'Call_and_Construct_ims_of_an_intrinsic_object'),
             (r'The %TypedArray% Intrinsic Object', 'Call_and_Construct_ims_of_an_intrinsic_object'),
 
-            (r'Changes to .+',                                   'changes'),
-            (r'__proto__ Property Names in Object Initializers', 'changes'),
-            (r'VariableStatements in Catch Blocks',              'changes'),
-            (r'Initializers in ForIn Statement Heads',           'changes'),
-
             (r'_NativeError_ Object Structure', 'loop'),
 
             (r'Non-ECMAScript Functions',                          'catchall'),
@@ -910,10 +907,6 @@ def _handle_other_section(section):
     section.section_kind = result
 
     section.ste = {}
-
-    if section.section_title == 'Pattern Semantics':
-        if section.section_num.startswith('B.'):
-            section.section_kind = 'changes'
 
     if section.parent.section_title == 'Terms and Definitions' and section.section_kind == 'other_property':
         section.section_kind = 'catchall'
@@ -974,6 +967,36 @@ def convert_param_listing_to_dict(parameter_listing):
                 assert 0, (section.section_title, repr(param_str))
 
     return params_info
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _handle_changes_section(section):
+
+    # Assume this holds,
+    # but be sure to undo it if we ultimately return False.
+    section.section_kind = 'changes'
+
+    if section.section_title == 'Pattern Semantics' and section.section_num.startswith('B.'):
+        pass
+    elif (mo := re.fullmatch('Changes to ([A-Z]\w+)', section.section_title)):
+        pass
+    elif (mo := re.fullmatch('Changes to (.+) Static Semantics: Early Errors', section.section_title)):
+        pass
+    elif section.section_title == 'VariableStatements in Catch Blocks':
+        pass
+    elif section.section_title == 'Initializers in ForIn Statement Heads':
+        pass
+    elif (mo := re.fullmatch('Changes to (.+)', section.section_title)):
+        pass
+    else:
+        del section.section_kind
+        return False
+
+    # ==========================================================================
+
+    section.ste = {}
+
+    return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
