@@ -189,6 +189,8 @@ def _set_section_kind(section):
         or
         _handle_other_op_section(section)
         or
+        _handle_function_section(section)
+        or
         _handle_other_section(section)
     )
     assert r
@@ -776,6 +778,78 @@ def _handle_header_with_std_preamble(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def _handle_function_section(section):
+
+    if (
+        section.section_title in [
+            'Non-ECMAScript Functions',
+            'URI Handling Functions',
+        ]
+        or
+        section.section_title.startswith('IfAbrupt')
+    ):
+        # The section title would match one of the patterns below,
+        # but we don't want it to,
+        # because the section doesn't define a function.
+        return False
+
+    pattern_results = [
+
+        (r'(?P<prop_path>[A-Z]\w+) \( \. \. \. \)',           'function_property_xref'),
+
+        (r'(?P<prop_path>.+) Functions',                      'anonymous_built_in_function'),
+        (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>', 'anonymous_built_in_function'),
+
+        (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',         'CallConstruct'),
+        (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>',       'CallConstruct'),
+        (r'(?P<prop_path>%[A-Z]\w+%) <PARAMETER_LIST>',       'CallConstruct'),
+
+        (r'(?P<prop_path>get <PROP_PATH>)',                   'accessor_property'),
+        (r'(?P<prop_path>set <PROP_PATH>)',                   'accessor_property'),
+
+        (r'(?P<prop_path><PROP_PATH>) <PARAMETER_LIST>',      'function_property'),
+        (r'(?P<prop_path>\w+) <PARAMETER_LIST>',              'function_property'),
+
+    ]
+    for (pattern, result) in pattern_results:
+        pattern = (
+            pattern
+            .replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
+            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
+        )
+        mo = re.fullmatch(pattern, section.section_title)
+        if mo:
+            break
+    else:
+        return False
+
+    # -----------
+
+    check_section_title(section)
+
+    section.section_kind = result
+
+    p_dict = mo.groupdict()
+    section.ste = {
+        'prop_path': p_dict['prop_path'],
+        'parameters': (
+            convert_param_listing_to_dict(p_dict['params_str'])
+            if 'params_str' in p_dict
+            else None
+        ),
+    }
+
+    if section.section_title.startswith('get '):
+        assert section.section_kind == 'accessor_property'
+        # The spec leaves off the empty parameter list
+        assert 'params_str' not in section.ste
+        section.ste['params_str'] = ''
+        section.ste['parameters'] = OrderedDict()
+
+    return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def _handle_other_section(section):
 
     check_section_title(section)
@@ -811,21 +885,7 @@ def _handle_other_section(section):
 
             (r'Non-ECMAScript Functions',                          'catchall'),
             (r'URI Handling Functions',                            'group_of_properties2'),
-            (r'(?P<prop_path>.+) Functions',                       'anonymous_built_in_function'),
-            (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>',  'anonymous_built_in_function'),
             (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
-
-            (r'(?P<prop_path>[A-Z]\w+) \( \. \. \. \)', 'function_property_xref'),
-
-            (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',   'CallConstruct'),
-            (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>', 'CallConstruct'),
-            (r'(?P<prop_path>%[A-Z]\w+%) <PARAMETER_LIST>', 'CallConstruct'),
-
-            (r'(?P<prop_path>get <PROP_PATH>)',              'accessor_property'),
-            (r'(?P<prop_path>set <PROP_PATH>)',              'accessor_property'),
-
-            (r'(?P<prop_path><PROP_PATH>) <PARAMETER_LIST>', 'function_property'),
-            (r'(?P<prop_path>\w+) <PARAMETER_LIST>',         'function_property'),
 
             (r'<PROP_PATH>',                                 'other_property'),
             (r'[a-z]\w+|Infinity|NaN',                       'other_property'),
@@ -838,7 +898,6 @@ def _handle_other_section(section):
     for (pattern, result) in pattern_results:
         pattern = (
             pattern
-            .replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
             .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
         )
         mo = re.fullmatch(pattern, section.section_title)
@@ -849,15 +908,8 @@ def _handle_other_section(section):
 
     assert isinstance(result, str)
     section.section_kind = result
-    p_dict = mo.groupdict()
-    section.ste = {
-        'prop_path': p_dict.get('prop_path', None),
-        'parameters': (
-            convert_param_listing_to_dict(p_dict['params_str'])
-            if 'params_str' in p_dict
-            else None
-        ),
-    }
+
+    section.ste = {}
 
     if section.section_title == 'Pattern Semantics':
         if section.section_num.startswith('B.'):
@@ -871,15 +923,6 @@ def _handle_other_section(section):
         section.section_kind = 'other_property_xref'
 
     # -----------
-
-    # Some stuff that isn't in the section_title, but should be?
-
-    if section.section_title.startswith('get '):
-        assert section.section_kind == 'accessor_property'
-        # The spec leaves off the empty parameter list
-        assert 'params_str' not in section.ste
-        section.ste['params_str'] = ''
-        section.ste['parameters'] = OrderedDict()
 
     return True
 
