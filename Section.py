@@ -319,7 +319,16 @@ def _handle_oddball_op_section(section):
         'sec-module-environment-records-deletebinding-n',
     ]:
         # The clause exists only to tell us that the concrete method is never used.
-        assert 'is never used' in section.block_children[0].inner_source_text()
+        p = section.block_children[0]
+        assert p.element_name == 'p'
+        assert re.fullmatch(
+            r'The \w+ concrete method of an? \w+ Environment Record is never used within this specification.',
+            p.inner_source_text()
+        )
+        # Note that the start of this sentence looks like the start of a standardized preamble,
+        # so we have to detect these cases before _handle_other_op_section's call
+        # to _handle_header_with_std_preamble.
+
         # There's roughly two approaches:
         # - Create the thing, but make the body of it be (effectively) "Assert: False."
         # - Don't create the thing. (So if there *is* an attempt to use it, the lookup will fail.)
@@ -333,9 +342,9 @@ def _handle_oddball_op_section(section):
 
     if section.section_id == 'sec-weakref-execution':
         # 9.10.3
-        section.section_kind = 'abstract_operation'
+        op_name = 'WeakRef emptying thing'
         section.ste = {
-            'op_name': 'WeakRef emptying thing',
+            'op_name': op_name,
             'type': 'abstract operation',
             'parameters': {'_S_': ''},
         }
@@ -346,12 +355,12 @@ def _handle_oddball_op_section(section):
         'Tear Free Reads',
     ]:
         # 29.7.*
-        section.section_kind = 'abstract_operation'
+        op_name = section.section_title
         assert section.block_children[0].source_text().startswith(
             "<p>A candidate execution _execution_ has "
         )
         section.ste = {
-            'op_name': section.section_title,
+            'op_name': op_name,
             'parameters': {'_execution_': ''},
         }
 
@@ -360,7 +369,7 @@ def _handle_oddball_op_section(section):
         'Data Races',
     ]:
         # 29.8, 29.9
-        section.section_kind = 'abstract_operation'
+        op_name = section.section_title
         assert section.block_children[0].source_text().startswith(
             "<p>For an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_) are in a "
         )
@@ -370,7 +379,7 @@ def _handle_oddball_op_section(section):
             '_D_'        : '',
         }
         section.ste = {
-            'op_name': section.section_title,
+            'op_name': op_name,
             'parameters': parameters,
         }
 
@@ -378,6 +387,8 @@ def _handle_oddball_op_section(section):
         return False
 
     # --------------------------------------------
+
+    section.section_kind = 'abstract_operation'
 
     return True
 
