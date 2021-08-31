@@ -4,22 +4,46 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import re, string
+import re, string, time
 from collections import OrderedDict
 
 import shared
 from shared import stderr, header, msg_at_posn, spec
+import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def make_and_check_sections():
     stderr("make_and_check_sections ...")
 
+    Pseudocode.create_all_parsers()
+
     spec.root_section = _make_section_tree(spec.doc_node)
     _set_section_identification_r(spec.root_section, None)
 
+    t_start = time.time()
+
+    prev_top_level_num = ''
     for section in spec.root_section.each_descendant_that_is_a_section():
+
+        # "progress bar"
+        top_level_num = section.section_num.split('.')[0]
+        if top_level_num != prev_top_level_num:
+            stderr(f" {top_level_num}", end='', flush=True)
+            prev_top_level_num = top_level_num
+
+        section.alg_defns = []
+
         _set_section_kind(section)
+
+    stderr()
+
+    t_end = time.time()
+    stderr(f"analyzing sections took {t_end-t_start:.2f} seconds")
+
+    Pseudocode.check_emu_alg_coverage()
+    Pseudocode.check_emu_eqn_coverage()
+    Pseudocode.report_all_parsers()
 
     _print_section_kinds(spec.root_section)
     _check_aoids(spec.root_section)
@@ -197,6 +221,8 @@ def _set_section_kind(section):
     )
     assert r
 
+    Pseudocode.ensure_every_emu_alg_in_section_is_parsed(section)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def _handle_root_section(section):
@@ -211,6 +237,9 @@ def _handle_early_errors_section(section):
 
     section.section_kind = 'early_errors'
     section.ste = {'op_name': 'Early Errors', 'parameters': OrderedDict()}
+
+    Pseudocode.analyze_early_errors_section(section)
+
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -307,6 +336,8 @@ def _handle_sdo_section(section):
                 _set_bcen_attributes(section)
         section.ste['parameters'] = parameters
 
+    Pseudocode.analyze_sdo_section(section)
+
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -394,6 +425,8 @@ def _handle_oddball_op_section(section):
 
     section.section_kind = 'abstract_operation'
 
+    Pseudocode.analyze_other_op_section(section)
+
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -410,11 +443,16 @@ def _handle_other_op_section(section):
         # So we can assume that this section has a structured header?
         # (Or might authors add a `type` attribute but use an old-style header?)
         _handle_structured_header(section)
-        return True
 
-    handled = _handle_header_with_std_preamble(section)
-    if not handled:
+    elif _handle_header_with_std_preamble(section):
+        pass
+
+    else:
         return False
+
+    # --------------------------------------------------------------------------
+
+    Pseudocode.analyze_other_op_section(section)
 
     return True
 
@@ -848,6 +886,8 @@ def _handle_function_section(section):
         section.ste['params_str'] = ''
         section.ste['parameters'] = OrderedDict()
 
+    Pseudocode.analyze_built_in_section(section)
+
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -916,6 +956,8 @@ def _handle_other_section(section):
         section.section_kind = 'other_property_xref'
 
     # -----------
+
+    Pseudocode.analyze_other_section(section)
 
     return True
 
@@ -995,6 +1037,8 @@ def _handle_changes_section(section):
     # ==========================================================================
 
     section.ste = {}
+
+    Pseudocode.analyze_changes_section(section)
 
     return True
 

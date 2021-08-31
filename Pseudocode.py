@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import sys, re, time, math, pdb, string, pprint
+import sys, re, math, pdb, string, pprint
 from collections import defaultdict
 
 from HTML import HNode
@@ -18,12 +18,6 @@ from shared import spec, stderr
 
 def do_stuff_with_pseudocode():
     check_step_references()
-
-    create_all_parsers()
-    analyze_sections()
-    check_emu_alg_coverage()
-    check_emu_eqn_coverage()
-    report_all_parsers()
 
     analyze_static_dependencies()
     check_sdo_coverage()
@@ -457,63 +451,7 @@ def check_emu_alg_coverage():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def analyze_sections():
-    stderr('analyze_sections...')
-
-    t_start = time.time()
-    prev_top_level_num = ''
-
-    sys.setrecursionlimit(2000)
-    # This might not be necessary any more.
-
-    for section in spec.root_section.each_descendant_that_is_a_section():
-        assert hasattr(section, 'ste')
-        section.alg_defns = []
-
-        # "progress bar"
-        top_level_num = section.section_num.split('.')[0]
-        if top_level_num != prev_top_level_num:
-            stderr(f" {top_level_num}", end='', flush=True)
-            prev_top_level_num = top_level_num
-
-        # ------------------------------------------------
-
-        if section.section_kind == 'early_errors':
-            analyze_early_errors_section(section)
-
-        elif section.section_kind == 'syntax_directed_operation':
-            analyze_sdo_section(section)
-
-        elif section.section_kind in [
-            'abstract_operation',
-            'host-defined_abstract_operation',
-            'implementation-defined_abstract_operation',
-            'env_rec_method',
-            'internal_method',
-            'module_rec_method',
-            'numeric_method',
-        ]:
-            analyze_other_op_section(section)
-
-        elif section.section_kind in [
-            'CallConstruct',
-            'CallConstruct_overload',
-            'accessor_property',
-            'anonymous_built_in_function',
-            'function_property',
-            'function_property_overload',
-            'function_property_xref',
-        ]:
-            analyze_built_in_section(section)
-
-        elif section.section_kind == 'changes':
-            analyze_changes_section(section)
-
-        else:
-            analyze_other_section(section)
-
-        # ------------------------------------------------------------
-
+def ensure_every_emu_alg_in_section_is_parsed(section):
         # Ensure that we've parsed every <emu-alg>
         # for which this is the closet-containing section.
         # (Eventually, these should be reached by 'normal' means.)
@@ -548,11 +486,6 @@ def analyze_sections():
                 parse(emu_alg)
                 # Most of these are involved in the definition of shorthands,
                 # which I don't handle well.
-
-    stderr()
-
-    t_end = time.time()
-    stderr(f"analyze_sections took {t_end-t_start:.2f} seconds")
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
