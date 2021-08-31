@@ -185,6 +185,8 @@ def _set_section_kind(section):
         or
         _handle_sdo_section(section)
         or
+        _handle_oddball_op_section(section)
+        or
         _handle_other_op_section(section)
         or
         _handle_other_section(section)
@@ -305,25 +307,17 @@ def _handle_sdo_section(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _handle_other_op_section(section):
-
-    section_type = section.attrs.get('type')
-    if section_type == 'sdo':
-        assert 0 # Would have been handled already
-        return False
-    elif section_type is not None:
-        # type="sdo" has been around for a while,
-        # but all the other type="..." attributes were introduced in PR #545.
-        # So we can assume that this section has a structured header?
-        # (Or might authors add a `type` attribute but use an old-style header?)
-        _handle_structured_header(section)
-        return True
+def _handle_oddball_op_section(section):
+    # This function handles a few specific cases where even though section doesn't have
+    # - a `type` attribute, or
+    # - a structured header, or
+    # - a preamble with standardized wording,
+    # we still want to treat it like an op.
 
     if section.section_id in [
         'sec-object-environment-records-createimmutablebinding-n-s',
         'sec-module-environment-records-deletebinding-n',
     ]:
-        # These are odd cases.
         # The clause exists only to tell us that the concrete method is never used.
         assert 'is never used' in section.block_children[0].inner_source_text()
         # There's roughly two approaches:
@@ -335,6 +329,8 @@ def _handle_other_op_section(section):
         section.ste = {}
         return True
 
+    # ----
+
     if section.section_id == 'sec-weakref-execution':
         # 9.10.3
         section.section_kind = 'abstract_operation'
@@ -343,9 +339,8 @@ def _handle_other_op_section(section):
             'type': 'abstract operation',
             'parameters': {'_S_': ''},
         }
-        return True
 
-    if section.section_title in [
+    elif section.section_title in [
         'Valid Chosen Reads',
         'Coherent Reads',
         'Tear Free Reads',
@@ -359,9 +354,8 @@ def _handle_other_op_section(section):
             'op_name': section.section_title,
             'parameters': {'_execution_': ''},
         }
-        return True
 
-    if section.section_title in [
+    elif section.section_title in [
         'Races',
         'Data Races',
     ]:
@@ -379,6 +373,28 @@ def _handle_other_op_section(section):
             'op_name': section.section_title,
             'parameters': parameters,
         }
+
+    else:
+        return False
+
+    # --------------------------------------------
+
+    return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _handle_other_op_section(section):
+
+    section_type = section.attrs.get('type')
+    if section_type == 'sdo':
+        assert 0 # Would have been handled already
+        return False
+    elif section_type is not None:
+        # type="sdo" has been around for a while,
+        # but all the other type="..." attributes were introduced in PR #545.
+        # So we can assume that this section has a structured header?
+        # (Or might authors add a `type` attribute but use an old-style header?)
+        _handle_structured_header(section)
         return True
 
     handled = _handle_header_with_std_preamble(section)
