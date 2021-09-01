@@ -563,15 +563,6 @@ def handle_inline_sdo_section_body(section, sdo_name):
     for ul in section.block_children:
         if ul.element_name != 'ul': continue
 
-        if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
-            # This is the <ul> for 'significant digit' at the end of 
-            # 7.1.3.1.1 Runtime Semantics: MV
-            # and
-            # 11.8.3.1 Static Semantics: MV
-            # We're not interested in it.
-            assert section.section_title in ['Runtime Semantics: MV', 'Static Semantics: MV']
-            continue
-
         for child in ul.children:
             if child.element_name == '#LITERAL':
                 assert child.is_whitespace()
