@@ -6,6 +6,7 @@
 
 import re, string, time
 from collections import OrderedDict
+from dataclasses import dataclass
 
 import shared
 from shared import stderr, header, msg_at_posn, spec
@@ -277,29 +278,74 @@ def _handle_early_errors_section(section):
     section.section_kind = 'early_errors'
     section.ste = {'op_name': 'Early Errors', 'parameters': OrderedDict()}
 
-    # XXX prose 'superstructure' outside early error rules:
-    #
-    # 12.2.6.1
-    # sec-object-initializer-static-semantics-early-errors:
-    # extra paragraph that constrains application of subsequent emu-grammar + ul
-    #
-    # 13.7.5.1
-    # sec-for-in-and-for-of-statements-static-semantics-early-errors:
-    # extra paragraph that is logically scoped to two bullets of three,
-    #
-    # See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/
+    patterns = [
+        (
+            # 89 cases, the vast majority
+            ['emu-grammar', 'ul'],
+            lambda emu_grammar, ul: (emu_grammar, None, ul)
+        ),
+        (
+            # 3 cases:
+            #   13.15.1   sec-assignment-operators-static-semantics-early-errors
+            #   13.15.5.1 sec-destructuring-assignment-static-semantics-early-errors
+            #   14.7.5.1  sec-for-in-and-for-of-statements-static-semantics-early-errors
+            # Extra <p> constrains aplication of immediately following <ul>.
+            # (See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/)
+            [
+                'emu-grammar',
+                ('p', 'If .+, the following Early Error rules are applied:'),
+                'ul',
+                ('p', 'If .+, the following Early Error rule is applied:'),
+                'ul'
+            ],
+            lambda emu_grammar, p1, ul1, p2, ul2: [
+                (emu_grammar, p1, ul1),
+                (emu_grammar, p2, ul2),
+            ]
+        ),
+        (
+            # 1 case (13.2.5.1 Static Semantics: Early Errors)
+            # sec-object-initializer-static-semantics-early-errors
+            # Extra <p> constrains application of subsequent 2 emu-grammar+ul pairs.
+            [
+                ('p', '.+ the following Early Error rules .+ not applied .+'),
+                'emu-grammar',
+                'ul',
+                'emu-note',
+                'emu-grammar',
+                'ul',
+            ],
+            lambda p, emu_grammar1, ul1, emu_note, emu_grammar2, ul2: [
+                (emu_grammar1, p, ul1),
+                (emu_grammar2, p, ul2),
+            ]
+        ),
+        (
+            # 1 case (B.1.4.1 "Static Semantics: Early Errors")
+            [ ('p', 'The semantics of <emu-xref href="#[^"]+"></emu-xref> is extended as follows:') ],
+            None
+        ),
+        (
+            # 1 case (B.1.4.1 "Static Semantics: Early Errors")
+            [ ('p', 'Additionally, the rules for the following productions are modified with the addition of the <ins>highlighted</ins> text:') ],
+            None
+        ),
+        (
+            # 18 cases
+            ['emu-note'],
+            None
+        ),
+    ]
 
-    assert not section.inline_child_element_names
+    bodies = scan_section(section, patterns)
 
-    for child in section.block_children:
-        if child.element_name == 'emu-grammar':
-            curr_emu_grammar = child
-        elif child.element_name == 'ul':
-            handle_early_error(curr_emu_grammar, child, section)
-        elif child.element_name in ['p', 'emu-note']:
-            pass
-        else:
-            assert 0, child.element_name
+    for body in bodies:
+        assert isinstance(body, tuple)
+        (emu_grammar, p, ul) = body
+
+        # TODO: handle <p>
+
+        handle_early_error(emu_grammar, ul, section)
 
     return True
 
@@ -425,134 +471,86 @@ def _handle_sdo_section(section):
 
     # ------------------------------------------------------------------------------
 
-    if 'emu-grammar' in section.bcen_set:
-        assert section.bcen_set <= set(['emu-grammar', 'emu-alg', 'emu-note', 'emu-table', 'p'])
-        # Each <emu-grammar> + <emu-alg> pair in an SDO unit.
-
-        used_indexes = set()
-        for (i,c) in enumerate(section.block_children):
-            if c.element_name == 'emu-alg':
-                prev_c = section.block_children[i-1]
-                handle_composite_sdo(sdo_name, prev_c, c, section)
-                used_indexes.add(i)
-                used_indexes.add(i-1)
-
-        for i in range(len(section.block_children)):
-            if i not in used_indexes:
-                c = section.block_children[i]
-                if c.element_name == 'emu-note':
-                    # lots, ignore.
-                    pass
-                elif c.element_name == 'p':
-                    # lots, ignore for now, but worth looking at.
-                    pass
-                elif c.element_name == 'emu-table':
-                    # 13.5.3.1
-                    # Evaluation of |UnaryExpression : `typeof` UnaryExpression|
-                    # ends with "Return a String according to <reference to emu-table>."
-                    # and then the emu-alg is followed by an emu-table.
-                    #
-                    # 22.2.1.4
-                    # CharacterValue of |CharacterEscape :: ControlEscape| is
-                    # "Return the code point value according to Table 59."
-                    # and then the emu-alg is followed by an emu-table.
-                    #
-                    # So I'll have to get that info eventually.
-                    pass
-                else:
-                    stderr(f"\nERROR: {section.section_num} {section.section_title} has unexpected/unused <{c.element_name}> element")
-                    sys.exit(1)
-
-
-    elif 'ul' in section.bcen_set:
+    if 'ul' in section.bcen_set:
+        # The rules are given in one or more <ul> elements.
         handle_inline_sdo_section_body(section, sdo_name)
 
-    elif 'emu-alg' in section.bcen_set:
-        assert section.bcen_set <= set(['emu-alg', 'p', 'emu-note'])
-        # Each <p> + <emu-alg> pair is an SDO unit.
-        assert sdo_name in ['Evaluation', 'regexp-Evaluate']
-
-        # print(section.bcen_str)
-        for (i,c) in enumerate(section.block_children):
-            if c.element_name == 'p':
-                p_text = c.inner_source_text()
-                if p_text == 'With parameter _direction_.':
-                    continue
-
-                if 'evaluates by returning' in p_text:
-                    # branch is based before the merge of PR #1596.
-                    continue
-
-                if (
-                    p_text.startswith('The production <emu-grammar')
-                    and
-                    (
-                        p_text.endswith('</emu-grammar> evaluates as follows:')
-                        or
-                        p_text.endswith('is evaluated as follows:')
-                    )
-                ):
-                    emu_alg = section.block_children[i+1]
-                    assert emu_alg.element_name == 'emu-alg'
-                    handle_composite_sdo(sdo_name, c, emu_alg, section)
-
-                else:
-                    # assert 0, p_text
-                    # print('>', p_text)
-                    pass
-                    # skip it for now
-
     else:
-        print(section.section_num, section.section_title, section.section_id)
-        print(section.bcen_str)
-        assert 0
+        patterns = [
+            (
+                # ~900 cases, the vast majority.
+                ['emu-grammar', 'emu-alg'],
+                lambda emu_grammar, emu_alg: (emu_grammar, emu_alg)
+            ),
+            (
+                # 58 cases in RegExp 22.2.2.*
+                [
+                    ('p', "The production <emu-grammar>.+?</emu-grammar> evaluates as follows:"),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: (p.children[1], emu_alg)
+            ),
+            (
+                # 3 cases in RegExp 22.2.2.* (CharacterEscape, DecimalEscape, ClassEscape):
+                [
+                    ('p', "The \|\w+\| productions evaluate as follows:"),
+                    'emu-grammar',
+                    'emu-alg',
+                ],
+                lambda p, emu_grammar, emu_alg: (emu_grammar, emu_alg)
+            ),
+            (
+                # 3 cases
+                [
+                    ('p', 'Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of \w+:'),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: (None, emu_alg)
+            ),
+            (
+                # 2 cases in Annex B
+                [
+                    ('p', 'The semantics of <emu-xref [^<>]+></emu-xref> is extended as follows:'),
+                    'emu-grammar',
+                    'emu-alg'
+                ],
+                lambda p, emu_grammar, emu_alg: (emu_grammar, emu_alg)
+            ),
+            (
+                # 90 cases
+                ['emu-note'],
+                None
+            ),
+            (
+                # 2 cases:
+                #
+                # 13.5.3.1
+                # Evaluation of |UnaryExpression : `typeof` UnaryExpression|
+                # ends with "Return a String according to <reference to emu-table>."
+                # and then the emu-alg is followed by an emu-table.
+                #
+                # 22.2.1.4
+                # CharacterValue of |CharacterEscape :: ControlEscape| is
+                # "Return the code point value according to Table 59."
+                # and then the emu-alg is followed by an emu-table.
+                #
+                ['emu-table'],
+                None
+            ),
+            (
+                # 6 cases. They're basically Notes.
+                ['p'],
+                None
+            ),
+        ]
+
+        bodies = scan_section(section, patterns)
+
+        for body in bodies:
+            (emu_grammar, emu_alg) = body
+            Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
 
     return True
-
-# ------------------------------------------------------------------------------
-
-def handle_composite_sdo(sdo_name, grammar_arg, code_hnode, section):
-    assert isinstance(grammar_arg, HNode)
-    assert isinstance(code_hnode, HNode)
-    assert code_hnode.element_name == 'emu-alg'
-
-    # ---------------------------
-    # grammar_arg -> emu_grammar:
-
-    if grammar_arg.element_name == 'emu-grammar':
-        emu_grammar = grammar_arg
-
-    elif grammar_arg.element_name == 'p':
-        if grammar_arg.inner_source_text() == f"Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of {sdo_name}:":
-            # This is the default definition,
-            # which isn't associated with a particular production.
-            emu_grammar = None
-
-        else:
-            (emu_grammars, text) = extract_grammars(grammar_arg)
-            assert len(emu_grammars) == 1
-            [emu_grammar] = emu_grammars
-            assert text == 'The production <G> evaluates as follows:'
-
-    else:
-        assert 0, grammar_arg.element_name
-
-    # ----------
-
-    Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, code_hnode, section)
-
-# ------------------------------------------------------------------------------
-
-def extract_grammars(x):
-    emu_grammars = []
-    text = ''
-    for c in x.children:
-        if c.element_name == 'emu-grammar':
-            emu_grammars.append(c)
-            text += '<G>'
-        else:
-            text += c.source_text()
-    return (emu_grammars, text.strip())
 
 # ------------------------------------------------------------------------------
 
@@ -1618,22 +1616,231 @@ def convert_param_listing_to_dict(parameter_listing):
 
 def _handle_changes_section(section):
 
-    # Assume this holds,
+    def blah_solo_op(op_name, emu_alg):
+        Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
+
+    def blah_composite_sdo(op_name, emu_grammar, emu_alg):
+        Pseudocode.alg_add_defn('op: syntax-directed', op_name, emu_grammar, emu_alg, section)
+
+    def blah_early_error(emu_grammar, ul):
+        handle_early_error(emu_grammar, ul, section)
+
+    # For calls to scan_section, we're going to assume this holds,
     # but be sure to undo it if we ultimately return False.
     section.section_kind = 'changes'
 
+    def e(s):
+        return (s
+            .replace('EMU-XREF',    r'<emu-xref [^<>]+></emu-xref>')
+            .replace('EMU-GRAMMAR', r'<emu-grammar>[^<>]+</emu-grammar>')
+            .replace('NONTERMINAL', r'\|\w+\|')
+        )
+
+    # --------------------------------------------------------------------------
     if section.section_title == 'Pattern Semantics' and section.section_num.startswith('B.'):
-        pass
+        # B.1.4.4
+
+        patterns = [
+
+            # -------------------
+            # Use an existing algorithm, but with a substitution:
+            (
+                [
+                    ('p', e("Within EMU-XREF reference to &ldquo;EMU-GRAMMAR &rdquo; are to be interpreted as meaning &ldquo;EMU-GRAMMAR &rdquo; or &ldquo;EMU-GRAMMAR &rdquo;.")),
+                ],
+                lambda p: None
+            ),
+            (
+                [
+                    ('p', e("The production EMU-GRAMMAR evaluates the same as the production EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\.")),
+                ],
+                lambda p: None
+            ),
+            (
+                [
+                    ('p', e("\w+ \(EMU-XREF\) evaluation rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL.")),
+                ],
+                lambda p: None
+            ),
+            (
+                [
+                    ('p', e("\w+ \(EMU-XREF\) evaluation rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following evaluation rules, with parameter _direction_, are also added:")),
+                ],
+                lambda p: None
+            ),
+
+            # -------------------
+            # Give a full emu-alg
+            (
+                # 2 cases:
+                [
+                    ('p', e("The production EMU-GRAMMAR evaluates as follows:")),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: blah_composite_sdo('regexp-Evaluate', p.children[1], emu_alg)
+            ),
+            (
+                # 4 cases:
+                [
+                    ('p', e("(\w+) \(EMU-XREF\) includes the following additional evaluation rule:")),
+                    ('p', e("The production EMU-GRAMMAR evaluates as follows:")),
+                    'emu-alg'
+                ],
+                lambda p1, p2, emu_alg: blah_composite_sdo('regexp-Evaluate', p2.children[1], emu_alg)
+            ),
+            (
+                # 2 cases:
+                [
+                    ('p', e("(?:\w+) \(EMU-XREF\) modifies the following evaluation rule:")),
+                    ('p', e("The production EMU-GRAMMAR evaluates as follows:")),
+                    'emu-alg'
+                ],
+                lambda p1, p2, emu_alg: blah_composite_sdo('regexp-Evaluate', p2.children[1], emu_alg)
+            ),
+
+            # -----------------------
+
+            (
+                # Introducing the section
+                [
+                    ('p', e("The semantics of EMU-XREF is extended as follows:")),
+                ],
+                None
+            ),
+            (
+                # 
+                [
+                    ('p', e("(\w+) \(EMU-XREF\) includes the following additional evaluation rules?:")),
+                ],
+                None
+            ),
+
+            # -------------------
+            (
+                ['emu-note'],
+                None
+            ),
+        ]
+        scan_section(section, patterns)
+
+    # --------------------------------------------------------------------------
     elif (mo := re.fullmatch('Changes to ([A-Z]\w+)', section.section_title)):
-        pass
+        op_name = mo.group(1)
+        patterns = [
+            (
+                # B.3.2.{1,2,3,6}:
+                [
+                    ('p', e(f'During {op_name} the following steps are performed in place of step EMU-XREF:')),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
+            ),
+            (
+                # B.3.6.1:
+                [
+                    ('p', e('The result column in EMU-XREF for an argument type of Object is replaced with the following algorithm:')),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
+            ),
+            (
+                # B.3.6.2:
+                [
+                    ('p', e(f'The following steps replace step EMU-XREF of the {op_name} algorithm:')),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
+            ),
+        ]
+        scan_section(section, patterns)
+
+    # --------------------------------------------------------------------------
     elif (mo := re.fullmatch('Changes to (.+) Static Semantics: Early Errors', section.section_title)):
-        pass
+        # B.3.2.{4,5}
+        patterns = [
+            (
+                [
+                    ('p', e('The rules for the following production in EMU-XREF are modified with the addition of the <ins>highlighted</ins> text:')),
+                    'emu-grammar',
+                    'ul',
+                ],
+                lambda p, emu_grammar, ul: blah_early_error(emu_grammar, ul)
+            ),
+        ]
+        scan_section(section, patterns)
+
+    # --------------------------------------------------------------------------
     elif section.section_title == 'VariableStatements in Catch Blocks':
-        pass
+        # B.3.4
+        patterns = [
+            (
+                [
+                    ('p', e('The content of subclause EMU-XREF is replaced with the following:')),
+                    'emu-grammar',
+                    'ul'
+                ],
+                lambda p, emu_grammar, ul: blah_early_error(emu_grammar, ul)
+            ),
+            (
+                ['emu-note'],
+                None
+            ),
+            (
+                [
+                    ('p', e('.+ This change is accomplished by modifying the algorithm of EMU-XREF as follows:')),
+                ],
+                None
+            ),
+            (
+                [
+                    ('p', e('Step EMU-XREF is replaced by:')),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: blah_solo_op('EvalDeclarationInstantiation', emu_alg)
+            ),
+        ]
+        scan_section(section, patterns)
+
+    # --------------------------------------------------------------------------
     elif section.section_title == 'Initializers in ForIn Statement Heads':
-        pass
+        # B.3.5
+        patterns = [
+            (
+                [
+                    ('p', e('The following augments the NONTERMINAL production in EMU-XREF:')),
+                    'emu-grammar',
+                    ('p', 'This production only applies when parsing non-strict code.'),
+                ],
+                lambda p, emu_grammar, _: None
+            ),
+            (
+                [
+                    ('p', e('The (?:static|runtime) semantics of (\w+) in EMU-XREF are augmented with the following:')),
+                    'emu-grammar',
+                    'emu-alg',
+                ],
+                lambda op_name, emu_grammar, emu_alg: blah_composite_sdo(op_name, emu_grammar, emu_alg)
+            ),
+        ]
+        scan_section(section, patterns) 
+
+    # --------------------------------------------------------------------------
     elif (mo := re.fullmatch('Changes to (.+)', section.section_title)):
-        pass
+        # B.3.6.3
+        assert mo.group(1) == 'the `typeof` Operator'
+        assert section.bcen_str == 'p emu-table'
+        patterns = [
+            (
+                [
+                    ('p', e('The following table entry is inserted into EMU-XREF immediately preceding the entry for "Object \(implements \[\[Call\]\]\)":')),
+                    'emu-table'
+                ],
+                lambda p, emu_table: None
+            ),
+        ]
+        scan_section(section, patterns)
+
+    # --------------------------------------------------------------------------
     else:
         del section.section_kind
         return False
@@ -1641,130 +1848,6 @@ def _handle_changes_section(section):
     # ==========================================================================
 
     section.ste = {}
-
-    mo = re.fullmatch(r'Changes to (\w+|Abstract Equality Comparison)', section.section_title)
-    if mo:
-        op_name = mo.group(1)
-        assert section.bcen_str in ['p emu-alg', 'p emu-alg p emu-alg']
-        for i in range(0, len(section.block_children), 2):
-            p = section.block_children[i]
-            assert p.element_name == 'p'
-            p_ist = p.inner_source_text()
-            assert any(
-                re.fullmatch(pattern, p_ist)
-                for pattern in [
-                    f"During {op_name} the following steps are performed in place of step <emu-xref .+:",
-                    f"The following steps replace step <emu-xref.+ of the {op_name} algorithm:",
-                    f"The result column in .+ for an argument type of Object is replaced with the following algorithm:",
-                ]
-            ), p_ist
-
-            emu_alg = section.block_children[i+1]
-            assert emu_alg.element_name == 'emu-alg'
-            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
-            # XXX debateable, since it's not a full algorithm
-
-    else:
-        emu_xref_re = r'<emu-xref href="[^"<>]+"></emu-xref>'
-        emu_grammar_re = r'<emu-grammar>[^<>]+</emu-grammar>'
-        nont_re = r'\|\w+\|'
-        i = 0
-        while i < len(section.block_children):
-            p = section.block_children[i]; i += 1
-
-            if p.element_name == 'emu-note':
-                continue
-
-            assert p.element_name == 'p'
-            p_ist = p.inner_source_text()
-
-            if (
-                re.fullmatch(fr'The rules for the following production in {emu_xref_re} are modified with the addition of the <ins>highlighted</ins> text:', p_ist)
-                or
-                re.fullmatch(fr'The content of subclause {emu_xref_re} is replaced with the following:', p_ist)
-            ):
-                emu_grammar = section.block_children[i]; i += 1
-                ul = section.block_children[i]; i += 1
-                handle_early_error(emu_grammar, ul, section)
-
-            elif re.fullmatch(fr'The semantics of {emu_xref_re} is extended as follows:', p_ist):
-                p2 = section.block_children[i]; i += 1
-                assert p2.element_name == 'p'
-                p2_ist = p2.inner_source_text()
-                assert re.fullmatch(fr'Within {emu_xref_re} reference to &ldquo;{emu_grammar_re} &rdquo; are to be interpreted as meaning &ldquo;{emu_grammar_re} &rdquo; or &ldquo;{emu_grammar_re} &rdquo;\.', p2_ist)
-
-            elif (
-                re.fullmatch(r'.+ includes the following additional evaluation rules?:', p_ist)
-                or 
-                re.fullmatch(r'.+ The following evaluation rules(, with parameter _direction_,)? are also added:', p_ist)
-                or
-                re.fullmatch(r'.+ modifies the following evaluation rule:', p_ist)
-            ):
-                while True:
-                    p2 = section.block_children[i]; i += 1
-                    if p2.element_name == 'emu-note':
-                        break
-                    assert p2.element_name == 'p'
-                    p2_ist = p2.inner_source_text()
-                    if re.fullmatch(fr'The production {emu_grammar_re} evaluates the same as the production {emu_grammar_re} but with {nont_re} substituted for {nont_re}\.', p2_ist):
-                        pass
-                    elif re.fullmatch(fr'The production {emu_grammar_re} evaluates as follows:', p2_ist):
-                        [emu_grammar] = [*p2.each_child_named('emu-grammar')]
-                        emu_alg = section.block_children[i]; i += 1
-                        assert emu_alg.element_name == 'emu-alg'
-                        handle_composite_sdo('regexp-Evaluate', emu_grammar, emu_alg, section)
-                    else:
-                        i -= 1
-                        break
-
-            elif re.fullmatch(fr'Assertion \({emu_xref_re}\) evaluation rules for the {emu_grammar_re} and {emu_grammar_re} productions are also used for the {nont_re} productions, but with {nont_re} substituted for {nont_re}\.', p_ist):
-                pass
-
-            elif re.fullmatch(fr'.+ This change is accomplished by modifying the algorithm of {emu_xref_re} as follows:', p_ist):
-                while i < len(section.block_children):
-                    p2 = section.block_children[i]; i += 1
-                    assert p2.element_name == 'p'
-                    p2_ist = p2.inner_source_text()
-                    assert re.fullmatch(r'Step <emu-xref.+></emu-xref> is replaced by:', p2_ist)
-
-                    emu_alg = section.block_children[i]; i += 1
-                    assert emu_alg.element_name == 'emu-alg'
-                    Pseudocode.alg_add_defn('op: solo', 'EvalDeclarationInstantiation', None, emu_alg, section)
-
-            elif re.fullmatch(fr'The following augments the \|\w+\| production in {emu_xref_re}:', p_ist):
-                emu_grammar = section.block_children[i]; i += 1
-                assert emu_grammar.element_name == 'emu-grammar'
-                p2 = section.block_children[i]; i += 1
-                assert p2.element_name == 'p'
-                p2_ist = p2.inner_source_text()
-                assert p2_ist == 'This production only applies when parsing non-strict code.'
-
-            elif re.fullmatch(fr'The following table entry is inserted into {emu_xref_re} .+', p_ist):
-                emu_table = section.block_children[i]; i += 1
-                assert emu_table.element_name == 'emu-table'
-
-            else:
-                mo = (
-                    re.fullmatch(fr'The (?:static|runtime) semantics of (\w+)( in {emu_xref_re})? are augmented with the following:', p_ist)
-                )
-                if mo:
-                    op_name = mo.group(1)
-                    emu_grammar = section.block_children[i]; i += 1
-                    emu_alg = section.block_children[i]; i += 1
-                    assert emu_grammar.element_name == 'emu-grammar'
-                    assert emu_alg.element_name == 'emu-alg'
-                    handle_composite_sdo(op_name, emu_grammar, emu_alg, section)
-
-                else:
-                    print()
-                    print('--------------------------------------')
-                    print(section.section_num, section.section_title)
-                    print(section.bcen_str)
-                    print()
-                    print(p_ist)
-                    print(section.block_children[i].source_text())
-                    assert 0
-                    break
 
     return True
 
@@ -1948,5 +2031,81 @@ def _check_section_order(section):
 
     for child in section.section_children:
         _check_section_order(child)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def scan_section(section, patterns):
+    try:
+        results = scan_nodes(section.block_children, patterns)
+    except ScanError as e:
+        msg_at_posn(e.node.start_posn, f"Unexpected node in {section.section_kind} section")
+        results = []
+    return results
+
+def scan_nodes(hnodes, patterns):
+    results = []
+    next_i = 0
+    while next_i < len(hnodes):
+        for (b, (pattern, processor)) in enumerate(patterns):
+            assert isinstance(pattern, list)
+
+            n = len(pattern)
+            if next_i + n > len(hnodes):
+                # This pattern is too long to match at this point in hnodes.
+                continue
+
+            match_results = [
+                node_matches_atom(child, element_atom)
+                for (child, element_atom) in zip(hnodes[next_i:], pattern)
+            ]
+            if not all(match_results):
+                # pattern didn't match
+                continue
+
+            matched_nodes = hnodes[next_i : next_i + n]
+            if processor is None:
+                pass
+            elif processor == 'print':
+                print()
+                for node in matched_nodes:
+                    print('>', node.source_text())
+            elif callable(processor):
+                # arguments = matched_nodes
+                arguments = []
+                for (matched_node, match_result) in zip(matched_nodes, match_results):
+                    # If the atom captured something(s), use that/them as the arguments to tha callable.
+                    if hasattr(match_result, 'groups') and len(match_result.groups()) > 0:
+                        arguments.extend(match_result.groups())
+                    else:
+                        arguments.append(matched_node)
+                result = processor(*arguments)
+                if type(result) == type([]):
+                    results.extend(result)
+                else:
+                    results.append(result)
+            else:
+                assert 0, processor
+            next_i += n
+            break
+        else:
+            raise ScanError(hnodes[next_i])
+    return results
+
+@dataclass(frozen = True)
+class ScanError(BaseException):
+    node: HNode
+
+def node_matches_atom(node, atom):
+    if isinstance(atom, str):
+        return (node.element_name == atom)
+    elif isinstance(atom, tuple):
+        (desired_element_name, desired_content_re) = atom
+        return (
+            node.element_name == desired_element_name
+            and
+            re.fullmatch(desired_content_re, node.inner_source_text())
+        )
+    else:
+        assert 0, atom
 
 # vim: sw=4 ts=4 expandtab
