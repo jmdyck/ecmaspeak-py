@@ -557,25 +557,31 @@ def extract_grammars(x):
 # ------------------------------------------------------------------------------
 
 def handle_inline_sdo_section_body(section, sdo_name):
-    assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
-    # Each <li> in the <ul> is an "inline SDO".
 
-    for ul in section.block_children:
-        if ul.element_name != 'ul': continue
+    lis = []
+    for bc in section.block_children:
+        if bc.element_name == 'ul':
+            # Each <li> in the <ul> is an "inline SDO".
+            for ul_child in bc.children:
+                if ul_child.is_whitespace(): continue
+                assert ul_child.element_name == 'li'
+                lis.append(ul_child)
+        elif bc.element_name == 'emu-table':
+            # "String Single Character Escape Sequences" in 12.8.4.1 "Static Semantics: SV"
+            # This table has info that is necessary for executing one of the SV rules,
+            # but we'll deal with it some other time?
+            pass
+        elif bc.element_name in ['p', 'emu-note']:
+            # In practice, in this context, a <p> is basically a Note.
+            pass
+        else:
+            assert 0, bc.element_name
 
-        for child in ul.children:
-            if child.element_name == '#LITERAL':
-                assert child.is_whitespace()
-            elif child.element_name == 'li':
-                handle_inline_sdo(child, sdo_name, section)
-            else:
-                assert 0, child.element_name
-
-def handle_inline_sdo(li, section_sdo_name, section):
+    for li in lis:
         assert li.element_name == 'li'
 
         LI = Pseudocode.parse(li, 'inline_sdo')
-        if LI is None: return
+        if LI is None: continue
 
         assert LI.prod.lhs_s == '{LI}'
         [ISDO_RULE] = LI.children
@@ -600,7 +606,7 @@ def handle_inline_sdo(li, section_sdo_name, section):
             if cl == '{ISDO_NAME}':
                 [cap_word] = child.children
                 [rule_sdo_name] = cap_word.children
-                assert rule_sdo_name == section_sdo_name
+                assert rule_sdo_name == sdo_name
                 rule_sdo_names.append(rule_sdo_name)
             elif cl == '{h_emu_grammar}':
                 rule_grammars.append(child._hnode)
