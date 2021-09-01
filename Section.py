@@ -1340,6 +1340,10 @@ def _handle_function_section(section):
         assert n_emu_algs == 0
         return True
 
+    # ======================================================
+
+    # Handle the function that's declared by the section-heading.
+
     bif_species = {
         'CallConstruct'               : 'bif: value of data property',
         'accessor_property'           : 'bif: accessor function',
@@ -1352,27 +1356,29 @@ def _handle_function_section(section):
         # - A Math function that we merely constrain, via a bullet-list.
         # - "This function is like that function" (except different, maybe).
         # - Other functions that we only define in prose.
-        Pseudocode.alg_add_defn(bif_species, prop_path, None, None, section)
-
-    elif n_emu_algs == 1:
-        emu_alg_posn = section.bcen_list.index('emu-alg')
-        emu_alg = section.block_children[emu_alg_posn]
-        Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg, section)
-
+        emu_alg_a = None
     else:
-        assert prop_path in ['%TypedArray%.prototype.sort']
-        # It's an odd combination of the emu-algs in the clause.
-        # The first emu-alg is at least the *start* of the full algorithm.
-        emu_alg_posn = section.bcen_list.index('emu-alg')
-        emu_alg = section.block_children[emu_alg_posn]
-        Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg, section)
+        emu_alg_posn_a = section.bcen_list.index('emu-alg')
+        emu_alg_a = section.block_children[emu_alg_posn_a]
 
-        if True:
-            assert n_emu_algs == 2
-            # The second emu-alg defines the TypedArray SortCompare.
-            emu_alg_posn = section.bcen_list.index('emu-alg', emu_alg_posn+1)
-            emu_alg = section.block_children[emu_alg_posn]
-            Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg, section)
+    Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
+
+    # ======================================================
+
+    # Handle any other algorithm in the section.
+
+    if n_emu_algs > 1:
+        # There's only one case of this left. (see PR #2302 or #2305)
+        assert prop_path == '%TypedArray%.prototype.sort'
+        assert n_emu_algs == 2
+
+        # The first emu-alg is only the *start* of the full algorithm,
+        # but we still want a header for the function. (created above)
+
+        # The second emu-alg defines the TypedArray SortCompare operation.
+        emu_alg_posn_b = section.bcen_list.index('emu-alg', emu_alg_posn_a+1)
+        emu_alg_b = section.block_children[emu_alg_posn_b]
+        Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
     return True
 
