@@ -851,8 +851,11 @@ def _handle_other_op_section(section):
 
 def handle_op_table(emu_table, section, op_name):
     # The op is defined by a table that splits on argument type.
-    # The second cell in each row is a little algorithm,
-    # but it's generally not marked as an emu-alg.
+    # I.e., each row has two cells:
+    # - The first cell is the name of an ES language type.
+    # - The second cell is a little algorithm,
+    #   but it's generally not marked as an emu-alg.
+
     assert emu_table.element_name == 'emu-table'
     (_, table, _) = emu_table.children
     assert table.element_name == 'table'
@@ -865,9 +868,6 @@ def handle_op_table(emu_table, section, op_name):
             assert b.inner_source_text().strip() == 'Result'
             continue
 
-        handle_tabular_op_defn(op_name, a, b, section)
-
-def handle_tabular_op_defn(op_name, a, b, section):
         assert a.element_name == 'td'
         assert b.element_name == 'td'
 
