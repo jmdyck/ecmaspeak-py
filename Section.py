@@ -465,28 +465,7 @@ def _handle_sdo_section(section):
 
 
     elif 'ul' in section.bcen_set:
-        assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
-        # Each <li> in the <ul> is an "inline SDO".
-
-        for ul in section.block_children:
-            if ul.element_name != 'ul': continue
-
-            if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
-                # This is the <ul> for 'significant digit' at the end of 
-                # 7.1.3.1.1 Runtime Semantics: MV
-                # and
-                # 11.8.3.1 Static Semantics: MV
-                # We're not interested in it.
-                assert section.section_title in ['Runtime Semantics: MV', 'Static Semantics: MV']
-                continue
-
-            for child in ul.children:
-                if child.element_name == '#LITERAL':
-                    assert child.is_whitespace()
-                elif child.element_name == 'li':
-                    handle_inline_sdo(child, sdo_name, section)
-                else:
-                    assert 0, child.element_name
+        handle_inline_sdo_section_body(section, sdo_name)
 
     elif 'emu-alg' in section.bcen_set:
         assert section.bcen_set <= set(['emu-alg', 'p', 'emu-note'])
@@ -576,6 +555,30 @@ def extract_grammars(x):
     return (emu_grammars, text.strip())
 
 # ------------------------------------------------------------------------------
+
+def handle_inline_sdo_section_body(section, sdo_name):
+    assert section.bcen_set <= set(['ul', 'p', 'emu-table', 'emu-note'])
+    # Each <li> in the <ul> is an "inline SDO".
+
+    for ul in section.block_children:
+        if ul.element_name != 'ul': continue
+
+        if re.match(r'^<li>\n +it is not `0`; or\n +</li>$', ul.children[1].source_text()):
+            # This is the <ul> for 'significant digit' at the end of 
+            # 7.1.3.1.1 Runtime Semantics: MV
+            # and
+            # 11.8.3.1 Static Semantics: MV
+            # We're not interested in it.
+            assert section.section_title in ['Runtime Semantics: MV', 'Static Semantics: MV']
+            continue
+
+        for child in ul.children:
+            if child.element_name == '#LITERAL':
+                assert child.is_whitespace()
+            elif child.element_name == 'li':
+                handle_inline_sdo(child, sdo_name, section)
+            else:
+                assert 0, child.element_name
 
 def handle_inline_sdo(li, section_sdo_name, section):
         assert li.element_name == 'li'
