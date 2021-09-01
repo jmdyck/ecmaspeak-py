@@ -1342,11 +1342,9 @@ def _handle_function_section(section):
 
     bif_species = {
         'CallConstruct'               : 'bif: value of data property',
-        'CallConstruct_overload'      : 'bif: value of data property: overload',
         'accessor_property'           : 'bif: accessor function',
         'anonymous_built_in_function' : 'bif: * per realm',
         'function_property'           : 'bif: value of data property',
-        'function_property_overload'  : 'bif: value of data property: overload',
     }[section.section_kind]
 
     if n_emu_algs == 0:
