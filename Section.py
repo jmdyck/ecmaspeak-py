@@ -755,23 +755,8 @@ def _handle_other_op_section(section):
 
         if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
             assert section.bcen_str == 'emu-table'
-            # The op is defined by a table that splits on argument type.
-            # The second cell in each row is a little algorithm,
-            # but it's generally not marked as an emu-alg.
             emu_table = section.block_children[0]
-            assert emu_table.element_name == 'emu-table'
-            (_, table, _) = emu_table.children
-            assert table.element_name == 'table'
-            (_, tbody, _) = table.children
-            for tr in tbody.each_child_named('tr'):
-                (_, a, _, b, _) = tr.children 
-
-                if a.element_name == 'th' and b.element_name == 'th':
-                    assert a.inner_source_text().strip() == 'Argument Type'
-                    assert b.inner_source_text().strip() == 'Result'
-                    continue
-
-                handle_tabular_op_defn(op_name, a, b, section)
+            handle_op_table(emu_table, section, op_name)
 
         elif section.section_kind == 'env_rec_method_unused':
             pass
@@ -863,6 +848,24 @@ def _handle_other_op_section(section):
     return True
 
 # ------------------------------------------------------------------------------
+
+def handle_op_table(emu_table, section, op_name):
+    # The op is defined by a table that splits on argument type.
+    # The second cell in each row is a little algorithm,
+    # but it's generally not marked as an emu-alg.
+    assert emu_table.element_name == 'emu-table'
+    (_, table, _) = emu_table.children
+    assert table.element_name == 'table'
+    (_, tbody, _) = table.children
+    for tr in tbody.each_child_named('tr'):
+        (_, a, _, b, _) = tr.children 
+
+        if a.element_name == 'th' and b.element_name == 'th':
+            assert a.inner_source_text().strip() == 'Argument Type'
+            assert b.inner_source_text().strip() == 'Result'
+            continue
+
+        handle_tabular_op_defn(op_name, a, b, section)
 
 def handle_tabular_op_defn(op_name, a, b, section):
         assert a.element_name == 'td'
