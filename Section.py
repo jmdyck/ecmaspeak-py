@@ -920,7 +920,11 @@ def _handle_other_op_section(section):
     else:
         assert 0
 
-    headers.create_operation_info_for_section(section)
+    alg_header = headers.get_info_from_heading(section)
+    alg_header.finish_initialization()
+    alg_header.node_at_end_of_header = section.dl_child
+    for alg_defn in section.alg_defns:
+        alg_header.add_defn(alg_defn)
     return True
 
 # ------------------------------------------------------------------------------
