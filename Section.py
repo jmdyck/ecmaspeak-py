@@ -720,6 +720,10 @@ def _handle_oddball_op_section(section):
     if section.section_id == 'sec-weakref-execution':
         # 9.10.3
         op_name = 'WeakRef emptying thing'
+        assert section.block_children[0].source_text().startswith(
+            "<p>At any time, if a set of objects _S_ is not live,"
+        )
+        param_nature_ = {'_S_': 'TBD'}
         section.ste = {
             'op_name': op_name,
             'type': 'abstract operation',
@@ -736,6 +740,7 @@ def _handle_oddball_op_section(section):
         assert section.block_children[0].source_text().startswith(
             "<p>A candidate execution _execution_ has "
         )
+        param_nature_ = {'_execution_': 'an execution'}
         section.ste = {
             'op_name': op_name,
             'parameters': {'_execution_': ''},
@@ -750,6 +755,11 @@ def _handle_oddball_op_section(section):
         assert section.block_children[0].source_text().startswith(
             "<p>For an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_) are in a "
         )
+        param_nature_ = {
+            '_execution_': 'an execution',
+            '_E_'        : 'an event in SharedDataBlockEventSet(_execution_)',
+            '_D_'        : 'an event in SharedDataBlockEventSet(_execution_)',
+        }
         parameters = {
             '_execution_': '',
             '_E_'        : '',
@@ -771,7 +781,20 @@ def _handle_oddball_op_section(section):
     assert emu_alg.element_name == 'emu-alg'
     Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
-    headers.create_operation_info_for_section(section)
+    headers.oh_warn()
+    headers.oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
+    headers.oh_warn(f"there is a non-standard preamble")
+
+    alg_header = headers.AlgHeader()
+    alg_header.species = 'op: solo'
+    alg_header.kind = 'abstract operation'
+    alg_header.name = op_name
+    alg_header.param_names = list(param_nature_.keys())
+    alg_header.param_nature_ = param_nature_
+    alg_header.finish_initialization()
+    alg_header.node_at_end_of_header = section.heading_child
+    alg_header.add_defn(section.alg_defns[0])
+
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

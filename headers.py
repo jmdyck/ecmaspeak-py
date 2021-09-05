@@ -485,17 +485,10 @@ single_sentence_rules_str = r'''
     # ==========================================================================
     # Sentences that start with "A" or "An"
 
-        A (candidate execution (_\w+_)) (has .+) if the following (?P<kind>algorithm) (returns \*true\*).
-        pl=a \1
-        v=\2 \3 if this operation \5.
-
         (An? (?P<name>.+) function) is an (?P<kind>anonymous built-in function) that ((has|is) .+)
         v=!FUNC \4
 
     # ==========================================================================
-
-        For (?P<pl>an execution _\w+_, two events (_\w_ and _\w_) in \S+) (are in a .+) if the following (?P<kind>algorithm) (returns \*true\*).
-        v=\2 \3 if this operation \5.
 
     # ==========================================================================
     # Sentences that start with "It"
@@ -1261,14 +1254,6 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         oi.param_names = ['_args_']
         oi.param_nature_['_args_'] = 'a List of ECMAScript language values'
         oi.rest_params.add('_args_')
-        return
-
-    elif parameter_listing == 'an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_)':
-        # 2 cases
-        oi.param_names = ['_execution_', '_E_', '_D_']
-        oi.param_nature_['_execution_'] = 'an execution'
-        oi.param_nature_['_E_'] = 'an event in SharedDataBlockEventSet(_execution_)'
-        oi.param_nature_['_D_'] = 'an event in SharedDataBlockEventSet(_execution_)'
         return
 
     elif parameter_listing in [
