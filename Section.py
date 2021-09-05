@@ -352,7 +352,7 @@ def _handle_early_errors_section(section):
 
         handle_early_error(emu_grammar, ul, section)
 
-    headers.something_sdo(section)
+    something_sdo(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ def _handle_sdo_section(section):
         assert section.block_children[0].element_name == 'emu-note'
         assert len(section.section_children) == 2
         Pseudocode.ensure_alg('op: syntax-directed', 'HasCallInTailPosition')
-        headers.something_sdo(section)
+        something_sdo(section)
         return True
 
     # ------------------------------------------------------------------------------
@@ -558,7 +558,7 @@ def _handle_sdo_section(section):
             (emu_grammar, emu_alg) = body
             Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
 
-    headers.something_sdo(section)
+    something_sdo(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -637,6 +637,72 @@ def handle_inline_sdo_section_body(section, sdo_name):
         for rule_sdo_name in rule_sdo_names:
             for rule_grammar in rule_grammars:
                 Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
+
+# ------------------------------------------------------------------------------
+
+def something_sdo(s):
+    assert s.section_kind in ['syntax_directed_operation', 'early_errors']
+
+    # get parameters
+    param_dict = OrderedDict()
+    for (param_name, param_punct) in s.ste['parameters'].items():
+        if param_name == '_argumentsList_':
+            param_type = 'a List'
+        else:
+            param_type = 'TBD'
+
+        if param_punct == '[]':
+            param_type = '(optional) ' + param_type
+        else:
+            assert param_punct == '', param_punct
+
+        param_dict[param_name] = param_type
+
+    op_name = s.ste['op_name']
+
+    if op_name == 'regexp-Evaluate':
+        declare_sdo(s, op_name, param_dict, regexp_also)
+    else:
+        declare_sdo(s, op_name, param_dict)
+
+regexp_also = [
+    # 21.2.2.1 Notation says:
+    # "The descriptions below use the following variables:"
+    ('_Input_'           , 'from somewhere'),
+    ('_DotAll_'          , 'from somewhere'),
+    ('_InputLength_'     , 'from somewhere'),
+    ('_NcapturingParens_', 'from somewhere'),
+    ('_IgnoreCase_'      , 'from somewhere'),
+    ('_Multiline_'       , 'from somewhere'),
+    ('_Unicode_'         , 'from somewhere'),
+    ('_WordCharacters_'  , 'from somewhere'),
+]
+
+# ------------------------------------------------------------------------------
+
+def declare_sdo(section, op_name, param_dict, also=[]):
+    oi = headers.AlgHeader()
+    oi.kind = 'syntax-directed operation'
+    oi.name = op_name
+    oi.for_phrase = 'Parse Node'
+    oi.param_names = list(param_dict.keys())
+    oi.param_nature_ = param_dict
+    oi.also = also
+
+    if op_name == 'regexp-Evaluate':
+        assert oi.param_names == [] or oi.param_names == ['_direction_']
+        oi.param_names = ['_direction_']
+        oi.param_nature_ = OrderedDict( [('_direction_', '1 or -1')] )
+        # oi.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
+
+    if True:
+        oi.finish_initialization()
+
+        if not section.section_num.startswith('B'):
+            for alg_defn in section.alg_defns:
+                oi.add_defn(alg_defn)
+
+        oi.node_at_end_of_header = section.heading_child
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
