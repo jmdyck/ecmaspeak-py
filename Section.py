@@ -1571,6 +1571,15 @@ def _handle_other_section(section):
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
             Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
 
+            alg_header = headers.AlgHeader()
+            alg_header.name = 'initializer for @@unscopables'
+            alg_header.kind = 'abstract operation'
+            alg_header.param_names = []
+            alg_header.species = 'op: solo'
+            alg_header.finish_initialization()
+            alg_header.node_at_end_of_header = section.block_children[emu_alg_posn-1]
+            alg_header.add_defn(section.alg_defns[0])
+
         elif section.section_kind == 'properties_of_an_intrinsic_object':
             # In addition to telling you about the intrinsic object,
             # it also defines an abstract operation that is used
@@ -1579,10 +1588,23 @@ def _handle_other_section(section):
             which = mo.group(1)
             op_name = f"this{'Time' if which == 'Date' else which}Value"
 
+            headers.oh_warn()
+            headers.oh_warn(f"In {section.section_num} {section.section_title},")
+            headers.oh_warn(f"    an algorithm gets no info from heading")
+
             preamble = section.block_children[emu_alg_posn-1]
             assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
 
             Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
+
+            alg_header = headers.AlgHeader()
+            alg_header.name = op_name
+            alg_header.kind = 'abstract operation'
+            alg_header.species = 'op: solo'
+            alg_header.param_names = ['_value_']
+            alg_header.finish_initialization()
+            alg_header.node_at_end_of_header = preamble
+            alg_header.add_defn(section.alg_defns[0])
 
         elif section.section_title == 'The Abstract Closure Specification Type':
             # The emu-alg is an example showing the definition and use
@@ -1615,7 +1637,6 @@ def _handle_other_section(section):
         else:
             assert 0, (section.section_num, section.section_title)
 
-    headers.create_operation_info_for_section(section)
     return True
 
 # ------------------------------------------------------------------------------

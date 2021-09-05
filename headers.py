@@ -161,10 +161,10 @@ def create_operation_info_for_section(s):
         'The Abstract Closure Specification Type',
     ]:
         # Its emu-algs are just examples.
-        return
+        assert 0
     elif s.section_kind == 'shorthand':
         # Its emu-algs are only in shorthand definitions.
-        return
+        assert 0
     elif s.section_title in [
         'Changes to FunctionDeclarationInstantiation',
         'Changes to GlobalDeclarationInstantiation',
@@ -393,9 +393,7 @@ def create_operation_info_for_section(s):
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
             hoi = AlgHeader()
             if s.section_title == 'Array.prototype [ @@unscopables ]':
-                hoi.name = 'initializer for @@unscopables'
-                hoi.kind = 'abstract operation'
-                hoi.param_names = []
+                assert 0
             else:
                 oh_warn()
                 oh_warn(f"In {s.section_num} {s.section_title},")
