@@ -681,28 +681,28 @@ regexp_also = [
 # ------------------------------------------------------------------------------
 
 def declare_sdo(section, op_name, param_dict, also=[]):
-    oi = headers.AlgHeader()
-    oi.kind = 'syntax-directed operation'
-    oi.name = op_name
-    oi.for_phrase = 'Parse Node'
-    oi.param_names = list(param_dict.keys())
-    oi.param_nature_ = param_dict
-    oi.also = also
+    alg_header = headers.AlgHeader()
+    alg_header.kind = 'syntax-directed operation'
+    alg_header.name = op_name
+    alg_header.for_phrase = 'Parse Node'
+    alg_header.param_names = list(param_dict.keys())
+    alg_header.param_nature_ = param_dict
+    alg_header.also = also
 
     if op_name == 'regexp-Evaluate':
-        assert oi.param_names == [] or oi.param_names == ['_direction_']
-        oi.param_names = ['_direction_']
-        oi.param_nature_ = OrderedDict( [('_direction_', '1 or -1')] )
-        # oi.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
+        assert alg_header.param_names == [] or alg_header.param_names == ['_direction_']
+        alg_header.param_names = ['_direction_']
+        alg_header.param_nature_ = OrderedDict( [('_direction_', '1 or -1')] )
+        # alg_header.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
 
     if True:
-        oi.finish_initialization()
+        alg_header.finish_initialization()
 
         if not section.section_num.startswith('B'):
             for alg_defn in section.alg_defns:
-                oi.add_defn(alg_defn)
+                alg_header.add_defn(alg_defn)
 
-        oi.node_at_end_of_header = section.heading_child
+        alg_header.node_at_end_of_header = section.heading_child
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
