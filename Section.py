@@ -39,7 +39,6 @@ def make_and_check_sections():
         section.alg_defns = []
 
         _set_section_kind(section)
-        headers.create_operation_info_for_section(section)
 
     stderr()
 
@@ -273,6 +272,7 @@ def ensure_every_emu_alg_in_section_is_parsed(section):
 
 def _handle_root_section(section):
     if section.is_root_section:
+        headers.create_operation_info_for_section(section)
         return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -353,6 +353,7 @@ def _handle_early_errors_section(section):
 
         handle_early_error(emu_grammar, ul, section)
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -474,6 +475,7 @@ def _handle_sdo_section(section):
         assert section.block_children[0].element_name == 'emu-note'
         assert len(section.section_children) == 2
         Pseudocode.ensure_alg('op: syntax-directed', 'HasCallInTailPosition')
+        headers.create_operation_info_for_section(section)
         return True
 
     # ------------------------------------------------------------------------------
@@ -557,6 +559,7 @@ def _handle_sdo_section(section):
             (emu_grammar, emu_alg) = body
             Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -667,6 +670,7 @@ def _handle_oddball_op_section(section):
         # I.e., don't create anything, but return True to indicate that we've handled this section.
         section.section_kind = 'env_rec_method_unused'
         section.ste = {}
+        headers.create_operation_info_for_section(section)
         return True
 
     # ----
@@ -725,6 +729,7 @@ def _handle_oddball_op_section(section):
     assert emu_alg.element_name == 'emu-alg'
     Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -850,6 +855,7 @@ def _handle_other_op_section(section):
     else:
         assert 0
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -1343,6 +1349,7 @@ def _handle_function_section(section):
 
     if section.section_kind == 'function_property_xref':
         assert n_emu_algs == 0
+        headers.create_operation_info_for_section(section)
         return True
 
     # ======================================================
@@ -1385,6 +1392,7 @@ def _handle_function_section(section):
         emu_alg_b = section.block_children[emu_alg_posn_b]
         Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1533,6 +1541,7 @@ def _handle_other_section(section):
         else:
             assert 0, (section.section_num, section.section_title)
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -1856,6 +1865,7 @@ def _handle_changes_section(section):
 
     section.ste = {}
 
+    headers.create_operation_info_for_section(section)
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
