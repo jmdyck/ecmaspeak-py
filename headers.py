@@ -66,117 +66,9 @@ def create_operation_info_for_section(s):
     # ==========================================================================
 
     def isnt_preamble(child):
-        if child.element_name == 'emu-note':
-            # Sometimes an 'emu-note' should be part of the preamble?
-            # FunctionDeclarationInstantiation:
-            #     The note is not really part of the preamble.
-            #     The next child is the preamble.
-            # String.prototype.* and Array.prototype.*:
-            #     The note kind of *is* part of the preamble.
-            #     XXX ignore for now.
+        if child.inner_source_text().startswith('The following version of SortCompare'):
+            # 22.2.3.26 %TypedArray%.prototype.sort
             return True
-        elif child.element_name in ['ul', 'pre']:
-            return True
-
-        # ?
-        elif child.element_name == 'emu-table':
-            # e.g. ControlEscape Code Point Values
-            return True
-        elif child.element_name == 'emu-grammar':
-            return True
-
-        assert child.element_name == 'p', child.element_name
-
-        t = child.inner_source_text()
-        for x in [
-            'Context-free grammars are not sufficiently powerful', # 5.2.4 Static Seantics
-            'Static Semantic Rules have names and typically are defined',
-
-            'The `*` |MultiplicativeOperator| performs multiplication', # 6.1.6.1.4
-            'The `+` operator performs addition',                       # 6.1.6.1.7
-            'Addition is a commutative operation',
-            'The `-` operator performs subtraction',                    # 6.1.6.1.8
-            # 'The result of `-` operator is then',
-
-            'Apply the algorithm in',
-
-            'The implementation of',                        # 15.2.1.17 Runtime Semantics: HostResolveImportedModule
-
-            'An implementation of Host',                    # 16.1 HostReportErrors
-                                                            # 18.2.1.2 HostEnsureCanCompileStrings
-                                                            # 25.6.1.9 HostPromiseRejectionTracker
-
-            'Most hosts will be able to simply define',     # HostFinalizeImportMeta
-
-            'The Boolean prototype object:',
-            'The Symbol prototype object:',
-            'The Number prototype object:',
-            'The BigInt prototype object:',
-            'The Date prototype object:',
-            'The String prototype object:',
-
-            # PR 2065:
-            'The <dfn>Boolean prototype object</dfn>:',
-            'The <dfn>Symbol prototype object</dfn>:',
-            'The <dfn>Number prototype object</dfn>:',
-            'The <dfn>BigInt prototype object</dfn>:',
-            'The <dfn>Date prototype object</dfn>:',
-            'The <dfn>String prototype object</dfn>:',
-
-            'Unless explicitly stated otherwise, the methods of the',
-            'Unless explicitly defined otherwise, the methods of the',
-
-            'An ECMAScript implementation that includes',   # 20.1.3.4 Number.prototype.toLocaleString
-                                                            # 20.3.4.38 Date.prototype.toLocaleDateString
-                                                            # 20.3.4.39 Date.prototype.toLocaleString
-                                                            # 20.3.4.40 Date.prototype.toLocaleTimeString
-                                                            # 21.1.3.10 String.prototype.localeCompare
-                                                            # 21.1.3.22 String.prototype.toLocaleLowerCase
-                                                            # 21.1.3.23 String.prototype.toLocaleUpperCase
-                                                            # 22.1.3.27 Array.prototype.toLocaleString
-
-            'The meanings of the optional parameters',      # 20.1.3.4 Number.prototype.toLocaleString
-                                                            # 22.1.3.27 Array.prototype.toLocaleString
-            'The meaning of the optional parameters',       # 20.3.4.38 Date.prototype.toLocaleDateString
-                                                            # 20.3.4.39 Date.prototype.toLocaleString
-                                                            # 20.3.4.40 Date.prototype.toLocaleTimeString
-                                                            # 21.1.3.22 String.prototype.toLocaleLowerCase
-                                                            # 21.1.3.23 String.prototype.toLocaleUpperCase
-
-            'When _isUTC_ is true',                         # 20.3.1.7 LocalTZA
-
-            'Before performing the comparisons, the following steps are performed to prepare the Strings:',
-                # 21.1.3.10 String.prototype.localeCompare
-
-            'Upon entry, the following steps are performed to initialize evaluation of the `sort` function',
-                # 22.1.3.25 Array.prototype.sort
-                # 22.2.3.26 %TypedArray%.prototype.sort
-            'The implementation-defined sort order condition',
-                # 22.2.3.26 %TypedArray%.prototype.sort
-            'The following version of SortCompare',
-                # 22.2.3.26 %TypedArray%.prototype.sort
-
-            # 22.1.3.34:
-            'The initial value of the @@unscopables data property',
-
-            # 24.4.1.3 GetWaiterList:
-            'A <dfn>WaiterList</dfn>',
-            'Initially a WaiterList object has',            
-            'The agent cluster has',
-            'Each WaiterList has',
-
-            'Let `',
-                # 24.4.2 Atomics.add
-                # 24.4.3 Atomics.and
-                # 24.4.5 Atomics.exchange
-                # 24.4.8 Atomics.or
-                # 24.4.10 Atomics.sub
-                # 24.4.13 Atomics.xor
-        ]:
-            if t.startswith(x):
-                # print(x, s.section_num, s.section_title)
-                return True
-
         return False
 
     # ==========================================================================
@@ -219,7 +111,7 @@ def create_operation_info_for_section(s):
                 else:
                     break
             if p_start_i < p_end_i:
-                assert s.block_children[p_start_i].element_name == 'p'
+                assert s.block_children[p_start_i].element_name in ['p', 'emu-note']
             for i in range(p_start_i, p_end_i):
                 if isnt_preamble(s.block_children[i]):
                     p_end_i = i
@@ -645,7 +537,8 @@ def extract_info_from_preamble(preamble_nodes, section):
 
     para_texts_remaining = []
     for preamble_node in preamble_nodes:
-        assert preamble_node.element_name == 'p'
+        assert preamble_node.element_name in ['p', 'emu-note']
+        if preamble_node.element_name != 'p': continue
 
         para_text = preamble_node.inner_source_text().strip()
         trace = ('xInvoke' in para_text)
