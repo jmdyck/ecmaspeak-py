@@ -175,7 +175,7 @@ def create_operation_info_for_section(s):
     ]:
         # Its emu-algs aren't complete, they just replace a step in another emu-alg.
         # XXX: We could analyze them if we made the replacement.
-        return
+        assert 0
 
     # if s.section_title.startswith('String.prototype.localeCompare'):
         # The emu-alg in the section isn't the (full) alg for the function,
@@ -191,7 +191,7 @@ def create_operation_info_for_section(s):
     ]:
         # Omnibus clauses in Annex B.
         # For now, skip them because they're too weird.
-        return
+        assert 0
 
     # ------------------------------------------------------
 

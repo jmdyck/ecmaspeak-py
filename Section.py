@@ -272,7 +272,6 @@ def ensure_every_emu_alg_in_section_is_parsed(section):
 
 def _handle_root_section(section):
     if section.is_root_section:
-        headers.create_operation_info_for_section(section)
         return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -670,7 +669,6 @@ def _handle_oddball_op_section(section):
         # I.e., don't create anything, but return True to indicate that we've handled this section.
         section.section_kind = 'env_rec_method_unused'
         section.ste = {}
-        headers.create_operation_info_for_section(section)
         return True
 
     # ----
@@ -1349,7 +1347,6 @@ def _handle_function_section(section):
 
     if section.section_kind == 'function_property_xref':
         assert n_emu_algs == 0
-        headers.create_operation_info_for_section(section)
         return True
 
     # ======================================================
@@ -1865,7 +1862,6 @@ def _handle_changes_section(section):
 
     section.ste = {}
 
-    headers.create_operation_info_for_section(section)
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
