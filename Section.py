@@ -663,7 +663,7 @@ def something_sdo(s):
     if op_name == 'regexp-Evaluate':
         declare_sdo(s, op_name, param_dict, regexp_also)
     else:
-        declare_sdo(s, op_name, param_dict)
+        declare_sdo(s, op_name, param_dict, [])
 
 regexp_also = [
     # 21.2.2.1 Notation says:
@@ -680,7 +680,7 @@ regexp_also = [
 
 # ------------------------------------------------------------------------------
 
-def declare_sdo(section, op_name, param_dict, also=[]):
+def declare_sdo(section, op_name, param_dict, also):
     alg_header = headers.AlgHeader()
     alg_header.kind = 'syntax-directed operation'
     alg_header.name = op_name
