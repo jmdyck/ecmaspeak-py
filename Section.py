@@ -352,7 +352,7 @@ def _handle_early_errors_section(section):
 
         handle_early_error(emu_grammar, ul, section)
 
-    something_sdo(section)
+    declare_sdo(section, 'Early Errors', OrderedDict(), [])
     return True
 
 # ------------------------------------------------------------------------------
@@ -467,6 +467,20 @@ def _handle_sdo_section(section):
                 _set_bcen_attributes(section)
         section.ste['parameters'] = parameters
 
+    param_dict = OrderedDict()
+    for (param_name, param_punct) in section.ste['parameters'].items():
+        if param_name == '_argumentsList_':
+            param_type = 'a List'
+        else:
+            param_type = 'TBD'
+
+        if param_punct == '[]':
+            param_type = '(optional) ' + param_type
+        else:
+            assert param_punct == '', param_punct
+
+        param_dict[param_name] = param_type
+
     # -----
 
     if section.section_title == 'Static Semantics: HasCallInTailPosition':
@@ -474,7 +488,7 @@ def _handle_sdo_section(section):
         assert section.block_children[0].element_name == 'emu-note'
         assert len(section.section_children) == 2
         Pseudocode.ensure_alg('op: syntax-directed', 'HasCallInTailPosition')
-        something_sdo(section)
+        declare_sdo(section, sdo_name, param_dict, [])
         return True
 
     # ------------------------------------------------------------------------------
@@ -558,7 +572,11 @@ def _handle_sdo_section(section):
             (emu_grammar, emu_alg) = body
             Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
 
-    something_sdo(section)
+    if sdo_name == 'regexp-Evaluate':
+        also = regexp_also
+    else:
+        also = []
+    declare_sdo(section, sdo_name, param_dict, also)
     return True
 
 # ------------------------------------------------------------------------------
@@ -637,34 +655,6 @@ def handle_inline_sdo_section_body(section, sdo_name):
         for rule_sdo_name in rule_sdo_names:
             for rule_grammar in rule_grammars:
                 Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
-
-# ------------------------------------------------------------------------------
-
-def something_sdo(s):
-    assert s.section_kind in ['syntax_directed_operation', 'early_errors']
-
-    # get parameters
-    param_dict = OrderedDict()
-    for (param_name, param_punct) in s.ste['parameters'].items():
-        if param_name == '_argumentsList_':
-            param_type = 'a List'
-        else:
-            param_type = 'TBD'
-
-        if param_punct == '[]':
-            param_type = '(optional) ' + param_type
-        else:
-            assert param_punct == '', param_punct
-
-        param_dict[param_name] = param_type
-
-    op_name = s.ste['op_name']
-
-    if op_name == 'regexp-Evaluate':
-        also = regexp_also
-    else:
-        also = []
-    declare_sdo(s, op_name, param_dict, also)
 
 # ------------------------------------------------------------------------------
 
