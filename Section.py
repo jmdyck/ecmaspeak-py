@@ -12,6 +12,7 @@ import shared
 from shared import stderr, header, msg_at_posn, spec
 from HTML import HNode
 import Pseudocode
+import headers
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -19,6 +20,7 @@ def make_and_check_sections():
     stderr("make_and_check_sections ...")
 
     Pseudocode.create_all_parsers()
+    headers.oh_inc_f = shared.open_for_output('oh_warnings')
 
     spec.root_section = _make_section_tree(spec.doc_node)
     _set_section_identification_r(spec.root_section, None)
@@ -37,6 +39,7 @@ def make_and_check_sections():
         section.alg_defns = []
 
         _set_section_kind(section)
+        headers.create_operation_info_for_section(section)
 
     stderr()
 
@@ -46,6 +49,9 @@ def make_and_check_sections():
     Pseudocode.check_emu_alg_coverage()
     Pseudocode.check_emu_eqn_coverage()
     Pseudocode.report_all_parsers()
+
+    headers.oh_inc_f.close()
+    headers.note_unused_rules()
 
     _print_section_kinds(spec.root_section)
     _check_aoids(spec.root_section)
@@ -467,6 +473,7 @@ def _handle_sdo_section(section):
         assert len(section.block_children) == 1
         assert section.block_children[0].element_name == 'emu-note'
         assert len(section.section_children) == 2
+        Pseudocode.ensure_alg('op: syntax-directed', 'HasCallInTailPosition')
         return True
 
     # ------------------------------------------------------------------------------

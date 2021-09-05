@@ -17,16 +17,6 @@ from shared import spec, stderr, RE, DL
 def generate_spec_for_PR_545():
     stderr("generate_spec_for_PR_545 ...")
 
-    global oh_inc_f
-    oh_inc_f = shared.open_for_output('oh_warnings')
-
-    for s in spec.root_section.each_descendant_that_is_a_section():
-        create_operation_info_for_section(s)
-
-    oh_inc_f.close()
-
-    note_unused_rules()
-
     write_header_info()
 
 # ------------------------------------------------------------------------------
