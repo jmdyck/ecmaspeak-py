@@ -26,129 +26,6 @@ def oh_warn(*args):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def should_create_op_info_for_algoless_section(s):
-
-    # It depends on what we intend to do with the op_info.
-    # From the point of view of static type analysis,
-    # there's no reason to generate op_info for an algoless section.
-
-    # -----------------------------
-
-    # It's the kind of section that we never want to create op info for:
-
-    if s.section_kind in [
-        'env_rec_method_unused',
-        #
-        'properties_of_an_intrinsic_object',
-        'catchall',
-        'other_property',
-        'shorthand',
-        #
-        'Call_and_Construct_ims_of_an_intrinsic_object',
-        'abstract_operations',
-        'early_errors',
-        'group_of_properties1',
-        'group_of_properties2',
-        'loop',
-        'properties_of_instances',
-        'function_property_xref',
-        'other_property_xref',
-    ]:
-        return False
-
-    # ----------------
-
-    # It's the kind of section that we might want to create op info for,
-    # but not if it's algoless?
-
-    if s.section_kind == 'changes':
-        assert s.section_title in [
-                "Changes to Block Static Semantics: Early Errors",
-                "Changes to `switch` Statement Static Semantics: Early Errors",
-                "Changes to the `typeof` Operator",
-        ]
-        return False
-
-    # -----------------------------
-
-    # It's the kind of section that we always want to create op info for:
-
-    if s.section_kind.endswith('abstract_operation'):
-        assert (
-            s.section_id.startswith('sec-host')
-            or
-            s.section_id == 'sec-local-time-zone-adjustment' # Should LocalTZA be HostLocalTZA?
-            or
-            s.section_title == 'StringToBigInt ( _argument_ )'
-        )
-        return True
-
-    if s.section_kind == 'numeric_method':
-        return True
-
-    # -----------------------------
-
-    # It's the kind of section that we usually want to create op info for,
-    # but with some exceptions:
-
-    if s.section_kind == 'accessor_property':
-        if s.section_title == 'Object.prototype.__proto__':
-            # The section is just a holder for subsections
-            # that define the 'get' and 'set' functions.
-            return False
-        else:
-            assert 0, s.section_title
-            return True
-
-    if s.section_kind == 'function_property':
-
-        # There are various reasons why the spec doesn't provide
-        # an algorithmic specification for a function property.
-        if (
-            s.section_title.startswith('Math.')
-            or
-            s.section_title.startswith('%TypedArray%.prototype.')
-            # A lot of these just say it implements the same algorithm
-            # as the corresponding Array.prototype.foo function.
-            # or
-            # 'Host' in s.section_title
-            or
-            '.prototype.toLocale' in s.section_title
-            or
-            '.prototype [ @@iterator ]' in s.section_title
-            or
-            s.section_title in [
-                # same function object as something else:
-                'Number.parseFloat ( _string_ )',
-                'Number.parseInt ( _string_, _radix_ )',
-                'Set.prototype.keys ( )',
-                'String.prototype.trimLeft ( )',
-                'String.prototype.trimRight ( )',
-                'Date.prototype.toGMTString ( )',
-
-                # similar alg to something else:
-                'String.prototype.toUpperCase ( )',
-
-                # implementation-defined/dependent:
-                # 'LocalTZA ( _t_, _isUTC_ )',
-                'Date.now ( )',
-                'Date.parse ( _string_ )',
-                'Date.prototype.toISOString ( )',
-            ]
-        ):
-            return True
-
-        else:
-            assert 0, s.section_title
-            return True
-
-    # ----------------
-
-    print('> Should I create an eoh for this?', s.section_kind, s.section_num, s.section_title)
-    return False
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 def create_operation_info_for_section(s):
 
     # There are a few cases where a section contains <emu-alg> elements,
@@ -225,7 +102,7 @@ def create_operation_info_for_section(s):
     if n_algos == 0:
         # Even though the section has no algos,
         # we might want to create a header.
-        if should_create_op_info_for_algoless_section(s):
+        if True:
             pre_algo_spans = [(0, len(s.block_children))]
         else:
             return
