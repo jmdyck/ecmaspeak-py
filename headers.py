@@ -28,73 +28,11 @@ def oh_warn(*args):
 
 def create_operation_info_for_section(s):
 
-    # There are a few cases where a section contains <emu-alg> elements,
-    # but we don't want to create emu-operation-header elements for any of them,
-    # because we can't really apply STA to them.
-
-    if s.section_title in [
-        'Algorithm Conventions',
-        'Syntax-Directed Operations',
-        'The Abstract Closure Specification Type',
-    ]:
-        # Its emu-algs are just examples.
-        assert 0
-    elif s.section_kind == 'shorthand':
-        # Its emu-algs are only in shorthand definitions.
-        assert 0
-    elif s.section_title in [
-        'Changes to FunctionDeclarationInstantiation',
-        'Changes to GlobalDeclarationInstantiation',
-        'Changes to EvalDeclarationInstantiation',
-        'Changes to BlockDeclarationInstantiation',
-        'VariableStatements in Catch Blocks',
-        'Changes to IsLooselyEqual',
-    ]:
-        # Its emu-algs aren't complete, they just replace a step in another emu-alg.
-        # XXX: We could analyze them if we made the replacement.
-        assert 0
-
-    # if s.section_title.startswith('String.prototype.localeCompare'):
-        # The emu-alg in the section isn't the (full) alg for the function,
-        # so don't connect them.
-        # return
-
-
-    if s.section_id in [
-        'sec-regular-expression-patterns-semantics',
-        'sec-initializers-in-forin-statement-heads',
-        'sec-__proto__-property-names-in-object-initializers',
-        'sec-IsHTMLDDA-internal-slot-to-boolean',
-    ]:
-        # Omnibus clauses in Annex B.
-        # For now, skip them because they're too weird.
-        assert 0
-
-    # ------------------------------------------------------
-
-    if s.section_kind in ['syntax_directed_operation', 'early_errors']:
-        assert 0
-
-    # ------------------------------------------------------
-
     algo_child_posns = [
         i
         for (i, child) in enumerate(s.block_children)
         if (
             child.element_name == 'emu-alg'
-            or
-            (
-                # Conversions are often presented in a table
-                # broken down by type.
-                # The <emu-table> is roughly equivalent to an <emu-alg>
-                # (or several of them).
-                child.element_name == 'emu-table'
-                and
-                re.fullmatch(
-                    r'(To(Boolean|Number|String|Object)|RequireObjectCoercible) \( _argument_ \)',
-                    s.section_title
-                )
-            )
         )
     ]
 
@@ -102,10 +40,7 @@ def create_operation_info_for_section(s):
     if n_algos == 0:
         # Even though the section has no algos,
         # we might want to create a header.
-        if True:
-            pre_algo_spans = [(0, len(s.block_children))]
-        else:
-            return
+        pre_algo_spans = [(0, len(s.block_children))]
 
     else:
         pre_algo_spans = [
@@ -252,14 +187,10 @@ def create_operation_info_for_section(s):
             algo = None
         else:
             algo = s.block_children[span_end_i]
-            assert algo.element_name in ['emu-alg', 'emu-table']
+            assert algo.element_name in ['emu-alg']
 
         if (
-            span_start_i == 0 and not (
-                s.section_title.startswith('Properties of the')
-                or
-                s.section_title == 'Array.prototype [ @@unscopables ]'
-            )
+            span_start_i == 0
         ):
             # The op is the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'is', span_end_i)
@@ -269,9 +200,7 @@ def create_operation_info_for_section(s):
             # The op is *not* the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
             hoi = AlgHeader()
-            if s.section_title == 'Array.prototype [ @@unscopables ]':
-                assert 0
-            else:
+            if True:
                 oh_warn()
                 oh_warn(f"In {s.section_num} {s.section_title},")
                 oh_warn(f"    an algorithm gets no info from heading")
@@ -334,11 +263,6 @@ def create_operation_info_for_section(s):
                     oi.add_defn(algo._parent_algdefn)
                 else:
                     stderr(f"No _parent_algdefn for {algo}")
-            elif algo.element_name == 'emu-table':
-                assert not hasattr(algo, '_parent_algdefn')
-                assert oi.kind == 'abstract operation'
-                for alg_defn in s.alg_defns:
-                    oi.add_defn(alg_defn)
             else:
                 assert 0, algo.element_name
 
