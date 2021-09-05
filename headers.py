@@ -65,15 +65,15 @@ def create_operation_info_for_section(s):
 
     # ==========================================================================
 
-    def isnt_preamble(child):
-        if child.inner_source_text().startswith('The following version of SortCompare'):
-            # 22.2.3.26 %TypedArray%.prototype.sort
-            return True
-        return False
-
     # ==========================================================================
 
     for (span_start_i, span_end_i) in pre_algo_spans:
+        create_operation_info_for_span(s, span_start_i, span_end_i)
+
+# --------------------------------
+
+def create_operation_info_for_span(s, span_start_i, span_end_i):
+        n_algos = s.bcen_list.count('emu-alg')
 
         if n_algos == 0 or span_end_i == len(s.block_children):
             algo = None
@@ -98,6 +98,12 @@ def create_operation_info_for_section(s):
                 oh_warn(f"    an algorithm gets no info from heading")
 
         # -----------------------------------
+
+        def isnt_preamble(child):
+            if child.inner_source_text().startswith('The following version of SortCompare'):
+                # 22.2.3.26 %TypedArray%.prototype.sort
+                return True
+            return False
 
         # Within the span, find the preamble, if any.
         p_start_i = span_start_i
