@@ -661,9 +661,10 @@ def something_sdo(s):
     op_name = s.ste['op_name']
 
     if op_name == 'regexp-Evaluate':
-        declare_sdo(s, op_name, param_dict, regexp_also)
+        also = regexp_also
     else:
-        declare_sdo(s, op_name, param_dict, [])
+        also = []
+    declare_sdo(s, op_name, param_dict, also)
 
 regexp_also = [
     # 21.2.2.1 Notation says:
