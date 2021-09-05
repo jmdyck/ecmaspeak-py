@@ -352,7 +352,7 @@ def _handle_early_errors_section(section):
 
         handle_early_error(emu_grammar, ul, section)
 
-    headers.create_operation_info_for_section(section)
+    headers.something_sdo(section)
     return True
 
 # ------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ def _handle_sdo_section(section):
         assert section.block_children[0].element_name == 'emu-note'
         assert len(section.section_children) == 2
         Pseudocode.ensure_alg('op: syntax-directed', 'HasCallInTailPosition')
-        headers.create_operation_info_for_section(section)
+        headers.something_sdo(section)
         return True
 
     # ------------------------------------------------------------------------------
@@ -558,7 +558,7 @@ def _handle_sdo_section(section):
             (emu_grammar, emu_alg) = body
             Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
 
-    headers.create_operation_info_for_section(section)
+    headers.something_sdo(section)
     return True
 
 # ------------------------------------------------------------------------------

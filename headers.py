@@ -196,8 +196,7 @@ def create_operation_info_for_section(s):
     # ------------------------------------------------------
 
     if s.section_kind in ['syntax_directed_operation', 'early_errors']:
-        something_sdo(s)
-        return
+        assert 0
 
     # ------------------------------------------------------
 
