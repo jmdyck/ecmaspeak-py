@@ -984,14 +984,8 @@ def resolve_oi(hoi, poi):
     oi = AlgHeader()
 
     # kind
-    if hoi.kind is None and poi.kind is None:
-        assert 0
-        oh_warn()
-        oh_warn(f'resolve_oi: {hoi.name}/{poi.name}: kind is None in both hoi and poi')
-    elif hoi.kind is None:
-        assert 0
-        oi.kind = poi.kind
-    elif poi.kind is None:
+    assert hoi.kind is not None
+    if poi.kind is None:
         oi.kind = hoi.kind
     else:
         if hoi.kind == poi.kind:
@@ -1001,14 +995,8 @@ def resolve_oi(hoi, poi):
             assert 0
 
     # name
-    if hoi.name is None and poi.name is None:
-        assert 0
-    elif hoi.name is None:
-        assert 0
-        # Only happens for ops/functions that are "hidden"
-        # within a section that is about something else.
-        oi.name = poi.name
-    else:
+    assert hoi.name is not None
+    if True:
         # We prefer to use the heading-name:
         oi.name = hoi.name
         # ... but we also check that it's consistent with the preamble-name, if any:
