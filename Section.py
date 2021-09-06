@@ -1442,12 +1442,15 @@ def _handle_function_section(section):
         # - A Math function that we merely constrain, via a bullet-list.
         # - "This function is like that function" (except different, maybe).
         # - Other functions that we only define in prose.
+        emu_alg_posn_a = len(section.block_children)
         emu_alg_a = None
     else:
         emu_alg_posn_a = section.bcen_list.index('emu-alg')
         emu_alg_a = section.block_children[emu_alg_posn_a]
 
     Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
+
+    headers.create_operation_info_for_span(section, 0, emu_alg_posn_a)
 
     # ======================================================
 
@@ -1466,7 +1469,8 @@ def _handle_function_section(section):
         emu_alg_b = section.block_children[emu_alg_posn_b]
         Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
-    headers.create_operation_info_for_section(section)
+        headers.create_operation_info_for_span(section, emu_alg_posn_a+1, emu_alg_posn_b)
+
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

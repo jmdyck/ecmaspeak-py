@@ -26,52 +26,6 @@ def oh_warn(*args):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def create_operation_info_for_section(s):
-
-    algo_child_posns = [
-        i
-        for (i, child) in enumerate(s.block_children)
-        if (
-            child.element_name == 'emu-alg'
-        )
-    ]
-
-    n_algos = len(algo_child_posns)
-    if n_algos == 0:
-        # Even though the section has no algos,
-        # we might want to create a header.
-        pre_algo_spans = [(0, len(s.block_children))]
-
-    else:
-        pre_algo_spans = [
-            (x+1, y)
-            for (x,y) in zip([-1] + algo_child_posns, algo_child_posns)
-        ]
-
-    # ------------
-
-    if s.section_title == 'Date.parse ( _string_ )':
-        # None of the paragraphs are preamble,
-        # and it's easier to say that here than later.
-        pre_algo_spans = [(0, 0)]
-
-    elif s.section_title == '%TypedArray%.prototype.sort ( _comparefn_ )':
-        assert n_algos == 2
-        # The first algo is just a variant of the first few steps from Array.p.sort,
-        # but we still want an eoh for the function.
-        # And the second is an alternative defn of SortCompare,
-        # so use both pre_algo_spans.
-        pass
-
-    # ==========================================================================
-
-    # ==========================================================================
-
-    for (span_start_i, span_end_i) in pre_algo_spans:
-        create_operation_info_for_span(s, span_start_i, span_end_i)
-
-# --------------------------------
-
 def create_operation_info_for_span(s, span_start_i, span_end_i):
         n_algos = s.bcen_list.count('emu-alg')
 
@@ -543,7 +497,7 @@ def extract_info_from_preamble(preamble_nodes, section):
 
     para_texts_remaining = []
     for preamble_node in preamble_nodes:
-        assert preamble_node.element_name in ['p', 'emu-note']
+        assert preamble_node.element_name in ['p', 'emu-note', 'pre']
         if preamble_node.element_name != 'p': continue
 
         para_text = preamble_node.inner_source_text().strip()
