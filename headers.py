@@ -38,20 +38,21 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
         if True:
             prev = s.heading_child
 
-        if span_start_i == span_end_i:
-            # no children in preamble, so no lines to suppress
-            poi = None
-        else:
-            info_holder = extract_info_from_preamble(s.block_children[span_start_i:span_end_i], s)
-            poi = info_holder.convert_to_header()
+        check_header_against_prose(hoi, s, span_start_i, span_end_i)
 
-        # -----------------------------------
-
-        resolve_oi(hoi, poi)
         hoi.finish_initialization()
         hoi.node_at_end_of_header = prev
 
         return hoi
+
+def check_header_against_prose(hoi, section, span_start_i, span_end_i):
+    if span_start_i == span_end_i:
+        # No prose to check
+        pass
+    else:
+        info_holder = extract_info_from_preamble(section.block_children[span_start_i:span_end_i], section)
+        poi = info_holder.convert_to_header()
+        resolve_oi(hoi, poi)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
