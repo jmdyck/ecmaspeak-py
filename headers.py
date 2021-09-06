@@ -47,11 +47,11 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
 
         # -----------------------------------
 
-        oi = resolve_oi(hoi, poi)
-        oi.finish_initialization()
-        oi.node_at_end_of_header = prev
+        resolve_oi(hoi, poi)
+        hoi.finish_initialization()
+        hoi.node_at_end_of_header = prev
 
-        return oi
+        return hoi
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -977,19 +977,20 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def resolve_oi(hoi, poi):
+    # Rather than creating a new AlgHeader,
+    # modifies {hoi} if appropriate.
+
     if poi is None:
         # no preamble, so just use info from heading
-        return hoi
-
-    oi = AlgHeader()
+        return
 
     # kind
     assert hoi.kind is not None
     if poi.kind is None:
-        oi.kind = hoi.kind
+        pass
     else:
         if hoi.kind == poi.kind:
-            oi.kind = hoi.kind
+            pass
         else:
             stderr(f"mismatch of 'kind' in heading/preamble for {hoi.name}: {hoi.kind!r} != {poi.kind!r}")
             assert 0
@@ -997,8 +998,7 @@ def resolve_oi(hoi, poi):
     # name
     assert hoi.name is not None
     if True:
-        # We prefer to use the heading-name:
-        oi.name = hoi.name
+        # We prefer to use the heading-name,
         # ... but we also check that it's consistent with the preamble-name, if any:
         if (
             poi.name is None
@@ -1021,44 +1021,37 @@ def resolve_oi(hoi, poi):
     # for_phrase
     if hoi.for_phrase and poi.for_phrase:
         assert hoi.for_phrase == poi.for_phrase
-        oi.for_phrase = hoi.for_phrase
     elif hoi.for_phrase:
-        oi.for_phrase = hoi.for_phrase
+        pass
     else:
-        oi.for_phrase = poi.for_phrase # which might or might not be None
+        hoi.for_phrase = poi.for_phrase # which might or might not be None
 
     # param_names
     if hoi.param_names is None:
         # assert poi.param_names is not None
-        oi.param_names = poi.param_names
-        oi.optional_params = poi.optional_params
-        oi.rest_params = poi.rest_params
+        hoi.param_names = poi.param_names
+        hoi.optional_params = poi.optional_params
+        hoi.rest_params = poi.rest_params
     elif poi.param_names is None:
         assert hoi.param_names is not None
-        oi.param_names = hoi.param_names
-        oi.optional_params = hoi.optional_params
-        oi.rest_params = hoi.rest_params
     else:
         # neither is None
 
         # When the heading contains a signature,
-        # it's deemed authoritative:
-        oi.param_names = hoi.param_names
-        oi.optional_params = hoi.optional_params
-        oi.rest_params = hoi.rest_params
+        # it's deemed authoritative.
 
-        if hoi.param_names != poi.param_names and oi.name not in [
+        if hoi.param_names != poi.param_names and hoi.name not in [
             'OrdinaryCreateFromConstructor',
             'TriggerPromiseReactions',
         ]:
             oh_warn()
-            oh_warn(oi.name, 'has param name mismatch:')
+            oh_warn(hoi.name, 'has param name mismatch:')
             oh_warn(hoi.param_names)
             oh_warn(poi.param_names)
         else:
             if hoi.optional_params != poi.optional_params:
                 oh_warn()
-                oh_warn(oi.name, 'has param optionality mismatch:')
+                oh_warn(hoi.name, 'has param optionality mismatch:')
                 oh_warn('h:', sorted(list(hoi.optional_params)))
                 oh_warn('p:', sorted(list(poi.optional_params)))
 
@@ -1069,21 +1062,19 @@ def resolve_oi(hoi, poi):
         )
 
     assert hoi.param_nature_ == {} # heading never has type info
-    oi.param_nature_ = poi.param_nature_
+    hoi.param_nature_ = poi.param_nature_
 
     assert hoi.also is None
-    oi.also = poi.also
+    hoi.also = poi.also
 
     assert hoi.return_nature_normal is None
-    oi.return_nature_normal = poi.return_nature_normal
+    hoi.return_nature_normal = poi.return_nature_normal
 
     assert hoi.return_nature_abrupt is None
-    oi.return_nature_abrupt = poi.return_nature_abrupt
+    hoi.return_nature_abrupt = poi.return_nature_abrupt
 
     assert hoi.description_paras == []
-    oi.description_paras = poi.description_paras
-
-    return oi
+    hoi.description_paras = poi.description_paras
 
 # --------------------------------------------------------------------
 
