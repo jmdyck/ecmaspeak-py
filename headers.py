@@ -28,17 +28,10 @@ def oh_warn(*args):
 
 def create_operation_info_for_span(s, span_start_i, span_end_i):
 
-        if (
-            span_start_i == 0
-        ):
+        if True:
             # The op is the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'is', span_end_i)
             hoi = get_info_from_heading(s)
-
-        else:
-            # The op is *not* the one indicated by the section heading.
-            # print(s.section_num, s.section_kind, 'isnt', span_end_i)
-            assert 0
 
         # -----------------------------------
 
@@ -63,30 +56,13 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
                     p_end_i = i
                     break
 
-        if p_start_i == 0:
+        if True:
             prev = s.heading_child
-        else:
-            assert 0
 
-        if p_start_i == p_end_i or (span_start_i == 0 and s.has_structured_header):
+        if p_start_i == p_end_i:
             # no children in preamble, so no lines to suppress
             poi = None
         else:
-            if False:
-                # Suppress the preamble lines, since anything useful
-                # in the preamble will appear in the header.
-                #
-                # We don't do this any more (after the merge of PR #545),
-                # as the purpose is no longer to replace preambles with structured headers.
-                # But it's possible that we might have a similar purpose again
-                # (e.g., for built-in functions), so I'm keeping the code just in case.
-                #
-                start_ln = get_first_ln(s.block_children[p_start_i])
-                # end_ln = get_first_ln(s.block_children[p_end_i]) node might not exist
-                end_ln = 1 + get_last_ln(s.block_children[p_end_i-1])
-                for line_info in spec.info_for_line_[start_ln:end_ln]:
-                    line_info.suppress = True
-
             info_holder = extract_info_from_preamble(s.block_children[p_start_i:p_end_i], s)
             poi = info_holder.convert_to_header()
 
