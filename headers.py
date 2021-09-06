@@ -989,6 +989,7 @@ def resolve_oi(hoi, poi):
         oh_warn()
         oh_warn(f'resolve_oi: {hoi.name}/{poi.name}: kind is None in both hoi and poi')
     elif hoi.kind is None:
+        assert 0
         oi.kind = poi.kind
     elif poi.kind is None:
         oi.kind = hoi.kind
@@ -1003,6 +1004,7 @@ def resolve_oi(hoi, poi):
     if hoi.name is None and poi.name is None:
         assert 0
     elif hoi.name is None:
+        assert 0
         # Only happens for ops/functions that are "hidden"
         # within a section that is about something else.
         oi.name = poi.name
