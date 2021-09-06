@@ -763,20 +763,7 @@ def get_info_from_heading(section):
     if 'parameters' not in section.ste or section.ste['parameters'] is None:
         return oi
 
-    oi.param_names = []
-
-    for (param_name, param_punct) in section.ste['parameters'].items():
-    
-        oi.param_names.append(param_name)
-
-        if param_punct == '...':
-            oi.rest_params.add(param_name)
-        elif param_punct == '[]':
-            oi.optional_params.add(param_name)
-        elif param_punct == '':
-            pass
-        else:
-            assert 0, param_punct
+    get_info_from_param_punct_dict(oi, section.ste['parameters'])
 
     if 'for_phrase' in section.ste:
         oi.for_phrase = section.ste['for_phrase']
@@ -790,6 +777,26 @@ def get_info_from_heading(section):
         oi.also = section.ste['also']
 
     return oi
+
+# ------------------------------------------------------------------------------
+
+def get_info_from_param_punct_dict(oi, param_punct_dict):
+    # Sets .param_names, .rest_params, and .optional_params.
+
+    oi.param_names = []
+
+    for (param_name, param_punct) in param_punct_dict.items():
+
+        oi.param_names.append(param_name)
+
+        if param_punct == '...':
+            oi.rest_params.add(param_name)
+        elif param_punct == '[]':
+            oi.optional_params.add(param_name)
+        elif param_punct == '':
+            pass
+        else:
+            assert 0, param_punct
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
