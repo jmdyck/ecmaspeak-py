@@ -38,18 +38,11 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
         else:
             # The op is *not* the one indicated by the section heading.
             # print(s.section_num, s.section_kind, 'isnt', span_end_i)
-            hoi = AlgHeader()
-            if True:
-                oh_warn()
-                oh_warn(f"In {s.section_num} {s.section_title},")
-                oh_warn(f"    an algorithm gets no info from heading")
+            assert 0
 
         # -----------------------------------
 
         def isnt_preamble(child):
-            if child.inner_source_text().startswith('The following version of SortCompare'):
-                # 22.2.3.26 %TypedArray%.prototype.sort
-                return True
             return False
 
         # Within the span, find the preamble, if any.
@@ -73,7 +66,7 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
         if p_start_i == 0:
             prev = s.heading_child
         else:
-            prev = s.block_children[p_start_i-1]
+            assert 0
 
         if p_start_i == p_end_i or (span_start_i == 0 and s.has_structured_header):
             # no children in preamble, so no lines to suppress

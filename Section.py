@@ -1474,7 +1474,30 @@ def _handle_function_section(section):
         emu_alg_b = section.block_children[emu_alg_posn_b]
         Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
-        alg_header = headers.create_operation_info_for_span(section, emu_alg_posn_a+1, emu_alg_posn_b)
+        headers.oh_warn()
+        headers.oh_warn(f"In {section.section_num} {section.section_title},")
+        headers.oh_warn(f"    an algorithm gets no info from heading")
+
+        assert [
+            p.source_text()
+            for p in section.block_children[emu_alg_posn_a+1:emu_alg_posn_b]
+        ] == [
+            '<p>The following version of SortCompare is used by %TypedArray%`.prototype.sort`. It performs a numeric comparison rather than the string comparison used in <emu-xref href="#sec-array.prototype.sort"></emu-xref>.</p>',
+            '<p>The abstract operation TypedArraySortCompare takes arguments _x_ and _y_. It also has access to the _comparefn_ and _buffer_ values of the current invocation of the `sort` method. It performs the following steps when called:</p>',
+        ]
+
+        alg_header = headers.AlgHeader()
+        alg_header.species = 'op: solo'
+        alg_header.kind = 'abstract operation'
+        alg_header.name = 'TypedArraySortCompare'
+        alg_header.param_names = ['_x_', '_y_']
+        alg_header.also = [
+            ('_comparefn_', 'from the `sort` method'),
+            ('_buffer_',    'from the `sort` method'),
+        ]
+        alg_header.finish_initialization()
+        alg_header.node_at_end_of_header = section.block_children[emu_alg_posn_a+1]
+
         if hasattr(emu_alg_b, '_parent_algdefn'):
             alg_header.add_defn(emu_alg_b._parent_algdefn)
         else:
