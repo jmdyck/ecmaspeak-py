@@ -35,35 +35,14 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
 
         # -----------------------------------
 
-        def isnt_preamble(child):
-            return False
-
-        # Within the span, find the preamble, if any.
-        p_start_i = span_start_i
-        p_end_i   = span_end_i
-        if p_start_i == p_end_i:
-            pass
-        else:
-            while p_start_i < p_end_i:
-                if isnt_preamble(s.block_children[p_start_i]):
-                    p_start_i += 1
-                else:
-                    break
-            if p_start_i < p_end_i:
-                assert s.block_children[p_start_i].element_name in ['p', 'emu-note']
-            for i in range(p_start_i, p_end_i):
-                if isnt_preamble(s.block_children[i]):
-                    p_end_i = i
-                    break
-
         if True:
             prev = s.heading_child
 
-        if p_start_i == p_end_i:
+        if span_start_i == span_end_i:
             # no children in preamble, so no lines to suppress
             poi = None
         else:
-            info_holder = extract_info_from_preamble(s.block_children[p_start_i:p_end_i], s)
+            info_holder = extract_info_from_preamble(s.block_children[span_start_i:span_end_i], s)
             poi = info_holder.convert_to_header()
 
         # -----------------------------------
