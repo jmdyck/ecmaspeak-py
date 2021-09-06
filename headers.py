@@ -27,13 +27,6 @@ def oh_warn(*args):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def create_operation_info_for_span(s, span_start_i, span_end_i):
-        n_algos = s.bcen_list.count('emu-alg')
-
-        if n_algos == 0 or span_end_i == len(s.block_children):
-            algo = None
-        else:
-            algo = s.block_children[span_end_i]
-            assert algo.element_name in ['emu-alg']
 
         if (
             span_start_i == 0
@@ -109,14 +102,8 @@ def create_operation_info_for_span(s, span_start_i, span_end_i):
         oi = resolve_oi(hoi, poi)
         oi.finish_initialization()
         oi.node_at_end_of_header = prev
-        if algo:
-            if algo.element_name == 'emu-alg':
-                if hasattr(algo, '_parent_algdefn'):
-                    oi.add_defn(algo._parent_algdefn)
-                else:
-                    stderr(f"No _parent_algdefn for {algo}")
-            else:
-                assert 0, algo.element_name
+
+        return oi
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

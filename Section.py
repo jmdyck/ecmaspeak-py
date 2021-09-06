@@ -1450,7 +1450,12 @@ def _handle_function_section(section):
 
     Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
 
-    headers.create_operation_info_for_span(section, 0, emu_alg_posn_a)
+    alg_header = headers.create_operation_info_for_span(section, 0, emu_alg_posn_a)
+    if emu_alg_a:
+        if hasattr(emu_alg_a, '_parent_algdefn'):
+            alg_header.add_defn(emu_alg_a._parent_algdefn)
+        else:
+            stderr(f"No _parent_algdefn for {emu_alg_a}")
 
     # ======================================================
 
@@ -1469,7 +1474,11 @@ def _handle_function_section(section):
         emu_alg_b = section.block_children[emu_alg_posn_b]
         Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
-        headers.create_operation_info_for_span(section, emu_alg_posn_a+1, emu_alg_posn_b)
+        alg_header = headers.create_operation_info_for_span(section, emu_alg_posn_a+1, emu_alg_posn_b)
+        if hasattr(emu_alg_b, '_parent_algdefn'):
+            alg_header.add_defn(emu_alg_b._parent_algdefn)
+        else:
+            stderr(f"No _parent_algdefn for {emu_alg_b}")
 
     return True
 
