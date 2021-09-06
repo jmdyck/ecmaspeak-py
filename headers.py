@@ -26,25 +26,6 @@ def oh_warn(*args):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def create_operation_info_for_span(s, span_start_i, span_end_i):
-
-        if True:
-            # The op is the one indicated by the section heading.
-            # print(s.section_num, s.section_kind, 'is', span_end_i)
-            hoi = get_info_from_heading(s)
-
-        # -----------------------------------
-
-        if True:
-            prev = s.heading_child
-
-        check_header_against_prose(hoi, s, span_start_i, span_end_i)
-
-        hoi.finish_initialization()
-        hoi.node_at_end_of_header = prev
-
-        return hoi
-
 def check_header_against_prose(hoi, section, span_start_i, span_end_i):
     if span_start_i == span_end_i:
         # No prose to check

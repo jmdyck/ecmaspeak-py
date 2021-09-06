@@ -1450,7 +1450,11 @@ def _handle_function_section(section):
 
     Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
 
-    alg_header = headers.create_operation_info_for_span(section, 0, emu_alg_posn_a)
+    alg_header = headers.get_info_from_heading(section)
+    headers.check_header_against_prose(alg_header, section, 0, emu_alg_posn_a)
+    alg_header.finish_initialization()
+    alg_header.node_at_end_of_header = section.heading_child
+
     if emu_alg_a:
         if hasattr(emu_alg_a, '_parent_algdefn'):
             alg_header.add_defn(emu_alg_a._parent_algdefn)
