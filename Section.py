@@ -866,7 +866,8 @@ def _handle_other_op_section(section):
         # (this definition of) the operation named by the section_title.
 
         if section.section_kind.endswith('abstract_operation'):
-            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
+            op_species = 'op: solo'
+            discriminator = None
 
         elif section.section_kind in [
             'numeric_method',
@@ -912,10 +913,10 @@ def _handle_other_op_section(section):
                 'internal_method'  : 'op: internal method',
             }[section.section_kind]
 
-            Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
-
         else:
             assert 0, section.section_kind
+
+        Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
 
     else:
         assert 0
