@@ -920,7 +920,7 @@ def _handle_other_op_section(section):
     else:
         assert 0
 
-    alg_header = headers.get_info_from_heading(section)
+    alg_header = get_info_from_heading(section)
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.dl_child
     for alg_defn in section.alg_defns:
@@ -1450,7 +1450,7 @@ def _handle_function_section(section):
 
     Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
 
-    alg_header = headers.get_info_from_heading(section)
+    alg_header = get_info_from_heading(section)
     headers.check_header_against_prose(alg_header, section, 0, emu_alg_posn_a)
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.heading_child
@@ -2258,5 +2258,96 @@ def node_matches_atom(node, atom):
         )
     else:
         assert 0, atom
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def get_info_from_heading(section):
+    alg_header = headers.AlgHeader()
+
+    if section.section_kind in [
+        'catchall',
+        'changes',
+    ]:
+        return alg_header
+
+    alg_header.kind = ( section.section_kind
+        .replace('_', ' ')
+        .replace('built in',                   'built-in')
+        .replace('env rec method',             'concrete method')
+        .replace('module rec method',          'concrete method')
+        .replace('CallConstruct',              'function property')
+    )
+
+    if section.section_kind in [
+        'abstract_operation',
+        'host-defined_abstract_operation',
+        'implementation-defined_abstract_operation',
+        'syntax_directed_operation',
+        'env_rec_method',
+        'module_rec_method',
+        'internal_method',
+        'numeric_method',
+    ]:
+        alg_header.name = section.ste['op_name']
+
+    elif section.section_kind in [
+        'function_property',
+        'accessor_property',
+        'CallConstruct',
+        'anonymous_built_in_function',
+    ]:
+        # convert heading-style to elsewhere-style:
+        # alg_header.name = ( section.ste['prop_path']
+        #     .replace(' [ ', '[')
+        #     .replace(' ]',  ']')
+        # )
+        alg_header.name = section.ste['prop_path']
+
+    else:
+        assert 0, section.section_kind
+
+    if section.section_kind == 'numeric_method':
+        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
+        # Should this be in section.ste?
+
+    if 'parameters' not in section.ste or section.ste['parameters'] is None:
+        return alg_header
+
+    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
+
+    if 'for_phrase' in section.ste:
+        alg_header.for_phrase = section.ste['for_phrase']
+
+    alg_header.param_nature_ = section.ste.get('param_nature_', {})
+
+    alg_header.return_nature_normal = section.ste.get('return_nature_normal', None)
+    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt', None)
+
+    if 'also' in section.ste:
+        alg_header.also = section.ste['also']
+
+    return alg_header
+
+# ------------------------------------------------------------------------------
+
+def get_info_from_param_punct_dict(alg_header, param_punct_dict):
+    # Sets .param_names, .rest_params, and .optional_params.
+
+    alg_header.param_names = []
+
+    for (param_name, param_punct) in param_punct_dict.items():
+
+        alg_header.param_names.append(param_name)
+
+        if param_punct == '...':
+            alg_header.rest_params.add(param_name)
+        elif param_punct == '[]':
+            alg_header.optional_params.add(param_name)
+        elif param_punct == '':
+            pass
+        else:
+            assert 0, param_punct
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # vim: sw=4 ts=4 expandtab
