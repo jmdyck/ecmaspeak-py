@@ -858,6 +858,16 @@ def _handle_other_op_section(section):
             assert 0, (section.section_num, section.section_title)
 
     elif n_emu_algs == 1:
+        op_species = {
+            'numeric_method'   : 'op: numeric method',
+            'env_rec_method'   : 'op: concrete method: env rec',
+            'module_rec_method': 'op: concrete method: module rec',
+            'internal_method'  : 'op: internal method',
+            'abstract_operation': 'op: solo',
+            'host-defined_abstract_operation': 'op: solo',
+            'implementation-defined_abstract_operation': 'op: solo',
+        }[section.section_kind]
+
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
         assert emu_alg.element_name == 'emu-alg'
@@ -866,7 +876,6 @@ def _handle_other_op_section(section):
         # (this definition of) the operation named by the section_title.
 
         if section.section_kind.endswith('abstract_operation'):
-            op_species = 'op: solo'
             discriminator = None
 
         elif section.section_kind in [
@@ -905,13 +914,6 @@ def _handle_other_op_section(section):
                 'Immutable Prototype Exotic Objects': 'immutable prototype exotic object',
                 'Proxy Object Internal Methods and Internal Slots': 'Proxy exotic object',
             }[section.parent.section_title]
-
-            op_species = {
-                'numeric_method'   : 'op: numeric method',
-                'env_rec_method'   : 'op: concrete method: env rec',
-                'module_rec_method': 'op: concrete method: module rec',
-                'internal_method'  : 'op: internal method',
-            }[section.section_kind]
 
         else:
             assert 0, section.section_kind
