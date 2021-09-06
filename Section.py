@@ -864,8 +864,8 @@ def _handle_other_op_section(section):
             'module_rec_method': 'op: concrete method: module rec',
             'internal_method'  : 'op: internal method',
             'abstract_operation': 'op: solo',
-            'host-defined_abstract_operation': 'op: solo',
-            'implementation-defined_abstract_operation': 'op: solo',
+            'host-defined_abstract_operation': 'op: host-defined',
+            'implementation-defined_abstract_operation': 'op: implementation-defined',
         }[section.section_kind]
 
         emu_alg_posn = section.bcen_list.index('emu-alg')
