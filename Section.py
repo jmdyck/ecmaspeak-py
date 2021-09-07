@@ -824,6 +824,21 @@ def _handle_other_op_section(section):
 
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
+    alg_header = headers.AlgHeader()
+    alg_header.species = op_species
+    alg_header.name = section.ste['op_name']
+    if section.section_kind == 'numeric_method':
+        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
+    else:
+        alg_header.for_phrase = section.ste.get('for_phrase')
+    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
+    alg_header.param_nature_ = section.ste['param_nature_']
+    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
+    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
+    alg_header.also = section.ste.get('also')
+    alg_header.finish_initialization()
+    alg_header.node_at_end_of_header = section.dl_child
+
     n_emu_algs = section.bcen_list.count('emu-alg')
     if n_emu_algs == 0:
         emu_alg = None
@@ -925,23 +940,6 @@ def _handle_other_op_section(section):
 
     # -----------------------------------------
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = op_species
-    alg_header.name = section.ste['op_name']
-
-    if section.section_kind == 'numeric_method':
-        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
-    else:
-        alg_header.for_phrase = section.ste.get('for_phrase')
-
-    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
-    alg_header.param_nature_ = section.ste['param_nature_']
-    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
-    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
-    alg_header.also = section.ste.get('also')
-
-    alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = section.dl_child
     for alg_defn in section.alg_defns:
         alg_header.add_defn(alg_defn)
     return True
