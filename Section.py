@@ -1317,28 +1317,24 @@ def _handle_header_with_std_preamble(section):
         assert 0
 
     parameters = convert_param_listing_to_dict(p_dict['params_str'])
-    section.ste = {
-        'op_name'   : p_dict['op_name'],
-        'kind'      : p_dict['kind'],
-        'parameters': parameters,
-    }
-
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
     alg_header = headers.AlgHeader()
     alg_header.species = op_species
-    alg_header.name = section.ste['op_name']
+    alg_header.name = p_dict['op_name']
     if section.section_kind == 'numeric_method':
         alg_header.for_phrase = re.sub(':.*', '', section.section_title)
     else:
-        alg_header.for_phrase = section.ste.get('for_phrase')
-    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
-    alg_header.param_nature_ = section.ste['param_nature_']
-    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
-    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
-    alg_header.also = section.ste.get('also')
+        alg_header.for_phrase = None
+    get_info_from_param_punct_dict(alg_header, parameters)
+    alg_header.param_nature_ = None
+    alg_header.return_nature_normal = None
+    alg_header.return_nature_abrupt = None
+    alg_header.also = None
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.dl_child
+
+    section.ste = { 'op_name': alg_header.name }
 
     # --------------------------------------------------------------------------
 
