@@ -721,9 +721,6 @@ def _handle_oddball_op_section(section):
             "<p>At any time, if a set of objects _S_ is not live,"
         )
         param_nature_ = {'_S_': 'TBD'}
-        section.ste = {
-            'op_name': op_name,
-        }
 
     elif section.section_title in [
         'Valid Chosen Reads',
@@ -736,9 +733,6 @@ def _handle_oddball_op_section(section):
             "<p>A candidate execution _execution_ has "
         )
         param_nature_ = {'_execution_': 'an execution'}
-        section.ste = {
-            'op_name': op_name,
-        }
 
     elif section.section_title in [
         'Races',
@@ -754,9 +748,6 @@ def _handle_oddball_op_section(section):
             '_E_'        : 'an event in SharedDataBlockEventSet(_execution_)',
             '_D_'        : 'an event in SharedDataBlockEventSet(_execution_)',
         }
-        section.ste = {
-            'op_name': op_name,
-        }
 
     else:
         return False
@@ -764,6 +755,8 @@ def _handle_oddball_op_section(section):
     # --------------------------------------------
 
     section.section_kind = 'abstract_operation'
+
+    section.ste = {'op_name': op_name}
 
     emu_alg = section.block_children[1]
     assert emu_alg.element_name == 'emu-alg'
