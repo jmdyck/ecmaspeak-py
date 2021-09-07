@@ -432,7 +432,8 @@ def _handle_sdo_section(section):
     section.section_kind = 'syntax_directed_operation'
 
     if section.section_title in ['Statement Rules', 'Expression Rules']:
-        section.ste = section.parent.ste.copy()
+        # TODO: Should copy this from section.parent
+        section.ste = {'op_name': sdo_name, 'parameters': {'_call_': ''}}
 
     else:
         section.ste = {'op_name': sdo_name}
