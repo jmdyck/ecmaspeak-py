@@ -1195,7 +1195,6 @@ def write_header_info():
                   ('op: syntax-directed'            , 'syntax-directed operation'      ),
                 ]
                 put(f"      --")
-                put(f"        {alg_header.kind}")
                 if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
                 # alg_header.param_names, .optional_params, .rest_params, .param_nature_
                 # alg_header.also
