@@ -843,15 +843,14 @@ def _handle_other_op_section(section):
     else:
         assert 0, n_emu_algs
 
-    if emu_alg is None:
-        # 13 cases
+    if emu_alg is None and 'emu-table' in section.bcen_set:
+        assert section.bcen_str == 'emu-table' # it turns out
+        [emu_table] = section.block_children
+        handle_op_table(emu_table, section, op_name)
+        
+    elif emu_alg is None:
 
-        if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
-            assert section.bcen_str == 'emu-table'
-            emu_table = section.block_children[0]
-            handle_op_table(emu_table, section, op_name)
-
-        elif section.section_kind == 'env_rec_method_unused':
+        if section.section_kind == 'env_rec_method_unused':
             pass
 
         elif op_name.startswith('Host'):
