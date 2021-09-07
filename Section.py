@@ -834,8 +834,16 @@ def _handle_other_op_section(section):
     }[section.section_kind]
 
     n_emu_algs = section.bcen_list.count('emu-alg')
-
     if n_emu_algs == 0:
+        emu_alg = None
+    elif n_emu_algs == 1:
+        emu_alg_posn = section.bcen_list.index('emu-alg')
+        emu_alg = section.block_children[emu_alg_posn]
+        assert emu_alg.element_name == 'emu-alg'
+    else:
+        assert 0, n_emu_algs
+
+    if emu_alg is None:
         # 13 cases
 
         if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
@@ -867,12 +875,7 @@ def _handle_other_op_section(section):
         else:
             assert 0, (section.section_num, section.section_title)
 
-    elif n_emu_algs == 1:
-
-        emu_alg_posn = section.bcen_list.index('emu-alg')
-        emu_alg = section.block_children[emu_alg_posn]
-        assert emu_alg.element_name == 'emu-alg'
-
+    else:
         # The emu-alg is the 'body' of
         # (this definition of) the operation named by the section_title.
 
@@ -920,9 +923,6 @@ def _handle_other_op_section(section):
             assert 0, section.section_kind
 
         Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
-
-    else:
-        assert 0
 
     # -----------------------------------------
 
