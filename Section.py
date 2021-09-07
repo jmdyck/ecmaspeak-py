@@ -1440,7 +1440,6 @@ def _handle_function_section(section):
     p_dict = mo.groupdict()
     prop_path = p_dict['prop_path']
     section.ste = {
-        'prop_path': prop_path,
         'parameters': (
             convert_param_listing_to_dict(p_dict['params_str'])
             if 'params_str' in p_dict
@@ -1451,8 +1450,6 @@ def _handle_function_section(section):
     if section.section_title.startswith('get '):
         assert section.section_kind == 'accessor_property'
         # The spec leaves off the empty parameter list
-        assert 'params_str' not in section.ste
-        section.ste['params_str'] = ''
         section.ste['parameters'] = OrderedDict()
 
     n_emu_algs = section.bcen_list.count('emu-alg')
