@@ -1178,12 +1178,7 @@ def write_header_info():
             put(f"    {len(alg_info.headers)} headers:")
             for alg_header in alg_info.headers:
                 assert alg_header.name == alg_name
-                assert alg_header.species == alg_info.species or (
-                    alg_header.species == 'op: syntax-directed'
-                    and
-                    alg_info.species == 'op: early error'
-                    # TODO: fix this exception
-                )
+                assert alg_header.species == alg_info.species
                 put(f"      --")
                 if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
                 # alg_header.param_names, .optional_params, .rest_params, .param_nature_

@@ -660,7 +660,7 @@ def handle_inline_sdo_section_body(section, sdo_name):
 
 def declare_sdo(section, op_name, param_dict, also):
     alg_header = headers.AlgHeader()
-    alg_header.species = 'op: syntax-directed'
+    alg_header.species = 'op: early error' if op_name == 'Early Errors' else 'op: syntax-directed'
     alg_header.name = op_name
     alg_header.for_phrase = 'Parse Node'
     alg_header.param_names = list(param_dict.keys())

@@ -765,7 +765,7 @@ class TypedAlgHeader:
         self.t_defns = []
 
         for alg_defn in header.u_defns:
-            if self.species == 'op: syntax-directed':
+            if self.species in ['op: syntax-directed', 'op: early error']:
                 discriminator = alg_defn.discriminator
             elif self.for_param_type:
                 discriminator = self.for_param_type
@@ -774,7 +774,7 @@ class TypedAlgHeader:
             else:
                 discriminator = None
 
-            if self.species == 'op: syntax-directed':
+            if self.species in ['op: syntax-directed', 'op: early error']:
                 assert (
                     discriminator is None
                     or
