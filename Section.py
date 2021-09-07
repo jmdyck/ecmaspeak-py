@@ -823,6 +823,16 @@ def _handle_other_op_section(section):
     assert 'op_name' in section.ste
     op_name = section.ste['op_name']
 
+    op_species = {
+        'numeric_method'   : 'op: numeric method',
+        'env_rec_method'   : 'op: concrete method: env rec',
+        'module_rec_method': 'op: concrete method: module rec',
+        'internal_method'  : 'op: internal method',
+        'abstract_operation': 'op: solo',
+        'host-defined_abstract_operation': 'op: host-defined',
+        'implementation-defined_abstract_operation': 'op: implementation-defined',
+    }[section.section_kind]
+
     n_emu_algs = section.bcen_list.count('emu-alg')
 
     if n_emu_algs == 0:
@@ -838,35 +848,26 @@ def _handle_other_op_section(section):
 
         elif op_name.startswith('Host'):
             # These are host-defined ops, so we expect no alg.
-            Pseudocode.ensure_alg('op: host-defined', op_name)
+            Pseudocode.ensure_alg(op_species, op_name)
             pass
 
         elif op_name == 'LocalTZA':
-            Pseudocode.ensure_alg('op: implementation-defined', op_name)
+            Pseudocode.ensure_alg(op_species, op_name)
             pass
 
         elif section.section_kind == 'numeric_method':
             # A mathematical operation that we merely constrain, via a bullet-list.
-            Pseudocode.ensure_alg('op: numeric method', op_name)
+            Pseudocode.ensure_alg(op_species, op_name)
             pass
 
         elif op_name == 'StringToBigInt':
             # Apply other alg with changes, ick.
-            Pseudocode.ensure_alg('op: solo', op_name)
+            Pseudocode.ensure_alg(op_species, op_name)
 
         else:
             assert 0, (section.section_num, section.section_title)
 
     elif n_emu_algs == 1:
-        op_species = {
-            'numeric_method'   : 'op: numeric method',
-            'env_rec_method'   : 'op: concrete method: env rec',
-            'module_rec_method': 'op: concrete method: module rec',
-            'internal_method'  : 'op: internal method',
-            'abstract_operation': 'op: solo',
-            'host-defined_abstract_operation': 'op: host-defined',
-            'implementation-defined_abstract_operation': 'op: implementation-defined',
-        }[section.section_kind]
 
         emu_alg_posn = section.bcen_list.index('emu-alg')
         emu_alg = section.block_children[emu_alg_posn]
