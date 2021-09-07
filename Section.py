@@ -478,6 +478,15 @@ def _handle_sdo_section(section):
 
         param_dict[param_name] = param_type
 
+    if sdo_name == 'regexp-Evaluate':
+        # regexp-Evaluate is unique in that it doesn't have a uniform set of parameters:
+        # sometimes it has the _direction_ parameter, and sometimes it doesn't.
+        # Force it to always have the _direction_ parameter.
+        assert list(param_dict.keys()) in [ [], ['_direction_'] ]
+        param_dict = OrderedDict( [('_direction_', '1 or -1')] )
+        # Don't make it optional, because then its type will be (Integer_ | not_passed),
+        # and STA will complain when we use it in a context that expects just Integer_.
+
     # -----
 
     if section.section_title == 'Static Semantics: HasCallInTailPosition':
@@ -663,12 +672,6 @@ def declare_sdo(section, op_name, param_dict, also):
     alg_header.param_names = list(param_dict.keys())
     alg_header.param_nature_ = param_dict
     alg_header.also = also
-
-    if op_name == 'regexp-Evaluate':
-        assert alg_header.param_names == [] or alg_header.param_names == ['_direction_']
-        alg_header.param_names = ['_direction_']
-        alg_header.param_nature_ = OrderedDict( [('_direction_', '1 or -1')] )
-        # alg_header.optional_params.add('_direction_') no, because then get (Integer_ | not_passed) when expect Integer_
 
     if True:
         alg_header.finish_initialization()
