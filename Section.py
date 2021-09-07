@@ -804,40 +804,21 @@ def _handle_other_op_section(section):
     if section_type == 'sdo':
         assert 0 # Would have been handled already
         return False
+
     elif section_type is not None:
         # type="sdo" has been around for a while,
         # but all the other type="..." attributes were introduced in PR #545.
         # So we can assume that this section has a structured header?
         # (Or might authors add a `type` attribute but use an old-style header?)
-        _handle_structured_header(section)
+        alg_header = _handle_structured_header(section)
 
-    elif _handle_header_with_std_preamble(section):
+    elif (alg_header := _handle_header_with_std_preamble(section)):
         pass
 
     else:
         return False
 
     # --------------------------------------------------------------------------
-
-    assert 'op_name' in section.ste
-    op_name = section.ste['op_name']
-
-    op_species = other_op_species_for_section_kind_[section.section_kind]
-
-    alg_header = headers.AlgHeader()
-    alg_header.species = op_species
-    alg_header.name = section.ste['op_name']
-    if section.section_kind == 'numeric_method':
-        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
-    else:
-        alg_header.for_phrase = section.ste.get('for_phrase')
-    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
-    alg_header.param_nature_ = section.ste['param_nature_']
-    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
-    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
-    alg_header.also = section.ste.get('also')
-    alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = section.dl_child
 
     op_species = alg_header.species
     op_name = alg_header.name
@@ -1252,6 +1233,25 @@ def _handle_structured_header(section):
     ]:
         section.ste['also'] = regexp_also
 
+    op_species = other_op_species_for_section_kind_[section.section_kind]
+
+    alg_header = headers.AlgHeader()
+    alg_header.species = op_species
+    alg_header.name = section.ste['op_name']
+    if section.section_kind == 'numeric_method':
+        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
+    else:
+        alg_header.for_phrase = section.ste.get('for_phrase')
+    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
+    alg_header.param_nature_ = section.ste['param_nature_']
+    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
+    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
+    alg_header.also = section.ste.get('also')
+    alg_header.finish_initialization()
+    alg_header.node_at_end_of_header = section.dl_child
+
+    return alg_header
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 regexp_also = [
@@ -1286,7 +1286,7 @@ def _handle_header_with_std_preamble(section):
             p_dict = mo.groupdict()
             break
     else:
-        return False
+        return None
 
     # -------------------------------
     # At this point, we're committed.
@@ -1322,6 +1322,23 @@ def _handle_header_with_std_preamble(section):
         'kind'      : p_dict['kind'],
         'parameters': parameters,
     }
+
+    op_species = other_op_species_for_section_kind_[section.section_kind]
+
+    alg_header = headers.AlgHeader()
+    alg_header.species = op_species
+    alg_header.name = section.ste['op_name']
+    if section.section_kind == 'numeric_method':
+        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
+    else:
+        alg_header.for_phrase = section.ste.get('for_phrase')
+    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
+    alg_header.param_nature_ = section.ste['param_nature_']
+    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
+    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
+    alg_header.also = section.ste.get('also')
+    alg_header.finish_initialization()
+    alg_header.node_at_end_of_header = section.dl_child
 
     # --------------------------------------------------------------------------
 
@@ -1379,7 +1396,7 @@ def _handle_header_with_std_preamble(section):
 
         msg_at_posn(section.inner_start_posn, f"Should use a structured header? e.g.:\n{suggestion}")
 
-    return True
+    return alg_header
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
