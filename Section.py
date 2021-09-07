@@ -1116,13 +1116,6 @@ def _handle_structured_header(section):
     if '::' in op_name:
         (num_type, op_name) = re.fullmatch(r'(\w+)(::\w+)', op_name).groups()
 
-    section.ste = {
-        'op_name': op_name,
-        'type': section_type,
-        'parameters': params_info,
-        'param_nature_': param_nature_,
-    }
-
     # --------------------------------------------------------------------------
     # Extract info from the <dl>
 
@@ -1147,7 +1140,7 @@ def _handle_structured_header(section):
 
     # ----------------------------------
 
-    section.ste['for_phrase'] = dl_dict['for'] if ('for' in dl_dict) else None
+    for_phrase = dl_dict['for'] if ('for' in dl_dict) else None
 
     if 'description' in dl_dict:
         retn = []
@@ -1212,21 +1205,21 @@ def _handle_structured_header(section):
             if sentence == "It returns a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean.":
                 reta.append('N/A')
 
-        section.ste['return_nature_normal'] = ' or '.join(retn) if retn else None
-        section.ste['return_nature_abrupt'] = ' or '.join(reta) if reta else None
+        return_nature_normal = ' or '.join(retn) if retn else None
+        return_nature_abrupt = ' or '.join(reta) if reta else None
 
     else:
-        section.ste['return_nature_normal'] = None
-        section.ste['return_nature_abrupt'] = None
+        return_nature_normal = None
+        return_nature_abrupt = None
 
     # --------------------------------------------------------------------------
 
     # Hack this for now:
-    if section.ste['op_name'] == 'SortCompare':
-        section.ste['also'] = [
+    if op_name == 'SortCompare':
+        also = [
             ('_comparefn_', 'from the current invocation of the `sort` method')
         ]
-    elif section.ste['op_name'] in [
+    elif op_name in [
         'IsWordChar',
         'CharacterSetMatcher',
         'Canonicalize',
@@ -1234,26 +1227,28 @@ def _handle_structured_header(section):
         'RegExpBuiltinExec',
         'CharacterRangeOrUnion',
     ]:
-        section.ste['also'] = regexp_also
+        also = regexp_also
     else:
-        section.ste['also'] = None
+        also = None
 
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
     alg_header = headers.AlgHeader()
     alg_header.species = op_species
-    alg_header.name = section.ste['op_name']
+    alg_header.name = op_name
     if section.section_kind == 'numeric_method':
         alg_header.for_phrase = re.sub(':.*', '', section.section_title)
     else:
-        alg_header.for_phrase = section.ste['for_phrase']
-    get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
-    alg_header.param_nature_ = section.ste['param_nature_']
-    alg_header.return_nature_normal = section.ste['return_nature_normal']
-    alg_header.return_nature_abrupt = section.ste['return_nature_abrupt']
-    alg_header.also = section.ste['also']
+        alg_header.for_phrase = for_phrase
+    get_info_from_param_punct_dict(alg_header, params_info)
+    alg_header.param_nature_ = param_nature_
+    alg_header.return_nature_normal = return_nature_normal
+    alg_header.return_nature_abrupt = return_nature_abrupt
+    alg_header.also = also
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.dl_child
+
+    section.ste = { 'op_name': op_name }
 
     return alg_header
 
