@@ -408,8 +408,6 @@ def _handle_sdo_section(section):
         ):
             # 22.2.2.*
             sdo_name = 'regexp-Evaluate'
-            #! assert 'op_name' not in section.ste
-            #! section.ste['op_name'] = 'regexp-Evaluate'
 
         # An Annex B clause that extends the semantics of a main-body SDO:
         elif section.section_title in [
@@ -430,15 +428,13 @@ def _handle_sdo_section(section):
 
     section.section_kind = 'syntax_directed_operation'
 
+    section.ste = {'op_name': sdo_name}
+
     if section.section_title in ['Statement Rules', 'Expression Rules']:
         # TODO: Should copy this from section.parent
-        section.ste = {'op_name': sdo_name}
-
         parameters = {'_call_': ''}
 
     else:
-        section.ste = {'op_name': sdo_name}
-
         # Parameters, if any, are stated in the section's first paragraph.
         parameters = OrderedDict()
         c0 = section.block_children[0]
