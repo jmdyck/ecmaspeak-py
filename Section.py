@@ -1428,18 +1428,18 @@ def _handle_function_section(section):
 
     section.section_kind = result
 
+    section.ste = {}
+
     if section.section_kind == 'function_property_xref':
         assert section.bcen_str == 'p'
         assert re.fullmatch(
             r'<p>See <emu-xref href="#[^"]+"></emu-xref>.</p>',
             section.block_children[0].source_text()
         )
-        section.ste = {}
         return True
 
     p_dict = mo.groupdict()
     prop_path = p_dict['prop_path']
-    section.ste = {}
 
     parameters = (
             convert_param_listing_to_dict(p_dict['params_str'])
