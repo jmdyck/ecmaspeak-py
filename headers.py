@@ -481,9 +481,6 @@ class PreambleInfoHolder:
 
         vs = join_field_values('kind')
         poi.kind = {
-            'abstract operation'                        : 'abstract operation',
-            'algorithm'                                 : 'abstract operation',
-            #
             'anonymous built-in function object'        : 'anonymous built-in function',
             'anonymous built-in function'               : 'anonymous built-in function',
             'accessor property'                         : 'accessor property',
