@@ -847,19 +847,33 @@ def _handle_other_op_section(section):
         assert section.bcen_str == 'emu-table' # it turns out
         [emu_table] = section.block_children
         handle_op_table(emu_table, section, op_name)
-        
+
+    elif section.section_kind in [
+        'host-defined_abstract_operation',
+        'implementation-defined_abstract_operation',
+    ]:
+        if emu_alg is None:
+            # That's what we'd expect.
+            # Typically, there's a <ul> containing
+            # requirements that the implementation must conform to.
+            Pseudocode.ensure_alg(op_species, op_name)
+        else:
+            # 3 cases:
+            # - 9.5.2 HostMakeJobCallback
+            # - 9.5.3 HostCallJobCallback
+            # - 9.10.4.1 HostEnqueueFinalizationRegistryCleanupJob
+            # In the first two, the <emu-alg> is a default implementation,
+            # which is actually required for non-browsers.
+            # In the last, the <emu-alg> is the steps of an Abstract Closure
+            # that defines the job to be scheduled.
+            #
+            # TODO: Handle these better.
+            discriminator = None
+            Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
+
     elif emu_alg is None:
 
         if section.section_kind == 'env_rec_method_unused':
-            pass
-
-        elif op_name.startswith('Host'):
-            # These are host-defined ops, so we expect no alg.
-            Pseudocode.ensure_alg(op_species, op_name)
-            pass
-
-        elif op_name == 'LocalTZA':
-            Pseudocode.ensure_alg(op_species, op_name)
             pass
 
         elif section.section_kind == 'numeric_method':
@@ -878,7 +892,7 @@ def _handle_other_op_section(section):
         # The emu-alg is the 'body' of
         # (this definition of) the operation named by the section_title.
 
-        if section.section_kind.endswith('abstract_operation'):
+        if section.section_kind == 'abstract_operation':
             discriminator = None
 
         elif section.section_kind in [
