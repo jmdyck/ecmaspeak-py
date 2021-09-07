@@ -1147,8 +1147,7 @@ def _handle_structured_header(section):
 
     # ----------------------------------
 
-    if 'for' in dl_dict:
-        section.ste['for_phrase'] = dl_dict['for']
+    section.ste['for_phrase'] = dl_dict['for'] if ('for' in dl_dict) else None
 
     if 'description' in dl_dict:
         retn = []
@@ -1213,8 +1212,12 @@ def _handle_structured_header(section):
             if sentence == "It returns a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean.":
                 reta.append('N/A')
 
-        if retn: section.ste['return_nature_normal'] = ' or '.join(retn)
-        if reta: section.ste['return_nature_abrupt'] = ' or '.join(reta)
+        section.ste['return_nature_normal'] = ' or '.join(retn) if retn else None
+        section.ste['return_nature_abrupt'] = ' or '.join(reta) if reta else None
+
+    else:
+        section.ste['return_nature_normal'] = None
+        section.ste['return_nature_abrupt'] = None
 
     # --------------------------------------------------------------------------
 
@@ -1232,6 +1235,8 @@ def _handle_structured_header(section):
         'CharacterRangeOrUnion',
     ]:
         section.ste['also'] = regexp_also
+    else:
+        section.ste['also'] = None
 
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
@@ -1241,12 +1246,12 @@ def _handle_structured_header(section):
     if section.section_kind == 'numeric_method':
         alg_header.for_phrase = re.sub(':.*', '', section.section_title)
     else:
-        alg_header.for_phrase = section.ste.get('for_phrase')
+        alg_header.for_phrase = section.ste['for_phrase']
     get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
     alg_header.param_nature_ = section.ste['param_nature_']
-    alg_header.return_nature_normal = section.ste.get('return_nature_normal')
-    alg_header.return_nature_abrupt = section.ste.get('return_nature_abrupt')
-    alg_header.also = section.ste.get('also')
+    alg_header.return_nature_normal = section.ste['return_nature_normal']
+    alg_header.return_nature_abrupt = section.ste['return_nature_abrupt']
+    alg_header.also = section.ste['also']
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.dl_child
 
