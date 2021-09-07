@@ -281,7 +281,7 @@ def _handle_early_errors_section(section):
         return False
 
     section.section_kind = 'early_errors'
-    section.ste = {'op_name': 'Early Errors', 'parameters': OrderedDict()}
+    section.ste = {'op_name': 'Early Errors'}
 
     patterns = [
         (
