@@ -1439,18 +1439,18 @@ def _handle_function_section(section):
 
     p_dict = mo.groupdict()
     prop_path = p_dict['prop_path']
-    section.ste = {
-        'parameters': (
+    section.ste = {}
+
+    parameters = (
             convert_param_listing_to_dict(p_dict['params_str'])
             if 'params_str' in p_dict
             else None
-        ),
-    }
+    )
 
     if section.section_title.startswith('get '):
         assert section.section_kind == 'accessor_property'
         # The spec leaves off the empty parameter list
-        section.ste['parameters'] = OrderedDict()
+        parameters = OrderedDict()
 
     n_emu_algs = section.bcen_list.count('emu-alg')
 
@@ -1486,8 +1486,8 @@ def _handle_function_section(section):
     #     .replace(' [ ', '[')
     #     .replace(' ]',  ']')
     # )
-    if section.ste['parameters'] is not None:
-        get_info_from_param_punct_dict(alg_header, section.ste['parameters'])
+    if parameters is not None:
+        get_info_from_param_punct_dict(alg_header, parameters)
 
     headers.check_header_against_prose(alg_header, section, 0, emu_alg_posn_a)
     alg_header.finish_initialization()
