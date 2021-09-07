@@ -839,6 +839,9 @@ def _handle_other_op_section(section):
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.dl_child
 
+    op_species = alg_header.species
+    op_name = alg_header.name
+
     n_emu_algs = section.bcen_list.count('emu-alg')
     if n_emu_algs == 0:
         emu_alg = None
