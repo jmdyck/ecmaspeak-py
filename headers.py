@@ -11,6 +11,7 @@ from collections import OrderedDict, defaultdict
 
 import shared
 from shared import spec, stderr, RE, DL
+import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1143,17 +1144,7 @@ class AlgHeader:
 
         # -------------------------
 
-        if self.species.startswith('bif:'):
-            bif_or_op = 'bif'
-        else:
-            bif_or_op = 'op'
-
-        if self.name not in spec.alg_info_[bif_or_op]:
-            oh_warn()
-            oh_warn(f"finish_initialization: spec.alg_info_[{bif_or_op!r}] has no entry for {self.name!r}")
-            return
-            
-        alg = spec.alg_info_[bif_or_op][self.name]
+        alg = Pseudocode.ensure_alg(self.species, self.name)
         alg.headers.append(self)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
