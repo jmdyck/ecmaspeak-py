@@ -873,10 +873,7 @@ def _handle_other_op_section(section):
 
     elif emu_alg is None:
 
-        if section.section_kind == 'env_rec_method_unused':
-            pass
-
-        elif section.section_kind == 'numeric_method':
+        if section.section_kind == 'numeric_method':
             # A mathematical operation that we merely constrain, via a bullet-list.
             Pseudocode.ensure_alg(op_species, op_name)
             pass
