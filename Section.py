@@ -872,16 +872,14 @@ def _handle_other_op_section(section):
             Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
 
     elif emu_alg is None:
-
-        if section.section_kind == 'numeric_method':
-            # A mathematical operation that we merely constrain, via a bullet-list.
+        if section.section_title.startswith('BigInt::'):
+            # 6 of the BigInt::* methods just give the semantics in the preamble.
             Pseudocode.ensure_alg(op_species, op_name)
-            pass
-
         elif op_name == 'StringToBigInt':
-            # Apply other alg with changes, ick.
+            # StringToBigInt says:
+            # "Apply the algorithm in 7.1.4.1 with the following changes: ..."
+            # (ick)
             Pseudocode.ensure_alg(op_species, op_name)
-
         else:
             assert 0, (section.section_num, section.section_title)
 
