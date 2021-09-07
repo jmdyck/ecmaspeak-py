@@ -822,15 +822,7 @@ def _handle_other_op_section(section):
     assert 'op_name' in section.ste
     op_name = section.ste['op_name']
 
-    op_species = {
-        'numeric_method'   : 'op: numeric method',
-        'env_rec_method'   : 'op: concrete method: env rec',
-        'module_rec_method': 'op: concrete method: module rec',
-        'internal_method'  : 'op: internal method',
-        'abstract_operation': 'op: solo',
-        'host-defined_abstract_operation': 'op: host-defined',
-        'implementation-defined_abstract_operation': 'op: implementation-defined',
-    }[section.section_kind]
+    op_species = other_op_species_for_section_kind_[section.section_kind]
 
     n_emu_algs = section.bcen_list.count('emu-alg')
     if n_emu_algs == 0:
@@ -1009,6 +1001,18 @@ def handle_op_table(emu_table, section, op_name):
 
         else:
             assert 0, x
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+other_op_species_for_section_kind_ = {
+    'env_rec_method'                           : 'op: concrete method: env rec',
+    'module_rec_method'                        : 'op: concrete method: module rec',
+    'numeric_method'                           : 'op: numeric method',
+    'internal_method'                          : 'op: internal method',
+    'abstract_operation'                       : 'op: solo',
+    'host-defined_abstract_operation'          : 'op: host-defined',
+    'implementation-defined_abstract_operation': 'op: implementation-defined',
+}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
