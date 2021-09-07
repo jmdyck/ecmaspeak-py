@@ -480,13 +480,13 @@ class PreambleInfoHolder:
             return values[0]
 
         vs = join_field_values('kind')
-        poi.kind = {
-            'anonymous built-in function object'        : 'anonymous built-in function',
-            'anonymous built-in function'               : 'anonymous built-in function',
-            'accessor property'                         : 'accessor property',
-            'constructor'                               : 'function property',
-            'function'                                  : 'function property',
-            'method'                                    : 'function property',
+        poi.species = {
+            'anonymous built-in function object'        : 'bif: * per realm',
+            'anonymous built-in function'               : 'bif: * per realm',
+            'accessor property'                         : 'bif: accessor function',
+            'constructor'                               : 'bif: value of data property',
+            'function'                                  : 'bif: value of data property',
+            'method'                                    : 'bif: value of data property',
             None                                        : None,
         }[vs]
 
@@ -882,14 +882,14 @@ def resolve_oi(hoi, poi):
         return
 
     # kind
-    assert hoi.kind is not None
-    if poi.kind is None:
+    assert hoi.species is not None
+    if poi.species is None:
         pass
     else:
-        if hoi.kind == poi.kind:
+        if hoi.species == poi.species:
             pass
         else:
-            stderr(f"mismatch of 'kind' in heading/preamble for {hoi.name}: {hoi.kind!r} != {poi.kind!r}")
+            stderr(f"mismatch of 'species' in heading/preamble for {hoi.name}: {hoi.species!r} != {poi.species!r}")
             assert 0
 
     # name
@@ -987,7 +987,7 @@ def sub_many(subject, pattern_repls):
 
 class AlgHeader:
     def __init__(self):
-        self.kind = None
+        self.species = None
         self.name = None
         self.for_phrase = None
         self.param_names = None
@@ -1007,7 +1007,7 @@ class AlgHeader:
         return f"""
             AlgHeader:
                 name: {self.name}
-                kind: {self.kind}
+                species: {self.species}
                 for : {self.for_phrase}
                 params: {', '.join(
                     pn + ' : ' + self.param_nature_.get(pn, 'TBD')
@@ -1067,7 +1067,7 @@ class AlgHeader:
             checked_set('return_nature_normal', pd_return_nature_normal)
             checked_set('return_nature_abrupt', pd_return_nature_abrupt)
 
-        if self.kind == 'numeric method':
+        if self.species == 'op: numeric method':
             assert self.for_phrase  in ['Number', 'BigInt']
             numeric_nature = f"a {self.for_phrase}"
 
@@ -1109,7 +1109,7 @@ class AlgHeader:
                 oh_warn(f"{self.name}: self.param_names is None")
                 self.param_names = []
 
-        if self.kind in ['function property', 'anonymous built-in function', 'accessor property']:
+        if self.species.startswith('bif:'):
             for param_name in self.param_names:
                 nature = self.param_nature_.get(param_name, 'TBD')
                 if nature == 'TBD':
@@ -1143,7 +1143,7 @@ class AlgHeader:
 
         # -------------------------
 
-        if self.kind in ['function property', 'accessor property', 'anonymous built-in function']:
+        if self.species.startswith('bif:'):
             bif_or_op = 'bif'
         else:
             bif_or_op = 'op'
@@ -1178,22 +1178,12 @@ def write_header_info():
             put(f"    {len(alg_info.headers)} headers:")
             for alg_header in alg_info.headers:
                 assert alg_header.name == alg_name
-                assert (alg_info.species, alg_header.kind) in [
-                  ('bif: * per realm'               , 'anonymous built-in function'    ),
-                  ('bif: accessor function'         , 'accessor property'              ),
-                  ('bif: value of data property'    , 'function property'              ),
-                  ('op: concrete method: env rec'   , 'concrete method'                ),
-                  ('op: concrete method: module rec', 'concrete method'                ),
-                  ('op: early error'                , 'syntax-directed operation'      ),
-                  ('op: host-defined'               , 'abstract operation'             ),
-                  ('op: host-defined'               , 'host-defined abstract operation'),
-                  ('op: implementation-defined'     , 'implementation-defined abstract operation'),
-                  ('op: internal method'            , 'internal method'                ),
-                  ('op: numeric method'             , 'numeric method'                 ),
-                  ('op: solo'                       , 'abstract operation'             ),
-                  ('op: solo'                       , 'host-defined abstract operation'),
-                  ('op: syntax-directed'            , 'syntax-directed operation'      ),
-                ]
+                assert alg_header.species == alg_info.species or (
+                    alg_header.species == 'op: syntax-directed'
+                    and
+                    alg_info.species == 'op: early error'
+                    # TODO: fix this exception
+                )
                 put(f"      --")
                 if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
                 # alg_header.param_names, .optional_params, .rest_params, .param_nature_

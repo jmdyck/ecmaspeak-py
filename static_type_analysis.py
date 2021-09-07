@@ -647,7 +647,7 @@ class TypedAlgHeader:
 
     def __init__(self, header):
 
-        self.kind = header.kind
+        self.species = header.species
         self.name = header.name
         self.name_w_markup = header.name_w_markup
         self.param_names = header.param_names
@@ -765,7 +765,7 @@ class TypedAlgHeader:
         self.t_defns = []
 
         for alg_defn in header.u_defns:
-            if self.kind == 'syntax-directed operation':
+            if self.species == 'op: syntax-directed':
                 discriminator = alg_defn.discriminator
             elif self.for_param_type:
                 discriminator = self.for_param_type
@@ -774,7 +774,7 @@ class TypedAlgHeader:
             else:
                 discriminator = None
 
-            if self.kind == 'syntax-directed operation':
+            if self.species == 'op: syntax-directed':
                 assert (
                     discriminator is None
                     or
@@ -784,20 +784,15 @@ class TypedAlgHeader:
                     isinstance(discriminator, ANode)
                         and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
                 )
-            elif self.kind in ['concrete method', 'internal method', 'numeric method']:
+            elif self.species in ['op: concrete method: env rec', 'op: concrete method: module rec', 'op: internal method', 'op: numeric method']:
                 assert isinstance(discriminator, Type)
-            elif self.kind == 'abstract operation':
+            elif self.species == 'op: solo':
                 assert discriminator is None or isinstance(discriminator, Type)
-            elif self.kind in [
-                'function property',
-                'accessor property',
-                'CallConstruct',
-                'anonymous built-in function',
-                'host-defined abstract operation', # HostMakeJobCallback has a default implementation
-            ]:
+            elif self.species.startswith('bif:') or self.species == 'op: host-defined':
+                # The latter because HostMakeJobCallback has a default implementation
                 assert discriminator is None
             else:
-                assert 0, self.kind
+                assert 0, self.species
 
             assert isinstance(alg_defn.anode, ANode)
             assert alg_defn.anode.prod.lhs_s in [
@@ -820,7 +815,7 @@ class TypedAlgHeader:
         return f"""
             TypedAlgHeader:
                 name: {self.name}
-                kind: {self.kind}
+                species: {self.species}
                 for : {self.for_param_type}
                 params: {', '.join(
                     pn + ' : ' + str(pt)
@@ -3210,7 +3205,7 @@ def tc_header(tah):
     # We should complain about any return-points
     # that do not conform.
     # In the meantime, ...
-    if tah.kind in ['anonymous built-in function', 'accessor property', 'function property']:
+    if tah.species.startswith('bif:'):
         expected_return_type = T_Tangible_ | T_throw_ | T_empty_
         # T_empty_ shouldn't really be allowed,
         # but if I leave it out,

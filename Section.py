@@ -660,7 +660,7 @@ def handle_inline_sdo_section_body(section, sdo_name):
 
 def declare_sdo(section, op_name, param_dict, also):
     alg_header = headers.AlgHeader()
-    alg_header.kind = 'syntax-directed operation'
+    alg_header.species = 'op: syntax-directed'
     alg_header.name = op_name
     alg_header.for_phrase = 'Parse Node'
     alg_header.param_names = list(param_dict.keys())
@@ -787,7 +787,6 @@ def _handle_oddball_op_section(section):
 
     alg_header = headers.AlgHeader()
     alg_header.species = 'op: solo'
-    alg_header.kind = 'abstract operation'
     alg_header.name = op_name
     alg_header.param_names = list(param_nature_.keys())
     alg_header.param_nature_ = param_nature_
@@ -935,11 +934,7 @@ def _handle_other_op_section(section):
     # -----------------------------------------
 
     alg_header = headers.AlgHeader()
-    alg_header.kind = ( section.section_kind
-        .replace('_', ' ')
-        .replace('env rec method',    'concrete method')
-        .replace('module rec method', 'concrete method')
-    )
+    alg_header.species = op_species
     alg_header.name = section.ste['op_name']
 
     if section.section_kind == 'numeric_method':
@@ -1488,11 +1483,7 @@ def _handle_function_section(section):
     Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
 
     alg_header = headers.AlgHeader()
-    alg_header.kind = ( section.section_kind
-        .replace('_', ' ')
-        .replace('built in',                   'built-in')
-        .replace('CallConstruct',              'function property')
-    )
+    alg_header.species = bif_species
     alg_header.name = prop_path
     # convert heading-style to elsewhere-style:
     # alg_header.name = ( prop_path
@@ -1543,7 +1534,6 @@ def _handle_function_section(section):
 
         alg_header = headers.AlgHeader()
         alg_header.species = 'op: solo'
-        alg_header.kind = 'abstract operation'
         alg_header.name = 'TypedArraySortCompare'
         alg_header.param_names = ['_x_', '_y_']
         alg_header.also = [
@@ -1664,7 +1654,6 @@ def _handle_other_section(section):
 
             alg_header = headers.AlgHeader()
             alg_header.name = 'initializer for @@unscopables'
-            alg_header.kind = 'abstract operation'
             alg_header.param_names = []
             alg_header.species = 'op: solo'
             alg_header.finish_initialization()
@@ -1690,7 +1679,6 @@ def _handle_other_section(section):
 
             alg_header = headers.AlgHeader()
             alg_header.name = op_name
-            alg_header.kind = 'abstract operation'
             alg_header.species = 'op: solo'
             alg_header.param_names = ['_value_']
             alg_header.finish_initialization()
