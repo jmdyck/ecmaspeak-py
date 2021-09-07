@@ -723,8 +723,6 @@ def _handle_oddball_op_section(section):
         param_nature_ = {'_S_': 'TBD'}
         section.ste = {
             'op_name': op_name,
-            'type': 'abstract operation',
-            'parameters': {'_S_': ''},
         }
 
     elif section.section_title in [
@@ -740,7 +738,6 @@ def _handle_oddball_op_section(section):
         param_nature_ = {'_execution_': 'an execution'}
         section.ste = {
             'op_name': op_name,
-            'parameters': {'_execution_': ''},
         }
 
     elif section.section_title in [
@@ -757,14 +754,8 @@ def _handle_oddball_op_section(section):
             '_E_'        : 'an event in SharedDataBlockEventSet(_execution_)',
             '_D_'        : 'an event in SharedDataBlockEventSet(_execution_)',
         }
-        parameters = {
-            '_execution_': '',
-            '_E_'        : '',
-            '_D_'        : '',
-        }
         section.ste = {
             'op_name': op_name,
-            'parameters': parameters,
         }
 
     else:
