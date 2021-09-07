@@ -410,7 +410,6 @@ def _handle_sdo_section(section):
             sdo_name = 'regexp-Evaluate'
             #! assert 'op_name' not in section.ste
             #! section.ste['op_name'] = 'regexp-Evaluate'
-            #! section.ste['parameters'] = OrderedDict()
 
         # An Annex B clause that extends the semantics of a main-body SDO:
         elif section.section_title in [
@@ -433,7 +432,9 @@ def _handle_sdo_section(section):
 
     if section.section_title in ['Statement Rules', 'Expression Rules']:
         # TODO: Should copy this from section.parent
-        section.ste = {'op_name': sdo_name, 'parameters': {'_call_': ''}}
+        section.ste = {'op_name': sdo_name}
+
+        parameters = {'_call_': ''}
 
     else:
         section.ste = {'op_name': sdo_name}
@@ -466,10 +467,9 @@ def _handle_sdo_section(section):
                         parameters[param_name] = part_punct
                 section.block_children.pop(0)
                 _set_bcen_attributes(section)
-        section.ste['parameters'] = parameters
 
     param_dict = OrderedDict()
-    for (param_name, param_punct) in section.ste['parameters'].items():
+    for (param_name, param_punct) in parameters.items():
         if param_name == '_argumentsList_':
             param_type = 'a List'
         else:
