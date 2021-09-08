@@ -1316,7 +1316,11 @@ def _handle_header_with_std_preamble(section):
     alg_header.return_nature_abrupt = None
     alg_header.also = None
     alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = section.dl_child
+    alg_header.node_at_end_of_header = None
+        # We could set it to section.heading_child,
+        # but `node_at_end_of_header` is only used during STA,
+        # and the idea is that this kind of header
+        # will be changed to a structured header before applying STA.
 
     section.ste = { 'op_name': alg_header.name }
 
