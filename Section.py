@@ -444,11 +444,11 @@ def _handle_sdo_section(section):
 
     if section.section_title in ['Statement Rules', 'Expression Rules']:
         # TODO: Should copy this from section.parent
-        parameters = {'_call_': ''}
+        params = [ AlgParam('_call_', '', 'unknown') ]
 
     else:
         # Parameters, if any, are stated in the section's first paragraph.
-        parameters = OrderedDict()
+        params = []
         c0 = section.block_children[0]
         if c0.element_name == 'p':
             p_text = c0.source_text()
@@ -468,34 +468,21 @@ def _handle_sdo_section(section):
                     for param in re.split(r', and |, | and ', part_params_s):
                         if param == '_argumentsList_ (a List)':
                             param_name = '_argumentsList_'
+                            param_nature = 'a List'
                         else:
                             assert re.match(r'^_[a-zA-Z]+_$', param), param
                             param_name = param
-                        assert param_name not in parameters
-                        parameters[param_name] = part_punct
+                            param_nature = 'unknown'
+                        params.append( AlgParam(param_name, part_punct, param_nature) )
                 section.block_children.pop(0)
                 _set_bcen_attributes(section)
-
-    param_dict = OrderedDict()
-    for (param_name, param_punct) in parameters.items():
-        if param_name == '_argumentsList_':
-            param_type = 'a List'
-        else:
-            param_type = 'TBD'
-
-        if param_punct == '[]':
-            param_type = '(optional) ' + param_type
-        else:
-            assert param_punct == '', param_punct
-
-        param_dict[param_name] = param_type
 
     if sdo_name == 'regexp-Evaluate':
         # regexp-Evaluate is unique in that it doesn't have a uniform set of parameters:
         # sometimes it has the _direction_ parameter, and sometimes it doesn't.
         # Force it to always have the _direction_ parameter.
-        assert list(param_dict.keys()) in [ [], ['_direction_'] ]
-        param_dict = OrderedDict( [('_direction_', '1 or -1')] )
+        assert [param.name for param in params] in [ [], ['_direction_'] ]
+        params = [ AlgParam('_direction_', '', '1 or -1') ]
         # Don't make it optional, because then its type will be (Integer_ | not_passed),
         # and STA will complain when we use it in a context that expects just Integer_.
 
@@ -589,8 +576,7 @@ def _handle_sdo_section(section):
     alg_header.species = 'op: syntax-directed'
     alg_header.name = sdo_name
     alg_header.for_phrase = 'Parse Node'
-    alg_header.param_names = list(param_dict.keys())
-    alg_header.param_nature_ = param_dict
+    AlgHeader_set_attributes_from_params(alg_header, params)
     alg_header.also = also
     alg_header.node_at_end_of_header = section.heading_child
     alg_header.finish_initialization()
