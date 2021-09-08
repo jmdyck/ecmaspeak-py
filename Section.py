@@ -487,16 +487,6 @@ def _handle_sdo_section(section):
         # Don't make it optional, because then its type will be (Integer_ | not_passed),
         # and STA will complain when we use it in a context that expects just Integer_.
 
-    # -----
-
-    if section.section_title == 'Static Semantics: HasCallInTailPosition':
-        assert len(section.block_children) == 1
-        assert section.block_children[0].element_name == 'emu-note'
-        assert len(section.section_children) == 2
-        Pseudocode.ensure_alg('op: syntax-directed', 'HasCallInTailPosition')
-        declare_sdo(section, sdo_name, param_dict, [])
-        return True
-
     # ------------------------------------------------------------------------------
 
     if 'ul' in section.bcen_set:
