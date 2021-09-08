@@ -1779,7 +1779,7 @@ def convert_param_listing_to_dict(parameter_listing):
 
             mo = re.match(r'^(\.\.\.)?(_\w+_)(.*)$', param_str)
             assert mo, section.section_title
-            (opt_dots, param_name, rest) = mo.groups()
+            (opt_dots, param_name, suffix) = mo.groups()
 
             assert param_name not in params_info
 
@@ -1794,9 +1794,9 @@ def convert_param_listing_to_dict(parameter_listing):
 
             params_info[param_name] = param_punct
 
-            if re.match(r'^( \])*$', rest):
+            if re.match(r'^( \])*$', suffix):
                 pass
-            elif rest == ' [ ':
+            elif suffix == ' [ ':
                 subsequent_are_optional = True
             else:
                 assert 0, (section.section_title, repr(param_str))
