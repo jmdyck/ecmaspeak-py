@@ -356,8 +356,7 @@ def _handle_early_errors_section(section):
     alg_header.species = 'op: early error'
     alg_header.name = 'Early Errors'
     alg_header.for_phrase = 'Parse Node'
-    alg_header.param_names = []
-    alg_header.param_nature_ = OrderedDict()
+    AlgHeader_set_attributes_from_params(alg_header, [])
     alg_header.also = []
     alg_header.node_at_end_of_header = section.heading_child
     alg_header.finish_initialization()
