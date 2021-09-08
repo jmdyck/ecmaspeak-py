@@ -2318,4 +2318,34 @@ def get_info_from_param_punct_dict(alg_header, param_punct_dict):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+@dataclass
+class AlgParam:
+    name: str
+    punct: str # '' | '[]' | '...'
+    nature: str
+
+def AlgHeader_set_attributes_from_params(alg_header, params):
+    # Sets .param_nature_, .param_names, .rest_params, and .optional_params.
+
+    alg_header.param_names = []
+
+    for param in params:
+        assert isinstance(param, AlgParam)
+
+        if param.nature != 'unknown':
+            alg_header.param_nature_[param.name] = param.nature
+
+        alg_header.param_names.append(param.name)
+
+        if param.punct == '...':
+            alg_header.rest_params.add(param.name)
+        elif param.punct == '[]':
+            alg_header.optional_params.add(param.name)
+        elif param.punct == '':
+            pass
+        else:
+            assert 0, param_punct
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 # vim: sw=4 ts=4 expandtab
