@@ -352,7 +352,20 @@ def _handle_early_errors_section(section):
 
         handle_early_error(emu_grammar, ul, section)
 
-    declare_sdo(section, 'Early Errors', OrderedDict(), [])
+    alg_header = headers.AlgHeader()
+    alg_header.species = 'op: early error'
+    alg_header.name = 'Early Errors'
+    alg_header.for_phrase = 'Parse Node'
+    alg_header.param_names = []
+    alg_header.param_nature_ = OrderedDict()
+    alg_header.also = []
+    alg_header.node_at_end_of_header = section.heading_child
+    alg_header.finish_initialization()
+
+    if not section.section_num.startswith('B'):
+        for alg_defn in section.alg_defns:
+            alg_header.add_defn(alg_defn)
+
     return True
 
 # ------------------------------------------------------------------------------
@@ -572,7 +585,21 @@ def _handle_sdo_section(section):
         also = regexp_also
     else:
         also = []
-    declare_sdo(section, sdo_name, param_dict, also)
+
+    alg_header = headers.AlgHeader()
+    alg_header.species = 'op: syntax-directed'
+    alg_header.name = sdo_name
+    alg_header.for_phrase = 'Parse Node'
+    alg_header.param_names = list(param_dict.keys())
+    alg_header.param_nature_ = param_dict
+    alg_header.also = also
+    alg_header.node_at_end_of_header = section.heading_child
+    alg_header.finish_initialization()
+
+    if not section.section_num.startswith('B'):
+        for alg_defn in section.alg_defns:
+            alg_header.add_defn(alg_defn)
+
     return True
 
 # ------------------------------------------------------------------------------
@@ -651,26 +678,6 @@ def handle_inline_sdo_section_body(section, sdo_name):
         for rule_sdo_name in rule_sdo_names:
             for rule_grammar in rule_grammars:
                 Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
-
-# ------------------------------------------------------------------------------
-
-def declare_sdo(section, op_name, param_dict, also):
-    alg_header = headers.AlgHeader()
-    alg_header.species = 'op: early error' if op_name == 'Early Errors' else 'op: syntax-directed'
-    alg_header.name = op_name
-    alg_header.for_phrase = 'Parse Node'
-    alg_header.param_names = list(param_dict.keys())
-    alg_header.param_nature_ = param_dict
-    alg_header.also = also
-
-    if True:
-        alg_header.finish_initialization()
-
-        if not section.section_num.startswith('B'):
-            for alg_defn in section.alg_defns:
-                alg_header.add_defn(alg_defn)
-
-        alg_header.node_at_end_of_header = section.heading_child
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
