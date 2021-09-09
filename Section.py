@@ -1074,7 +1074,9 @@ def _handle_structured_header(section):
         section.section_title = f"{which_semantics}{op_name} ({brief_params(0)} )"
 
     if '::' in op_name:
-        (num_type, op_name) = re.fullmatch(r'(\w+)(::\w+)', op_name).groups()
+        (for_phrase, op_name) = re.split(r'(?=::)', op_name)
+    else:
+        for_phrase = None
 
     # --------------------------------------------------------------------------
     # Extract info from the <dl>
@@ -1100,7 +1102,9 @@ def _handle_structured_header(section):
 
     # ----------------------------------
 
-    for_phrase = dl_dict['for'] if ('for' in dl_dict) else None
+    if 'for' in dl_dict:
+        assert for_phrase is None, for_phrase
+        for_phrase = dl_dict['for']
 
     if 'description' in dl_dict:
         retn = []
@@ -1196,10 +1200,7 @@ def _handle_structured_header(section):
     alg_header = headers.AlgHeader()
     alg_header.species = op_species
     alg_header.name = op_name
-    if section.section_kind == 'numeric_method':
-        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
-    else:
-        alg_header.for_phrase = for_phrase
+    alg_header.for_phrase = for_phrase
     AlgHeader_set_attributes_from_params(alg_header, params)
     alg_header.return_nature_normal = return_nature_normal
     alg_header.return_nature_abrupt = return_nature_abrupt
@@ -1252,10 +1253,12 @@ def _handle_header_with_std_preamble(section):
 
     op_name = p_dict['op_name']
 
+    for_phrase = None
+
     if p_dict['kind'] == 'abstract operation':
         if '::' in op_name:
             section.section_kind = 'numeric_method'
-            op_name = re.sub(r'^\w+', '', op_name)
+            (for_phrase, op_name) = re.split(r'(?=::)', op_name)
         else:
             section.section_kind = 'abstract_operation'
 
@@ -1283,10 +1286,7 @@ def _handle_header_with_std_preamble(section):
     alg_header = headers.AlgHeader()
     alg_header.species = op_species
     alg_header.name = op_name
-    if section.section_kind == 'numeric_method':
-        alg_header.for_phrase = re.sub(':.*', '', section.section_title)
-    else:
-        alg_header.for_phrase = None
+    alg_header.for_phrase = for_phrase
     AlgHeader_set_attributes_from_params(alg_header, params)
     alg_header.return_nature_normal = None
     alg_header.return_nature_abrupt = None
@@ -1330,7 +1330,7 @@ def _handle_header_with_std_preamble(section):
         name_for_heading = op_name
 
         if section.section_kind == 'numeric_method':
-            name_for_heading = alg_header.for_phrase + op_name
+            name_for_heading = for_phrase + op_name
 
         if section.section_title.startswith('Static Semantics:'):
             name_for_heading = 'Static Semantics: ' + name_for_heading
