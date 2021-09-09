@@ -2277,26 +2277,6 @@ def node_matches_atom(node, atom):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def get_info_from_param_punct_dict(alg_header, param_punct_dict):
-    # Sets .param_names, .rest_params, and .optional_params.
-
-    alg_header.param_names = []
-
-    for (param_name, param_punct) in param_punct_dict.items():
-
-        alg_header.param_names.append(param_name)
-
-        if param_punct == '...':
-            alg_header.rest_params.add(param_name)
-        elif param_punct == '[]':
-            alg_header.optional_params.add(param_name)
-        elif param_punct == '':
-            pass
-        else:
-            assert 0, param_punct
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 @dataclass
 class AlgParam:
     name: str
