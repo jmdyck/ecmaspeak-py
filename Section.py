@@ -1275,7 +1275,7 @@ def _handle_header_with_std_preamble(section):
     else:
         assert 0
 
-    parameters = convert_param_listing_to_dict(p_dict['params_str'])
+    params = convert_parameter_listing_to_params(p_dict['params_str'])
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
     alg_header = headers.AlgHeader()
@@ -1285,8 +1285,7 @@ def _handle_header_with_std_preamble(section):
         alg_header.for_phrase = re.sub(':.*', '', section.section_title)
     else:
         alg_header.for_phrase = None
-    get_info_from_param_punct_dict(alg_header, parameters)
-    alg_header.param_nature_ = None
+    AlgHeader_set_attributes_from_params(alg_header, params)
     alg_header.return_nature_normal = None
     alg_header.return_nature_abrupt = None
     alg_header.also = None
@@ -1331,15 +1330,14 @@ def _handle_header_with_std_preamble(section):
         if section.section_title.startswith('Static Semantics:'):
             name_for_heading = 'Static Semantics: ' + name_for_heading
 
-        if len(parameters) == 0:
+        if len(params) == 0:
             lines.append(f"{ind}  <h1>{name_for_heading} ( )</h1>")
         else:
             lines.append(f"{ind}  <h1>")
             lines.append(f"{ind}    {name_for_heading} (")
-            for (param_name, param_punct) in parameters.items():
-                optionality = 'optional ' if param_punct == '[]' else ''
-                param_nature = 'unknown'
-                lines.append(f"{ind}      {optionality}{param_name}: {param_nature},")
+            for param in params:
+                optionality = 'optional ' if param.punct == '[]' else ''
+                lines.append(f"{ind}      {optionality}{param.name}: {param.nature},")
             lines.append(f"{ind}    )")
             lines.append(f"{ind}  </h1>")
 
@@ -1424,13 +1422,13 @@ def _handle_function_section(section):
     prop_path = p_dict['prop_path']
 
     if 'params_str' in p_dict:
-        parameters = convert_param_listing_to_dict(p_dict['params_str'])
+        params = convert_parameter_listing_to_params(p_dict['params_str'])
     elif section.section_title.startswith('get '):
         assert section.section_kind == 'accessor_property'
         # The spec leaves off the empty parameter list
-        parameters = OrderedDict()
+        params = []
     else:
-        parameters = None
+        params = None
 
     n_emu_algs = section.bcen_list.count('emu-alg')
 
@@ -1466,8 +1464,8 @@ def _handle_function_section(section):
     #     .replace(' [ ', '[')
     #     .replace(' ]',  ']')
     # )
-    if parameters is not None:
-        get_info_from_param_punct_dict(alg_header, parameters)
+    if params is not None:
+        AlgHeader_set_attributes_from_params(alg_header, params)
 
     headers.check_header_against_prose(alg_header, section, 0, emu_alg_posn_a)
     alg_header.finish_initialization()
@@ -1731,8 +1729,8 @@ def handle_emu_eqn(emu_eqn, section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def convert_param_listing_to_dict(parameter_listing):
-    params_info = OrderedDict()
+def convert_parameter_listing_to_params(parameter_listing):
+    params = []
     parameter_listing = parameter_listing.strip()
     if parameter_listing != '':
         if parameter_listing == '_value1_, _value2_, ..._values_':
@@ -1756,7 +1754,6 @@ def convert_param_listing_to_dict(parameter_listing):
             assert mo, repr(parameter_listing)
             (opt_dots, param_name, suffix) = mo.groups()
 
-            assert param_name not in params_info
 
             assert not (opt_dots and subsequent_are_optional)
 
@@ -1767,7 +1764,7 @@ def convert_param_listing_to_dict(parameter_listing):
             else:
                 param_punct = ''
 
-            params_info[param_name] = param_punct
+            params.append( AlgParam(param_name, param_punct, 'unknown') )
 
             if re.match(r'^( \])*$', suffix):
                 pass
@@ -1776,7 +1773,7 @@ def convert_param_listing_to_dict(parameter_listing):
             else:
                 assert 0, repr(parameter_listing)
 
-    return params_info
+    return params
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
