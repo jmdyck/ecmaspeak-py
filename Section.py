@@ -283,6 +283,15 @@ def _handle_early_errors_section(section):
     section.section_kind = 'early_errors'
     section.ste = {'op_name': 'Early Errors'}
 
+    alg_header = AlgHeader_make(
+        species = 'op: early error',
+        name = 'Early Errors',
+        for_phrase = 'Parse Node',
+        params = [],
+        also = [],
+        node_at_end_of_header = section.heading_child,
+    )
+
     patterns = [
         (
             # 89 cases, the vast majority
@@ -351,15 +360,6 @@ def _handle_early_errors_section(section):
         # TODO: handle <p>
 
         handle_early_error(emu_grammar, ul, section)
-
-    alg_header = AlgHeader_make(
-        species = 'op: early error',
-        name = 'Early Errors',
-        for_phrase = 'Parse Node',
-        params = [],
-        also = [],
-        node_at_end_of_header = section.heading_child,
-    )
 
     if not section.section_num.startswith('B'):
         for alg_defn in section.alg_defns:
@@ -486,6 +486,20 @@ def _handle_sdo_section(section):
         # Don't make it optional, because then its type will be (Integer_ | not_passed),
         # and STA will complain when we use it in a context that expects just Integer_.
 
+    if sdo_name == 'regexp-Evaluate':
+        also = regexp_also
+    else:
+        also = []
+
+    alg_header = AlgHeader_make(
+        species = 'op: syntax-directed',
+        name = sdo_name,
+        for_phrase = 'Parse Node',
+        params = params,
+        also = also,
+        node_at_end_of_header = section.heading_child,
+    )
+
     # ------------------------------------------------------------------------------
 
     if 'ul' in section.bcen_set:
@@ -566,20 +580,6 @@ def _handle_sdo_section(section):
         for body in bodies:
             (emu_grammar, emu_alg) = body
             Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
-
-    if sdo_name == 'regexp-Evaluate':
-        also = regexp_also
-    else:
-        also = []
-
-    alg_header = AlgHeader_make(
-        species = 'op: syntax-directed',
-        name = sdo_name,
-        for_phrase = 'Parse Node',
-        params = params,
-        also = also,
-        node_at_end_of_header = section.heading_child,
-    )
 
     if not section.section_num.startswith('B'):
         for alg_defn in section.alg_defns:
@@ -743,10 +743,6 @@ def _handle_oddball_op_section(section):
 
     section.ste = {'op_name': op_name}
 
-    emu_alg = section.block_children[1]
-    assert emu_alg.element_name == 'emu-alg'
-    Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
-
     headers.oh_warn()
     headers.oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
     headers.oh_warn(f"there is a non-standard preamble")
@@ -757,6 +753,10 @@ def _handle_oddball_op_section(section):
         params = params,
         node_at_end_of_header = section.heading_child,
     )
+
+    emu_alg = section.block_children[1]
+    assert emu_alg.element_name == 'emu-alg'
+    Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
     alg_header.add_defn(section.alg_defns[0])
 
@@ -1457,8 +1457,6 @@ def _handle_function_section(section):
         emu_alg_posn_a = section.bcen_list.index('emu-alg')
         emu_alg_a = section.block_children[emu_alg_posn_a]
 
-    Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
-
     # convert heading-style to elsewhere-style:
     # prop_path = ( prop_path
     #     .replace(' [ ', '[')
@@ -1472,6 +1470,8 @@ def _handle_function_section(section):
         node_at_end_of_header = section.heading_child,
         preamble_nodes = section.block_children[0:emu_alg_posn_a],
     )
+
+    Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
 
     if emu_alg_a:
         if hasattr(emu_alg_a, '_parent_algdefn'):
@@ -1494,7 +1494,6 @@ def _handle_function_section(section):
         # The second emu-alg defines the TypedArray SortCompare operation.
         emu_alg_posn_b = section.bcen_list.index('emu-alg', emu_alg_posn_a+1)
         emu_alg_b = section.block_children[emu_alg_posn_b]
-        Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
         headers.oh_warn()
         headers.oh_warn(f"In {section.section_num} {section.section_title},")
@@ -1521,6 +1520,8 @@ def _handle_function_section(section):
             ],
             node_at_end_of_header = section.block_children[emu_alg_posn_a+1],
         )
+
+        Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
 
         if hasattr(emu_alg_b, '_parent_algdefn'):
             alg_header.add_defn(emu_alg_b._parent_algdefn)
@@ -1629,7 +1630,6 @@ def _handle_other_section(section):
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
-            Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
 
             alg_header = AlgHeader_make(
                 species = 'op: solo',
@@ -1638,6 +1638,7 @@ def _handle_other_section(section):
                 node_at_end_of_header = section.block_children[emu_alg_posn-1],
             )
 
+            Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
             alg_header.add_defn(section.alg_defns[0])
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
@@ -1655,14 +1656,14 @@ def _handle_other_section(section):
             preamble = section.block_children[emu_alg_posn-1]
             assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
 
-            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
-
             alg_header = AlgHeader_make(
                 species = 'op: solo',
                 name = op_name,
                 params = [ AlgParam('_value_', '', 'unknown') ],
                 node_at_end_of_header = preamble,
             )
+
+            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
             alg_header.add_defn(section.alg_defns[0])
 
