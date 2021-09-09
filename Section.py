@@ -705,7 +705,7 @@ def _handle_oddball_op_section(section):
         assert section.block_children[0].source_text().startswith(
             "<p>At any time, if a set of objects _S_ is not live,"
         )
-        param_nature_ = {'_S_': 'TBD'}
+        params = [ AlgParam('_S_', '', 'unknown') ]
 
     elif section.section_title in [
         'Valid Chosen Reads',
@@ -717,7 +717,7 @@ def _handle_oddball_op_section(section):
         assert section.block_children[0].source_text().startswith(
             "<p>A candidate execution _execution_ has "
         )
-        param_nature_ = {'_execution_': 'an execution'}
+        params = [ AlgParam('_execution_', '', 'an execution') ]
 
     elif section.section_title in [
         'Races',
@@ -728,11 +728,11 @@ def _handle_oddball_op_section(section):
         assert section.block_children[0].source_text().startswith(
             "<p>For an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_) are in a "
         )
-        param_nature_ = {
-            '_execution_': 'an execution',
-            '_E_'        : 'an event in SharedDataBlockEventSet(_execution_)',
-            '_D_'        : 'an event in SharedDataBlockEventSet(_execution_)',
-        }
+        params = [
+            AlgParam('_execution_', '', 'an execution'),
+            AlgParam('_E_'        , '', 'an event in SharedDataBlockEventSet(_execution_)'),
+            AlgParam('_D_'        , '', 'an event in SharedDataBlockEventSet(_execution_)'),
+        ]
 
     else:
         return False
@@ -754,8 +754,7 @@ def _handle_oddball_op_section(section):
     alg_header = headers.AlgHeader()
     alg_header.species = 'op: solo'
     alg_header.name = op_name
-    alg_header.param_names = list(param_nature_.keys())
-    alg_header.param_nature_ = param_nature_
+    AlgHeader_set_attributes_from_params(alg_header, params)
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.heading_child
     alg_header.add_defn(section.alg_defns[0])
