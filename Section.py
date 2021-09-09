@@ -1329,6 +1329,9 @@ def _handle_header_with_std_preamble(section):
 
         name_for_heading = op_name
 
+        if section.section_kind == 'numeric_method':
+            name_for_heading = alg_header.for_phrase + op_name
+
         if section.section_title.startswith('Static Semantics:'):
             name_for_heading = 'Static Semantics: ' + name_for_heading
 
