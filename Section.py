@@ -999,8 +999,7 @@ def _handle_structured_header(section):
         mo = re.fullmatch(r'([A-Z][a-zA-Z]+|\[\[[A-Z][a-zA-Z]+\]\]) \( \)', h1_ist)
         assert mo
         op_name = mo.group(1)
-        params_info = OrderedDict()
-        param_nature_ = {}
+        params = []
 
     else:
         # multi-line h1:
@@ -1029,8 +1028,7 @@ def _handle_structured_header(section):
         ]
         which_semantics = 'UNSET'
         op_name = 'UNSET'
-        params_info = OrderedDict()
-        param_nature_ = {}
+        params = []
         n_lines = len(posns_for_line_)
         for (line_i, (a,b,c)) in enumerate(posns_for_line_):
             if line_i in [0, 1]:
@@ -1052,28 +1050,25 @@ def _handle_structured_header(section):
                     if which_semantics is None: which_semantics = ''
                 elif pattern_i == 2:
                     [optionality, param_name, param_nature] = mo.groups()
-                    is_optional = (optionality == 'optional ')
-                    # params.append( (param_name, param_nature, is_optional) )
-                    params_info[param_name] = '[]' if is_optional else ''
-                    param_nature_[param_name] = 'TBD' if param_nature == 'unknown' else param_nature
+                    param_punct = '[]' if (optionality == 'optional ') else ''
+                    params.append( AlgParam(param_name, param_punct, param_nature) )
                 else:
                     assert mo.groups() == ()
             else:
                 msg_at_posn(b, f"line doesn't match pattern /{expected_pattern}/")
 
-        params = [* params_info.items() ]
         def brief_params(param_i):
             if param_i == len(params):
                 return ''
             else:
                 brief_for_subsequent_params = brief_params(param_i + 1)
-                (param_name, param_punct) = params[param_i]
-                if param_punct == '[]':
+                param = params[param_i]
+                if param.punct == '[]':
                     comma = ' ' if param_i == 0 else ' , '
-                    return f" [{comma}{param_name}{brief_for_subsequent_params} ]"
+                    return f" [{comma}{param.name}{brief_for_subsequent_params} ]"
                 else:
                     comma = ' ' if param_i == 0 else ', '
-                    return f"{comma}{param_name}{brief_for_subsequent_params}"
+                    return f"{comma}{param.name}{brief_for_subsequent_params}"
 
         # overwrite section.section_title
         section.section_title = f"{which_semantics}{op_name} ({brief_params(0)} )"
@@ -1205,8 +1200,7 @@ def _handle_structured_header(section):
         alg_header.for_phrase = re.sub(':.*', '', section.section_title)
     else:
         alg_header.for_phrase = for_phrase
-    get_info_from_param_punct_dict(alg_header, params_info)
-    alg_header.param_nature_ = param_nature_
+    AlgHeader_set_attributes_from_params(alg_header, params)
     alg_header.return_nature_normal = return_nature_normal
     alg_header.return_nature_abrupt = return_nature_abrupt
     alg_header.also = also
