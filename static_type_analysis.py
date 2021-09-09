@@ -331,6 +331,7 @@ nature_to_tipe = {
         # 25.4.1.1: PromiseCapability Record
         'a PromiseCapability Record'    : 'PromiseCapability Record',
         'a new PromiseCapability Record': 'PromiseCapability Record',
+        'an optional PromiseCapability' : 'PromiseCapability Record | not_passed',
 
         # 25.4.1.2: PromiseReaction Records
         'a PromiseReaction Record' : 'PromiseReaction Record',
