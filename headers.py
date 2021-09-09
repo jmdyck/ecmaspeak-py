@@ -32,7 +32,7 @@ def check_header_against_prose(hoi, section, span_start_i, span_end_i):
         # No prose to check
         pass
     else:
-        info_holder = extract_info_from_preamble(section.block_children[span_start_i:span_end_i], section)
+        info_holder = extract_info_from_preamble(section.block_children[span_start_i:span_end_i])
         poi = info_holder.convert_to_header()
         resolve_oi(hoi, poi)
 
@@ -382,7 +382,7 @@ class HeaderConstructionRule:
 multi_sentence_rules = ExtractionRules(multi_sentence_rules_str)
 single_sentence_rules = ExtractionRules(single_sentence_rules_str)
 
-def extract_info_from_preamble(preamble_nodes, section):
+def extract_info_from_preamble(preamble_nodes):
 
     info_holder = PreambleInfoHolder()
 
