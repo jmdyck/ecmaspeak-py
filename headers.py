@@ -383,20 +383,6 @@ multi_sentence_rules = ExtractionRules(multi_sentence_rules_str)
 single_sentence_rules = ExtractionRules(single_sentence_rules_str)
 
 def extract_info_from_preamble(preamble_nodes, section):
-    
-    # Okay, so this preamble has a non-standard format.
-    if section.section_kind in [
-        'anonymous_built_in_function',
-        'accessor_property',
-        'function_property',
-        'CallConstruct',
-    ]:
-        # no standard yet
-        pass
-    else:
-        oh_warn()
-        oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
-        oh_warn(f"there is a non-standard preamble")
 
     info_holder = PreambleInfoHolder()
 
