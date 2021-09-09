@@ -1509,7 +1509,11 @@ def _handle_function_section(section):
         alg_header = headers.AlgHeader()
         alg_header.species = 'op: solo'
         alg_header.name = 'TypedArraySortCompare'
-        alg_header.param_names = ['_x_', '_y_']
+        params = [
+            AlgParam('_x_', '', 'unknown'),
+            AlgParam('_y_', '', 'unknown'),
+        ]
+        AlgHeader_set_attributes_from_params(alg_header, params)
         alg_header.also = [
             ('_comparefn_', 'from the `sort` method'),
             ('_buffer_',    'from the `sort` method'),
