@@ -1250,10 +1250,12 @@ def _handle_header_with_std_preamble(section):
     # -------------------------------
     # At this point, we're committed.
 
+    op_name = p_dict['op_name']
+
     if p_dict['kind'] == 'abstract operation':
-        if '::' in p_dict['op_name']:
+        if '::' in op_name:
             section.section_kind = 'numeric_method'
-            p_dict['op_name'] = re.sub(r'^\w+', '', p_dict['op_name'])
+            op_name = re.sub(r'^\w+', '', op_name)
         else:
             section.section_kind = 'abstract_operation'
 
@@ -1280,7 +1282,7 @@ def _handle_header_with_std_preamble(section):
 
     alg_header = headers.AlgHeader()
     alg_header.species = op_species
-    alg_header.name = p_dict['op_name']
+    alg_header.name = op_name
     if section.section_kind == 'numeric_method':
         alg_header.for_phrase = re.sub(':.*', '', section.section_title)
     else:
@@ -1325,7 +1327,7 @@ def _handle_header_with_std_preamble(section):
         clause_start_tag += '>'
         lines.append(f"{ind}{clause_start_tag}")
 
-        name_for_heading = p_dict['op_name']
+        name_for_heading = op_name
 
         if section.section_title.startswith('Static Semantics:'):
             name_for_heading = 'Static Semantics: ' + name_for_heading
