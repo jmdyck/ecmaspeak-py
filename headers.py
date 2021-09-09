@@ -27,12 +27,12 @@ def oh_warn(*args):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def check_header_against_prose(hoi, section, span_start_i, span_end_i):
-    if span_start_i == span_end_i:
+def check_header_against_prose(hoi, preamble_nodes):
+    if preamble_nodes == []:
         # No prose to check
         pass
     else:
-        info_holder = extract_info_from_preamble(section.block_children[span_start_i:span_end_i])
+        info_holder = extract_info_from_preamble(preamble_nodes)
         poi = info_holder.convert_to_header()
         resolve_oi(hoi, poi)
 

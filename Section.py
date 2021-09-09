@@ -1472,7 +1472,7 @@ def _handle_function_section(section):
     if params is not None:
         AlgHeader_set_attributes_from_params(alg_header, params)
 
-    headers.check_header_against_prose(alg_header, section, 0, emu_alg_posn_a)
+    headers.check_header_against_prose(alg_header, section.block_children[0:emu_alg_posn_a])
     alg_header.finish_initialization()
     alg_header.node_at_end_of_header = section.heading_child
 
