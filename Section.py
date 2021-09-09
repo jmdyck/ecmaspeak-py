@@ -352,14 +352,14 @@ def _handle_early_errors_section(section):
 
         handle_early_error(emu_grammar, ul, section)
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = 'op: early error'
-    alg_header.name = 'Early Errors'
-    alg_header.for_phrase = 'Parse Node'
-    AlgHeader_set_attributes_from_params(alg_header, [])
-    alg_header.also = []
-    alg_header.node_at_end_of_header = section.heading_child
-    alg_header.finish_initialization()
+    alg_header = AlgHeader_make(
+        species = 'op: early error',
+        name = 'Early Errors',
+        for_phrase = 'Parse Node',
+        params = [],
+        also = [],
+        node_at_end_of_header = section.heading_child,
+    )
 
     if not section.section_num.startswith('B'):
         for alg_defn in section.alg_defns:
@@ -572,14 +572,14 @@ def _handle_sdo_section(section):
     else:
         also = []
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = 'op: syntax-directed'
-    alg_header.name = sdo_name
-    alg_header.for_phrase = 'Parse Node'
-    AlgHeader_set_attributes_from_params(alg_header, params)
-    alg_header.also = also
-    alg_header.node_at_end_of_header = section.heading_child
-    alg_header.finish_initialization()
+    alg_header = AlgHeader_make(
+        species = 'op: syntax-directed',
+        name = sdo_name,
+        for_phrase = 'Parse Node',
+        params = params,
+        also = also,
+        node_at_end_of_header = section.heading_child,
+    )
 
     if not section.section_num.startswith('B'):
         for alg_defn in section.alg_defns:
@@ -751,12 +751,13 @@ def _handle_oddball_op_section(section):
     headers.oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
     headers.oh_warn(f"there is a non-standard preamble")
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = 'op: solo'
-    alg_header.name = op_name
-    AlgHeader_set_attributes_from_params(alg_header, params)
-    alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = section.heading_child
+    alg_header = AlgHeader_make(
+        species = 'op: solo',
+        name = op_name,
+        params = params,
+        node_at_end_of_header = section.heading_child,
+    )
+
     alg_header.add_defn(section.alg_defns[0])
 
     return True
@@ -1197,16 +1198,16 @@ def _handle_structured_header(section):
 
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = op_species
-    alg_header.name = op_name
-    alg_header.for_phrase = for_phrase
-    AlgHeader_set_attributes_from_params(alg_header, params)
-    alg_header.return_nature_normal = return_nature_normal
-    alg_header.return_nature_abrupt = return_nature_abrupt
-    alg_header.also = also
-    alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = section.dl_child
+    alg_header = AlgHeader_make(
+        species = op_species,
+        name = op_name,
+        for_phrase = for_phrase,
+        params = params,
+        also = also,
+        return_nature_normal = return_nature_normal,
+        return_nature_abrupt = return_nature_abrupt,
+        node_at_end_of_header = section.dl_child,
+    )
 
     section.ste = { 'op_name': op_name }
 
@@ -1283,20 +1284,17 @@ def _handle_header_with_std_preamble(section):
     params = convert_parameter_listing_to_params(p_dict['params_str'])
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = op_species
-    alg_header.name = op_name
-    alg_header.for_phrase = for_phrase
-    AlgHeader_set_attributes_from_params(alg_header, params)
-    alg_header.return_nature_normal = None
-    alg_header.return_nature_abrupt = None
-    alg_header.also = None
-    alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = None
+    alg_header = AlgHeader_make(
+        species = op_species,
+        name = op_name,
+        for_phrase = for_phrase,
+        params = params,
+        node_at_end_of_header = None,
         # We could set it to section.heading_child,
         # but `node_at_end_of_header` is only used during STA,
         # and the idea is that this kind of header
         # will be changed to a structured header before applying STA.
+    )
 
     section.ste = { 'op_name': alg_header.name }
 
@@ -1461,20 +1459,19 @@ def _handle_function_section(section):
 
     Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
 
-    alg_header = headers.AlgHeader()
-    alg_header.species = bif_species
-    alg_header.name = prop_path
     # convert heading-style to elsewhere-style:
-    # alg_header.name = ( prop_path
+    # prop_path = ( prop_path
     #     .replace(' [ ', '[')
     #     .replace(' ]',  ']')
     # )
-    if params is not None:
-        AlgHeader_set_attributes_from_params(alg_header, params)
 
-    headers.check_header_against_prose(alg_header, section.block_children[0:emu_alg_posn_a])
-    alg_header.finish_initialization()
-    alg_header.node_at_end_of_header = section.heading_child
+    alg_header = AlgHeader_make(
+        species = bif_species,
+        name = prop_path,
+        params = params,
+        node_at_end_of_header = section.heading_child,
+        preamble_nodes = section.block_children[0:emu_alg_posn_a],
+    )
 
     if emu_alg_a:
         if hasattr(emu_alg_a, '_parent_algdefn'):
@@ -1511,20 +1508,19 @@ def _handle_function_section(section):
             '<p>The abstract operation TypedArraySortCompare takes arguments _x_ and _y_. It also has access to the _comparefn_ and _buffer_ values of the current invocation of the `sort` method. It performs the following steps when called:</p>',
         ]
 
-        alg_header = headers.AlgHeader()
-        alg_header.species = 'op: solo'
-        alg_header.name = 'TypedArraySortCompare'
-        params = [
-            AlgParam('_x_', '', 'unknown'),
-            AlgParam('_y_', '', 'unknown'),
-        ]
-        AlgHeader_set_attributes_from_params(alg_header, params)
-        alg_header.also = [
-            ('_comparefn_', 'from the `sort` method'),
-            ('_buffer_',    'from the `sort` method'),
-        ]
-        alg_header.finish_initialization()
-        alg_header.node_at_end_of_header = section.block_children[emu_alg_posn_a+1]
+        alg_header = AlgHeader_make(
+            species = 'op: solo',
+            name = 'TypedArraySortCompare',
+            params = [
+                AlgParam('_x_', '', 'unknown'),
+                AlgParam('_y_', '', 'unknown'),
+            ],
+            also = [
+                ('_comparefn_', 'from the `sort` method'),
+                ('_buffer_',    'from the `sort` method'),
+            ],
+            node_at_end_of_header = section.block_children[emu_alg_posn_a+1],
+        )
 
         if hasattr(emu_alg_b, '_parent_algdefn'):
             alg_header.add_defn(emu_alg_b._parent_algdefn)
@@ -1635,12 +1631,13 @@ def _handle_other_section(section):
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
             Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
 
-            alg_header = headers.AlgHeader()
-            alg_header.name = 'initializer for @@unscopables'
-            AlgHeader_set_attributes_from_params(alg_header, [])
-            alg_header.species = 'op: solo'
-            alg_header.finish_initialization()
-            alg_header.node_at_end_of_header = section.block_children[emu_alg_posn-1]
+            alg_header = AlgHeader_make(
+                species = 'op: solo',
+                name = 'initializer for @@unscopables',
+                params = [],
+                node_at_end_of_header = section.block_children[emu_alg_posn-1],
+            )
+
             alg_header.add_defn(section.alg_defns[0])
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
@@ -1660,12 +1657,13 @@ def _handle_other_section(section):
 
             Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
-            alg_header = headers.AlgHeader()
-            alg_header.name = op_name
-            alg_header.species = 'op: solo'
-            AlgHeader_set_attributes_from_params(alg_header, [ AlgParam('_value_', '', 'unknown') ])
-            alg_header.finish_initialization()
-            alg_header.node_at_end_of_header = preamble
+            alg_header = AlgHeader_make(
+                species = 'op: solo',
+                name = op_name,
+                params = [ AlgParam('_value_', '', 'unknown') ],
+                node_at_end_of_header = preamble,
+            )
+
             alg_header.add_defn(section.alg_defns[0])
 
         elif section.section_title == 'The Abstract Closure Specification Type':
@@ -2309,6 +2307,39 @@ def AlgHeader_set_attributes_from_params(alg_header, params):
             pass
         else:
             assert 0, param_punct
+
+# ------------------------------------------------------------------------------
+
+def AlgHeader_make(
+    *,
+    species,
+    name,
+    params,
+    node_at_end_of_header,
+    for_phrase           = None,
+    return_nature_normal = None,
+    return_nature_abrupt = None,
+    also                 = None,
+    preamble_nodes       = None,
+):
+    alg_header = headers.AlgHeader()
+    alg_header.species = species
+    alg_header.name = name
+    alg_header.node_at_end_of_header = node_at_end_of_header
+    alg_header.for_phrase = for_phrase
+    alg_header.return_nature_normal = return_nature_normal
+    alg_header.return_nature_abrupt = return_nature_abrupt
+    alg_header.also = also
+
+    if params is not None:
+        AlgHeader_set_attributes_from_params(alg_header, params)
+
+    if preamble_nodes:
+        headers.check_header_against_prose(alg_header, preamble_nodes)
+
+    alg_header.finish_initialization()
+
+    return alg_header
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
