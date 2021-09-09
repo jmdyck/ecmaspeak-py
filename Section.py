@@ -1632,7 +1632,7 @@ def _handle_other_section(section):
 
             alg_header = headers.AlgHeader()
             alg_header.name = 'initializer for @@unscopables'
-            alg_header.param_names = []
+            AlgHeader_set_attributes_from_params(alg_header, [])
             alg_header.species = 'op: solo'
             alg_header.finish_initialization()
             alg_header.node_at_end_of_header = section.block_children[emu_alg_posn-1]
@@ -1658,7 +1658,7 @@ def _handle_other_section(section):
             alg_header = headers.AlgHeader()
             alg_header.name = op_name
             alg_header.species = 'op: solo'
-            alg_header.param_names = ['_value_']
+            AlgHeader_set_attributes_from_params(alg_header, [ AlgParam('_value_', '', 'unknown') ])
             alg_header.finish_initialization()
             alg_header.node_at_end_of_header = preamble
             alg_header.add_defn(section.alg_defns[0])
