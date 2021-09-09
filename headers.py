@@ -383,19 +383,6 @@ multi_sentence_rules = ExtractionRules(multi_sentence_rules_str)
 single_sentence_rules = ExtractionRules(single_sentence_rules_str)
 
 def extract_info_from_preamble(preamble_nodes, section):
-    # PR #1914 established a consistent format for abstract operation preambles
-    if len(preamble_nodes) == 1:
-        preamble_node = preamble_nodes[0]
-        preamble_text = preamble_node.inner_source_text().strip()
-        if (
-            preamble_text.startswith('The abstract operation')
-            or
-            (preamble_text.startswith('The ') and ' takes ' in preamble_text)
-            and
-            not preamble_text.startswith("The `")
-        ):
-            ih = extract_info_from_standard_preamble(preamble_nodes[0])
-            if ih: return ih
     
     # Okay, so this preamble has a non-standard format.
     if section.section_kind in [
@@ -622,58 +609,6 @@ for line in rec_method_declarations.split('\n'):
     else:
         (return_nature_normal, return_nature_abrupt) = (return_nature, 'TBD')
     predeclared_rec_method_info[name] = (param_names, param_nature_, return_nature_normal, return_nature_abrupt)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def extract_info_from_standard_preamble(preamble_node):
-    preamble_text = preamble_node.inner_source_text().strip()
-
-    sentences = re.split('(?<=\.) +', preamble_text)
-
-    sentence0 = sentences.pop(0)
-
-    info_holder = PreambleInfoHolder()
-
-    # -----------------------------------
-    # The first sentence in the preamble:
-
-    for pattern in [
-        r'The (?P<kind>abstract operation) (?P<name>[\w:/]+) takes (?P<pl>.+)\.',
-        r'The (?P<kind>abstract operation) (?P<name><dfn id="\w+" aoid="\w+" oldids="sec-\w+">\w+</dfn>) takes (?P<pl>.+)\.',
-    ]:
-        mo = re.fullmatch(pattern, sentence0)
-        if mo:
-            for (key, value) in mo.groupdict().items():
-                info_holder.add(key, value)
-            break
-    else:
-        oh_warn()
-        oh_warn("Starts like std preamble but isn't:")
-        oh_warn(preamble_text)
-        return None
-
-    if sentences == []:
-        return info_holder
-
-    # ----------------------------------
-    # also
-
-    if RE.fullmatch('It also has access to (.+)\.', sentences[0]):
-        info_holder.add('also', RE.group(1))
-        del sentences[0]
-
-    # ----------------------------------
-    # The last sentence of the preamble:
-
-    if sentences[-1] == 'It performs the following steps when called:':
-        del sentences[-1]
-
-    # ----------------------------------------
-    # Any remaining sentences are description:
-    
-    assert sentences == [] # since the merge of PR 545
-
-    return info_holder
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
