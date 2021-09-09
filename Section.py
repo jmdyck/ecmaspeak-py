@@ -284,6 +284,7 @@ def _handle_early_errors_section(section):
     section.ste = {'op_name': 'Early Errors'}
 
     alg_header = AlgHeader_make(
+        section = section,
         species = 'op: early error',
         name = 'Early Errors',
         for_phrase = 'Parse Node',
@@ -492,6 +493,7 @@ def _handle_sdo_section(section):
         also = []
 
     alg_header = AlgHeader_make(
+        section = section,
         species = 'op: syntax-directed',
         name = sdo_name,
         for_phrase = 'Parse Node',
@@ -748,6 +750,7 @@ def _handle_oddball_op_section(section):
     headers.oh_warn(f"there is a non-standard preamble")
 
     alg_header = AlgHeader_make(
+        section = section,
         species = 'op: solo',
         name = op_name,
         params = params,
@@ -1199,6 +1202,7 @@ def _handle_structured_header(section):
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
     alg_header = AlgHeader_make(
+        section = section,
         species = op_species,
         name = op_name,
         for_phrase = for_phrase,
@@ -1285,6 +1289,7 @@ def _handle_header_with_std_preamble(section):
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
     alg_header = AlgHeader_make(
+        section = section,
         species = op_species,
         name = op_name,
         for_phrase = for_phrase,
@@ -1464,6 +1469,7 @@ def _handle_function_section(section):
     # )
 
     alg_header = AlgHeader_make(
+        section = section,
         species = bif_species,
         name = prop_path,
         params = params,
@@ -1508,6 +1514,7 @@ def _handle_function_section(section):
         ]
 
         alg_header = AlgHeader_make(
+            section = section,
             species = 'op: solo',
             name = 'TypedArraySortCompare',
             params = [
@@ -1632,6 +1639,7 @@ def _handle_other_section(section):
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
 
             alg_header = AlgHeader_make(
+                section = section,
                 species = 'op: solo',
                 name = 'initializer for @@unscopables',
                 params = [],
@@ -1657,6 +1665,7 @@ def _handle_other_section(section):
             assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
 
             alg_header = AlgHeader_make(
+                section = section,
                 species = 'op: solo',
                 name = op_name,
                 params = [ AlgParam('_value_', '', 'unknown') ],
@@ -2313,6 +2322,7 @@ def AlgHeader_set_attributes_from_params(alg_header, params):
 
 def AlgHeader_make(
     *,
+    section,
     species,
     name,
     params,
@@ -2324,6 +2334,7 @@ def AlgHeader_make(
     preamble_nodes       = None,
 ):
     alg_header = headers.AlgHeader()
+    alg_header.section = section
     alg_header.species = species
     alg_header.name = name
     alg_header.node_at_end_of_header = node_at_end_of_header
