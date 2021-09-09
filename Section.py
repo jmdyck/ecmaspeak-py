@@ -1085,14 +1085,14 @@ def _handle_structured_header(section):
             if param_i == len(params):
                 return ''
             else:
-                rest = brief_params(param_i + 1)
+                brief_for_subsequent_params = brief_params(param_i + 1)
                 (param_name, param_punct) = params[param_i]
                 if param_punct == '[]':
                     comma = ' ' if param_i == 0 else ' , '
-                    return f" [{comma}{param_name}{rest} ]"
+                    return f" [{comma}{param_name}{brief_for_subsequent_params} ]"
                 else:
                     comma = ' ' if param_i == 0 else ', '
-                    return f"{comma}{param_name}{rest}"
+                    return f"{comma}{param_name}{brief_for_subsequent_params}"
 
         # overwrite section.section_title
         section.section_title = f"{which_semantics}{op_name} ({brief_params(0)} )"
