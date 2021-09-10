@@ -1739,7 +1739,17 @@ def handle_emu_eqn(emu_eqn, section):
         [op_name, parameter, body] = child.children
         assert op_name.source_text() == aoid
         parameter_name = parameter.source_text()
+
+        alg_header = AlgHeader_make(
+            section = section,
+            species = 'op: solo',
+            name = aoid,
+            params = [ AlgParam(parameter_name, '', 'unknown') ],
+            node_at_end_of_header = emu_eqn,
+        )
+
         Pseudocode.alg_add_defn('op: solo', aoid, None, body, section)
+        alg_header.add_defn(section.alg_defns[-1])
 
     else:
         assert 0
