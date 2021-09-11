@@ -781,9 +781,7 @@ def alg_add_defn(alg_species, alg_name, discriminator, hnode_or_anode, section):
 
     alg_info = ensure_alg(alg_species, alg_name)
 
-    if hnode_or_anode is None:
-        assert discriminator is None
-        return
+    assert hnode_or_anode is not None
 
     alg_defn = AlgDefn(alg_info, discriminator, hnode_or_anode, section)
     section.alg_defns.append(alg_defn)
