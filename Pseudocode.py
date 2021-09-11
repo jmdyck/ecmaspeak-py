@@ -785,7 +785,6 @@ def ensure_alg(alg_species, alg_name):
 class AlgDefn:
     def __init__(self, alg_header, discriminator, hnode_or_anode):
         self.discriminator = discriminator
-        self.section = alg_header.section
         self.header = None
 
         assert (
@@ -858,7 +857,7 @@ def analyze_static_dependencies():
                             if callee_name in spec.alg_info_['op']:
                                 spec.alg_info_['op'][callee_name].invocations.append(d)
                             else:
-                                stderr(f"spec.alg_info_['op'] has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.section.section_num})")
+                                stderr(f"spec.alg_info_['op'] has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.header.section.section_num})")
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         assert alg_name == 'Early Errors'
                         # "... and the following algorithm evaluates to *true*: ..."
@@ -1185,7 +1184,7 @@ def check_sdo_coverage():
 
             for alg_defn in op_info.all_definitions():
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
-                if alg_defn.section.section_num.startswith('B'): continue
+                if alg_defn.header.section.section_num.startswith('B'): continue
 
                 discriminator = alg_defn.discriminator
 
