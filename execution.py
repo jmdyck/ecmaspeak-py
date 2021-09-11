@@ -1257,15 +1257,16 @@ def apply_op_to_arg_values(de, op_name, arg_values):
         alg_info = spec.alg_info_['op'][op_name]
         assert alg_info.species == 'op: solo'
 
-        if len(alg_info.definitions) == 0:
+        alg_defns = alg_info.all_definitions()
+        if len(alg_defns) == 0:
             # Pseudocode.py has calls like:
             # ensure_alg('op: solo', 'floor')
             # but no definition(s), so we arrive here.
             func = predefined_operations[op_name]
             return func(de, *arg_values)
 
-        elif len(alg_info.definitions) == 1:
-            [alg_defn] = alg_info.definitions
+        elif len(alg_defns) == 1:
+            [alg_defn] = alg_defns
             return de.execute_alg_defn(alg_defn, arg_vals=arg_values)
 
         else:
@@ -1276,7 +1277,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
 
             matching_defns = [
                 alg_defn
-                for alg_defn in alg_info.definitions
+                for alg_defn in alg_defns
                 if value_matches_discriminator(arg_value, alg_defn.discriminator)
             ]
             assert len(matching_defns) == 1
@@ -1291,7 +1292,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
         assert alg_info.species == 'op: numeric method'
         matching_defns = [
             alg_defn
-            for alg_defn in alg_info.definitions
+            for alg_defn in alg_info.all_definitions()
             if alg_defn.discriminator == type_name
         ]
         assert len(matching_defns) == 1

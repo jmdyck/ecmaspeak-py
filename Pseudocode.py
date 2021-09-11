@@ -742,7 +742,6 @@ class Alg:
         self.name = name
         self.bif_or_op = bif_or_op
         self.species = species
-        self.definitions = []
         self.invocations = []
         self.callees = set()
         self.callers = set()
@@ -759,6 +758,13 @@ class Alg:
             and
             self.name < other.name
         )
+
+    def all_definitions(self):
+        return [
+            alg_defn
+            for alg_header in self.headers
+            for alg_defn in alg_header.u_defns
+        ]
 
 def ensure_alg(alg_species, alg_name):
     bif_or_op = 'bif' if alg_species.startswith('bif:') else 'op'
@@ -841,7 +847,7 @@ def analyze_static_dependencies():
         +
         sorted(spec.alg_info_['bif'].items())
     ):
-        for alg_defn in alg_info.definitions:
+        for alg_defn in alg_info.all_definitions():
             alg_defn.callees = set()
 
             def recurse(anode):
@@ -864,7 +870,7 @@ def analyze_static_dependencies():
 
         put()
         put(alg_name)
-        put(f"[{alg_info.species}, {len(alg_info.definitions)} definitions]")
+        put(f"[{alg_info.species}, {len(alg_info.all_definitions())} definitions]")
         for callee in sorted(alg_info.callees):
             put('  ', callee)
 
@@ -1115,7 +1121,7 @@ def analyze_static_dependencies():
     # First, find the ops that directly look runtimey.
     ops_that_look_runtimey = set()
     for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
-        for op_defn in op_info.definitions:
+        for op_defn in op_info.all_definitions():
             def recurse(anode):
                 for d in anode.each_descendant_or_self():
                     if looks_runtimey(d):
@@ -1178,7 +1184,7 @@ def check_sdo_coverage():
             assert op_name not in spec.sdo_coverage_map
             spec.sdo_coverage_map[op_name] = {}
 
-            for alg_defn in op_info.definitions:
+            for alg_defn in op_info.all_definitions():
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
                 if alg_defn.section.section_num.startswith('B'): continue
 
