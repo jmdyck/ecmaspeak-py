@@ -1477,9 +1477,8 @@ def _handle_function_section(section):
         preamble_nodes = section.block_children[0:emu_alg_posn_a],
     )
 
-    Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
-
     if emu_alg_a:
+        Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
         if hasattr(emu_alg_a, '_parent_algdefn'):
             alg_header.add_defn(emu_alg_a._parent_algdefn)
         else:
