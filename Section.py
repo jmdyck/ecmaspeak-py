@@ -1642,8 +1642,8 @@ def _handle_other_section(section):
                 node_at_end_of_header = section.block_children[emu_alg_posn-1],
             )
 
-            Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
-            alg_header.add_defn(section.alg_defns[0])
+            alg_defn = Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
+            alg_header.add_defn(alg_defn)
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
             # In addition to telling you about the intrinsic object,
@@ -1668,9 +1668,9 @@ def _handle_other_section(section):
                 node_at_end_of_header = preamble,
             )
 
-            Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
+            alg_defn = Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
-            alg_header.add_defn(section.alg_defns[0])
+            alg_header.add_defn(alg_defn)
 
         elif section.section_title == 'The Abstract Closure Specification Type':
             # The emu-alg is an example showing the definition and use
