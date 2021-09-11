@@ -2341,8 +2341,8 @@ def AlgHeader_make(
 def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode, make_annex_B_exception=False):
     assert hnode_or_anode is not None
     alg_defn = Pseudocode.AlgDefn(alg_header, discriminator, hnode_or_anode)
-    alg_header.parent_alg.definitions.append(alg_defn)
     if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
+        alg_header.parent_alg.definitions.append(alg_defn)
         alg_header.u_defns.append(alg_defn)
         assert alg_defn.header is None
         alg_defn.header = alg_header
