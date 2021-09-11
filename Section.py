@@ -1744,8 +1744,8 @@ def handle_emu_eqn(emu_eqn, section):
             node_at_end_of_header = emu_eqn,
         )
 
-        Pseudocode.alg_add_defn('op: solo', aoid, None, body, section)
-        alg_header.add_defn(section.alg_defns[-1])
+        alg_defn = Pseudocode.alg_add_defn('op: solo', aoid, None, body, section)
+        alg_header.add_defn(alg_defn)
 
     else:
         assert 0
