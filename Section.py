@@ -1709,7 +1709,7 @@ def handle_emu_eqn(emu_eqn, section):
     if child.prod.lhs_s == '{CONSTANT_DEF}':
         [constant_name, dec_int_lit] = child.children[0:2]
         assert constant_name.source_text() == aoid
-        # XXX Pseudocode.alg_add_defn('constant', aoid, None, dec_int_lit, section)
+        # TODO: Define a constant named {aoid} defined by {dec_int_lit}
 
     elif child.prod.lhs_s == '{OPERATION_DEF}':
         [op_name, parameter, body] = child.children
@@ -2341,13 +2341,10 @@ def AlgHeader_make(
 # ------------------------------------------------------------------------------
 
 def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode, make_annex_B_exception=False):
-    alg_defn = Pseudocode.alg_add_defn(
-        alg_header.species,
-        alg_header.name,
-        discriminator,
-        hnode_or_anode,
-        alg_header.section,
-    )
+    assert hnode_or_anode is not None
+    alg_info = Pseudocode.ensure_alg(alg_header.species, alg_header.name)
+    alg_defn = Pseudocode.AlgDefn(alg_info, discriminator, hnode_or_anode, alg_header.section)
+    alg_header.section.alg_defns.append(alg_defn)
     if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
         alg_header.add_defn(alg_defn)
 

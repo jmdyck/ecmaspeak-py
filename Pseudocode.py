@@ -776,18 +776,6 @@ def ensure_alg(alg_species, alg_name):
 
 # ------------------------------------------------
 
-def alg_add_defn(alg_species, alg_name, discriminator, hnode_or_anode, section):
-    assert type(alg_name) == str
-
-    alg_info = ensure_alg(alg_species, alg_name)
-
-    assert hnode_or_anode is not None
-
-    alg_defn = AlgDefn(alg_info, discriminator, hnode_or_anode, section)
-    section.alg_defns.append(alg_defn)
-
-    return alg_defn
-
 class AlgDefn:
     def __init__(self, alg_info, discriminator, hnode_or_anode, section):
         self.the_alg_to_which_this_belongs = alg_info
