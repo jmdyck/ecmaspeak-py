@@ -784,7 +784,6 @@ def ensure_alg(alg_species, alg_name):
 
 class AlgDefn:
     def __init__(self, alg_header, discriminator, hnode_or_anode):
-        self.the_alg_to_which_this_belongs = alg_header.parent_alg
         self.discriminator = discriminator
         self.section = alg_header.section
         self.header = None

@@ -277,7 +277,7 @@ class Frame:
 
         frame._alg_defn = alg_defn
         frame._header = alg_defn.header
-        frame._alg = frame._alg_defn.the_alg_to_which_this_belongs
+        frame._alg = alg_defn.header.parent_alg
 
         # -----------
         # focus_node:
