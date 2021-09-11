@@ -203,7 +203,6 @@ def _set_section_kind(section):
     # Set section attributes:
     # .section_kind
     # .section_title
-    # .ste
     # .alg_headers
 
     section.has_structured_header = False
@@ -281,7 +280,6 @@ def _handle_early_errors_section(section):
         return False
 
     section.section_kind = 'early_errors'
-    section.ste = {'op_name': 'Early Errors'}
 
     alg_header = AlgHeader_make(
         section = section,
@@ -437,8 +435,6 @@ def _handle_sdo_section(section):
     # At this point, we know it's an SDO section.
 
     section.section_kind = 'syntax_directed_operation'
-
-    section.ste = {'op_name': sdo_name}
 
     if section.section_title in ['Statement Rules', 'Expression Rules']:
         # TODO: Should copy this from section.parent
@@ -689,7 +685,6 @@ def _handle_oddball_op_section(section):
         # Let's try the latter.
         # I.e., don't create anything, but return True to indicate that we've handled this section.
         section.section_kind = 'env_rec_method_unused'
-        section.ste = {}
         return True
 
     # ----
@@ -735,8 +730,6 @@ def _handle_oddball_op_section(section):
     # --------------------------------------------
 
     section.section_kind = 'abstract_operation'
-
-    section.ste = {'op_name': op_name}
 
     headers.oh_warn()
     headers.oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
@@ -1202,8 +1195,6 @@ def _handle_structured_header(section):
         node_at_end_of_header = section.dl_child,
     )
 
-    section.ste = { 'op_name': op_name }
-
     return alg_header
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1289,8 +1280,6 @@ def _handle_header_with_std_preamble(section):
         # and the idea is that this kind of header
         # will be changed to a structured header before applying STA.
     )
-
-    section.ste = { 'op_name': alg_header.name }
 
     # --------------------------------------------------------------------------
 
@@ -1404,8 +1393,6 @@ def _handle_function_section(section):
     check_section_title(section)
 
     section.section_kind = result
-
-    section.ste = {}
 
     if section.section_kind == 'function_property_xref':
         assert section.bcen_str == 'p'
@@ -1571,8 +1558,6 @@ def _handle_other_section(section):
 
     assert isinstance(result, str)
     section.section_kind = result
-
-    section.ste = {}
 
     if section.parent.section_title == 'Terms and Definitions' and section.section_kind == 'other_property':
         section.section_kind = 'catchall'
@@ -2012,8 +1997,6 @@ def _handle_changes_section(section):
 
     # ==========================================================================
 
-    section.ste = {}
-
     return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2103,7 +2086,7 @@ def _check_aoids(section):
 
     else:
         aoid = section.attrs.get('aoid', None)
-        op_name = section.ste.get('op_name', None)
+        op_name = section.alg_headers[0].name if section.alg_headers else None
 
         if section.section_kind == 'shorthand':
             assert op_name is None
@@ -2112,7 +2095,13 @@ def _check_aoids(section):
         else:
 
             if section.section_kind == 'catchall':
-                assert op_name is None
+                assert (
+                    op_name is None
+                    or
+                    section.parent.section_id == 'sec-overview-of-date-objects-and-definitions-of-abstract-operations'
+                    # {section} defines one or more ops via <emu-eqn>,
+                    # and doesn't have an aoid.
+                )
 
                 if section.parent.section_title == 'Relations of Candidate Executions':
                     # Should we have a 'relation' kind?

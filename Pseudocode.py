@@ -962,8 +962,8 @@ def analyze_static_dependencies():
     op_names_labelled_rs = set()
     op_names_not_labelled = set()
     for section in spec.root_section.each_descendant_that_is_a_section():
-        if 'op_name' not in section.ste: continue
-        op_name = section.ste['op_name']
+        if section.alg_headers == []: continue
+        op_name = section.alg_headers[0].name
 
         if section.section_title.startswith('Static Semantics:'):
             op_names_labelled_ss.add(op_name)
@@ -976,7 +976,6 @@ def analyze_static_dependencies():
             assert op_name in op_names_labelled_ss
 
         elif section.section_title.startswith('Runtime Semantics:'):
-            op_name = section.ste['op_name']
             op_names_labelled_rs.add(op_name)
 
         else:
