@@ -36,8 +36,6 @@ def make_and_check_sections():
             stderr(f" {top_level_num}", end='', flush=True)
             prev_top_level_num = top_level_num
 
-        section.alg_defns = []
-
         _set_section_kind(section)
 
     stderr()
@@ -2344,7 +2342,6 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode, make_ann
     assert hnode_or_anode is not None
     alg_defn = Pseudocode.AlgDefn(alg_header, discriminator, hnode_or_anode)
     alg_header.parent_alg.definitions.append(alg_defn)
-    alg_header.section.alg_defns.append(alg_defn)
     if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
         alg_header.u_defns.append(alg_defn)
         assert alg_defn.header is None
