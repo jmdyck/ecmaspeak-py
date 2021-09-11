@@ -505,7 +505,7 @@ def _handle_sdo_section(section):
 
     if 'ul' in section.bcen_set:
         # The rules are given in one or more <ul> elements.
-        handle_inline_sdo_section_body(section, sdo_name)
+        handle_inline_sdo_section_body(section, alg_header)
 
     else:
         patterns = [
@@ -580,17 +580,15 @@ def _handle_sdo_section(section):
 
         for body in bodies:
             (emu_grammar, emu_alg) = body
-            Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
-
-    if not section.section_num.startswith('B'):
-        for alg_defn in section.alg_defns:
-            alg_header.add_defn(alg_defn)
+            alg_defn = Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
+            if not section.section_num.startswith('B'):
+                alg_header.add_defn(alg_defn)
 
     return True
 
 # ------------------------------------------------------------------------------
 
-def handle_inline_sdo_section_body(section, sdo_name):
+def handle_inline_sdo_section_body(section, alg_header):
 
     lis = []
     for bc in section.block_children:
@@ -640,7 +638,7 @@ def handle_inline_sdo_section_body(section, sdo_name):
             if cl == '{ISDO_NAME}':
                 [cap_word] = child.children
                 [rule_sdo_name] = cap_word.children
-                assert rule_sdo_name == sdo_name
+                assert rule_sdo_name == alg_header.name
                 rule_sdo_names.append(rule_sdo_name)
             elif cl == '{h_emu_grammar}':
                 rule_grammars.append(child._hnode)
@@ -663,7 +661,9 @@ def handle_inline_sdo_section_body(section, sdo_name):
         assert 0 < len(rule_grammars) <= 5
         for rule_sdo_name in rule_sdo_names:
             for rule_grammar in rule_grammars:
-                Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
+                alg_defn = Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
+                if not section.section_num.startswith('B'):
+                    alg_header.add_defn(alg_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
