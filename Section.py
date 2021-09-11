@@ -360,17 +360,13 @@ def _handle_early_errors_section(section):
 
         # TODO: handle <p>
 
-        handle_early_error(emu_grammar, ul, section)
-
-    if not section.section_num.startswith('B'):
-        for alg_defn in section.alg_defns:
-            alg_header.add_defn(alg_defn)
+        handle_early_error(emu_grammar, ul, alg_header)
 
     return True
 
 # ------------------------------------------------------------------------------
 
-def handle_early_error(emu_grammar, ul, section):
+def handle_early_error(emu_grammar, ul, alg_header):
     assert emu_grammar.element_name == 'emu-grammar'
     assert ul.element_name == 'ul'
 
@@ -382,7 +378,10 @@ def handle_early_error(emu_grammar, ul, section):
             if tree is None: continue
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            if section: Pseudocode.alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
+            if alg_header:
+                alg_defn = Pseudocode.alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, alg_header.section)
+                if not alg_header.section.section_num.startswith('B'):
+                    alg_header.add_defn(alg_defn)
         else:
             assert 0, li.element_name
 
