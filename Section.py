@@ -827,7 +827,8 @@ def _handle_other_op_section(section):
             #
             # TODO: Handle these better.
             discriminator = None
-            Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
+            alg_defn = Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
+            alg_header.add_defn(alg_defn)
 
     elif emu_alg is None:
         if section.section_title.startswith('BigInt::'):
@@ -888,12 +889,11 @@ def _handle_other_op_section(section):
         else:
             assert 0, section.section_kind
 
-        Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
+        alg_defn = Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
+        alg_header.add_defn(alg_defn)
 
     # -----------------------------------------
 
-    for alg_defn in section.alg_defns:
-        alg_header.add_defn(alg_defn)
     return True
 
 # ------------------------------------------------------------------------------
@@ -933,21 +933,25 @@ def handle_op_table(emu_table, alg_header):
             '#LITERAL sub #LITERAL',
             '#LITERAL sub #LITERAL sub #LITERAL',
         ]:
-            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
+            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
+            alg_header.add_defn(alg_defn)
 
         elif x == '#LITERAL emu-note #LITERAL':
             # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
-            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
+            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
+            alg_header.add_defn(alg_defn)
 
         elif x == '#LITERAL p #LITERAL p #LITERAL':
             (_, p1, _, p2, _) = b.children
-            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
+            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
+            alg_header.add_defn(alg_defn)
             pass
 
         elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
             (_, p, _, emu_alg, _) = b.children
             assert p.source_text() == '<p>Apply the following steps:</p>'
-            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, emu_alg, alg_header.section)
+            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, emu_alg, alg_header.section)
+            alg_header.add_defn(alg_defn)
 
         else:
             assert 0, x
