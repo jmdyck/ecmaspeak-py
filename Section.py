@@ -804,7 +804,7 @@ def _handle_other_op_section(section):
     if emu_alg is None and 'emu-table' in section.bcen_set:
         assert section.bcen_str == 'emu-table' # it turns out
         [emu_table] = section.block_children
-        handle_op_table(emu_table, section, op_name)
+        handle_op_table(emu_table, alg_header)
 
     elif section.section_kind in [
         'host-defined_abstract_operation',
@@ -898,7 +898,7 @@ def _handle_other_op_section(section):
 
 # ------------------------------------------------------------------------------
 
-def handle_op_table(emu_table, section, op_name):
+def handle_op_table(emu_table, alg_header):
     # The op is defined by a table that splits on argument type.
     # I.e., each row has two cells:
     # - The first cell is the name of an ES language type.
@@ -933,21 +933,21 @@ def handle_op_table(emu_table, section, op_name):
             '#LITERAL sub #LITERAL',
             '#LITERAL sub #LITERAL sub #LITERAL',
         ]:
-            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, b, section)
+            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
 
         elif x == '#LITERAL emu-note #LITERAL':
             # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
-            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, b, section)
+            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
 
         elif x == '#LITERAL p #LITERAL p #LITERAL':
             (_, p1, _, p2, _) = b.children
-            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, b, section)
+            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
             pass
 
         elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
             (_, p, _, emu_alg, _) = b.children
             assert p.source_text() == '<p>Apply the following steps:</p>'
-            Pseudocode.alg_add_defn('op: solo', op_name, discriminator, emu_alg, section)
+            Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, emu_alg, alg_header.section)
 
         else:
             assert 0, x
