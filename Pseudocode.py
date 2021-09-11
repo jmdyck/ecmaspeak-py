@@ -777,10 +777,10 @@ def ensure_alg(alg_species, alg_name):
 # ------------------------------------------------
 
 class AlgDefn:
-    def __init__(self, alg_info, discriminator, hnode_or_anode, section):
-        self.the_alg_to_which_this_belongs = alg_info
+    def __init__(self, alg_header, discriminator, hnode_or_anode):
+        self.the_alg_to_which_this_belongs = alg_header.parent_alg
         self.discriminator = discriminator
-        self.section = section
+        self.section = alg_header.section
         self.header = None
 
         assert (
@@ -814,7 +814,7 @@ class AlgDefn:
             '{ONE_LINE_ALG}',
         ]
 
-        alg_info.definitions.append(self)
+        alg_header.parent_alg.definitions.append(self)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
