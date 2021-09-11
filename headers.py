@@ -1065,8 +1065,8 @@ class AlgHeader:
 
         # -------------------------
 
-        alg = Pseudocode.ensure_alg(self.species, self.name)
-        alg.headers.append(self)
+        self.parent_alg = Pseudocode.ensure_alg(self.species, self.name)
+        self.parent_alg.headers.append(self)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
