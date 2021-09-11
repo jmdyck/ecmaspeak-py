@@ -942,13 +942,6 @@ class AlgHeader:
 
     # --------------------------------------------------------------------------
 
-    def add_defn(self, alg_defn):
-        self.u_defns.append(alg_defn)
-        assert alg_defn.header is None
-        alg_defn.header = self
-
-    # --------------------------------------------------------------------------
-
     def finish_initialization(self):
 
         self.name_w_markup = self.name

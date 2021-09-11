@@ -2346,7 +2346,9 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode, make_ann
     alg_header.parent_alg.definitions.append(alg_defn)
     alg_header.section.alg_defns.append(alg_defn)
     if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
-        alg_header.add_defn(alg_defn)
+        alg_header.u_defns.append(alg_defn)
+        assert alg_defn.header is None
+        alg_defn.header = alg_header
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
