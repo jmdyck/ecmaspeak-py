@@ -382,7 +382,7 @@ def handle_early_error(emu_grammar, ul, section):
             if tree is None: continue
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            Pseudocode.alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
+            if section: Pseudocode.alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, section)
         else:
             assert 0, li.element_name
 
@@ -1806,13 +1806,13 @@ def convert_parameter_listing_to_params(parameter_listing):
 def _handle_changes_section(section):
 
     def blah_solo_op(op_name, emu_alg):
-        Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
+        Pseudocode.parse(emu_alg)
 
     def blah_composite_sdo(op_name, emu_grammar, emu_alg):
-        Pseudocode.alg_add_defn('op: syntax-directed', op_name, emu_grammar, emu_alg, section)
+        Pseudocode.parse(emu_alg)
 
     def blah_early_error(emu_grammar, ul):
-        handle_early_error(emu_grammar, ul, section)
+        handle_early_error(emu_grammar, ul, None)
 
     # For calls to scan_section, we're going to assume this holds,
     # but be sure to undo it if we ultimately return False.
