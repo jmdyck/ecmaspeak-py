@@ -1094,9 +1094,8 @@ def write_header_info():
                 n_defns_via_headers += len(alg_header.u_defns)
                 for alg_defn in alg_header.u_defns:
                     assert alg_defn.header is alg_header
-            n_defns = len(alg_info.all_definitions())
-            if n_defns_via_headers != n_defns:
-                put(f"    ERROR: n_defns_via_headers = {n_defns_via_headers}, but n_defns = {n_defns}, so {n_defns-n_defns_via_headers} missing")
+
+            assert n_defns_via_headers == len(alg_info.all_definitions())
             # alg_info.invocations
             # alg_info.callees
             # alg_info.callers
