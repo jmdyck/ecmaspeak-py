@@ -758,9 +758,9 @@ def _handle_oddball_op_section(section):
 
     emu_alg = section.block_children[1]
     assert emu_alg.element_name == 'emu-alg'
-    Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
+    alg_defn = Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
 
-    alg_header.add_defn(section.alg_defns[0])
+    alg_header.add_defn(alg_defn)
 
     return True
 
