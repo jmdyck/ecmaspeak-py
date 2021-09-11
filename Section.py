@@ -204,8 +204,10 @@ def _set_section_kind(section):
     # .section_kind
     # .section_title
     # .ste
+    # .alg_headers
 
     section.has_structured_header = False
+    section.alg_headers = []
 
     r = (
         _handle_root_section(section)
@@ -2333,6 +2335,8 @@ def AlgHeader_make(
         headers.check_header_against_prose(alg_header, preamble_nodes)
 
     alg_header.finish_initialization()
+
+    section.alg_headers.append(alg_header)
 
     return alg_header
 
