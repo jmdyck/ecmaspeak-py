@@ -379,9 +379,7 @@ def handle_early_error(emu_grammar, ul, alg_header):
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
             if alg_header:
-                alg_defn = Pseudocode.alg_add_defn('op: early error', 'Early Errors', emu_grammar, ee_rule, alg_header.section)
-                if not alg_header.section.section_num.startswith('B'):
-                    alg_header.add_defn(alg_defn)
+                AlgHeader_add_definition(alg_header, emu_grammar, ee_rule, make_annex_B_exception=True)
         else:
             assert 0, li.element_name
 
@@ -580,9 +578,7 @@ def _handle_sdo_section(section):
 
         for body in bodies:
             (emu_grammar, emu_alg) = body
-            alg_defn = Pseudocode.alg_add_defn('op: syntax-directed', sdo_name, emu_grammar, emu_alg, section)
-            if not section.section_num.startswith('B'):
-                alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, emu_grammar, emu_alg, make_annex_B_exception=True)
 
     return True
 
@@ -661,9 +657,7 @@ def handle_inline_sdo_section_body(section, alg_header):
         assert 0 < len(rule_grammars) <= 5
         for rule_sdo_name in rule_sdo_names:
             for rule_grammar in rule_grammars:
-                alg_defn = Pseudocode.alg_add_defn('op: syntax-directed', rule_sdo_name, rule_grammar, rule_expr, section)
-                if not section.section_num.startswith('B'):
-                    alg_header.add_defn(alg_defn)
+                AlgHeader_add_definition(alg_header, rule_grammar, rule_expr, make_annex_B_exception=True)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -758,9 +752,7 @@ def _handle_oddball_op_section(section):
 
     emu_alg = section.block_children[1]
     assert emu_alg.element_name == 'emu-alg'
-    alg_defn = Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
-
-    alg_header.add_defn(alg_defn)
+    AlgHeader_add_definition(alg_header, None, emu_alg)
 
     return True
 
@@ -827,8 +819,7 @@ def _handle_other_op_section(section):
             #
             # TODO: Handle these better.
             discriminator = None
-            alg_defn = Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, discriminator, emu_alg)
 
     elif emu_alg is None:
         if section.section_title.startswith('BigInt::'):
@@ -889,8 +880,7 @@ def _handle_other_op_section(section):
         else:
             assert 0, section.section_kind
 
-        alg_defn = Pseudocode.alg_add_defn(op_species, op_name, discriminator, emu_alg, section)
-        alg_header.add_defn(alg_defn)
+        AlgHeader_add_definition(alg_header, discriminator, emu_alg)
 
     # -----------------------------------------
 
@@ -933,25 +923,21 @@ def handle_op_table(emu_table, alg_header):
             '#LITERAL sub #LITERAL',
             '#LITERAL sub #LITERAL sub #LITERAL',
         ]:
-            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, discriminator, b)
 
         elif x == '#LITERAL emu-note #LITERAL':
             # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
-            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, discriminator, b)
 
         elif x == '#LITERAL p #LITERAL p #LITERAL':
             (_, p1, _, p2, _) = b.children
-            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, b, alg_header.section)
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, discriminator, b)
             pass
 
         elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
             (_, p, _, emu_alg, _) = b.children
             assert p.source_text() == '<p>Apply the following steps:</p>'
-            alg_defn = Pseudocode.alg_add_defn('op: solo', alg_header.name, discriminator, emu_alg, alg_header.section)
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, discriminator, emu_alg)
 
         else:
             assert 0, x
@@ -1481,8 +1467,7 @@ def _handle_function_section(section):
     )
 
     if emu_alg_a:
-        alg_defn = Pseudocode.alg_add_defn(bif_species, prop_path, None, emu_alg_a, section)
-        alg_header.add_defn(alg_defn)
+        AlgHeader_add_definition(alg_header, None, emu_alg_a)
 
     # ======================================================
 
@@ -1527,9 +1512,7 @@ def _handle_function_section(section):
             node_at_end_of_header = section.block_children[emu_alg_posn_a+1],
         )
 
-        alg_defn = Pseudocode.alg_add_defn('op: solo', 'TypedArraySortCompare', None, emu_alg_b, section)
-
-        alg_header.add_defn(alg_defn)
+        AlgHeader_add_definition(alg_header, None, emu_alg_b)
 
     return True
 
@@ -1642,8 +1625,7 @@ def _handle_other_section(section):
                 node_at_end_of_header = section.block_children[emu_alg_posn-1],
             )
 
-            alg_defn = Pseudocode.alg_add_defn('op: solo', 'initializer for @@unscopables', None, emu_alg, section)
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, None, emu_alg)
 
         elif section.section_kind == 'properties_of_an_intrinsic_object':
             # In addition to telling you about the intrinsic object,
@@ -1668,9 +1650,7 @@ def _handle_other_section(section):
                 node_at_end_of_header = preamble,
             )
 
-            alg_defn = Pseudocode.alg_add_defn('op: solo', op_name, None, emu_alg, section)
-
-            alg_header.add_defn(alg_defn)
+            AlgHeader_add_definition(alg_header, None, emu_alg)
 
         elif section.section_title == 'The Abstract Closure Specification Type':
             # The emu-alg is an example showing the definition and use
@@ -1744,8 +1724,7 @@ def handle_emu_eqn(emu_eqn, section):
             node_at_end_of_header = emu_eqn,
         )
 
-        alg_defn = Pseudocode.alg_add_defn('op: solo', aoid, None, body, section)
-        alg_header.add_defn(alg_defn)
+        AlgHeader_add_definition(alg_header, None, body)
 
     else:
         assert 0
@@ -2358,6 +2337,19 @@ def AlgHeader_make(
     alg_header.finish_initialization()
 
     return alg_header
+
+# ------------------------------------------------------------------------------
+
+def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode, make_annex_B_exception=False):
+    alg_defn = Pseudocode.alg_add_defn(
+        alg_header.species,
+        alg_header.name,
+        discriminator,
+        hnode_or_anode,
+        alg_header.section,
+    )
+    if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
+        alg_header.add_defn(alg_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
