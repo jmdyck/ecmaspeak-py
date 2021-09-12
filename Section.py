@@ -1470,6 +1470,7 @@ def _handle_function_section(section):
         # The second emu-alg defines the TypedArray SortCompare operation.
         emu_alg_posn_b = section.bcen_list.index('emu-alg', emu_alg_posn_a+1)
         emu_alg_b = section.block_children[emu_alg_posn_b]
+        op_name = 'TypedArraySortCompare'
 
         headers.oh_warn()
         headers.oh_warn(f"In {section.section_num} {section.section_title},")
@@ -1486,7 +1487,7 @@ def _handle_function_section(section):
         alg_header = AlgHeader_make(
             section = section,
             species = 'op: solo',
-            name = 'TypedArraySortCompare',
+            name = op_name,
             params = [
                 AlgParam('_x_', '', 'unknown'),
                 AlgParam('_y_', '', 'unknown'),
