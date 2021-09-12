@@ -1599,6 +1599,12 @@ def _handle_other_section(section):
             # Skip it.
             pass
 
+        elif section.section_title == 'The Abstract Closure Specification Type':
+            # The emu-alg is an example showing the definition and use
+            # of an abstract closure.
+            # Skip it.
+            pass
+
         elif section.section_title == 'Array.prototype [ @@unscopables ]':
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
@@ -1638,12 +1644,6 @@ def _handle_other_section(section):
             )
 
             AlgHeader_add_definition(alg_header, None, emu_alg)
-
-        elif section.section_title == 'The Abstract Closure Specification Type':
-            # The emu-alg is an example showing the definition and use
-            # of an abstract closure.
-            # Skip it.
-            pass
 
         else:
             assert 0, (section.section_num, section.section_title)
