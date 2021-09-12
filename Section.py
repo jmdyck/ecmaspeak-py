@@ -1474,7 +1474,7 @@ def _handle_function_section(section):
 
         headers.oh_warn()
         headers.oh_warn(f"In {section.section_num} {section.section_title},")
-        headers.oh_warn(f"    an algorithm gets no info from heading")
+        headers.oh_warn(f"    operation {op_name} gets no info from heading")
 
         assert [
             p.source_text()
@@ -1630,7 +1630,7 @@ def _handle_other_section(section):
 
             headers.oh_warn()
             headers.oh_warn(f"In {section.section_num} {section.section_title},")
-            headers.oh_warn(f"    an algorithm gets no info from heading")
+            headers.oh_warn(f"    operation {op_name} gets no info from heading")
 
             preamble = section.block_children[emu_alg_posn-1]
             assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
