@@ -811,8 +811,7 @@ def _handle_other_op_section(section):
             # that defines the job to be scheduled.
             #
             # TODO: Handle these better.
-            discriminator = None
-            AlgHeader_add_definition(alg_header, discriminator, emu_alg)
+            AlgHeader_add_definition(alg_header, None, emu_alg)
 
     elif emu_alg is None:
         if section.section_title.startswith('BigInt::'):
