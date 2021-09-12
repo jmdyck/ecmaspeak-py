@@ -377,7 +377,7 @@ def handle_early_error(emu_grammar, ul, alg_header):
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
             if alg_header:
-                AlgHeader_add_definition(alg_header, emu_grammar, ee_rule, make_annex_B_exception=True)
+                AlgHeader_add_definition(alg_header, emu_grammar, ee_rule)
         else:
             assert 0, li.element_name
 
@@ -574,7 +574,7 @@ def _handle_sdo_section(section):
 
         for body in bodies:
             (emu_grammar, emu_alg) = body
-            AlgHeader_add_definition(alg_header, emu_grammar, emu_alg, make_annex_B_exception=True)
+            AlgHeader_add_definition(alg_header, emu_grammar, emu_alg)
 
     return True
 
@@ -653,7 +653,7 @@ def handle_inline_sdo_section_body(section, alg_header):
         assert 0 < len(rule_grammars) <= 5
         for rule_sdo_name in rule_sdo_names:
             for rule_grammar in rule_grammars:
-                AlgHeader_add_definition(alg_header, rule_grammar, rule_expr, make_annex_B_exception=True)
+                AlgHeader_add_definition(alg_header, rule_grammar, rule_expr)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2331,9 +2331,10 @@ def AlgHeader_make(
 
 # ------------------------------------------------------------------------------
 
-def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode, make_annex_B_exception=False):
+def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
     assert hnode_or_anode is not None
     alg_defn = Pseudocode.AlgDefn(alg_header, discriminator, hnode_or_anode)
+    make_annex_B_exception = (alg_header.species in ['op: early error', 'op: syntax-directed'])
     if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
         alg_header.u_defns.append(alg_defn)
 
