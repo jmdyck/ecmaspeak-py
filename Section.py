@@ -2334,8 +2334,30 @@ def AlgHeader_make(
 def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
     assert hnode_or_anode is not None
     alg_defn = Pseudocode.AlgDefn(alg_header, discriminator, hnode_or_anode)
-    make_annex_B_exception = (alg_header.species in ['op: early error', 'op: syntax-directed'])
-    if not make_annex_B_exception or not alg_header.section.section_num.startswith('B'):
+
+    if alg_header.section.section_num.startswith('B'):
+        # We're in Annex B. Do we want to add this {alg_defn} to {alg_header}?
+        if alg_header.species in ['op: early error', 'op: syntax-directed']:
+            add_it = False
+            # These are additional/replacement units of
+            # discriminated operations that are invoked in the main body,
+            # so including them will mess up main-body semantics
+            # until we can handle Annex B stuff properly.
+        elif alg_header.species in ['op: solo', 'bif: value of data property']:
+            add_it = True
+            # This is 2 ops (CharacterRangeOrUnion & CreateHTML) that are only
+            # referenced from within Annex B,
+            # plus a bunch of built-in functions.
+            # So it doesn't hurt main-body semantics to include them.
+            # (The reason to include them is that they are then
+            # subjected to static type analysis.)
+        else:
+            assert 0, alg_header.species
+    else:
+        # Main-body, so definitely include it.
+        add_it = True
+
+    if add_it:
         alg_header.u_defns.append(alg_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
