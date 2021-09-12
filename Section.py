@@ -1556,15 +1556,17 @@ def _handle_other_section(section):
     else:
         assert 0, section.section_title
 
-    assert isinstance(result, str)
-    section.section_kind = result
+    # -----------
 
-    if section.parent.section_title == 'Terms and Definitions' and section.section_kind == 'other_property':
+    if section.parent.section_title == 'Terms and Definitions' and result == 'other_property':
         section.section_kind = 'catchall'
 
-    if section.parent.section_title == 'Other Properties of the Global Object':
-        assert section.section_kind == 'catchall'
+    elif section.parent.section_title == 'Other Properties of the Global Object':
+        assert result == 'catchall'
         section.section_kind = 'other_property_xref'
+
+    else:
+        section.section_kind = result
 
     # -----------
 
