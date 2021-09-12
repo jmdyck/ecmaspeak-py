@@ -799,7 +799,9 @@ class AlgDefn:
             hnode = hnode_or_anode
             assert hnode.element_name in ['emu-alg', 'td']
             self.anode = parse(hnode)
-            if self.anode is None: return
+            if self.anode is None:
+                print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
+                return
             assert not hasattr(hnode, '_parent_algdefn')
             hnode._parent_algdefn = self
 
@@ -863,7 +865,7 @@ def analyze_static_dependencies():
                         # "... and the following algorithm evaluates to *true*: ..."
                         recurse(d._hnode._syntax_tree)
 
-            recurse(alg_defn.anode)
+            if alg_defn.anode: recurse(alg_defn.anode)
             alg_info.callees.update(alg_defn.callees)
 
         put()
@@ -1127,7 +1129,7 @@ def analyze_static_dependencies():
                     if hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         assert op_name == 'Early Errors'
                         recurse(d._hnode._syntax_tree)
-            recurse(op_defn.anode)
+            if op_defn.anode: recurse(op_defn.anode)
 
     # Then propagate to callers.
     while True:
