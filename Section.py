@@ -799,7 +799,7 @@ def _handle_other_op_section(section):
             # That's what we'd expect.
             # Typically, there's a <ul> containing
             # requirements that the implementation must conform to.
-            Pseudocode.ensure_alg(op_species, op_name)
+            pass
         else:
             # 3 cases:
             # - 9.5.2 HostMakeJobCallback
