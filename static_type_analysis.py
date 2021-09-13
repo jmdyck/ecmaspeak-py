@@ -1570,6 +1570,7 @@ named_type_hierarchy = {
                     'AsyncGeneratorRequest Record': {},
                     'Chosen Value Record': {},
                     'ClassFieldDefinition Record': {},
+                    'ClassStaticBlockDefinition Record': {},
                     'Environment Record': {
                         'declarative Environment Record': {
                             'function Environment Record': {},
@@ -1782,6 +1783,7 @@ BindingInitialization                    ; _environment_          ; TBD         
 # BitwiseOp                                ; _op_                   ; TBD                 ; (MathInteger_, MathInteger_) -> MathInteger_
 ClassDefinitionEvaluation                ; _className_            ; TBD                 ; String | Undefined
 ClassDefinitionEvaluation                ; *return*               ; TBD                 ; function_object_ | throw_
+ClassElementEvaluation                   ; *return*               ; TBD                 ; Abrupt | ClassFieldDefinition Record | ClassStaticBlockDefinition Record | PrivateElement | Undefined | empty_
 # ClassFieldDefinitionEvaluation           ; *return*               ; TBD                 ; ClassFieldDefinition Record | throw_
 Construct                                ; _argumentsList_        ; (optional) TBD      ; (optional) List of Tangible_
 ConstructorMethod                        ; *return*               ; TBD                 ; empty_ | Parse Node for |ClassElement|
@@ -3360,6 +3362,8 @@ def tc_header(tah):
                 tah.name == 'BigInt.asUintN' and pn == '_bits_'
                 or
                 tah.name == 'CreateBuiltinFunction' and pn == '_realm_'
+                or
+                tah.name == 'ClassElementEvaluation' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
@@ -5240,6 +5244,10 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a ClassFieldDefinition Record":
         [var] = children
         return env0.with_type_test(var, 'is a', T_ClassFieldDefinition_Record, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is a ClassStaticBlockDefinition Record":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_ClassStaticBlockDefinition_Record, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a Continuation":
         [var] = children
@@ -7247,12 +7255,12 @@ def tc_cond_(cond, env0, asserting):
         [prod_ref] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal}":
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}":
         [local_ref, nont] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal} or a {nonterminal}":
+    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}":
         [local_ref, nonta, nontb] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
@@ -8327,8 +8335,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype == T_Realm_Record:
                         # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
                         result_memtype = memtype
-                    elif memtype == T_ClassFieldDefinition_Record:
-                        # ClassDefinitionEvaluation: `Set _field_ to _field_.[[Value]].`
+                    elif memtype in [T_ClassFieldDefinition_Record, T_ClassStaticBlockDefinition_Record]:
+                        # ClassDefinitionEvaluation: `Set _element_ to _element_.[[Value]].`
                         result_memtype = memtype
                     elif memtype in [T_not_returned, ListType(T_code_unit_), T_Top_]:
                         # hm.
@@ -8397,7 +8405,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif lhs_text == '_ref_':
                 # EvaluateCall
                 lhs_t = T_Reference_Record
-            elif lhs_text == '_field_':
+            elif lhs_text == '_element_':
                 lhs_t = T_PrivateElement
             else:
                 assert 0, expr.source_text()
@@ -11400,6 +11408,10 @@ fields_for_record_type_named_ = {
         'Name'                          : T_Private_Name | T_String | T_Symbol,
         'Initializer'                   : T_function_object_ | T_empty_,
         'IsAnonymousFunctionDefinition' : T_Boolean,
+    },
+
+    'ClassStaticBlockDefinition Record' : {
+        'BodyFunction' : T_function_object_,
     },
 
     # 8.1

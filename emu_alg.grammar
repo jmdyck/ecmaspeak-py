@@ -530,6 +530,7 @@
     {var} has {var} in its range
     {var} imports a specific binding for this export
     {var} is a ClassFieldDefinition Record
+    {var} is a ClassStaticBlockDefinition Record
     {var} is a Completion Record
     {var} is a Continuation
     {var} is a Cyclic Module Record
@@ -1206,6 +1207,7 @@
     Source Text Module Record
     WriteSharedMemory
     the ClassFieldDefinition Record
+    the ClassStaticBlockDefinition Record
     the ExportEntry Record
     the ImportEntry Record
     the JobCallback Record

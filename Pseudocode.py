@@ -1462,6 +1462,7 @@ FDI_possibilities_for_func_ECMAScriptCode = [
     'AsyncGeneratorBody', # FDI called from EvaluateAsyncGeneratorBody
     'AsyncFunctionBody',  # FDI called from EvaluateAsyncFunctionBody
     'AsyncConciseBody',   # FDI called from EvaluateAsyncConciseBody
+    'ClassStaticBlockBody', # FDI called from EvaluateClassStaticBlockBody
 ]
 all_possibilities_for_func_ECMAScriptCode = FDI_possibilities_for_func_ECMAScriptCode + [
     'Initializer',

@@ -973,13 +973,13 @@ def _(de, var):
 # (By examining the parent of a Parse Node (if any), and that parent's parent, etc,
 # we can ...
 
-@efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal}')
+@efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}')
 def _(de, local_ref, nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     pnode = de.exec(local_ref, ParseNode)
     return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name])
 
-@efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function boundaries), within an {nonterminal} or a {nonterminal}')
+@efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}')
 def _(de, local_ref, nonta, nontb):
     nt_name_a = nt_name_from_nonterminal_node(nonta)
     nt_name_b = nt_name_from_nonterminal_node(nontb)
@@ -1000,9 +1000,13 @@ def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_s
         'ArrowFunction',
         'AsyncArrowFunction',
     ]
+    static_initialization_block_boundary_symbols = [
+        'ClassStaticBlock',
+    ]
+    boundary_symbols = function_boundary_symbols + static_initialization_block_boundary_symbols
 
     assert not any(
-        target_symbol in function_boundary_symbols
+        target_symbol in boundary_symbols
         for target_symbol in target_symbols
     )
     # because that would be weird
@@ -1012,7 +1016,7 @@ def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_s
 
     for anc in pnode.each_ancestor():
         if anc.symbol in target_symbols: return True
-        if anc.symbol in function_boundary_symbols: return False
+        if anc.symbol in boundary_symbols: return False
 
     return False
 
