@@ -972,13 +972,13 @@ def check_non_defining_prodns(emu_grammars):
                 for u_rhs_item_n in u_rhs_n._rhs_items:
                     if u_rhs_item_n.kind in ['GNT', 'NT_BUT_NOT', 'BACKTICKED_THING', 'NAMED_CHAR']:
                         pass
-                    elif u_rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET', 'NLTH']:
+                    elif u_rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET', 'NLTH', 'PARAMS', 'LABEL']:
                         annotations.append(u_rhs_item_n)
                     else:
                         assert 0, u_rhs_item_n.kind
 
                 for annotation_n in annotations:
-                    if cc_section.section_title == 'Rules of Automatic Semicolon Insertion' and annotation_n.kind == 'NLTH':
+                    if cc_section.section_title == 'Rules of Automatic Semicolon Insertion' and annotation_n.kind in ['NLTH', 'PARAMS', 'LABEL']:
                         # allow it
                         pass
                     elif (lhs_nt, annotation_n.kind) in [
