@@ -4340,10 +4340,6 @@ def tc_nonvalue(anode, env0):
     # ----------------------------------
     # execution context
 
-    elif p == r'{COMMAND} : Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.':
-        [var] = children
-        result = env0.ensure_expr_is_of_type(var, T_execution_context)
-
     elif p == r'{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.':
         [var1, var2] = children
         assert var1.children == var2.children
@@ -4988,6 +4984,10 @@ def tc_nonvalue(anode, env0):
         result = env0
 
     elif p == r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error":
+        [] = children
+        result = env0
+
+    elif p == r"{COMMAND} : Discard all resources associated with the current execution context.":
         [] = children
         result = env0
 
@@ -6246,11 +6246,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(item_var, T_event_)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} has no further use. It will never be activated as the running execution context':
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_execution_context)
-        return (env1, env1)
-
     elif p == r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}':
         [var, code_unit_lit] = children
         env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
@@ -6569,10 +6564,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : The following loop will terminate":
-        [] = children
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : the above call will not return here, but instead evaluation will continue as if the following return has already occurred":
         [] = children
         return (env0, env0)
 
@@ -7446,6 +7437,10 @@ def tc_cond_(cond, env0, asserting):
         (exa_type, env1) = tc_expr(exa, env0)
         (exb_type, env2) = tc_expr(exb, env1)
         return (env2, env2)
+
+    elif p == r"{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation":
+        [] = children
+        return (env0, env0)
 
     else:
         stderr()

@@ -54,6 +54,7 @@
     Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.
     Create any host-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
+    Discard all resources associated with the current execution context.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
     Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.
     Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.
@@ -93,7 +94,6 @@
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Perform {PP_NAMED_OPERATION_INVOCATION}. {note}
-    Pop {var} from the execution context stack. The execution context now on the top of the stack becomes the running execution context.
     Prepend {var} to {var}.
     Push {var} onto the execution context stack; {var} is now the running execution context.
     Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.
@@ -329,6 +329,7 @@
     GlobalSymbolRegistry does not currently contain an entry for {var}
     The calling agent is in the critical section for {var}
     The calling agent is not in the critical section for any WaiterList
+    The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The execution context stack has at least two elements
     The execution context stack is not empty
     The following loop will terminate
@@ -360,7 +361,6 @@
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
-    the above call will not return here, but instead evaluation will continue as if the following return has already occurred
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
     the binding exists
@@ -524,7 +524,6 @@
     {var} has been linked and declarations in its module environment have been instantiated
     {var} has no duplicate entries
     {var} has no elements
-    {var} has no further use. It will never be activated as the running execution context
     {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}
     {var} has {DSBN} and {DSBN} internal slots
     {var} has {var} in its range
