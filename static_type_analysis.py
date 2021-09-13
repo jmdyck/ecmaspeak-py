@@ -9292,15 +9292,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_TypedArray_element_type_, env0)
 
     elif p in [
-        r"{EXPR} : the String value of length 1, containing one code unit from {var}, namely the code unit at index {var}",
-        r"{EXPR} : the String value of length 1, containing one code unit from {var}, specifically the code unit at index {EX}",
-    ]:
-        [s_var, i_var] = children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env1 = env0.ensure_expr_is_of_type(i_var, T_MathInteger_)
-        return (T_String, env1)
-
-    elif p in [
         r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the sole element of {var}",
     ]:

@@ -846,8 +846,6 @@
     the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String
-    the String value of length 1, containing one code unit from {var}, namely the code unit at index {var}
-    the String value of length 1, containing one code unit from {var}, specifically the code unit at index {EX}
     the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor
     the String value of the property name
     the String value of {DOTTING}
