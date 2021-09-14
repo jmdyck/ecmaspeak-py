@@ -1107,6 +1107,7 @@ def _handle_structured_header(section):
                     ("It returns a Number.", 'a Number'),
                     ("It returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is a Boolean.", 'a Boolean'),
                     ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean.", 'a Boolean'),
+                    ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean indicating .+", 'a Boolean'),
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
                     ("It returns a new promise resolved with _x_.", 'a promise'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
