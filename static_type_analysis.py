@@ -388,18 +388,17 @@ nature_to_tipe = {
         'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
 
 
-        'either ~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
+        '~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
 
-        'either ~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
+        '~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
 
-        'either ~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
+        '~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
 
-        'either ~sync~ or ~async~' : 'IteratorKind_',
         '~sync~ or ~async~'        : 'IteratorKind_',
 
-        'either ~assignment~, ~varBinding~ or ~lexicalBinding~' : 'LhsKind_',
+        '~assignment~, ~varBinding~, or ~lexicalBinding~' : 'LhsKind_',
 
-        'either ~string~ or ~symbol~' : 'PropertyKeyKind_',
+        '~string~ or ~symbol~' : 'PropertyKeyKind_',
 
         'throw *RangeError*'             : 'throw_ *RangeError*',
         'throw *TypeError*'              : 'throw_ *TypeError*',
@@ -410,7 +409,7 @@ nature_to_tipe = {
         'throws an exception'            : 'throw_',
 
         'a TypedArray element type'     : 'TypedArray_element_type_',
-        'either ~SeqCst~ or ~Unordered~': 'SharedMemory_ordering_',
+        '~SeqCst~ or ~Unordered~'          : 'SharedMemory_ordering_',
         '~SeqCst~, ~Unordered~, or ~Init~' : 'SharedMemory_ordering_',
         '~key+value~ or ~value~'         : 'iteration_result_kind_',
         '~key+value~, ~key~, or ~value~' : 'iteration_result_kind_',
