@@ -2420,8 +2420,6 @@ class AlgDefn:
             if self.anode is None:
                 print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
                 return
-            assert not hasattr(hnode, '_parent_algdefn')
-            hnode._parent_algdefn = self
 
         elif isinstance(hnode_or_anode, Pseudocode.ANode):
             self.anode = hnode_or_anode
