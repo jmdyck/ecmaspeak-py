@@ -2370,8 +2370,39 @@ def AlgHeader_make(
 # ------------------------------------------------------------------------------
 
 def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
-    assert hnode_or_anode is not None
-    alg_defn = AlgDefn(alg_header, discriminator, hnode_or_anode)
+
+    assert (
+        discriminator is None
+        or
+        isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
+        or
+        isinstance(discriminator, str) # type name
+    )
+
+    if isinstance(hnode_or_anode, HNode):
+        hnode = hnode_or_anode
+        assert hnode.element_name in ['emu-alg', 'td']
+        anode = Pseudocode.parse(hnode)
+        if anode is None:
+            print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
+        else:
+            assert anode.prod.lhs_s in [
+                '{EMU_ALG_BODY}',
+                '{ONE_LINE_ALG}',
+            ]
+
+    elif isinstance(hnode_or_anode, Pseudocode.ANode):
+        anode = hnode_or_anode
+        assert anode.prod.lhs_s in [
+            '{EE_RULE}',
+            '{EXPR}',
+            '{RHSS}',
+        ]
+
+    else:
+        assert 0
+
+    alg_defn = AlgDefn(alg_header, discriminator, anode)
 
     if alg_header.section.section_num.startswith('B'):
         # We're in Annex B. Do we want to add this {alg_defn} to {alg_header}?
@@ -2401,40 +2432,10 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
 # ------------------------------------------------------------------------------
 
 class AlgDefn:
-    def __init__(self, alg_header, discriminator, hnode_or_anode):
+    def __init__(self, alg_header, discriminator, anode):
         self.header = alg_header
         self.discriminator = discriminator
-
-        assert (
-            discriminator is None
-            or
-            isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
-            or
-            isinstance(discriminator, str) # type name
-        )
-
-        if isinstance(hnode_or_anode, HNode):
-            hnode = hnode_or_anode
-            assert hnode.element_name in ['emu-alg', 'td']
-            self.anode = Pseudocode.parse(hnode)
-            if self.anode is None:
-                print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
-                return
-            assert self.anode.prod.lhs_s in [
-                '{EMU_ALG_BODY}',
-                '{ONE_LINE_ALG}',
-            ]
-
-        elif isinstance(hnode_or_anode, Pseudocode.ANode):
-            self.anode = hnode_or_anode
-            assert self.anode.prod.lhs_s in [
-                '{EE_RULE}',
-                '{EXPR}',
-                '{RHSS}',
-            ]
-
-        else:
-            assert 0
+        self.anode = anode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
