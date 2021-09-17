@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import re, string, time
+import re, string, time, typing
 from collections import OrderedDict
 from dataclasses import dataclass
 
@@ -2431,11 +2431,11 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
 
 # ------------------------------------------------------------------------------
 
+@dataclass
 class AlgDefn:
-    def __init__(self, alg_header, discriminator, anode):
-        self.header = alg_header
-        self.discriminator = discriminator
-        self.anode = anode
+    header: headers.AlgHeader
+    discriminator: typing.Union[HNode, str, None]
+    anode: Pseudocode.ANode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
