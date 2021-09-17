@@ -2371,7 +2371,7 @@ def AlgHeader_make(
 
 def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
     assert hnode_or_anode is not None
-    alg_defn = Pseudocode.AlgDefn(alg_header, discriminator, hnode_or_anode)
+    alg_defn = AlgDefn(alg_header, discriminator, hnode_or_anode)
 
     if alg_header.section.section_num.startswith('B'):
         # We're in Annex B. Do we want to add this {alg_defn} to {alg_header}?
@@ -2397,6 +2397,46 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
 
     if add_it:
         alg_header.u_defns.append(alg_defn)
+
+# ------------------------------------------------------------------------------
+
+class AlgDefn:
+    def __init__(self, alg_header, discriminator, hnode_or_anode):
+        self.header = alg_header
+        self.discriminator = discriminator
+
+        assert (
+            discriminator is None
+            or
+            isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
+            or
+            isinstance(discriminator, str) # type name
+        )
+
+        if isinstance(hnode_or_anode, HNode):
+            hnode = hnode_or_anode
+            assert hnode.element_name in ['emu-alg', 'td']
+            self.anode = Pseudocode.parse(hnode)
+            if self.anode is None:
+                print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
+                return
+            assert not hasattr(hnode, '_parent_algdefn')
+            hnode._parent_algdefn = self
+
+        elif isinstance(hnode_or_anode, Pseudocode.ANode):
+            self.anode = hnode_or_anode
+
+        else:
+            assert 0
+
+        assert self.anode.prod.lhs_s in [
+            '{EXPR}',
+            '{NAMED_OPERATION_INVOCATION}',
+            '{EMU_ALG_BODY}',
+            '{EE_RULE}',
+            '{RHSS}',
+            '{ONE_LINE_ALG}',
+        ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
