@@ -2402,10 +2402,8 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
     else:
         assert 0
 
-    alg_defn = AlgDefn(alg_header, discriminator, anode)
-
     if alg_header.section.section_num.startswith('B'):
-        # We're in Annex B. Do we want to add this {alg_defn} to {alg_header}?
+        # We're in Annex B. Do we want to create this {alg_defn} and add it to {alg_header}?
         if alg_header.species in ['op: early error', 'op: syntax-directed']:
             add_it = False
             # These are additional/replacement units of
@@ -2427,6 +2425,7 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
         add_it = True
 
     if add_it:
+        alg_defn = AlgDefn(alg_header, discriminator, anode)
         alg_header.u_defns.append(alg_defn)
 
 # ------------------------------------------------------------------------------
