@@ -2420,21 +2420,21 @@ class AlgDefn:
             if self.anode is None:
                 print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
                 return
+            assert self.anode.prod.lhs_s in [
+                '{EMU_ALG_BODY}',
+                '{ONE_LINE_ALG}',
+            ]
 
         elif isinstance(hnode_or_anode, Pseudocode.ANode):
             self.anode = hnode_or_anode
+            assert self.anode.prod.lhs_s in [
+                '{EE_RULE}',
+                '{EXPR}',
+                '{RHSS}',
+            ]
 
         else:
             assert 0
-
-        assert self.anode.prod.lhs_s in [
-            '{EXPR}',
-            '{NAMED_OPERATION_INVOCATION}',
-            '{EMU_ALG_BODY}',
-            '{EE_RULE}',
-            '{RHSS}',
-            '{ONE_LINE_ALG}',
-        ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
