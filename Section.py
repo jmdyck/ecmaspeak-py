@@ -2203,7 +2203,14 @@ def _check_section_order(section):
                     'catchall',
                     'anonymous_built_in_function',
                 ]:
-                    assert re.search(r'_property(_xref)?$', child.section_kind), child.section_kind
+                    assert child.section_kind in [
+                        'accessor_property',
+                        'function_property',
+                        'function_property_xref',
+                        'other_property',
+                        'other_property_xref',
+                    ]
+
                     t = child.section_title
                     t = t.lower()
                     t = t.replace('int8', 'int08')
