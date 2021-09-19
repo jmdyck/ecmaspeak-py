@@ -814,10 +814,7 @@ def _handle_other_op_section(section):
             AlgHeader_add_definition(alg_header, None, emu_alg)
 
     elif emu_alg is None:
-        if section.section_title.startswith('BigInt::'):
-            # 6 of the BigInt::* methods just give the semantics in the preamble.
-            Pseudocode.ensure_alg(op_species, op_name)
-        elif op_name == 'StringToBigInt':
+        if op_name == 'StringToBigInt':
             # StringToBigInt says:
             # "Apply the algorithm in 7.1.4.1 with the following changes: ..."
             # (ick)

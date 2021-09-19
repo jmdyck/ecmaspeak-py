@@ -1016,6 +1016,7 @@
     the code unit whose value is {EX}
     the code units of {var}
     the current Realm Record
+    the difference {var} minus {var}
     the digits of the decimal representation of {var} (in order, with no leading zeroes)
     the escape sequence for {var} as specified in the &ldquo;Escape Sequence&rdquo; column of the corresponding row
     the first code unit of {var}
@@ -1024,11 +1025,13 @@
     the number of code units in {var}
     the number of elements in {var}
     the numeric value of {EX}
+    the product of {var} and {var}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
+    the sum of {var} and {var}
     the value of {SETTABLE}
     the {var} flag
     {DSBN}

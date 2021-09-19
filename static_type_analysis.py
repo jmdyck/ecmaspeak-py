@@ -3403,6 +3403,8 @@ def tc_header(tah):
                     or
                     tah.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
                     or
+                    tah.name in ['::lessThan'] and pn == '*return*' and init_t == T_Boolean | T_Undefined and final_t == T_Boolean
+                    or
                     tah.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::leftShift', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
                     or
                     tah.name == 'AsyncGeneratorResume' and pn == '_completion_'
@@ -8656,6 +8658,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # XXX
         return (T_BigInt, env0)
 
+    elif p in [
+        r"{EX} : the sum of {var} and {var}",
+        r"{EX} : the product of {var} and {var}",
+        r"{EX} : the difference {var} minus {var}",
+    ]:
+        [x, y] = children
+        env0.assert_expr_is_of_type(x, T_BigInt)
+        env0.assert_expr_is_of_type(y, T_BigInt)
+        return (T_BigInt, env0)
+
     # -------------------------------------------------
     # return T_Number
 
@@ -9072,7 +9084,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathInteger_, env0) # bit string
 
     # -------------------------------------------------
-    # return MathReal_ or MathInteger_ or Number or Integer_ (arithmetic)
+    # return MathReal_ or MathInteger_ or Number or BigInt or Integer_ (arithmetic)
 
     elif p in [
         r'{SUM} : {TERM} {SUM_OPERATOR} {TERM}',
@@ -9180,6 +9192,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 return (T_Number, env2)
 
             assert 0, (a_t, b_t)
+
+        elif a_t.is_a_subtype_of_or_equal_to(T_BigInt) and b_t.is_a_subtype_of_or_equal_to(T_BigInt):
+            return (T_BigInt, env2)
 
         else:
             assert 0, (a_t, b_t)
