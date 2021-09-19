@@ -283,7 +283,7 @@ def _handle_early_errors_section(section):
 
     alg_header = AlgHeader_make(
         section = section,
-        species = 'op: early error',
+        species = 'op: discriminated by syntax: early error',
         name = 'Early Errors',
         for_phrase = 'Parse Node',
         params = [],
@@ -487,7 +487,7 @@ def _handle_sdo_section(section):
 
     alg_header = AlgHeader_make(
         section = section,
-        species = 'op: syntax-directed',
+        species = 'op: discriminated by syntax: steps',
         name = sdo_name,
         for_phrase = 'Parse Node',
         params = params,
@@ -737,7 +737,7 @@ def _handle_oddball_op_section(section):
 
     alg_header = AlgHeader_make(
         section = section,
-        species = 'op: solo',
+        species = 'op: singular',
         name = op_name,
         params = params,
         node_at_end_of_header = section.heading_child,
@@ -934,13 +934,13 @@ def handle_op_table(emu_table, alg_header):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 other_op_species_for_section_kind_ = {
-    'env_rec_method'                           : 'op: concrete method: env rec',
-    'module_rec_method'                        : 'op: concrete method: module rec',
-    'numeric_method'                           : 'op: numeric method',
-    'internal_method'                          : 'op: internal method',
-    'abstract_operation'                       : 'op: solo',
-    'host-defined_abstract_operation'          : 'op: host-defined',
-    'implementation-defined_abstract_operation': 'op: implementation-defined',
+    'env_rec_method'                           : 'op: discriminated by type: env rec',
+    'module_rec_method'                        : 'op: discriminated by type: module rec',
+    'numeric_method'                           : 'op: discriminated by type: numeric',
+    'internal_method'                          : 'op: discriminated by type: object',
+    'abstract_operation'                       : 'op: singular',
+    'host-defined_abstract_operation'          : 'op: singular: host-defined',
+    'implementation-defined_abstract_operation': 'op: singular: implementation-defined',
 }
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1519,7 +1519,7 @@ def _handle_function_section(section):
 
         alg_header = AlgHeader_make(
             section = section,
-            species = 'op: solo',
+            species = 'op: singular',
             name = op_name,
             params = [
                 AlgParam('_x_', '', 'unknown'),
@@ -1615,13 +1615,13 @@ def _handle_other_section(section):
 
     if n_emu_algs == 0:
         if section.section_title == 'Mathematical Operations':
-            Pseudocode.ensure_alg('op: solo', 'abs')
-            Pseudocode.ensure_alg('op: solo', 'min')
-            Pseudocode.ensure_alg('op: solo', 'max')
-            Pseudocode.ensure_alg('op: solo', 'floor')
-            Pseudocode.ensure_alg('op: solo', '\U0001d53d')
-            Pseudocode.ensure_alg('op: solo', '\u211d')
-            Pseudocode.ensure_alg('op: solo', '\u2124')
+            Pseudocode.ensure_alg('op: singular', 'abs')
+            Pseudocode.ensure_alg('op: singular', 'min')
+            Pseudocode.ensure_alg('op: singular', 'max')
+            Pseudocode.ensure_alg('op: singular', 'floor')
+            Pseudocode.ensure_alg('op: singular', '\U0001d53d')
+            Pseudocode.ensure_alg('op: singular', '\u211d')
+            Pseudocode.ensure_alg('op: singular', '\u2124')
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
@@ -1645,7 +1645,7 @@ def _handle_other_section(section):
 
             alg_header = AlgHeader_make(
                 section = section,
-                species = 'op: solo',
+                species = 'op: singular',
                 name = 'initializer for @@unscopables',
                 params = [],
                 node_at_end_of_header = section.block_children[emu_alg_posn-1],
@@ -1670,7 +1670,7 @@ def _handle_other_section(section):
 
             alg_header = AlgHeader_make(
                 section = section,
-                species = 'op: solo',
+                species = 'op: singular',
                 name = op_name,
                 params = [ AlgParam('_value_', '', 'unknown') ],
                 node_at_end_of_header = preamble,
@@ -1738,7 +1738,7 @@ def handle_emu_eqn(emu_eqn, section):
 
         alg_header = AlgHeader_make(
             section = section,
-            species = 'op: solo',
+            species = 'op: singular',
             name = aoid,
             params = [ AlgParam(parameter_name, '', 'unknown') ],
             node_at_end_of_header = emu_eqn,
@@ -2401,13 +2401,13 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
 
     if alg_header.section.section_num.startswith('B'):
         # We're in Annex B. Do we want to create this {alg_defn} and add it to {alg_header}?
-        if alg_header.species in ['op: early error', 'op: syntax-directed']:
+        if alg_header.species.startswith('op: discriminated by syntax'):
             add_it = False
             # These are additional/replacement units of
             # discriminated operations that are invoked in the main body,
             # so including them will mess up main-body semantics
             # until we can handle Annex B stuff properly.
-        elif alg_header.species in ['op: solo', 'bif: value of data property']:
+        elif alg_header.species in ['op: singular', 'bif: value of data property']:
             add_it = True
             # This is 2 ops (CharacterRangeOrUnion & CreateHTML) that are only
             # referenced from within Annex B,

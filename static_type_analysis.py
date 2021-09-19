@@ -618,7 +618,7 @@ def summarize_headers(alg):
         alg.return_type = header.tah.return_type
 
     else:
-        assert alg.species in ['op: concrete method: env rec', 'op: internal method', 'op: numeric method', 'op: syntax-directed', 'op: early error'], alg.species
+        assert alg.species.startswith('op: discriminated'), alg.species
         n_params = len(alg.headers[0].tah.parameter_types)
         assert all(len(header.tah.parameter_types) == n_params for header in alg.headers)
 
@@ -765,7 +765,7 @@ class TypedAlgHeader:
         self.t_defns = []
 
         for alg_defn in header.u_defns:
-            if self.species in ['op: syntax-directed', 'op: early error']:
+            if self.species.startswith('op: discriminated by syntax'):
                 discriminator = alg_defn.discriminator
             elif self.for_param_type:
                 discriminator = self.for_param_type
@@ -774,7 +774,7 @@ class TypedAlgHeader:
             else:
                 discriminator = None
 
-            if self.species in ['op: syntax-directed', 'op: early error']:
+            if self.species.startswith('op: discriminated by syntax'):
                 assert (
                     discriminator is None
                     or
@@ -784,11 +784,11 @@ class TypedAlgHeader:
                     isinstance(discriminator, ANode)
                         and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
                 )
-            elif self.species in ['op: concrete method: env rec', 'op: concrete method: module rec', 'op: internal method', 'op: numeric method']:
+            elif self.species.startswith('op: discriminated by type'):
                 assert isinstance(discriminator, Type)
-            elif self.species == 'op: solo':
+            elif self.species == 'op: singular':
                 assert discriminator is None or isinstance(discriminator, Type)
-            elif self.species.startswith('bif:') or self.species == 'op: host-defined':
+            elif self.species.startswith('bif:') or self.species == 'op: singular: host-defined':
                 # The latter because HostMakeJobCallback has a default implementation
                 assert discriminator is None
             else:
@@ -7973,7 +7973,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             callee_op_name = cap_word.source_text()
 
             callee_op = spec.alg_info_['op'][callee_op_name]
-            assert callee_op.species.startswith('op: concrete method:')
+            assert callee_op.species in [
+                'op: discriminated by type: env rec',
+                'op: discriminated by type: module rec',
+            ]
 
             # XXX If PR #955 is accepted, that will change things around here.
 
@@ -8045,7 +8048,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             callee_op_name = '::' + low_word.source_text()
             callee_op = spec.alg_info_['op'][callee_op_name]
-            assert callee_op.species == 'op: numeric method'
+            assert callee_op.species == 'op: discriminated by type: numeric'
             assert len(callee_op.headers) == 2
 
             for header in callee_op.headers:
@@ -8230,7 +8233,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
             else:
                 callee_op = spec.alg_info_['op'][callee_op_name]
-                if callee_op.species == 'op: syntax-directed':
+                if callee_op.species == 'op: discriminated by syntax: steps':
                     add_pass_error(
                         expr,
                         "Unusual to invoke a SDO via prefix-paren notation: " + expr.source_text()
@@ -8238,7 +8241,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.species in ['op: solo', 'op: host-defined', 'op: implementation-defined'], callee_op.species
+                    assert callee_op.species.startswith('op: singular'), callee_op.species
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
@@ -11166,7 +11169,7 @@ def exes_in_exlist(exlist):
 
 def tc_ao_invocation(callee_op_name, args, expr, env0):
     callee_op = spec.alg_info_['op'][callee_op_name]
-    assert callee_op.species == 'op: solo'
+    assert callee_op.species == 'op: singular'
     params = callee_op.parameters_with_types
     env1 = tc_args(params, args, env0, expr)
     return_type = callee_op.return_type
@@ -11174,7 +11177,7 @@ def tc_ao_invocation(callee_op_name, args, expr, env0):
 
 def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
     op = spec.alg_info_['op'][op_name]
-    assert op.species == 'op: syntax-directed'
+    assert op.species == 'op: discriminated by syntax: steps'
 
     env1 = env0.ensure_expr_is_of_type(main_arg, T_Parse_Node)
     # XXX expectation should be specific to what the callee accepts

@@ -982,7 +982,7 @@ class AlgHeader:
             checked_set('return_nature_normal', pd_return_nature_normal)
             checked_set('return_nature_abrupt', pd_return_nature_abrupt)
 
-        if self.species == 'op: numeric method':
+        if self.species == 'op: discriminated by type: numeric':
             assert self.for_phrase  in ['Number', 'BigInt']
             numeric_nature = f"a {self.for_phrase}"
 

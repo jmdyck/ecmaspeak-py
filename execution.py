@@ -268,8 +268,6 @@ class DynamicEnvironment:
         de.early_errors.append(error)
         if verbosity >= 1: stderr(f"Found early error: {error}")
 
-alg_species_that_require_a_focus_node = ['op: early error', 'op: syntax-directed']
-
 class Frame:
     def __init__(frame, alg_defn, *, focus_node=None, arg_vals=[]):
         # -----
@@ -283,7 +281,7 @@ class Frame:
         # focus_node:
 
         frame._focus_node = focus_node
-        if frame._alg.species in alg_species_that_require_a_focus_node:
+        if frame._alg.species.startswith('op: discriminated by syntax'):
             assert frame._focus_node is not None
             assert isinstance(frame._focus_node, ParseNode)
             frame._make_focus_map(frame._focus_node)
@@ -294,7 +292,7 @@ class Frame:
         # arg_vals:
 
         frame._arg_vals = arg_vals
-        if frame._alg.species == 'op: early error':
+        if frame._alg.species == 'op: discriminated by syntax: early error':
             assert frame._arg_vals == []
 
         frame._contours = [{}]
@@ -461,7 +459,7 @@ class Frame:
         return (frame._focus_node is not None)
 
     def resolve_focus_reference(frame, ordinal, nt_name):
-        assert frame._alg.species in alg_species_that_require_a_focus_node
+        assert frame._alg.species.startswith('op: discriminated by syntax')
         assert frame._focus_node
 
         if nt_name not in frame.focus_map:
@@ -1259,12 +1257,12 @@ def apply_op_to_arg_values(de, op_name, arg_values):
     if isinstance(op_name, str):
 
         alg_info = spec.alg_info_['op'][op_name]
-        assert alg_info.species == 'op: solo'
+        assert alg_info.species == 'op: singular'
 
         alg_defns = alg_info.all_definitions()
         if len(alg_defns) == 0:
             # Pseudocode.py has calls like:
-            # ensure_alg('op: solo', 'floor')
+            # ensure_alg('op: singular', 'floor')
             # but no definition(s), so we arrive here.
             func = predefined_operations[op_name]
             return func(de, *arg_values)
@@ -1293,7 +1291,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
         assert len(op_name) == 2
         (type_name, method_name) = op_name
         alg_info = spec.alg_info_['op']['::' + method_name]
-        assert alg_info.species == 'op: numeric method'
+        assert alg_info.species == 'op: discriminated by type: numeric'
         matching_defns = [
             alg_defn
             for alg_defn in alg_info.all_definitions()
