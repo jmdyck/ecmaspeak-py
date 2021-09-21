@@ -388,7 +388,7 @@ def _handle_sdo_section(section):
     # Since the merge of PR #2271,
     # almost all SDO sections are identified by `type="sdo"`.
     if section.attrs.get('type') == 'sdo':
-        sdo_name = section.attrs['aoid']
+        alg_header = _handle_structured_header(section)
 
     else:
         # But `type="sdo"` really means more like:
@@ -404,7 +404,7 @@ def _handle_sdo_section(section):
         ]:
             sdo_name = re.sub('.*: ', '', section.section_title)
 
-        elif section.parent.section_title == 'Static Semantics: HasCallInTailPosition':
+        elif section.parent.section_id == 'sec-static-semantics-hascallintailposition':
             # 15.10.2.1 Statement Rules
             # 15.10.2.2 Expression Rules
             sdo_name = 'HasCallInTailPosition'
@@ -431,69 +431,66 @@ def _handle_sdo_section(section):
             # Anything else isn't an SDO section.
             return False
 
-    # -------------------------------------------
-    # At this point, we know it's an SDO section.
+        section.section_kind = 'syntax_directed_operation'
 
-    section.section_kind = 'syntax_directed_operation'
+        if section.section_title in ['Statement Rules', 'Expression Rules']:
+            # TODO: Should copy this from section.parent
+            params = [ AlgParam('_call_', '', 'unknown') ]
 
-    if section.section_title in ['Statement Rules', 'Expression Rules']:
-        # TODO: Should copy this from section.parent
-        params = [ AlgParam('_call_', '', 'unknown') ]
+        else:
+            # Parameters, if any, are stated in the section's first paragraph.
+            params = []
+            c0 = section.block_children[0]
+            if c0.element_name == 'p':
+                p_text = c0.source_text()
+                if p_text.startswith('<p>With '):
+                    mo = re.match(r'^<p>With (.+)\.</p>$', p_text)
+                    assert mo, p_text
+                    params_s = mo.group(1)
+                    if mo := re.match(r'(.+?),? and (optional .+)', params_s):
+                        parts = mo.groups()
+                    else:
+                        parts = [params_s]
 
-    else:
-        # Parameters, if any, are stated in the section's first paragraph.
-        params = []
-        c0 = section.block_children[0]
-        if c0.element_name == 'p':
-            p_text = c0.source_text()
-            if p_text.startswith('<p>With '):
-                mo = re.match(r'^<p>With (.+)\.</p>$', p_text)
-                assert mo, p_text
-                params_s = mo.group(1)
-                if mo := re.match(r'(.+?),? and (optional .+)', params_s):
-                    parts = mo.groups()
-                else:
-                    parts = [params_s]
+                    for part in parts:
+                        part_punct = '[]' if part.startswith('optional') else ''
+                        part_params_s = re.sub('^(optional )?parameters? ', '', part)
 
-                for part in parts:
-                    part_punct = '[]' if part.startswith('optional') else ''
-                    part_params_s = re.sub('^(optional )?parameters? ', '', part)
+                        for param in re.split(r', and |, | and ', part_params_s):
+                            if param == '_argumentsList_ (a List)':
+                                param_name = '_argumentsList_'
+                                param_nature = 'a List'
+                            else:
+                                assert re.match(r'^_[a-zA-Z]+_$', param), param
+                                param_name = param
+                                param_nature = 'unknown'
+                            params.append( AlgParam(param_name, part_punct, param_nature) )
+                    section.block_children.pop(0)
+                    _set_bcen_attributes(section)
 
-                    for param in re.split(r', and |, | and ', part_params_s):
-                        if param == '_argumentsList_ (a List)':
-                            param_name = '_argumentsList_'
-                            param_nature = 'a List'
-                        else:
-                            assert re.match(r'^_[a-zA-Z]+_$', param), param
-                            param_name = param
-                            param_nature = 'unknown'
-                        params.append( AlgParam(param_name, part_punct, param_nature) )
-                section.block_children.pop(0)
-                _set_bcen_attributes(section)
+        if sdo_name == 'regexp-Evaluate':
+            # regexp-Evaluate is unique in that it doesn't have a uniform set of parameters:
+            # sometimes it has the _direction_ parameter, and sometimes it doesn't.
+            # Force it to always have the _direction_ parameter.
+            assert [param.name for param in params] in [ [], ['_direction_'] ]
+            params = [ AlgParam('_direction_', '', '1 or -1') ]
+            # Don't make it optional, because then its type will be (Integer_ | not_passed),
+            # and STA will complain when we use it in a context that expects just Integer_.
 
-    if sdo_name == 'regexp-Evaluate':
-        # regexp-Evaluate is unique in that it doesn't have a uniform set of parameters:
-        # sometimes it has the _direction_ parameter, and sometimes it doesn't.
-        # Force it to always have the _direction_ parameter.
-        assert [param.name for param in params] in [ [], ['_direction_'] ]
-        params = [ AlgParam('_direction_', '', '1 or -1') ]
-        # Don't make it optional, because then its type will be (Integer_ | not_passed),
-        # and STA will complain when we use it in a context that expects just Integer_.
+        if sdo_name == 'regexp-Evaluate':
+            also = regexp_also
+        else:
+            also = []
 
-    if sdo_name == 'regexp-Evaluate':
-        also = regexp_also
-    else:
-        also = []
-
-    alg_header = AlgHeader_make(
-        section = section,
-        species = 'op: discriminated by syntax: steps',
-        name = sdo_name,
-        for_phrase = 'Parse Node',
-        params = params,
-        also = also,
-        node_at_end_of_header = section.heading_child,
-    )
+        alg_header = AlgHeader_make(
+            section = section,
+            species = 'op: discriminated by syntax: steps',
+            name = sdo_name,
+            for_phrase = 'Parse Node',
+            params = params,
+            also = also,
+            node_at_end_of_header = section.heading_child,
+        )
 
     # ------------------------------------------------------------------------------
 
@@ -934,6 +931,7 @@ def handle_op_table(emu_table, alg_header):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 other_op_species_for_section_kind_ = {
+    'syntax_directed_operation'                : 'op: discriminated by syntax: steps',
     'env_rec_method'                           : 'op: discriminated by type: env rec',
     'module_rec_method'                        : 'op: discriminated by type: module rec',
     'numeric_method'                           : 'op: discriminated by type: numeric',
@@ -969,19 +967,28 @@ def _handle_structured_header(section):
             'abstract operation': 'abstract_operation',
             'numeric method'    : 'numeric_method',
             'internal method'   : 'internal_method',
+            'sdo'               : 'syntax_directed_operation',
             'host-defined abstract operation'          : 'host-defined_abstract_operation',
             'implementation-defined abstract operation': 'implementation-defined_abstract_operation',
         }[section_type]
+
+    # --------------------------------------------
 
     h1 = section.heading_child
     h1_ist = h1.inner_source_text()
 
     if '\n' not in h1_ist:
         # single-line h1:
-        mo = re.fullmatch(r'([A-Z][a-zA-Z]+|\[\[[A-Z][a-zA-Z]+\]\]) \( \)', h1_ist)
-        assert mo
-        op_name = mo.group(1)
-        params = []
+        if section_type == 'sdo':
+            mo = re.fullmatch(r'(Static|Runtime) Semantics: ([A-Z][a-zA-Z]+)', h1_ist)
+            assert mo
+            op_name = mo.group(2)
+            params = []
+        else:
+            mo = re.fullmatch(r'([A-Z][a-zA-Z]+|\[\[[A-Z][a-zA-Z]+\]\]) \( \)', h1_ist)
+            assert mo
+            op_name = mo.group(1)
+            params = []
 
     else:
         # multi-line h1:
@@ -1003,7 +1010,7 @@ def _handle_structured_header(section):
 
         patterns = [
             (0, '<h1>'),
-            (2, fr'(Static Semantics: )?({op_name_pattern}) \('),
+            (2, fr'((?:Static|Runtime) Semantics: )?({op_name_pattern}) \('),
             (4, r'(optional )?(_\w+_): (.+),'),
             (2, fr'\)'),
             (0, '</h1>'),
@@ -1041,24 +1048,30 @@ def _handle_structured_header(section):
             else:
                 msg_at_posn(b, f"line doesn't match pattern /{expected_pattern}/")
 
-        def brief_params(param_i):
-            if param_i == len(params):
-                return ''
-            else:
-                brief_for_subsequent_params = brief_params(param_i + 1)
-                param = params[param_i]
-                if param.punct == '[]':
-                    comma = ' ' if param_i == 0 else ' , '
-                    return f" [{comma}{param.name}{brief_for_subsequent_params} ]"
-                else:
-                    comma = ' ' if param_i == 0 else ', '
-                    return f"{comma}{param.name}{brief_for_subsequent_params}"
-
         # overwrite section.section_title
-        section.section_title = f"{which_semantics}{op_name} ({brief_params(0)} )"
+        if section_type == 'sdo':
+            parameter_part = ''
+        else:
+            def brief_params(param_i):
+                if param_i == len(params):
+                    return ''
+                else:
+                    brief_for_subsequent_params = brief_params(param_i + 1)
+                    param = params[param_i]
+                    if param.punct == '[]':
+                        comma = ' ' if param_i == 0 else ' , '
+                        return f" [{comma}{param.name}{brief_for_subsequent_params} ]"
+                    else:
+                        comma = ' ' if param_i == 0 else ', '
+                        return f"{comma}{param.name}{brief_for_subsequent_params}"
+            parameter_part = f" ({brief_params(0)} )"
+
+        section.section_title = f"{which_semantics}{op_name}{parameter_part}"
 
     if '::' in op_name:
         (for_phrase, op_name) = re.split(r'(?=::)', op_name)
+    elif section_type == 'sdo':
+        for_phrase = 'Parse Node'
     else:
         for_phrase = None
 
@@ -2146,22 +2159,7 @@ def _check_aoids(section):
                     expected_aoid = None
 
             elif section.section_kind == 'syntax_directed_operation':
-                if op_name in [
-                    'MV',
-                    'Evaluation',
-                    'HasCallInTailPosition',
-                    'regexp-Evaluate',
-                ]:
-                    # After 2271, there are still a few SDOs that are defined piecewise.
-                    expected_aoid = None
-                elif section.element_name == 'emu-annex' and op_name in [
-                    'IsCharacterClass',
-                    'CharacterValue',
-                ]:
-                    # These can't duplicate the aoid of the main-spec clause.
-                    expected_aoid = None
-                else:
-                    expected_aoid = op_name
+                expected_aoid = None
 
             else:
                 expected_aoid = None
