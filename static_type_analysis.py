@@ -1886,8 +1886,6 @@ TV                                       ; *return*               ; TBD         
 TemplateStrings                          ; *return*               ; TBD                 ; List of String
 ToBoolean                                ; *return*               ; TBD                 ; Boolean
 ToBoolean                                ; _argument_             ; TBD                 ; Tangible_
-ToIndex                                  ; _value_                ; TBD                 ; Tangible_
-ToLength                                 ; *return*               ; TBD                 ; IntegralNumber_ | throw_ *TypeError*
 ToNumber                                 ; *return*               ; TBD                 ; Number | throw_ *TypeError*
 ToNumber                                 ; _argument_             ; TBD                 ; Tangible_
 ToObject                                 ; *return*               ; TBD                 ; Object | throw_ *TypeError*
