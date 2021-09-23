@@ -206,7 +206,7 @@ single_sentence_rules_str = r'''
         (.+ produces (?P<retn>a Number value) .+)
         v=\1
 
-        (.+ produces (?P<retn>an ECMAScript value).)
+        (.+ produces (?P<retn>an ECMAScript language value).)
         v=\1
 
         # ----------
