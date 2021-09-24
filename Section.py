@@ -1319,11 +1319,7 @@ def _handle_header_with_std_preamble(section):
         name = op_name,
         for_phrase = for_phrase,
         params = params,
-        node_at_end_of_header = None,
-        # We could set it to section.heading_child,
-        # but `node_at_end_of_header` is only used during STA,
-        # and the idea is that this kind of header
-        # will be changed to a structured header before applying STA.
+        node_at_end_of_header = section.heading_child
     )
 
     # --------------------------------------------------------------------------
