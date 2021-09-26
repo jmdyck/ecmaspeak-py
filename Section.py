@@ -1561,23 +1561,23 @@ def _handle_other_section(section):
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
             (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
 
-            (r'.+ Instances',             'properties_of_instances'),
-            (r'Module Namespace Objects', 'properties_of_instances'),
+            (r'.+ Instances',             'instances: info // properties'),
+            (r'Module Namespace Objects', 'instances: info // properties'),
 
             (r'Properties of Valid Executions', 'catchall'),
-            (r'(Additional )?Properties of .+', 'properties_of_an_intrinsic_object'),
-            (r'The [\w%.]+ Object',             'properties_of_an_intrinsic_object'),
+            (r'(Additional )?Properties of .+', 'intrinsic: info // properties'),
+            (r'The [\w%.]+ Object',             'intrinsic: info // properties'),
 
-            (r'The \w+ Constructor',               'Call_and_Construct_ims_of_an_intrinsic_object'),
-            (r'The _NativeError_ Constructors',    'Call_and_Construct_ims_of_an_intrinsic_object'),
-            (r'The _TypedArray_ Constructors',     'Call_and_Construct_ims_of_an_intrinsic_object'),
-            (r'The %TypedArray% Intrinsic Object', 'Call_and_Construct_ims_of_an_intrinsic_object'),
+            (r'The \w+ Constructor',               'intrinsic: info // CallConstruct'),
+            (r'The _NativeError_ Constructors',    'intrinsic: info // CallConstruct'),
+            (r'The _TypedArray_ Constructors',     'intrinsic: info // CallConstruct'),
+            (r'The %TypedArray% Intrinsic Object', 'intrinsic: info // CallConstruct'),
 
             (r'_NativeError_ Object Structure', 'loop'),
 
             (r'Non-ECMAScript Functions',                          'catchall'),
-            (r'URI Handling Functions',                            'group_of_properties2'),
-            (r'(Value|Function|Constructor|Other) Properties of .+', 'group_of_properties1'),
+            (r'URI Handling Functions',                            '- // properties'),
+            (r'(Value|Function|Constructor|Other) Properties of .+', '- // properties'),
 
             (r'<PROP_PATH>',                                 'other_property'),
             (r'[a-z]\w+|Infinity|NaN',                       'other_property'),
@@ -1662,7 +1662,7 @@ def _handle_other_section(section):
 
             AlgHeader_add_definition(alg_header, None, emu_alg)
 
-        elif section.section_kind == 'properties_of_an_intrinsic_object':
+        elif section.section_kind == 'intrinsic: info // properties':
             # In addition to telling you about the intrinsic object,
             # it also defines an abstract operation that is used
             # by the object's function properties.
@@ -2182,12 +2182,8 @@ def _check_section_order(section):
         pass
     else:
 
-        if section.section_kind in [
-            'group_of_properties1',
-            'group_of_properties2',
-            'properties_of_an_intrinsic_object',
-            'properties_of_instances',
-        ]:
+        if section.section_kind.endswith('// properties'):
+            # Each descendant section (if any) is expected to define a property.
             prev_title = None
             prev_t = None
             for child in section.section_children:
@@ -2214,8 +2210,7 @@ def _check_section_order(section):
 
                 else:
                     assert child.section_kind in [
-                        'group_of_properties1',
-                        'group_of_properties2',
+                        '- // properties',
                         'catchall',
                     ]
 
