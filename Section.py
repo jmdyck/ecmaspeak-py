@@ -2191,20 +2191,13 @@ def _check_section_order(section):
             prev_title = None
             prev_t = None
             for child in section.section_children:
-                if child.section_kind not in [
-                    'group_of_properties1',
-                    'group_of_properties2',
-                    'catchall',
-                    'anonymous_built_in_function',
+                if child.section_kind in [
+                    'accessor_property',
+                    'function_property',
+                    'function_property_xref',
+                    'other_property',
+                    'other_property_xref',
                 ]:
-                    assert child.section_kind in [
-                        'accessor_property',
-                        'function_property',
-                        'function_property_xref',
-                        'other_property',
-                        'other_property_xref',
-                    ]
-
                     t = child.section_title
                     t = t.lower()
                     t = t.replace('int8', 'int08')
@@ -2218,6 +2211,13 @@ def _check_section_order(section):
                         msg_at_posn(child.start_posn, '"%s" should be before "%s"' % (child.section_title, prev_title))
                     prev_t = t
                     prev_title = child.section_title
+
+                else:
+                    assert child.section_kind in [
+                        'group_of_properties1',
+                        'group_of_properties2',
+                        'catchall',
+                    ]
 
     for child in section.section_children:
         _check_section_order(child)
