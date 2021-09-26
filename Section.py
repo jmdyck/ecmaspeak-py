@@ -1565,8 +1565,9 @@ def _handle_other_section(section):
             (r'Module Namespace Objects', 'instances: info // properties'),
 
             (r'Properties of Valid Executions', 'catchall'),
-            (r'(Additional )?Properties of .+', 'intrinsic: info // properties'),
+            (r'Properties of .+',               'intrinsic: info // properties'),
             (r'The [\w%.]+ Object',             'intrinsic: info // properties'),
+            (r'Additional Properties of .+',    'intrinsic: - // properties'),
 
             (r'The \w+ Constructor',               'intrinsic: info // CallConstruct'),
             (r'The _NativeError_ Constructors',    'intrinsic: info // CallConstruct'),
