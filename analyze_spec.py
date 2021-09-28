@@ -11,6 +11,7 @@ from collections import defaultdict, OrderedDict
 import HTML, Section, emu_grammars, Pseudocode, headers
 import shared
 from shared import stderr, header, msg_at_posn, spec
+from emu_tables import analyze_table
 
 def main():
     if len(sys.argv) != 3:
@@ -534,29 +535,11 @@ def check_tables():
     stderr('check_tables...')
     header("checking tables...")
     for et in spec.doc_node.each_descendant_named('emu-table'):
-        a_caption = et.attrs.get('caption', None)
-        caption_children = [c for c in et.each_child_named('emu-caption')]
-        if len(caption_children) == 0:
-            e_caption = None
-        elif len(caption_children) == 1:
-            [emu_caption] = caption_children
-            e_caption = emu_caption.inner_source_text().strip()
-        else:
-            assert 0
-        # ----
-        if a_caption and not e_caption:
-            caption = a_caption
-        elif e_caption and not a_caption:
-            caption = e_caption
-        else:
-            assert 0, (a_caption, e_caption)
+        analyze_table(et)
 
-        if 'id' not in et.attrs:
-            msg_at_posn(et.start_posn, f'no id attribute for table with caption "{caption}"')
+        caption = et._caption
+        header_line = '; '.join(et._header_row.cell_texts)
 
-        header_tr = [tr for tr in et.each_descendant_named('tr')][0]
-        column_heads = [th.inner_source_text().strip() for th in header_tr.each_descendant_named('th')]
-        header_line = '; '.join(column_heads)
         if 'Field' in caption:
             if re.match(r'^(.+) Fields$', caption):
                 pass
@@ -573,16 +556,11 @@ def check_tables():
                 'Field Name; Value; Usage',
                 'Field Name; Values of the [[Kind]] field for which it is present; Value; Meaning',
             ], header_line
-            for tr in et.each_descendant_named('tr'):
-                if tr == header_tr: continue
-                td_texts = [
-                    td.inner_source_text().strip()
-                    for td in tr.each_descendant_named('td')
-                ]
+            for row in et._data_rows:
                 if header_line == 'Field Name; Values of the [[Kind]] field for which it is present; Value; Meaning':
-                    [field_name, _, value_type, meaning] = td_texts
+                    [field_name, _, value_type, meaning] = row.cell_texts
                 else:
-                    [field_name, value_type, meaning] = td_texts
+                    [field_name, value_type, meaning] = row.cell_texts
                 assert re.fullmatch(r'\[\[[A-Z][A-Za-z0-9]+\]\]', field_name), field_name
                 # `value_type` is limited, could be checked, but format is ad hoc
                 # `meaning` is arbitrary prose
@@ -616,12 +594,8 @@ def check_tables():
             ]
             
             assert header_line == 'Intrinsic Name; Global Name; ECMAScript Language Association'
-            for tr in et.each_descendant_named('tr'):
-                if tr == header_tr: continue
-                [oname, global_name, assoc] = [
-                    td.inner_source_text().strip()
-                    for td in tr.each_descendant_named('td')
-                ]
+            for row in et._data_rows:
+                [oname, global_name, assoc] = row.cell_texts
 
                 assert re.fullmatch(r'%\w+%', oname)
                 assert oname not in well_known_intrinsics

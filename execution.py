@@ -689,30 +689,6 @@ def emu_table_get_unique_row_satisfying(emu_table, predicate):
     assert isinstance(emu_table, HNode)
     assert emu_table.element_name == 'emu-table'
 
-    if not hasattr(emu_table, '_data_rows'):
-        emu_table._data_rows = []
-        (_, table, _) = emu_table.children
-        assert table.element_name == 'table'
-        (_, tbody, _) = table.children
-        th_values = None
-        for tr in tbody.each_child_named('tr'):
-            if th_values is None:
-                # This is the first <tr>, should be a header.
-                th_values = [
-                    th.inner_source_text().strip()
-                    for th in tr.each_child_named('th')
-                ]
-            else:
-                # This is a subsequent <tr>, should be data.
-                td_values = [
-                    quasi_ecmarkdown(td.inner_source_text().strip())
-                    for td in tr.each_child_named('td')
-                ]
-                assert len(td_values) == len(th_values)
-                row = dict(zip(th_values, td_values))
-                emu_table._data_rows.append(row)
-                # print(f"{row = }")
-
     rows_selected_by_predicate = [
         row
         for row in emu_table._data_rows
@@ -721,16 +697,6 @@ def emu_table_get_unique_row_satisfying(emu_table, predicate):
     assert len(rows_selected_by_predicate) == 1
     [row] = rows_selected_by_predicate
     return row
-
-# I'm not sure about applying this,
-# versus using the literal spec text.
-# But it does seem to simplify things.
-def quasi_ecmarkdown(text):
-    if re.fullmatch(r'`[^`]*`', text):
-        text = text[1:-1]
-    text = re.sub(r'\\(.)', r'\1', text)
-    text = text.replace('&lt;', '<').replace('&gt;', '>')
-    return text
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1969,8 +1935,8 @@ def _(de, prod_ref, emu_xref):
     emu_table = dereference_emu_xref(emu_xref)
     assert emu_table.element_name == 'emu-table'
     assert emu_table.attrs['caption'] == 'String Single Character Escape Sequences'
-    row = emu_table_get_unique_row_satisfying(emu_table, lambda row: row['Escape Sequence'] == escape_seq)
-    cu_hex = row['Code Unit Value']
+    row = emu_table_get_unique_row_satisfying(emu_table, lambda row: row.as_dict['Escape Sequence'] == escape_seq)
+    cu_hex = row.as_dict['Code Unit Value']
     cu_int = int(cu_hex, 16)
     return ES_CodeUnit(cu_int)
 
