@@ -7082,20 +7082,9 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var1, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production":
-        [noi, ssa, ssb, noi2, var, nont] = children
-        env0.assert_expr_is_of_type(noi, T_String)
-        env1 = env0.plus_new_entry(var, T_code_point_)
-        env1.assert_expr_is_of_type(noi2, T_String)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, {starred_str}, ! {NAMED_OPERATION_INVOCATION}, ! {NAMED_OPERATION_INVOCATION}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} that would be matched by the {nonterminal} lexical grammar production":
-        [noi, ssa, ssb, noi2, noi3, noi4, var, nont] = children
-        env0.assert_expr_is_of_type(noi, T_String)
-        env0.assert_expr_is_of_type(noi2, T_String)
-        env0.assert_expr_is_of_type(noi3, T_String)
-        env1 = env0.plus_new_entry(var, T_code_point_)
-        env1.assert_expr_is_of_type(noi4, T_String)
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production":
+        [noi, nont] = children
+        env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}":
@@ -7147,11 +7136,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1":
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_List)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {LOCAL_REF} contains a Unicode escape sequence":
-        [local_ref] = children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
     elif p in [
@@ -7318,23 +7302,14 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, or some code point matched by the {nonterminal} lexical grammar production":
-        [noi, ssa, ssb, nont] = children
-        env0.assert_expr_is_of_type(noi, T_MathInteger_)
-        add_pass_error(ssa, "has type T_String, expected T_code_point_")
-        add_pass_error(ssb, "has type T_String, expected T_code_point_")
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production":
         [noi, nont] = children
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, {named_char}, {named_char}, or some code point matched by the {nonterminal} lexical grammar production":
-        [noi, ssa, ssb, ncc, ncd, nont] = children
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the code point value of some code point matched by the {nonterminal} lexical grammar production":
+        [noi, nont] = children
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
-        add_pass_error(ssa, "has type T_String, expected T_code_point_")
-        add_pass_error(ssb, "has type T_String, expected T_code_point_")
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
@@ -7856,8 +7831,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
     elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({var})",
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({named_char})",
         r"{NAMED_OPERATION_INVOCATION} : {cap_word}({PROD_REF})",
     ]:
         [callee, local_ref] = children
@@ -9461,7 +9434,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
         return (T_code_unit_, env0)
 
-    elif p == r"{EXPR} : the code unit whose numeric value is that of {var}":
+    elif p == r"{EXPR} : the code unit whose numeric value is that of {EXPR}":
         [var] = children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_code_unit_, env0)
@@ -9483,8 +9456,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----------------------------------------------------------
     # return T_code_point_
 
-    elif p == r"{EXPR} : the code point {var}":
+    elif p in [
+        r"{EXPR} : the code point {var}",
         # This means "the code point whose numeric value is {var}"
+        r"{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}",
+    ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_code_point_, env0)
@@ -9534,11 +9510,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm":
         [var] = children
         env0.assert_expr_is_of_type(var, T_code_point_)
-        return (T_Unicode_code_points_, env0)
-
-    elif p == r"{EXPR} : the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}":
-        [term, nont, var, nont2] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (T_Unicode_code_points_, env0)
 
     elif p == r"{EXPR} : the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements":
@@ -11042,10 +11013,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [error_type] = children
         error_type_name = error_type.source_text()[1:-1]
         return (ListType(NamedType(error_type_name)), env0)
-
-    elif p == r"{EX} : the two code points matched by {PROD_REF} and {PROD_REF} respectively":
-        [prod_refa, prod_refb] = children
-        return (T_code_point_, env0)
 
     elif p == r"{EXPR} : that PrivateElement":
         [] = children

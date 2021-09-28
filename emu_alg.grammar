@@ -879,9 +879,10 @@
     the code point value of {code_point_lit}
     the code point value of {var}
     the code point whose numeric value is that of {var}
+    the code point whose numeric value is {NAMED_OPERATION_INVOCATION}
     the code point {var}
     the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}
-    the code unit whose numeric value is that of {var}
+    the code unit whose numeric value is that of {EXPR}
     the element in {EX} whose {DSBN} is {EX}
     the element of {EX} whose {DSBN} field is {var}
     the element of {EX} whose {DSBN} is the same as {EX}
@@ -944,7 +945,6 @@
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
     the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of raising {EX} to the {EX} power
-    the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}
     the result of subtracting 1 from the exponential function of {EX}
     the result of the {MATH_FUNC} of {EX}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
@@ -1116,6 +1116,7 @@
 
 {PROD_REF} :
     the corresponding {nonterminal}
+    the derived {nonterminal}
     the enclosing {nonterminal}
     the located {nonterminal}
     the {ORDINAL} {nonterminal}
@@ -1330,7 +1331,6 @@
     {dsb_word}
 
 {TERMINAL} :
-    {backticked_oth}
     {backticked_word}
 
 {LITERAL} :

@@ -1264,6 +1264,7 @@ def analyze_sdo_coverage_info():
                         'the {nonterminal} that is that single code point',
                         'the {nonterminal} that is that {nonterminal}',
                         'the corresponding {nonterminal}',
+                        'the derived {nonterminal}',
                     ]:
                         nonterminal = uprimary.children[0]
                     elif u_rhs == 'the {ORDINAL} {nonterminal}':

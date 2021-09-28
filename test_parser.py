@@ -157,7 +157,7 @@ def expectation_for_dirname(dirname):
 
 corrections = {
 
-    # [fixed by PR #29:]
+    # [will be fixed when PR #29 is merged:]
     # These 6 are in 'pass', but should be in 'fail'.
     # They contain an HTMLCloseComment, which (in a valid Script)
     # must be preceded by a LineTerminatorSequence or a /* ... LineTerminator ... */
@@ -168,14 +168,14 @@ corrections = {
     'pass/ba00173ff473e7da.js': 'fail',
     'pass/e03ae54743348d7d.js': 'fail',
 
-    # [fixed by PR #31:]
+    # [will be fixed when PR #31 is merged:]
     # In 'fail', should be in 'pass'.
     'fail/0d5e450f1da8a92a.js': 'pass',
     'fail/748656edbfb2d0bb.js': 'pass',
     'fail/79f882da06f88c9f.js': 'pass',
     'fail/92b6af54adef3624.js': 'pass',
 
-    # [fixed by PR #32:]
+    # [will be fixed when PR #32 is merged:]
     # These two are in 'early', but should be in 'fail'.
     # They raise a ParseError, but not due to an early error,
     # rather due to a "but only if" production-annotation.
@@ -184,6 +184,12 @@ corrections = {
     # See issue #15.
     'early/14eaa7e71c682461.js': 'fail',
     'early/aca911e336954a5b.js': 'fail',
+
+    # [will be fixed when PR #33 is merged:]
+    # In 'early', should be in 'fail':
+    # PR #2392 replaced an Early Error with a more restrictive grammar.
+    'early/1447683fba196181.js': 'fail',
+    'early/d52f769ab39372c7.js': 'fail',
 
     # ------------
 

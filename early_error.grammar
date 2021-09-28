@@ -60,7 +60,6 @@
     the syntactic goal symbol is not {nonterminal}
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}
-    {LOCAL_REF} contains a Unicode escape sequence
     {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}
     {LOCAL_REF} is an {nonterminal} or an {nonterminal}
     {LOCAL_REF} is contained in strict mode code
@@ -77,12 +76,10 @@
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
-    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is none of {starred_str}, {starred_str}, ! {NAMED_OPERATION_INVOCATION}, ! {NAMED_OPERATION_INVOCATION}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} that would be matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not empty
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, or some code point matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is not the code point value of {starred_str}, {starred_str}, {named_char}, {named_char}, or some code point matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is not the code point value of some code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not {LITERAL}
     {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
     {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`
@@ -98,13 +95,10 @@
     {var} &ge; 2<sup>32</sup> - 1
 
 {NAMED_OPERATION_INVOCATION} :
-    the result of performing {cap_word} on {EX}
     the {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
     {cap_word}({PROD_REF})
-    {cap_word}({named_char})
-    {cap_word}({var})
 
 {LOCAL_REF} :
     {PROD_REF}
@@ -134,7 +128,6 @@
 {EX} :
     the {nonterminal} that is covered by {LOCAL_REF}
     &laquo; &raquo;
-    the two code points matched by {PROD_REF} and {PROD_REF} respectively
     {LITERAL}
 
 {LITERAL} :

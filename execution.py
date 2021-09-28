@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import typing
 import math
 import resource
+import unicodedata
 
 import shared
 from shared import spec, stderr, print_tree
@@ -18,6 +19,7 @@ from HTML import HNode
 from Pseudocode_Parser import ANode
 from es_parser import ParseNode, ParseError, T_lit, parse
 from DecoratedFuncDict import DecoratedFuncDict
+import unicode_contributory_properties as ucp
 
 # -------------------------------
 # This code gets very recursive.
@@ -2152,6 +2154,13 @@ class ES_List(ES_Value):
         assert isinstance(other, ES_List)
         self._elements.extend(other._elements)
 
+    # iterate:
+    
+    def each(self, item_nature_s):
+        for element in self._elements:
+            # assert element is_blah item_nature_s
+            yield element
+
     # query:
 
     def is_empty(self):
@@ -2342,6 +2351,145 @@ def _(de, prod_ref):
     assert len(t) == 1
     return ES_Mathnum(ord(t))
 
+@efd.put('{EXPR} : the code point matched by {PROD_REF}')
+def _(de, prod_ref):
+    pnode = de.exec(prod_ref, ParseNode)
+    t = pnode.text()
+    assert len(t) == 1
+    return ES_UnicodeCodePoint(ord(t))
+
+@efd.put('{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}')
+def _(de, noi):
+    mathnum = de.exec(noi, ES_Mathnum)
+    return ES_UnicodeCodePoint(mathnum.val)
+
+@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production')
+def _(de, noi, nont):
+    code_point = de.exec(noi, ES_UnicodeCodePoint)
+    nt_name = nt_name_from_nonterminal_node(nont)
+    return not pychar_matches_lexical_nonterminal(chr(code_point.scalar), nt_name)
+
+# ----------------------------------------------------------
+
+def pychar_matches_lexical_nonterminal(pychar, nt_name):
+    g = spec.grammar_[('lexical', 'A')]
+    for rhs in g.prodn_for_lhs_[nt_name]._rhss:
+        if pychar_matches_rhs(pychar, rhs):
+            return True
+    return False
+
+# ----------------------------------------------------------
+
+def pychar_matches_rhs(pychar, rhs):
+    assert rhs.kind == 'RHS_LINE'
+    assert len(rhs._rhs_items) == 1
+    [r_item] = rhs._rhs_items
+
+    if r_item.kind == 'GNT':
+        assert not r_item._is_optional
+        assert r_item._params == []
+        return pychar_matches_lexical_nonterminal(pychar, r_item._nt_name)
+
+    elif r_item.kind == 'BACKTICKED_THING':
+        return (pychar == r_item._chars)
+
+    elif r_item.kind == 'U_PROP':
+        [unicode_property_name] = r_item.groups
+        return unicode_character_has_property(pychar, unicode_property_name)
+
+    elif r_item.kind == 'NAMED_CHAR':
+        [char_name] = r_item.groups
+        named_pychar = {
+            'ZWNJ'  : '\u200c',
+            'ZWJ'   : '\u200d',
+        }[char_name]
+        return (pychar == named_pychar)
+
+    else:
+        assert NYI, r_item.kind
+
+# ----------------------------------------------------------
+
+def unicode_character_has_property(pychar, property_name):
+    # Does the given character (code point) have the given Unicode property?
+    assert len(pychar) == 1
+
+    # Python has the unicodedata module, but
+    # it doesn't have a method relating to properties.
+
+    # We'll probably need to know pychar's category.
+    cat = unicodedata.category(pychar)
+
+    if property_name == 'ID_Start':
+        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
+        #
+        #" Derived Property: ID_Start
+        #"  Characters that can start an identifier.
+        #"  Generated from:
+        #"      Lu + Ll + Lt + Lm + Lo + Nl
+        #"    + Other_ID_Start
+        #"    - Pattern_Syntax
+        #"    - Pattern_White_Space
+        #"  NOTE: See UAX #31 for more information
+
+        return (
+            (
+                cat in ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl']
+                or
+                pychar in ucp.Other_ID_Start
+            )
+            and
+            not pychar in ucp.Pattern_Syntax
+            and
+            not pychar in ucp.Pattern_White_Space
+        )
+
+    elif property_name == 'ID_Continue':
+        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
+        #
+        #" Derived Property: ID_Continue
+        #"  Characters that can continue an identifier.
+        #"  Generated from:
+        #"      ID_Start
+        #"    + Mn + Mc + Nd + Pc
+        #"    + Other_ID_Continue
+        #"    - Pattern_Syntax
+        #"    - Pattern_White_Space
+        #"  NOTE: See UAX #31 for more information
+
+        return (
+            (
+                unicode_character_has_property(pychar, 'ID_Start')
+                or
+                cat in ['Mn', 'Mc', 'Nd', 'Pc']
+                or
+                pychar in ucp.Other_ID_Continue
+            )
+            and
+            not pychar in ucp.Pattern_Syntax
+            and
+            not pychar in ucp.Pattern_White_Space
+        )
+
+    else:
+        assert 0, property_name
+
+# http://www.unicode.org/reports/tr44/ says:
+#" Implementations should simply use the derived properties,
+#" and should not try to rederive them
+#" from lists of simple properties and collections of rules,
+#" because of the chances for error and divergence when doing so.
+#
+# E.g., Rather than the code above, I should scan
+# https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt
+# to find out all the characters with property ID_Start.
+#
+# However,
+# (a) ID_Start has 131482 code points and ID_Continue has 134434,
+#     so I'd rather not. 
+# (b) The formulae are more likely to be correct wrt future versions of Unicode.
+#     I.e. Python's 'unicodedata' module will be updated.
+
 # ------------------------------------------------------------------------------
 # ES_UnicodeCodePoints
 
@@ -2406,14 +2554,6 @@ def _(de, prod_ref, nont):
     assert nont.source_text() == '|NumericLiteralSeparator|'
     return ES_Mathnum(len(pnode.text().replace('_', '')))
 
-@efd.put('{EXPR} : the result of replacing any occurrences of {TERMINAL} {nonterminal} in {var} with the code point represented by the {nonterminal}')
-def _(de, terminal, nonterminal, var, nonterminal2):
-    assert terminal.source_text() == '`\\\\`'
-    assert nonterminal.source_text() == '|UnicodeEscapeSequence|'
-    assert nonterminal2.source_text() == '|UnicodeEscapeSequence|'
-    value = de.exec(var, ES_UnicodeCodePoints)
-    return value.replace_backslashUniEscapeSeqs()
-
 @efd.put('{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once')
 def _(de, noi, *backticked_words):
     noi_val = de.exec(noi, ES_UnicodeCodePoints)
@@ -2436,125 +2576,6 @@ def _(de, noi, backticked_word):
     assert cps.number_of_code_points() == 1
     [cp] = cps.code_points()
     return noi_val.contains_code_point(cp)
-
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, or {starred_str}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} matched by the {nonterminal} lexical grammar production')
-def _(de, base_noi, ssa, ssb, wah_noi, var, nont):
-    noi_val = de.exec(base_noi, EL_String)
-    ssa_val = de.exec(ssa, EL_String)
-    ssb_val = de.exec(ssb, EL_String)
-    if same_value(noi_val, ssa_val): return False
-    if same_value(noi_val, ssb_val): return False
-
-    assert wah_noi.source_text() == 'UTF16EncodeCodePoint(_cp_)'
-    assert var.source_text() == '_cp_'
-    assert nont.source_text() == '|UnicodeIDStart|'
-    # So theoretically, we would iterate through all code points matched by UnicodeIDStart,
-    # and for each, bind it to _cp_, evaluate `UTF16EncodeCodePoint(_cp_)`,
-    # and check if noi_val is equal to the result.
-    # But UnicodeIDStart is any Unicode code point with the Unicode property "ID_Start"
-    # which is fairly large.
-    # Really, this check should be carried out in the space of code points,
-    # rather than in the space of Strings (see PR #2392)
-    # Until then, kludge:
-
-    if noi_val in [
-        EL_String.from_Python_string('A'),
-        EL_String.from_Python_string('a'),
-
-        EL_String.from_integers([0xd83b, 0xde00]),
-            # = U+1EE00 ARABIC MATHEMATICAL ALEF,
-            # whose category is Letter, Other [Lo],
-            # so it's in ID_Start and ID_Continue.
-
-        EL_String.from_integers([0xd83b, 0xde06]),
-            # = U+1EE06 ARABIC MATHEMATICAL ZAIN,
-            # whose category is Letter, Other [Lo]
-            # so it's in ID_Start and ID_Continue.
-
-        EL_String.from_integers([0xd83b, 0xde0a]),
-            # = U+1EE0A ARABIC MATHEMATICAL KAF,
-            # whose category is Letter, Other [Lo]
-            # so it's in ID_Start and ID_Continue.
-
-    ]:
-        return False
-
-    if noi_val in [
-        EL_String.from_integers([0]),
-        EL_String.from_integers([0xd800]),
-        EL_String.from_integers([0xd83b]),
-        EL_String.from_Python_string('\\'),
-    ]:
-        return True
-
-    assert NYI, noi_val
-
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is none of {starred_str}, {starred_str}, ! {NAMED_OPERATION_INVOCATION}, ! {NAMED_OPERATION_INVOCATION}, or ! {NAMED_OPERATION_INVOCATION} for some Unicode code point {var} that would be matched by the {nonterminal} lexical grammar production')
-def _(de, noia, ssa, ssb, noib, noic, noid, var, nont):
-    # the SV of |UnicodeEscapeSequence| is none of
-    # - *"$"*,
-    # - *"_"*,
-    # - ! UTF16EncodeCodePoint(&lt;ZWNJ&gt;),
-    # - ! UTF16EncodeCodePoint(&lt;ZWJ&gt;), or
-    # - ! UTF16EncodeCodePoint(_cp_) for some Unicode code point _cp_ that would be matched by the |UnicodeIDContinue| lexical grammar production
-
-    noia_val = de.exec(noia, EL_String)
-    ssa_val = de.exec(ssa, EL_String)
-    ssb_val = de.exec(ssb, EL_String)
-    if same_value(noia_val, ssa_val): return False
-    if same_value(noia_val, ssb_val): return False
-
-    assert noib.source_text() == 'UTF16EncodeCodePoint(&lt;ZWNJ&gt;)'
-    assert noic.source_text() == 'UTF16EncodeCodePoint(&lt;ZWJ&gt;)'
-    assert noid.source_text() == 'UTF16EncodeCodePoint(_cp_)'
-    assert var.source_text() == '_cp_'
-    assert nont.source_text() == '|UnicodeIDContinue|'
-
-    # Kludge, but waiting for PR #2392.
-
-    if noia_val in [
-        EL_String.from_Python_string('B'),
-        EL_String.from_Python_string('C'),
-        EL_String.from_Python_string('a'),
-        EL_String.from_Python_string('i'),
-
-        EL_String.from_integers([0x2118]),
-            # = U+2118 SCRIPT CAPITAL P,
-            # which is in Other_ID_Start,
-            # so it's in ID_Continue.
-
-        EL_String.from_integers([0xd801, 0xdca6]),
-            # = U+104A6 OSMANYA DIGIT SIX,
-            # whose category is Number, Decimal Digit [Nd],
-            # so it's in ID_Continue
-
-        EL_String.from_integers([0xd83b, 0xde03]),
-            # = U+1EE03 Arabic Mathematical Dal,
-            # whose category is Letter, Other [Lo],
-            # so it's in ID_Start and ID_Continue.
-
-        EL_String.from_integers([0xd83b, 0xde0b]),
-            # = U+1EE0B ARABIC MATHEMATICAL LAM,
-            # whose category is Letter, Other [Lo],
-            # so it's in ID_Start and ID_Continue.
-
-        EL_String.from_integers([0xdb40, 0xddd5]),
-            # = U+E01D5 Variation Selector, whose category is Mn,
-            # so it's in ID_Continue.
-
-    ]:
-        return False
-
-    if noia_val in [
-        EL_String.from_Python_string('*'),
-        EL_String.from_Python_string('\\'),
-        EL_String.from_integers([0]),
-        EL_String.from_integers([0xdc00]),
-        EL_String.from_integers([0xde00]),
-    ]:
-        return True
-
-    assert NYI, noia_val
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2832,13 +2853,6 @@ def each_item_in_left_recursive_list(list_node):
 #> The source text is scanned from left to right,
 #> repeatedly taking the longest possible sequence of code points
 #> as the next input element.
-
-# 12.6 Names and Keywords
-
-@efd.put('{CONDITION_1} : {LOCAL_REF} contains a Unicode escape sequence')
-def _(de, local_ref):
-    node = de.exec(local_ref, ParseNode)
-    return node.contains_a('UnicodeEscapeSequence')
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
