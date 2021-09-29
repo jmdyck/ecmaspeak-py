@@ -73,7 +73,6 @@
     Let {var} and {var} be {LITERAL}.
     Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
-    Let {var} be the largest possible non-negative integer not larger than {var} such that {CONDITION}; but if there is no such integer, let {var} be {EXPR}.
     Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
     Let {var} be {EXPR}.
     Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the integer value that is represented by {var} in radix-{var} notation.)
@@ -233,6 +232,7 @@
     field of {var} that is present
     index {var} of {var}
     integer {var} starting with {EX} such that {CONDITION}, in ascending order
+    non-negative integer {var} starting with {var} such that {CONDITION}, in descending order
     own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
@@ -352,7 +352,6 @@
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
     every field in {var} is absent
-    for all non-negative integers {var} such that {CONDITION_1}, {CONDITION_1}
     it must be in the object Environment Record
     its value is {LITERAL}
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})

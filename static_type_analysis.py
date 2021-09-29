@@ -3794,15 +3794,6 @@ def tc_nonvalue(anode, env0):
         t_env.assert_expr_is_of_type(product, T_MathReal_)
         result = t_env
 
-    elif p == "{COMMAND} : Let {var} be the largest possible non-negative integer not larger than {var} such that {CONDITION}; but if there is no such integer, let {var} be {EXPR}.":
-        [let_var, limit_var, cond, let_var2, default_expr] = children
-        assert let_var.source_text() == let_var2.source_text()
-        env0.assert_expr_is_of_type(limit_var, T_MathNonNegativeInteger_)
-        env0.assert_expr_is_of_type(default_expr, T_MathInteger_)
-        env_for_cond = env0.plus_new_entry(let_var, T_MathNonNegativeInteger_)
-        (t_env, f_env) = tc_cond(cond, env_for_cond)
-        result = env0.plus_new_entry(let_var, T_MathInteger_)
-
     elif p in [
         r"{SMALL_COMMAND} : let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria",
         r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.",
@@ -4262,6 +4253,13 @@ def tc_nonvalue(anode, env0):
             [loop_var, start_ex, condition] = each_thing.children
             env0.assert_expr_is_of_type(start_ex, T_MathInteger_)
             env1 = env0.plus_new_entry(loop_var, T_MathInteger_)
+            (tenv, fenv) = tc_cond(condition, env1)
+            env_for_commands = tenv
+
+        elif each_thing.prod.rhs_s == r"non-negative integer {var} starting with {var} such that {CONDITION}, in descending order":
+            [loop_var, start_ex, condition] = each_thing.children
+            env0.assert_expr_is_of_type(start_ex, T_MathNonNegativeInteger_)
+            env1 = env0.plus_new_entry(loop_var, T_MathNonNegativeInteger_)
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
@@ -6044,12 +6042,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(m_var, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(cond, env_for_cond)
-
-    elif p == r"{CONDITION_1} : for all non-negative integers {var} such that {CONDITION_1}, {CONDITION_1}":
-        [loop_var, conda, condb] = children
-        env_for_conda = env0.plus_new_entry(loop_var, T_MathInteger_)
-        (env_for_condb, _) = tc_cond(conda, env_for_conda)
-        return tc_cond(condb, env_for_condb)
 
     elif p == r"{CONDITION_1} : there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}":
         [let_var, i, cond] = children
