@@ -125,6 +125,11 @@ nature_to_tipe = {
 
         'an integral Number'            : 'IntegralNumber_',
         'a non-negative integral Number': 'IntegralNumber_',
+        'a time value'                  : 'IntegralNumber_',
+        # time value is defined to be 'IntegralNumber_ | NaN_Number_',
+        # but the only use (so far) is for LocalTime()'s _t_ param,
+        # which probably shouldn't accept NaN.
+        # I.e., it should be marked "a *finite* time value".
 
         # function_: an object with a [[Call]] internal method
         'function'            : 'function_object_',
@@ -1894,7 +1899,6 @@ ToPropertyDescriptor                     ; _Obj_                  ; TBD         
 ToString                                 ; *return*               ; TBD                 ; String | throw_ *TypeError*
 ToString                                 ; _argument_             ; TBD                 ; Tangible_
 TriggerPromiseReactions                  ; _argument_             ; TBD                 ; Tangible_
-UTC                                      ; _t_                    ; TBD                 ; Number
 # xUTF16Decode                              ; _string_               ; TBD                 ; String
 # xUTF16Encode                              ; _text_                 ; TBD                 ; Unicode_code_points_
 UpdateEmpty                              ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
@@ -11817,7 +11821,7 @@ type_of_internal_thing_ = {
     'BooleanData' : T_Boolean,
 
     # 30688
-    'DateValue': T_FiniteNumber_ | T_NaN_Number_,
+    'DateValue': T_IntegralNumber_ | T_NaN_Number_,
 
     # 30738: Table 46: Internal Slots of String Iterator Instances
     'IteratedString' : T_String,
