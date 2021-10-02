@@ -583,30 +583,34 @@ def check_tables():
             assert header_line == 'Property; Value; Requirements'
 
         elif 'Intrinsic Objects' in caption:
-            assert caption in [
-                'Well-Known Intrinsic Objects',
-                'Additional Well-known Intrinsic Objects',
-            ]
-            
-            assert header_line == 'Intrinsic Name; Global Name; ECMAScript Language Association'
-            for row in et._data_rows:
-                [oname, global_name, assoc] = row.cell_texts
-
-                assert re.fullmatch(r'%\w+%', oname)
-                assert oname not in well_known_intrinsics
-                well_known_intrinsics[oname] = True
-
-                assert re.fullmatch(r"|`\w+`", global_name)
-
-                assert ';' not in assoc
-                assert 'i.e.' not in assoc
-                # Those were used before the merge of PR #2056.
+            handle_intrinsics_table(et)
 
         else:
             # print('>>>', header_line, '---', caption)
             pass
 
 well_known_intrinsics = {}
+
+def handle_intrinsics_table(emu_table):
+    assert emu_table._caption in [
+        'Well-Known Intrinsic Objects',
+        'Additional Well-known Intrinsic Objects',
+    ]
+    
+    assert emu_table._header_row.cell_texts == ['Intrinsic Name', 'Global Name', 'ECMAScript Language Association']
+
+    for row in emu_table._data_rows:
+        [oname, global_name, assoc] = row.cell_texts
+
+        assert re.fullmatch(r'%\w+%', oname)
+        assert oname not in well_known_intrinsics
+        well_known_intrinsics[oname] = True
+
+        assert re.fullmatch(r"|`\w+`", global_name)
+
+        assert ';' not in assoc
+        assert 'i.e.' not in assoc
+        # Those were used before the merge of PR #2056.
 
 def check_references_to_intrinsics():
     stderr("check_references_to_intrinsics...")
