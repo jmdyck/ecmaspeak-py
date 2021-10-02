@@ -43,7 +43,7 @@ def main():
     check_ids()
 
     check_tables()
-    check_intrinsics()
+    check_references_to_intrinsics()
     Section.make_and_check_sections()
     emu_grammars.do_stuff_with_emu_grammars()
     
@@ -608,8 +608,8 @@ def check_tables():
 
 well_known_intrinsics = {}
 
-def check_intrinsics():
-    stderr("checking intrinsics...")
+def check_references_to_intrinsics():
+    stderr("check_references_to_intrinsics...")
 
     # We can't just scan through spec.text looking for %...%,
     # because that would find occurrences in element IDs,
