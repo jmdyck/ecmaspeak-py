@@ -263,9 +263,6 @@ def msg_at_posn_start():
     global msgs_for_line_
     msgs_for_line_ = collections.defaultdict(list)
 
-def header(msg):
-    pass
-
 def msg_at_node(node, msg):
     msg_at_posn(node.start_posn, msg)
 

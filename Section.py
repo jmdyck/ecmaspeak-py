@@ -9,7 +9,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 import shared
-from shared import stderr, header, msg_at_posn, spec
+from shared import stderr, msg_at_posn, spec
 from HTML import HNode
 import Pseudocode
 import headers

@@ -9,7 +9,7 @@ from html.parser import HTMLParser
 from collections import OrderedDict
 
 import shared
-from shared import stderr, header, msg_at_posn, SpecNode
+from shared import stderr, msg_at_posn, SpecNode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -27,7 +27,6 @@ def parse_and_validate():
 
 def _parse():
     stderr("parsing spec...")
-    header("parsing markup...")
 
     doc_node = HNode(0, len(shared.spec_text), '#DOC', {})
     doc_node.parent = None
@@ -243,7 +242,6 @@ def string_is_whitespace(s):
 def _validate(node):
     if node.element_name == '#DOC':
         stderr("validating markup...")
-        header("validating markup...")
 
     def is_loose_about_spaces(x):
         # In   sec-assignment-operators-runtime-semantics-evaluation

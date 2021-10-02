@@ -10,7 +10,7 @@ from collections import namedtuple, defaultdict, OrderedDict
 
 import DFA
 import shared
-from shared import stderr, header, msg_at_node, msg_at_posn, spec, SpecNode, decode_entities
+from shared import stderr, msg_at_node, msg_at_posn, spec, SpecNode, decode_entities
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -582,7 +582,6 @@ info_for_nt_ = None
 
 def process_defining_emu_grammars(emu_grammars):
     stderr('process_defining_emu_grammars...')
-    header("checking grammar (i.e., defining prodns)...")
 
     global info_for_nt_
     grammar_f = shared.open_for_output('def_prodns')
@@ -856,7 +855,6 @@ def get_grammar_arena_for_section(section):
 
 def check_non_defining_prodns(emu_grammars):
     stderr("check_non_defining_prodns...")
-    header("checking non-defining productions...")
 
     for emu_grammar in emu_grammars:
         emu_grammar.puk_set = set()
@@ -1274,7 +1272,6 @@ def d_item_doesnt_require_a_matching_u_item(d_item_n):
 
 def check_order_of_RHSs_within_each_SDO_clause():
     stderr("check_order_of_RHSs_within_each_SDO_clause ...")
-    header("check_order_of_RHSs_within_each_SDO_clause ...")
 
     for section in spec.root_section.each_descendant_that_is_a_section():
         if section.section_kind != 'syntax_directed_operation': continue
@@ -1316,7 +1313,6 @@ def check_order_of_RHSs_within_each_SDO_clause():
 
 def check_emu_prodrefs(doc_node):
     stderr("check_emu_prodrefs...")
-    header("checking emu-prodref elements...")
 
     referenced_names = []
 
@@ -1359,7 +1355,7 @@ def check_emu_prodrefs(doc_node):
             for (_, nt_name) in arena_A_names_with_posn
         ]
 
-        header("comparing Annex A order to main-body order:")
+        stderr("comparing Annex A order to main-body order:")
         import difflib
         for line in difflib.context_diff(referenced_names, arena_A_names, lineterm=''):
             print(line, file=shared.g_errors_f)
@@ -1571,8 +1567,8 @@ def approximate_annex_A():
 # ------------------------------------------------------------------------------
 
 def check_nonterminal_refs(doc_node):
+    # Check references to nonterminals outside of <emu-grammar> elements
     stderr("check_nonterminal_refs...")
-    header("checking references to nonterminals (outside of emu-grammar)...")
 
     # kludge:
     B_start = shared.spec_text.find('namespace="annexB"')

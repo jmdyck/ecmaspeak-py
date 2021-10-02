@@ -10,7 +10,7 @@ from collections import defaultdict, OrderedDict
 
 import HTML, Section, emu_grammars, Pseudocode, headers
 import shared
-from shared import stderr, header, msg_at_posn, spec
+from shared import stderr, msg_at_posn, spec
 from emu_tables import analyze_table
 
 def main():
@@ -92,7 +92,6 @@ def handle_insdel(text):
 
 def check_indentation():
     stderr("check_indentation...")
-    header("checking indentation...")
 
     INDENT_UNIT = 2
 
@@ -278,7 +277,6 @@ def check_indentation():
 
 def check_for_extra_blank_lines():
     stderr("checking for extra blank lines...")
-    header("checking for extra blank lines...")
     for mo in re.finditer(r'\n( *\n){2,}', spec.text):
         posn = mo.end() - 1
         msg_at_posn(posn, "2 or more adjacent blank lines")
@@ -289,7 +287,6 @@ def check_for_extra_blank_lines():
 
 def check_trailing_whitespace():
     stderr("checking trailing whitespace...")
-    header("checking trailing whitespace...")
     for mo in re.finditer(r'(?m)[ \t]+$', spec.text):
         posn = mo.start()
         msg_at_posn(posn, "trailing whitespace")
@@ -298,7 +295,6 @@ def check_trailing_whitespace():
 
 def check_characters():
     stderr("checking characters...")
-    header("checking characters...")
     for mo in re.finditer(r'[^\n -~]', spec.text):
         # Note that this will (among other things) find and complain about TAB characters.
         posn = mo.start()
@@ -328,7 +324,7 @@ ascii_replacement = {
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_ids():
-    header("checking ids...")
+    stderr("checking ids...")
 
     node_with_id_ = OrderedDict()
     all_oldids = set()
@@ -533,7 +529,6 @@ def kebab(id):
 
 def check_tables():
     stderr('check_tables...')
-    header("checking tables...")
     for et in spec.doc_node.each_descendant_named('emu-table'):
         analyze_table(et)
 
@@ -615,7 +610,7 @@ well_known_intrinsics = {}
 
 def check_intrinsics():
     stderr("checking intrinsics...")
-    header("checking intrinsics...")
+
     # We can't just scan through spec.text looking for %...%,
     # because that would find occurrences in element IDs,
     # which are lower-cased.
