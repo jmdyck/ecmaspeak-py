@@ -30,9 +30,12 @@ def handle_intrinsics_table(emu_table):
 
         assert re.fullmatch(r"|`\w+`", global_name)
 
-        assert ';' not in assoc
-        assert 'i.e.' not in assoc
-        # Those were used before the merge of PR #2056.
+        if re.match(r'(A function|An) object that ', assoc):
+            phrase = None
+        elif (mo := re.fullmatch(r'The (.+) \(<emu-xref href="[^"]+"></emu-xref>\)', assoc)):
+            phrase = 'the ' + mo.group(1)
+        else:
+            assert 0, assoc
 
 def check_references_to_intrinsics():
     stderr("check_references_to_intrinsics...")
