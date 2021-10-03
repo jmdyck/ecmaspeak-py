@@ -22,11 +22,11 @@ def handle_intrinsics_table(emu_table):
     assert emu_table._header_row.cell_texts == ['Intrinsic Name', 'Global Name', 'ECMAScript Language Association']
 
     for row in emu_table._data_rows:
-        [oname, global_name, assoc] = row.cell_texts
+        [percent_name, global_name, assoc] = row.cell_texts
 
-        assert re.fullmatch(r'%\w+%', oname)
-        assert oname not in well_known_intrinsics
-        well_known_intrinsics[oname] = True
+        assert re.fullmatch(r'%\w+%', percent_name)
+        assert percent_name not in well_known_intrinsics
+        well_known_intrinsics[percent_name] = True
 
         assert re.fullmatch(r"|`\w+`", global_name)
 
