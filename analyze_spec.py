@@ -42,6 +42,7 @@ def main():
     check_for_extra_blank_lines()
 
     check_ids()
+    check_dfns()
 
     check_tables()
     check_references_to_intrinsics()
@@ -525,6 +526,23 @@ def kebab(id):
         else:
             return '-' + low
     return re.sub('[A-Z]', replfunc, id)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_dfns():
+    stderr('check_dfns...')
+
+    spec.dfn_for_term_ = {}
+    for dfn in spec.doc_node.each_descendant_named('dfn'):
+        ist = dfn.inner_source_text()
+        assert ist not in spec.dfn_for_term_
+        spec.dfn_for_term_[ist] = dfn
+
+        variants = dfn.attrs.get('variants')
+        if variants:
+            if ',' in variants: assert NYI
+            assert variants not in spec.dfn_for_term_
+            spec.dfn_for_term_[variants] = dfn
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
