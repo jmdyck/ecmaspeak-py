@@ -1375,16 +1375,18 @@ def approximate_annex_A():
         # caast = corresponding_annex_a_section_title
         mo = re.fullmatch(r'ECMAScript Language: (.+)', section.section_title)
         if mo:
-            caast = mo.group(1)
+            title_part = mo.group(1)
 
-            if caast == 'Source Code':
+            if title_part == 'Source Code':
                 # Annex A doesn't have a separate section corresponding to 10 "Source Code".
-                # Instead, it slips its single production into "Lexical Grammar"
+                # Instead, it slips its single production for SourceCharacter into "Lexical Grammar"
                 caast = None
-                source_code_section = section
 
-            elif caast == 'Statements and Declarations':
+            elif title_part == 'Statements and Declarations':
                 caast = 'Statements'
+
+            else:
+                caast = title_part
 
         elif section.section_title == 'ToNumber Applied to the String Type':
             caast = 'Number Conversions'
@@ -1392,7 +1394,7 @@ def approximate_annex_A():
         elif section.section_title == 'URI Syntax and Semantics':
             caast = 'Universal Resource Identifier Character Classes'
 
-        elif section.section_title in ['Patterns', 'Syntax for Patterns']:
+        elif section.section_title in ['Patterns', 'Syntax for Patterns']: # "Syntax for Patterns" is from #1651
             caast = 'Regular Expressions'
         
         else:
