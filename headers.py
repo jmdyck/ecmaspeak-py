@@ -483,7 +483,10 @@ class PreambleInfoHolder:
             assert 0
 
         for ps in self.fields['ps']:
-            get_info_from_parameter_sentence_in_ao_preamble(poi, ps)
+            assert ps == "The optional _offset_ value"
+            assert poi.param_names is None
+            poi.param_names = ['_offset_']
+            poi.param_nature_['_offset_'] = 'TBD'
 
         also = at_most_one_value('also')
         if also is None:
@@ -595,37 +598,6 @@ for line in rec_method_declarations.split('\n'):
     else:
         (return_nature_normal, return_nature_abrupt) = (return_nature, 'TBD')
     predeclared_rec_method_info[name] = (param_names, param_nature_, return_nature_normal, return_nature_abrupt)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def get_info_from_parameter_sentence_in_ao_preamble(oi, parameter_sentence):
-    # if '_C_' in parameter_sentence: stderr('gifps', parameter_sentence)
-    # if 'neither' in parameter_sentence: pdb.set_trace()
-
-    foo = {
-        "The optional _offset_ value":
-            [('_offset_', 'TBD')],
-    }[parameter_sentence]
-
-    for (param_name, nature) in foo:
-        if oi.param_names and param_name in oi.param_names:
-            # The preamble has previously 'declared' this parameter.
-            assert 0 # since PR #1914 or so
-            current_nature = oi.param_nature_[param_name]
-            if current_nature == 'TBD':
-                new_nature = nature
-            else:
-                new_nature = current_nature + '; may also be ' + nature
-            oi.param_nature_[param_name] = new_nature
-        else:
-            # The preamble has not previously 'declared' this parameter,
-            # and yet it now mentions it in a way
-            # that is normally only used when we've already declared it.
-
-            if oi.param_names is None: oi.param_names = []
-
-            oi.param_names.append(param_name)
-            oi.param_nature_[param_name] = nature
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
