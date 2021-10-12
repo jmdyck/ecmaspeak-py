@@ -1452,6 +1452,7 @@ def _handle_function_section(section):
         # The spec leaves off the empty parameter list
         params = []
     else:
+        assert section.section_kind == 'anonymous_built_in_function' or section.section_title == 'set Object.prototype.__proto__'
         params = None
 
     n_emu_algs = section.bcen_list.count('emu-alg')
