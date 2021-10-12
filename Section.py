@@ -1428,11 +1428,12 @@ def _handle_function_section(section):
     else:
         return False
 
+    p_dict = mo.groupdict()
+    section.section_kind = result
+
     # -----------
 
     check_section_title(section)
-
-    section.section_kind = result
 
     if section.section_kind == 'function_property_xref':
         assert section.bcen_str == 'p'
@@ -1442,7 +1443,6 @@ def _handle_function_section(section):
         )
         return True
 
-    p_dict = mo.groupdict()
     prop_path = p_dict['prop_path']
 
     if 'params_str' in p_dict:
