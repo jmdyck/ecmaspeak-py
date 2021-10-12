@@ -457,10 +457,10 @@ class PreambleInfoHolder:
         poi.species = {
             'anonymous built-in function object'        : 'bif: * per realm',
             'anonymous built-in function'               : 'bif: * per realm',
-            'accessor property'                         : 'bif: accessor function',
-            'constructor'                               : 'bif: value of data property',
-            'function'                                  : 'bif: value of data property',
-            'method'                                    : 'bif: value of data property',
+            'accessor property'                         : 'bif: intrinsic: accessor function',
+            'constructor'                               : 'bif: intrinsic',
+            'function'                                  : 'bif: intrinsic',
+            'method'                                    : 'bif: intrinsic',
             None                                        : None,
         }[vs]
 

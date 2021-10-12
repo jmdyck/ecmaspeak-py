@@ -1462,10 +1462,10 @@ def _handle_function_section(section):
     # Handle the function that's declared by the section-heading.
 
     bif_species = {
-        'CallConstruct'               : 'bif: value of data property',
-        'accessor_property'           : 'bif: accessor function',
+        'CallConstruct'               : 'bif: intrinsic',
+        'accessor_property'           : 'bif: intrinsic: accessor function',
         'anonymous_built_in_function' : 'bif: * per realm',
-        'function_property'           : 'bif: value of data property',
+        'function_property'           : 'bif: intrinsic',
     }[section.section_kind]
 
     if n_emu_algs == 0:
@@ -2404,7 +2404,7 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
             # discriminated operations that are invoked in the main body,
             # so including them will mess up main-body semantics
             # until we can handle Annex B stuff properly.
-        elif alg_header.species in ['op: singular', 'bif: value of data property']:
+        elif alg_header.species in ['op: singular', 'bif: intrinsic']:
             add_it = True
             # This is 2 ops (CharacterRangeOrUnion & CreateHTML) that are only
             # referenced from within Annex B,
