@@ -1404,7 +1404,6 @@ def _handle_function_section(section):
         (r'(?P<prop_path>[A-Z]\w+) \( \. \. \. \)',           'function_property_xref'),
 
         (r'(?P<prop_path>.+) Functions',                      'anonymous_built_in_function'),
-        (r'(?P<prop_path>%ThrowTypeError%) <PARAMETER_LIST>', 'anonymous_built_in_function'),
 
         (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',         'CallConstruct'),
         (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>',       'CallConstruct'),

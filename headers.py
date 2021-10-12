@@ -98,7 +98,7 @@ single_sentence_rules_str = r'''
 
         # ---------
 
-        The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object) that (?P<desc>is defined once for each realm.)
+        The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object that is defined once for each realm).
 
         The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps when called:
 
@@ -455,7 +455,7 @@ class PreambleInfoHolder:
 
         vs = join_field_values('kind')
         poi.species = {
-            'anonymous built-in function object'        : 'bif: * per realm',
+            'anonymous built-in function object that is defined once for each realm' : 'bif: intrinsic',
             'anonymous built-in function'               : 'bif: * per realm',
             'accessor property'                         : 'bif: intrinsic: accessor function',
             'constructor'                               : 'bif: intrinsic',
