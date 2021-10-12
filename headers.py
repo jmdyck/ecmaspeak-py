@@ -47,6 +47,10 @@ multi_sentence_rules_str = r'''
         name=get \2
         v= \1
         # A bit kludgey: Insert a space to prevent later match against /`(?P<name>[\w.]+)` (.+)/
+
+        (Sets multiple values in this _TypedArray_, reading the values from _source_. The optional _offset_ value indicates the first element index in this _TypedArray_ where values are written. If omitted, it is assumed to be 0.)
+        pl=argument _source_ and optional argument _offset_
+        v=\1
 '''
 
 single_sentence_rules_str = r'''
@@ -82,11 +86,6 @@ single_sentence_rules_str = r'''
         The following steps are performed:
 
         The following steps are taken:
-
-        # ---------
-
-        ((?P<ps>The optional _\w+_ value) indicates .+)
-        v=\1
 
         # ---------
 
@@ -483,10 +482,7 @@ class PreambleInfoHolder:
             assert 0
 
         for ps in self.fields['ps']:
-            assert ps == "The optional _offset_ value"
-            assert poi.param_names is None
-            poi.param_names = ['_offset_']
-            poi.param_nature_['_offset_'] = 'TBD'
+            assert 0
 
         also = at_most_one_value('also')
         if also is None:
