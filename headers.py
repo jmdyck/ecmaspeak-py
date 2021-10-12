@@ -67,7 +67,6 @@ single_sentence_rules_str = r'''
     # Sentences that start with "It"
 
         It can take three parameters.
-        # could send to <ps>, but not helpful.
 
         It performs the following steps when called:
 
@@ -186,9 +185,6 @@ single_sentence_rules_str = r'''
         Given (?P<pl>zero or more arguments), (calls ToNumber .+)
         v=!FUNC \2
 
-        # (Don't extract parameter info ('ps') from env-rec preambles,
-        # because you'll get lots of warnings re mismatches.)
-
         Specifically, perform the following steps:
 
         These are the steps in stringifying an object:
@@ -275,11 +271,6 @@ single_sentence_rules_str = r'''
         v=\1
 
         # -----------
-
-        # (.+) the value of (the Boolean argument) _S_.
-        # ps=\2 _S_
-        # v=\1 the value of _S_.
-        # Better to not try to extract parameter info from env-rec preambles?
 
         (.+) as follows:
         v=\1.
@@ -479,9 +470,6 @@ class PreambleInfoHolder:
             get_info_from_parameter_listing_in_preamble(poi, pl_values[1])
         else:
             stderr(f"{poi.name} has multi-pl: {poi.param_names}")
-            assert 0
-
-        for ps in self.fields['ps']:
             assert 0
 
         also = at_most_one_value('also')
