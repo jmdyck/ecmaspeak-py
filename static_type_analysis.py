@@ -543,13 +543,12 @@ class TypedAlgHeader:
         self.initial_parameter_types = OrderedDict()
 
         for param in header.params:
-            optionality = '(optional) ' if param.punct == '[]' else ''
+            pt = parse_type_string(convert_nature_to_tipe(param.nature))
 
-            tipe = convert_nature_to_tipe(param.nature)
+            if param.punct == '[]':
+                pt = pt | T_not_passed
 
-            param_tipe = optionality + tipe
-
-            self.initial_parameter_types[param.name] = parse_type_string(param_tipe)
+            self.initial_parameter_types[param.name] = pt
 
         self.parameter_types = self.initial_parameter_types.copy()
 
