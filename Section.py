@@ -13,6 +13,7 @@ from shared import stderr, msg_at_posn, spec
 from HTML import HNode
 import Pseudocode
 import headers
+from headers import AlgParam
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2295,12 +2296,6 @@ def node_matches_atom(node, atom):
         assert 0, atom
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-@dataclass
-class AlgParam:
-    name: str
-    punct: str # '' | '[]' | '...'
-    nature: str
 
 def AlgHeader_set_attributes_from_params(alg_header, params):
     # Sets .param_nature_, .param_names, .rest_params, and .optional_params.

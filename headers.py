@@ -8,6 +8,7 @@
 
 import re, pdb
 from collections import OrderedDict, defaultdict
+from dataclasses import dataclass
 
 import shared
 from shared import spec, stderr, RE, DL
@@ -859,6 +860,14 @@ def sub_many(subject, pattern_repls):
     return result
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+@dataclass
+class AlgParam:
+    name: str
+    punct: str # '' | '[]' | '...'
+    nature: str
+
+# ------------------------------------------------
 
 class AlgHeader:
     def __init__(self):
