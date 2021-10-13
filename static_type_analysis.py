@@ -53,78 +53,42 @@ nature_to_tipe = {
         # Null
 
         # Boolean
-        'Boolean'           : 'Boolean',
-        'Boolean value'     : 'Boolean',
         'a Boolean'         : 'Boolean',
-        'a Boolean Value'   : 'Boolean',
-        'a Boolean flag'    : 'Boolean',
-        'A Boolean value'   : 'Boolean',
-        '*true* or *false*' : 'Boolean',
 
         # String
-        'String'          : 'String',
         'a String'        : 'String',
         'a String value'  : 'String',
-        'the String value': 'String',
-        'a substring'     : 'String',
-        '*"default"*, *"number"*, and *"string"*': 'String',
         '*"reject"* or *"handle"*': 'String',
-        'passed as a String value': 'String',
-        'the String name of a property in _holder_': 'String', # TODO
-        'the |ModuleSpecifier| String': 'String', # TODO
         'a |ModuleSpecifier| String': 'String', # TODO
-        "the name of a binding that exists in _M_'s module Environment Record": 'String', # TODO
-        'the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String', # TODO
         'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
 
         # Symbol
         'a Symbol' : 'Symbol',
 
         # Number
-        'Number'                     : 'Number',
         'a Number'                   : 'Number',
         'a Number value'             : 'Number',
-        'Number value'               : 'Number',
 
         # BigInt
-        'BigInt'      : 'BigInt',
         'a BigInt'    : 'BigInt',
 
         # Object
-        'Object'      : 'Object',
         'an Object'   : 'Object',
         'an object'   : 'Object',
-        'object'      : 'Object',
-        'the object'  : 'Object',
-        'the argument object': 'Object',
-        'an object with a *"constructor"* property whose value is _F_': 'Object', # TODO
-        'an Object that is neither a TypedArray nor an ArrayBuffer': 'Object',
         'an Object that conforms to the <i>IteratorResult</i> interface' : 'Object',
         'an Object that has a [[StringData]] internal slot'              : 'Object',
         'an Object, but not a TypedArray or an ArrayBuffer'              : 'Object',
         'an initialized RegExp instance'                                 : 'Object',
 
     # unofficial 'supertypes':
-        'a primitive value'             : 'Primitive',
 
         'an ECMAScript language value'  : 'Tangible_',
-        'the ECMAScript language value' : 'Tangible_',
-        'ECMAScript language value'     : 'Tangible_',
-        'an ECMAScript value'           : 'Tangible_',
-        'ECMAScript value'              : 'Tangible_',
         'a value'                       : 'Tangible_',
-        'the value'                     : 'Tangible_',
-        'value'                         : 'Tangible_',
-        'Tangible_'                     : 'Tangible_',
-        'an ECMAScript value, which is usually an object or array, although it can also be a String, Boolean, Number or *null*': 'Tangible_',
-        'not a numeric value'           : 'Tangible_', # TODO
-        'an ECMAScript value other than a TypedArray': 'Tangible_', # loses info
-        'an ECMAScript language value, but not a TypedArray' : 'Tangible_',
+        'an ECMAScript language value, but not a TypedArray' : 'Tangible_', # loses info
 
     # unofficial 'subtypes' of the above:
 
         'an integral Number'            : 'IntegralNumber_',
-        'a non-negative integral Number': 'IntegralNumber_',
         'a time value'                  : 'IntegralNumber_',
         # time value is defined to be 'IntegralNumber_ | NaN_Number_',
         # but the only use (so far) is for LocalTime()'s _t_ param,
@@ -132,39 +96,25 @@ nature_to_tipe = {
         # I.e., it should be marked "a *finite* time value".
 
         # function_: an object with a [[Call]] internal method
-        'function'            : 'function_object_',
-        'a Function'          : 'function_object_',
         'a function object'   : 'function_object_',
-        'function object'     : 'function_object_',
-        'the function object' : 'function_object_',
-        'a built-in function object'   : 'function_object_',
-        'a function that takes two parameters, _key_ and _value_': 'function_object_',
         'an ECMAScript function object': 'function_object_',
         'an ECMAScript function object or a built-in function object' : 'function_object_',
         'an ECMAScript function'                                      : 'function_object_',
 
         # constructor_: an object with a [[Construct]] internal method
-        'a constructor function' : 'constructor_object_',
         'a constructor'          : 'constructor_object_',
-        'constructor'            : 'constructor_object_',
 
         # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
         'an ArrayBuffer' : 'ArrayBuffer_object_',
         'an ArrayBuffer or SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
         'an ArrayBuffer or a SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
-        'a SharedArrayBuffer' : 'SharedArrayBuffer_object_',
 
-        'the TypedArray instance' : 'TypedArray_object_',
-        'a TypedArray instance'   : 'TypedArray_object_',
         'a TypedArray'            : 'TypedArray_object_',
         'a new _TypedArray_'      : 'TypedArray_object_',
 
         # 9.4.2
-        'an Array exotic object' : 'Array_object_',
         'an Array'               : 'Array_object_',
         'an array'               : 'Array_object_',
-
-        'an array-like object': 'Object', # TODO
 
         #? 'a Proxy exotic object' : 'Proxy_object_',
 
@@ -172,23 +122,16 @@ nature_to_tipe = {
         'a Promise' : 'Promise_object_',
         'a new promise': 'Promise_object_',
 
-        'an Integer-Indexed object': 'Integer_Indexed_object_',
         'an Integer-Indexed exotic object': 'Integer_Indexed_object_',
 
         # 25.1.1.3: IteratorResult_object_
 
         'an Iterator object': 'Iterator_object_',
 
-        'an integer length'         : 'MathInteger_',
-        'an integer offset'         : 'MathInteger_',
         'an integer'                : 'MathInteger_',
-        'an integer value'          : 'MathInteger_',
-        'integer'                   : 'MathInteger_',
         '1 or -1'                   : 'MathInteger_',
         'a Unicode code point'      : 'code_point_',
-        'a numeric code point value': 'MathInteger_', # TODO
         'a non-negative integer'    : 'MathNonNegativeInteger_', # currently mapped to MathInteger_
-        'a nonnegative integer'     : 'MathNonNegativeInteger_',
         'a positive integer'        : 'MathNonNegativeInteger_',
         '0 or 1'                    : 'MathNonNegativeInteger_',
         'a non-negative integer that is evenly divisble by 4' : 'MathNonNegativeInteger_',
@@ -201,21 +144,14 @@ nature_to_tipe = {
         # Reference
 
         # List
-        'List' : 'List',
         'a List' : 'List',
-        'List of String'                       : 'List of String',
         'a List of names'                      : 'List of String',
         'a List of property keys'              : 'List of (String | Symbol)',
         '`&amp;`, `^`, or `|`'                 : 'Unicode_code_points_',
         'ECMAScript source text'               : 'Unicode_code_points_',
         'a sequence of Unicode code points'    : 'Unicode_code_points_',
-        'a sequence of Unicode code points that is the source text of the syntactic definition of the function to be created' : 'Unicode_code_points_',
         'a List of Unicode code points'        : 'List of code_point_',
-        'List of Tangible_'                    : 'List of Tangible_',
-        'a List of values'                     : 'List of Tangible_',
-        'a list of arguments'                  : 'List of Tangible_',
         'a List of ECMAScript language values' : 'List of Tangible_',
-        'a possibly empty List of ECMAScript language values': 'List of Tangible_',
         'a List of Cyclic Module Records'      : 'List of Cyclic Module Record',
         'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
         'a List of Records that have [[Module]] and [[ExportName]] fields' : 'List of ExportResolveSet_Record_',
@@ -224,7 +160,6 @@ nature_to_tipe = {
         'a possibly empty List of Strings'                                 : 'List of String',
 
         # 6.2.3 Completion
-        'an abrupt completion': 'Abrupt',
         'a Completion Record': 'Abrupt | Normal',
         'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
 
@@ -232,11 +167,9 @@ nature_to_tipe = {
         'a Reference Record' : 'Reference Record',
 
         # 6.2.5 Property Descriptor
-        'Property Descriptor'   : 'Property Descriptor',
         'a Property Descriptor' : 'Property Descriptor',
 
         # 6.2.6 Environment Record
-        'Environment Record' : 'Environment Record',
         'an Environment Record' : 'Environment Record',
         'a declarative Environment Record'                                      : 'declarative Environment Record',
         'a global Environment Record'                                           : 'global Environment Record',
@@ -267,11 +200,9 @@ nature_to_tipe = {
         'a mathematical value': 'MathReal_',
 
         # 8.2 Realms: Realm Record
-        'Realm Record' : 'Realm Record',
         'a Realm Record' : 'Realm Record',
 
         # 8.3 Execution Contexts
-        'execution context' : 'execution context',
         'an execution context' : 'execution context',
 
         # 8.4 Jobs etc
@@ -287,13 +218,10 @@ nature_to_tipe = {
 
         # 15.2.1.15 Abstract Module Records: Module Record
         'a Module Record' : 'Module Record',
-        'Module Record'   : 'Module Record',
-        'Cyclic Module Record': 'Cyclic Module Record',
         'a Cyclic Module Record': 'Cyclic Module Record',
         'an instance of a concrete subclass of Module Record': 'Module Record',
 
         # 15.2.1.16 Source Text Module Records:
-        'a Source Text Module Record': 'Source Text Module Record',
         # ImportEntry Record
         # ExportEntry Record
 
@@ -303,7 +231,6 @@ nature_to_tipe = {
 
         # 21.2.2.1 Notation:
         # CharSet
-            'CharSet'        : 'CharSet',
             'a CharSet'      : 'CharSet',
         # State
             'a State'        : 'State',
@@ -326,17 +253,13 @@ nature_to_tipe = {
         'a FinalizationRegistry' : 'FinalizationRegistry_object_',
 
         # 27.4 Candidate Executions
-        'candidate execution'  : 'candidate execution',
         'a candidate execution': 'candidate execution',
         'an execution'         : 'candidate execution', # ???
 
-        'a Shared Data Block event': 'Shared Data Block event',
         'an event in SharedDataBlockEventSet(_execution_)': 'Shared Data Block event',
 
         # 25.4.1.1: PromiseCapability Record
         'a PromiseCapability Record'    : 'PromiseCapability Record',
-        'a new PromiseCapability Record': 'PromiseCapability Record',
-        'an optional PromiseCapability' : 'PromiseCapability Record | not_passed',
 
         # 25.4.1.2: PromiseReaction Records
         'a PromiseReaction Record' : 'PromiseReaction Record',
@@ -350,36 +273,19 @@ nature_to_tipe = {
     # unofficial 'subtypes' of official spec types:
 
         'a List of byte values'                       : 'List of MathInteger_',
-        'a List of slot-names'                        : 'List of SlotName_',
         'a List of names of internal slots'           : 'List of SlotName_',
         'a List of internal slot names'               : 'List of SlotName_',
-        'a List of ECMAScript Language Type names'    : 'List of LangTypeName_',
         'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
         'a List of PromiseReaction Records'           : 'List of PromiseReaction Record',
-        'a collection of PromiseReactionRecords'      : 'List of PromiseReaction Record',
 
     # unofficial spec types
 
-        'empty_'      : 'empty_',
-        'code unit'   : 'code_unit_',
         'a code unit' : 'code_unit_',
 
         # 8.7.1 AgentSignifier
         'an agent signifier' : 'agent_signifier_',
 
-        'a parameter list Parse Node'    : 'Parse Node',
-        'a body Parse Node'              : 'Parse Node',
         'a Parse Node'                   : 'Parse Node',
-        'Parse Node'                     : 'Parse Node',
-        'the Parse Node'                 : 'Parse Node',
-        'the result of parsing an |AssignmentExpression| or |Initializer|' : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
-        'a Parse Node for |AssignmentExpression| or a Parse Node for |Initializer|': 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
-        'a Parse Node for |CaseClause|'  : 'Parse Node for |CaseClause|',
-        'a |ScriptBody|'                 : 'Parse Node for |ScriptBody|',
-        'the |ScriptBody|'               : 'Parse Node for |ScriptBody|',
-        'a Parse Node for |ScriptBody|'  : 'Parse Node for |ScriptBody|',
-        '|CaseClause|'                   : 'Parse Node for |CaseClause|',
-        'a |CallExpression| Parse Node, an |OptionalChain| Parse Node, or a |MemberExpression| Parse Node' : 'Parse Node for |CallExpression| | Parse Node for |OptionalChain| | Parse Node for |MemberExpression|',
         'a |CaseClause| Parse Node'                                             : 'Parse Node for |CaseClause|',
         'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : 'Parse Node for |FunctionBody| | () -> Top_',
         'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : 'Parse Node for |NewExpression| | Parse Node for |MemberExpression|',
@@ -387,7 +293,6 @@ nature_to_tipe = {
         'a |ScriptBody| Parse Node'                                             : 'Parse Node for |ScriptBody|',
         'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
         'an |IdentifierName| Parse Node'                                        : 'Parse Node for |IdentifierName|',
-        'an |Identifier| Parse Node'                                            : 'Parse Node for |Identifier|',
         '~empty~ or an |Arguments| Parse Node'                                  : 'Parse Node for |Arguments| | empty_',
 
         'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
@@ -407,11 +312,8 @@ nature_to_tipe = {
 
         'throw *RangeError*'             : 'throw_ *RangeError*',
         'throw *TypeError*'              : 'throw_ *TypeError*',
-        'throw a *TypeError* exception'  : 'throw_ *TypeError*',
         'throw'                          : 'throw_',
         'throw *ReferenceError*'         : 'throw_ *ReferenceError*',
-        'throws a *TypeError* exception' : 'throw_ *TypeError*',
-        'throws an exception'            : 'throw_',
 
         'a TypedArray element type'     : 'TypedArray_element_type_',
         '~SeqCst~ or ~Unordered~'          : 'SharedMemory_ordering_',
@@ -429,48 +331,26 @@ nature_to_tipe = {
     # union of named types
 
     'a character'                                                : 'code_unit_ | code_point_',
-    'a function or an array of Strings and Numbers'              : 'function_object_ | Array_object_',
     'a BigInt or a Number'                                       : 'BigInt | Number',
-    'Number or BigInt'                                           : 'Number | BigInt',
-    'a Number or BigInt'                                         : 'Number | BigInt',
     'a Number or a BigInt'                                       : 'Number | BigInt',
-    'a Number value & *undefined*'                               : 'Number | Undefined',
     'a Number or *undefined*'                                    : 'Number | Undefined',
     'a Number, but not *NaN*'                                    : 'FiniteNumber_ | InfiniteNumber_',
     'an Array or *null*'                                         : 'Array_object_ | Null',
-    '*false* or a non-negative integer'                          : 'Boolean | MathInteger_',
-    '*false* or an IteratorResult object'                        : 'Boolean | IteratorResult_object_',
-    '*true*, *false*, or *undefined*'                            : 'Boolean | Undefined',
-    'Boolean or Undefined'                                       : 'Boolean | Undefined',
     'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
-    'Boolean | empty_'                                           : 'Boolean | empty_',
     'a Boolean or ~empty~'                                       : 'Boolean | empty_',
     'a Data Block or a Shared Data Block'                        : 'Data Block | Shared Data Block',
     'a non-negative integer or +&infin;'                          : 'MathNonNegativeInteger_ | MathPosInfinity_',
     'an Environment Record or *null*'                            : 'Environment Record | Null',
-    'an object or null'                                          : 'Object | Null',
-    'an object or *null*'                                        : 'Object | Null',
     'an Object or *null*'                                        : 'Object | Null',
     'an Object or *undefined*'                                   : 'Object | Undefined',
-    'Object | Undefined'                                         : 'Object | Undefined',
-    'Object | Null | Undefined'                                  : 'Object | Null | Undefined',
     'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
-    'a Parse Node or an Abstract Closure with no parameters'     : 'Parse Node | () -> Top_',
     'a PrivateEnvironment Record or *null*'                      : 'PrivateEnvironment Record | Null',
     'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
-    'Property Descriptor (or *undefined*)'                       : 'Property Descriptor | Undefined',
     'a Realm Record or *null*'                                   : 'Realm Record | Null',
-    'ResolvedBinding Record | Null | String'                     : 'ResolvedBinding Record | Null | String',
     'a ResolvedBinding Record or *null* or *"ambiguous"*'        : 'ResolvedBinding Record | Null | String',
     'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
-    'the Script Record or Module Record; may also be *null*'     : 'Script Record | Module Record | Null',
-    'a Script Record or Module Record; may also be Null'         : 'Script Record | Module Record | Null',
-    'a String or Number'                                         : 'String | Number',
-    'a String or Symbol'                                         : 'String | Symbol',
     'a property key or Private Name'                             : 'String | Symbol | Private Name',
-    'property key'                                               : 'String | Symbol',
     'a property key'                                             : 'String | Symbol',
-    'the property key'                                           : 'String | Symbol',
     'an ECMAScript language value or a Reference Record'         : 'Tangible_ | Reference Record',
     '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
     'an ECMAScript language value, but not a Number or a BigInt' : 'Undefined | Null | Boolean | String | Symbol | Object',
