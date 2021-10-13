@@ -538,7 +538,10 @@ class TypedAlgHeader:
         self.param_names = header.param_names()
         self.description = header.description
 
-        self.param_tipes = OrderedDict()
+        # ----
+
+        self.initial_parameter_types = OrderedDict()
+
         for param in header.params:
             optionality = '(optional) ' if param.punct == '[]' else ''
 
@@ -546,7 +549,11 @@ class TypedAlgHeader:
 
             param_tipe = optionality + tipe
 
-            self.param_tipes[param.name] = param_tipe
+            self.initial_parameter_types[param.name] = parse_type_string(param_tipe)
+
+        self.parameter_types = self.initial_parameter_types.copy()
+
+        # ----
 
         self.return_tipe_normal = convert_nature_to_tipe(header.return_nature_normal)
         self.return_tipe_abrupt = convert_nature_to_tipe(header.return_nature_abrupt)
@@ -583,12 +590,6 @@ class TypedAlgHeader:
                 self.for_param_type = x[for_param_type_string]
             else:
                 self.for_param_type = parse_type_string(for_param_type_string)
-
-        self.initial_parameter_types = OrderedDict()
-        for (param_name, param_type_str) in self.param_tipes.items():
-            self.initial_parameter_types[param_name] = parse_type_string(param_type_str)
-
-        self.parameter_types = self.initial_parameter_types.copy()
 
         if header.also is None:
             self.typed_alsos = {}
