@@ -815,10 +815,7 @@ def resolve_oi(hoi, poi):
         # When the heading contains a signature,
         # it's deemed authoritative.
 
-        if hoi.param_names != poi.param_names and hoi.name not in [
-            'OrdinaryCreateFromConstructor',
-            'TriggerPromiseReactions',
-        ]:
+        if hoi.param_names != poi.param_names:
             oh_warn()
             oh_warn(hoi.name, 'has param name mismatch:')
             oh_warn(hoi.param_names)
