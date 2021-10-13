@@ -299,10 +299,10 @@ class Frame:
 
         frame._contours = [{}]
         if frame._header:
-            assert len(arg_vals) == len(frame._header.param_names)
+            assert len(arg_vals) == len(frame._header.params)
             # XXX Doesn't handle optionals yet.
-            for (param_name, arg_val) in zip(frame._header.param_names, arg_vals):
-                frame.let_var_be_value(param_name, arg_val)
+            for (param, arg_val) in zip(frame._header.params, arg_vals):
+                frame.let_var_be_value(param.name, arg_val)
         else:
             assert NYI, frame._alg.name
 

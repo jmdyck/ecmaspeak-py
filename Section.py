@@ -2297,30 +2297,6 @@ def node_matches_atom(node, atom):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def AlgHeader_set_attributes_from_params(alg_header, params):
-    # Sets .param_nature_, .param_names, .rest_params, and .optional_params.
-
-    alg_header.param_names = []
-
-    for param in params:
-        assert isinstance(param, AlgParam)
-
-        if param.nature != 'unknown':
-            alg_header.param_nature_[param.name] = param.nature
-
-        alg_header.param_names.append(param.name)
-
-        if param.punct == '...':
-            alg_header.rest_params.add(param.name)
-        elif param.punct == '[]':
-            alg_header.optional_params.add(param.name)
-        elif param.punct == '':
-            pass
-        else:
-            assert 0, param_punct
-
-# ------------------------------------------------------------------------------
-
 def AlgHeader_make(
     *,
     section,
@@ -2345,7 +2321,8 @@ def AlgHeader_make(
     alg_header.also = also
 
     if params is not None:
-        AlgHeader_set_attributes_from_params(alg_header, params)
+        assert all(isinstance(param, AlgParam) for param in params)
+        alg_header.params = params
 
     if preamble_nodes:
         headers.check_header_against_prose(alg_header, preamble_nodes)

@@ -461,7 +461,7 @@ class PreambleInfoHolder:
 
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
-            poi.param_names = None
+            poi.params = None
         elif len(pl_values) == 1:
             get_info_from_parameter_listing_in_preamble(poi, pl_values[0])
         elif pl_values == [
@@ -470,7 +470,7 @@ class PreambleInfoHolder:
         ]:
             get_info_from_parameter_listing_in_preamble(poi, pl_values[1])
         else:
-            stderr(f"{poi.name} has multi-pl: {poi.param_names}")
+            stderr(f"{poi.name} has multi-pl: {pl_values}")
             assert 0
 
         also = at_most_one_value('also')
@@ -589,7 +589,7 @@ for line in rec_method_declarations.split('\n'):
 
 def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
-    assert oi.param_names is None, oi.name
+    assert oi.params is None, oi.name
 
     # if '_C_' in parameter_listing: stderr('gifpl', parameter_listing)
 
@@ -599,7 +599,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
     if parameter_listing == 'no arguments':
         # 27 cases
-        oi.param_names = []
+        oi.params = []
         return
 
     if parameter_listing in [
@@ -614,9 +614,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         return
 
     if parameter_listing == 'zero or more arguments which form the rest parameter ..._args_':
-        oi.param_names = ['_args_']
-        oi.param_nature_['_args_'] = 'a List of ECMAScript language values'
-        oi.rest_params.add('_args_')
+        oi.params = [ AlgParam('_args_', '...', 'a List of ECMAScript language values') ]
         return
 
     elif parameter_listing in [
@@ -626,19 +624,21 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no _p_ arguments, and where _body_ might also not be provided)',
     ]:
         # 4 cases
-        oi.param_names = ['_args_', '_body_']
-        oi.param_nature_['_args_'] = 'a List of ECMAScript language values'
-        oi.param_nature_['_body_'] = 'an ECMAScript language value'
-        oi.optional_params.add('_body_')
+        oi.params = [
+            AlgParam('_args_', '...', 'a List of ECMAScript language values'),
+            AlgParam('_body_', '[]', 'an ECMAScript language value'),
+        ]
         return
 
     elif parameter_listing  == 'at least one argument _buffer_':
         # 1 case
         # kludgey
         if oi.name == 'DataView':
-            oi.param_names = ['_buffer_', '_byteOffset_', '_byteLength_']
-            oi.optional_params.add('_byteOffset_')
-            oi.optional_params.add('_byteLength_')
+            oi.params = [
+                AlgParam('_buffer_',     '',   'unknown'),
+                AlgParam('_byteOffset_', '[]', 'unknown'),
+                AlgParam('_byteLength_', '[]', 'unknown'),
+            ]
         else:
             assert 0, oi.name
         return
@@ -656,7 +656,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
     # ---------------------
 
-    oi.param_names = []
+    oi.params = []
 
     # Split the listing into the 'required' and 'optional' parts:
     parts = []
@@ -717,15 +717,14 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
 
             [param_name] = parameter_names
 
-            assert param_name not in oi.param_names, param_name
-            oi.param_names.append(param_name)
+            assert param_name not in oi.param_names(), param_name
 
             if optionality == 'optional':
-                oi.optional_params.add(param_name)
-
-            if param_item == 'zero or more _args_':
-                # XXX how to represent 'zero or more'?
-                continue
+                punct = '[]'
+            elif param_item == 'zero or more _args_':
+                punct = '...'
+            else:
+                punct = ''
 
             r_param_item = re.sub(var_pattern, 'VAR', param_item)
 
@@ -736,6 +735,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
                 (r'VAR \((.+)\)', r'\1'),
                 (r'VAR',          'unknown'),
 
+                (r'zero or more VAR', 'a List of ECMAScript language values'),
                 (r'a Boolean flag named VAR', 'a Boolean'),
                 (r'(an? .+) VAR', r'\1'),
                 (r'(value) VAR',     r'a \1'),
@@ -748,7 +748,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
                 print(f"?   {r_param_item}")
                 assert 0
 
-            oi.param_nature_[param_name] = nature
+            oi.params.append( AlgParam(param_name, punct, nature) )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -803,39 +803,37 @@ def resolve_oi(hoi, poi):
         hoi.for_phrase = poi.for_phrase # which might or might not be None
 
     # param_names
-    if hoi.param_names is None:
-        # assert poi.param_names is not None
-        hoi.param_names = poi.param_names
-        hoi.optional_params = poi.optional_params
-        hoi.rest_params = poi.rest_params
-    elif poi.param_names is None:
-        assert hoi.param_names is not None
+    if hoi.params is None:
+        # assert poi.params is not None
+        hoi.params = poi.params
+    elif poi.params is None:
+        assert hoi.params is not None
     else:
         # neither is None
 
         # When the heading contains a signature,
         # it's deemed authoritative.
 
-        if hoi.param_names != poi.param_names:
+        if hoi.param_names() != poi.param_names():
             oh_warn()
             oh_warn(hoi.name, 'has param name mismatch:')
-            oh_warn(hoi.param_names)
-            oh_warn(poi.param_names)
+            oh_warn(hoi.param_names())
+            oh_warn(poi.param_names())
         else:
-            if hoi.optional_params != poi.optional_params:
-                oh_warn()
-                oh_warn(hoi.name, 'has param optionality mismatch:')
-                oh_warn('h:', sorted(list(hoi.optional_params)))
-                oh_warn('p:', sorted(list(poi.optional_params)))
 
-        assert (
-            not poi.rest_params
-            or
-            poi.rest_params == hoi.rest_params
-        )
+            for (hoi_param, poi_param) in zip(hoi.params, poi.params):
+                assert hoi_param.name == poi_param.name
 
-    assert hoi.param_nature_ == {} # heading never has type info
-    hoi.param_nature_ = poi.param_nature_
+                if hoi_param.punct != poi_param.punct:
+                    oh_warn()
+                    oh_warn(f"{hoi.name} parameter {hoi_param.name} has param punct mismatch:")
+                    oh_warn('h:', hoi_param.punct)
+                    oh_warn('p:', poi_param.punct)
+
+                if hoi_param.nature == 'unknown':
+                    hoi_param.nature = poi_param.nature
+                else:
+                    assert hoi_param.nature == poi_param.nature
 
     assert hoi.also is None
     hoi.also = poi.also
@@ -874,10 +872,7 @@ class AlgHeader:
         self.species = None
         self.name = None
         self.for_phrase = None
-        self.param_names = None
-        self.optional_params = set()
-        self.rest_params = set()
-        self.param_nature_ = {}
+        self.params = None
         self.also = None
         self.return_nature_normal = None
         self.return_nature_abrupt = None
@@ -894,13 +889,21 @@ class AlgHeader:
                 species: {self.species}
                 for : {self.for_phrase}
                 params: {', '.join(
-                    pn + ' : ' + self.param_nature_.get(pn, 'unknown')
-                    for pn in self.param_names
+                    param.name + ' : ' + param.nature
+                    for param in self.params
                     )
                 }
                 returns: {self.return_nature_normal}
                 # defns: {len(self.u_defns)}
         """
+
+    # --------------------------------------------------------------------------
+
+    def param_names(self):
+        return [
+            param.name
+            for param in self.params
+        ]
 
     # --------------------------------------------------------------------------
 
@@ -930,16 +933,16 @@ class AlgHeader:
         if self.name in predeclared_rec_method_info:
 
             (pd_param_names, pd_param_nature_, pd_return_nature_normal, pd_return_nature_abrupt) = predeclared_rec_method_info[self.name]
-            assert self.param_names == pd_param_names
-            for param_name in self.param_names:
-                pd_nature = pd_param_nature_[param_name]
-                if param_name in self.param_nature_:
-                    if self.param_nature_[param_name] != pd_nature:
+            assert self.param_names() == pd_param_names
+            for param in self.params:
+                pd_nature = pd_param_nature_[param.name]
+                if True: # param.nature == 'unknown'?
+                    if param.nature != pd_nature:
                         oh_warn()
-                        oh_warn(f"{self.name}, param {param_name}:")
-                        oh_warn(f"predeclared nature {pd_nature!r} != extracted nature {self.param_nature_[param_name]!r}")
+                        oh_warn(f"{self.name}, param {param.name}:")
+                        oh_warn(f"predeclared nature {pd_nature!r} != extracted nature {param.nature!r}")
                 else:
-                    self.param_nature_[param_name] = pd_nature
+                    param.nature = pd_nature
 
             checked_set('return_nature_normal', pd_return_nature_normal)
             checked_set('return_nature_abrupt', pd_return_nature_abrupt)
@@ -948,15 +951,12 @@ class AlgHeader:
             assert self.for_phrase  in ['Number', 'BigInt']
             numeric_nature = f"a {self.for_phrase}"
 
-            assert self.param_names
-            for param_name in self.param_names:
-                if param_name in self.param_nature_:
-                    if self.param_nature_[param_name] != numeric_nature:
-                        oh_warn()
-                        oh_warn(f"{self.name}, param {param_name}:")
-                        oh_warn(f"predeclared nature {numeric_nature!r} != extracted nature {self.param_nature_[param_name]!r}")
-                else:
-                    self.param_nature_[param_name] = numeric_nature
+            assert self.param_names()
+            for param in self.params:
+                if param.nature != numeric_nature:
+                    oh_warn()
+                    oh_warn(f"{self.name}, param {param.name}:")
+                    oh_warn(f"predeclared nature {numeric_nature!r} != extracted nature {param.nature!r}")
 
             if self.name in ['::equal', '::sameValue', '::sameValueZero']:
                 pd_return_nature_normal = 'a Boolean'
@@ -979,22 +979,21 @@ class AlgHeader:
 
         # --------------------------------------------------------------------------
 
-        assert len(self.rest_params) in [0,1]
+        assert self.params is not None
 
-        if self.param_names is None:
-                oh_warn()
-                oh_warn(f"{self.name}: self.param_names is None")
-                self.param_names = []
+        assert len([
+                param.name
+                for param in self.params
+                if param.punct == '...'
+            ]) in [0,1]
 
         if self.species.startswith('bif:'):
-            for param_name in self.param_names:
-                nature = self.param_nature_.get(param_name, 'unknown')
-                if nature == 'unknown':
-                    if param_name in self.rest_params:
-                        nature = 'a List of ECMAScript language values'
+            for param in self.params:
+                if param.nature == 'unknown':
+                    if param.punct == '...':
+                        param.nature = 'a List of ECMAScript language values'
                     else:
-                        nature = 'an ECMAScript language value'
-                    self.param_nature_[param_name] = nature
+                        param.nature = 'an ECMAScript language value'
 
         if self.return_nature_normal is None:
             if self.name.startswith('Math.'):
@@ -1048,7 +1047,7 @@ def write_header_info():
                 assert alg_header.species == alg_info.species
                 put(f"      --")
                 if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
-                # alg_header.param_names, .optional_params, .rest_params, .param_nature_
+                # alg_header.params
                 # alg_header.also
                 # alg_header.return_nature_{normal,abrupt}
                 # alg_header.description_paras

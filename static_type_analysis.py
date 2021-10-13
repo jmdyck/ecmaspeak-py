@@ -655,22 +655,18 @@ class TypedAlgHeader:
         self.species = header.species
         self.name = header.name
         self.name_w_markup = header.name_w_markup
-        self.param_names = header.param_names
+        self.param_names = header.param_names()
         self.description = header.description
 
         self.param_tipes = OrderedDict()
-        for param_name in self.param_names:
-            optionality = '(optional) ' if param_name in header.optional_params else ''
+        for param in header.params:
+            optionality = '(optional) ' if param.punct == '[]' else ''
 
-            if param_name in header.rest_params:
-                assert param_name not in header.optional_params
-
-            nature = header.param_nature_.get(param_name, 'unknown')
-            tipe = convert_nature_to_tipe(nature)
+            tipe = convert_nature_to_tipe(param.nature)
 
             param_tipe = optionality + tipe
 
-            self.param_tipes[param_name] = param_tipe
+            self.param_tipes[param.name] = param_tipe
 
         self.return_tipe_normal = convert_nature_to_tipe(header.return_nature_normal)
         self.return_tipe_abrupt = convert_nature_to_tipe(header.return_nature_abrupt)
