@@ -500,9 +500,9 @@ rec_method_declarations = '''
 
     # Table 16: Abstract Methods of Environment Records
     HasBinding(N)                -> a Boolean
-    CreateMutableBinding(N, D)   -> TBD
-    CreateImmutableBinding(N, S) -> TBD
-    InitializeBinding(N, V)      -> TBD
+    CreateMutableBinding(N, D)   -> unknown
+    CreateImmutableBinding(N, S) -> unknown
+    InitializeBinding(N, V)      -> unknown
     SetMutableBinding(N, V, S)   -> a Boolean or ~empty~ | throw
     GetBindingValue(N, S)        -> an ECMAScript language value | throw *ReferenceError*
     DeleteBinding(N)             -> a Boolean
@@ -511,7 +511,7 @@ rec_method_declarations = '''
     WithBaseObject()             -> an Object or *undefined*
 
     # Table 18: Additional Methods of Function Environment Records
-    BindThisValue(V) -> TBD
+    BindThisValue(V) -> unknown
     GetThisBinding() -> an ECMAScript language value | throw *ReferenceError*
     GetSuperBase()   -> an Object or *null* or *undefined*
 
@@ -522,22 +522,22 @@ rec_method_declarations = '''
     HasRestrictedGlobalProperty(N)       -> a Boolean
     CanDeclareGlobalVar(N)               -> a Boolean
     CanDeclareGlobalFunction(N)          -> a Boolean
-    CreateGlobalVarBinding(N, D)         -> TBD
-    CreateGlobalFunctionBinding(N, V, D) -> TBD
+    CreateGlobalVarBinding(N, D)         -> unknown
+    CreateGlobalFunctionBinding(N, V, D) -> unknown
 
     # Table 21: Additional Methods of Module Environment Records
-    CreateImportBinding(N, M, N2) -> TBD
+    CreateImportBinding(N, M, N2) -> unknown
     # GetThisBinding()            -> an ECMAScript language value | throw *ReferenceError*
 
     # Table 39: Abstract Methods of Module Records
     GetExportedNames(exportStarSet)       -> a List of names
     ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or *"ambiguous"*
-    Link()                                -> TBD
-    Evaluate()                            -> TBD
+    Link()                                -> unknown
+    Evaluate()                            -> unknown
 
     # Table 41: Additional Abstract Methods of Cyclic Module Record
-    InitializeEnvironment() -> TBD
-    ExecuteModule(capability) -> TBD
+    InitializeEnvironment() -> unknown
+    ExecuteModule(capability) -> unknown
 '''
 
 rec_method_param_nature_ = {
@@ -547,9 +547,9 @@ rec_method_param_nature_ = {
     '_N2_': 'a String',
     '_S_' : 'a Boolean',
     '_V_' : 'an ECMAScript language value',
-    '_exportStarSet_' : 'TBD',
+    '_exportStarSet_' : 'unknown',
     '_exportName_'    : 'a String',
-    '_resolveSet_'    : 'TBD',
+    '_resolveSet_'    : 'unknown',
     '_capability_'    : 'an optional PromiseCapability',
 }
 
@@ -580,7 +580,7 @@ for line in rec_method_declarations.split('\n'):
     if 'throw' in return_nature:
         (return_nature_normal, return_nature_abrupt) = re.split(r' \| (?=throw)', return_nature)
     else:
-        (return_nature_normal, return_nature_abrupt) = (return_nature, 'TBD')
+        (return_nature_normal, return_nature_abrupt) = (return_nature, 'unknown')
     predeclared_rec_method_info[name] = (param_names, param_nature_, return_nature_normal, return_nature_abrupt)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -733,7 +733,7 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
                 (r'VAR which is (a possibly empty List of ECMAScript language values)', r'\1'),
                 (r'VAR of type BigInt', 'a BigInt'),
                 (r'VAR \((.+)\)', r'\1'),
-                (r'VAR',          'TBD'),
+                (r'VAR',          'unknown'),
 
                 (r'a Boolean flag named VAR', 'a Boolean'),
                 (r'(an? .+) VAR', r'\1'),
@@ -888,7 +888,7 @@ class AlgHeader:
                 species: {self.species}
                 for : {self.for_phrase}
                 params: {', '.join(
-                    pn + ' : ' + self.param_nature_.get(pn, 'TBD')
+                    pn + ' : ' + self.param_nature_.get(pn, 'unknown')
                     for pn in self.param_names
                     )
                 }
@@ -982,8 +982,8 @@ class AlgHeader:
 
         if self.species.startswith('bif:'):
             for param_name in self.param_names:
-                nature = self.param_nature_.get(param_name, 'TBD')
-                if nature == 'TBD':
+                nature = self.param_nature_.get(param_name, 'unknown')
+                if nature == 'unknown':
                     if param_name in self.rest_params:
                         nature = 'a List of ECMAScript language values'
                     else:
@@ -994,10 +994,10 @@ class AlgHeader:
             if self.name.startswith('Math.'):
                 self.return_nature_normal = 'a Number'
             else:
-                self.return_nature_normal = 'TBD'
+                self.return_nature_normal = 'unknown'
 
         if self.return_nature_abrupt is None:
-            self.return_nature_abrupt = 'TBD'
+            self.return_nature_abrupt = 'unknown'
 
         # -------------------------
 

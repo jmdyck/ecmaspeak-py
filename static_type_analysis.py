@@ -33,7 +33,7 @@ def main():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def convert_nature_to_tipe(nature):
-    if nature == 'TBD': return 'TBD'
+    if nature == 'unknown': return 'TBD'
     if nature == 'N/A': return 'N/A'
 
     assert 'VAR' not in nature, nature
@@ -665,7 +665,7 @@ class TypedAlgHeader:
             if param_name in header.rest_params:
                 assert param_name not in header.optional_params
 
-            nature = header.param_nature_.get(param_name, 'TBD')
+            nature = header.param_nature_.get(param_name, 'unknown')
             tipe = convert_nature_to_tipe(nature)
 
             param_tipe = optionality + tipe
