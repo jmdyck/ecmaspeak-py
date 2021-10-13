@@ -554,8 +554,22 @@ class TypedAlgHeader:
 
         # ----
 
-        self.return_tipe_normal = convert_nature_to_tipe(header.return_nature_normal)
-        self.return_tipe_abrupt = convert_nature_to_tipe(header.return_nature_abrupt)
+        rtn = parse_type_string(convert_nature_to_tipe(header.return_nature_normal))
+        rta = parse_type_string(convert_nature_to_tipe(header.return_nature_abrupt))
+
+        if rtn == T_TBD and rta == T_TBD:
+            rt = T_TBD
+        elif rta == T_TBD:
+            rt = rtn
+        elif rtn == T_TBD:
+            rt = rta
+        else:
+            rt = rtn | rta
+        self.initial_return_type = rt
+
+        self.return_type = self.initial_return_type
+
+        # ----
 
         self.for_phrase = header.for_phrase
         if self.for_phrase is None:
@@ -597,17 +611,6 @@ class TypedAlgHeader:
                 (pn, parse_type_string(ahat_[(pn, pt)]))
                 for (pn, pt) in header.also
             )
-
-        if self.return_tipe_normal == 'TBD' and self.return_tipe_abrupt == 'TBD':
-            rt = 'TBD'
-        elif self.return_tipe_abrupt in ['TBD', 'N/A']:
-            rt = self.return_tipe_normal
-        elif self.return_tipe_normal == 'TBD':
-            rt = self.return_tipe_abrupt
-        else:
-            rt = self.return_tipe_normal + " | " + self.return_tipe_abrupt
-        self.initial_return_type = parse_type_string(rt)
-        self.return_type = self.initial_return_type
 
         self.fake_node_for_ = {}
         for pname in self.param_names:
@@ -1258,6 +1261,8 @@ def maybe_UnionType(member_types):
 def parse_type_string(text):
     assert isinstance(text, str)
     assert text != ''
+
+    if text == 'N/A': return T_0
 
     mo = re.match(r'^\(optional\) (.+)$', text)
     if mo:
