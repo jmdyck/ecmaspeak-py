@@ -934,7 +934,8 @@ def parse_type_string(text):
     else:
         is_optional = False
 
-    t = ptsr(text)
+    assert re.fullmatch(r'\w+( \w+)*', text)
+    t = maybe_NamedType(text)
 
     if is_optional:
         t = t | T_not_passed
@@ -943,10 +944,6 @@ def parse_type_string(text):
 
 def type_for_environment_record_kind(kind):
     return parse_type_string(kind.source_text() + ' Environment Record')
-
-def ptsr(text):
-    assert re.fullmatch(r'\w+( \w+)*', text)
-    return maybe_NamedType(text)
 
 def ptn_type_for(nonterminal):
     if isinstance(nonterminal, str):
