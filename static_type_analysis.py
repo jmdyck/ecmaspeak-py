@@ -278,24 +278,24 @@ class TypedAlgHeader:
         else:
             ahat_ = {
                 ('_comparefn_', 'from the current invocation of the `sort` method'):
-                    'Undefined | function_object_',
+                    T_Undefined | T_function_object_,
 
-                ('_IgnoreCase_', 'Boolean'): 'Boolean',
+                ('_IgnoreCase_', 'Boolean'): T_Boolean,
 
-                ('_Input_'           , 'from somewhere'): 'List of character_',
-                ('_InputLength_'     , 'from somewhere'): 'MathInteger_',
-                ('_NcapturingParens_', 'from somewhere'): 'MathInteger_',
-                ('_DotAll_'          , 'from somewhere'): 'Boolean',
-                ('_IgnoreCase_'      , 'from somewhere'): 'Boolean',
-                ('_Multiline_'       , 'from somewhere'): 'Boolean',
-                ('_Unicode_'         , 'from somewhere'): 'Boolean',
-                ('_WordCharacters_'  , 'from somewhere'): 'CharSet',
+                ('_Input_'           , 'from somewhere'): ListType(T_character_),
+                ('_InputLength_'     , 'from somewhere'): T_MathInteger_,
+                ('_NcapturingParens_', 'from somewhere'): T_MathInteger_,
+                ('_DotAll_'          , 'from somewhere'): T_Boolean,
+                ('_IgnoreCase_'      , 'from somewhere'): T_Boolean,
+                ('_Multiline_'       , 'from somewhere'): T_Boolean,
+                ('_Unicode_'         , 'from somewhere'): T_Boolean,
+                ('_WordCharacters_'  , 'from somewhere'): T_CharSet,
 
-                ('_comparefn_' , 'from the `sort` method'): 'function_object_ | Undefined',
-                ('_buffer_'    , 'from the `sort` method'): 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+                ('_comparefn_' , 'from the `sort` method'): T_function_object_ | T_Undefined,
+                ('_buffer_'    , 'from the `sort` method'): T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
             }
             self.typed_alsos = dict(
-                (pn, parse_type_string(ahat_[(pn, pt)]))
+                (pn, ahat_[(pn, pt)])
                 for (pn, pt) in header.also
             )
 
