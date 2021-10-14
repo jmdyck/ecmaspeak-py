@@ -927,18 +927,8 @@ def parse_type_string(text):
     assert isinstance(text, str)
     assert text != ''
 
-    mo = re.match(r'^\(optional\) (.+)$', text)
-    if mo:
-        is_optional = True
-        text = mo.group(1)
-    else:
-        is_optional = False
-
     assert re.fullmatch(r'\w+( \w+)*', text)
     t = maybe_NamedType(text)
-
-    if is_optional:
-        t = t | T_not_passed
 
     return t
 
