@@ -1247,20 +1247,20 @@ T_captures_list_  = ListType(T_captures_entry_)
 def type_for_TYPE_NAME(type_name):
     assert isinstance(type_name, ANode)
     assert type_name.prod.lhs_s == '{TYPE_NAME}'
-    return parse_type_string(type_name.source_text())
+    st = type_name.source_text()
+    if st == 'Matcher':
+        return T_Matcher
+    elif st == 'character':
+        return T_character_
+    elif st == 'integer':
+        return T_MathInteger_
+    else:
+        return parse_type_string(st)
 
 def parse_type_string(text):
     assert isinstance(text, str)
-
-    if text == 'Matcher':
-        return T_Matcher
-    elif text == 'character':
-        return T_character_
-    elif text == 'integer':
-        return T_MathInteger_
-    else:
-        assert re.fullmatch(r'\w+( \w+)*', text)
-        return NamedType(text)
+    assert re.fullmatch(r'\w+( \w+)*', text)
+    return NamedType(text)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
