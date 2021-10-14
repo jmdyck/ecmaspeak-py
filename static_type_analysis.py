@@ -945,16 +945,8 @@ def type_for_environment_record_kind(kind):
     return parse_type_string(kind.source_text() + ' Environment Record')
 
 def ptsr(text):
-    assert text != ''
-    for (pattern, lam) in [
-        (r'\w+( \w+)*',       lambda mo: maybe_NamedType(mo.group(0))),
-    ]:
-        mo = re.match('^' + pattern + '$', text)
-        if mo:
-            memtype = lam(mo)
-            # assert memtype in tnode_for_type_, memtype
-            return memtype
-    assert 0, repr(text)
+    assert re.fullmatch(r'\w+( \w+)*', text)
+    return maybe_NamedType(text)
 
 def ptn_type_for(nonterminal):
     if isinstance(nonterminal, str):
