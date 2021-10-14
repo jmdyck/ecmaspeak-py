@@ -1251,22 +1251,16 @@ def type_for_TYPE_NAME(type_name):
 
 def parse_type_string(text):
     assert isinstance(text, str)
-    assert text != ''
 
-    assert re.fullmatch(r'\w+( \w+)*', text)
-    t = maybe_NamedType(text)
-
-    return t
-
-def maybe_NamedType(name):
-    if name == 'Matcher':
+    if text == 'Matcher':
         return T_Matcher
-    elif name == 'character':
+    elif text == 'character':
         return T_character_
-    elif name == 'integer':
+    elif text == 'integer':
         return T_MathInteger_
     else:
-        return NamedType(name)
+        assert re.fullmatch(r'\w+( \w+)*', text)
+        return NamedType(text)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
