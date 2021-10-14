@@ -1244,6 +1244,13 @@ T_captures_list_  = ListType(T_captures_entry_)
 
 # ------------------------------------------
 
+def type_for_ERROR_TYPE(error_type):
+    st = error_type.source_text()
+    assert st.startswith('*')
+    assert st.endswith('*')
+    error_type_name = st[1:-1]
+    return NamedType(error_type_name)
+
 def type_for_TYPE_NAME(type_name):
     assert isinstance(type_name, ANode)
     assert type_name.prod.lhs_s == '{TYPE_NAME}'
@@ -3839,8 +3846,7 @@ def tc_nonvalue(anode, env0):
         r'{SMALL_COMMAND} : throw a {ERROR_TYPE} exception',
     ]:
         [error_type] = children
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), anode)
+        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), anode)
         result = None
 
     # ----------------------------------
@@ -5110,8 +5116,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is a non-empty List of {ERROR_TYPE} objects":
         [var, error_type] = children
-        error_type_name = error_type.source_text()[1:-1]
-        return env0.with_type_test(var, 'is a', ListType(NamedType(error_type_name)), asserting)
+        return env0.with_type_test(var, 'is a', ListType(type_for_ERROR_TYPE(error_type)), asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List in which each element is a String or a Symbol":
         [var] = children
@@ -9962,8 +9967,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
+        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Data_Block, env1)
 
     elif p == r'{EXPR} : a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception':
@@ -9971,8 +9975,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-        error_type_name = error_type.source_text()[1:-1]
-        proc_add_return(env0, ThrowType(NamedType(error_type_name)), error_type)
+        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Shared_Data_Block, env1)
 
     elif p == '{RECORD_CONSTRUCTOR} : {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }':
@@ -10344,8 +10347,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EX} : a newly created {ERROR_TYPE} object":
         [error_type] = children
-        error_type_name = error_type.source_text()[1:-1]
-        return (NamedType(error_type_name), env0)
+        return (type_for_ERROR_TYPE(error_type), env0)
 
     elif p in [
         r"{EXPR} : a copy of {var}",
@@ -10800,8 +10802,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present":
         [error_type] = children
-        error_type_name = error_type.source_text()[1:-1]
-        return (ListType(NamedType(error_type_name)), env0)
+        return (ListType(type_for_ERROR_TYPE(error_type)), env0)
 
     elif p == r"{EXPR} : that PrivateElement":
         [] = children
