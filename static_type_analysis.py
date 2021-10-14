@@ -212,7 +212,7 @@ class TypedAlgHeader:
         self.initial_parameter_types = OrderedDict()
 
         for param in header.params:
-            pt = parse_type_string(convert_nature_to_tipe(param.nature))
+            pt = convert_nature_to_type(param.nature)
 
             if param.punct == '[]':
                 pt = pt | T_not_passed
@@ -223,8 +223,8 @@ class TypedAlgHeader:
 
         # ----
 
-        rtn = parse_type_string(convert_nature_to_tipe(header.return_nature_normal))
-        rta = parse_type_string(convert_nature_to_tipe(header.return_nature_abrupt))
+        rtn = convert_nature_to_type(header.return_nature_normal)
+        rta = convert_nature_to_type(header.return_nature_abrupt)
 
         if rtn == T_TBD and rta == T_TBD:
             rt = T_TBD
@@ -931,8 +931,6 @@ def parse_type_string(text):
     assert isinstance(text, str)
     assert text != ''
 
-    if text == 'N/A': return T_0
-
     mo = re.match(r'^\(optional\) (.+)$', text)
     if mo:
         is_optional = True
@@ -1326,331 +1324,333 @@ def maybe_NamedType(name):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def convert_nature_to_tipe(nature):
-    if nature == 'unknown': return 'TBD'
-    if nature == 'N/A': return 'N/A'
-
+def convert_nature_to_type(nature):
     assert 'VAR' not in nature, nature
 
-    t = nature_to_tipe.get(nature, None)
-    if t is not None: return t
+    try:
+        t = nature_to_type[nature]
+        assert isinstance(t, Type), nature
+    except KeyError:
+        print(nature, file=un_f)
+        t = NamedType(nature)
 
-    print(nature, file=un_f)
-    return nature
+    return t
 
-nature_to_tipe = {
+nature_to_type = {
+        'unknown': T_TBD,
+        'N/A': T_0,
 
     # 5.1.4 The Syntactic Grammar
-        'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
+        'a nonterminal in one of the ECMAScript grammars' : T_grammar_symbol_,
 
-        'a Parse Node'                   : 'Parse Node',
-        'a |CaseClause| Parse Node'                                             : 'Parse Node for |CaseClause|',
-        'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : 'Parse Node for |NewExpression| | Parse Node for |MemberExpression|',
-        'a |RegularExpressionLiteral| Parse Node'                               : 'Parse Node for |RegularExpressionLiteral|',
-        'a |ScriptBody| Parse Node'                                             : 'Parse Node for |ScriptBody|',
-        'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
-        'an |IdentifierName| Parse Node'                                        : 'Parse Node for |IdentifierName|',
+        'a Parse Node'                                                          : T_Parse_Node,
+        'a |CaseClause| Parse Node'                                             : ptn_type_for('CaseClause'),
+        'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : ptn_type_for('NewExpression') | ptn_type_for('MemberExpression'),
+        'a |RegularExpressionLiteral| Parse Node'                               : ptn_type_for('RegularExpressionLiteral'),
+        'a |ScriptBody| Parse Node'                                             : ptn_type_for('ScriptBody'),
+        'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : ptn_type_for('AssignmentExpression') | ptn_type_for('Initializer'),
+        'an |IdentifierName| Parse Node'                                        : ptn_type_for('IdentifierName'),
 
     # 5.2.5 Mathematical Operations
-        'a mathematical value'      : 'MathReal_',
-        'an integer'                : 'MathInteger_',
-        '1 or -1'                   : 'MathInteger_',
-        'a non-negative integer'    : 'MathNonNegativeInteger_', # currently mapped to MathInteger_
-        'a positive integer'        : 'MathNonNegativeInteger_',
-        '0 or 1'                    : 'MathNonNegativeInteger_',
-        'a non-negative integer that is evenly divisble by 4' : 'MathNonNegativeInteger_',
+        'a mathematical value'      : T_MathReal_,
+        'an integer'                : T_MathInteger_,
+        '1 or -1'                   : T_MathInteger_,
+        'a non-negative integer'    : T_MathNonNegativeInteger_, # currently mapped to MathInteger_
+        'a positive integer'        : T_MathNonNegativeInteger_,
+        '0 or 1'                    : T_MathNonNegativeInteger_,
+        'a non-negative integer that is evenly divisble by 4' : T_MathNonNegativeInteger_,
 
     # 6.1 ECMAScript language types
 
-        'an ECMAScript language value'                       : 'Tangible_',
-        'a value'                                            : 'Tangible_',
-        'an ECMAScript language value, but not a TypedArray' : 'Tangible_', # loses info
+        'an ECMAScript language value'                       : T_Tangible_,
+        'a value'                                            : T_Tangible_,
+        'an ECMAScript language value, but not a TypedArray' : T_Tangible_, # loses info
 
     # 6.1.1 The Undefined Type
 
     # 6.1.2 The Null Type
 
     # 6.1.3 The Boolean Type
-        'a Boolean' : 'Boolean',
+        'a Boolean' : T_Boolean,
 
     # 6.1.4 The String Type
-        'a String'                  : 'String',
-        'a String value'            : 'String',
-        '*"reject"* or *"handle"*'  : 'String',
-        'a |ModuleSpecifier| String': 'String', # TODO
-        'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
+        'a String'                  : T_String,
+        'a String value'            : T_String,
+        '*"reject"* or *"handle"*'  : T_String,
+        'a |ModuleSpecifier| String': T_String, # TODO
+        'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': T_String,
 
-        'a code unit' : 'code_unit_',
+        'a code unit' : T_code_unit_,
 
     # 6.1.5 The Symbol Type
-        'a Symbol' : 'Symbol',
+        'a Symbol' : T_Symbol,
 
     # 6.1.6.1 The Number Type
-        'a Number'       : 'Number',
-        'a Number value' : 'Number',
+        'a Number'       : T_Number,
+        'a Number value' : T_Number,
 
-        'an integral Number' : 'IntegralNumber_',
+        'an integral Number' : T_IntegralNumber_,
 
     # 6.1.6.2 The BigInt Type
-        'a BigInt'    : 'BigInt',
+        'a BigInt'    : T_BigInt,
 
     # 6.1.7 The Object Type
-        'an Object'                                                      : 'Object',
-        'an object'                                                      : 'Object',
-        'an Object that conforms to the <i>IteratorResult</i> interface' : 'Object',
-        'an Object that has a [[StringData]] internal slot'              : 'Object',
-        'an Object, but not a TypedArray or an ArrayBuffer'              : 'Object',
-        'an initialized RegExp instance'                                 : 'Object',
+        'an Object'                                                      : T_Object,
+        'an object'                                                      : T_Object,
+        'an Object that conforms to the <i>IteratorResult</i> interface' : T_Object,
+        'an Object that has a [[StringData]] internal slot'              : T_Object,
+        'an Object, but not a TypedArray or an ArrayBuffer'              : T_Object,
+        'an initialized RegExp instance'                                 : T_Object,
 
         # function_: an object with a [[Call]] internal method
-        'a function object'                                           : 'function_object_',
+        'a function object'                                           : T_function_object_,
 
         # constructor_: an object with a [[Construct]] internal method
-        'a constructor'          : 'constructor_object_',
+        'a constructor'          : T_constructor_object_,
 
     # 6.2.1 The List and Record Specification Types
-        'a List'                                      : 'List',
-        'a List of Cyclic Module Records'             : 'List of Cyclic Module Record',
-        'a List of ECMAScript language values'        : 'List of Tangible_',
-        'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
-        'a List of PromiseReaction Records'           : 'List of PromiseReaction Record',
-        'a List of Records that have [[Module]] and [[ExportName]] fields': 'List of ExportResolveSet_Record_',
-        'a List of Source Text Module Records'        : 'List of Source Text Module Record',
-        'a List of Strings'                           : 'List of String',
-        'a List of Unicode code points'               : 'List of code_point_',
-        'a List of byte values'                       : 'List of MathInteger_',
-        'a List of internal slot names'               : 'List of SlotName_',
-        'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
-        'a List of names of internal slots'           : 'List of SlotName_',
-        'a List of names'                             : 'List of String',
-        'a List of property keys'                     : 'List of (String | Symbol)',
-        'a possibly empty List of Strings'            : 'List of String',
+        'a List'                                      : T_List,
+        'a List of Cyclic Module Records'             : ListType(T_Cyclic_Module_Record),
+        'a List of ECMAScript language values'        : ListType(T_Tangible_),
+        'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': ListType(T_ImportEntry_Record),
+        'a List of PromiseReaction Records'           : ListType(T_PromiseReaction_Record),
+        'a List of Records that have [[Module]] and [[ExportName]] fields': ListType(T_ExportResolveSet_Record_),
+        'a List of Source Text Module Records'        : ListType(T_Source_Text_Module_Record),
+        'a List of Strings'                           : ListType(T_String),
+        'a List of Unicode code points'               : ListType(T_code_point_),
+        'a List of byte values'                       : ListType(T_MathInteger_),
+        'a List of internal slot names'               : ListType(T_SlotName_),
+        'a List of names of ECMAScript Language Types': ListType(T_LangTypeName_),
+        'a List of names of internal slots'           : ListType(T_SlotName_),
+        'a List of names'                             : ListType(T_String),
+        'a List of property keys'                     : ListType(T_String | T_Symbol),
+        'a possibly empty List of Strings'            : ListType(T_String),
 
     # 6.2.2 The Set and Relation Specification Types
 
     # 6.2.3 Completion
-        'a Completion Record': 'Abrupt | Normal',
-        'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
+        'a Completion Record': T_Abrupt | T_Normal,
+        'a Completion Record whose [[Type]] is ~return~ or ~throw~': T_return_ | T_throw_,
 
-        'throw'                          : 'throw_',
-        'throw *RangeError*'             : 'throw_ *RangeError*',
-        'throw *ReferenceError*'         : 'throw_ *ReferenceError*',
-        'throw *TypeError*'              : 'throw_ *TypeError*',
+        'throw'                          : T_throw_,
+        'throw *RangeError*'             : ThrowType(T_RangeError),
+        'throw *ReferenceError*'         : ThrowType(T_ReferenceError),
+        'throw *TypeError*'              : ThrowType(T_TypeError),
 
     # 6.2.4 Reference Record
-        'a Reference Record' : 'Reference Record',
+        'a Reference Record' : T_Reference_Record,
 
     # 6.2.5 Property Descriptor
-        'a Property Descriptor' : 'Property Descriptor',
+        'a Property Descriptor' : T_Property_Descriptor,
 
     # 6.2.7 Abstract Closure
-        'an Abstract Closure with no parameters': '() -> Top_',
+        'an Abstract Closure with no parameters': ProcType([], T_Top_),
 
     # 6.2.8 Data Block
-        'a Shared Data Block' : 'Shared Data Block',
+        'a Shared Data Block' : T_Shared_Data_Block,
         # is it a subtype of Data Block? Doesn't seem to be treated that way
 
     # 6.2.9 The PrivateElement Specification Type
-        'a PrivateElement': 'PrivateElement',
+        'a PrivateElement': T_PrivateElement,
 
     # 6.2.10 The ClassFieldDefinition Record Specification Type
-        'a ClassFieldDefinition Record': 'ClassFieldDefinition Record',
+        'a ClassFieldDefinition Record': T_ClassFieldDefinition_Record,
 
     # 6.2.11 Private Name
-        'a Private Name': 'Private Name',
+        'a Private Name': T_Private_Name,
 
     # 6.2.12 ClassStaticBlockDefinition
 
     # 7.1.1 ToPrimitive
-        '~string~ or ~number~' : 'PreferredTypeHint_',
+        '~string~ or ~number~' : T_PreferredTypeHint_,
 
     # 7.3.15 SetIntegrityLevel
-        '~sealed~ or ~frozen~' : 'integrity_level_',
+        '~sealed~ or ~frozen~' : T_integrity_level_,
 
     # (6.2.6 The Environment Record Specification Type)
     # 9.1 Environment Records
-        'an Environment Record'            : 'Environment Record',
-        'a declarative Environment Record' : 'declarative Environment Record',
-        'a global Environment Record'      : 'global Environment Record',
+        'an Environment Record'            : T_Environment_Record,
+        'a declarative Environment Record' : T_declarative_Environment_Record,
+        'a global Environment Record'      : T_global_Environment_Record,
 
     # 9.2 PrivateEnvironment Records
-        'a PrivateEnvironment Record': 'PrivateEnvironment Record',
+        'a PrivateEnvironment Record': T_PrivateEnvironment_Record,
 
     # 9.3 Realms
-        'a Realm Record' : 'Realm Record',
+        'a Realm Record' : T_Realm_Record,
 
     # 9.4 Execution Contexts
-        'an execution context' : 'execution context',
+        'an execution context' : T_execution_context,
 
     # 9.5 Jobs etc
-        'a Job Abstract Closure' : 'Job Abstract Closure',
+        'a Job Abstract Closure' : T_Job,
 
     # 9.5.1 JobCallback Record
-        'a JobCallback Record': 'JobCallback Record',
+        'a JobCallback Record': T_JobCallback_Record,
 
     # 9.7 Agents
-        'an agent signifier' : 'agent_signifier_',
+        'an agent signifier' : T_agent_signifier_,
 
     # 10.2 ECMAScript Function Objects
     # 10.3 Built-in Function Objects
     # 20.2 Function Objects
-        'an ECMAScript function object'                               : 'function_object_',
-        'an ECMAScript function object or a built-in function object' : 'function_object_',
-        'an ECMAScript function'                                      : 'function_object_',
+        'an ECMAScript function object'                               : T_function_object_,
+        'an ECMAScript function object or a built-in function object' : T_function_object_,
+        'an ECMAScript function'                                      : T_function_object_,
 
     # 10.2.3 OrdinaryFunctionCreate
-        '~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
+        '~lexical-this~ or ~non-lexical-this~': T_this_mode2_,
 
     # 10.4.2 Array Exotic Objects
     # 23.1 Array Objects
-        'an Array' : 'Array_object_',
-        'an array' : 'Array_object_',
+        'an Array' : T_Array_object_,
+        'an array' : T_Array_object_,
 
     # 10.4.5 Integer-Indexed Exotic Objects
-        'an Integer-Indexed exotic object': 'Integer_Indexed_object_',
+        'an Integer-Indexed exotic object': T_Integer_Indexed_object_,
 
     # 10.5 Proxy Object ...
 
     # 11.1 Source Text
-        'a Unicode code point' : 'code_point_',
+        'a Unicode code point' : T_code_point_,
 
-        '`&amp;`, `^`, or `|`'              : 'Unicode_code_points_',
-        'ECMAScript source text'            : 'Unicode_code_points_',
-        'a sequence of Unicode code points' : 'Unicode_code_points_',
+        '`&amp;`, `^`, or `|`'              : T_Unicode_code_points_,
+        'ECMAScript source text'            : T_Unicode_code_points_,
+        'a sequence of Unicode code points' : T_Unicode_code_points_,
 
     # 14.7.5.6 ForIn/OfHeadEvaluation
-        '~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
+        '~enumerate~, ~iterate~, or ~async-iterate~' : T_IterationKind_,
 
     # 14.7.5.7 ForIn/OfBodyEvaluation
-        '~assignment~, ~varBinding~, or ~lexicalBinding~' : 'LhsKind_',
+        '~assignment~, ~varBinding~, or ~lexicalBinding~' : T_LhsKind_,
 
-        '~sync~ or ~async~' : 'IteratorKind_',
+        '~sync~ or ~async~' : T_IteratorKind_,
 
     # 16.2.1.4 Abstract Module Records
-        'a Module Record'                                    : 'Module Record',
-        'an instance of a concrete subclass of Module Record': 'Module Record',
-        'a Cyclic Module Record'                             : 'Cyclic Module Record',
+        'a Module Record'                                    : T_Module_Record,
+        'an instance of a concrete subclass of Module Record': T_Module_Record,
+        'a Cyclic Module Record'                             : T_Cyclic_Module_Record,
 
     # 20.1.2.11.1 GetOwnPropertyKeys
-        '~string~ or ~symbol~' : 'PropertyKeyKind_',
+        '~string~ or ~symbol~' : T_PropertyKeyKind_,
 
     # 20.2.1.1.1 CreateDynamicFunction
-        '~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
+        '~normal~, ~generator~, ~async~, or ~asyncGenerator~' : T_FunctionKind2_,
 
     # 21.4.1.1 TimeValues
-        'a time value'       : 'IntegralNumber_',
+        'a time value'       : T_IntegralNumber_,
         # time value is defined to be 'IntegralNumber_ | NaN_Number_',
         # but the only use (so far) is for LocalTime()'s _t_ param,
         # which probably shouldn't accept NaN.
         # I.e., it should be marked "a *finite* time value".
 
     # 22.1.3.30.1 TrimString
-        '~start~ or ~end~'               : 'TrimString_where_',
-        '~start~, ~end~, or ~start+end~' : 'TrimString_where_',
+        '~start~ or ~end~'               : T_TrimString_where_,
+        '~start~, ~end~, or ~start+end~' : T_TrimString_where_,
 
     # 22.2.2.1 Notation:
-        'a CharSet'      : 'CharSet',
-        'a State'        : 'State',
-        'a Continuation' : 'Continuation',
-        'a Matcher'      : 'Matcher',
+        'a CharSet'      : T_CharSet,
+        'a State'        : T_State,
+        'a Continuation' : T_Continuation,
+        'a Matcher'      : T_Matcher,
 
     # 23.2 TypedArray Objects
-        'a TypedArray'       : 'TypedArray_object_',
-        'a new _TypedArray_' : 'TypedArray_object_',
+        'a TypedArray'       : T_TypedArray_object_,
+        'a new _TypedArray_' : T_TypedArray_object_,
 
-        'a TypedArray element type' : 'TypedArray_element_type_',
+        'a TypedArray element type' : T_TypedArray_element_type_,
 
     # 25.1 ArrayBuffer Objects
     # 25.2 SharedArrayBuffer Objects
 
         # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
-        'an ArrayBuffer'                        : 'ArrayBuffer_object_',
-        'an ArrayBuffer or SharedArrayBuffer'   : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
-        'an ArrayBuffer or a SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+        'an ArrayBuffer'                        : T_ArrayBuffer_object_,
+        'an ArrayBuffer or SharedArrayBuffer'   : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
+        'an ArrayBuffer or a SharedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
 
     # 25.1.1 [ArrayBuffer Objects] Notation
-        'a read-modify-write modification function': 'ReadModifyWrite_modification_closure',
+        'a read-modify-write modification function': T_ReadModifyWrite_modification_closure,
 
     # 25.1.2.10 GetValueFromBuffer
-        '~SeqCst~ or ~Unordered~'          : 'SharedMemory_ordering_',
+        '~SeqCst~ or ~Unordered~'          : T_SharedMemory_ordering_,
 
     # 25.1.2.12 SetValueInBuffer
-        '~SeqCst~, ~Unordered~, or ~Init~' : 'SharedMemory_ordering_',
+        '~SeqCst~, ~Unordered~, or ~Init~' : T_SharedMemory_ordering_,
 
     # 25.4.1 WaiterList Objects
-        'a WaiterList' : 'WaiterList',
+        'a WaiterList' : T_WaiterList,
 
     # 26.1 WeakRef Objects
-        'a WeakRef': 'WeakRef_object_',
+        'a WeakRef': T_WeakRef_object_,
 
     # 26.2 FinalizationRegistry Objects
-        'a FinalizationRegistry' : 'FinalizationRegistry_object_',
+        'a FinalizationRegistry' : T_FinalizationRegistry_object_,
 
     # 27.1.1.2 The Iterator Interface
-        'an Iterator object': 'Iterator_object_',
+        'an Iterator object': T_Iterator_object_,
 
-        '~key+value~ or ~value~'         : 'iteration_result_kind_',
-        '~key+value~, ~key~, or ~value~' : 'iteration_result_kind_',
-        '~key~, ~value~, or ~key+value~' : 'iteration_result_kind_',
+        '~key+value~ or ~value~'         : T_iteration_result_kind_,
+        '~key+value~, ~key~, or ~value~' : T_iteration_result_kind_,
+        '~key~, ~value~, or ~key+value~' : T_iteration_result_kind_,
 
     # 27.2 Promise Objects
-        'a promise'    : 'Promise_object_',
-        'a Promise'    : 'Promise_object_',
-        'a new promise': 'Promise_object_',
+        'a promise'    : T_Promise_object_,
+        'a Promise'    : T_Promise_object_,
+        'a new promise': T_Promise_object_,
 
     # 27.2.1.1: PromiseCapability Record
-        'a PromiseCapability Record'    : 'PromiseCapability Record',
+        'a PromiseCapability Record'    : T_PromiseCapability_Record,
 
     # 27.2.1.2: PromiseReaction Records
-        'a PromiseReaction Record' : 'PromiseReaction Record',
+        'a PromiseReaction Record' : T_PromiseReaction_Record,
 
     # 27.6 AsyncGenerator Objects
-        'an AsyncGenerator': 'AsyncGenerator_object_',
+        'an AsyncGenerator': T_AsyncGenerator_object_,
 
     # 29.1 Memory Model Fundamentals
         'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
-            'ReadSharedMemory event | ReadModifyWriteSharedMemory event',
+            T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event,
         'a List of WriteSharedMemory or ReadModifyWriteSharedMemory events':
-            'List of (WriteSharedMemory event | ReadModifyWriteSharedMemory event)',
+            ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event),
 
     # 29.4 Candidate Executions
-        'a candidate execution': 'candidate execution',
-        'an execution'         : 'candidate execution', # ???
+        'a candidate execution': T_candidate_execution,
+        'an execution'         : T_candidate_execution, # ???
 
-        'an event in SharedDataBlockEventSet(_execution_)': 'Shared Data Block event',
+        'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_event,
 
     # -----------------------------
     # union of named types
 
-    'a BigInt or a Number'                                       : 'BigInt | Number',
-    'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
-    'a Boolean or ~empty~'                                       : 'Boolean | empty_',
-    'a Data Block or a Shared Data Block'                        : 'Data Block | Shared Data Block',
-    'a Number or *undefined*'                                    : 'Number | Undefined',
-    'a Number or a BigInt'                                       : 'Number | BigInt',
-    'a Number, but not *NaN*'                                    : 'FiniteNumber_ | InfiniteNumber_',
-    'a PrivateEnvironment Record or *null*'                      : 'PrivateEnvironment Record | Null',
-    'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
-    'a Realm Record or *null*'                                   : 'Realm Record | Null',
-    'a ResolvedBinding Record or *null* or *"ambiguous"*'        : 'ResolvedBinding Record | Null | String',
-    'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
-    'a character'                                                : 'code_unit_ | code_point_',
-    'a non-negative integer or +&infin;'                         : 'MathNonNegativeInteger_ | MathPosInfinity_',
-    'a property key or Private Name'                             : 'String | Symbol | Private Name',
-    'a property key'                                             : 'String | Symbol',
-    'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : 'Parse Node for |FunctionBody| | () -> Top_',
-    'an Abstract Closure, a set of algorithm steps, or some other definition of a function\'s behaviour provided in this specification' : 'proc_ | alg_steps',
-    'an Array or *null*'                                         : 'Array_object_ | Null',
-    'an ECMAScript language value or a Reference Record'         : 'Tangible_ | Reference Record',
-    'an ECMAScript language value, but not *undefined* or *null*': 'Boolean | Number | BigInt | String | Symbol | Object',
-    'an ECMAScript language value, but not a Number or a BigInt' : 'Undefined | Null | Boolean | String | Symbol | Object',
-    'an Environment Record or *null*'                            : 'Environment Record | Null',
-    'an Environment Record or *undefined*'                       : 'Environment Record | Undefined',
-    'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
-    'an Object or *null*'                                        : 'Object | Null',
-    'an Object or *undefined*'                                   : 'Object | Undefined',
-    '~empty~ or an |Arguments| Parse Node'                       : 'Parse Node for |Arguments| | empty_',
-    '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
+    'a BigInt or a Number'                                       : T_BigInt | T_Number,
+    'a Boolean or *undefined*'                                   : T_Boolean | T_Undefined,
+    'a Boolean or ~empty~'                                       : T_Boolean | T_empty_,
+    'a Data Block or a Shared Data Block'                        : T_Data_Block | T_Shared_Data_Block,
+    'a Number or *undefined*'                                    : T_Number | T_Undefined,
+    'a Number or a BigInt'                                       : T_Number | T_BigInt,
+    'a Number, but not *NaN*'                                    : T_FiniteNumber_ | T_InfiniteNumber_,
+    'a PrivateEnvironment Record or *null*'                      : T_PrivateEnvironment_Record | T_Null,
+    'a Property Descriptor or *undefined*'                       : T_Property_Descriptor | T_Undefined,
+    'a Realm Record or *null*'                                   : T_Realm_Record | T_Null,
+    'a ResolvedBinding Record or *null* or *"ambiguous"*'        : T_ResolvedBinding_Record | T_Null | T_String,
+    'a Script Record or Module Record or *null*'                 : T_Script_Record | T_Module_Record | T_Null,
+    'a character'                                                : T_code_unit_ | T_code_point_,
+    'a non-negative integer or +&infin;'                         : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
+    'a property key or Private Name'                             : T_String | T_Symbol | T_Private_Name,
+    'a property key'                                             : T_String | T_Symbol,
+    'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : ptn_type_for('FunctionBody') | ProcType([], T_Top_),
+    'an Abstract Closure, a set of algorithm steps, or some other definition of a function\'s behaviour provided in this specification' : T_proc_ | T_alg_steps,
+    'an Array or *null*'                                         : T_Array_object_ | T_Null,
+    'an ECMAScript language value or a Reference Record'         : T_Tangible_ | T_Reference_Record,
+    'an ECMAScript language value, but not *undefined* or *null*': T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object,
+    'an ECMAScript language value, but not a Number or a BigInt' : T_Undefined | T_Null | T_Boolean | T_String | T_Symbol | T_Object,
+    'an Environment Record or *null*'                            : T_Environment_Record | T_Null,
+    'an Environment Record or *undefined*'                       : T_Environment_Record | T_Undefined,
+    'an Object or *null* or *undefined*'                         : T_Object | T_Null | T_Undefined,
+    'an Object or *null*'                                        : T_Object | T_Null,
+    'an Object or *undefined*'                                   : T_Object | T_Undefined,
+    '~empty~ or an |Arguments| Parse Node'                       : ptn_type_for('Arguments') | T_empty_,
+    '~not-matched~ or a non-negative integer'                    : T_NotMatched_ | T_MathNonNegativeInteger_,
 
 }
 
