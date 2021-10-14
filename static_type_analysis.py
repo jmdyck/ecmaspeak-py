@@ -1247,7 +1247,7 @@ T_captures_list_  = ListType(T_captures_entry_)
 def type_for_TYPE_NAME(type_name):
     assert isinstance(type_name, ANode)
     assert type_name.prod.lhs_s == '{TYPE_NAME}'
-    return NamedType(type_name.source_text())
+    return parse_type_string(type_name.source_text())
 
 def parse_type_string(text):
     assert isinstance(text, str)
@@ -3668,7 +3668,7 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.":
         [prod_ref, res_type_name, res_var] = children
-        res_t = parse_type_string(res_type_name.source_text())
+        res_t = type_for_TYPE_NAME(res_type_name)
         result = env0.plus_new_entry(res_var, res_t)
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.":
@@ -3690,7 +3690,7 @@ def tc_nonvalue(anode, env0):
         [prod_ref, a_type, a_var, b_var] = children
         result = (
             env0
-            .plus_new_entry(a_var, parse_type_string(a_type.source_text()))
+            .plus_new_entry(a_var, type_for_TYPE_NAME(a_type))
             .plus_new_entry(b_var, T_Boolean)
         )
 
@@ -3700,7 +3700,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(arg, T_MathInteger_)
         result = (
             env0
-            .plus_new_entry(r_var, parse_type_string(r_type.source_text()))
+            .plus_new_entry(r_var, type_for_TYPE_NAME(r_type))
         )
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} with argument {var} to obtain an? {TYPE_NAME} {var}.":
@@ -3709,7 +3709,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(arg, T_MathInteger_)
         result = (
             env0
-            .plus_new_entry(r_var, parse_type_string(r_type.source_text()))
+            .plus_new_entry(r_var, type_for_TYPE_NAME(r_type))
         )
 
     elif p == r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
