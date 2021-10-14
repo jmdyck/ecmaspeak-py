@@ -947,13 +947,6 @@ def type_for_environment_record_kind(kind):
 def ptsr(text):
     assert text != ''
     for (pattern, lam) in [
-        (r'\(([^()]*)\) -> (.+)', text_to_proc_type),
-        (r'(List of \([^()]+\)) \| ([\w ]+)', lambda mo: UnionType([ptsr(mo.group(1)), ptsr(mo.group(2))])),
-        (r'List of \(([^()]+)\)', lambda mo: ListType(ptsr(mo.group(1)))),
-        (r'List of ([\w ]+)',     lambda mo: ListType(ptsr(mo.group(1)))),
-        (r'Parse Node for \|(\w+)\|', lambda mo: ptn_type_for(mo.group(1))),
-        (r'.+ \| .+',         lambda mo: UnionType([ptsr(alt) for alt in text.split(' | ')])),
-        (r'throw_ \*(\w+)\*', lambda mo: ThrowType(ptsr(mo.group(1)))),
         (r'\w+( \w+)*',       lambda mo: maybe_NamedType(mo.group(0))),
     ]:
         mo = re.match('^' + pattern + '$', text)
@@ -962,20 +955,6 @@ def ptsr(text):
             # assert memtype in tnode_for_type_, memtype
             return memtype
     assert 0, repr(text)
-
-def text_to_proc_type(mo):
-    (param_text, return_text) = mo.groups()
-
-    if re.match('^ *$', param_text):
-        param_types = []
-    else:
-        param_types = [parse_type_string(tx) for tx in param_text.split(', ')]
-
-    if re.match(r'^\([^()]+\)$', return_text):
-        return_text = return_text[1:-1]
-    return_type = parse_type_string(return_text)
-
-    return ProcType(param_types, return_type)
 
 def ptn_type_for(nonterminal):
     if isinstance(nonterminal, str):
