@@ -271,7 +271,7 @@ class TypedAlgHeader:
             if for_param_type_string in x:
                 self.for_param_type = x[for_param_type_string]
             else:
-                self.for_param_type = parse_type_string(for_param_type_string)
+                self.for_param_type = NamedType(for_param_type_string)
 
         if header.also is None:
             self.typed_alsos = {}
@@ -924,7 +924,7 @@ def maybe_UnionType(member_types):
 # ------------------------------------------------------------------------------
 
 def type_for_environment_record_kind(kind):
-    return parse_type_string(kind.source_text() + ' Environment Record')
+    return NamedType(kind.source_text() + ' Environment Record')
 
 def ptn_type_for(nonterminal):
     if isinstance(nonterminal, str):
@@ -1255,12 +1255,7 @@ def type_for_TYPE_NAME(type_name):
     elif st == 'integer':
         return T_MathInteger_
     else:
-        return parse_type_string(st)
-
-def parse_type_string(text):
-    assert isinstance(text, str)
-    assert re.fullmatch(r'\w+( \w+)*', text)
-    return NamedType(text)
+        return NamedType(st)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -8267,7 +8262,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             else:
                 assert len(candidate_type_names) == 1, (dsbn_name, candidate_type_names)
                 [type_name] = candidate_type_names
-                lhs_t = parse_type_string(type_name)
+                lhs_t = NamedType(type_name)
 
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
@@ -10105,7 +10100,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         # XXX: Should also ensure that each declared field is specified exactly once.
 
-        return ( parse_type_string(record_type_name), env2 )
+        return ( NamedType(record_type_name), env2 )
 
     elif p in [
         r"{SETTABLE} : the {DSBN} field of the calling surrounding's Agent Record", # XXX
