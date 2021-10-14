@@ -276,6 +276,24 @@ class TypedAlgHeader:
         if header.also is None:
             self.typed_alsos = {}
         else:
+            ahat_ = {
+                ('_comparefn_', 'from the current invocation of the `sort` method'):
+                    'Undefined | function_object_',
+
+                ('_IgnoreCase_', 'Boolean'): 'Boolean',
+
+                ('_Input_'           , 'from somewhere'): 'List of character_',
+                ('_InputLength_'     , 'from somewhere'): 'MathInteger_',
+                ('_NcapturingParens_', 'from somewhere'): 'MathInteger_',
+                ('_DotAll_'          , 'from somewhere'): 'Boolean',
+                ('_IgnoreCase_'      , 'from somewhere'): 'Boolean',
+                ('_Multiline_'       , 'from somewhere'): 'Boolean',
+                ('_Unicode_'         , 'from somewhere'): 'Boolean',
+                ('_WordCharacters_'  , 'from somewhere'): 'CharSet',
+
+                ('_comparefn_' , 'from the `sort` method'): 'function_object_ | Undefined',
+                ('_buffer_'    , 'from the `sort` method'): 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+            }
             self.typed_alsos = dict(
                 (pn, parse_type_string(ahat_[(pn, pt)]))
                 for (pn, pt) in header.also
@@ -532,28 +550,6 @@ class TypedAlgHeader:
 
         #!!! print("EDIT: In a header for `%s`: %s" % (self.name, change))
         # if self.name == 'LabelledEvaluation' and pname == '_labelSet_': pdb.set_trace()
-
-# ------------------------------------------------------------------------------
-
-# "also has access to" type info
-ahat_ = {
-    ('_comparefn_', 'from the current invocation of the `sort` method'):
-        'Undefined | function_object_',
-
-    ('_IgnoreCase_', 'Boolean'): 'Boolean',
-
-    ('_Input_'           , 'from somewhere'): 'List of character_',
-    ('_InputLength_'     , 'from somewhere'): 'MathInteger_',
-    ('_NcapturingParens_', 'from somewhere'): 'MathInteger_',
-    ('_DotAll_'          , 'from somewhere'): 'Boolean',
-    ('_IgnoreCase_'      , 'from somewhere'): 'Boolean',
-    ('_Multiline_'       , 'from somewhere'): 'Boolean',
-    ('_Unicode_'         , 'from somewhere'): 'Boolean',
-    ('_WordCharacters_'  , 'from somewhere'): 'CharSet',
-
-    ('_comparefn_' , 'from the `sort` method'): 'function_object_ | Undefined',
-    ('_buffer_'    , 'from the `sort` method'): 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
-}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
