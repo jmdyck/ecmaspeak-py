@@ -30,337 +30,6 @@ def main():
     do_static_type_analysis(levels)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def convert_nature_to_tipe(nature):
-    if nature == 'unknown': return 'TBD'
-    if nature == 'N/A': return 'N/A'
-
-    assert 'VAR' not in nature, nature
-
-    t = nature_to_tipe.get(nature, None)
-    if t is not None: return t
-
-    print(nature, file=un_f)
-    return nature
-
-nature_to_tipe = {
-    # ------------------------------
-    # ECMAScript language types
-
-        # Undefined
-
-        # Null
-
-        # Boolean
-        'a Boolean'         : 'Boolean',
-
-        # String
-        'a String'        : 'String',
-        'a String value'  : 'String',
-        '*"reject"* or *"handle"*': 'String',
-        'a |ModuleSpecifier| String': 'String', # TODO
-        'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
-
-        # Symbol
-        'a Symbol' : 'Symbol',
-
-        # Number
-        'a Number'                   : 'Number',
-        'a Number value'             : 'Number',
-
-        # BigInt
-        'a BigInt'    : 'BigInt',
-
-        # Object
-        'an Object'   : 'Object',
-        'an object'   : 'Object',
-        'an Object that conforms to the <i>IteratorResult</i> interface' : 'Object',
-        'an Object that has a [[StringData]] internal slot'              : 'Object',
-        'an Object, but not a TypedArray or an ArrayBuffer'              : 'Object',
-        'an initialized RegExp instance'                                 : 'Object',
-
-    # unofficial 'supertypes':
-
-        'an ECMAScript language value'  : 'Tangible_',
-        'a value'                       : 'Tangible_',
-        'an ECMAScript language value, but not a TypedArray' : 'Tangible_', # loses info
-
-    # unofficial 'subtypes' of the above:
-
-        'an integral Number'            : 'IntegralNumber_',
-        'a time value'                  : 'IntegralNumber_',
-        # time value is defined to be 'IntegralNumber_ | NaN_Number_',
-        # but the only use (so far) is for LocalTime()'s _t_ param,
-        # which probably shouldn't accept NaN.
-        # I.e., it should be marked "a *finite* time value".
-
-        # function_: an object with a [[Call]] internal method
-        'a function object'   : 'function_object_',
-        'an ECMAScript function object': 'function_object_',
-        'an ECMAScript function object or a built-in function object' : 'function_object_',
-        'an ECMAScript function'                                      : 'function_object_',
-
-        # constructor_: an object with a [[Construct]] internal method
-        'a constructor'          : 'constructor_object_',
-
-        # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
-        'an ArrayBuffer' : 'ArrayBuffer_object_',
-        'an ArrayBuffer or SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
-        'an ArrayBuffer or a SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
-
-        'a TypedArray'            : 'TypedArray_object_',
-        'a new _TypedArray_'      : 'TypedArray_object_',
-
-        # 9.4.2
-        'an Array'               : 'Array_object_',
-        'an array'               : 'Array_object_',
-
-        #? 'a Proxy exotic object' : 'Proxy_object_',
-
-        'a promise' : 'Promise_object_',
-        'a Promise' : 'Promise_object_',
-        'a new promise': 'Promise_object_',
-
-        'an Integer-Indexed exotic object': 'Integer_Indexed_object_',
-
-        # 25.1.1.3: IteratorResult_object_
-
-        'an Iterator object': 'Iterator_object_',
-
-        'an integer'                : 'MathInteger_',
-        '1 or -1'                   : 'MathInteger_',
-        'a Unicode code point'      : 'code_point_',
-        'a non-negative integer'    : 'MathNonNegativeInteger_', # currently mapped to MathInteger_
-        'a positive integer'        : 'MathNonNegativeInteger_',
-        '0 or 1'                    : 'MathNonNegativeInteger_',
-        'a non-negative integer that is evenly divisble by 4' : 'MathNonNegativeInteger_',
-
-    # ------------------------------
-    # ECMAScript specification types
-
-    # The ones enumerated in 6.2
-
-        # Reference
-
-        # List
-        'a List' : 'List',
-        'a List of names'                      : 'List of String',
-        'a List of property keys'              : 'List of (String | Symbol)',
-        '`&amp;`, `^`, or `|`'                 : 'Unicode_code_points_',
-        'ECMAScript source text'               : 'Unicode_code_points_',
-        'a sequence of Unicode code points'    : 'Unicode_code_points_',
-        'a List of Unicode code points'        : 'List of code_point_',
-        'a List of ECMAScript language values' : 'List of Tangible_',
-        'a List of Cyclic Module Records'      : 'List of Cyclic Module Record',
-        'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
-        'a List of Records that have [[Module]] and [[ExportName]] fields' : 'List of ExportResolveSet_Record_',
-        'a List of Source Text Module Records'                             : 'List of Source Text Module Record',
-        'a List of Strings'                                                : 'List of String',
-        'a possibly empty List of Strings'                                 : 'List of String',
-
-        # 6.2.3 Completion
-        'a Completion Record': 'Abrupt | Normal',
-        'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
-
-        # 6.2.4 Reference Record
-        'a Reference Record' : 'Reference Record',
-
-        # 6.2.5 Property Descriptor
-        'a Property Descriptor' : 'Property Descriptor',
-
-        # 6.2.6 Environment Record
-        'an Environment Record' : 'Environment Record',
-        'a declarative Environment Record'                                      : 'declarative Environment Record',
-        'a global Environment Record'                                           : 'global Environment Record',
-
-        # 6.2.7 Abstract Closure
-        'an Abstract Closure with no parameters': '() -> Top_',
-
-        # 6.2.8 Data Block
-        'a Shared Data Block' : 'Shared Data Block',
-        # is it a subtype of Data Block? Doesn't seem to be treated that way
-
-        # 6.2.9 The PrivateElement Specification Type
-        'a PrivateElement': 'PrivateElement',
-
-        # 6.2.10 The ClassFieldDefinition Record Specification Type
-        'a ClassFieldDefinition Record': 'ClassFieldDefinition Record',
-
-        # 6.2.11 Private Name
-        'a Private Name': 'Private Name',
-
-    # official 'subtypes' of the above:
-        # Object Environment Record
-        # Declarative Environment Record
-
-    # other 'declared' spec types:
-
-        # 5.2.5
-        'a mathematical value': 'MathReal_',
-
-        # 8.2 Realms: Realm Record
-        'a Realm Record' : 'Realm Record',
-
-        # 8.3 Execution Contexts
-        'an execution context' : 'execution context',
-
-        # 8.4 Jobs etc
-        'a Job Abstract Closure' : 'Job Abstract Closure',
-
-        # 8.4.1 JobCallback Record
-        'a JobCallback Record': 'JobCallback Record',
-
-        # 9.2 PrivateEnvironment Records
-        'a PrivateEnvironment Record': 'PrivateEnvironment Record',
-
-        # 15.1.8 Script Records: Script Record
-
-        # 15.2.1.15 Abstract Module Records: Module Record
-        'a Module Record' : 'Module Record',
-        'a Cyclic Module Record': 'Cyclic Module Record',
-        'an instance of a concrete subclass of Module Record': 'Module Record',
-
-        # 15.2.1.16 Source Text Module Records:
-        # ImportEntry Record
-        # ExportEntry Record
-
-        # 15.6 Async Generator Function Definitions
-        # 27.4 AsyncGeneratorFunction Objects
-            'an AsyncGenerator': 'AsyncGenerator_object_',
-
-        # 21.2.2.1 Notation:
-        # CharSet
-            'a CharSet'      : 'CharSet',
-        # State
-            'a State'        : 'State',
-        # MatchResult
-        # Continuation
-            'a Continuation' : 'Continuation',
-        # Matcher
-            'a Matcher'      : 'Matcher',
-
-        # 24.1.1 [ArrayBuffer Objects] Notation
-        'a read-modify-write modification function': 'ReadModifyWrite_modification_closure',
-
-        # 24.4
-        'a WaiterList' : 'WaiterList',
-
-        # 25.1
-        'a WeakRef': 'WeakRef_object_',
-
-        # 25.2
-        'a FinalizationRegistry' : 'FinalizationRegistry_object_',
-
-        # 27.4 Candidate Executions
-        'a candidate execution': 'candidate execution',
-        'an execution'         : 'candidate execution', # ???
-
-        'an event in SharedDataBlockEventSet(_execution_)': 'Shared Data Block event',
-
-        # 25.4.1.1: PromiseCapability Record
-        'a PromiseCapability Record'    : 'PromiseCapability Record',
-
-        # 25.4.1.2: PromiseReaction Records
-        'a PromiseReaction Record' : 'PromiseReaction Record',
-
-        # 27.1 Memory Model Fundamentals
-        'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
-            'ReadSharedMemory event | ReadModifyWriteSharedMemory event',
-        'a List of WriteSharedMemory or ReadModifyWriteSharedMemory events':
-            'List of (WriteSharedMemory event | ReadModifyWriteSharedMemory event)',
-
-    # unofficial 'subtypes' of official spec types:
-
-        'a List of byte values'                       : 'List of MathInteger_',
-        'a List of names of internal slots'           : 'List of SlotName_',
-        'a List of internal slot names'               : 'List of SlotName_',
-        'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
-        'a List of PromiseReaction Records'           : 'List of PromiseReaction Record',
-
-    # unofficial spec types
-
-        'a code unit' : 'code_unit_',
-
-        # 8.7.1 AgentSignifier
-        'an agent signifier' : 'agent_signifier_',
-
-        'a Parse Node'                   : 'Parse Node',
-        'a |CaseClause| Parse Node'                                             : 'Parse Node for |CaseClause|',
-        'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : 'Parse Node for |FunctionBody| | () -> Top_',
-        'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : 'Parse Node for |NewExpression| | Parse Node for |MemberExpression|',
-        'a |RegularExpressionLiteral| Parse Node'                               : 'Parse Node for |RegularExpressionLiteral|',
-        'a |ScriptBody| Parse Node'                                             : 'Parse Node for |ScriptBody|',
-        'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
-        'an |IdentifierName| Parse Node'                                        : 'Parse Node for |IdentifierName|',
-        '~empty~ or an |Arguments| Parse Node'                                  : 'Parse Node for |Arguments| | empty_',
-
-        'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
-
-
-        '~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
-
-        '~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
-
-        '~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
-
-        '~sync~ or ~async~'        : 'IteratorKind_',
-
-        '~assignment~, ~varBinding~, or ~lexicalBinding~' : 'LhsKind_',
-
-        '~string~ or ~symbol~' : 'PropertyKeyKind_',
-
-        'throw *RangeError*'             : 'throw_ *RangeError*',
-        'throw *TypeError*'              : 'throw_ *TypeError*',
-        'throw'                          : 'throw_',
-        'throw *ReferenceError*'         : 'throw_ *ReferenceError*',
-
-        'a TypedArray element type'     : 'TypedArray_element_type_',
-        '~SeqCst~ or ~Unordered~'          : 'SharedMemory_ordering_',
-        '~SeqCst~, ~Unordered~, or ~Init~' : 'SharedMemory_ordering_',
-        '~key+value~ or ~value~'         : 'iteration_result_kind_',
-        '~key+value~, ~key~, or ~value~' : 'iteration_result_kind_',
-        '~key~, ~value~, or ~key+value~' : 'iteration_result_kind_',
-
-        '~sealed~ or ~frozen~'           : 'integrity_level_',
-        '~start~ or ~end~'               : 'TrimString_where_',
-        '~start~, ~end~, or ~start+end~' : 'TrimString_where_',
-        '~string~ or ~number~'           : 'PreferredTypeHint_',
-
-    # -----------------------------
-    # union of named types
-
-    'a character'                                                : 'code_unit_ | code_point_',
-    'a BigInt or a Number'                                       : 'BigInt | Number',
-    'a Number or a BigInt'                                       : 'Number | BigInt',
-    'a Number or *undefined*'                                    : 'Number | Undefined',
-    'a Number, but not *NaN*'                                    : 'FiniteNumber_ | InfiniteNumber_',
-    'an Array or *null*'                                         : 'Array_object_ | Null',
-    'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
-    'a Boolean or ~empty~'                                       : 'Boolean | empty_',
-    'a Data Block or a Shared Data Block'                        : 'Data Block | Shared Data Block',
-    'a non-negative integer or +&infin;'                          : 'MathNonNegativeInteger_ | MathPosInfinity_',
-    'an Environment Record or *null*'                            : 'Environment Record | Null',
-    'an Object or *null*'                                        : 'Object | Null',
-    'an Object or *undefined*'                                   : 'Object | Undefined',
-    'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
-    'a PrivateEnvironment Record or *null*'                      : 'PrivateEnvironment Record | Null',
-    'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
-    'a Realm Record or *null*'                                   : 'Realm Record | Null',
-    'a ResolvedBinding Record or *null* or *"ambiguous"*'        : 'ResolvedBinding Record | Null | String',
-    'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
-    'a property key or Private Name'                             : 'String | Symbol | Private Name',
-    'a property key'                                             : 'String | Symbol',
-    'an ECMAScript language value or a Reference Record'         : 'Tangible_ | Reference Record',
-    '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
-    'an ECMAScript language value, but not a Number or a BigInt' : 'Undefined | Null | Boolean | String | Symbol | Object',
-    'an ECMAScript language value, but not *undefined* or *null*': 'Boolean | Number | BigInt | String | Symbol | Object',
-    'an Abstract Closure, a set of algorithm steps, or some other definition of a function\'s behaviour provided in this specification' : 'proc_ | alg_steps',
-    'an Environment Record or *undefined*'                       : 'Environment Record | Undefined',
-
-}
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def prep_for_STA():
     stderr('prep_for_STA ...')
@@ -1654,6 +1323,338 @@ def maybe_NamedType(name):
         return T_character_
     else:
         return NamedType(name)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def convert_nature_to_tipe(nature):
+    if nature == 'unknown': return 'TBD'
+    if nature == 'N/A': return 'N/A'
+
+    assert 'VAR' not in nature, nature
+
+    t = nature_to_tipe.get(nature, None)
+    if t is not None: return t
+
+    print(nature, file=un_f)
+    return nature
+
+nature_to_tipe = {
+
+    # 5.1.4 The Syntactic Grammar
+        'a nonterminal in one of the ECMAScript grammars' : 'grammar_symbol_',
+
+        'a Parse Node'                   : 'Parse Node',
+        'a |CaseClause| Parse Node'                                             : 'Parse Node for |CaseClause|',
+        'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : 'Parse Node for |NewExpression| | Parse Node for |MemberExpression|',
+        'a |RegularExpressionLiteral| Parse Node'                               : 'Parse Node for |RegularExpressionLiteral|',
+        'a |ScriptBody| Parse Node'                                             : 'Parse Node for |ScriptBody|',
+        'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : 'Parse Node for |AssignmentExpression| | Parse Node for |Initializer|',
+        'an |IdentifierName| Parse Node'                                        : 'Parse Node for |IdentifierName|',
+
+    # 5.2.5 Mathematical Operations
+        'a mathematical value'      : 'MathReal_',
+        'an integer'                : 'MathInteger_',
+        '1 or -1'                   : 'MathInteger_',
+        'a non-negative integer'    : 'MathNonNegativeInteger_', # currently mapped to MathInteger_
+        'a positive integer'        : 'MathNonNegativeInteger_',
+        '0 or 1'                    : 'MathNonNegativeInteger_',
+        'a non-negative integer that is evenly divisble by 4' : 'MathNonNegativeInteger_',
+
+    # 6.1 ECMAScript language types
+
+        'an ECMAScript language value'                       : 'Tangible_',
+        'a value'                                            : 'Tangible_',
+        'an ECMAScript language value, but not a TypedArray' : 'Tangible_', # loses info
+
+    # 6.1.1 The Undefined Type
+
+    # 6.1.2 The Null Type
+
+    # 6.1.3 The Boolean Type
+        'a Boolean' : 'Boolean',
+
+    # 6.1.4 The String Type
+        'a String'                  : 'String',
+        'a String value'            : 'String',
+        '*"reject"* or *"handle"*'  : 'String',
+        'a |ModuleSpecifier| String': 'String', # TODO
+        'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': 'String',
+
+        'a code unit' : 'code_unit_',
+
+    # 6.1.5 The Symbol Type
+        'a Symbol' : 'Symbol',
+
+    # 6.1.6.1 The Number Type
+        'a Number'       : 'Number',
+        'a Number value' : 'Number',
+
+        'an integral Number' : 'IntegralNumber_',
+
+    # 6.1.6.2 The BigInt Type
+        'a BigInt'    : 'BigInt',
+
+    # 6.1.7 The Object Type
+        'an Object'                                                      : 'Object',
+        'an object'                                                      : 'Object',
+        'an Object that conforms to the <i>IteratorResult</i> interface' : 'Object',
+        'an Object that has a [[StringData]] internal slot'              : 'Object',
+        'an Object, but not a TypedArray or an ArrayBuffer'              : 'Object',
+        'an initialized RegExp instance'                                 : 'Object',
+
+        # function_: an object with a [[Call]] internal method
+        'a function object'                                           : 'function_object_',
+
+        # constructor_: an object with a [[Construct]] internal method
+        'a constructor'          : 'constructor_object_',
+
+    # 6.2.1 The List and Record Specification Types
+        'a List'                                      : 'List',
+        'a List of Cyclic Module Records'             : 'List of Cyclic Module Record',
+        'a List of ECMAScript language values'        : 'List of Tangible_',
+        'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': 'List of ImportEntry Record',
+        'a List of PromiseReaction Records'           : 'List of PromiseReaction Record',
+        'a List of Records that have [[Module]] and [[ExportName]] fields': 'List of ExportResolveSet_Record_',
+        'a List of Source Text Module Records'        : 'List of Source Text Module Record',
+        'a List of Strings'                           : 'List of String',
+        'a List of Unicode code points'               : 'List of code_point_',
+        'a List of byte values'                       : 'List of MathInteger_',
+        'a List of internal slot names'               : 'List of SlotName_',
+        'a List of names of ECMAScript Language Types': 'List of LangTypeName_',
+        'a List of names of internal slots'           : 'List of SlotName_',
+        'a List of names'                             : 'List of String',
+        'a List of property keys'                     : 'List of (String | Symbol)',
+        'a possibly empty List of Strings'            : 'List of String',
+
+    # 6.2.2 The Set and Relation Specification Types
+
+    # 6.2.3 Completion
+        'a Completion Record': 'Abrupt | Normal',
+        'a Completion Record whose [[Type]] is ~return~ or ~throw~': 'return_ | throw_',
+
+        'throw'                          : 'throw_',
+        'throw *RangeError*'             : 'throw_ *RangeError*',
+        'throw *ReferenceError*'         : 'throw_ *ReferenceError*',
+        'throw *TypeError*'              : 'throw_ *TypeError*',
+
+    # 6.2.4 Reference Record
+        'a Reference Record' : 'Reference Record',
+
+    # 6.2.5 Property Descriptor
+        'a Property Descriptor' : 'Property Descriptor',
+
+    # 6.2.7 Abstract Closure
+        'an Abstract Closure with no parameters': '() -> Top_',
+
+    # 6.2.8 Data Block
+        'a Shared Data Block' : 'Shared Data Block',
+        # is it a subtype of Data Block? Doesn't seem to be treated that way
+
+    # 6.2.9 The PrivateElement Specification Type
+        'a PrivateElement': 'PrivateElement',
+
+    # 6.2.10 The ClassFieldDefinition Record Specification Type
+        'a ClassFieldDefinition Record': 'ClassFieldDefinition Record',
+
+    # 6.2.11 Private Name
+        'a Private Name': 'Private Name',
+
+    # 6.2.12 ClassStaticBlockDefinition
+
+    # 7.1.1 ToPrimitive
+        '~string~ or ~number~' : 'PreferredTypeHint_',
+
+    # 7.3.15 SetIntegrityLevel
+        '~sealed~ or ~frozen~' : 'integrity_level_',
+
+    # (6.2.6 The Environment Record Specification Type)
+    # 9.1 Environment Records
+        'an Environment Record'            : 'Environment Record',
+        'a declarative Environment Record' : 'declarative Environment Record',
+        'a global Environment Record'      : 'global Environment Record',
+
+    # 9.2 PrivateEnvironment Records
+        'a PrivateEnvironment Record': 'PrivateEnvironment Record',
+
+    # 9.3 Realms
+        'a Realm Record' : 'Realm Record',
+
+    # 9.4 Execution Contexts
+        'an execution context' : 'execution context',
+
+    # 9.5 Jobs etc
+        'a Job Abstract Closure' : 'Job Abstract Closure',
+
+    # 9.5.1 JobCallback Record
+        'a JobCallback Record': 'JobCallback Record',
+
+    # 9.7 Agents
+        'an agent signifier' : 'agent_signifier_',
+
+    # 10.2 ECMAScript Function Objects
+    # 10.3 Built-in Function Objects
+    # 20.2 Function Objects
+        'an ECMAScript function object'                               : 'function_object_',
+        'an ECMAScript function object or a built-in function object' : 'function_object_',
+        'an ECMAScript function'                                      : 'function_object_',
+
+    # 10.2.3 OrdinaryFunctionCreate
+        '~lexical-this~ or ~non-lexical-this~': 'this_mode2_',
+
+    # 10.4.2 Array Exotic Objects
+    # 23.1 Array Objects
+        'an Array' : 'Array_object_',
+        'an array' : 'Array_object_',
+
+    # 10.4.5 Integer-Indexed Exotic Objects
+        'an Integer-Indexed exotic object': 'Integer_Indexed_object_',
+
+    # 10.5 Proxy Object ...
+
+    # 11.1 Source Text
+        'a Unicode code point' : 'code_point_',
+
+        '`&amp;`, `^`, or `|`'              : 'Unicode_code_points_',
+        'ECMAScript source text'            : 'Unicode_code_points_',
+        'a sequence of Unicode code points' : 'Unicode_code_points_',
+
+    # 14.7.5.6 ForIn/OfHeadEvaluation
+        '~enumerate~, ~iterate~, or ~async-iterate~' : 'IterationKind_',
+
+    # 14.7.5.7 ForIn/OfBodyEvaluation
+        '~assignment~, ~varBinding~, or ~lexicalBinding~' : 'LhsKind_',
+
+        '~sync~ or ~async~' : 'IteratorKind_',
+
+    # 16.2.1.4 Abstract Module Records
+        'a Module Record'                                    : 'Module Record',
+        'an instance of a concrete subclass of Module Record': 'Module Record',
+        'a Cyclic Module Record'                             : 'Cyclic Module Record',
+
+    # 20.1.2.11.1 GetOwnPropertyKeys
+        '~string~ or ~symbol~' : 'PropertyKeyKind_',
+
+    # 20.2.1.1.1 CreateDynamicFunction
+        '~normal~, ~generator~, ~async~, or ~asyncGenerator~' : 'FunctionKind2_',
+
+    # 21.4.1.1 TimeValues
+        'a time value'       : 'IntegralNumber_',
+        # time value is defined to be 'IntegralNumber_ | NaN_Number_',
+        # but the only use (so far) is for LocalTime()'s _t_ param,
+        # which probably shouldn't accept NaN.
+        # I.e., it should be marked "a *finite* time value".
+
+    # 22.1.3.30.1 TrimString
+        '~start~ or ~end~'               : 'TrimString_where_',
+        '~start~, ~end~, or ~start+end~' : 'TrimString_where_',
+
+    # 22.2.2.1 Notation:
+        'a CharSet'      : 'CharSet',
+        'a State'        : 'State',
+        'a Continuation' : 'Continuation',
+        'a Matcher'      : 'Matcher',
+
+    # 23.2 TypedArray Objects
+        'a TypedArray'       : 'TypedArray_object_',
+        'a new _TypedArray_' : 'TypedArray_object_',
+
+        'a TypedArray element type' : 'TypedArray_element_type_',
+
+    # 25.1 ArrayBuffer Objects
+    # 25.2 SharedArrayBuffer Objects
+
+        # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
+        'an ArrayBuffer'                        : 'ArrayBuffer_object_',
+        'an ArrayBuffer or SharedArrayBuffer'   : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+        'an ArrayBuffer or a SharedArrayBuffer' : 'ArrayBuffer_object_ | SharedArrayBuffer_object_',
+
+    # 25.1.1 [ArrayBuffer Objects] Notation
+        'a read-modify-write modification function': 'ReadModifyWrite_modification_closure',
+
+    # 25.1.2.10 GetValueFromBuffer
+        '~SeqCst~ or ~Unordered~'          : 'SharedMemory_ordering_',
+
+    # 25.1.2.12 SetValueInBuffer
+        '~SeqCst~, ~Unordered~, or ~Init~' : 'SharedMemory_ordering_',
+
+    # 25.4.1 WaiterList Objects
+        'a WaiterList' : 'WaiterList',
+
+    # 26.1 WeakRef Objects
+        'a WeakRef': 'WeakRef_object_',
+
+    # 26.2 FinalizationRegistry Objects
+        'a FinalizationRegistry' : 'FinalizationRegistry_object_',
+
+    # 27.1.1.2 The Iterator Interface
+        'an Iterator object': 'Iterator_object_',
+
+        '~key+value~ or ~value~'         : 'iteration_result_kind_',
+        '~key+value~, ~key~, or ~value~' : 'iteration_result_kind_',
+        '~key~, ~value~, or ~key+value~' : 'iteration_result_kind_',
+
+    # 27.2 Promise Objects
+        'a promise'    : 'Promise_object_',
+        'a Promise'    : 'Promise_object_',
+        'a new promise': 'Promise_object_',
+
+    # 27.2.1.1: PromiseCapability Record
+        'a PromiseCapability Record'    : 'PromiseCapability Record',
+
+    # 27.2.1.2: PromiseReaction Records
+        'a PromiseReaction Record' : 'PromiseReaction Record',
+
+    # 27.6 AsyncGenerator Objects
+        'an AsyncGenerator': 'AsyncGenerator_object_',
+
+    # 29.1 Memory Model Fundamentals
+        'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
+            'ReadSharedMemory event | ReadModifyWriteSharedMemory event',
+        'a List of WriteSharedMemory or ReadModifyWriteSharedMemory events':
+            'List of (WriteSharedMemory event | ReadModifyWriteSharedMemory event)',
+
+    # 29.4 Candidate Executions
+        'a candidate execution': 'candidate execution',
+        'an execution'         : 'candidate execution', # ???
+
+        'an event in SharedDataBlockEventSet(_execution_)': 'Shared Data Block event',
+
+    # -----------------------------
+    # union of named types
+
+    'a BigInt or a Number'                                       : 'BigInt | Number',
+    'a Boolean or *undefined*'                                   : 'Boolean | Undefined',
+    'a Boolean or ~empty~'                                       : 'Boolean | empty_',
+    'a Data Block or a Shared Data Block'                        : 'Data Block | Shared Data Block',
+    'a Number or *undefined*'                                    : 'Number | Undefined',
+    'a Number or a BigInt'                                       : 'Number | BigInt',
+    'a Number, but not *NaN*'                                    : 'FiniteNumber_ | InfiniteNumber_',
+    'a PrivateEnvironment Record or *null*'                      : 'PrivateEnvironment Record | Null',
+    'a Property Descriptor or *undefined*'                       : 'Property Descriptor | Undefined',
+    'a Realm Record or *null*'                                   : 'Realm Record | Null',
+    'a ResolvedBinding Record or *null* or *"ambiguous"*'        : 'ResolvedBinding Record | Null | String',
+    'a Script Record or Module Record or *null*'                 : 'Script Record | Module Record | Null',
+    'a character'                                                : 'code_unit_ | code_point_',
+    'a non-negative integer or +&infin;'                         : 'MathNonNegativeInteger_ | MathPosInfinity_',
+    'a property key or Private Name'                             : 'String | Symbol | Private Name',
+    'a property key'                                             : 'String | Symbol',
+    'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : 'Parse Node for |FunctionBody| | () -> Top_',
+    'an Abstract Closure, a set of algorithm steps, or some other definition of a function\'s behaviour provided in this specification' : 'proc_ | alg_steps',
+    'an Array or *null*'                                         : 'Array_object_ | Null',
+    'an ECMAScript language value or a Reference Record'         : 'Tangible_ | Reference Record',
+    'an ECMAScript language value, but not *undefined* or *null*': 'Boolean | Number | BigInt | String | Symbol | Object',
+    'an ECMAScript language value, but not a Number or a BigInt' : 'Undefined | Null | Boolean | String | Symbol | Object',
+    'an Environment Record or *null*'                            : 'Environment Record | Null',
+    'an Environment Record or *undefined*'                       : 'Environment Record | Undefined',
+    'an Object or *null* or *undefined*'                         : 'Object | Null | Undefined',
+    'an Object or *null*'                                        : 'Object | Null',
+    'an Object or *undefined*'                                   : 'Object | Undefined',
+    '~empty~ or an |Arguments| Parse Node'                       : 'Parse Node for |Arguments| | empty_',
+    '~not-matched~ or a non-negative integer'                    : 'NotMatched_ | MathNonNegativeInteger_',
+
+}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 type_tweaks_str = '''
 AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
