@@ -946,11 +946,6 @@ def ptn_type_for(nonterminal):
     type = NamedType(type_name)
     return type
 
-def type_for_TYPE_NAME(type_name):
-    assert isinstance(type_name, ANode)
-    assert type_name.prod.lhs_s == '{TYPE_NAME}'
-    return NamedType(type_name.source_text())
-
 # ------------------------------------------------------------------------------
 
 named_type_hierarchy = {
@@ -1248,6 +1243,11 @@ T_captures_list_  = ListType(T_captures_entry_)
 # T_Unicode_code_points_ = ListType(T_code_point_)
 
 # ------------------------------------------
+
+def type_for_TYPE_NAME(type_name):
+    assert isinstance(type_name, ANode)
+    assert type_name.prod.lhs_s == '{TYPE_NAME}'
+    return NamedType(type_name.source_text())
 
 def parse_type_string(text):
     assert isinstance(text, str)
