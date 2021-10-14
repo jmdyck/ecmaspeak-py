@@ -1275,6 +1275,10 @@ def maybe_NamedType(name):
         return T_MathNonNegativeInteger_
     elif name == 'character_':
         return T_character_
+    elif name == 'character':
+        return T_character_
+    elif name == 'integer':
+        return T_MathInteger_
     else:
         return NamedType(name)
 
@@ -3664,12 +3668,7 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.":
         [prod_ref, res_type_name, res_var] = children
-        res_t = {
-            'Matcher'         : T_Matcher,
-            'CharSet'         : T_CharSet,
-            'character'       : T_character_,
-            'integer'         : T_MathInteger_,
-        }[res_type_name.source_text()]
+        res_t = parse_type_string(res_type_name.source_text())
         result = env0.plus_new_entry(res_var, res_t)
 
     elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.":
