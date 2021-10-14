@@ -1652,152 +1652,151 @@ nature_to_type = {
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-type_tweaks_str = '''
-AllPrivateIdentifiersValid               ; _names_                ; TBD                 ; List of String
-ArrayAccumulation                        ; _nextIndex_            ; TBD                 ; MathInteger_
-AsyncFunctionStart                       ; _asyncFunctionBody_    ; TBD                 ; Parse Node
-AsyncGeneratorEnqueue                    ; _completion_           ; Abrupt | Normal     ; Tangible_ | return_ | throw_
-AsyncGeneratorUnwrapYieldResumption      ; _resumptionValue_      ; Abrupt | Normal     ; Tangible_ | return_ | throw_
-AsyncIteratorClose                       ; _completion_           ; Abrupt | Normal     ; Tangible_ | empty_ | throw_
-BindingClassDeclarationEvaluation        ; *return*               ; TBD                 ; function_object_ | throw_
-BindingInitialization                    ; _environment_          ; TBD                 ; Environment Record | Undefined
-ClassDefinitionEvaluation                ; _className_            ; TBD                 ; String | Undefined
-ClassDefinitionEvaluation                ; *return*               ; TBD                 ; function_object_ | throw_
-ClassElementEvaluation                   ; *return*               ; TBD                 ; Abrupt | ClassFieldDefinition Record | ClassStaticBlockDefinition Record | PrivateElement | Undefined | empty_
-Construct                                ; _argumentsList_        ; (optional) TBD      ; (optional) List of Tangible_
-ConstructorMethod                        ; *return*               ; TBD                 ; empty_ | Parse Node for |ClassElement|
-Contains                                 ; _symbol_               ; TBD                 ; grammar_symbol_
-ContainsDuplicateLabels                  ; *return*               ; TBD                 ; Boolean
-ContainsDuplicateLabels                  ; _labelSet_             ; TBD                 ; List of String
-ContainsUndefinedBreakTarget             ; *return*               ; TBD                 ; Boolean
-ContainsUndefinedContinueTarget          ; *return*               ; TBD                 ; Boolean
-CreateListFromArrayLike                  ; _obj_                  ; TBD                 ; Tangible_
-CreateMappedArgumentsObject              ; _argumentsList_        ; List                ; List of Tangible_
-CreatePerIterationEnvironment            ; _perIterationBindings_ ; TBD                 ; List of String
-DefineMethod                             ; _functionPrototype_    ; (optional) TBD      ; (optional) Object
-DefineMethod                             ; *return*               ; TBD                 ; methodDef_record_ | throw_
-DestructuringAssignmentEvaluation        ; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
-DetachArrayBuffer                        ; _key_                  ; (optional) TBD      ; (optional) Tangible_
-EvalDeclarationInstantiation             ; _varEnv_               ; TBD                 ; Environment Record
-EvalDeclarationInstantiation             ; _lexEnv_               ; TBD                 ; Environment Record
-EvalDeclarationInstantiation             ; _privateEnv_           ; TBD                 ; PrivateEnvironment Record
-Evaluation                               ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
-ExportEntriesForModule                   ; _module_               ; TBD                 ; String | Null
-FinishDynamicImport                      ; _referencingScriptOrModule_ ; TBD            ; Script Record | Module Record | Null
-FinishDynamicImport                      ; _specifier_            ; TBD                 ; String
-FlattenIntoArray                         ; *return*               ; TBD                 ; MathNonNegativeInteger_ | throw_
-GeneratorResume                          ; _value_                ; TBD                 ; Tangible_ | empty_
-GeneratorValidate                        ; _generator_            ; TBD                 ; Tangible_
-GetIterator                              ; _method_               ; (optional) TBD      ; (optional) function_object_
-GetMethod                                ; *return*               ; TBD                 ; Undefined | function_object_ | throw_
-GetOwnPropertyKeys                       ; _O_                    ; TBD                 ; Tangible_
-GetValue                                 ; *return*               ; TBD                 ; Tangible_ | throw_
-GetValue                                 ; _V_                    ; TBD                 ; Tangible_ | Reference Record | throw_
-GetViewValue                             ; _view_                 ; TBD                 ; Tangible_
-GetViewValue                             ; _isLittleEndian_       ; TBD                 ; Tangible_
-HasCallInTailPosition                    ; _call_                 ; TBD                 ; Parse Node
-HostEnqueuePromiseJob                    ; *return*               ; TBD                 ; empty_
-HostEnsureCanCompileStrings              ; *return*               ; TBD                 ; host_defined_ | throw_
-HostFinalizeImportMeta                   ; *return*               ; TBD                 ; empty_
-HostGetImportMetaProperties              ; *return*               ; TBD                 ; List of ImportMeta_record_
-HostHasSourceTextAvailable               ; *return*               ; TBD                 ; Boolean
-HostImportModuleDynamically              ; *return*               ; TBD                 ; Undefined
-HostPromiseRejectionTracker              ; *return*               ; TBD                 ; empty_
-HostResolveImportedModule                ; *return*               ; TBD                 ; Module Record | throw_ *Error*
-InitializeBoundName                      ; _value_                ; TBD                 ; Tangible_
-InitializeReferencedBinding              ; _V_                    ; TBD                 ; Reference Record | throw_
-InitializeReferencedBinding              ; _W_                    ; TBD                 ; Tangible_ | throw_
-InnerModuleLinking                       ; _module_               ; Cyclic Module Record; Module Record
-IsArray                                  ; _argument_             ; TBD                 ; Tangible_
-IsConcatSpreadable                       ; _O_                    ; TBD                 ; Tangible_
-IsIntegralNumber                         ; _argument_             ; TBD                 ; Tangible_
-IsLabelledFunction                       ; _stmt_                 ; TBD                 ; Parse Node
-IsPromise                                ; _x_                    ; TBD                 ; Tangible_
-IsRegExp                                 ; _argument_             ; TBD                 ; Tangible_
-IteratorBindingInitialization            ; _environment_          ; TBD                 ; Environment Record | Undefined
-IteratorClose                            ; _completion_           ; Normal | Abrupt     ; Tangible_ | empty_ | throw_
-IteratorDestructuringAssignmentEvaluation; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
-IteratorNext                             ; _value_                ; (optional) TBD      ; (optional) Tangible_
-IteratorStep                             ; *return*               ; TBD                 ; Boolean | Object | throw_
-IteratorValue                            ; *return*               ; TBD                 ; Tangible_ | throw_
-KeyedBindingInitialization               ; _environment_          ; TBD                 ; Environment Record | Undefined
-KeyedDestructuringAssignmentEvaluation   ; *return*               ; TBD                 ; Tangible_ | empty_ | throw_
-LabelledEvaluation                       ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
-LoopContinues                            ; _completion_           ; TBD                 ; Tangible_ | empty_ | Abrupt
-LoopEvaluation                           ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
-MV                                       ; *return*               ; TBD                 ; MathInteger_
-MakeSuperPropertyReference               ; _actualThis_           ; TBD                 ; Tangible_
-MakeSuperPropertyReference               ; _propertyKey_          ; TBD                 ; String | Symbol
-MakeSuperPropertyReference               ; _strict_               ; TBD                 ; Boolean
-NewPromiseReactionJob                    ; _argument_             ; TBD                 ; Tangible_
-OrdinaryHasInstance                      ; _O_                    ; TBD                 ; Tangible_
-ParsePattern                             ; *return*               ; TBD                 ; List of SyntaxError | Parse Node for |Pattern|
-PerformEval                              ; _x_                    ; TBD                 ; Tangible_
-PerformPromiseThen                       ; _onFulfilled_          ; TBD                 ; Tangible_
-PerformPromiseThen                       ; _onRejected_           ; TBD                 ; Tangible_
-PromiseResolve                           ; _C_                    ; constructor_object_ ; Object
-PropertyDefinitionEvaluation             ; *return*               ; TBD                 ; not_returned | throw_
-ProxyCreate                              ; _handler_              ; TBD                 ; Tangible_
-ProxyCreate                              ; _target_               ; TBD                 ; Tangible_
-PutValue                                 ; _V_                    ; TBD                 ; Tangible_ | Reference Record | throw_
-PutValue                                 ; _W_                    ; TBD                 ; Tangible_ | throw_
-QuoteJSONString                          ; _value_                ; TBD                 ; String
-RepeatMatcher                            ; *return*               ; TBD                 ; MatchResult
-RequireInternalSlot                      ; _O_                    ; TBD                 ; Tangible_
-RequireInternalSlot                      ; _internalSlot_         ; TBD                 ; SlotName_
-RequireObjectCoercible                   ; *return*               ; throw_              ; Boolean | Number | String | Symbol | Object | throw_ *TypeError*
-RequireObjectCoercible                   ; _argument_             ; TBD                 ; Tangible_
-SV                                       ; *return*               ; TBD                 ; String
-SetRealmGlobalObject                     ; _thisValue_            ; TBD                 ; Tangible_
-SetViewValue                             ; _view_                 ; TBD                 ; Tangible_
-SetViewValue                             ; _isLittleEndian_       ; TBD                 ; Tangible_
-SortCompare                              ; _x_                    ; TBD                 ; Tangible_
-SortCompare                              ; _y_                    ; TBD                 ; Tangible_
-StringToBigInt                           ; *return*               ; TBD                 ; BigInt | Number
-TRV                                      ; *return*               ; TBD                 ; String
-TV                                       ; *return*               ; TBD                 ; String | Undefined
-TemplateStrings                          ; *return*               ; TBD                 ; List of String
-ToBoolean                                ; *return*               ; TBD                 ; Boolean
-ToBoolean                                ; _argument_             ; TBD                 ; Tangible_
-ToNumber                                 ; *return*               ; TBD                 ; Number | throw_ *TypeError*
-ToNumber                                 ; _argument_             ; TBD                 ; Tangible_
-ToObject                                 ; *return*               ; TBD                 ; Object | throw_ *TypeError*
-ToObject                                 ; _argument_             ; TBD                 ; Tangible_
-ToPropertyDescriptor                     ; _Obj_                  ; TBD                 ; Tangible_
-ToString                                 ; *return*               ; TBD                 ; String | throw_ *TypeError*
-ToString                                 ; _argument_             ; TBD                 ; Tangible_
-TriggerPromiseReactions                  ; _argument_             ; TBD                 ; Tangible_
-UpdateEmpty                              ; *return*               ; TBD                 ; Tangible_ | empty_ | Abrupt
-UpdateEmpty                              ; _completionRecord_     ; TBD                 ; Tangible_ | empty_ | Abrupt
-UpdateEmpty                              ; _value_                ; TBD                 ; Tangible_ | empty_
-ValidateAndApplyPropertyDescriptor       ; _P_                    ; String | Symbol     ; String | Symbol | Undefined
-ValidateAndApplyPropertyDescriptor       ; _current_              ; Property Descriptor ; Property Descriptor | Undefined
-ValidateTypedArray                       ; _O_                    ; TBD                 ; Tangible_
-[[Call]]                                 ; *return*               ; TBD                 ; Tangible_ | throw_
-[[Construct]]                            ; *return*               ; TBD                 ; Object | throw_
-Day                                      ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-TimeWithinDay                            ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-DaysInYear                               ; _y_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-DayFromYear                              ; _y_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-TimeFromYear                             ; _y_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-YearFromTime                             ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-MonthFromTime                            ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-DateFromTime                             ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-WeekDay                                  ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-HourFromTime                             ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-MinFromTime                              ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-SecFromTime                              ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-msFromTime                               ; _t_                    ; TBD                 ; FiniteNumber_ | InfiniteNumber_
-'''
+type_tweaks_tuples = [
+    ('AllPrivateIdentifiersValid'               , '_names_'                , 'TBD'                 , 'List of String'),
+    ('ArrayAccumulation'                        , '_nextIndex_'            , 'TBD'                 , 'MathInteger_'),
+    ('AsyncFunctionStart'                       , '_asyncFunctionBody_'    , 'TBD'                 , 'Parse Node'),
+    ('AsyncGeneratorEnqueue'                    , '_completion_'           , 'Abrupt | Normal'     , 'Tangible_ | return_ | throw_'),
+    ('AsyncGeneratorUnwrapYieldResumption'      , '_resumptionValue_'      , 'Abrupt | Normal'     , 'Tangible_ | return_ | throw_'),
+    ('AsyncIteratorClose'                       , '_completion_'           , 'Abrupt | Normal'     , 'Tangible_ | empty_ | throw_'),
+    ('BindingClassDeclarationEvaluation'        , '*return*'               , 'TBD'                 , 'function_object_ | throw_'),
+    ('BindingInitialization'                    , '_environment_'          , 'TBD'                 , 'Environment Record | Undefined'),
+    ('ClassDefinitionEvaluation'                , '_className_'            , 'TBD'                 , 'String | Undefined'),
+    ('ClassDefinitionEvaluation'                , '*return*'               , 'TBD'                 , 'function_object_ | throw_'),
+    ('ClassElementEvaluation'                   , '*return*'               , 'TBD'                 , 'Abrupt | ClassFieldDefinition Record | ClassStaticBlockDefinition Record | PrivateElement | Undefined | empty_'),
+    ('Construct'                                , '_argumentsList_'        , '(optional) TBD'      , '(optional) List of Tangible_'),
+    ('ConstructorMethod'                        , '*return*'               , 'TBD'                 , 'empty_ | Parse Node for |ClassElement|'),
+    ('Contains'                                 , '_symbol_'               , 'TBD'                 , 'grammar_symbol_'),
+    ('ContainsDuplicateLabels'                  , '*return*'               , 'TBD'                 , 'Boolean'),
+    ('ContainsDuplicateLabels'                  , '_labelSet_'             , 'TBD'                 , 'List of String'),
+    ('ContainsUndefinedBreakTarget'             , '*return*'               , 'TBD'                 , 'Boolean'),
+    ('ContainsUndefinedContinueTarget'          , '*return*'               , 'TBD'                 , 'Boolean'),
+    ('CreateListFromArrayLike'                  , '_obj_'                  , 'TBD'                 , 'Tangible_'),
+    ('CreateMappedArgumentsObject'              , '_argumentsList_'        , 'List'                , 'List of Tangible_'),
+    ('CreatePerIterationEnvironment'            , '_perIterationBindings_' , 'TBD'                 , 'List of String'),
+    ('DefineMethod'                             , '_functionPrototype_'    , '(optional) TBD'      , '(optional) Object'),
+    ('DefineMethod'                             , '*return*'               , 'TBD'                 , 'methodDef_record_ | throw_'),
+    ('DestructuringAssignmentEvaluation'        , '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | throw_'),
+    ('DetachArrayBuffer'                        , '_key_'                  , '(optional) TBD'      , '(optional) Tangible_'),
+    ('EvalDeclarationInstantiation'             , '_varEnv_'               , 'TBD'                 , 'Environment Record'),
+    ('EvalDeclarationInstantiation'             , '_lexEnv_'               , 'TBD'                 , 'Environment Record'),
+    ('EvalDeclarationInstantiation'             , '_privateEnv_'           , 'TBD'                 , 'PrivateEnvironment Record'),
+    ('Evaluation'                               , '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | Abrupt'),
+    ('ExportEntriesForModule'                   , '_module_'               , 'TBD'                 , 'String | Null'),
+    ('FinishDynamicImport'                      , '_referencingScriptOrModule_' , 'TBD'            , 'Script Record | Module Record | Null'),
+    ('FinishDynamicImport'                      , '_specifier_'            , 'TBD'                 , 'String'),
+    ('FlattenIntoArray'                         , '*return*'               , 'TBD'                 , 'MathNonNegativeInteger_ | throw_'),
+    ('GeneratorResume'                          , '_value_'                , 'TBD'                 , 'Tangible_ | empty_'),
+    ('GeneratorValidate'                        , '_generator_'            , 'TBD'                 , 'Tangible_'),
+    ('GetIterator'                              , '_method_'               , '(optional) TBD'      , '(optional) function_object_'),
+    ('GetMethod'                                , '*return*'               , 'TBD'                 , 'Undefined | function_object_ | throw_'),
+    ('GetOwnPropertyKeys'                       , '_O_'                    , 'TBD'                 , 'Tangible_'),
+    ('GetValue'                                 , '*return*'               , 'TBD'                 , 'Tangible_ | throw_'),
+    ('GetValue'                                 , '_V_'                    , 'TBD'                 , 'Tangible_ | Reference Record | throw_'),
+    ('GetViewValue'                             , '_view_'                 , 'TBD'                 , 'Tangible_'),
+    ('GetViewValue'                             , '_isLittleEndian_'       , 'TBD'                 , 'Tangible_'),
+    ('HasCallInTailPosition'                    , '_call_'                 , 'TBD'                 , 'Parse Node'),
+    ('HostEnqueuePromiseJob'                    , '*return*'               , 'TBD'                 , 'empty_'),
+    ('HostEnsureCanCompileStrings'              , '*return*'               , 'TBD'                 , 'host_defined_ | throw_'),
+    ('HostFinalizeImportMeta'                   , '*return*'               , 'TBD'                 , 'empty_'),
+    ('HostGetImportMetaProperties'              , '*return*'               , 'TBD'                 , 'List of ImportMeta_record_'),
+    ('HostHasSourceTextAvailable'               , '*return*'               , 'TBD'                 , 'Boolean'),
+    ('HostImportModuleDynamically'              , '*return*'               , 'TBD'                 , 'Undefined'),
+    ('HostPromiseRejectionTracker'              , '*return*'               , 'TBD'                 , 'empty_'),
+    ('HostResolveImportedModule'                , '*return*'               , 'TBD'                 , 'Module Record | throw_ *Error*'),
+    ('InitializeBoundName'                      , '_value_'                , 'TBD'                 , 'Tangible_'),
+    ('InitializeReferencedBinding'              , '_V_'                    , 'TBD'                 , 'Reference Record | throw_'),
+    ('InitializeReferencedBinding'              , '_W_'                    , 'TBD'                 , 'Tangible_ | throw_'),
+    ('InnerModuleLinking'                       , '_module_'               , 'Cyclic Module Record', 'Module Record'),
+    ('IsArray'                                  , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('IsConcatSpreadable'                       , '_O_'                    , 'TBD'                 , 'Tangible_'),
+    ('IsIntegralNumber'                         , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('IsLabelledFunction'                       , '_stmt_'                 , 'TBD'                 , 'Parse Node'),
+    ('IsPromise'                                , '_x_'                    , 'TBD'                 , 'Tangible_'),
+    ('IsRegExp'                                 , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('IteratorBindingInitialization'            , '_environment_'          , 'TBD'                 , 'Environment Record | Undefined'),
+    ('IteratorClose'                            , '_completion_'           , 'Normal | Abrupt'     , 'Tangible_ | empty_ | throw_'),
+    ('IteratorDestructuringAssignmentEvaluation', '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | throw_'),
+    ('IteratorNext'                             , '_value_'                , '(optional) TBD'      , '(optional) Tangible_'),
+    ('IteratorStep'                             , '*return*'               , 'TBD'                 , 'Boolean | Object | throw_'),
+    ('IteratorValue'                            , '*return*'               , 'TBD'                 , 'Tangible_ | throw_'),
+    ('KeyedBindingInitialization'               , '_environment_'          , 'TBD'                 , 'Environment Record | Undefined'),
+    ('KeyedDestructuringAssignmentEvaluation'   , '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | throw_'),
+    ('LabelledEvaluation'                       , '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | Abrupt'),
+    ('LoopContinues'                            , '_completion_'           , 'TBD'                 , 'Tangible_ | empty_ | Abrupt'),
+    ('LoopEvaluation'                           , '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | Abrupt'),
+    ('MV'                                       , '*return*'               , 'TBD'                 , 'MathInteger_'),
+    ('MakeSuperPropertyReference'               , '_actualThis_'           , 'TBD'                 , 'Tangible_'),
+    ('MakeSuperPropertyReference'               , '_propertyKey_'          , 'TBD'                 , 'String | Symbol'),
+    ('MakeSuperPropertyReference'               , '_strict_'               , 'TBD'                 , 'Boolean'),
+    ('NewPromiseReactionJob'                    , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('OrdinaryHasInstance'                      , '_O_'                    , 'TBD'                 , 'Tangible_'),
+    ('ParsePattern'                             , '*return*'               , 'TBD'                 , 'List of SyntaxError | Parse Node for |Pattern|'),
+    ('PerformEval'                              , '_x_'                    , 'TBD'                 , 'Tangible_'),
+    ('PerformPromiseThen'                       , '_onFulfilled_'          , 'TBD'                 , 'Tangible_'),
+    ('PerformPromiseThen'                       , '_onRejected_'           , 'TBD'                 , 'Tangible_'),
+    ('PromiseResolve'                           , '_C_'                    , 'constructor_object_' , 'Object'),
+    ('PropertyDefinitionEvaluation'             , '*return*'               , 'TBD'                 , 'not_returned | throw_'),
+    ('ProxyCreate'                              , '_handler_'              , 'TBD'                 , 'Tangible_'),
+    ('ProxyCreate'                              , '_target_'               , 'TBD'                 , 'Tangible_'),
+    ('PutValue'                                 , '_V_'                    , 'TBD'                 , 'Tangible_ | Reference Record | throw_'),
+    ('PutValue'                                 , '_W_'                    , 'TBD'                 , 'Tangible_ | throw_'),
+    ('QuoteJSONString'                          , '_value_'                , 'TBD'                 , 'String'),
+    ('RepeatMatcher'                            , '*return*'               , 'TBD'                 , 'MatchResult'),
+    ('RequireInternalSlot'                      , '_O_'                    , 'TBD'                 , 'Tangible_'),
+    ('RequireInternalSlot'                      , '_internalSlot_'         , 'TBD'                 , 'SlotName_'),
+    ('RequireObjectCoercible'                   , '*return*'               , 'throw_'              , 'Boolean | Number | String | Symbol | Object | throw_ *TypeError*'),
+    ('RequireObjectCoercible'                   , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('SV'                                       , '*return*'               , 'TBD'                 , 'String'),
+    ('SetRealmGlobalObject'                     , '_thisValue_'            , 'TBD'                 , 'Tangible_'),
+    ('SetViewValue'                             , '_view_'                 , 'TBD'                 , 'Tangible_'),
+    ('SetViewValue'                             , '_isLittleEndian_'       , 'TBD'                 , 'Tangible_'),
+    ('SortCompare'                              , '_x_'                    , 'TBD'                 , 'Tangible_'),
+    ('SortCompare'                              , '_y_'                    , 'TBD'                 , 'Tangible_'),
+    ('StringToBigInt'                           , '*return*'               , 'TBD'                 , 'BigInt | Number'),
+    ('TRV'                                      , '*return*'               , 'TBD'                 , 'String'),
+    ('TV'                                       , '*return*'               , 'TBD'                 , 'String | Undefined'),
+    ('TemplateStrings'                          , '*return*'               , 'TBD'                 , 'List of String'),
+    ('ToBoolean'                                , '*return*'               , 'TBD'                 , 'Boolean'),
+    ('ToBoolean'                                , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('ToNumber'                                 , '*return*'               , 'TBD'                 , 'Number | throw_ *TypeError*'),
+    ('ToNumber'                                 , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('ToObject'                                 , '*return*'               , 'TBD'                 , 'Object | throw_ *TypeError*'),
+    ('ToObject'                                 , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('ToPropertyDescriptor'                     , '_Obj_'                  , 'TBD'                 , 'Tangible_'),
+    ('ToString'                                 , '*return*'               , 'TBD'                 , 'String | throw_ *TypeError*'),
+    ('ToString'                                 , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('TriggerPromiseReactions'                  , '_argument_'             , 'TBD'                 , 'Tangible_'),
+    ('UpdateEmpty'                              , '*return*'               , 'TBD'                 , 'Tangible_ | empty_ | Abrupt'),
+    ('UpdateEmpty'                              , '_completionRecord_'     , 'TBD'                 , 'Tangible_ | empty_ | Abrupt'),
+    ('UpdateEmpty'                              , '_value_'                , 'TBD'                 , 'Tangible_ | empty_'),
+    ('ValidateAndApplyPropertyDescriptor'       , '_P_'                    , 'String | Symbol'     , 'String | Symbol | Undefined'),
+    ('ValidateAndApplyPropertyDescriptor'       , '_current_'              , 'Property Descriptor' , 'Property Descriptor | Undefined'),
+    ('ValidateTypedArray'                       , '_O_'                    , 'TBD'                 , 'Tangible_'),
+    ('[[Call]]'                                 , '*return*'               , 'TBD'                 , 'Tangible_ | throw_'),
+    ('[[Construct]]'                            , '*return*'               , 'TBD'                 , 'Object | throw_'),
+    ('Day'                                      , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('TimeWithinDay'                            , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('DaysInYear'                               , '_y_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('DayFromYear'                              , '_y_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('TimeFromYear'                             , '_y_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('YearFromTime'                             , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('MonthFromTime'                            , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('DateFromTime'                             , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('WeekDay'                                  , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('HourFromTime'                             , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('MinFromTime'                              , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('SecFromTime'                              , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+    ('msFromTime'                               , '_t_'                    , 'TBD'                 , 'FiniteNumber_ | InfiniteNumber_'),
+]
 class TypeTweaks:
     def __init__(self):
         self.tweaks = []
         self.n_uses = 0
 
 type_tweaks_for_op_ = defaultdict(TypeTweaks)
-for line in type_tweaks_str.strip().split('\n'):
-    if line.startswith('#'): continue
-    [op_name, p_name, old_t_str, new_t_str] = re.split(' *; *', line.rstrip())
+for tweak_tuple in type_tweaks_tuples:
+    [op_name, p_name, old_t_str, new_t_str] = tweak_tuple
     type_tweaks_for_op_[op_name].tweaks.append( (
         op_name,
         p_name,
