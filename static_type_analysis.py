@@ -923,15 +923,6 @@ def maybe_UnionType(member_types):
 
 # ------------------------------------------------------------------------------
 
-def parse_type_string(text):
-    assert isinstance(text, str)
-    assert text != ''
-
-    assert re.fullmatch(r'\w+( \w+)*', text)
-    t = maybe_NamedType(text)
-
-    return t
-
 def type_for_environment_record_kind(kind):
     return parse_type_string(kind.source_text() + ' Environment Record')
 
@@ -1255,6 +1246,17 @@ T_captures_entry_ = ListType(T_character_) | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
 
 # T_Unicode_code_points_ = ListType(T_code_point_)
+
+# ------------------------------------------
+
+def parse_type_string(text):
+    assert isinstance(text, str)
+    assert text != ''
+
+    assert re.fullmatch(r'\w+( \w+)*', text)
+    t = maybe_NamedType(text)
+
+    return t
 
 def maybe_NamedType(name):
     if name == 'TBD':
