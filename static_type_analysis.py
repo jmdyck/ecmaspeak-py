@@ -251,27 +251,7 @@ class TypedAlgHeader:
             else:
                 for_param_type_string = self.for_phrase
                 self.for_param_name = None
-            for_param_type_string = re.sub(r'^an? ', '', for_param_type_string)
-
-            x = {
-                'ECMAScript function object'        : T_function_object_,
-                'built-in function object'          : T_function_object_,
-                'Proxy exotic object'               : T_Proxy_exotic_object_,
-                'Integer-Indexed exotic object'     : T_Integer_Indexed_object_,
-                'String exotic object'              : T_Object,
-                'arguments exotic object'           : T_Object,
-                'immutable prototype exotic object' : T_Object,
-                'module namespace exotic object'    : T_Object,
-                'ordinary object'                   : T_Object,
-
-                'bound function exotic object'      : T_bound_function_exotic_object_,
-                'Array exotic object'               : T_Array_object_,
-            }
-
-            if for_param_type_string in x:
-                self.for_param_type = x[for_param_type_string]
-            else:
-                self.for_param_type = NamedType(for_param_type_string)
+            self.for_param_type = convert_nature_to_type(for_param_type_string)
 
         if header.also is None:
             self.typed_alsos = {}
@@ -1285,6 +1265,7 @@ nature_to_type = {
     # 5.1.4 The Syntactic Grammar
         'a nonterminal in one of the ECMAScript grammars' : T_grammar_symbol_,
 
+        'Parse Node'                                                            : T_Parse_Node,
         'a Parse Node'                                                          : T_Parse_Node,
         'a |CaseClause| Parse Node'                                             : ptn_type_for('CaseClause'),
         'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : ptn_type_for('NewExpression') | ptn_type_for('MemberExpression'),
@@ -1328,12 +1309,14 @@ nature_to_type = {
         'a Symbol' : T_Symbol,
 
     # 6.1.6.1 The Number Type
+        'Number'         : T_Number,
         'a Number'       : T_Number,
         'a Number value' : T_Number,
 
         'an integral Number' : T_IntegralNumber_,
 
     # 6.1.6.2 The BigInt Type
+        'BigInt'      : T_BigInt,
         'a BigInt'    : T_BigInt,
 
     # 6.1.7 The Object Type
@@ -1414,6 +1397,9 @@ nature_to_type = {
         'an Environment Record'            : T_Environment_Record,
         'a declarative Environment Record' : T_declarative_Environment_Record,
         'a global Environment Record'      : T_global_Environment_Record,
+        'a module Environment Record'      : T_module_Environment_Record,
+        'a function Environment Record'    : T_function_Environment_Record,
+        'an object Environment Record'     : T_object_Environment_Record,
 
     # 9.2 PrivateEnvironment Records
         'a PrivateEnvironment Record': T_PrivateEnvironment_Record,
@@ -1433,25 +1419,46 @@ nature_to_type = {
     # 9.7 Agents
         'an agent signifier' : T_agent_signifier_,
 
+    # 10.1 Ordinary Object
+        'an ordinary object' : T_Object,
+
     # 10.2 ECMAScript Function Objects
     # 10.3 Built-in Function Objects
     # 20.2 Function Objects
         'an ECMAScript function object'                               : T_function_object_,
         'an ECMAScript function object or a built-in function object' : T_function_object_,
         'an ECMAScript function'                                      : T_function_object_,
+        'a built-in function object'                                  : T_function_object_,
 
     # 10.2.3 OrdinaryFunctionCreate
         '~lexical-this~ or ~non-lexical-this~': T_this_mode2_,
+
+    # 10.4.1 Bound Function Exotic Objects
+        'a bound function exotic object' : T_bound_function_exotic_object_,
 
     # 10.4.2 Array Exotic Objects
     # 23.1 Array Objects
         'an Array' : T_Array_object_,
         'an array' : T_Array_object_,
+        'an Array exotic object' : T_Array_object_,
+
+    # 10.4.3 String Exotic Objects
+        'a String exotic object' : T_Object,
+
+    # 10.4.4 Arguments Exotic Objects
+        'an arguments exotic object' : T_Object,
 
     # 10.4.5 Integer-Indexed Exotic Objects
         'an Integer-Indexed exotic object': T_Integer_Indexed_object_,
 
+    # 10.4.6 Module Namespace Exotic Objects
+        'a module namespace exotic object' : T_Object,
+
+    # 10.4.7 Immutable Prototype Exotic Objects
+        'an immutable prototype exotic object' : T_Object,
+
     # 10.5 Proxy Object ...
+        'a Proxy exotic object': T_Proxy_exotic_object_,
 
     # 11.1 Source Text
         'a Unicode code point' : T_code_point_,
@@ -1472,6 +1479,7 @@ nature_to_type = {
         'a Module Record'                                    : T_Module_Record,
         'an instance of a concrete subclass of Module Record': T_Module_Record,
         'a Cyclic Module Record'                             : T_Cyclic_Module_Record,
+        'a Source Text Module Record'                        : T_Source_Text_Module_Record,
 
     # 20.1.2.11.1 GetOwnPropertyKeys
         '~string~ or ~symbol~' : T_PropertyKeyKind_,
