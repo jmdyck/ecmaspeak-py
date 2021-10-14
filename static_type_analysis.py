@@ -1259,22 +1259,8 @@ def parse_type_string(text):
     return t
 
 def maybe_NamedType(name):
-    if name == 'TBD':
-        return T_TBD
-    elif name == 'Continuation':
-        return T_Continuation
-    elif name == 'Matcher':
+    if name == 'Matcher':
         return T_Matcher
-    elif name == 'RegExpMatcher_':
-        return T_RegExpMatcher_
-    elif name == 'Job Abstract Closure':
-        return T_Job
-    elif name == 'ReadModifyWrite_modification_closure':
-        return T_ReadModifyWrite_modification_closure
-    elif name == 'MathNonNegativeInteger_':
-        return T_MathNonNegativeInteger_
-    elif name == 'character_':
-        return T_character_
     elif name == 'character':
         return T_character_
     elif name == 'integer':
