@@ -1797,12 +1797,7 @@ class TypeTweaks:
 type_tweaks_for_op_ = defaultdict(TypeTweaks)
 for tweak_tuple in type_tweaks_tuples:
     [op_name, p_name, old_t, new_t] = tweak_tuple
-    type_tweaks_for_op_[op_name].tweaks.append( (
-        op_name,
-        p_name,
-        old_t,
-        new_t,
-    ))
+    type_tweaks_for_op_[op_name].tweaks.append( tweak_tuple )
 
 def print_unused_type_tweaks():
     f = shared.open_for_output('unused_type_tweaks')
