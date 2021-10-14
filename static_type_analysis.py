@@ -247,11 +247,11 @@ class TypedAlgHeader:
         else:
             mo = re.fullmatch(r'(.+) (_\w+_)', self.for_phrase)
             if mo:
-                (for_param_type_string, self.for_param_name) = mo.groups()
+                (for_param_nature, self.for_param_name) = mo.groups()
             else:
-                for_param_type_string = self.for_phrase
+                for_param_nature = self.for_phrase
                 self.for_param_name = None
-            self.for_param_type = convert_nature_to_type(for_param_type_string)
+            self.for_param_type = convert_nature_to_type(for_param_nature)
 
         if header.also is None:
             self.typed_alsos = {}
