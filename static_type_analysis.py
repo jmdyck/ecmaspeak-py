@@ -3562,7 +3562,7 @@ def tc_nonvalue(anode, env0):
         (t, env1) = tc_expr(expr, env0)
         result = env1.plus_new_entry(let_var, t)
 
-    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated value representing the integer value that is represented by {var} in radix-{var} notation.)":
+    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)":
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = children
         assert same_source_text(let_var, let_var2)
         assert same_source_text(rvar, rvar2)
@@ -10790,7 +10790,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, table_result_type_str
         return (result_type, env0)
 
-    elif p == r"{EXPR} : an implementation-approximated value representing {EXPR}":
+    elif p == r"{EXPR} : an implementation-approximated Number value representing {EXPR}":
         [ex] = children
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
