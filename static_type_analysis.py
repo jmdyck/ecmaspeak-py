@@ -6514,14 +6514,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(lit, noi_t)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} can be the string-concatenation of {var} and some other String {var}":
-        [a,b,c] = children
-        env0.assert_expr_is_of_type(a, T_String)
-        env0.assert_expr_is_of_type(b, T_String)
-        # Hm, This is causes `c` to come into existence.
-        # env0.assert_expr_is_of_type(c, T_String)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} and {var} each contain exactly one character":
         [a,b] = children
         env0.assert_expr_is_of_type(a, T_CharSet)
@@ -6650,7 +6642,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : {var} is a non-negative integer &le; {var}",
         r"{CONDITION_1} : {var} is a non-negative integer which is &le; {EXPR}",
     ]:
         [a, b] = children
@@ -9373,12 +9364,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
         return (ListType(T_code_unit_), env1)
 
-    elif p == r"{EXPR} : a List whose elements are the code unit elements of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (ListType(T_code_unit_), env0)
-
-    elif p == r"{EXPR} : a List whose elements are the code units that are the elements of {var}":
+    elif p in [
+        r"{EXPR} : a List whose elements are the code unit elements of {var}",
+        r"{EXPR} : a List whose elements are the code units that are the elements of {var}",
+        r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}",
+    ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_unit_), env0)
@@ -10619,7 +10609,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, word
 
     elif p in [
-        r"{EXPR} : the number of elements of {var}",
+        r"{EX} : the number of elements of {var}",
         r"{EX} : The number of elements in {var}",
     ]:
         [var] = children

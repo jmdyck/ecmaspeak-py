@@ -484,7 +484,6 @@
     {var} and {var} have the same number of elements
     {var} binds a single name
     {var} can be interpreted as an expansion of {nonterminal}
-    {var} can be the string-concatenation of {var} and some other String {var}
     {var} contains a PrivateElement whose {dsb_word} is {DOTTING}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
@@ -559,7 +558,6 @@
     {var} is a bound function exotic object
     {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
     {var} is a non-empty List of {ERROR_TYPE} objects
-    {var} is a non-negative integer &le; {var}
     {var} is a non-negative integer which is &le; {EXPR}
     {var} is a non-negative integral Number
     {var} is a normal completion
@@ -736,6 +734,7 @@
 {EXPR} :
     (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
     Type({var})
+    a List consisting of the sequence of code units that are the elements of {var}
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
     a List of length {var} whose elements are nondeterministically chosen byte values
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
@@ -919,7 +918,6 @@
     the number of code unit elements in {var}
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
-    the number of elements of {var}
     the number of leading 1 bits in {var}
     the number of leading zero bits in the unsigned 32-bit binary representation of {var}
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
@@ -1023,6 +1021,7 @@
     the integer represented by the 32-bit two's complement bit string {var}
     the number of code units in {var}
     the number of elements in {var}
+    the number of elements of {var}
     the numeric value of {EX}
     the product of {var} and {var}
     the remainder of dividing {EX} by {EX}
