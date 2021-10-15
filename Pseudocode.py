@@ -1837,6 +1837,12 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, rhs_reduced):
         # `AsyncConciseBody : ExpressionBody`
         return True
 
+    if sdo_name == 'HasCallInTailPosition' and lhs_nt == 'ForInOfStatement' and rhs_reduced.startswith("`for` `await` `(`"):
+        # "These branches are never invoked, because async functions and top-level async modules
+        # are never inspected for tail calls."
+        # See issues #2279 and #2544, and PR #2545.
+        return True
+
     # ----------
 
     if sdo_name in ['AllPrivateIdentifiersValid', 'ContainsArguments']:
