@@ -1580,6 +1580,7 @@ def _handle_other_section(section):
             (r'Non-ECMAScript Functions',                          'catchall'),
             (r'URI Handling Functions',                            '- // properties'),
             (r'(Value|Function|Constructor|Other) Properties of .+', '- // properties'),
+            (r'Legacy Object.prototype Accessor Methods'           , '- // properties'),
 
             (r'<PROP_PATH>',                                 'other_property'),
             (r'[a-z]\w+|Infinity|NaN',                       'other_property'),
