@@ -897,6 +897,9 @@ class AlgHeader:
                 # defns: {len(self.u_defns)}
         """
 
+    def __repr__(self):
+        return f"AlgHeader(name: {self.name!r})"
+
     # --------------------------------------------------------------------------
 
     def param_names(self):

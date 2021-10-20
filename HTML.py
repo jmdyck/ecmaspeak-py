@@ -171,6 +171,9 @@ class HNode(SpecNode):
         self.element_name = element_name
         self.attrs = attrs
 
+    def __repr__(self):
+        return f"HNode<{self.element_name}>"
+
     def inner_source_text(self):
         return shared.spec_text[self.inner_start_posn:self.inner_end_posn]
 
