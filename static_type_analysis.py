@@ -7779,36 +7779,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             [num_type_indicator, low_word] = opn_before_paren.children
 
             nti = num_type_indicator.source_text()
-            if nti in [ 'Number', 'BigInt']:
-                for_type = NamedType(nti)
-            else:
-                # hack for now
-                opn = low_word.source_text()
-                if opn in [
-                    'sameValue',
-                    'sameValueZero',
-                    'equal',
-                    'lessThan',
-                ]:
-                    return (T_Boolean, env0)
-                elif opn in [
-                    'add',
-                    'bitwiseAND',
-                    'bitwiseNOT',
-                    'bitwiseOR',
-                    'bitwiseXOR',
-                    'divide',
-                    'exponentiate',
-                    'leftShift',
-                    'multiply',
-                    'remainder',
-                    'signedRightShift',
-                    'subtract',
-                    'unaryMinus',
-                    'unsignedRightShift',
-                ]:
-                    return (T_Number|T_BigInt, env0)
-                assert 0, expr.source_text()
+            assert nti in [ 'Number', 'BigInt']
+            for_type = NamedType(nti)
 
             callee_op_name = '::' + low_word.source_text()
             callee_op = spec.alg_info_['op'][callee_op_name]
@@ -10769,7 +10741,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         table_result_type_str = table_result_type.source_text()
         if table_result_type_str == 'sequence of Unicode code points':
             result_type = T_Unicode_code_points_
-        elif table_result_type_str == 'abstract operation':
+        else:
+            assert 0, table_result_type_str
+        return (result_type, env0)
+
+    elif p == r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}":
+        [table_result_type, vara, varb, h_figure] = children
+        table_result_type_str = table_result_type.source_text()
+        if table_result_type_str == 'abstract operation':
             # result_type = (
             #     ProcType([T_Number, T_Number], T_Number | T_throw_)
             #     |

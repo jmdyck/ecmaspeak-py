@@ -699,6 +699,7 @@
     a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
     the string-concatenation of:{I_BULLETS}
     the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
+    the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
 
 {CLOSURE_KIND} :
     Abstract Closure
@@ -999,7 +1000,6 @@
     NewTarget
     The number of elements in {var}
     The remainder of dividing {EX} by {EX}
-    Type({var})::unit
     a newly created {ERROR_TYPE} object
     a nondeterministically chosen byte value
     an implementation-defined timezone name
@@ -1176,8 +1176,6 @@
 {NUMERIC_TYPE_INDICATOR} :
     BigInt
     Number
-    Type({var})
-    {var}
 
 {EXLIST_OPT} :
     {EPSILON}

@@ -87,8 +87,16 @@ def analyze_table(emu_table):
             # but it also happens (in the Module evaluation examples)
             # that the first is <th> and the rest are <td>
             # (in which case, we treat the <th> the same as if it were a <td>).
-            assert len(cooked_cell_texts) == len(emu_table._header_row.cell_texts)
-            as_dict = dict(zip(emu_table._header_row.cell_texts, cooked_cell_texts))
+            if len(cooked_cell_texts) == len(emu_table._header_row.cell_texts):
+                as_dict = dict(zip(emu_table._header_row.cell_texts, cooked_cell_texts))
+            else:
+                as_dict = None
+                if caption == 'Numeric Type Operations':
+                    # There are lots of 'rowspan' attributes,
+                    # so some <tr>s don't have a full complement of <td>s.
+                    pass
+                else:
+                    assert 0, caption
 
         row = TableRow(tr, cell_nodes, raw_cell_texts, as_dict)
 
