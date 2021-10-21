@@ -1583,7 +1583,7 @@ nature_to_type = {
     'a Property Descriptor or *undefined*'                       : T_Property_Descriptor | T_Undefined,
     'a Realm Record or *null*'                                   : T_Realm_Record | T_Null,
     'a ResolvedBinding Record or *null* or *"ambiguous"*'        : T_ResolvedBinding_Record | T_Null | T_String,
-    'a Script Record or Module Record or *null*'                 : T_Script_Record | T_Module_Record | T_Null,
+    'a Script Record, a Module Record, or *null*'                : T_Script_Record | T_Module_Record | T_Null,
     'a character'                                                : T_code_unit_ | T_code_point_,
     'a non-negative integer or +&infin;'                         : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
     'a property key or Private Name'                             : T_String | T_Symbol | T_Private_Name,
