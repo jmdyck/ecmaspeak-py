@@ -1102,6 +1102,7 @@ named_type_hierarchy = {
                     'templateMap_entry_': {},
                 },
                 # 'Reference': {}, # 2085
+                'RegExpDirection_': {},
                 'Relation': {},
                 'Set': {},
                 'Shared Data Block': {},
@@ -1504,6 +1505,7 @@ nature_to_type = {
         'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
         'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
         'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
+        '~forward~ or ~backward~' : T_RegExpDirection_,
 
     # 23.2 TypedArray Objects
         'a TypedArray'       : T_TypedArray_object_,
@@ -7523,6 +7525,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_Unresolvable_, env0)
         elif chars in ['field', 'method', 'accessor']:
             return (T_PrivateElementKind_, env0)
+        elif chars in ['forward', 'backward']:
+            return (T_RegExpDirection_, env0)
         else:
             assert 0, chars
 
