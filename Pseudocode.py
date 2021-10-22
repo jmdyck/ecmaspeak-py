@@ -561,21 +561,8 @@ def annotate_invocations(anode):
                         args.extend(with_args.children)
 
             elif rhs == 'evaluating {LOCAL_REF}':
-                # 'Evaluation' or 'regexp-Evaluate',
-                # depending on the argument.
                 [local_ref] = d.children
-                if local_ref.source_text() in [
-                    '|Assertion|',
-                    '|NonemptyClassRanges|',
-                    '|ClassAtom|',
-                    '|ClassAtomNoDash|',
-                    '|ClassEscape|',
-                    '|CharacterClassEscape|',
-                ]:
-                    # A better criterion would be the containing clause
-                    op_names = ['regexp-Evaluate']
-                else:
-                    op_names = ['Evaluation']
+                op_names = ['Evaluation']
                 args = d.children
 
             elif rhs == 'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments':
@@ -588,13 +575,9 @@ def annotate_invocations(anode):
                     'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}' :  'Abstract Relational Comparison',
                     'Abstract Relational Comparison {var} &lt; {var}'  : 'Abstract Relational Comparison',
                     'Strict Equality Comparison {var} === {EX}'        : 'Strict Equality Comparison',
-                    'evaluating {LOCAL_REF} with argument {var}'       : 'regexp-Evaluate',
                     'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
-                    "the Abstract Closure that evaluates the above parse by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
-                    "the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters": 'regexp-Evaluate',
-                    "the CharSet returned by {PROD_REF}"               : 'regexp-Evaluate',
-                    "the CharSet returned by {h_emu_grammar} "         : 'regexp-Evaluate',
+                    "the CharSet returned by {h_emu_grammar} "         : 'CompileToCharSet',
                     '{LOCAL_REF} Contains {TERMINAL}'                  : 'Contains',
                     '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
@@ -690,12 +673,6 @@ def annotate_invocations(anode):
         ]:
             op_names = ['ReturnIfAbrupt']
             args = [d.children[0]]
-
-        elif d.prod.lhs_s == '{COMMAND}' and d.prod.rhs_s.startswith('Evaluate {PROD_REF}'):
-            op_names = ['regexp-Evaluate']
-            args = [d.children[0]]
-            if d.prod.rhs_s.startswith('Evaluate {PROD_REF} with'):
-                args.append(d.children[1])
 
         if op_names is not None:
             d._op_invocation = (op_names, args)
@@ -1729,7 +1706,7 @@ nts_behind_var_in_sdo_call = {
     ('StringNumericValue', '_parsedNumber_') : ['StrDecimalLiteral'],
 
     # 30931 RegExpInitialize
-    ('regexp-Evaluate', '_parseResult_'): ['Pattern'],
+    ('CompilePattern', '_parseResult_'): ['Pattern'],
 
     # 37399 JSON.parse
     ('Evaluation', '_script_'): ['Script'],

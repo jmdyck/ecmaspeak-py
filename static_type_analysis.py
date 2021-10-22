@@ -1043,6 +1043,7 @@ named_type_hierarchy = {
                     'Chosen Value Record': {},
                     'ClassFieldDefinition Record': {},
                     'ClassStaticBlockDefinition Record': {},
+                    'CharacterClassResultRecord_': {},
                     'Environment Record': {
                         'declarative Environment Record': {
                             'function Environment Record': {},
@@ -1075,6 +1076,8 @@ named_type_hierarchy = {
                     'Property Descriptor': {
                         # subtypes data and accessor and generic?
                     },
+                    'QuantifierPrefixResultRecord_': {},
+                    'QuantifierResultRecord_': {},
                     'Realm Record': {},
                     'Reference Record': {},
                     'ResolvedBinding Record': {},
@@ -1235,14 +1238,7 @@ def type_for_TYPE_NAME(type_name):
     assert isinstance(type_name, ANode)
     assert type_name.prod.lhs_s == '{TYPE_NAME}'
     st = type_name.source_text()
-    if st == 'Matcher':
-        return T_Matcher
-    elif st == 'character':
-        return T_character_
-    elif st == 'integer':
-        return T_MathInteger_
-    else:
-        return NamedType(st)
+    return NamedType(st)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1370,6 +1366,7 @@ nature_to_type = {
 
     # 6.2.7 Abstract Closure
         'an Abstract Closure with no parameters': ProcType([], T_Top_),
+        'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult': T_RegExpMatcher_,
 
     # 6.2.8 Data Block
         'a Shared Data Block' : T_Shared_Data_Block,
@@ -1503,6 +1500,10 @@ nature_to_type = {
         'a State'        : T_State,
         'a Continuation' : T_Continuation,
         'a Matcher'      : T_Matcher,
+
+        'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
+        'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
+        'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
 
     # 23.2 TypedArray Objects
         'a TypedArray'       : T_TypedArray_object_,
@@ -3178,6 +3179,8 @@ def tc_header(tah):
                 tah.name == 'CreateBuiltinFunction' and pn == '_realm_'
                 or
                 tah.name == 'ClassElementEvaluation' and pn == '*return*'
+                or
+                tah.name == 'CompilePattern' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
@@ -3655,52 +3658,6 @@ def tc_nonvalue(anode, env0):
         # associated with <emu-grammar>Pattern :: Disjunction</emu-grammar>)
         # todo: move this step to that closure.
         result = env0.plus_new_entry('_eUTF_', T_MathInteger_)
-
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.":
-        [prod_ref, res_type_name, res_var] = children
-        res_t = type_for_TYPE_NAME(res_type_name)
-        result = env0.plus_new_entry(res_var, res_t)
-
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.":
-        [prod_ref, i_var, ii_var, b_var] = children
-        result = (env0
-            .plus_new_entry(i_var, T_MathInteger_)
-            .plus_new_entry(ii_var, T_MathInteger_)
-            .plus_new_entry(b_var, T_Boolean)
-        )
-
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain the two results: an integer {var} and an integer (or +&infin;) {var}.":
-        [prod_ref, i_var, ii_var] = children
-        result = (env0
-            .plus_new_entry(i_var, T_MathInteger_)
-            .plus_new_entry(ii_var, T_MathInteger_)
-        )
-
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.":
-        [prod_ref, a_type, a_var, b_var] = children
-        result = (
-            env0
-            .plus_new_entry(a_var, type_for_TYPE_NAME(a_type))
-            .plus_new_entry(b_var, T_Boolean)
-        )
-
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} with {EX} as its {var} argument to obtain an? {TYPE_NAME} {var}.":
-        [prod_ref, arg, p, r_type, r_var] = children
-        assert p.source_text() == '_direction_'
-        env0.assert_expr_is_of_type(arg, T_MathInteger_)
-        result = (
-            env0
-            .plus_new_entry(r_var, type_for_TYPE_NAME(r_type))
-        )
-
-    elif p == r"{COMMAND} : Evaluate {PROD_REF} with argument {var} to obtain an? {TYPE_NAME} {var}.":
-        [prod_ref, arg, r_type, r_var] = children
-        assert arg.source_text() == '_direction_'
-        env0.assert_expr_is_of_type(arg, T_MathInteger_)
-        result = (
-            env0
-            .plus_new_entry(r_var, type_for_TYPE_NAME(r_type))
-        )
 
     elif p == r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
         [var, cond, literal] = children
@@ -7378,16 +7335,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [child] = children
         return tc_expr(child, env0, expr_value_will_be_discarded)
 
-    elif p == r"{EXPR} : the CharSet that is {EXPR}":
-        [ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_CharSet)
-        return (T_CharSet, env1)
-
-    elif p == r"{EXPR} : the Matcher that is {EXPR}":
-        [ex] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Matcher)
-        return (T_Matcher, env1)
-
     # ------------------------------------------------------
     # literals
 
@@ -7663,36 +7610,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF}. This may be of type Reference",
     ]:
         [local_ref] = children
-        if local_ref.source_text() in [
-            '|Assertion|',
-            '|AtomEscape|',
-            '|Atom|',
-            '|CharacterClassEscape|',
-            '|CharacterEscape|',
-            '|ClassAtomNoDash|',
-            '|ClassAtom|',
-            '|ClassEscape|',
-            '|Disjunction|',
-            '|LeadSurrogate|',
-            '|NonSurrogate|',
-            '|NonemptyClassRanges|'
-            '|RegExpUnicodeEscapeSequence|',
-            '|TrailSurrogate|',
-        ]:
-            op_name = 'regexp-Evaluate'
-        else:
-            op_name = 'Evaluation'
+        op_name = 'Evaluation'
         return tc_sdo_invocation(op_name, local_ref, [], expr, env0)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF} with argument {var}":
-        [local_ref, var] = children
-        assert local_ref.source_text() in [
-            '|Atom|',
-            '|AtomEscape|',
-            '|Disjunction|',
-        ]
-        op_name = 'regexp-Evaluate'
-        return tc_sdo_invocation(op_name, local_ref, [var], expr, env0)
 
     elif p == r"{NAMED_OPERATION_INVOCATION} : evaluating {nonterminal} {var}":
         [nont, var] = children
@@ -9662,10 +9581,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(noi, T_CharSet)
         return (T_CharSet, env0)
 
-    elif p == "{NAMED_OPERATION_INVOCATION} : the CharSet returned by {PROD_REF}":
-        [prod_ref] = children
-        return (T_CharSet, env0)
-
     elif p == r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar} ":
         [emu_grammar] = children
         return (T_CharSet, env0)
@@ -9797,13 +9712,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref, var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
         return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters":
-        [p_var, emu_xref, chars_var, nont, f_var] = children
-        env1 = env0.ensure_expr_is_of_type(p_var, T_PTN_Pattern)
-        env1.assert_expr_is_of_type(chars_var, ListType(T_character_))
-        env1.assert_expr_is_of_type(f_var, T_String)
-        return (T_RegExpMatcher_, env1)
 
     elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}":
         [clo_kind, clo_parameters, clo_captures, _, commands] = children
@@ -10014,6 +9922,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 record_type_name = 'JSON_Stringify_state_record_'
             elif field_names == ['HeldValue', 'UnregisterToken', 'WeakRefTarget']:
                 record_type_name = 'FinalizationRegistryCellRecord_'
+            elif field_names == ['Greedy', 'Max', 'Min']:
+                record_type_name = 'QuantifierResultRecord_'
+            elif field_names == ['Max', 'Min']:
+                record_type_name = 'QuantifierPrefixResultRecord_'
+            elif field_names == ['CharSet', 'Invert']:
+                record_type_name = 'CharacterClassResultRecord_'
 
             elif field_names == ['Value']:
                 fst = fields.source_text()
@@ -10363,21 +10277,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         whose_type = fields[dsbn_name]
         env1.assert_expr_is_of_type(val_ex, whose_type)
         return (et, env1)
-
-    elif p == r"{EXPR} : the three results {var}, {var}, and {LITERAL}":
-        [a, b, c] = children
-        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
-        (b_t, env2) = tc_expr(b, env0); assert env2 is env0
-        (c_t, env3) = tc_expr(c, env0); assert env3 is env0
-        t = TupleType( (a_t, b_t, c_t) )
-        return (t, env0)
-
-    elif p == r"{EXPR} : the two results {EX} and {EX}":
-        [a, b] = children
-        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
-        (b_t, env2) = tc_expr(b, env0); assert env2 is env0
-        t = TupleType( (a_t, b_t) )
-        return (t, env0)
 
     elif p == r"{EXPR} : a new Record":
         # Once, in CreateIntrinsics
@@ -11355,6 +11254,21 @@ fields_for_record_type_named_ = {
     'GlobalSymbolRegistry Record': {
         'Key'   : T_String,
         'Symbol': T_Symbol,
+    },
+
+    # 22.2.2.?
+    'QuantifierResultRecord_': {
+        'Min'   : T_MathNonNegativeInteger_,
+        'Max'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
+        'Greedy': T_Boolean,
+    },
+    'QuantifierPrefixResultRecord_': {
+        'Min'   : T_MathNonNegativeInteger_,
+        'Max'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
+    },
+    'CharacterClassResultRecord_': {
+        'CharSet': T_CharSet,
+        'Invert' : T_Boolean,
     },
 
     # 38121 24.5.2: JSON.stringify: no table, no mention

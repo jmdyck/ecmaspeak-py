@@ -55,12 +55,6 @@
     Create any host-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
     Discard all resources associated with the current execution context.
-    Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var} and a Boolean {var}.
-    Evaluate {PROD_REF} to obtain an? {TYPE_NAME} {var}.
-    Evaluate {PROD_REF} to obtain the three results: a non-negative integer {var}, a non-negative integer (or +&infin;) {var}, and Boolean {var}.
-    Evaluate {PROD_REF} to obtain the two results: an integer {var} and an integer (or +&infin;) {var}.
-    Evaluate {PROD_REF} with argument {var} to obtain an? {TYPE_NAME} {var}.
-    Evaluate {PROD_REF} with {EX} as its {var} argument to obtain an? {TYPE_NAME} {var}.
     Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
@@ -719,7 +713,6 @@
     {var} and {var}
     {var}, {var}, and {var}
     {var}, {var}, {var}, and {var}
-    {var}, {var}, {var}, {var}, {var}, and {var}
     {var}, {var}, {var}, {var}, {var}, {var}, {var}, and {var}
 
 {CLOSURE_STEPS} :
@@ -811,7 +804,6 @@
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
     the CharSet of all characters
-    the CharSet that is {EXPR}
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
@@ -824,7 +816,6 @@
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
     the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}
-    the Matcher that is {EXPR}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
@@ -968,10 +959,8 @@
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the surrounding agent's Agent Record
     the ten-element CharSet containing the characters `0` through `9` inclusive
-    the three results {var}, {var}, and {LITERAL}
     the time value (UTC) identifying the current time
     the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}
-    the two results {EX} and {EX}
     the union of CharSets {var} and {var}
     the union of CharSets {var}, {var} and {var}
     the union of {var} and {var}
@@ -1088,11 +1077,8 @@
 
 {NAMED_OPERATION_INVOCATION} :
     evaluating {LOCAL_REF}
-    evaluating {LOCAL_REF} with argument {var}
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
-    the Abstract Closure that evaluates {var} by applying the semantics provided in {h_emu_xref} using {var} as the pattern's List of {nonterminal} values and {var} as the flag parameters
-    the CharSet returned by {PROD_REF}
     the CharSet returned by {h_emu_grammar} 
     the {cap_word} of {LOCAL_REF}
     the {cap_word} of {LOCAL_REF} (see {h_emu_xref})
@@ -1382,10 +1368,5 @@
     String
     Symbol
     Undefined
-    #
-    CharSet
-    Matcher
-    character
-    integer
 
 # -----------------------

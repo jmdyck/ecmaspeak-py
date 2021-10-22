@@ -410,14 +410,6 @@ def _handle_sdo_section(section):
             # 15.10.2.2 Expression Rules
             sdo_name = 'HasCallInTailPosition'
 
-        elif (
-            section.parent.section_id == 'sec-pattern-semantics'
-            and
-            section.section_title != 'Notation'
-        ):
-            # 22.2.2.*
-            sdo_name = 'regexp-Evaluate'
-
         # An Annex B clause that extends the semantics of a main-body SDO:
         elif section.section_title in [
             'Static Semantics: IsCharacterClass',
@@ -469,19 +461,7 @@ def _handle_sdo_section(section):
                     section.block_children.pop(0)
                     _set_bcen_attributes(section)
 
-        if sdo_name == 'regexp-Evaluate':
-            # regexp-Evaluate is unique in that it doesn't have a uniform set of parameters:
-            # sometimes it has the _direction_ parameter, and sometimes it doesn't.
-            # Force it to always have the _direction_ parameter.
-            assert [param.name for param in params] in [ [], ['_direction_'] ]
-            params = [ AlgParam('_direction_', '', '1 or -1') ]
-            # Don't make it optional, because then its type will be (Integer_ | not_passed),
-            # and STA will complain when we use it in a context that expects just Integer_.
-
-        if sdo_name == 'regexp-Evaluate':
-            also = regexp_also
-        else:
-            also = []
+        also = []
 
         alg_header = AlgHeader_make(
             section = section,
@@ -1117,12 +1097,18 @@ def _handle_structured_header(section):
                     ("It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.", 'a non-negative integer'),
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
                     ("It returns _value_ converted to a numeric value of type Number or BigInt.", 'a Number or a BigInt'),
+                    ("It returns a CharSet.", 'a CharSet'),
+                    ("It returns a Matcher.", 'a Matcher'),
                     ("It returns a Number.", 'a Number'),
+                    ("It returns a Record with fields \[\[CharSet\]\] \(a CharSet\) and \[\[Invert\]\] \(a Boolean\).", 'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)'),
+                    ("It returns a Record with fields \[\[Min\]\] \(a non-negative integer\) and \[\[Max\]\] \(a non-negative integer or \+&infin;\).", 'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)'),
+                    ("It returns a Record with fields \[\[Min\]\] \(a non-negative integer\), \[\[Max\]\] \(a non-negative integer or \+&infin;\), and \[\[Greedy\]\] \(a Boolean\).", 'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)'),
                     ("It returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is a Boolean.", 'a Boolean'),
                     ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean.", 'a Boolean'),
                     ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean indicating .+", 'a Boolean'),
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
                     ("It returns a new promise resolved with _x_.", 'a promise'),
+                    ("It returns an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult.", 'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
                     ("It returns an integral Number representing .+", 'an integral Number'),
                     ("It returns either \*false\* or the end index of a match.", '*false* or a non-negative integer'),
@@ -1190,6 +1176,8 @@ def _handle_structured_header(section):
         'RegExpBuiltinExec',
         'CharacterRangeOrUnion',
     ]:
+        also = regexp_also
+    elif op_name.startswith('Compile'):
         also = regexp_also
     else:
         also = None
@@ -1834,89 +1822,97 @@ def _handle_changes_section(section):
         )
 
     # --------------------------------------------------------------------------
-    if section.section_title == 'Pattern Semantics' and section.section_num.startswith('B.'):
-        # B.1.4.4
-
+    if section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileSubpattern':
+        # B.1.2.4
         patterns = [
+            (
+                [
+                    ('p', e("The semantics of \w+ is extended as follows:")),
+                ],
+                None
+            ),
+            (
+                [
+                    ('p', e("Within the rule for EMU-GRAMMAR, references to &ldquo;EMU-GRAMMAR &rdquo; are to be interpreted as meaning &ldquo;EMU-GRAMMAR &rdquo; or &ldquo;EMU-GRAMMAR &rdquo;.")),
+                ],
+                lambda p: None
+            ),
+            (
+                [
+                    ('p', e("The rule for EMU-GRAMMAR is the same as for EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\.")),
+                ],
+                lambda p: None
+            ),
+        ]
+        scan_section(section, patterns)
 
-            # -------------------
-            # Use an existing algorithm, but with a substitution:
+    # --------------------------------------------------------------------------
+    elif section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileAssertion':
+        # B.1.2.5
+        patterns = [
             (
                 [
-                    ('p', e("Within EMU-XREF reference to &ldquo;EMU-GRAMMAR &rdquo; are to be interpreted as meaning &ldquo;EMU-GRAMMAR &rdquo; or &ldquo;EMU-GRAMMAR &rdquo;.")),
+                    ('p', e("\w+ rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL.")),
                 ],
                 lambda p: None
             ),
-            (
-                [
-                    ('p', e("The production EMU-GRAMMAR evaluates the same as the production EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\.")),
-                ],
-                lambda p: None
-            ),
-            (
-                [
-                    ('p', e("\w+ \(EMU-XREF\) evaluation rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL.")),
-                ],
-                lambda p: None
-            ),
-            (
-                [
-                    ('p', e("\w+ \(EMU-XREF\) evaluation rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following evaluation rules, with parameter _direction_, are also added:")),
-                ],
-                lambda p: None
-            ),
+        ]
+        scan_section(section, patterns)
 
-            # -------------------
-            # Give a full emu-alg
+    # --------------------------------------------------------------------------
+    elif section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileAtom':
+        # B.1.2.6
+        patterns = [
             (
-                # 2 cases:
                 [
-                    ('p', e("The production EMU-GRAMMAR evaluates as follows:")),
+                    ('p', e("\w+ rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following rules, with parameter _direction_, are also added:")),
+                ],
+                lambda p: None
+            ),
+            (
+                [
+                    'emu-grammar',
                     'emu-alg'
                 ],
-                lambda p, emu_alg: blah_composite_sdo('regexp-Evaluate', p.children[1], emu_alg)
+                lambda emu_grammar, emu_alg: blah_composite_sdo('CompileAtom', emu_grammar, emu_alg)
             ),
-            (
-                # 4 cases:
-                [
-                    ('p', e("(\w+) \(EMU-XREF\) includes the following additional evaluation rule:")),
-                    ('p', e("The production EMU-GRAMMAR evaluates as follows:")),
-                    'emu-alg'
-                ],
-                lambda p1, p2, emu_alg: blah_composite_sdo('regexp-Evaluate', p2.children[1], emu_alg)
-            ),
-            (
-                # 2 cases:
-                [
-                    ('p', e("(?:\w+) \(EMU-XREF\) modifies the following evaluation rule:")),
-                    ('p', e("The production EMU-GRAMMAR evaluates as follows:")),
-                    'emu-alg'
-                ],
-                lambda p1, p2, emu_alg: blah_composite_sdo('regexp-Evaluate', p2.children[1], emu_alg)
-            ),
+        ]
+        scan_section(section, patterns)
 
-            # -----------------------
-
+    # --------------------------------------------------------------------------
+    elif section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileToCharSet':
+        # B.1.2.7
+        patterns = [
             (
-                # Introducing the section
                 [
                     ('p', e("The semantics of EMU-XREF is extended as follows:")),
                 ],
                 None
             ),
             (
-                # 
                 [
-                    ('p', e("(\w+) \(EMU-XREF\) includes the following additional evaluation rules?:")),
+                    ('p', "The following two rules replace the corresponding rules of CompileToCharSet."),
                 ],
                 None
             ),
-
-            # -------------------
+            (
+                [
+                    ('p', "In addition, the following rules are added to CompileToCharSet."),
+                ],
+                None
+            ),
+            (
+                [
+                    'emu-grammar',
+                    'emu-alg',
+                ],
+                lambda emu_grammar, emu_alg: blah_composite_sdo('CompileToCharSet', emu_grammar, emu_alg)
+            ),
             (
                 ['emu-note'],
                 None
             ),
+
         ]
         scan_section(section, patterns)
 
