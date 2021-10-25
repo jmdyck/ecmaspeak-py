@@ -51,9 +51,9 @@ def make_and_check_sections():
     headers.oh_inc_f.close()
     headers.note_unused_rules()
 
-    _print_section_kinds(spec.root_section)
-    _check_aoids(spec.root_section)
-    _check_section_order(spec.root_section)
+    _print_section_kinds()
+    _check_aoids()
+    _check_section_order()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2104,11 +2104,10 @@ def _set_bcen_attributes(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _print_section_kinds(section):
-    global g_sections_f
-    if section.is_root_section:
-        g_sections_f = shared.open_for_output('sections')
-    else:
+def _print_section_kinds():
+    sections_f = shared.open_for_output('sections')
+
+    for section in spec.root_section.each_descendant_that_is_a_section():
         if not(hasattr(section, 'section_kind')): section.section_kind = 'UNSET!'
         print("%s%-47s%s %s" % (
                 '  '*(section.section_level-1),
@@ -2116,19 +2115,15 @@ def _print_section_kinds(section):
                 section.section_num,
                 section.section_title
             ),
-            file=g_sections_f
+            file=sections_f
         )
 
-    for child in section.section_children:
-        _print_section_kinds(child)
+    sections_f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _check_aoids(section):
-    if section.is_root_section:
-        pass
-
-    else:
+def _check_aoids():
+    for section in spec.root_section.each_descendant_that_is_a_section():
         aoid = section.attrs.get('aoid', None)
         op_name = section.alg_headers[0].name if section.alg_headers else None
 
@@ -2170,18 +2165,12 @@ def _check_aoids(section):
 
                 msg_at_posn(section.start_posn, msg)
 
-    for child in section.section_children:
-        _check_aoids(child)
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def _check_section_order(section):
+def _check_section_order():
     # In some sections, the subsections should be in "alphabetical order".
 
-    if section.is_root_section:
-        pass
-    else:
-
+    for section in spec.root_section.each_descendant_that_is_a_section():
         if section.section_kind.endswith('// properties'):
             # Each descendant section (if any) is expected to define a property.
             prev_title = None
@@ -2213,9 +2202,6 @@ def _check_section_order(section):
                         '- // properties',
                         'catchall',
                     ]
-
-    for child in section.section_children:
-        _check_section_order(child)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
