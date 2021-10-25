@@ -1576,6 +1576,7 @@ nature_to_type = {
     # union of named types
 
     'a BigInt or a Number'                                       : T_BigInt | T_Number,
+    'a BigInt or *undefined*'                                    : T_BigInt | T_Undefined,
     'a Boolean or *undefined*'                                   : T_Boolean | T_Undefined,
     'a Boolean or ~empty~'                                       : T_Boolean | T_empty_,
     'a Data Block or a Shared Data Block'                        : T_Data_Block | T_Shared_Data_Block,
@@ -1710,7 +1711,6 @@ type_tweaks_tuples = [
     ('SetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
     ('SortCompare'                              , '_x_'                    , T_TBD                 , T_Tangible_),
     ('SortCompare'                              , '_y_'                    , T_TBD                 , T_Tangible_),
-    ('StringToBigInt'                           , '*return*'               , T_TBD                 , T_BigInt | T_Number),
     ('TRV'                                      , '*return*'               , T_TBD                 , T_String),
     ('TV'                                       , '*return*'               , T_TBD                 , T_String | T_Undefined),
     ('TemplateStrings'                          , '*return*'               , T_TBD                 , ListType(T_String)),
@@ -5536,6 +5536,10 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(exa, lit_type)
             env0.assert_expr_is_of_type(exb, lit_type)
             return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is an integer":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
 
     elif p == r"{CONDITION_1} : {var} is finite":
         [var] = children

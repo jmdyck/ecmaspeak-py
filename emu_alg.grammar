@@ -573,6 +573,7 @@
     {var} is an instance of a nonterminal
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
+    {var} is an integer
     {var} is an integral Number
     {var} is an odd integral Number
     {var} is an ordinary, extensible object with no non-configurable properties

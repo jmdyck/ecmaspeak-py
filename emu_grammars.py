@@ -1388,7 +1388,7 @@ def approximate_annex_A():
             else:
                 caast = title_part
 
-        elif section.section_title == 'ToNumber Applied to the String Type':
+        elif section.section_title == 'Type Conversion':
             caast = 'Number Conversions'
 
         elif section.section_title == 'URI Syntax and Semantics':

@@ -1411,6 +1411,9 @@ nts_behind_var_in_sdo_call = {
     # 4529 StringToNumber
     ('StringNumericValue', '_literal_'): ['StringNumericLiteral'],
 
+    # 5344
+    ('MV', '_literal_'): ['StringIntegerLiteral'],
+
     # 5715 BoundNames
     ('BoundNames', '_head_'): ['AsyncArrowHead'],
     # 11005 FunctionDeclarationInstantiation
