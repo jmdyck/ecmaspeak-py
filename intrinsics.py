@@ -28,7 +28,11 @@ def handle_intrinsics_table(emu_table):
         assert percent_name not in well_known_intrinsics
         well_known_intrinsics[percent_name] = True
 
-        assert re.fullmatch(r"|`\w+`", global_name)
+        if global_name == '':
+            pass
+        else:
+            assert re.fullmatch(r"`\w+`", global_name)
+            assert global_name[1:-1] == percent_name[1:-1]
 
         if re.match(r'(A function|An) object that ', assoc):
             phrase = None
