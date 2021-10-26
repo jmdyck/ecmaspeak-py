@@ -12,6 +12,7 @@ import HTML, Section, emu_grammars, Pseudocode, headers
 import shared
 from shared import stderr, msg_at_posn, spec
 from emu_tables import analyze_table
+import intrinsics
 from intrinsics import handle_intrinsics_table, check_references_to_intrinsics
 
 def main():
@@ -50,6 +51,8 @@ def main():
     emu_grammars.do_stuff_with_emu_grammars()
     
     Pseudocode.do_stuff_with_pseudocode()
+
+    check_globals()
 
     shared.msg_at_posn_finish()
 
@@ -607,6 +610,29 @@ def check_tables():
         else:
             # print('>>>', header_line, '---', caption)
             pass
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_globals():
+    stderr('check_globals...')
+    global_object_property_names = set()
+
+    sgo = spec.node_with_id_['sec-global-object']
+    for section in sgo.each_descendant_that_is_a_section():
+        if '_property' in section.section_kind:
+            # print('>', section.section_kind, section.section_title)
+            mo = re.fullmatch(r'(\w+)( \(.*\))?', section.section_title)
+            assert mo
+            global_property_name = mo.group(1)
+            if section.parent.section_title != 'Value Properties of the Global Object':
+                global_object_property_names.add(global_property_name)
+
+    def show_names_set(label, names_set):
+        for name in sorted(names_set):
+            print(f"> {label}: {name}")
+        
+    show_names_set("In 'The Global Object' but not in WKI", global_object_property_names - intrinsics.global_property_names)
+    show_names_set("In WKI but not in 'The Global Object'", intrinsics.global_property_names - global_object_property_names)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

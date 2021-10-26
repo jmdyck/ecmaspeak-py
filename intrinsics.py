@@ -12,6 +12,7 @@ from shared import stderr, spec
 # ------------------------------------------------------------------------------
 
 well_known_intrinsics = {}
+global_property_names = set()
 
 def handle_intrinsics_table(emu_table):
     assert emu_table._caption in [
@@ -33,6 +34,8 @@ def handle_intrinsics_table(emu_table):
         else:
             assert re.fullmatch(r"`\w+`", global_name)
             assert global_name[1:-1] == percent_name[1:-1]
+            assert global_name not in global_property_names
+            global_property_names.add(global_name[1:-1])
 
         if re.match(r'(A function|An) object that ', assoc):
             phrase = None
