@@ -532,7 +532,7 @@ rec_method_declarations = '''
 
     # Table 39: Abstract Methods of Module Records
     GetExportedNames(exportStarSet)       -> a List of names
-    ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or *"ambiguous"*
+    ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or ~ambiguous~
     Link()                                -> unknown
     Evaluate()                            -> unknown
 

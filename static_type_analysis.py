@@ -1108,6 +1108,11 @@ named_type_hierarchy = {
                 'Shared Data Block': {},
                 'SharedMemory_ordering_': {},
                 'SlotName_': {},
+                'TildeAllButDefault_': {},
+                'TildeAll_': {},
+                'TildeAmbiguous_': {},
+                'TildeNamespaceObject_': {},
+                'TildeNamespace_': {},
                 'TrimString_where_': {},
                 'TypedArray_element_type_': {},
                 'Unicode_code_points_': {},
@@ -1586,7 +1591,7 @@ nature_to_type = {
     'a PrivateEnvironment Record or *null*'                      : T_PrivateEnvironment_Record | T_Null,
     'a Property Descriptor or *undefined*'                       : T_Property_Descriptor | T_Undefined,
     'a Realm Record or *null*'                                   : T_Realm_Record | T_Null,
-    'a ResolvedBinding Record or *null* or *"ambiguous"*'        : T_ResolvedBinding_Record | T_Null | T_String,
+    'a ResolvedBinding Record or *null* or ~ambiguous~'          : T_ResolvedBinding_Record | T_Null | T_TildeAmbiguous_,
     'a Script Record, a Module Record, or *null*'                : T_Script_Record | T_Module_Record | T_Null,
     'a character'                                                : T_code_unit_ | T_code_point_,
     'a non-negative integer or +&infin;'                         : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
@@ -5097,6 +5102,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {EX} is a String":
+        [ex] = children
+        return env0.with_type_test(ex, 'is a', T_String, asserting)
+
     elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
@@ -5443,15 +5452,10 @@ def tc_cond_(cond, env0, asserting):
         (lit_type, lit_env) = tc_expr(literal, env0)
         assert lit_env is env0
 
-        if lit_type in [T_Undefined, T_Null, T_empty_, T_not_in_node, T_match_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_]:
+        if lit_type in [T_Undefined, T_Null, T_empty_, T_not_in_node, T_match_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_, T_TildeAmbiguous_, T_TildeNamespace_, T_TildeAllButDefault_, T_TildeAll_, T_TildeNamespaceObject_]:
             # i.e., the literal is *undefined* or *null* or ~empty~ or ~[empty]~ or ~failure~ or *NaN* or +&infin; or -&infin;
             # Because the type has only one value,
             # a value-comparison is equivalent to a type-comparison.
-            return env0.with_type_test(ex, copula, lit_type, asserting)
-        elif literal.source_text() == '*"ambiguous"*':
-            # The return-type of ResolveExport includes String,
-            # but only for the single value "ambiguous".
-            # So a test against that value is a type-comparison.
             return env0.with_type_test(ex, copula, lit_type, asserting)
         else:
             # The type has more than one value.
@@ -5500,8 +5504,8 @@ def tc_cond_(cond, env0, asserting):
         ):
             return env0.with_type_test(ex, copula, T_Null | T_Undefined, asserting)
 
-        elif lita_type == T_Null and litb_type == T_String and litb.source_text() == '*"ambiguous"*':
-            return env0.with_type_test(ex, copula, T_Null | T_String, asserting)
+        elif lita_type == T_Null and litb_type == T_TildeAmbiguous_:
+            return env0.with_type_test(ex, copula, T_Null | T_TildeAmbiguous_, asserting)
 
         elif lita_type == litb_type:
             (t, env1) = tc_expr(ex, env0)
@@ -7531,6 +7535,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_PrivateElementKind_, env0)
         elif chars in ['forward', 'backward']:
             return (T_RegExpDirection_, env0)
+        elif chars == 'all':
+            return (T_TildeAll_, env0)
+        elif chars == 'all-but-default':
+            return (T_TildeAllButDefault_, env0)
+        elif chars == 'ambiguous':
+            return (T_TildeAmbiguous_, env0)
+        elif chars == 'namespace':
+            return (T_TildeNamespace_, env0)
+        elif chars == 'namespace-object':
+            return (T_TildeNamespaceObject_, env0)
         else:
             assert 0, chars
 
@@ -11234,13 +11248,13 @@ fields_for_record_type_named_ = {
     # 23376
     'ResolvedBinding Record': {
         'Module'      : T_Module_Record,
-        'BindingName' : T_String,
+        'BindingName' : T_String | T_TildeNamespace_,
     },
 
     # 23490: Table 39: ImportEntry Record Fields
     'ImportEntry Record': {
         'ModuleRequest': T_String,
-        'ImportName'   : T_String,
+        'ImportName'   : T_String | T_TildeNamespaceObject_,
         'LocalName'    : T_String,
     },
 
@@ -11248,7 +11262,7 @@ fields_for_record_type_named_ = {
     'ExportEntry Record': {
         'ExportName'    : T_String | T_Null,
         'ModuleRequest' : T_String | T_Null,
-        'ImportName'    : T_String | T_Null,
+        'ImportName'    : T_String | T_Null | T_TildeAll_ | T_TildeAllButDefault_,
         'LocalName'     : T_String | T_Null,
     },
 

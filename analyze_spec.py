@@ -454,7 +454,7 @@ def check_ids():
             if refid in node_with_id_:
 
                 defnode = node_with_id_[refid]
-                if defnode.element_name in ['emu-clause', 'emu-annex', 'emu-table', 'emu-alg']:
+                if defnode.element_name in ['emu-clause', 'emu-annex', 'emu-table', 'emu-alg', 'emu-note']:
                     pass
                 elif defnode.element_name == 'dfn':
                     deftext = defnode.inner_source_text()

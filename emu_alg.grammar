@@ -405,6 +405,7 @@
     {EX} has the value {LITERAL}
     {EX} is -1
     {EX} is a Private Name
+    {EX} is a String
     {EX} is a sequence of Unicode code points
     {EX} is absent
     {EX} is absent or has the value {LITERAL}
