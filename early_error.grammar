@@ -71,6 +71,7 @@
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}
+    {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
     {NAMED_OPERATION_INVOCATION} contains {starred_str}
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
@@ -98,7 +99,7 @@
     the {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
-    {cap_word}({PROD_REF})
+    {cap_word}({EX})
 
 {LOCAL_REF} :
     {PROD_REF}
@@ -129,6 +130,8 @@
     the {nonterminal} that is covered by {LOCAL_REF}
     &laquo; &raquo;
     {LITERAL}
+    {LOCAL_REF}
+    {NAMED_OPERATION_INVOCATION}
 
 {LITERAL} :
     {BOOL_LITERAL}

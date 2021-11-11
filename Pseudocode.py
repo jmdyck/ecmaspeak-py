@@ -544,7 +544,7 @@ def annotate_invocations(anode):
                 '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
                 '{cap_word} of {LOCAL_REF}',
                 '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                '{cap_word}({PROD_REF})',
+                '{cap_word}({EX})',
                 '{cap_word}({var})',
                 '{cap_word}({named_char})',
                 'the result of performing {cap_word} on {EX}',

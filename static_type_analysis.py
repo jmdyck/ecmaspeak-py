@@ -2556,6 +2556,7 @@ class Env:
                 '\u211d(_t_ / msPerHour)', # HourFromTime
                 '\u211d(_t_ / msPerMinute)', # MinFromTime
                 '\u211d(_t_ / msPerSecond)', # SecFromTime
+                'ReferencedBindings of |NamedExports|',
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -4742,9 +4743,9 @@ def tc_nonvalue(anode, env0):
     elif p == r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.":
         [nont, var, noi, cond] = children
         t = ptn_type_for(nont)
-        env0.assert_expr_is_of_type(noi, ListType(t))
-        env1 = env0.plus_new_entry(var, t)
-        tc_cond(cond, env1)
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(t))
+        env2 = env1.plus_new_entry(var, t)
+        tc_cond(cond, env2)
         result = None
 
 
@@ -6978,6 +6979,11 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s":
+        [noi, nont] = children
+        env0.assert_expr_is_of_type(noi, ListType(NamedType('PTN_IdentifierName') | NamedType('PTN_StringLiteral'))) # over-specific (ReferencedBindings)
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : at least two of those entries were obtained from productions of the form {h_emu_grammar}":
         [emu_grammar] = children
         return (env0, env0)
@@ -7593,7 +7599,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
     elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({PROD_REF})",
+        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({EX})",
     ]:
         [callee, local_ref] = children
         callee_op_name = callee.source_text()
