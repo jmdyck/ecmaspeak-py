@@ -36,7 +36,7 @@ def _parse():
         nonlocal current_open_node
         current_open_node.children.append(child)
         child.parent = current_open_node
-        if child.element_name.startswith('#') or child.element_name in ['meta', 'link', 'img', 'br']:
+        if child.element_name.startswith('#') or child.element_name in ['html', 'meta', 'link', 'img', 'br']:
             # This is a complete child
             pass
         else:
@@ -255,11 +255,12 @@ def _validate(node):
         return (
             x.element_name in ['th', 'td']
             and
-            x.parent.parent.parent.attrs.get('class', None) == 'lightweight-table'
+            x.parent.parent.attrs.get('class', None) == 'lightweight-table'
             # x.parent is the <tr>
-            # x.parent.parent is the <tbody>
-            # x.parent.parent.parent is the <table>
+            # x.parent.parent is the <table>
         )
+        # TODO: Base it on the presence of "<!-- emu-format ignore -->",
+        # because not all lightweight-tables are loose about spaces.
 
     if node.element_name == '#LITERAL':
         # Check for runs of multiple space characters.
@@ -376,18 +377,14 @@ element_info = {
     # Block-level
 
         # block contains blocks:
-        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;'),
-        'html'              : ('B', 'lang',      '',           '#WS;head;#WS;body;#WS;'),
-        'head'              : ('B', '',          '',           '#WS;meta;#WS;((link;|script;|style;)#WS;)+'),
-        'body'              : ('B', '',          '',           '#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
+        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;meta;#WS;link;#WS;style;#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
         'emu-clause'        : ('B', '', 'aoid example id legacy namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', 'id', 'aoid namespace normative oldids type', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
         'emu-table'         : ('B', 'caption id', 'class informative oldids', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', 'caption id', 'informative', '#WS;(object;|img;)#WS;'),
         'figure'            : ('B', '',          '',           '#WS;table;#WS;'),
-        'table'             : ('B', '',          'class',      '#WS;(thead;#WS;)?tbody;#WS;'),
-        'tbody'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
+        'table'             : ('B', '',          'class',      '#WS;(thead;#WS;)?(tr;#WS;)+'),
         'thead'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
         'tr'                : ('B', '',          '',           '(#WS;)?((th;|td;)(#WS;)?)+'),
         'ul'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
@@ -419,6 +416,7 @@ element_info = {
 
         # block is empty:
         '#DECL'             : ('B', '',          '',           ''),
+        'html'              : ('B', 'lang',      '',           ''),
         'meta'              : ('B', 'charset',   '',           ''),
         'link'              : ('B', 'href rel',  '',           ''),
         'img'               : ('B', 'src',       'alt height id width', ''),

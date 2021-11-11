@@ -265,7 +265,7 @@ class Pseudocode_Parser:
             shared.spec_text,
             start_posn,
             end_posn,
-            (self.file_base == 'emu_alg'),
+            (self.file_base in ['emu_alg', 'emu_eqn']),
             this_line_indentation
         )
 

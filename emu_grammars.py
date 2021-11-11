@@ -283,7 +283,8 @@ metagrammar = {
     'BLOCK_PRODUCTIONS'    : ('+', 'n', 'BLOCK_PRODUCTION', r'\n'),
     'BLOCK_PRODUCTION'     : ('|', '^', 'MULTILINE_PRODUCTION', '_ONELINE_PRODUCTION'),
 
-    'MULTILINE_PRODUCTION' : ('_', 'n', 'NLAI', 'GNT', ' ', 'COLONS', 'MULTILINE_R'),
+    'MULTILINE_PRODUCTION' : ('_', 'n', 'OPTIONAL_COMMENT_LINE', 'NLAI', 'GNT', ' ', 'COLONS', 'MULTILINE_R'),
+    'OPTIONAL_COMMENT_LINE': ('?', ' ', 'NLAI', '// emu-format ignore'),
     'MULTILINE_R'          : ('|', '^', 'MULTILINE_ONE_OF', 'MULTILINE_RHSS'),
     'MULTILINE_ONE_OF'     : ('_', 'n', ' one of', 'INDENT', 'NLAI', 'LINES_OF_BACKTICKED_THINGS', 'OUTDENT'),
     'LINES_OF_BACKTICKED_THINGS': ('+', 'n', 'BACKTICKED_THINGS', 'NLAI'),
@@ -320,9 +321,9 @@ metagrammar = {
     'LAC_SET'              : ('_', 'n', r'\[lookahead ', 'LAC_SET_OP', ' ', 'LAC_SET_OPERAND', r'\]'),
     'LAC_SET_OP'           : ('/', 'n', '&isin;|&notin;'),
     'LAC_SET_OPERAND'      : ('|', '^', 'NT', 'SET_OF_TERMINAL_SEQ'),
-    'SET_OF_TERMINAL_SEQ'  : ('+', 'n', 'TERMINAL_SEQ', ', ', '{', '}'),
+    'SET_OF_TERMINAL_SEQ'  : ('+', 'n', 'TERMINAL_SEQ', ', ', '{ ', ' }'),
     'TERMINAL_SEQ'         : ('+', 'n', 'TERMINAL_ITEM', ' '),
-    'TERMINAL_ITEM'        : ('|', '^', 'BACKTICKED_THING', 'NAMED_CHAR', 'NLTH_BAR'),
+    'TERMINAL_ITEM'        : ('|', '^', 'BACKTICKED_THING', 'NAMED_CHAR', 'NLTH'),
 
     'BUT_ONLY'             : ('/', 'n', r'\[> but only if ([^][]+)\]'),
 
@@ -337,7 +338,6 @@ metagrammar = {
     'LABEL'            : ('/', 'n', r'#\w+'),
     'EMPTY'            : ('/', 'n', r'\[empty\]'),
     'NLTH'             : ('/', 'n', r'\[no LineTerminator here\]'),
-    'NLTH_BAR'         : ('/', 'n', r'\[no \|LineTerminator\| here\]'),
     'U_RANGE'          : ('/', 'n', r'&gt; any Unicode code point in the inclusive range (0x[0-9A-F]+) to (0x[0-9A-F]+)'),
     'U_PROP'           : ('/', 'n', r'&gt; any Unicode code point with the Unicode property &ldquo;(\w+)&rdquo;'),
     'U_ANY'            : ('/', 'n', r'&gt; any Unicode code point'),
@@ -424,14 +424,19 @@ def simple_parse(grammar, goal, start_posn, end_posn, start_indent):
             for child_goal in args:
                 r = attempt(child_goal, posn, indent, level+1)
                 if r is None:
-                    # optional thing has been omitted
+                    # We failed to find an instance of {child_goal},
+                    # and so we've failed to find an instance of {goal}.
+                    # I.e., the optional thing has been omitted.
+                    # So (maybe) make a GNode to hold the representation of that absence.
                     if rkind == 'n':
                         result = GNode(at_start_posn, at_start_posn, goal, [])
                     elif rkind == '^':
                         result = GNode(at_start_posn, at_start_posn, 'OMITTED_OPTIONAL', [])
+                    elif rkind == ' ':
+                        result = None
                     else:
                         assert 0, rkind
-                    return (posn, indent, result)
+                    return (at_start_posn, indent, result)
                 (posn, indent, child) = r
                 if child: children.append(child)
             # optional thing is there
@@ -440,6 +445,8 @@ def simple_parse(grammar, goal, start_posn, end_posn, start_indent):
             elif rkind == '^':
                 assert len(children) == 1
                 [result] = children
+            elif rkind == ' ':
+                result = None
             else:
                 assert 0, rkind
             return (posn, indent, result)

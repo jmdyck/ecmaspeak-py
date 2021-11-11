@@ -78,18 +78,8 @@ def _make_section_tree(doc_node):
     # .bcen_{list,str,set}
 
     assert doc_node.element_name == '#DOC'
-    [html_node] = [
-        child
-        for child in doc_node.children
-        if child.element_name == 'html'
-    ]
-    [body_node] = [
-        child
-        for child in html_node.children
-        if child.element_name == 'body'
-    ]
-    _make_section_tree_r(body_node, 0)
-    return body_node
+    _make_section_tree_r(doc_node, 0)
+    return doc_node
 
 def _make_section_tree_r(section, section_level):
     section.section_level = section_level
@@ -865,8 +855,7 @@ def handle_op_table(emu_table, alg_header):
     assert emu_table.element_name == 'emu-table'
     (_, table, _) = emu_table.children
     assert table.element_name == 'table'
-    (_, tbody, _) = table.children
-    for tr in tbody.each_child_named('tr'):
+    for tr in table.each_child_named('tr'):
         (_, a, _, b, _) = tr.children 
 
         if a.element_name == 'th' and b.element_name == 'th':

@@ -22,7 +22,7 @@
 
 {OPERATION_DEF} :
     {OP_NAME}({var}) = {EXPR}
-    {OP_NAME}({var}){RHSS}{nlai}
+    {_indent_}{nlai}{OP_NAME}({var}){_indent_}{RHSS}{_outdent_}{_outdent_}{nlai}
 
 {RHSS} :
     {RHSS}{RHS}

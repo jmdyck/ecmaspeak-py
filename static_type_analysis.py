@@ -917,13 +917,14 @@ def ptn_type_for(nonterminal):
     elif isinstance(nonterminal, ANode):
         assert nonterminal.prod.lhs_s == '{nonterminal}'
         [nonterminal_ref] = nonterminal.children
-        mo = re.fullmatch(r'\|(\w+)((?:\[[^][]+\])?)((?:_opt)?)\|', nonterminal_ref)
+        mo = re.fullmatch(r'\|(\w+)((?:\[[^][]+\])?)(\??)\|', nonterminal_ref)
         assert mo
         [nont_basename, params, optionality] = mo.groups()
     else:
         assert 0
-    type_name = 'PTN_' + nont_basename + optionality
+    type_name = 'PTN_' + nont_basename
     type = NamedType(type_name)
+    if optionality: type = type | T_not_in_node
     return type
 
 # ------------------------------------------------------------------------------
@@ -4694,7 +4695,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(ex, T_Parse_Node)
         result = None
 
-    elif p == r"{EE_RULE} : <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>":
+    elif p == r"{EE_RULE} : <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>":
         [local_ref1, h_emu_grammar, local_ref2, local_ref3] = children
         env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
         env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
