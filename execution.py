@@ -744,7 +744,7 @@ def _(de, nonterminal):
     assert nont_str.endswith('|')
     return ES_NonterminalSymbol(nont_str[1:-1])
 
-@efd.put('{nonterminal} : \\| [A-Za-z][A-Za-z0-9]* (_opt|\\?)? (\\[ .+? \\])? \\|')
+@efd.put('{nonterminal} : \\| [A-Za-z][A-Za-z0-9]* \\?? (\\[ .+? \\])? \\|')
 def _(de, chars):
     return ES_NonterminalSymbol(chars[1:-1])
 

@@ -1582,9 +1582,17 @@ def check_nonterminal_refs(doc_node):
     # kludge:
     B_start = shared.spec_text.find('namespace="annexB"')
 
-    for mo in re.finditer('\|(\w+?)(?:\[(.*?)\])?(_opt)?\|', shared.spec_text):
-        (nt, args, maybe_opt) = mo.groups()
+    # TODO: Simply scanning through the whole of shared.spec_text
+    # will find matches in some <code class="javascript">,
+    # where we don't want it to.
+    for mo in re.finditer(r'\|\w[^|]+\|', shared.spec_text):
         posn = mo.start()
+        ref = mo.group(0)
+        mo2 = re.fullmatch(r'\|(\w+)(?:\[(.+?)\])?(\?)?\|', ref)
+        if mo2 is None:
+            msg_at_posn(posn, "ERROR: malformed nonterminal-reference")
+            continue
+        (nt, args, maybe_opt) = mo2.groups()
         if nt not in info_for_nt_:
             msg_at_posn(posn, "ERROR: unrecognized nonterminal: %s" % nt)
             continue
@@ -1618,7 +1626,7 @@ def check_nonterminal_refs(doc_node):
                     (args, ', '.join(def_prodn_params))
                 )
 
-        # XXX: Should check that _opt is compatible with nt's use.
+        # XXX: Should check that maybe_opt is compatible with nt's use.
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

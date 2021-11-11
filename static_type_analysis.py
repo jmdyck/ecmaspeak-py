@@ -76,7 +76,7 @@ def gather_nonterminals():
 #            print(anode.source_text())
         if anode.prod.lhs_s == '{nonterminal}':
             [nonterminal_name] = anode.children
-            if '[' in nonterminal_name or '?' in nonterminal_name: # or '_opt' in nonterminal_name:
+            if '[' in nonterminal_name or '?' in nonterminal_name:
                 return
             nonterminals.add(nonterminal_name)
         else:
