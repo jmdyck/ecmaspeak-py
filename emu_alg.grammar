@@ -366,8 +366,6 @@
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
     the character {EX} is one of {nonterminal}
-    the code matched by {PROD_REF} is strict mode code
-    the code matching the syntactic production that is being evaluated is contained in strict mode code
     the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits
     the decimal representation of {var} has 20 or fewer significant digits
     the execution context stack is empty
@@ -379,8 +377,9 @@
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the parse succeeded and no early errors were found
-    the source code matching {PROD_REF} is strict mode code
-    the source code matching {var} is non-strict code
+    the source text matched by the syntactic production that is being evaluated is contained in strict mode code
+    the source text matched by {PROD_REF} is strict mode code
+    the source text matched by {var} is non-strict code
     the source text matched by {var} is strict mode code
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist an element {var} of {var} such that {CONDITION_1}

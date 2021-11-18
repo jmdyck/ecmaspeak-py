@@ -1384,7 +1384,7 @@ def approximate_annex_A():
         if mo:
             title_part = mo.group(1)
 
-            if title_part == 'Source Code':
+            if title_part == 'Source Text':
                 # Annex A doesn't have a separate section corresponding to 10 "Source Code".
                 # Instead, it slips its single production for SourceCharacter into "Lexical Grammar"
                 caast = None

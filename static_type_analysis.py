@@ -4686,10 +4686,6 @@ def tc_nonvalue(anode, env0):
         tc_cond(cond, env0, False)
         result = None
 
-    elif p == r"{EE_RULE} : Always throw a Syntax Error if code matches this production.":
-        [] = children
-        result = None
-
     elif p == r"{EE_RULE} : All Early Error rules for {nonterminal} and its derived productions also apply to {EX}.":
         [nont, ex] = children
         env0.assert_expr_is_of_type(ex, T_Parse_Node)
@@ -5775,16 +5771,16 @@ def tc_cond_(cond, env0, asserting):
     # relating to strict code:
 
     elif p in [
-        r"{CONDITION_1} : the code matched by {PROD_REF} is strict mode code",
-        r"{CONDITION_1} : the source code matching {PROD_REF} is strict mode code",
-        r"{CONDITION_1} : the source code matching {var} is non-strict code",
+        r"{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code",
+        r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code",
+        r"{CONDITION_1} : the source text matched by {var} is non-strict code",
         r"{CONDITION_1} : {PROD_REF} is contained in strict mode code",
     ]:
         [prod_ref] = children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the code matching the syntactic production that is being evaluated is contained in strict mode code":
+    elif p == r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code":
         [] = children
         return (env0, env0)
 
@@ -6900,21 +6896,13 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : the code matched by {PROD_REF} is contained in strict mode code",
-        r"{CONDITION_1} : the code that matches {PROD_REF} is contained in strict mode code",
-    ]:
-        [prod_ref] = children
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code":
         [local_ref] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : any code matches this production",
-        r"{CONDITION_1} : any source text matches this rule",
+        r"{CONDITION_1} : any source text is matched by this production",
     ]:
         [] = children
         return (env0, env0)
@@ -7020,7 +7008,7 @@ def tc_cond_(cond, env0, asserting):
         tc_cond(condb, env0)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source code containing {G_SYM} is eval code that is being processed by a direct eval":
+    elif p == r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval":
         [g_sym] = children
         return (env0, env0)
 
