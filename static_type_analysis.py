@@ -5389,7 +5389,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
-        r"{CONDITION_1} : {EX} has the value {LITERAL}",
         r"{CONDITION_1} : {EX} is not {LITERAL}",
         r"{CONDITION_1} : {EX} is present and has value {LITERAL}",
         r"{CONDITION_1} : {EX} is {LITERAL}",
@@ -6289,7 +6288,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(item_lit, T_String)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {EX} is absent or has the value {LITERAL}":
+    elif p == r"{CONDITION_1} : {EX} is absent or is {LITERAL}":
         [ex, literal] = children
         (lit_type, env1) = tc_expr(literal, env0); assert env1 is env0
         assert lit_type == T_Boolean

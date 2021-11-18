@@ -401,13 +401,12 @@
     {EX} contains a Private Name whose {dsb_word} is {var}
     {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} does not contain {EX}
-    {EX} has the value {LITERAL}
     {EX} is -1
     {EX} is a Private Name
     {EX} is a String
     {EX} is a sequence of Unicode code points
     {EX} is absent
-    {EX} is absent or has the value {LITERAL}
+    {EX} is absent or is {LITERAL}
     {EX} is an Environment Record
     {EX} is an element of {var}
     {EX} is different from {EX}
