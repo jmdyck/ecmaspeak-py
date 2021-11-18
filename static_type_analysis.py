@@ -6713,7 +6713,7 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     # PR ? function-strictness
-    elif p == r"{CONDITION_1} : the source text matching {var} is strict mode code":
+    elif p == r"{CONDITION_1} : the source text matched by {var} is strict mode code":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)

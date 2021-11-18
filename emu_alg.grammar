@@ -381,7 +381,7 @@
     the parse succeeded and no early errors were found
     the source code matching {PROD_REF} is strict mode code
     the source code matching {var} is non-strict code
-    the source text matching {var} is strict mode code
+    the source text matched by {var} is strict mode code
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist an element {var} of {var} such that {CONDITION_1}
     there exists a member {var} of {var} such that {CONDITION_1}
