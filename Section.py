@@ -2195,15 +2195,8 @@ def _check_section_order():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def scan_section(section, patterns):
-    try:
-        results = scan_nodes(section.block_children, patterns)
-    except ScanError as e:
-        msg_at_posn(e.node.start_posn, f"Unexpected node in {section.section_kind} section")
-        results = []
-    return results
-
-def scan_nodes(hnodes, patterns):
     results = []
+    hnodes = section.block_children
     next_i = 0
     while next_i < len(hnodes):
         for (b, (pattern, processor)) in enumerate(patterns):
@@ -2248,12 +2241,9 @@ def scan_nodes(hnodes, patterns):
             next_i += n
             break
         else:
-            raise ScanError(hnodes[next_i])
+            msg_at_posn(hnodes[next_i].start_posn, f"Unexpected node in {section.section_kind} section")
+            results = []
     return results
-
-@dataclass(frozen = True)
-class ScanError(BaseException):
-    node: HNode
 
 def node_matches_atom(node, atom):
     if isinstance(atom, str):
