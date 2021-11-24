@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import re, string, time, typing
+import re, string, time, typing, pdb, types
 from collections import OrderedDict
 from dataclasses import dataclass
 
@@ -13,6 +13,8 @@ from shared import stderr, msg_at_posn, spec
 from HTML import HNode
 import Pseudocode
 import headers
+import intrinsics
+from intrinsics import get_pdn, S_Property, S_InternalSlot
 from headers import AlgParam
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -52,6 +54,8 @@ def make_and_check_sections():
     headers.note_unused_rules()
 
     _print_section_kinds()
+    _print_unused_ispl()
+    _print_intrinsic_facts()
     _check_aoids()
     _check_section_order()
 
@@ -217,6 +221,8 @@ def _set_section_kind(section):
         _handle_other_section(section)
     )
     assert r
+
+    extract_intrinsic_info(section)
 
     ensure_every_emu_alg_in_section_is_parsed(section)
 
@@ -2093,6 +2099,1248 @@ def _set_bcen_attributes(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def extract_intrinsic_info(section):
+    section.intrinsic_facts_raw = []
+    section.intrinsic_facts_cooked = []
+
+    if section.section_title in [
+        'Well-Known Intrinsic Objects',
+        'Additional Properties of the Global Object',
+    ]:
+        extract_intrinsic_info_from_WKI_section(section)
+    elif section.section_kind.startswith('intrinsic: info'):
+        extract_intrinsic_info_from_p_ul_section(section)
+    elif section.section_kind == 'CallConstruct':
+        extract_intrinsic_info_from_CallConstruct_section(section)
+    elif '_property' in section.section_kind:
+        extract_intrinsic_info_from_property_section(section)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+non_global_wkis = []
+
+def extract_intrinsic_info_from_WKI_section(section):
+    [wki_table] = [
+        child
+        for child in section.block_children
+        if child.element_name == 'emu-table'
+    ]
+    for (percent_name, global_name, phrase) in intrinsics.each_row_in_wki_table(wki_table):
+        section.put_fact(percent_name, 'exists', '')
+
+        if global_name:
+            global_name = detick(global_name)
+            section.put_fact(percent_name, 'is-aka', global_name)
+            section.put_fact(
+                'the global object',
+                'has-prop',
+                S_Property(
+                    pystr_to_spec_String_literal(global_name),
+                    {'[[Value]]': percent_name}
+                )
+            )
+        else:
+            non_global_wkis.append(percent_name)
+
+        if phrase:
+            section.put_fact(percent_name, 'is-aka', detick(phrase))
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def extract_intrinsic_info_from_p_ul_section(section):
+
+    assert section.bcen_str.startswith('p ul')
+    (p, ul) = section.block_children[0:2]
+
+    assert p.element_name == 'p'
+    p_ist = p.inner_source_text()
+
+    if '<dfn' in p_ist:
+        mo = re.fullmatch(r'(.+)<dfn\b[^<>]*>(.+)</dfn>(.+)', p_ist)
+        dfn_phrase = mo.group(2)
+        p_ist = mo.expand(r'\1\2\3')
+    else:
+        dfn_phrase = None
+
+    # ----------------------------------------------------------------
+    # section_title + intro <p>
+
+    if (mo := re.fullmatch(r'(Properties of the|The) (_\w+_) (Constructor|Prototype Object)s', section.section_title)):
+        # _NativeError_ and _TypedArray_
+        (_, var, what) = mo.groups()
+        what = what.lower()
+        subject = f"each {var} {what}"
+        assert p_ist == f"Each {var} {what}:"
+
+    elif (mo := re.fullmatch(r'(Properties of the|The) (%\w+%|[A-Z]\w+) (Constructor|Prototype Object|Intrinsic Object|Object)', section.section_title)):
+        # the usual case
+        (prefix, id, suffix) = mo.groups()
+        if id == 'Global': id = 'global'
+        assert p_ist == 'The ' + id + ' ' + suffix.lower() + ':'
+        subject = 'the ' + id + ' ' + suffix.lower()
+
+    else:
+        assert 0, section.section_title
+
+    if dfn_phrase:
+        # Any mention of {dfn_phrase} in the spec will be autolinked to here,
+        # so in effect, {dfn_phrase} is a synonym for whatever is being defined here.
+        section.put_fact(subject, 'is-aka', dfn_phrase)
+
+    # ----------------------------------------------------------------
+    # <ul>
+
+    assert ul.element_name == 'ul'
+    for li in ul.children:
+        if li.is_whitespace(): continue
+        assert li.element_name == 'li'
+        li_ist = li.inner_source_text().strip()
+
+        # -------------------
+        # is AKA
+
+        if mo := re.fullmatch(r'is <dfn>(%\w+(\.\w+)*%)</dfn>( \(see <emu-xref [^<>]+></emu-xref>\))?\.', li_ist):
+            section.put_fact(subject, 'is-aka', mo.group(1))
+
+        # -------------------
+        # ordinary vs exotic object (which subsumes internal methods + slots)
+
+        # ordinary
+        elif li_ist in [
+            'is an ordinary object.',
+            'is itself an ordinary object.',
+        ]:
+            section.put_fact(subject, 'is', 'an ordinary object')
+        elif li_ist == 'is itself a Boolean object; it has a [[BooleanData]] internal slot with the value *false*.':
+            section.put_fact(subject, 'is', 'an ordinary object')
+            section.put_fact(subject, 'has-slot', S_InternalSlot('[[BooleanData]]', '*false*'))
+        elif li_ist == 'is itself a Number object; it has a [[NumberData]] internal slot with the value *+0*<sub>\U0001d53d</sub>.':
+            section.put_fact(subject, 'is', 'an ordinary object')
+            section.put_fact(subject, 'has-slot', S_InternalSlot('[[NumberData]]', '*+0*<sub>\U0001d53d</sub>'))
+
+        # exotic
+        elif li_ist == 'is a String exotic object and has the internal methods specified for such objects.':
+            section.put_fact(subject, 'is', 'a String exotic object')
+        elif li_ist == 'is an Array exotic object and has the internal methods specified for such objects.':
+            section.put_fact(subject, 'is', 'an Array exotic object')
+        elif li_ist == 'has the internal methods defined for ordinary objects, except for the [[SetPrototypeOf]] method, which is as defined in <emu-xref href="#sec-immutable-prototype-exotic-objects-setprototypeof-v"></emu-xref>. (Thus, it is an immutable prototype exotic object.)':
+            section.put_fact(subject, 'is', 'an immutable prototype exotic object')
+
+        # function
+        # (All intrinsics are built-in, so we don't have to say "built-in".)
+        elif li_ist in [
+            'is a function whose behaviour differs based upon the number and types of its arguments. The actual behaviour of a call of _TypedArray_ depends upon the number and kind of arguments that are passed to it.',
+            'is a function whose behaviour differs based upon the number and types of its arguments.',
+            'is a standard built-in function object that inherits from the Function constructor.',
+            'is itself a built-in function object.',
+            'returns a new Symbol value when called as a function.',
+            'is not intended to be used with the `new` operator.',
+        ]:
+            section.put_fact(subject, 'is', 'a function object')
+
+        elif li_ist == 'accepts any arguments and returns *undefined* when invoked.':
+            section.put_fact(subject, 'has-slot', S_InternalSlot('[[ccb]]', f"prose in {section.section_id}"))
+
+        # constructor
+        elif li_ist in [
+            'performs a type conversion when called as a function rather than as a constructor.',
+            'returns a String representing the current time (UTC) when called as a function rather than as a constructor.',
+            'is not intended to be called as a function and will throw an exception when called in that manner.',
+            'creates a new ordinary object when called as a constructor.',
+            'is a constructor function object that all of the _TypedArray_ constructor objects inherit from.',
+            'will throw an error when invoked, because it is an abstract class constructor. The _TypedArray_ constructors do not perform a `super` call to it.',
+        ]:
+            section.put_fact(subject, 'is', 'a constructor')
+        elif (
+            re.fullmatch(r'(also )?creates and initializes a new \w+( object)? when called as a function rather than as a constructor.( A call of the object as a function is equivalent to calling it as a constructor with the same arguments.)? Thus the function call .+ is equivalent to the object creation expression .+ with the same arguments.', li_ist)
+            or
+            re.fullmatch(r'creates and initializes a new \w+( object)? when called as a constructor.', li_ist)
+        ):
+            section.put_fact(subject, 'is', 'a constructor')
+
+        # negative statements that don't tell us anything about what it *is*:
+        elif li_ist in [
+            'is not a function object.',
+            'does not have a [[Call]] internal method; it cannot be invoked as a function.',
+            'does not have a [[Construct]] internal method; it cannot be used as a constructor with the `new` operator.',
+        ]:
+            pass
+
+        # ----------------------
+        # internal slots
+
+        # has
+        elif mo := re.fullmatch(r'has an? (\[\[\w+\]\]) internal slot whose value is (%\w+(?:\.\w+)*%|\*null\*|\*true\*|the empty String|host-defined)\.', li_ist):
+            section.put_fact(subject, 'has-slot', S_InternalSlot(mo.group(1), mo.group(2)))
+
+        # does not have
+        elif mo := re.fullmatch(r'does not have a \[\[\w+\]\] internal slot\.', li_ist):
+            pass
+        elif mo := re.fullmatch(r'does not have a \[\[\w+\]\] internal slot or any of the other internal slots of Promise instances\.', li_ist):
+            pass
+        elif mo := re.fullmatch(r'does not have a \[\[\w+\]\] or any other of the internal slots that are specific to _TypedArray_ instance objects\.', li_ist):
+            pass
+        elif mo := re.fullmatch(r'does not have \[\[\w+\]\] and \[\[\w+\]\] internal slots\.', li_ist):
+            pass
+        elif mo := re.fullmatch(r'does not have an \[\[\w+\]\] or \[\[\w+\]\] internal slot\.', li_ist):
+            pass
+        elif mo := re.fullmatch(r'does not have a \[\[\w+\]\], \[\[\w+\]\], \[\[\w+\]\], or \[\[\w+\]\] internal slot\.', li_ist):
+            pass
+
+        elif mo := re.fullmatch(r'''(?x)
+                is\ not\ an?\ (\w+)\ (object|instance)
+                (\ or\ an\ AggregateError\ instance)?
+                (;\ it|\ and)\ does\ not\ have\ an?\ \[\[\w+\]\]\ internal\ slot
+                (
+                    \.
+                |
+                    \ or\ any\ of\ the\ other\ internal\ slots\ of\ RegExp\ instance\ objects\.
+                |
+                    \ or\ any\ other\ of\ the\ internal\ slots\ listed\ in\ <emu-xref\ [^<>]+></emu-xref>\.
+                |
+                    \ or\ any\ other\ of\ the\ internal\ slots\ listed\ in\ <emu-xref\ [^<>]+></emu-xref>\ or\ <emu-xref\ [^<>]+></emu-xref>\.
+                )
+            ''', li_ist):
+            assert mo.group(1) != 'ordinary'
+
+        # ----------------------
+        # subclassing it
+
+        elif (
+            re.fullmatch(r'''(?x)
+                may\ be\ used\ as\ the\ value\ 
+                    ( in | of )
+                \ an\ `extends`\ clause\ of\ a\ class\ definition
+                (
+                    \.
+                |
+                    \ but\ a\ `super`\ call\ to\ it\ will\ cause\ an\ exception\.
+                |
+                    \.
+                    \ Subclass\ constructors\ that\ intend\ to\ inherit\ the\ (specified|exotic)\ 
+                        ( \w+ | `\w+` )
+                    \ behaviour\ must\ include\ a\ `super`\ call\ to\ the\ 
+                        ( \w+ | `\w+` )
+                    \ constructor\ to(\ create\ and)?\ initialize\ 
+                        ( a\ subclass\ instance | the\ subclass\ instance | subclass\ instances )
+                    (
+                        \ that\ are\ Array\ exotic\ objects.\ However,\ most\ of\ the\ `Array.prototype`\ methods\ are\ generic\ methods\ that\ are\ not\ dependent\ upon\ their\ \*this\*\ value\ being\ an\ Array\ exotic\ object\.
+                    |
+                        \ with\ 
+                        (
+                            the\ internal\ state\ necessary\ to\ support\ 
+                            (
+                                the(\ `\w+`\ and)?\ `\w+.prototype`\ built-in\ methods
+                            |
+                                the\ %\w+%`.prototype`\ built-in\ methods
+                            )
+                        |
+                            an?\ \[\[\w+\]\]\ internal\ slot
+                        |
+                            the\ necessary\ internal\ slots
+                        |
+                            the\ internal\ slots\ necessary\ for\ built-in\ (.+)\ behaviour.
+                            \ All\ ECMAScript\ syntactic\ forms\ for\ defining\ (.+)\ objects\ create(\ direct)?\ instances\ of\ (\w+)\.
+                            \ There\ is\ no\ syntactic\ means\ to\ create\ instances\ of\ (\w+)\ subclasses
+                            (\ except\ for\ the\ built-in\ GeneratorFunction,\ AsyncFunction,\ and\ AsyncGeneratorFunction\ subclasses)?
+                        )
+                        \.
+                    )
+                )
+            ''', li_ist)
+        ):
+            pass
+
+        elif li_ist == 'acts as the abstract superclass of the various _TypedArray_ constructors.':
+            pass
+
+        elif li_ist == 'is not intended to be subclassed.':
+            pass
+        elif li_ist == 'is not intended to be used with the `new` operator or to be subclassed. It may be used as the value of an `extends` clause of a class definition but a `super` call to the BigInt constructor will cause an exception.':
+            pass
+
+        # ----------------------
+        # properties
+
+        elif li_ist == 'contains two functions, `parse` and `stringify`, that are used to parse and construct JSON texts.':
+            section.put_fact(subject, 'has-prop', S_Property('*"parse"*',     {}))
+            section.put_fact(subject, 'has-prop', S_Property('*"stringify"*', {}))
+
+        elif mo := re.fullmatch(r'has a (\*"\w+"\*) property whose( initial)? value is (.+) and whose attributes are ({.+})\.', li_ist):
+            section.put_fact(subject, 'has-prop', S_Property(mo.group(1), {'[[Value]]': mo.group(3), **attr_string_to_dict(mo.group(4))}))
+        elif mo := re.fullmatch(r'has a (\*"\w+"\*) property whose( initial)? value is (.+)\.', li_ist):
+            section.put_fact(subject, 'has-prop', S_Property(mo.group(1), {'[[Value]]': mo.group(3)}))
+        elif mo := re.fullmatch(r'has a (\*"\w+"\*) property\.', li_ist):
+            section.put_fact(subject, 'has-prop', S_Property(mo.group(1), {}))
+
+        elif mo := re.fullmatch(r'has properties that are indirectly inherited by all \w+ instances\.', li_ist):
+            pass
+        elif mo := re.fullmatch(r'has properties that are inherited by all (.+) Iterator Objects\.', li_ist):
+            pass
+        elif li_ist == 'along with its corresponding prototype object, provides common properties that are inherited by all _TypedArray_ constructors and their instances.':
+            pass
+
+        elif li_ist == 'may have host-defined properties in addition to the properties defined in this specification. This may include a property whose value is the global object itself.':
+            pass
+
+        elif li_ist in [
+            'does not have a *"prototype"* property because Proxy objects do not have a [[Prototype]] internal slot that requires initialization.',
+            'does not have a *"prototype"* property.',
+        ]:
+            pass
+
+        elif li_ist in [
+            'has the following properties:',
+            'has the following additional properties:',
+        ]:
+            pass
+
+        # -------------------
+        # global name
+
+        elif mo := re.fullmatch(r'is the initial value of the (\*"\w+"\*) property of the global object(, if that property is present \(see below\))?\.', li_ist):
+            section.put_fact('the global object', 'has-prop', S_Property(mo.group(1), {'[[Value]]': subject}))
+
+        elif li_ist == 'does not have a global name or appear as a property of the global object.':
+            pass
+
+        # -------------------
+        # other
+
+        elif li_ist == 'is never directly accessible to ECMAScript code.':
+            pass
+
+        elif re.fullmatch('is an intrinsic object that has the structure described below, differing only in the name used as the constructor name instead of _TypedArray_, in <emu-xref [^<>]+></emu-xref>.', li_ist):
+            pass
+
+        elif li_ist == 'is a subclass of `Function`.': # This should be above, but I'm not sure where it fits in.
+            pass
+
+        elif li_ist == 'is created before control enters any execution context.':
+            pass
+
+        else:
+            assert 0, li.inner_source_text().strip()
+
+    # ----------------------------------------------------
+
+    # TODO: convert to scan_section?
+    # Not with ispl, because I don't think there's any overlap.
+    # But just to be more consistent in processing.
+    # And also to be alerted if a pattern is no longer used.
+    for child in section.block_children[2:]:
+        if child.element_name == 'p':
+            cst = child.inner_source_text()
+            if re.match(r'Unless explicitly (defined|stated) otherwise, the methods of the (Date|Number|String) prototype object defined below are not generic and the \*this\* value passed to them must be ', cst):
+                # The methods in question refer to "this Foo object/value" (or don't),
+                # so I don't need to do anything extra to handle this sentence.
+                pass
+            elif cst.startswith('The abstract operation <dfn'):
+                # The preamble to an emu-alg. Handled in _handle_other_section().
+                pass
+            elif (
+                cst.startswith('In following descriptions of functions that are properties of the Date prototype object, the phrase &ldquo;<dfn id="this-Date-object">this Date object</dfn>&rdquo; refers to')
+                or
+                re.match(r'The phrase &ldquo;this (Number|BigInt) value&rdquo; within the specification of a method refers to', cst)
+            ):
+                # I just hard-code these. They're unlikely to change.
+                pass
+            elif (
+                cst.startswith('The Atomics object provides functions that') # 25.4
+                or
+                cst.startswith('The JSON Data Interchange Format is defined in ECMA-404.')
+            ):
+                # No specific normative content?
+                pass
+            elif cst == 'Whenever a host does not provide concurrent access to SharedArrayBuffers it may omit the *"SharedArrayBuffer"* property of the global object.':
+                # Not sure yet whether I'm going to provide it or not.
+                pass
+            else:
+                assert 0
+        elif child.element_name == 'emu-alg':
+            # Handled in _handle_other_section()
+            pass
+        elif child.element_name == 'emu-note':
+            pass
+        else:
+            assert 0, child.element_name
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def extract_intrinsic_info_from_CallConstruct_section(section):
+
+    mo = re.fullmatch(r'(\S+) \([^()]+\)', section.section_title)
+    assert mo
+    name = mo.group(1)
+    section.put_fact(name, 'is', 'a constructor')
+
+    if name in non_global_wkis or f"%{name}%" in non_global_wkis:
+        # (Currently: %ThrowTypeError%, %TypedArray%, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction)
+        # The function defined by this section
+        # is a well-known intrinsic,
+        # but doesn't have a global name.
+        # (I.e., it isn't the value of a property of the global object.)
+        section.this_property = None
+    else:
+        section.this_property = types.SimpleNamespace()
+        section.this_property.container = 'the global object'
+        section.this_property.key = pystr_to_spec_String_literal(name)
+
+    section.this_object = name
+
+    scan_section(section, ispl, ispl_counter)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def extract_intrinsic_info_from_property_section(section):
+
+    # Skip sections that are within "Properties of Foo Instances" sections.
+    # TODO: move this distinction into section_kind?
+    anc = section
+    while True:
+        if anc.section_kind.startswith('instances:'):
+            # {section} is within a "Properties of Foo Instances" section.
+            return
+        if anc.section_kind.startswith('intrinsic:'):
+            # This is what I want.
+            break
+        anc = anc.parent
+
+    # -------------------------------------------------
+
+    # We know that this section is telling us about
+    # some property of some intrinsic/global object.
+    # Figure out which object and which property.
+
+    id_from_title = re.sub(' \(.*', '', section.section_title)
+
+    if mo := re.fullmatch('(get|set) (.+)', id_from_title):
+        (getset, path) = mo.groups()
+    else:
+        getset = None
+        path = id_from_title
+
+    (t_container, t_key) = split_prop_path(path)
+
+    if t_container is None:
+        assert (
+            section.parent.section_title.endswith(' Properties of the Global Object')
+            or
+            section.parent.parent.section_title.endswith(' Properties of the Global Object')
+        )
+        t_container = 'the global object'
+
+    section.this_property = types.SimpleNamespace()
+    section.this_property.container = t_container
+    section.this_property.key       = t_key
+
+    section.this_property_has_attributes({})
+    # Running scan_section on the section's content
+    # will almost certainly expand on this fact,
+    # but this is a backstop in case it doesn't.
+
+    # --------------------------------------------
+
+    # First, dispense with sections that are simply a cross-reference to another section.
+    # All they tell us is that the property exists, and we've already captured that.
+
+    if section.section_kind.endswith('_xref'):
+        assert section.bcen_str == 'p'
+        p = section.block_children[0]
+        p_ist = p.inner_source_text()
+        mo = re.fullmatch(r'See <emu-xref href="#([^"]+)"></emu-xref>\.', p_ist)
+        assert mo
+        refd_id = mo.group(1)
+
+        if section.this_property.key == '*"WeakSet"*':
+            assert refd_id == 'sec-weakset-objects'
+            # But that's inconsistent:
+            # within "Constructor Properties of the Global Object",
+            # the clause for "Foo ( . . .)" references "The Foo Constructor"
+            # (SPEC BUG, ish)
+            refd_id = 'sec-weakset-constructor'
+        return
+
+    # ---------------------------------------
+
+    # The phrase `Foo.prototype` (without percents) is 'isolated'.
+    #
+    # The spec doesn't explicitly equate `Foo.prototype` with `the Foo prototype object`,
+    # but when you get a section entitled "Properties of the Foo Prototype Object"
+    # and its child-sections have titles like "Foo.prototype.bar",
+    # then it's pretty clear that we are to treat the phrases in question as synonyms
+    # (in this context at least).
+    # 
+    # (True, the spec does equate `the Foo prototype object` with %Foo.prototype%,
+    # which is by definition initially-equivalent to %Foo%.prototype,
+    # which is initially-equivalent to Foo.prototype
+    # *if* %Foo% is initially-equivalent to Foo,
+    # but that isn't always the case,
+    # and I don't want to have to look elsewhere to find that out.)
+    #
+    # So I use the former criterion to establish the equivalence.
+
+    if section.this_property.container.endswith('.prototype'):
+        if mo := re.fullmatch(r'Properties of the (\S+) Prototype Object', section.parent.section_title):
+            section.put_fact(mo.expand(r'the \1 prototype object'), 'is-aka', section.this_property.container)
+        elif mo := re.fullmatch(r'Properties of the (_\w+_) Prototype Objects', section.parent.section_title):
+            section.put_fact(mo.expand(r'each \1 prototype object'), 'is-aka', section.this_property.container)
+
+    # --------------------------------------------------------
+
+    # There's a similar problem (and similar solution) for
+    # constructors that aren't properties of the global object.
+    #
+    # E.g., consider AsyncFunction:
+    # The WKI table declares %AsyncFunction% but doesn't (can't) give it a global name,
+    # and under "ECMAscript Language Association" says
+    # "The constructor of async function objects (27.7.1)"
+    # That phrase isn't useful for my purposes, because it doesn't occur elsewhere.
+    # 27.7.1 equates "the AsyncFunction constructor" to %AsyncFunction%,
+    # but "AsyncFunction" (which appears in section titles) is terminologically isolated.
+
+    # (This isn't a problem for constructors that *are* global properties,
+    # because for them, the WKI table equates %Foo% with `Foo`.)
+
+    if mo := re.fullmatch(r'Properties of the (\S+) Constructor', section.parent.section_title):
+        section.put_fact(mo.expand(r'the \1 constructor'), 'is-aka', section.this_property.container)
+    elif mo := re.fullmatch(r'Properties of the (_\w+_) Constructors', section.parent.section_title):
+        section.put_fact(mo.expand(r'each \1 constructor'), 'is-aka', section.this_property.container)
+
+    # -------------------------------------------------
+
+    # Ultimately, I need to know what all the distinct intrinsics are,
+    # so I'm arranging things so that every distinct percent-delimited name
+    # mentioned in a fact denotes a distinct intrinsic.
+    #
+    # In the facts for this section, I'll be using `section.this_object`
+    # to refer to the intrinsic object defined by this section, if any.
+    # So if this section *doesn't* define an intrinsic object,
+    # it's important that I not accidentally generate a fact that mentions
+    # section.this_object.
+    # As a safeguard, I'll only set `section.this_object`
+    # when I expect this section to define an intrinsic object.
+
+    if section.section_kind == 'accessor_property':
+        section_defines_object = True
+
+    elif section.section_kind == 'function_property':
+        # We know, from the parameter list in the section heading,
+        # that this section defines an intrinsic data property
+        # whose [[Value]] is a function object.
+        #
+        # However, that function object might be defined elsewhere.
+        # E.g. Date.prototype.toGMTString and Date.prototype.toUTCString
+        # are the same function. The section for Date.prototype.toGMTString
+        # just refers to %Date.prototype.toUTCString%
+
+        for child in section.block_children:
+            if (
+                child.element_name == 'p'
+                and
+                re.fullmatch(
+                    r'The initial value of the \S+ property is %\S+%(, defined in .+)?\.',
+                    child.inner_source_text()
+                )
+            ):
+                # The function object is defined elsewhere,
+                section_defines_object = False
+                break
+        else:
+            section_defines_object = True
+        
+    elif section.section_kind == 'other_property':
+        if section.section_title == 'Array.prototype [ @@unscopables ]':
+            # The only not-well-known intrinsic that isn't a function?
+            section_defines_object = True
+        else:
+            # The [[Value]] of the property defined by this section
+            # is either a primitive value
+            # (e.g. Math.PI or Math[@@toStringTag]),
+            # or an object defined elsewhere
+            # (e.g. Array.prototype or Array.prototype.constructor).
+            section_defines_object = False
+
+    else:
+        assert 0, section.section_kind
+
+    if section_defines_object:
+        section.this_object = id_from_title
+
+    # -----------------------------------
+
+    scan_section(section, ispl, ispl_counter)
+
+# ==============================================================================
+
+# Intrinsic Section Pattern/Parsing List
+# i.e., a list of patterns (and corresponding actions)
+# with which to "parse" (roughly speaking)
+# a section that gives info about an intrinsic
+# (except for a <p><ul> section, probably).
+#
+# Note that order is significant:
+# Text might match multiple patterns,
+# but the earliest of them is the one that succeeds.
+# (So in general, specific patterns should precede general patterns.)
+
+ispl = []
+
+def for_patterns(*patterns):
+    pattern_list = []
+    for pattern in patterns:
+        if not isinstance(pattern, tuple):
+            pattern = tuple([pattern])
+
+        pattern_atoms = []
+        for pattern_str in pattern:
+            assert isinstance(pattern_str, str)
+            if re.fullmatch(r'[\w-]+', pattern_str):
+                # This is just the name of an element (HNode)
+                pattern_atom = pattern_str
+            else:
+                # This is a regex for the text of a <p> element.
+                pattern_atom = ('p', pattern_str)
+            pattern_atoms.append(pattern_atom)
+        pattern_list.append(pattern_atoms)
+
+    def decorator(func):
+        for pattern in pattern_list:
+            ispl.append((pattern, func))
+        return func
+
+    return decorator
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+ATTRS = r'(?P<attrs>{[^{}]+})'
+THIS_FUNCTION = r'''(?P<this_function>(?x:
+        ([Tt]he|a|Each)\ (?P<func_name1>\S+)\ (function|method|constructor\ function|constructor|intrinsic\ object)
+        |
+        (?P<func_name2>\S+)
+        |
+        [Tt]his\ function
+    ))'''
+VALUE = r'(?P<value>.+)'
+THIS  = r'(?P<this>\S+)'
+H_EMU_XREF = r'<emu-xref href="#(?P<refd_id>[^"]+)">[^<>]*</emu-xref>'
+
+# ==============================================================================
+# The section defines an accessor property,
+# or just the [[Get]] or [[Set]] attribute of an accessor property.
+
+@for_patterns(
+    (fr"{THIS} is an accessor property whose set accessor function is \*undefined\*\. Its get accessor function performs the following steps( when called)?:", 'emu-alg')
+)
+def _(section, mo, emu_alg):
+    confirm_this_property(section, mo.group('this'))
+
+    propAttrs = {
+        '[[Get]]': section.this_object,
+        '[[Set]]': '*undefined*',
+    }
+    section.this_property_has_attributes(propAttrs)
+
+    section.defines_a_function_via('emu-alg')
+
+# -------------------
+
+@for_patterns(
+    fr"{THIS} is an accessor property with attributes {ATTRS}. The \[\[Get\]\] and \[\[Set\]\] attributes are defined as follows:"
+)
+def _(section, mo):
+    assert section.bcen_str == 'p'
+    # I.e., the <p> that matches the above is the only block-child in the section.
+    # The "as follows:" refers to the following two subsections.
+
+    (g, s) = section.section_children
+    assert g.section_title.startswith('get ')
+    assert s.section_title.startswith('set ')
+    propAttrs = {
+        '[[Get]]': g.section_title,
+        '[[Set]]': s.section_title,
+        **attr_string_to_dict(mo.group('attrs'))
+    }
+    section.this_property_has_attributes(propAttrs)
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (r'The value of the (\[\[[GS]et\]\]) attribute is a built-in function that .+\. It performs the following steps when called:', 'emu-alg')
+)
+def _(section, mo, emu_alg):
+    propAttrs = { mo.group(1): section.this_object }
+    section.this_property_has_attributes(propAttrs)
+
+    section.defines_a_function_via('emu-alg')
+
+# ==============================================================================
+# Blocks that indicate that this section defines a intrinsic function
+# (other than an accessor function, handled above).
+# This function is usually the initial value of a data property (of some intrinsic object),
+# but in some cases it's an 'orphan'.
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (fr"{THIS_FUNCTION} is the <dfn>(?P<percented>%.+%)</dfn> intrinsic object\. When the `\w+` function is called, the following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} is the <dfn>(?P<percented>%.+%)</dfn> intrinsic object\. When the `\w+` function is called with .+, the following steps are taken:", 'emu-alg'),
+)
+def _(section, mo, emu_alg):
+    check_this_function(section, mo.group('this_function'), mo)
+    section.this_property_has_attributes({'[[Value]]': section.this_object})
+    section.put_fact(section.this_object, 'is-aka', mo.group('percented'))
+    section.defines_a_function_via('emu-alg')
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (fr"The following steps are performed:", 'emu-alg'),
+    (fr"The following steps are taken:", 'emu-alg'),
+    (fr"When {THIS_FUNCTION} is called it returns .+ The following steps are taken:", 'emu-alg'),
+    (fr"When {THIS_FUNCTION} is called with .+ it performs the following steps:", 'emu-alg'),
+    (fr"When {THIS_FUNCTION} is called with .+, the following steps are taken:", 'emu-alg'),
+    (fr"When {THIS_FUNCTION} of an object _F_ is called with .+, the following steps are taken:", 'emu-alg'), # SPEC BUG?
+    (fr"When {THIS_FUNCTION} is called, the following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} may be called with a variable number of arguments. .+ The following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} may be called with any number of arguments .+ The following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} takes .+, and performs the following steps:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} takes .+, and returns .+ The following steps are taken:", 'emu-alg'),
+    (fr"These are the steps in stringifying an object:", 'emu-alg'),
+
+    (fr"This function interprets a String value .+ The following steps are taken:", 'emu-alg'),
+
+    (fr"{THIS_FUNCTION} returns .+ It performs the following steps when called:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} creates .+ When the `\w+` function is called, the following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} (notifies|puts) .+ The following steps are taken:", 'emu-alg'),
+
+    (fr"{THIS_FUNCTION} is used to .+ When `[\w.]+` is called with .+, the following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} is used to .+ When the `\w+` function is called, the following steps are taken:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} performs the following steps:", 'emu-alg'),
+    (fr"{THIS_FUNCTION} performs the following steps when called:", 'emu-alg'),
+
+    (fr"Return a String containing .+ Specifically, perform the following steps:", 'emu-alg'), # -> Returns -> This function returns
+
+    (r"The String ToString\(_string_\) is searched for an occurrence of the regular expression pattern as follows:", 'emu-alg'),
+
+)
+def _(section, mo, emu_alg):
+    section.this_property_has_attributes({'[[Value]]': section.this_object})
+    section.defines_a_function_via('emu-alg')
+
+# ----------------------------------------------------------
+
+@for_patterns(
+    # `sort` has lots of unique sentences
+    (
+        fr"The elements of this array are sorted. .+",
+        fr"When the `sort` method is called, the following steps are taken:",
+        'emu-alg',
+        fr"The <em>sort order</em> is .+",
+        fr"The sort order is .+",
+        'ul',
+        fr"Unless the sort order is .+",
+        'ul',
+        fr"Here the notation .+",
+        fr"A function _comparefn_ is a consistent comparison function .+",
+        'ul',
+    ),
+    (fr"Upon entry, the following steps are performed to initialize evaluation of {THIS_FUNCTION}. .+:", 'emu-alg'),
+
+    # Comment out this one to find cases where a function's <emu-alg> appears without a preamble,
+    # or with a preamble that doesn't mention "the following steps" or some such.
+    'emu-alg',
+)
+def _(section, *_):
+    section.this_property_has_attributes({'[[Value]]': section.this_object})
+    section.defines_a_function_via('emu-alg')
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (r"The <dfn>%ThrowTypeError%</dfn> intrinsic is an anonymous built-in function object that is defined once for each realm. When %ThrowTypeError% is called it performs the following steps:", 'emu-alg'),
+)
+def _(section, mo, emu_alg):
+    section.defines_a_function_via('emu-alg')
+
+    #> Functions that are identified as anonymous functions use the empty String as the value of the *"name"* property.
+    section.put_fact('%ThrowTypeError%', 'has-prop', S_Property('*"name"*', {'[[Value]]': '*""*'}))
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (fr"An ECMAScript implementation that includes the ECMA-402 Internationalization API must implement {THIS_FUNCTION} as specified in the ECMA-402 specification\. If an ECMAScript implementation does not include the ECMA-402 API the following specification of the `\w+` method is used."),
+    (fr"{THIS_FUNCTION} is a property of the global object. It computes a new version of a String value in which .+"),
+
+    (fr"When {THIS_FUNCTION} is called with .+, it returns .+"),
+
+    (fr"The meanings? of the optional parameters to this method are defined in the ECMA-402 specification; implementations that do not include ECMA-402 support must not use those parameter positions for anything else."),
+
+    (fr"The interpretation and use of the arguments of {THIS_FUNCTION} are the same as for .+"),
+    (fr"This function interprets a String value .+"),
+    (fr"This function is called by ECMAScript language operators .+"),
+    (fr"This function provides .+"),
+
+    (fr"{THIS_FUNCTION} (applies|behaves|compares|computes|parses|produces|returns|works) .+"),
+    (fr"{THIS_FUNCTION} is a distinct function that.+"),
+    (fr"{THIS_FUNCTION} is a function whose behaviour differs .+"),
+    (fr"{THIS_FUNCTION} takes .+, and returns .+"),
+
+    (fr"{THIS_FUNCTION}, if considered as a function of two arguments .+, is a consistent .+"),
+    (r"If this time value is not a finite Number .+, this function throws .+"), # Date.prototype.toISOString
+    (r"Returns a Number .+ This function takes no arguments."), # Math.random
+)
+def _(section, mo):
+    section.this_property_has_attributes({'[[Value]]': section.this_object})
+    section.defines_a_function_via('prose')
+
+# ==============================================================================
+# Other blocks that give info about attributes
+# of the data property defined by this section:
+
+@for_patterns(
+    (fr"The( initial)? value of the {THIS} data property is an object created by the following steps:", 'emu-alg'),
+)
+def _(section, mo, emu_alg):
+    confirm_this_property(section, mo.group('this'))
+    section.this_property_has_attributes({'[[Value]]': section.this_object})
+    section.put_fact(section.this_object, 'exists', '')
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (fr"The( initial)? value of {THIS} is {VALUE} \({H_EMU_XREF}\)\. Each _NativeError_ constructor has a distinct prototype object\."),
+    (fr"The( initial)? value of {THIS} is {VALUE} \(see {H_EMU_XREF}\)\. This property has the attributes {ATTRS}\."),
+    (fr"This is a data property with a value of {VALUE}. This property has the attributes {ATTRS}\."),
+
+    (fr"The( initial)? value of the {THIS} property is {VALUE}, defined in {H_EMU_XREF}\."),
+    (fr"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
+    (fr"The( initial)? value of {THIS} is {VALUE}\."),
+    (fr"The( initial)? value of {THIS} is {VALUE}"), # SPEC BUG
+
+    (fr"The( initial)? value of a {THIS} is {VALUE}\."),
+    (fr"The initial value of the {THIS} property of the prototype for a given _NativeError_ constructor is {VALUE}\."),
+
+)
+def _(section, mo):
+    if 'this' in mo.groupdict():
+        confirm_this_property(section, mo.group('this'))
+
+    if 'attrs' in mo.groupdict():
+        attr_dict = attr_string_to_dict(mo.group('attrs'))
+    else:
+        attr_dict = {}
+
+    section.this_property_has_attributes({'[[Value]]': mo.group('value'), **attr_dict})
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (fr"(The Number value for .+)"), # should be?: "The value of [this property] is the Number value for ..."
+)
+def _(section, mo):
+    section.this_property_has_attributes({'[[Value]]': mo.group(1)}) 
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (fr"This property has the attributes {ATTRS}\."),
+)
+def _(section, mo):
+    attr_dict = attr_string_to_dict(mo.group('attrs'))
+    section.this_property_has_attributes(attr_dict)
+
+# ==============================================================================
+# Other blocks that give information about a (sub-)property
+# of the object defined by this section
+
+SUB = r'(?P<sub>\S+)'
+
+@for_patterns(
+    fr"The( initial)? value of the {SUB} property of {THIS_FUNCTION} is {VALUE}\.", # *"name"*
+    fr"The {SUB} property of {THIS_FUNCTION} is {VALUE}\.",          # *"length"*
+)
+def _(section, mo):
+    check_this_function(section, mo.group('this_function'), mo)
+
+    sub_prop_id = mo.group('sub')
+    value_desc = mo.group('value')
+    section.put_fact(
+        section.this_object,
+        'has-prop',
+        S_Property(sub_prop_id, {'[[Value]]': value_desc}))
+
+@for_patterns(
+    fr"The {SUB} property of {THIS_FUNCTION} has the attributes {ATTRS}."
+)
+def _(section, mo):
+    check_this_function(section, mo.group('this_function'), mo)
+
+    sub_prop_id = mo.group('sub')
+    attr_dict = attr_string_to_dict(mo.group('attrs'))
+    section.put_fact(
+        section.this_object,
+        'has-prop',
+        S_Property(sub_prop_id, attr_dict)
+    )
+
+# ==============================================================================
+# Blocks that give info about an internal slot
+# of the object defined by this section
+
+@for_patterns(
+    r'The value of the (\[\[\w+\]\]) internal slot of a %ThrowTypeError% function is (\*false\*).'
+)
+def _(section, mo):
+    section.put_fact('%ThrowTypeError%', 'has-slot', S_InternalSlot(mo.group(1), mo.group(2)))
+
+# ==============================================================================
+# Blocks that don't generate any intrinsic facts
+
+@for_patterns(
+    (fr'The initial value of the \*"globalThis"\* property of the global object in a Realm Record .+'),
+
+    # -------
+    (fr"This function is not generic. The \*this\* value must be an object with a \[\[TypedArrayName\]\] internal slot."),
+    (fr"{THIS_FUNCTION} is not generic[;.] .+"),
+
+    # elides subject, starts with verb:
+    (fr"Performs a regular expression match of .+"),
+    (fr"Produces a String value that .+"),
+    (fr"Returns .+"),
+    (fr"Sets multiple values .+"),
+    (fr"Given zero or more arguments, calls ToNumber on each of the arguments .+"),
+
+    (fr"The following version of SortCompare is used .+"),
+    (fr"The abstract operation TypedArraySortCompare takes .+ It performs the following steps when called:", 'emu-alg'), # AO
+    (r"The last argument specifies the body .+"),
+
+    # Other unique sentences
+    (fr"If the String conforms to the {H_EMU_XREF}, .+"),
+    (fr"The actual value of the string passed in step {H_EMU_XREF} is either .+"), # Should be emu-note?
+    (r"Before performing the comparisons, the following steps are performed to prepare the Strings:", 'emu-alg'),
+    (r"Each `Math.random` function created for distinct realms must produce a distinct sequence of values from successive calls."),
+    (r"For those code units being replaced whose value is .+"),
+    (r"If _start_ is larger than _end_, they are swapped."),
+    (r"If either argument is \*NaN\* or negative, it is replaced with zero; .+"),
+    (r"In the IEEE 754-2019 double precision binary representation, .+"),
+    (r"The GlobalSymbolRegistry is a List that is globally available. .+"),
+    (r"The actual return values are implementation-defined .+"),
+    (r"The arguments are prepended to the start of the array, .+"),
+    (r"The elements of the array are converted to Strings, .+"),
+    (r"The first element of the array is removed from the array and returned."),
+    (r"The meaning of the optional second and third parameters to this method .+"),
+    (r"The optional _reviver_ parameter is a function that takes two parameters, .+"),
+    (r"The optional parameters to this function are not used .+"),
+    (r"The result must be derived according to the locale-insensitive case mappings .+"),
+    (r"This property is non-writable and non-configurable to prevent tampering .+"), # should be an emu-note?
+
+    (r"If `x` is any Date whose milliseconds amount is zero .+", 'pre', r"However, the expression", 'pre', "is not required to produce .+"),
+)
+def _(section, *_):
+    pass
+
+@for_patterns(
+    ('emu-grammar'), # only in Function.prototype.toString
+    ('emu-table'), # Symbol.for, "GlobalSymbolRegistry Record Fields"
+    ('emu-note'),
+)
+def _(section, _):
+    pass
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class IndexedCounter:
+    def __init__(self, N):
+        self.count_at_index_ = [0] * N
+
+    def increment_at_index(self, index):
+        self.count_at_index_[index] += 1
+
+    def get_counts(self):
+        # return a list of (index, count) pairs
+        return enumerate(self.count_at_index_)
+
+ispl_counter = IndexedCounter(len(ispl))
+
+def _print_unused_ispl():
+    stderr()
+    stderr("Unused patterns in ispl:")
+    n_shown = 0
+    for (i, count) in ispl_counter.get_counts():
+        if count == 0:
+            stderr('    ', ispl[i][0])
+            n_shown += 1
+    if n_shown == 0:
+        stderr('    (none)')
+    stderr()
+
+# ------------------------------------------------------------------------------
+
+def check_this_function(section, this_function, mo):
+    if this_function == 'this function':
+        pass
+    else:
+        func_name = mo.group('func_name1') or mo.group('func_name2')
+        confirm_this_property(section, func_name)
+    # TODO: check for "function" vs "method"
+
+def confirm_this_property(section, this_prop_t):
+    # print(f"! ctp: {this_prop_t}")
+    try:
+        (p_container, p_key) = split_prop_path(detick(this_prop_t))
+    except AssertionError:
+        # print(f"! ctp: {this_prop_t!r}")
+        return
+
+    assert p_container == section.this_property.container or p_container is None
+    assert p_key       == section.this_property.key
+
+# ------------------------------------------------------------------------------
+
+def split_prop_path(path):
+    if re.fullmatch(r'@@\w+', path):
+        return (None, path)
+    if mo := re.fullmatch(r'\*"\w+"\*', path):
+        return (None, path)
+
+    mo = re.fullmatch(r'(%\w+%|\w+)(\.\w+| ?\[ ?@@\w+ ?\])*', path)
+    assert mo, path
+
+    if mo.group(2) is None:
+        # Nothing after the first path component.
+        # {path} is just a single word.
+        assert re.fullmatch(r'\w+', path)
+        return (None, pystr_to_spec_String_literal(path))
+
+    else:
+        # {path} is a proper path.
+        # Split off the last component:
+        mo = re.fullmatch(r'(.+?)(\.(\w+)| ?\[ ?(@@\w+) ?\])$', path)
+        (g1, _, g3, g4) = mo.groups()
+        if g3:
+            return (g1, pystr_to_spec_String_literal(g3))
+        elif g4:
+            return (g1, g4)
+        else:
+            assert 0, path
+
+# ------------------------------------------------------------------------------
+
+def attr_string_to_dict(st):
+    mo = re.fullmatch('{ (.+) }', st)
+    assert mo
+    fields = mo.group(1).split(', ')
+    attrs = dict(
+        re.fullmatch(r'(\[\[\w+\]\]): (.+)', field).groups()
+        for field in fields
+    )
+    return attrs
+
+def pystr_to_spec_String_literal(pystr):
+    assert '"' not in pystr
+    return f'*"{pystr}"*'
+
+def detick(st):
+    return st.replace('`', '')
+
+# ==============================================================================
+
+def section_this_property_has_attributes(section, propAttrs):
+    if section.this_property is None:
+        # stderr(f"! skipping {propAttrs} in {section.section_title} because it doesn't define a property")
+        return
+
+    section.put_fact(
+        section.this_property.container,
+        'has-prop',
+        S_Property(section.this_property.key, propAttrs)
+    )
+
+setattr(HNode, 'this_property_has_attributes', section_this_property_has_attributes)
+
+# ------------------------------------------------------------------------------
+
+def section_defines_a_function_via(section, mechanism):
+    assert mechanism in ['emu-alg', 'prose']
+    section.put_fact(section.this_object, 'is', 'a function object')
+    section.put_fact(section.this_object, 'has-slot', S_InternalSlot('[[ccb]]', f"{mechanism} in {section.section_id}"))
+
+setattr(HNode, 'defines_a_function_via', section_defines_a_function_via)
+
+# ------------------------------------------------------------------------------
+
+NativeError_expansions = None
+TypedArray_expansions = None
+
+def section_put_fact(section, L, verb, R):
+
+    section.intrinsic_facts_raw.append((L,verb,R))
+
+    # ----------------------------------------------------------------
+    # Expand facts involving 'variables' (_NativeError_, _TypedArray_)
+
+    global NativeError_expansions, TypedArray_expansions
+    if NativeError_expansions is None:
+        NativeError_section = spec.node_with_id_['sec-native-error-types-used-in-this-standard']
+        NativeError_expansions = [
+            child.section_title
+            for child in NativeError_section.section_children
+        ]
+
+        TypedArray_table = spec.node_with_id_['table-the-typedarray-constructors']
+        TypedArray_expansions = [
+            re.sub(r'<br>\n.+', '', row.cell_texts[0])
+            for row in TypedArray_table._data_rows
+        ]
+
+    expanded_facts = []
+
+    for (name, expansions) in [
+        ('NativeError', NativeError_expansions),
+        ('TypedArray',  TypedArray_expansions),
+    ]:
+        uvar = f"_{name}_"
+        if uvar in section.section_title:
+            # We expect every fact in this section to reference {uvar}.
+
+            for expansion in expansions:
+
+                def expand_str(s):
+                    return (s
+                        .replace(f'the corresponding {uvar} prototype intrinsic object (<emu-xref href="#sec-properties-of-typedarray-prototype-objects"></emu-xref>)', f'the {expansion} prototype object') # SPEC: drop "intrinsic"?
+                        .replace(f'the corresponding %TypedArray% intrinsic object', f"the {expansion} constructor")
+                        .replace(f'the corresponding intrinsic object %_NativeError_% (<emu-xref href="#sec-nativeerror-constructors"></emu-xref>)', expansion)
+                        .replace(f'the String value consisting of the name of the constructor (the name used instead of _NativeError_)', f'*"{expansion}"*')
+
+                        .replace(f"each {uvar}", f"the {expansion}")
+                        .replace(f"a {uvar}", f"the {expansion}") # for "a _NativeError_ prototype object" SPEC BUG?
+                        .replace(uvar, expansion)
+                        .replace(f'the String value <emu-val>"<var>{name}</var>"</emu-val>', f'*"{expansion}"*')
+
+                        .replace('the String value of the constructor name specified for it in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>', f'*"{expansion}"*')
+                    )
+
+                def expand_attrs(attrs):
+                    return {
+                        n: expand_str(v)
+                        for (n, v) in attrs.items()
+                    }
+
+                # -------------------
+
+                assert isinstance(L, str)
+                xL = expand_str(L)
+
+                if isinstance(R, str):
+                    xR = expand_str(R)
+
+                elif isinstance(R, S_InternalSlot):
+                    xR = S_InternalSlot(
+                        R.name,
+                        expand_str(R.value),
+                    )
+                elif isinstance(R, S_Property):
+                    xR = S_Property(
+                        expand_str(R.key),
+                        expand_attrs(R.attrs)
+                    )
+                else:
+                    assert 0, R
+
+                xfact = (xL, verb, xR)
+                expanded_facts.append(xfact)
+
+            break
+
+    else:
+        xfact = (L, verb, R)
+        expanded_facts.append(xfact)
+
+    # -----------------------------------------
+
+    # Normalize object-references
+
+    for (xL, verb, xR) in expanded_facts:
+
+        nL = get_pdn(xL)
+
+        def normalize_str(s):
+            if s.startswith((
+                '*',
+                'the largest',
+                'the smallest',
+                'the Number value',
+                'The Number value',
+                'the Element Size',
+                'the empty String',
+                'the String value',
+                'the well-known symbol',
+                'the well known symbol',
+                '1', # SPEC BUG
+            )):
+                # It denotes a primitive value
+                return s
+            elif s.startswith((
+                'host-defined',
+                'emu-alg in',
+                'prose in',
+            )):
+                # Hm
+                return s
+            else:
+                # It refers to an intrinsic object
+                return get_pdn(s)
+
+        def normalize_attrs(attrs):
+            return {
+                n: normalize_str(v)
+                for(n, v) in attrs.items()
+            }
+
+        if verb in ['exists', 'is']:
+            nR = xR
+        elif isinstance(xR, str):
+            nR = normalize_str(xR)
+        elif isinstance(xR, S_InternalSlot):
+            nR = S_InternalSlot(
+                xR.name,
+                normalize_str(xR.value),
+            )
+        elif isinstance(xR, S_Property):
+            nR = S_Property(
+                xR.key,
+                normalize_attrs(xR.attrs)
+            )
+        else:
+            assert 0, xR
+
+        if verb == 'is-aka':
+            assert nL == nR
+        else:
+            normalized_fact = (nL, verb, nR)
+            section.intrinsic_facts_cooked.append(normalized_fact)
+
+setattr(HNode, 'put_fact', section_put_fact)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def _print_intrinsic_facts():
+    facts_f = shared.open_for_output('intrinsic_facts')
+    def put(*args): print(*args, file=facts_f)
+
+    for section in spec.root_section.each_descendant_that_is_a_section():
+        if section.intrinsic_facts_raw:
+            put()
+            put(section.section_num, section.section_title)
+            for (L,verb,R) in section.intrinsic_facts_raw:
+                put(f"    {L} {verb.upper()} {R}")
+
+    facts_f.close()
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def _print_section_kinds():
     sections_f = shared.open_for_output('sections')
 
@@ -2194,7 +3442,14 @@ def _check_section_order():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def scan_section(section, patterns):
+def scan_section(section, patterns, counter=None):
+    if section.section_kind in ['syntax_directed_operation', 'early_errors', 'changes']:
+        arguments_style = 1
+    elif section.section_kind in ['CallConstruct', 'function_property', 'accessor_property', 'other_property']:
+        arguments_style = 2
+    else:
+        assert 0, section.section_kind
+
     results = []
     hnodes = section.block_children
     next_i = 0
@@ -2216,6 +3471,8 @@ def scan_section(section, patterns):
                 continue
 
             # pattern matched!
+            if counter: counter.increment_at_index(b)
+
             matched_nodes = hnodes[next_i : next_i + n]
 
             if processor is None:
@@ -2227,10 +3484,15 @@ def scan_section(section, patterns):
             elif callable(processor):
                 # arguments = matched_nodes
                 arguments = []
+                if arguments_style == 2:
+                    arguments.append(section)
                 for (matched_node, match_result) in zip(matched_nodes, match_results):
                     # If the atom captured something(s), use that/them as the arguments to the callable.
                     if hasattr(match_result, 'groups') and len(match_result.groups()) > 0:
-                        arguments.extend(match_result.groups())
+                        if arguments_style == 1:
+                            arguments.extend(match_result.groups())
+                        elif arguments_style == 2:
+                            arguments.append(match_result)
                     else:
                         arguments.append(matched_node)
                 try:
@@ -2241,7 +3503,9 @@ def scan_section(section, patterns):
                     stderr("When trying to invoke processor for pattern:")
                     stderr(pattern)
                     raise
-                if isinstance(result, list):
+                if result is None:
+                    pass
+                elif isinstance(result, list):
                     results.extend(result)
                 else:
                     results.append(result)

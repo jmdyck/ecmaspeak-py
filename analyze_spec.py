@@ -13,7 +13,7 @@ import shared
 from shared import stderr, msg_at_posn, spec
 from emu_tables import analyze_table
 import intrinsics
-from intrinsics import handle_intrinsics_table, check_references_to_intrinsics
+from intrinsics import check_references_to_intrinsics, process_intrinsics_facts
 
 def main():
     if len(sys.argv) != 3:
@@ -46,8 +46,9 @@ def main():
     check_dfns()
 
     check_tables()
-    check_references_to_intrinsics()
     Section.make_and_check_sections()
+    process_intrinsics_facts()
+    check_references_to_intrinsics()
     emu_grammars.do_stuff_with_emu_grammars()
     
     Pseudocode.do_stuff_with_pseudocode()
@@ -605,7 +606,9 @@ def check_tables():
             assert header_line == 'Property; Value; Requirements'
 
         elif 'Intrinsic Objects' in caption:
-            handle_intrinsics_table(et)
+            # see Section.extract_intrinsic_info_from_WKI_section()
+            # and intrinsics.each_row_in_wki_table()
+            pass
 
         else:
             # print('>>>', header_line, '---', caption)
