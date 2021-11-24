@@ -263,12 +263,9 @@ def coalesce_intrinsic_facts():
                     curr_value = L_intrinsic.slots[slot.name]
                     if curr_value == slot.value:
                         pass
-                    elif (
-                        slot.name == '[[ccb]]'
-                        and
-                        curr_value.replace('prose in', 'emu-alg in') == slot.value
-                    ):
-                        L_intrinsic.slots[slot.name] = slot.value
+                    elif slot.name == '[[ccb]]':
+                        # One says 'emu-alg' and the other says 'prose'
+                        L_intrinsic.slots[slot.name] = curr_value.replace('prose in', 'emu-alg in')
                     else:
                         assert curr_value == slot.value, \
                             f"? {L_intrinsic.name} {slot.name}: {curr_value!r} != {slot.value!r}"
@@ -618,7 +615,7 @@ class S_Intrinsic:
                         '[[Configurable]]': '*true*',
                     }
                 else:
-                    assert 0, kind
+                    assert 0, f"{self.name}'s property {prop_key} has kind {kind!r}"
                 self.apply_defaults_for_property(prop_key, default_attrs)
 
     # -------------------------------------------------------------

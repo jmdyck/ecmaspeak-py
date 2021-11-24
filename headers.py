@@ -41,17 +41,14 @@ def check_header_against_prose(hoi, preamble_nodes):
 
 multi_sentence_rules_str = r'''
 
-        This (?P<kind>function) returns (?P<retn>a String value). The contents of the String (are .+)
+        This (?P<kind>method) returns (?P<retn>a String value). The contents of the String (are .+)
         v=The contents of the returned String \3
 
-        (`([][@\w.]+)` is an accessor property whose set accessor function is \*undefined\*.) Its get accessor function performs the following steps:
+        (`([][@\w.]+)` is an accessor property whose set accessor function is \*undefined\*.) Its get accessor function performs the following steps when called:
         name=get \2
         v= \1
         # A bit kludgey: Insert a space to prevent later match against /`(?P<name>[\w.]+)` (.+)/
 
-        (Sets multiple values in this _TypedArray_, reading the values from _source_. The optional _offset_ value indicates the first element index in this _TypedArray_ where values are written. If omitted, it is assumed to be 0.)
-        pl=argument _source_ and optional argument _offset_
-        v=\1
 '''
 
 single_sentence_rules_str = r'''
@@ -63,8 +60,6 @@ single_sentence_rules_str = r'''
         v=!FUNC \4
 
     # ==========================================================================
-
-    # ==========================================================================
     # Sentences that start with "It"
 
         It can take three parameters.
@@ -74,20 +69,7 @@ single_sentence_rules_str = r'''
         Its get accessor function performs the following steps when called:
 
     # ==========================================================================
-
-        (Returns (?P<retn>an array) containing .+)
-        v=\1
-
-    # ==========================================================================
     # Sentences that start with "The"
-
-        # --------------
-
-        The following steps are performed:
-
-        The following steps are taken:
-
-        # ---------
 
         # Don't match "The value of _separator_ may be a String of any length or it may be ..."
         # because it belongs in the description, is misleading for parameter-type.
@@ -95,35 +77,12 @@ single_sentence_rules_str = r'''
         (The value of the \[\[\w+\]\] attribute is a built-in function) that (requires|takes) (?P<pl>no arguments|an argument _proto_).
         kind=accessor property
 
-        # ---------
-
-        The <dfn>(?P<name>[^<>]+)</dfn> intrinsic is an (?P<kind>anonymous built-in function object that is defined once for each realm).
-
-        The (?P<name>[%\w]+) (?P<kind>constructor) performs the following steps when called:
-
-        # ------------
-
-        The `(?P<name>[\w.]+)` (?P<kind>function|method) (.+)
-        v=!FUNC \3
-
-        `(?P<name>[\w.]+)` (.+)
-        v=!FUNC \2
-
-            !FUNC takes (?P<pl>.+), and performs the following steps:
-
-            !FUNC takes (?P<pl>.+), and (returns .+)
-            v=!FUNC \2
-
-            !FUNC performs the following steps:
-
     # ==========================================================================
     # Sentences that start with "This"
 
         # Note that none of these leave anything for the description.
 
-        This (?P<kind>function) takes (?P<pl>no arguments).
-
-        This function (.+)
+        This method (.+)
         v=!FUNC \1
 
     # ==========================================================================
@@ -131,64 +90,17 @@ single_sentence_rules_str = r'''
 
         # (Ultimately, almost nothing falls through to the description.)
 
-        # When the ...
-
-        When the `(?P<name>Date)` (function) is called(.+)
-        kind=constructor
-        v=When it is called\3
-
-        (When the `@@hasInstance` method) of an object _F_ (is called .+)
-        v=\1 \2
-        # convert anomalous syntax into syntax handled by next rule:
-
-        When the `(?P<name>@*[\w.]+)` (?P<kind>function|method) is called(.+)
-        v=When it is called\3
-
         # -----------------------------------------------------
 
         # When a|an ...
 
-        When an? (?P<name>.+) function is called(.+)
-        v=When it is called\2
-
-        # -----------------------------------------------------
-
-        # When <name> ...
-
-        When `(?P<name>[\w.]+)` is called(.+)
-        v=When it is called\2
-
-        When (?P<name>%\w+%) is called it performs the following steps:
-
-        # -----------------------------------------------------
-
-        When it is called with (?P<pl>.+?),? the following steps are (performed|taken):
-
-        When it is called with (?P<pl>.+?),? it performs the following steps:
-
-        When it is called, the following steps are taken:
-
-        When it is called with (?P<pl>.+?),? it returns (.+)
-        v=It returns \2
-
-        When it is called it returns (.+)
-        v=It returns \1
-
-    # ==========================================================================
-    # Sentences that (now) start with "!OP":
-
-        # !OP (.+)
-        # v=The operation \1
+        When an? (?P<name>.+) function is called with (?P<pl>.+?), the following steps are taken:
 
     # ==========================================================================
     # Miscellaneous starts:
 
-        Given (?P<pl>zero or more arguments), (calls ToNumber .+)
+        Given (?P<pl>zero or more arguments), this function (calls ToNumber .+)
         v=!FUNC \2
-
-        Specifically, perform the following steps:
-
-        These are the steps in stringifying an object:
 
     # ==========================================================================
     # Sentences where we don't care how it starts:
@@ -196,7 +108,7 @@ single_sentence_rules_str = r'''
         # ----------
         # produces ...
 
-        (Produces (?P<retn>a String value) .+)
+        (.+ produces (?P<retn>a String value) .+)
         v=\1
 
         (.+ produces (?P<retn>a Number value) .+)
@@ -214,27 +126,27 @@ single_sentence_rules_str = r'''
         # ----------
         # returns ...
 
-        (Return (?P<retn>a String) .+)
+        (.+ returns (?P<retn>an array) containing .+)
         v=\1
 
-        (Returns (?P<retn>a Number) .+)
+        (.+ returns (?P<retn>a Number) .+)
         v=\1
 
-        (Returns the Number .+)
+        (.+ returns the Number .+)
         retn=a Number
         v=\1
 
-        (Returns (?P<retn>a new _TypedArray_) .+)
+        (.+ returns (?P<retn>a new _TypedArray_) .+)
         v=\1
 
-        (Returns (?P<retn>an Array) into .+)
+        (.+ returns (?P<retn>an Array) into .+)
         v=\1
 
-        (Returns the .+ integral Number value .+)
+        (.+ returns the .+ integral Number value .+)
         retn=an integral Number
         v=\1
 
-        (Returns the integral part of the number .+)
+        (.+ returns the integral part of the number .+)
         retn=an integral Number
         v=\1
 
@@ -270,11 +182,6 @@ single_sentence_rules_str = r'''
         (.+ returns either a new promise .+ or the argument itself if the argument is a promise .+)
         retn=a promise
         v=\1
-
-        # -----------
-
-        (.+) as follows:
-        v=\1.
 
 '''
 
@@ -446,11 +353,8 @@ class PreambleInfoHolder:
 
         vs = join_field_values('kind')
         poi.species = {
-            'anonymous built-in function object that is defined once for each realm' : 'bif: intrinsic',
             'anonymous built-in function'               : 'bif: * per realm',
             'accessor property'                         : 'bif: intrinsic: accessor function',
-            'constructor'                               : 'bif: intrinsic',
-            'function'                                  : 'bif: intrinsic',
             'method'                                    : 'bif: intrinsic',
             None                                        : None,
         }[vs]
@@ -462,11 +366,6 @@ class PreambleInfoHolder:
             poi.params = None
         elif len(pl_values) == 1:
             get_info_from_parameter_listing_in_preamble(poi, pl_values[0])
-        elif pl_values == [
-            'zero or more arguments',
-            'zero or more arguments which form the rest parameter ..._args_'
-        ]:
-            get_info_from_parameter_listing_in_preamble(poi, pl_values[1])
         else:
             stderr(f"{poi.name} has multi-pl: {pl_values}")
             assert 0
@@ -483,14 +382,9 @@ class PreambleInfoHolder:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
+    # This is only called about 10 times now.
 
     assert oi.params is None, oi.name
-
-    # if '_C_' in parameter_listing: stderr('gifpl', parameter_listing)
-
-    if parameter_listing == '':
-        assert 0
-        return
 
     if parameter_listing == 'no arguments':
         # 27 cases
@@ -498,152 +392,19 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
         return
 
     if parameter_listing in [
-        'zero or more arguments _item1_, _item2_, etc.',
         'zero or more arguments',
-        'any number of arguments',
-        'one or two arguments',
-        'zero or one arguments',
     ]:
-        # 24 cases
+        # 2 cases
         # XXX not sure what to do
         return
 
-    if parameter_listing == 'zero or more arguments which form the rest parameter ..._args_':
-        oi.params = [ AlgParam('_args_', '...', 'a List of ECMAScript language values') ]
-        return
-
-    elif parameter_listing in [
-        'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no &ldquo; _p_ &rdquo; arguments, and where _body_ might also not be provided)',
-        'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no &ldquo;_p_&rdquo; arguments, and where _body_ might also not be provided)',
-        'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no "_p_" arguments, and where _body_ might also not be provided)',
-        'some arguments _p1_, _p2_, &hellip; , _pn_, _body_ (where _n_ might be 0, that is, there are no _p_ arguments, and where _body_ might also not be provided)',
-    ]:
-        # 4 cases
-        oi.params = [
-            AlgParam('_args_', '...', 'a List of ECMAScript language values'),
-            AlgParam('_body_', '[]', 'an ECMAScript language value'),
-        ]
-        return
-
-    elif parameter_listing  == 'at least one argument _buffer_':
-        # 1 case
-        # kludgey
-        if oi.name == 'DataView':
-            oi.params = [
-                AlgParam('_buffer_',     '',   'unknown'),
-                AlgParam('_byteOffset_', '[]', 'unknown'),
-                AlgParam('_byteLength_', '[]', 'unknown'),
-            ]
-        else:
-            assert 0, oi.name
-        return
-
-    # --------------------
-
-    # 'Hide' commas within parentheses, so they don't mess up splits:
-    def hide_commas(mo):
-        return mo.group(0).replace(',', '<COMMA>')
-    param_listing = re.sub(r'\(.*?\)', hide_commas, parameter_listing)
-    # The commas will be unhidden later.
-
-    # Also here:
-    param_listing = re.sub(r'(_argumentsList_), (a List of ECMAScript language values)', r'\1<COMMA> \2', param_listing)
-
-    # ---------------------
-
-    oi.params = []
-
-    # Split the listing into the 'required' and 'optional' parts:
-    parts = []
-    if 'optional' in param_listing:
-        if RE.fullmatch(r'optional (argument.+)', param_listing):
-            parts.append(('optional', RE.group(1)))
-        elif RE.fullmatch(r'(.+?),? and optional (argument.+)', param_listing):
-            parts.append(('required', RE.group(1)))
-            parts.append(('optional', RE.group(2)))
-        else:
-            assert 0, param_listing
-    else:
-        parts.append(('required', param_listing))
-
-    for (optionality, part) in parts:
-        part = sub_many(part, [
-            ('^parameters ', ''),
-            ('^argument ', ''),
-            ('^one argument,? ', ''),
-            ('^an argument ', ''),
-            ('^arguments ', ''),
-            ('^two arguments,? ', ''),
-        ])
-
-        pieces = re.split('(, and |, | and )', part)
-        assert len(pieces) % 2 == 1
-        param_items = pieces[0::2]
-        connectors = pieces[1::2]
-
-        if len(connectors) == 0:
-            expected_connectors = []
-        elif len(connectors) == 1:
-            expected_connectors = [' and ']
-        else:
-            expected_connectors = [', '] * (len(connectors) - 1) + [', and ']
-
-        if connectors != expected_connectors:
-            oh_warn()
-            oh_warn(f"`{oi.name}` preamble param list:")
-            oh_warn(repr(part))
-            oh_warn(f"is of the form: X{'X'.join(connectors)}X")
-            oh_warn(f"but expected  : X{'X'.join(expected_connectors)}X")
-
-        var_pattern = r'\b_\w+_\b'
-
-        for param_item in param_items:
-
-            # unhide_commas:
-            param_item = param_item.replace('<COMMA>', ',')
-
-            parameter_names = re.findall(var_pattern, param_item)
-            if len(parameter_names) != 1:
-                stderr()
-                stderr(f"> {oi.name}: param listing")
-                stderr(f"    {parameter_listing!r}")
-                stderr(f"  contains item {param_item!r} with {len(parameter_names)} parameter names")
-                continue
-
-            [param_name] = parameter_names
-
-            assert param_name not in oi.param_names(), param_name
-
-            if optionality == 'optional':
-                punct = '[]'
-            elif param_item == 'zero or more _args_':
-                punct = '...'
-            else:
-                punct = ''
-
-            r_param_item = re.sub(var_pattern, 'VAR', param_item)
-
-            for (pat, nat) in [
-                (r'VAR, (a List of ECMAScript language values)', r'\1'),
-                (r'VAR which is (a possibly empty List of ECMAScript language values)', r'\1'),
-                (r'VAR of type BigInt', 'a BigInt'),
-                (r'VAR \((.+)\)', r'\1'),
-                (r'VAR',          'unknown'),
-
-                (r'zero or more VAR', 'a List of ECMAScript language values'),
-                (r'a Boolean flag named VAR', 'a Boolean'),
-                (r'(an? .+) VAR', r'\1'),
-                (r'(value) VAR',     r'a \1'),
-            ]:
-                mo = re.fullmatch(pat, r_param_item)
-                if mo:
-                    nature = mo.expand(nat)
-                    break
-            else:
-                print(f"?   {r_param_item}")
-                assert 0
-
-            oi.params.append( AlgParam(param_name, punct, nature) )
+    mo = re.fullmatch(r'(an )?argument (_\w+_)', parameter_listing)
+    assert mo, parameter_listing
+    param_name = mo.group(2)
+    punct = ''
+    nature = 'unknown'
+    oi.params = [ AlgParam(param_name, punct, nature) ]
+    return
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

@@ -17,6 +17,7 @@ import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
 from headers import AlgParam
 import records
+from NodeGrammar import NodeGrammar
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1636,32 +1637,25 @@ def _handle_changes_section(section):
     # but be sure to undo it if we ultimately return False.
     section.section_kind = 'changes'
 
-    def e(s):
-        return (s
-            .replace('EMU-XREF',    r'<emu-xref [^<>]+>[^<>]*</emu-xref>')
-            .replace('EMU-GRAMMAR', r'<emu-grammar>[^<>]+</emu-grammar>')
-            .replace('NONTERMINAL', r'\|\w+\|')
-        )
-
     # --------------------------------------------------------------------------
     if section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileSubpattern':
         # B.1.2.4
         patterns = [
             (
                 [
-                    ('p', e("The semantics of \w+ is extended as follows:")),
+                    ('p', "The semantics of \w+ is extended as follows:"),
                 ],
                 None
             ),
             (
                 [
-                    ('p', e("Within the rule for EMU-GRAMMAR, references to &ldquo;EMU-GRAMMAR &rdquo; are to be interpreted as meaning &ldquo;EMU-GRAMMAR &rdquo; or &ldquo;EMU-GRAMMAR &rdquo;.")),
+                    ('p', "Within the rule for EMU-GRAMMAR, references to &ldquo;EMU-GRAMMAR &rdquo; are to be interpreted as meaning &ldquo;EMU-GRAMMAR &rdquo; or &ldquo;EMU-GRAMMAR &rdquo;."),
                 ],
                 lambda p: None
             ),
             (
                 [
-                    ('p', e("The rule for EMU-GRAMMAR is the same as for EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\.")),
+                    ('p', "The rule for EMU-GRAMMAR is the same as for EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\."),
                 ],
                 lambda p: None
             ),
@@ -1674,7 +1668,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e("\w+ rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL.")),
+                    ('p', "\w+ rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL."),
                 ],
                 lambda p: None
             ),
@@ -1687,7 +1681,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e("\w+ rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following rules, with parameter _direction_, are also added:")),
+                    ('p', "\w+ rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following rules, with parameter _direction_, are also added:"),
                 ],
                 lambda p: None
             ),
@@ -1707,7 +1701,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e("The semantics of EMU-XREF is extended as follows:")),
+                    ('p', "The semantics of EMU-XREF is extended as follows:"),
                 ],
                 None
             ),
@@ -1745,7 +1739,7 @@ def _handle_changes_section(section):
             (
                 # B.3.2.{1,2,3,6}:
                 [
-                    ('p', e(f'During {op_name} the following steps are performed in place of step EMU-XREF:')),
+                    ('p', f'During {op_name} the following steps are performed in place of step EMU-XREF:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
@@ -1753,7 +1747,7 @@ def _handle_changes_section(section):
             (
                 # B.3.6.1:
                 [
-                    ('p', e('The result column in EMU-XREF for an argument type of Object is replaced with the following algorithm:')),
+                    ('p', 'The result column in EMU-XREF for an argument type of Object is replaced with the following algorithm:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
@@ -1761,7 +1755,7 @@ def _handle_changes_section(section):
             (
                 # B.3.6.2:
                 [
-                    ('p', e(f'The following steps replace step EMU-XREF of the {op_name} algorithm:')),
+                    ('p', f'The following steps replace step EMU-XREF of the {op_name} algorithm:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
@@ -1775,7 +1769,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e('The rules for the following production in EMU-XREF are modified with the addition of the <ins>highlighted</ins> text:')),
+                    ('p', 'The rules for the following production in EMU-XREF are modified with the addition of the <ins>highlighted</ins> text:'),
                     'emu-grammar',
                     'ul',
                 ],
@@ -1790,7 +1784,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e('The content of subclause EMU-XREF is replaced with the following:')),
+                    ('p', 'The content of subclause EMU-XREF is replaced with the following:'),
                     'emu-grammar',
                     'ul'
                 ],
@@ -1802,13 +1796,13 @@ def _handle_changes_section(section):
             ),
             (
                 [
-                    ('p', e('.+ This change is accomplished by modifying the algorithm of EMU-XREF as follows:')),
+                    ('p', '.+ This change is accomplished by modifying the algorithm of EMU-XREF as follows:'),
                 ],
                 None
             ),
             (
                 [
-                    ('p', e('Step EMU-XREF is replaced by:')),
+                    ('p', 'Step EMU-XREF is replaced by:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: blah_solo_op('EvalDeclarationInstantiation', emu_alg)
@@ -1822,7 +1816,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e('The following augments the NONTERMINAL production in EMU-XREF:')),
+                    ('p', 'The following augments the NONTERMINAL production in EMU-XREF:'),
                     'emu-grammar',
                     ('p', 'This production only applies when parsing non-strict code.'),
                 ],
@@ -1830,7 +1824,7 @@ def _handle_changes_section(section):
             ),
             (
                 [
-                    ('p', e('The (?:static|runtime) semantics of (\w+) in EMU-XREF are augmented with the following:')),
+                    ('p', 'The (?:static|runtime) semantics of (\w+) in EMU-XREF are augmented with the following:'),
                     'emu-grammar',
                     'emu-alg',
                 ],
@@ -1847,7 +1841,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', e('The following step replaces step EMU-XREF of EMU-XREF:')),
+                    ('p', 'The following step replaces step EMU-XREF of EMU-XREF:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: None
@@ -1863,6 +1857,17 @@ def _handle_changes_section(section):
     # ==========================================================================
 
     return True
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def scan_section(section, patterns):
+    def e(s):
+        return (s
+            .replace('EMU-XREF',    r'<emu-xref [^<>]+>[^<>]*</emu-xref>')
+            .replace('EMU-GRAMMAR', r'<emu-grammar>[^<>]+</emu-grammar>')
+            .replace('NONTERMINAL', r'\|\w+\|')
+        )
+    return NodeGrammar(patterns, e).scan_section(section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2314,7 +2319,7 @@ def extract_intrinsic_info_from_CallConstruct_section(section):
 
     section.this_object = name
 
-    scan_section(section, ispl, ispl_counter)
+    ispl.scan_section(section)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2495,7 +2500,7 @@ def extract_intrinsic_info_from_property_section(section):
 
     # -----------------------------------
 
-    scan_section(section, ispl, ispl_counter)
+    ispl.scan_section(section)
 
 # ==============================================================================
 
@@ -2510,7 +2515,7 @@ def extract_intrinsic_info_from_property_section(section):
 # but the earliest of them is the one that succeeds.
 # (So in general, specific patterns should precede general patterns.)
 
-ispl = []
+ispl_units = []
 
 def for_patterns(*patterns):
     pattern_list = []
@@ -2532,31 +2537,19 @@ def for_patterns(*patterns):
 
     def decorator(func):
         for pattern in pattern_list:
-            ispl.append((pattern, func))
+            ispl_units.append((pattern, func))
         return func
 
     return decorator
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-ATTRS = r'(?P<attrs>{[^{}]+})'
-THIS_FUNCTION = r'''(?P<this_function>(?x:
-        ([Tt]he|a|Each)\ (?P<func_name1>\S+)\ (function|method|constructor\ function|constructor|intrinsic\ object)
-        |
-        (?P<func_name2>\S+)
-        |
-        [Tt]his\ function
-    ))'''
-VALUE = r'(?P<value>.+)'
-THIS  = r'(?P<this>\S+)'
-H_EMU_XREF = r'<emu-xref href="#(?P<refd_id>[^"]+)">[^<>]*</emu-xref>'
-
 # ==============================================================================
 # The section defines an accessor property,
 # or just the [[Get]] or [[Set]] attribute of an accessor property.
 
 @for_patterns(
-    (fr"{THIS} is an accessor property whose set accessor function is \*undefined\*\. Its get accessor function performs the following steps( when called)?:", 'emu-alg')
+    (r"{THIS} is an accessor property whose set accessor function is \*undefined\*\. Its get accessor function performs the following steps when called:", 'emu-alg')
 )
 def _(section, mo, emu_alg):
     confirm_this_property(section, mo.group('this'))
@@ -2572,7 +2565,7 @@ def _(section, mo, emu_alg):
 # -------------------
 
 @for_patterns(
-    fr"{THIS} is an accessor property with attributes {ATTRS}. The \[\[Get\]\] and \[\[Set\]\] attributes are defined as follows:"
+    r"{THIS} is an accessor property with attributes {ATTRS}. The \[\[Get\]\] and \[\[Set\]\] attributes are defined as follows:"
 )
 def _(section, mo):
     assert section.bcen_str == 'p'
@@ -2609,48 +2602,10 @@ def _(section, mo, emu_alg):
 # ------------------------------------------------------------------------------
 
 @for_patterns(
-    (fr"{THIS_FUNCTION} is the <dfn>(?P<percented>%.+%)</dfn> intrinsic object\. When the `\w+` function is called, the following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} is the <dfn>(?P<percented>%.+%)</dfn> intrinsic object\. When the `\w+` function is called with .+, the following steps are taken:", 'emu-alg'),
+    (r"{THIS_FUNCTION} performs the following steps when called:", 'emu-alg'),
 )
 def _(section, mo, emu_alg):
-    check_this_function(section, mo.group('this_function'), mo)
-    section.this_property_has_attributes({'[[Value]]': section.this_object})
-    section.put_fact(section.this_object, 'is-aka', mo.group('percented'))
-    section.defines_a_function_via('emu-alg')
-
-# ------------------------------------------------------------------------------
-
-@for_patterns(
-    (fr"The following steps are performed:", 'emu-alg'),
-    (fr"The following steps are taken:", 'emu-alg'),
-    (fr"When {THIS_FUNCTION} is called it returns .+ The following steps are taken:", 'emu-alg'),
-    (fr"When {THIS_FUNCTION} is called with .+ it performs the following steps:", 'emu-alg'),
-    (fr"When {THIS_FUNCTION} is called with .+, the following steps are taken:", 'emu-alg'),
-    (fr"When {THIS_FUNCTION} of an object _F_ is called with .+, the following steps are taken:", 'emu-alg'), # SPEC BUG?
-    (fr"When {THIS_FUNCTION} is called, the following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} may be called with a variable number of arguments. .+ The following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} may be called with any number of arguments .+ The following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} takes .+, and performs the following steps:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} takes .+, and returns .+ The following steps are taken:", 'emu-alg'),
-    (fr"These are the steps in stringifying an object:", 'emu-alg'),
-
-    (fr"This function interprets a String value .+ The following steps are taken:", 'emu-alg'),
-
-    (fr"{THIS_FUNCTION} returns .+ It performs the following steps when called:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} creates .+ When the `\w+` function is called, the following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} (notifies|puts) .+ The following steps are taken:", 'emu-alg'),
-
-    (fr"{THIS_FUNCTION} is used to .+ When `[\w.]+` is called with .+, the following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} is used to .+ When the `\w+` function is called, the following steps are taken:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} performs the following steps:", 'emu-alg'),
-    (fr"{THIS_FUNCTION} performs the following steps when called:", 'emu-alg'),
-
-    (fr"Return a String containing .+ Specifically, perform the following steps:", 'emu-alg'), # -> Returns -> This function returns
-
-    (r"The String ToString\(_string_\) is searched for an occurrence of the regular expression pattern as follows:", 'emu-alg'),
-
-)
-def _(section, mo, emu_alg):
+    check_this_function(section, mo)
     section.this_property_has_attributes({'[[Value]]': section.this_object})
     section.defines_a_function_via('emu-alg')
 
@@ -2659,8 +2614,8 @@ def _(section, mo, emu_alg):
 @for_patterns(
     # `sort` has lots of unique sentences
     (
-        fr"The elements of this array are sorted. .+",
-        fr"When the `sort` method is called, the following steps are taken:",
+        r"This method sorts the elements of this array\. .+",
+        r"It performs the following steps when called:",
         'emu-alg',
         'emu-note',
         'emu-note',
@@ -2678,36 +2633,47 @@ def _(section, *_):
 # ------------------------------------------------------------------------------
 
 @for_patterns(
-    (r"The <dfn>%ThrowTypeError%</dfn> intrinsic is an anonymous built-in function object that is defined once for each realm. When %ThrowTypeError% is called it performs the following steps:", 'emu-alg'),
+
+    (r"An ECMAScript implementation that includes the ECMA-402 Internationalization API must implement {THIS_FUNCTION} as specified in the ECMA-402 specification\. If an ECMAScript implementation does not include the ECMA-402 API the following specification of this method is used."),
+    (r"Given zero or more arguments, {THIS_FUNCTION} calls ToNumber on each of the arguments .+"),
+    (r"Given zero or more arguments, {THIS_FUNCTION} returns .+"),
+    (r"If this time value is not a finite Number .+, {THIS_FUNCTION} throws .+"), # Date.prototype.toISOString
+    (r"The interpretation and use of the arguments of {THIS_FUNCTION} are the same as for .+"),
+    (r"The meanings? of the optional parameters to {THIS_FUNCTION} are defined in the ECMA-402 specification; implementations that do not include ECMA-402 support must not use those parameter positions for anything else."),
+
+    (r"{THIS_FUNCTION} adds .+"),
+    (r"{THIS_FUNCTION} applies .+"),
+    (r"{THIS_FUNCTION} behaves .+"),
+    (r"{THIS_FUNCTION} compares .+"),
+    (r"{THIS_FUNCTION} computes .+"),
+    (r"{THIS_FUNCTION} converts .+"),
+    (r"{THIS_FUNCTION} copies .+"),
+    (r"{THIS_FUNCTION} creates .+"),
+    (r"{THIS_FUNCTION} interprets a String value .+"),
+    (r"{THIS_FUNCTION} is a property of the global object. It computes a new version of a String value in which .+"),
+    (r"{THIS_FUNCTION} is called by ECMAScript language operators .+"),
+    (r"{THIS_FUNCTION} may be called with a variable number of arguments. .+"),
+    (r"{THIS_FUNCTION} may be called with any number of arguments .+"),
+    (r"{THIS_FUNCTION} notifies .+"),
+    (r"{THIS_FUNCTION} parses .+"),
+    (r"{THIS_FUNCTION} performs a regular expression match of .+"),
+    (r"{THIS_FUNCTION} prepends .+"),
+    (r"{THIS_FUNCTION} produces .+"),
+    (r"{THIS_FUNCTION} provides .+"),
+    (r"{THIS_FUNCTION} puts .+"),
+    (r"{THIS_FUNCTION} removes .+"),
+    (r"{THIS_FUNCTION} returns .+"),
+    (r"{THIS_FUNCTION} searches .+"),
+    (r"{THIS_FUNCTION} sets .+"),
+    (r"{THIS_FUNCTION} works .+"),
 )
-def _(section, mo, emu_alg):
-    section.defines_a_function_via('emu-alg')
-
-    #> Functions that are identified as anonymous functions use the empty String as the value of the *"name"* property.
-    section.put_fact('%ThrowTypeError%', 'has-prop', S_Property('*"name"*', {'[[Value]]': '*""*'}))
-
-# ------------------------------------------------------------------------------
+def _(section, mo):
+    check_this_function(section, mo)
+    section.this_property_has_attributes({'[[Value]]': section.this_object})
+    section.defines_a_function_via('prose')
 
 @for_patterns(
-    (fr"An ECMAScript implementation that includes the ECMA-402 Internationalization API must implement {THIS_FUNCTION} as specified in the ECMA-402 specification\. If an ECMAScript implementation does not include the ECMA-402 API the following specification of the `\w+` method is used."),
-    (fr"{THIS_FUNCTION} is a property of the global object. It computes a new version of a String value in which .+"),
-
-    (fr"When {THIS_FUNCTION} is called with .+, it returns .+"),
-
-    (fr"The meanings? of the optional parameters to this method are defined in the ECMA-402 specification; implementations that do not include ECMA-402 support must not use those parameter positions for anything else."),
-
-    (fr"The interpretation and use of the arguments of {THIS_FUNCTION} are the same as for .+"),
-    (fr"This function interprets a String value .+"),
-    (fr"This function is called by ECMAScript language operators .+"),
-    (fr"This function provides .+"),
-
-    (fr"{THIS_FUNCTION} (applies|behaves|compares|computes|parses|produces|returns|works) .+"),
-    (fr"{THIS_FUNCTION} is a distinct function that.+"),
-    (fr"{THIS_FUNCTION} is a function whose behaviour differs .+"),
-    (fr"{THIS_FUNCTION} takes .+, and returns .+"),
-
-    (r"If this time value is not a finite Number .+, this function throws .+"), # Date.prototype.toISOString
-    (r"Returns a Number .+ This function takes no arguments."), # Math.random
+    (r"This is a distinct method that.+"),
 )
 def _(section, mo):
     section.this_property_has_attributes({'[[Value]]': section.this_object})
@@ -2718,7 +2684,7 @@ def _(section, mo):
 # of the data property defined by this section:
 
 @for_patterns(
-    (fr"The( initial)? value of the {THIS} data property is an object created by the following steps:", 'emu-alg'),
+    (r"The( initial)? value of the {THIS} data property is an object created by the following steps:", 'emu-alg'),
 )
 def _(section, mo, emu_alg):
     confirm_this_property(section, mo.group('this'))
@@ -2728,17 +2694,17 @@ def _(section, mo, emu_alg):
 # ------------------------------------------------------------------------------
 
 @for_patterns(
-    (fr"The( initial)? value of {THIS} is {VALUE} \({H_EMU_XREF}\)\. Each _NativeError_ constructor has a distinct prototype object\."),
-    (fr"The( initial)? value of {THIS} is {VALUE} \(see {H_EMU_XREF}\)\. This property has the attributes {ATTRS}\."),
-    (fr"This is a data property with a value of {VALUE}. This property has the attributes {ATTRS}\."),
+    (r"The( initial)? value of {THIS} is {VALUE} \({H_EMU_XREF}\)\. Each _NativeError_ constructor has a distinct prototype object\."),
+    (r"The( initial)? value of {THIS} is {VALUE} \(see {H_EMU_XREF}\)\. This property has the attributes {ATTRS}\."),
+    (r"This is a data property with a value of {VALUE}. This property has the attributes {ATTRS}\."),
 
-    (fr"The( initial)? value of the {THIS} property is {VALUE}, defined in {H_EMU_XREF}\."),
-    (fr"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
-    (fr"The( initial)? value of {THIS} is {VALUE}\."),
-    (fr"The( initial)? value of {THIS} is {VALUE}"), # SPEC BUG
+    (r"The( initial)? value of the {THIS} property is {VALUE}, defined in {H_EMU_XREF}\."),
+    (r"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
+    (r"The( initial)? value of {THIS} is {VALUE}\."),
+    (r"The( initial)? value of {THIS} is {VALUE}"), # SPEC BUG
 
-    (fr"The( initial)? value of a {THIS} is {VALUE}\."),
-    (fr"The initial value of the {THIS} property of the prototype for a given _NativeError_ constructor is {VALUE}\."),
+    (r"The( initial)? value of a {THIS} is {VALUE}\."),
+    (r"The initial value of the {THIS} property of the prototype for a given _NativeError_ constructor is {VALUE}\."),
 
 )
 def _(section, mo):
@@ -2755,7 +2721,7 @@ def _(section, mo):
 # ------------------------------------------------------------------------------
 
 @for_patterns(
-    (fr"(The Number value for .+)"), # should be?: "The value of [this property] is the Number value for ..."
+    (r"(The Number value for .+)"), # should be?: "The value of [this property] is the Number value for ..."
 )
 def _(section, mo):
     section.this_property_has_attributes({'[[Value]]': mo.group(1)}) 
@@ -2763,7 +2729,7 @@ def _(section, mo):
 # ------------------------------------------------------------------------------
 
 @for_patterns(
-    (fr"This property has the attributes {ATTRS}\."),
+    (r"This property has the attributes {ATTRS}\."),
 )
 def _(section, mo):
     attr_dict = attr_string_to_dict(mo.group('attrs'))
@@ -2773,14 +2739,12 @@ def _(section, mo):
 # Other blocks that give information about a (sub-)property
 # of the object defined by this section
 
-SUB = r'(?P<sub>\S+)'
-
 @for_patterns(
-    fr"The( initial)? value of the {SUB} property of {THIS_FUNCTION} is {VALUE}\.", # *"name"*
-    fr"The {SUB} property of {THIS_FUNCTION} is {VALUE}\.",          # *"length"*
+    r"The( initial)? value of the {SUB} property of {THIS_FUNCTION} is {VALUE}\.", # *"name"* x20
+    r"The {SUB} property of {THIS_FUNCTION} is {VALUE}\.",          # *"length"* x28
 )
 def _(section, mo):
-    check_this_function(section, mo.group('this_function'), mo)
+    check_this_function(section, mo)
 
     sub_prop_id = mo.group('sub')
     value_desc = mo.group('value')
@@ -2790,10 +2754,10 @@ def _(section, mo):
         S_Property(sub_prop_id, {'[[Value]]': value_desc}))
 
 @for_patterns(
-    fr"The {SUB} property of {THIS_FUNCTION} has the attributes {ATTRS}."
+    r"The {SUB} property of {THIS_FUNCTION} has the attributes {ATTRS}." # %ThrowTypeError% ( )
 )
 def _(section, mo):
-    check_this_function(section, mo.group('this_function'), mo)
+    check_this_function(section, mo)
 
     sub_prop_id = mo.group('sub')
     attr_dict = attr_string_to_dict(mo.group('attrs'))
@@ -2803,39 +2767,56 @@ def _(section, mo):
         S_Property(sub_prop_id, attr_dict)
     )
 
-# ==============================================================================
-# Blocks that give info about an internal slot
-# of the object defined by this section
+# ------------------------------------------------------------------------------
 
 @for_patterns(
-    r'The value of the (\[\[\w+\]\]) internal slot of a %ThrowTypeError% function is (\*false\*).'
+    (r"It is an anonymous built-in function object that is defined once for each realm.")
 )
 def _(section, mo):
-    section.put_fact('%ThrowTypeError%', 'has-slot', S_InternalSlot(mo.group(1), mo.group(2)))
+    #> Functions that are identified as anonymous functions use the empty String as the value of the *"name"* property.
+    section.put_fact(section.this_object, 'has-prop', S_Property('*"name"*', {'[[Value]]': '*""*'}))
+
+# ==============================================================================
+# Blocks that give other info about object defined by this section
+
+@for_patterns(
+    r'The value of the (\[\[\w+\]\]) internal slot of {THIS_FUNCTION} is {VALUE}.'
+)
+def _(section, mo):
+    check_this_function(section, mo)
+    section.put_fact(section.this_object, 'has-slot', S_InternalSlot(mo.group(1), mo.group('value')))
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (r"{THIS_FUNCTION} is the <dfn>(?P<percented>%.+%)</dfn> intrinsic object\."),
+)
+def _(section, mo):
+    check_this_function(section, mo)
+    section.put_fact(section.this_object, 'is-aka', mo.group('percented'))
 
 # ==============================================================================
 # Blocks that don't generate any intrinsic facts
 
 @for_patterns(
-    (fr'The initial value of the \*"globalThis"\* property of the global object in a Realm Record .+'),
+    (r"{THIS_FUNCTION} is not generic[;.] .+"),
+)
+def _(section, mo):
+    check_this_function(section, mo)
+
+# ------------------------------------------------------------------------------
+
+@for_patterns(
+    (r'The initial value of the \*"globalThis"\* property of the global object in a Realm Record .+'),
 
     # -------
-    (fr"This function is not generic. The \*this\* value must be an object with a \[\[TypedArrayName\]\] internal slot."),
-    (fr"{THIS_FUNCTION} is not generic[;.] .+"),
 
-    # elides subject, starts with verb:
-    (fr"Performs a regular expression match of .+"),
-    (fr"Produces a String value that .+"),
-    (fr"Returns .+"),
-    (fr"Sets multiple values .+"),
-    (fr"Given zero or more arguments, calls ToNumber on each of the arguments .+"),
-
-    (r"The last argument specifies the body .+"),
+    (r"The last argument \(if any\) specifies the body .+"),
 
     # Other unique sentences
-    (fr"If the String conforms to the {H_EMU_XREF}, .+"),
-    (fr"The actual value of the string passed in step {H_EMU_XREF} is either .+"), # Should be emu-note?
-    (r"Before performing the comparisons, the following steps are performed to prepare the Strings:", 'emu-alg'),
+    (r"If the String conforms to the {H_EMU_XREF}, .+"),
+    (r"The actual value of the string passed in step {H_EMU_XREF} is either .+"), # Should be emu-note?
+    (r"Before performing the comparisons, this method performs the following steps to prepare the Strings:", 'emu-alg'),
     (r"Each `Math.random` function created for distinct realms must produce a distinct sequence of values from successive calls."),
     (r"For those code units being replaced whose value is .+"),
     (r"If _start_ is larger than _end_, they are swapped."),
@@ -2843,12 +2824,9 @@ def _(section, mo):
     (r"In the IEEE 754-2019 double precision binary representation, .+"),
     (r"The GlobalSymbolRegistry is a List that is globally available. .+"),
     (r"The actual return values are implementation-defined .+"),
-    (r"The arguments are prepended to the start of the array, .+"),
-    (r"The elements of the array are converted to Strings, .+"),
-    (r"The first element of the array is removed from the array and returned."),
     (r"The meaning of the optional second and third parameters to this method .+"),
     (r"The optional _reviver_ parameter is a function that takes two parameters, .+"),
-    (r"The optional parameters to this function are not used .+"),
+    (r"The optional parameters to this method are not used .+"),
     (r"The result must be derived according to the locale-insensitive case mappings .+"),
     (r"This property is non-writable and non-configurable to prevent tampering .+"), # should be an emu-note?
 
@@ -2867,40 +2845,78 @@ def _(section, _):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class IndexedCounter:
-    def __init__(self, N):
-        self.count_at_index_ = [0] * N
+def ispl_prep(s):
+    return (s
+        .replace('{H_EMU_XREF}', r'<emu-xref href="#(?P<refd_id>[^"]+)">[^<>]*</emu-xref>')
+        .replace('{ATTRS}', r'(?P<attrs>{[^{}]+})')
+        .replace('{VALUE}', r'(?P<value>.+)')
+        .replace('{SUB}',   r'(?P<sub>\S+)')
+        .replace('{THIS}',  r'(?P<this>\S+)')
+        .replace('{THIS_FUNCTION}', r'''(?P<this_function>(?x:
+                ([Tt]he|[Aa]|Each)\ (?P<func_name1>\S+)\ (?P<func_what1>function|method|constructor\ function|constructor|intrinsic\ object)
+                |
+                (?P<func_name2>\S+)
+                |
+                [Tt]his\ (?P<func_what3>function|method)
+            ))''')
+    )
 
-    def increment_at_index(self, index):
-        self.count_at_index_[index] += 1
-
-    def get_counts(self):
-        # return a list of (index, count) pairs
-        return enumerate(self.count_at_index_)
-
-ispl_counter = IndexedCounter(len(ispl))
+ispl = NodeGrammar(ispl_units, ispl_prep)
 
 def _print_unused_ispl():
     stderr()
     stderr("Unused patterns in ispl:")
     n_shown = 0
-    for (i, count) in ispl_counter.get_counts():
-        if count == 0:
-            stderr('    ', ispl[i][0])
-            n_shown += 1
+    for pattern in ispl.each_unused_pattern():
+        stderr('    ', pattern)
+        n_shown += 1
     if n_shown == 0:
         stderr('    (none)')
     stderr()
 
 # ------------------------------------------------------------------------------
 
-def check_this_function(section, this_function, mo):
-    if this_function == 'this function':
-        pass
-    else:
-        func_name = mo.group('func_name1') or mo.group('func_name2')
+def check_this_function(section, mo):
+    # print(mo.group('this_function'))
+
+    func_name = mo.group('func_name1') or mo.group('func_name2')
+    if func_name and func_name != 'It':
         confirm_this_property(section, func_name)
-    # TODO: check for "function" vs "method"
+
+        if mo.group(2) == 'Each':
+            # e.g., "Each _NativeError_ function" or "Each _TypedArray_ constructor"
+            # I think converting these to "This function" might be misleading.
+            pass
+        else:
+            msg_at_posn(section.start_posn, f"Named function")
+
+    # if '`' in mo.group(0): msg_at_posn(section.start_posn, 'check backtick')
+
+    func_what = mo.group('func_what1') or mo.group('func_what3')
+    if func_what:
+        if (
+            '.prototype' in section.section_title and not section.section_title.startswith('get ')
+            or
+            section.this_object in [
+                'Array.from',
+                'Array.of',
+                '%TypedArray%.from',
+                '%TypedArray%.of',
+            ]
+        ):
+            # We expect it to be referred to as a "method"
+            if func_what != 'method':
+                msg_at_posn(section.start_posn, f"Expected 'method', got {func_what!r}")
+        else:
+            # We don't expect it to be referred to as a "method"
+            if func_what == 'method':
+                msg_at_posn(section.start_posn, f"Didn't expect 'method', but got it")
+                # This complains at:
+                # - Array.from
+                # - Array.of
+                # - %TypedArray%.from
+                # - %TypedArray%.of
+
 
 def confirm_this_property(section, this_prop_t):
     # print(f"! ctp: {this_prop_t}")
@@ -2910,8 +2926,11 @@ def confirm_this_property(section, this_prop_t):
         # print(f"! ctp: {this_prop_t!r}")
         return
 
-    assert p_container == section.this_property.container or p_container is None
-    assert p_key       == section.this_property.key
+    if section.this_property is not None:
+        assert p_container == section.this_property.container or p_container is None
+        assert p_key       == section.this_property.key
+    else:
+        assert p_container is None
 
 # ------------------------------------------------------------------------------
 
@@ -3256,97 +3275,6 @@ def _check_section_order():
                         '- // properties',
                         'catchall',
                     ]
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def scan_section(section, patterns, counter=None):
-    if section.section_kind in ['syntax_directed_operation', 'early_errors', 'changes']:
-        arguments_style = 1
-    elif section.section_kind in ['CallConstruct', 'function_property', 'accessor_property', 'other_property']:
-        arguments_style = 2
-    else:
-        assert 0, section.section_kind
-
-    results = []
-    hnodes = section.block_children
-    next_i = 0
-    while next_i < len(hnodes):
-        for (b, (pattern, processor)) in enumerate(patterns):
-            assert isinstance(pattern, list)
-
-            n = len(pattern)
-            if next_i + n > len(hnodes):
-                # This pattern is too long to match at this point in hnodes.
-                continue
-
-            match_results = [
-                node_matches_atom(child, element_atom)
-                for (child, element_atom) in zip(hnodes[next_i:], pattern)
-            ]
-            if not all(match_results):
-                # pattern didn't match
-                continue
-
-            # pattern matched!
-            if counter: counter.increment_at_index(b)
-
-            matched_nodes = hnodes[next_i : next_i + n]
-
-            if processor is None:
-                pass
-            elif processor == 'print':
-                print()
-                for node in matched_nodes:
-                    print('>', node.source_text())
-            elif callable(processor):
-                # arguments = matched_nodes
-                arguments = []
-                if arguments_style == 2:
-                    arguments.append(section)
-                for (matched_node, match_result) in zip(matched_nodes, match_results):
-                    # If the atom captured something(s), use that/them as the arguments to the callable.
-                    if hasattr(match_result, 'groups') and len(match_result.groups()) > 0:
-                        if arguments_style == 1:
-                            arguments.extend(match_result.groups())
-                        elif arguments_style == 2:
-                            arguments.append(match_result)
-                    else:
-                        arguments.append(matched_node)
-                try:
-                    result = processor(*arguments)
-                except TypeError:
-                    stderr()
-                    stderr()
-                    stderr("When trying to invoke processor for pattern:")
-                    stderr(pattern)
-                    raise
-                if result is None:
-                    pass
-                elif isinstance(result, list):
-                    results.extend(result)
-                else:
-                    results.append(result)
-            else:
-                assert 0, processor
-            next_i += n
-            break
-        else:
-            msg_at_node(hnodes[next_i], f"At this point, no pattern matches (in {section.section_kind} section)")
-            return []
-    return results
-
-def node_matches_atom(node, atom):
-    if isinstance(atom, str):
-        return (node.element_name == atom)
-    elif isinstance(atom, tuple):
-        (desired_element_name, desired_content_re) = atom
-        return (
-            node.element_name == desired_element_name
-            and
-            re.fullmatch(desired_content_re, node.inner_source_text())
-        )
-    else:
-        assert 0, atom
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
