@@ -2215,7 +2215,9 @@ def scan_section(section, patterns):
                 # pattern didn't match
                 continue
 
+            # pattern matched!
             matched_nodes = hnodes[next_i : next_i + n]
+
             if processor is None:
                 pass
             elif processor == 'print':
@@ -2226,13 +2228,20 @@ def scan_section(section, patterns):
                 # arguments = matched_nodes
                 arguments = []
                 for (matched_node, match_result) in zip(matched_nodes, match_results):
-                    # If the atom captured something(s), use that/them as the arguments to tha callable.
+                    # If the atom captured something(s), use that/them as the arguments to the callable.
                     if hasattr(match_result, 'groups') and len(match_result.groups()) > 0:
                         arguments.extend(match_result.groups())
                     else:
                         arguments.append(matched_node)
-                result = processor(*arguments)
-                if type(result) == type([]):
+                try:
+                    result = processor(*arguments)
+                except TypeError:
+                    stderr()
+                    stderr()
+                    stderr("When trying to invoke processor for pattern:")
+                    stderr(pattern)
+                    raise
+                if isinstance(result, list):
                     results.extend(result)
                 else:
                     results.append(result)
@@ -2241,8 +2250,8 @@ def scan_section(section, patterns):
             next_i += n
             break
         else:
-            msg_at_posn(hnodes[next_i].start_posn, f"Unexpected node in {section.section_kind} section")
-            results = []
+            msg_at_posn(hnodes[next_i].start_posn, f"At this point, no pattern matches (in {section.section_kind} section)")
+            return []
     return results
 
 def node_matches_atom(node, atom):
