@@ -629,7 +629,7 @@ def check_globals():
 
     def show_names_set(label, names_set):
         for name in sorted(names_set):
-            print(f"> {label}: {name}")
+            stderr(f"> {label}: {name}")
         
     show_names_set("In 'The Global Object' but not in WKI", global_object_property_names - intrinsics.global_property_names)
     show_names_set("In WKI but not in 'The Global Object'", intrinsics.global_property_names - global_object_property_names)
