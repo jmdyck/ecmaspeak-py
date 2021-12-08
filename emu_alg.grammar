@@ -117,7 +117,6 @@
     Return {var} as the Completion Record of this abstract operation.
     Return.
     ReturnIfAbrupt({EX}).
-    Scan until the next {code_point_lit}.
     Search {PROD_REF} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to {NAMED_OPERATION_INVOCATION}.
     Set all of the bytes of {var} to 0.
     Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
@@ -205,7 +204,6 @@
     perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
     remove the first code unit from {var}
-    replace the text through `>` with {EXPR}
     return
     return {EXPR}
     reverse the order of the elements of {var}
@@ -213,7 +211,6 @@
     set {SETTABLE} to {EXPR}
     store the individual bytes of {var} into {var}, starting at {var}[{var}]
     suspend {var}
-    the replacement text is {EXPR}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
 
@@ -350,7 +347,6 @@
     its value is {LITERAL}
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
-    none is found
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
@@ -640,6 +636,8 @@
     {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}
     {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
+    {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits
+    {var} starts with {STR_LITERAL}
     {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
     {var}, {var}, and {var} have the same number of elements
 
@@ -672,6 +670,7 @@
 
 {NUM_COMPARAND} :
     the length of {var}
+    the number of elements in {var}
     the numeric value of {var}
     {FACTOR}
     {PRODUCT}
@@ -832,7 +831,6 @@
     the String value containing only the code unit {var}
     the String value containing the single code unit {var}
     the String value containing {var} occurrences of {code_unit_lit}
-    the String value derived from {var} by copying code unit elements from {var} to {var} while performing replacements as specified in {h_emu_xref}. These `$` replacements are done left-to-right, and, once such a replacement is performed, the new replacement text is not subject to further replacements
     the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String
@@ -878,7 +876,6 @@
     the element of {EX} whose {DSBN} is the same as {EX}
     the empty CharSet
     the empty sequence of Unicode code points
-    the enclosed {h_emu_not_ref_substring}
     the first agent in {var}
     the first element of {var}
     the first waiter in {var}
@@ -1335,6 +1332,7 @@
     the empty String
     the single-element String *","*
     {starred_str}
+    {starred_str} ({code_unit_lit} followed by {code_unit_lit})
 
 {NUM_LITERAL} :
     *-0.5*{h_sub_fancy_f}

@@ -1353,6 +1353,7 @@ nature_to_type = {
         'a List of names'                             : ListType(T_String),
         'a List of property keys'                     : ListType(T_String | T_Symbol),
         'a possibly empty List of Strings'            : ListType(T_String),
+        'a possibly empty List, each of whose elements is a String or *undefined*': ListType(T_String | T_Undefined),
 
     # 6.2.2 The Set and Relation Specification Types
 
@@ -3962,6 +3963,7 @@ def tc_nonvalue(anode, env0):
                     "Private Name"        : T_Private_Name,
                     "PrivateElement"      : T_PrivateElement,
                     "String"              : T_String,
+                    "integer"             : T_MathInteger_,
                 }[item_nature.prod.rhs_s]
                 collection_type = ListType(item_type)
 
@@ -6599,6 +6601,17 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
         return (env1, env1)
 
+    elif p == r"{CONDITION_1} : {var} starts with {STR_LITERAL}":
+        [var, str_literal] = children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits":
+        [var, str_literal, ex] = children
+        env0.assert_expr_is_of_type(var, T_String)
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
     elif p in [
         r"{CONDITION_1} : only one argument was passed",
     ]:
@@ -8556,13 +8569,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the number of code unit elements in {var}",
     ]:
         [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_MathNonNegativeInteger_, env0)
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_MathNonNegativeInteger_, env1)
 
     elif p in [
         r"{EXPR} : the number of characters contained in {var}",
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : the number of elements in {var}",
+        r"{NUM_COMPARAND} : the number of elements in {var}",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
@@ -9058,13 +9072,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EX} : the escape sequence for {var} as specified in the &ldquo;Escape Sequence&rdquo; column of the corresponding row":
         [var] = children
         return (T_String, env0)
-
-    elif p == r"{EXPR} : the String value derived from {var} by copying code unit elements from {var} to {var} while performing replacements as specified in {h_emu_xref}. These `$` replacements are done left-to-right, and, once such a replacement is performed, the new replacement text is not subject to further replacements":
-        [va, vb, vc, _] = children
-        assert same_source_text(va, vb)
-        env0.assert_expr_is_of_type(vb, T_String)
-        # env0.assert_expr_is_of_type(vc, T_String) repeats the var-being-defined
-        return (T_String | T_throw_, env0)
 
     elif p == r"{EX} : the substring of {var} from {EX} to {EX}":
         [s_var, start_var, end_var] = children
