@@ -220,6 +220,7 @@ class S_Property:
 
 def process_intrinsics_facts():
     coalesce_intrinsic_facts()
+    apply_defaults()
     print_intrinsic_info()
 
 def coalesce_intrinsic_facts():
@@ -286,6 +287,12 @@ def coalesce_intrinsic_facts():
                     # hm
                     continue
                 ensure_intrinsic_named(phrase)
+
+# ------------------------------------------------------------------------------
+
+def apply_defaults():
+    for intrinsic in all_intrinsics:
+        intrinsic.apply_defaults()
 
 # ------------------------------------------------------------------------------
 
@@ -378,6 +385,236 @@ class S_Intrinsic:
             old_prop = self.properties[k]
             assert old_prop.key == s_prop.key
             old_prop.attrs = merge_propAttrs(old_prop.attrs, s_prop.attrs)
+
+    def apply_defaults(self):
+
+        # ---------------
+        # self.kind
+
+        if self.name == '%(global)%':
+            assert self.kind is None
+            # Might be ordinary or exotic.
+            # From clause 19, we know it doesn't have [[Call]] or [[Construct]].
+            self.kind = 'host-defined non-function'
+        elif self.name == '%Array.prototype[@@unscopables]%':
+            assert self.kind is None
+            # "The initial value ... is an object created by the following steps:"
+            # where the object is created by OrdinaryObjectCreate(null)
+            self.kind = 'an ordinary object'
+        else:
+            assert self.kind in [
+                'an ordinary object',
+                'a function object',
+                'a constructor',
+                'a String exotic object',
+                'an Array exotic object',
+                'an immutable prototype exotic object',
+            ]
+
+        # ---------------
+        # self.slots
+
+        # [[Prototype]]
+        
+        # 10.3 Built-in Function Objects
+        #
+        #> Unless otherwise specified
+        #> every built-in function object has the %Function.prototype% object
+        #> as the initial value of its [[Prototype]] internal slot.
+
+        # 18 ECMAScript Standard Built-in Objects:
+        #
+        #> Unless otherwise specified
+        #> every built-in function and every built-in constructor
+        #> has the Function prototype object,
+        #> which is the initial value of the expression `Function.prototype` (...),
+        #> as the value of its [[Prototype]] internal slot.
+        #>
+        #> Unless otherwise specified
+        #> every built-in prototype object
+        #> has the Object prototype object,
+        #> which is the initial value of the expression `Object.prototype` (...),
+        #> as the value of its [[Prototype]] internal slot,
+        #> except the Object prototype object itself.
+
+        if '[[Prototype]]' not in self.slots:
+            if self.kind in ['a function object', 'a constructor']:
+                Prototype = '%Function.prototype%'
+            elif self.name == '%Array.prototype[@@unscopables]%':
+                # Created via `OrdinaryObjectCreate(*null*)`
+                Prototype = '*null*'
+            else:
+                # Every other intrinsic specifies its [[Prototype]] explicitly.
+                assert 0, f"need [[Prototype]] for {self.name}"
+            self.slots['[[Prototype]]'] = Prototype
+
+        # ---------------
+        # self.properties
+
+        if self.kind in ['a function object', 'a constructor']:
+
+            # --------------------------------------------------------
+            # `length`
+
+            # 18 ECMAScript Standard Built-in Objects:
+            #
+            #> Every built-in function object, including constructors,
+            #> has a *"length"* property whose value is a non-negative integral Number.
+            #> Unless otherwise specified, this value is equal to
+            #> the number of required parameters shown in the subclause heading for the function description.
+            #> Optional parameters and rest parameters are not included in the parameter count.
+            #>
+            #> Unless otherwise specified,
+            #> the *"length"* property of a built-in function object has the attributes
+            #> { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+
+            prop_key = '*"length"*'
+
+            ccb = self.slots['[[ccb]]']
+            (ccb_style, ccb_section_id) = ccb.split(' in ')
+            ccb_section = spec.node_with_id_[ccb_section_id]
+            if self.name == '%Function.prototype%':
+                assert ccb_section.alg_headers == []
+                # There isn't a section dedicated to specifying its behavior.
+                # Rather, `Properties of the Function Prototype Object` says:
+                #> accepts any arguments and returns *undefined* when invoked.
+                # But that section also explicitly defines the value of the *"length"* property,
+                # so we it shouldn't be necessary to determine the default value.
+                # However, due to the way this code is written,
+                # we still have to set this variable to something.
+                n_plain_parameters = -1
+                # (Negative so that it'll stick out if it ever does get used.)
+            else:
+                alg_header = ccb_section.alg_headers[0]
+                n_plain_parameters = sum(
+                    param.punct == ''
+                    for param in alg_header.params
+                )
+
+            if n_plain_parameters == 0:
+                npp = '+0'
+            else:
+                npp = str(n_plain_parameters)
+
+            default_attrs = {
+                '[[Value]]'       : f"*{npp}*<sub>\U0001d53d</sub>",
+                '[[Writable]]'    : '*false*',
+                '[[Enumerable]]'  : '*false*',
+                '[[Configurable]]': '*true*',
+            }
+
+            self.apply_defaults_for_property(prop_key, default_attrs)
+
+            # --------------------------------------------------------
+            # `name`
+
+            # 18 ECMAScript Standard Built-in Objects:
+            #
+            #> Every built-in function object, including constructors,
+            #> has a *"name"* property whose value is a String.
+            #> Unless otherwise specified, this value is
+            #> the name that is given to the function in this specification.
+            #> Functions that are identified as anonymous functions
+            #> use the empty String as the value of the *"name"* property.
+            #> For functions that are specified as properties of objects,
+            #> the name value is the property name string used to access the function.
+            #> Functions that are specified as get or set accessor functions of built-in properties
+            #> have *"get"* or *"set"* (respectively) passed to the _prefix_ parameter
+            #> when calling CreateBuiltinFunction.
+            #>
+            #> The value of the *"name"* property is explicitly specified for each built-in functions
+            #> whose property key is a Symbol value.
+            #> If such an explicitly specified value starts with the prefix *"get "* or *"set "*
+            #> and the function for which it is specified is a get or set accessor function of a built-in property,
+            #> the value without the prefix is passed to the _name_ parameter,
+            #> and the value *"get"* or *"set"* (respectively) is passed to the _prefix_ parameter
+            #> when calling CreateBuiltinFunction.</p>
+            #>
+            #> Unless otherwise specified,
+            #> the *"name"* property of a built-in function object has the attributes
+            #> { [[Writable]]: *false*, [[Enumerable]]: *false*, [[Configurable]]: *true* }.
+
+            prop_key = '*"name"*'
+
+            if mo := re.search(r'\[@@(\w+)\]:([gs]et)%$', self.name):
+                default_name = mo.expand(r'\2 [Symbol.\1]')
+            elif mo := re.search(r'\[@@(\w+)\]%$', self.name):
+                default_name = mo.expand(r'[Symbol.\1]')
+            elif mo := re.search(r'(\w+)%$', self.name):
+                default_name = mo.expand(r'\1')
+
+            default_attrs = {
+                '[[Value]]'       : f'*"{default_name}"*',
+                '[[Writable]]'    : '*false*',
+                '[[Enumerable]]'  : '*false*',
+                '[[Configurable]]': '*true*',
+            }
+
+            self.apply_defaults_for_property(prop_key, default_attrs)
+
+        # --------------------------------------------------------
+
+        # 18 ECMAScript Standard Built-in Objects:
+        #
+        #> Every other data property described in clauses
+        #> <emu-xref href="#sec-global-object"></emu-xref> through <emu-xref href="#sec-reflection"></emu-xref>
+        #> and in Annex <emu-xref href="#sec-additional-built-in-properties"></emu-xref>
+        #> has the attributes
+        #> { [[Writable]]: *true*, [[Enumerable]]: *false*, [[Configurable]]: *true* }
+        #> unless otherwise specified.
+        #>
+        #> Every accessor property described in clauses
+        #> <emu-xref href="#sec-global-object"></emu-xref> through <emu-xref href="#sec-reflection"></emu-xref>
+        #> and in Annex <emu-xref href="#sec-additional-built-in-properties"></emu-xref>
+        #> has the attributes
+        #> { [[Enumerable]]: *false*, [[Configurable]]: *true* }
+        #> unless otherwise specified.
+        #> If only a get accessor function is described,
+        #> the set accessor function is the default value, *undefined*.
+        #> If only a set accessor is described
+        #> the get accessor is the default value, *undefined*.
+
+        for prop_key in self.properties:
+            if prop_key in ['*"length"*', '*"name"*'] and self.kind in ['a function object', 'a constructor']:
+                pass # already handled above
+            else:
+                prop = self.properties[prop_key]
+                kind = prop.kind()
+                if kind == 'data':
+                    default_attrs = {
+                        '[[Writable]]'    : '*true*',
+                        '[[Enumerable]]'  : '*false*',
+                        '[[Configurable]]': '*true*',
+                    }
+                elif kind == 'accessor':
+                    default_attrs = {
+                        '[[Enumerable]]'  : '*false*',
+                        '[[Configurable]]': '*true*',
+                    }
+                else:
+                    assert 0, kind
+                self.apply_defaults_for_property(prop_key, default_attrs)
+
+    # -------------------------------------------------------------
+
+    def apply_defaults_for_property(self, prop_key, default_attrs):
+        if prop_key in self.properties:
+            # We have some explicit facts about this property,
+            # but maybe not about all the attributes.
+            prop = self.properties[prop_key]
+            for (attr_name, attr_setting) in default_attrs.items():
+                if attr_name in prop.attrs:
+                    # We already have an explicit setting for this attribute.
+                    if False and prop_key == '*"name"*':
+                        explicit_setting = prop.attrs[attr_name]
+                        if explicit_setting != attr_setting:
+                            print(f"NOTE: {self.name}, property {prop_key}, attribute {attr_name}: explicit setting {explicit_setting} differs from default {attr_setting}")
+                else:
+                    # There isn't an explicit setting for this attribute.
+                    prop.attrs[attr_name] = attr_setting
+        else:
+            # We don't have any explicit facts about this property.
+            self.ensure_property(S_Property(prop_key, default_attrs.copy()))
 
 def merge_propAttrs(propAttrs_a, propAttrs_b):
     if propAttrs_a == propAttrs_b: return propAttrs_a
