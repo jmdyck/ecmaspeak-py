@@ -541,7 +541,6 @@ def annotate_invocations(anode):
                 'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
                 'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
                 'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
-                '{cap_word} for {LOCAL_REF} {WITH_ARGS}',
                 '{cap_word} of {LOCAL_REF}',
                 '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
                 '{cap_word}({EX})',

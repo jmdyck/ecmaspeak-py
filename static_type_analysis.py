@@ -2514,8 +2514,8 @@ class Env:
                 'the result of evaluating |NonSurrogate|',
                 'the result of evaluating |NonemptyClassRanges|',
                 'the result of evaluating |TrailSurrogate|',
-                'the result of performing ArrayAccumulation for |ElementList| with arguments _array_ and _nextIndex_',
-                'the result of performing ArrayAccumulation for |Elision| with arguments _array_ and _nextIndex_',
+                'the result of performing ArrayAccumulation of |ElementList| with arguments _array_ and _nextIndex_',
+                'the result of performing ArrayAccumulation of |Elision| with arguments _array_ and _nextIndex_',
                 'the result of performing IteratorDestructuringAssignmentEvaluation of |AssignmentRestElement| with _iteratorRecord_ as the argument',
                 'the result of performing IteratorDestructuringAssignmentEvaluation of |Elision| with _iteratorRecord_ as the argument', # hm
                 '(16 times the MV of the first |HexDigit|) plus the MV of the second |HexDigit|',
@@ -2527,7 +2527,7 @@ class Env:
                 '_p_ - (_e_ + 1)', # toPrecision
                 '_srcBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 '_targetBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
-                'the result of performing NamedEvaluation for |Initializer| with argument _bindingId_',
+                'the result of performing NamedEvaluation of |Initializer| with argument _bindingId_',
                 '_handler_', # NewPromiseReactionJob
                 '_r_.[[Value]]',
                 '%Generator.prototype.next%', # CreateListIteratorRecord
@@ -7608,7 +7608,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}",
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word} for {LOCAL_REF} {WITH_ARGS}",
         r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}",
     ]:
         [callee, local_ref, with_args] = children

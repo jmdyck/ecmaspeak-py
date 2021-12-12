@@ -1085,7 +1085,6 @@
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}
-    {cap_word} for {LOCAL_REF} {WITH_ARGS}
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
 

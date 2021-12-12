@@ -1289,7 +1289,6 @@ def _(de, cap_word, local_ref):
     return execute_sdo_invocation(de, cap_word, local_ref, [])
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}')
-@efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word} for {LOCAL_REF} {WITH_ARGS}')
 def _(de, cap_word, local_ref, with_args):
     return execute_sdo_invocation(de, cap_word, local_ref, flatten_with_args(with_args))
 
