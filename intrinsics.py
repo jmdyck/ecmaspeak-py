@@ -221,6 +221,7 @@ class S_Property:
 def process_intrinsics_facts():
     coalesce_intrinsic_facts()
     apply_defaults()
+    determine_creation_order()
     print_intrinsic_info()
 
 def coalesce_intrinsic_facts():
@@ -296,6 +297,19 @@ def apply_defaults():
 
 # ------------------------------------------------------------------------------
 
+def determine_creation_order():
+    intrinsics_in_rank_ = defaultdict(list)
+    for intrinsic in all_intrinsics:
+        rank = intrinsic.get_creation_rank()
+        intrinsics_in_rank_[rank].append(intrinsic)
+
+    spec.intrinsics_in_creation_order = []
+    for (rank, intrinsics_in_rank) in sorted(intrinsics_in_rank_.items()):
+        for intrinsic in sorted(intrinsics_in_rank, key=lambda intr: intr.name):
+            spec.intrinsics_in_creation_order.append(intrinsic)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def print_intrinsic_info():
 
     f = shared.open_for_output('intrinsics')
@@ -364,6 +378,7 @@ class S_Intrinsic:
         put()
         put('----')
         put(self.name)
+        put(f"    creation_rank: {self.creation_rank}")
         put(f"    kind: {self.kind}")
         put(f"    slots:")
         for (slot_name, slot_value) in sorted(self.slots.items()):
@@ -615,6 +630,22 @@ class S_Intrinsic:
         else:
             # We don't have any explicit facts about this property.
             self.ensure_property(S_Property(prop_key, default_attrs.copy()))
+
+    # --------------------------------------------------------------------------
+
+    def get_creation_rank(self):
+        if hasattr(self, 'creation_rank'):
+            return self.creation_rank
+
+        Proto = self.slots['[[Prototype]]']
+        if Proto in ['*null*', 'host-defined']:
+            rank = 0
+        else:
+            rank = 1 + intrinsic_named_[Proto].get_creation_rank()
+        self.creation_rank = rank
+        return rank
+
+    # --------------------------------------------------------------------------
 
 def merge_propAttrs(propAttrs_a, propAttrs_b):
     if propAttrs_a == propAttrs_b: return propAttrs_a
