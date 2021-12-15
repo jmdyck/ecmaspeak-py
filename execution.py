@@ -1199,7 +1199,7 @@ def _(de, opn_before_paren, exlist_opt):
     arg_values = de.exec(exlist_opt, list)
     return apply_op_to_arg_values(de, op_name, arg_values)
 
-@efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word}({PROD_REF})')
+@efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word}({EX})')
 @efd.put('{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}') # looks like an SDO invocation, but it isn't
 def _(de, cap_word, arg):
     [op_name] = cap_word.children
@@ -2177,6 +2177,12 @@ class ES_List(ES_Value):
             for element in self._elements
         )
 
+    def contains_an_element_satisfying(self, predicate):
+        return any(
+            predicate(element)
+            for element in self._elements
+        )
+
     def number_of_occurrences_of(self, value):
         return len([
             element
@@ -2263,6 +2269,14 @@ def _(de, noi, starred_str):
     L = de.exec(noi, ES_List)
     s = de.exec(starred_str, EL_String)
     return L.contains(s)
+
+@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s')
+def _(de, noi, nont):
+    L = de.exec(noi, ES_List)
+    nt_name = nt_name_from_nonterminal_node(nont)
+    return L.contains_an_element_satisfying(
+        lambda e: e.symbol == nt_name
+    )
 
 @efd.put('{CONDITION_1} : {var} does not include the element {LITERAL}')
 def _(de, var, lit):
