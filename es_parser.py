@@ -26,8 +26,6 @@ character_named_ = {
     'TAB'   : '\u0009',
     'VT'    : '\u000b',
     'FF'    : '\u000c',
-    'SP'    : '\u0020',
-    'NBSP'  : '\u00a0',
     # 'ZWNBSP': '\ufeff', # appears above
     # 'USP' : isn't a single character
 
@@ -2127,12 +2125,9 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
     elif T == 'T_named':
         n = rsymbol.n
         if n == 'USP':
-            #" Any other Unicode 'Space_Separator' code point
-            # (where, in this context, "other" means "other than SP and NBSP")
+            #" Any Unicode 'Space_Separator' code point
             return (
                 unicodedata.category(char) == 'Zs'
-                and
-                char not in ['\u0020', '\u00a0']
             )
         else:
             return (char == character_named_[n])
