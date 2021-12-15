@@ -1576,7 +1576,7 @@ def _(de, nonta, ex):
     pnode = de.exec(ex, ParseNode)
     de.traverse_for_early_errors(pnode)
 
-@efd.put('{EE_RULE} : <p>It is a Syntax Error if {LOCAL_REF} is{nlai}<br>{nlai}{h_emu_grammar}{nlai}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.</p>')
+@efd.put('{EE_RULE} : <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>')
 def _(de, local_ref1, h_emu_grammar, local_ref2, local_ref3):
     assert len(h_emu_grammar._hnode.puk_set) == 1
     [puk] = list(h_emu_grammar._hnode.puk_set)

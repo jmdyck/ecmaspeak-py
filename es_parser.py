@@ -274,7 +274,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                         t = T_lit(terminal_item_n._chars)
                     elif terminal_item_n.kind == 'NAMED_CHAR':
                         t = T_named(terminal_item_n.groups[0])
-                    elif terminal_item_n.kind == 'NLTH_BAR':
+                    elif terminal_item_n.kind == 'NLTH':
                         t = C_no_LT_here()
                     else:
                         t = str(terminal_item_n)
