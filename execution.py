@@ -1494,7 +1494,7 @@ def _(de, nont):
     assert pnode.symbol in ['Script', 'Module']
     return (pnode.symbol == nt_name)
 
-@efd.put('{CONDITION_1} : any source text matches this rule')
+@efd.put('{CONDITION_1} : any source text is matched by this production')
 def _(de):
     return True
 
@@ -1527,10 +1527,6 @@ def _(de, conda, condb):
     if not de.exec(condb, bool) and de.exec(conda, bool):
         de.it_is_a_syntax_error(conda.parent)
 
-@efd.put('{EE_RULE} : Always throw a Syntax Error if code matches this production.')
-def _(de):
-    de.it_is_a_syntax_error('code matches this production')
-
 @efd.put('{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}')
 def _(de, cond, bool_lit, h_emu_alg):
     if de.exec(cond, bool):
@@ -1557,7 +1553,7 @@ def _(de, cond, emu_grammar):
     # which generally wouldn't have any meaning for an instance of a production B.
     #
     # However, in the 4 occurrences of this rule, it does make sense:
-    assert cond.source_text() == "the source code matching |FormalParameters| is strict mode code"
+    assert cond.source_text() == "the source text matched by |FormalParameters| is strict mode code"
     assert emu_grammar.source_text() == "<emu-grammar>UniqueFormalParameters : FormalParameters</emu-grammar>"
     # `UniqueFormalParameters : FormalParameters` only has 1 Early Error rule,
     # and it only refers to |FormalParameters|, which *does* have meaning for the focus node.
@@ -2664,7 +2660,7 @@ def _(de, error_type):
 
 # 11.2 Types of Source Code
 
-@efd.put('{CONDITION_1} : the source code containing {G_SYM} is eval code that is being processed by a direct eval')
+@efd.put('{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval')
 def _(de, gsym):
     return False # BUG
 
@@ -2672,9 +2668,8 @@ def _(de, gsym):
 
 # 11.2.2 Strict Mode Code
 
-@efd.put('{CONDITION_1} : the code that matches {PROD_REF} is contained in strict mode code')
-@efd.put('{CONDITION_1} : the code matched by {PROD_REF} is contained in strict mode code')
-@efd.put('{CONDITION_1} : the source code matching {PROD_REF} is strict mode code')
+@efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code')
+@efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code')
 @efd.put('{CONDITION_1} : {LOCAL_REF} is contained in strict mode code')
 @efd.put('{CONDITION_1} : {PROD_REF} is contained in strict mode code')
 def _(de, local_ref):
