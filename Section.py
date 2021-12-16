@@ -2224,7 +2224,7 @@ def extract_intrinsic_info_from_p_ul_section(section):
         elif li_ist == 'is an Array exotic object and has the internal methods specified for such objects.':
             section.put_fact(subject, 'is', 'an Array exotic object')
         elif li_ist == 'has the internal methods defined for ordinary objects, except for the [[SetPrototypeOf]] method, which is as defined in <emu-xref href="#sec-immutable-prototype-exotic-objects-setprototypeof-v"></emu-xref>. (Thus, it is an immutable prototype exotic object.)':
-            section.put_fact(subject, 'is', 'an immutable prototype exotic object')
+            section.put_fact(subject, 'is', 'an immutable prototype exotic object whose other internal methods are ordinary')
 
         # function
         # (All intrinsics are built-in, so we don't have to say "built-in".)

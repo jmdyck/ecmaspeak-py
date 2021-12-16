@@ -327,7 +327,7 @@ def print_intrinsic_info():
             'an ordinary object',
             'a String exotic object',
             'an Array exotic object',
-            'an immutable prototype exotic object',
+            'an immutable prototype exotic object whose other internal methods are ordinary',
         ]:
             put(f"{intrinsic.name} kind = {intrinsic.kind}")
 
@@ -423,7 +423,7 @@ class S_Intrinsic:
                 'a constructor',
                 'a String exotic object',
                 'an Array exotic object',
-                'an immutable prototype exotic object',
+                'an immutable prototype exotic object whose other internal methods are ordinary',
             ]
 
         # ---------------
