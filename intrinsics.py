@@ -429,14 +429,25 @@ class S_Intrinsic:
         # ---------------
         # self.slots
 
+        # [[Extensible]]
+        # 
+        # 18 ECMAScript Standard Built-in Objects:
+        #
+        #> Unless specified otherwise,
+        #> the [[Extensible]] internal slot of a built-in object
+        #> initially has the value *true*.
+
+        if '[[Extensible]]' not in self.slots:
+            self.slots['[[Extensible]]'] = '*true*'
+
         # [[Prototype]]
-        
+        #
         # 10.3 Built-in Function Objects
         #
         #> Unless otherwise specified
         #> every built-in function object has the %Function.prototype% object
         #> as the initial value of its [[Prototype]] internal slot.
-
+        #
         # 18 ECMAScript Standard Built-in Objects:
         #
         #> Unless otherwise specified
