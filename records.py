@@ -13,14 +13,26 @@ def process_tables():
     for emu_table in spec.doc_node.each_descendant_named('emu-table'):
         caption = emu_table._caption
         header_line = '; '.join(emu_table._header_row.cell_texts)
-        
+
+        # tc_schema_name:
+        # "tc" is for "title-cased" (because we're extracting it from a table caption),
+        # which might not be the casing as used elsewhere.
+
         if 'Field' in caption:
-            if re.fullmatch(r'(.+) Fields', caption):
-                pass
-            elif re.fullmatch(r'Additional Fields of (.+)', caption):
-                pass
+            if mo := re.fullmatch(r'(.+) Fields', caption):
+                tc_schema_name = mo.group(1)
+            elif mo := re.fullmatch(r'Additional Fields of (.+)s', caption):
+                tc_schema_name = mo.group(1)
             else:
                 assert 0, caption
+            assert (
+                tc_schema_name.endswith(' Record')
+                or
+                tc_schema_name.endswith(' Event')
+                or
+                tc_schema_name == 'PrivateElement'
+            )
+
             assert header_line in [
                 'Field Name; Value Type; Meaning',
                 'Field Name; Value; Meaning',
@@ -37,7 +49,11 @@ def process_tables():
                 # `meaning` is arbitrary prose
 
         elif 'Method' in caption and 'Record' in caption:
-            assert re.fullmatch(r'(Additional )?(Abstract )?Methods of .+ Records', caption), caption
+            if mo := re.fullmatch(r'(Additional )?(Abstract )?Methods of (.+ Record)s', caption):
+                tc_schema_name = mo.group(3)
+            else:
+                assert 0, caption
+
             assert header_line == 'Method; Purpose'
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
