@@ -19,9 +19,6 @@ def process_tables():
                 pass
             elif re.match(r'^Additional Fields of (.+)$', caption):
                 pass
-            elif caption == 'Fields of the Private Name':
-                # PR 1668
-                pass
             else:
                 assert 0, caption
             assert header_line in [
