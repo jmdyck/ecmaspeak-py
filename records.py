@@ -15,9 +15,9 @@ def process_tables():
         header_line = '; '.join(emu_table._header_row.cell_texts)
         
         if 'Field' in caption:
-            if re.match(r'^(.+) Fields$', caption):
+            if re.fullmatch(r'(.+) Fields', caption):
                 pass
-            elif re.match(r'^Additional Fields of (.+)$', caption):
+            elif re.fullmatch(r'Additional Fields of (.+)', caption):
                 pass
             else:
                 assert 0, caption
