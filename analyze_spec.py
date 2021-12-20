@@ -14,6 +14,7 @@ from shared import stderr, msg_at_posn, spec
 from emu_tables import analyze_table
 import intrinsics
 from intrinsics import check_references_to_intrinsics, process_intrinsics_facts
+import records
 
 def main():
     if len(sys.argv) != 3:
@@ -46,6 +47,7 @@ def main():
     check_dfns()
 
     check_tables()
+    records.process_tables()
     Section.make_and_check_sections()
     process_intrinsics_facts()
     check_references_to_intrinsics()
@@ -558,30 +560,9 @@ def check_tables():
         caption = et._caption
         header_line = '; '.join(et._header_row.cell_texts)
 
-        if 'Field' in caption:
-            if re.match(r'^(.+) Fields$', caption):
-                pass
-            elif re.match(r'^Additional Fields of (.+)$', caption):
-                pass
-            elif caption == 'Fields of the Private Name':
-                # PR 1668
-                pass
-            else:
-                assert 0, caption
-            assert header_line in [
-                'Field Name; Value Type; Meaning',
-                'Field Name; Value; Meaning',
-                'Field Name; Value; Usage',
-                'Field Name; Values of the [[Kind]] field for which it is present; Value; Meaning',
-            ], header_line
-            for row in et._data_rows:
-                if header_line == 'Field Name; Values of the [[Kind]] field for which it is present; Value; Meaning':
-                    [field_name, _, value_type, meaning] = row.cell_texts
-                else:
-                    [field_name, value_type, meaning] = row.cell_texts
-                assert re.fullmatch(r'\[\[[A-Z][A-Za-z0-9]+\]\]', field_name), field_name
-                # `value_type` is limited, could be checked, but format is ad hoc
-                # `meaning` is arbitrary prose
+        if 'Field' in caption or ('Method' in caption and 'Record' in caption):
+            # See records.process_tables()
+            pass
 
         elif 'Slot' in caption:
             if re.match(r'^Internal Slots of (.+)$', caption):
@@ -593,9 +574,6 @@ def check_tables():
             if 'Internal Methods' in caption:
                 assert caption in ['Essential Internal Methods', 'Additional Essential Internal Methods of Function Objects']
                 assert header_line == 'Internal Method; Signature; Description'
-            elif 'Records' in caption:
-                assert re.fullmatch(r'(Additional )?(Abstract )?Methods of .+ Records', caption), caption
-                assert header_line == 'Method; Purpose'
             elif caption == 'Proxy Handler Methods':
                 assert header_line == 'Internal Method; Handler Method'
             else:
