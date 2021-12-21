@@ -5,7 +5,8 @@
 
 import re
 
-from shared import spec
+from shared import spec, msg_at_node
+from nature import check_nature
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -44,8 +45,12 @@ def process_tables():
                     [field_name, _, value_type, meaning] = row.cell_texts
                 else:
                     [field_name, value_type, meaning] = row.cell_texts
+
                 assert re.fullmatch(r'\[\[[A-Z][A-Za-z0-9]+\]\]', field_name), field_name
-                # `value_type` is limited, could be checked, but format is ad hoc
+
+                for warning in check_nature(value_type):
+                    msg_at_node(row.cell_nodes[-2], warning)
+
                 # `meaning` is arbitrary prose
 
         elif 'Method' in caption and 'Record' in caption:
