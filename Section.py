@@ -16,6 +16,7 @@ import headers
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
 from headers import AlgParam
+from nature import check_nature
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1011,7 +1012,7 @@ def _handle_structured_header(section):
                     [optionality, param_name, param_nature] = mo.groups()
                     param_punct = '[]' if (optionality == 'optional ') else ''
                     params.append( AlgParam(param_name, param_punct, param_nature) )
-                    if (warning := check_param_nature(param_nature)):
+                    for warning in check_nature(param_nature):
                         msg_at_posn(b, f"warning re nature: {warning}")
                 else:
                     assert mo.groups() == ()
@@ -1190,39 +1191,6 @@ def _handle_structured_header(section):
     )
 
     return alg_header
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def check_param_nature(nature):
-    if nature.startswith('a List of '):
-        elements_nature = nature[len('a List of '):]
-        # TODO
-
-    elif nature.startswith('a Completion Record whose '):
-        pass # TODO
-
-    elif ', but not' in nature:
-        pass # TODO
-
-    elif ' or ' in nature:
-        alts = re.split(r', or |, | or ', nature)
-
-        N = len(alts)
-        if N <= 1:
-            assert 0, alts
-        elif N == 2:
-            expected = ' or '.join(alts)
-        elif N >= 3:
-            expected = ', '.join(alts[:-1]) + ', or ' + alts[-1]
-        if expected != nature:
-            return f"comma problem, expected: {expected}"
-
-        # for alt in alts: print(alt)
-
-    else:
-        pass
-
-    return None
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
