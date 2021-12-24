@@ -49,6 +49,7 @@ def main():
     check_tables()
     records.process_tables()
     Section.make_and_check_sections()
+    records.print_schema_hierarchies()
     process_intrinsics_facts()
     check_references_to_intrinsics()
     emu_grammars.do_stuff_with_emu_grammars()

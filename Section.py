@@ -16,6 +16,7 @@ import headers
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
 from headers import AlgParam
+import records
 from nature import check_nature
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -645,8 +646,8 @@ def _handle_oddball_op_section(section):
         # The clause exists only to tell us that the concrete method is never used.
         p = section.block_children[0]
         assert p.element_name == 'p'
-        assert re.fullmatch(
-            r'The \w+ concrete method of an? \w+ Environment Record is never used within this specification.',
+        mo = re.fullmatch(
+            r'The (\w+) concrete method of (an? (\w+ Environment Record)) is never used within this specification.',
             p.inner_source_text()
         )
         # Note that the start of this sentence looks like the start of a standardized preamble,
@@ -659,6 +660,39 @@ def _handle_oddball_op_section(section):
         # Let's try the latter.
         # I.e., don't create anything, but return True to indicate that we've handled this section.
         section.section_kind = 'env_rec_method_unused'
+
+        # Actually, if there's an attempt to invoke DeleteBinding on a module ER,
+        # and the module ER schema doesn't have anything for that method,
+        # the lookup *won't* fail, it will propagate up to the declarative ER schema,
+        # which *does* have a definition for that method, which might succeed.
+        # So we'd fail to detect that an unexpected thing had occurred.
+        # So we do want *something* in the schema to 'trap' the invocation.
+        (method_name, for_phrase, discriminator) = mo.groups()
+
+        # This is a bit kludgey.
+        # I could use _handle_header_with_std_preamble,
+        # but I'd have to tweak it somewhat, and I don't feel like it.
+        # Could maybe even leave these cases to _handle_other_op_section.
+        params = {
+            'CreateImmutableBinding': [
+                AlgParam('_N_', '', 'a String'),
+                AlgParam('_S_', '', 'a Boolean'),
+            ],
+            'DeleteBinding': [
+                AlgParam('_N_', '', 'a String'),
+            ],
+        }[method_name]
+        alg_header = AlgHeader_make(
+            section = section,
+            species = 'op: discriminated by type: env rec',
+            name = method_name,
+            params = params,
+            node_at_end_of_header = p,
+            for_phrase = for_phrase,
+        )
+
+        rs = spec.RecordSchema_for_name_[discriminator.title()]
+        rs.add_method_defn(records.MethodDefn(alg_header, None))
         return True
 
     # ----
@@ -839,6 +873,12 @@ def _handle_other_op_section(section):
             assert 0, section.section_kind
 
         AlgHeader_add_definition(alg_header, discriminator, emu_alg)
+
+        if section.section_kind.endswith('_rec_method'):
+            assert len(alg_header.u_defns) == 1
+            [alg_defn] = alg_header.u_defns
+            rs = spec.RecordSchema_for_name_[discriminator.title()]
+            rs.add_method_defn(records.MethodDefn(alg_header, alg_defn))
 
     # -----------------------------------------
 
