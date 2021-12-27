@@ -961,18 +961,18 @@ class AlgHeader:
                     oh_warn(f"{self.name}, param {param.name}:")
                     oh_warn(f"predeclared nature {numeric_nature!r} != extracted nature {param.nature!r}")
 
-            if self.name in ['::equal', '::sameValue', '::sameValueZero']:
+            if self.name.endswith(('::equal', '::sameValue', '::sameValueZero')):
                 pd_return_nature_normal = 'a Boolean'
-            elif self.name == '::lessThan':
+            elif self.name.endswith('::lessThan'):
                 pd_return_nature_normal = 'a Boolean or *undefined*'
-            elif self.name == '::toString':
+            elif self.name.endswith('::toString'):
                 pd_return_nature_normal = 'a String'
             else:
                 pd_return_nature_normal = numeric_nature
 
-            if self.name in ['::exponentiate', '::divide', '::remainder']:
+            if self.name.endswith(('::exponentiate', '::divide', '::remainder')):
                 pd_return_nature_abrupt = 'throw *RangeError*'
-            elif self.name == '::unsignedRightShift':
+            elif self.name.endswith('::unsignedRightShift'):
                 pd_return_nature_abrupt = 'throw *TypeError*'
             else:
                 pd_return_nature_abrupt = None

@@ -624,26 +624,37 @@ def annotate_invocations(anode):
                     assert d.source_text() == '_operation_(_lnum_, _rnum_)'
                     # ApplyStringOrNumericBinaryOperator
                     op_names = [
-                        '::exponentiate',
-                        '::multiply',
-                        '::divide',
-                        '::remainder',
-                        '::add',
-                        '::subtract',
-                        '::leftShift',
-                        '::signedRightShift',
-                        '::unsignedRightShift',
-                        '::bitwiseAND',
-                        '::bitwiseXOR',
-                        '::bitwiseOR',
+                        'Number::exponentiate',
+                        'BigInt::exponentiate',
+                        'Number::multiply',
+                        'BigInt::multiply',
+                        'Number::divide',
+                        'BigInt::divide',
+                        'Number::remainder',
+                        'BigInt::remainder',
+                        'Number::add',
+                        'BigInt::add',
+                        'Number::subtract',
+                        'BigInt::subtract',
+                        'Number::leftShift',
+                        'BigInt::leftShift',
+                        'Number::signedRightShift',
+                        'BigInt::signedRightShift',
+                        'Number::unsignedRightShift',
+                        'BigInt::unsignedRightShift',
+                        'Number::bitwiseAND',
+                        'BigInt::bitwiseAND',
+                        'Number::bitwiseXOR',
+                        'BigInt::bitwiseXOR',
+                        'Number::bitwiseOR',
+                        'BigInt::bitwiseOR',
                     ]
                 else:
                     # mostly closures created+invoked in RegExp semantics
                     # print('>>>', opn_before_paren.source_text())
                     pass
             elif opn_before_paren.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-                [_, low_word] = opn_before_paren.children
-                op_names = ['::' + low_word.source_text()]
+                op_names = [opn_before_paren.source_text()]
             else:
                 assert 0, opn_before_paren.prod.rhs_s
 

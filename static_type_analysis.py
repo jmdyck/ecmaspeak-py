@@ -3225,15 +3225,15 @@ def tc_header(tah):
                     or
                     tah.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
                     or
-                    tah.name in ['::divide','::exponentiate','::remainder'] and pn == '*return*' and init_t == T_Number | ThrowType(T_RangeError) and final_t == T_Number
+                    tah.name in ['Number::divide','Number::exponentiate','Number::remainder'] and pn == '*return*' and init_t == T_Number | ThrowType(T_RangeError) and final_t == T_Number
                     or
-                    tah.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
+                    tah.name == 'Number::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
                     or
-                    tah.name == '::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
+                    tah.name == 'BigInt::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
                     or
-                    tah.name in ['::lessThan'] and pn == '*return*' and init_t == T_Boolean | T_Undefined and final_t == T_Boolean
+                    tah.name in ['BigInt::lessThan'] and pn == '*return*' and init_t == T_Boolean | T_Undefined and final_t == T_Boolean
                     or
-                    tah.name in ['::bitwiseAND', '::bitwiseOR', '::bitwiseXOR', '::leftShift', '::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
+                    tah.name in ['Number::bitwiseAND', 'Number::bitwiseOR', 'Number::bitwiseXOR', 'Number::leftShift', 'Number::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
                     or
                     tah.name == 'AsyncGeneratorResume' and pn == '_completion_'
                     or
@@ -7729,10 +7729,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert nti in [ 'Number', 'BigInt']
             for_type = NamedType(nti)
 
-            callee_op_name = '::' + low_word.source_text()
+            callee_op_name = opn_before_paren.source_text()
             callee_op = spec.alg_info_['op'][callee_op_name]
             assert callee_op.species == 'op: discriminated by type: numeric'
-            assert len(callee_op.headers) == 2
+            assert len(callee_op.headers) == 1
 
             for header in callee_op.headers:
                 if for_type is None or header.tah.for_param_type == for_type:

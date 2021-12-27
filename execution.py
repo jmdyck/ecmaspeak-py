@@ -1258,7 +1258,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
     elif isinstance(op_name, tuple):
         assert len(op_name) == 2
         (type_name, method_name) = op_name
-        alg_info = spec.alg_info_['op']['::' + method_name]
+        alg_info = spec.alg_info_['op'][f"{type_name}::{method_name}"]
         assert alg_info.species == 'op: discriminated by type: numeric'
         matching_defns = [
             alg_defn
