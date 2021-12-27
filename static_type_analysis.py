@@ -7734,13 +7734,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert callee_op.species == 'op: discriminated by type: numeric'
             assert len(callee_op.headers) == 1
 
-            for header in callee_op.headers:
-                if for_type is None or header.tah.for_param_type == for_type:
-                    params = header.tah.parameter_types.items()
-                    return_type = header.tah.return_type
-                    break
-            else:
-                assert 0
+            [header] = callee_op.headers
+            assert header.tah.for_param_type == for_type
+            params = header.tah.parameter_types.items()
+            return_type = header.tah.return_type
 
         elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
