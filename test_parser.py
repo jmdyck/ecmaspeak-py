@@ -6,9 +6,9 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 # example use:
-# test_parser.py --all && car _testing/{fail,early,pass,pass-explicit}_output
+# test_parser.py --all && car _test_parser/{fail,early,pass,pass-explicit}_output
 # ^ takes about 3 minutes
-# test_parser.py --all-dir=fail && car _testing/fail_output
+# test_parser.py --all-dir=fail && car _test_parser/fail_output
 
 # You may need to `export PYTHONIOENCODING=utf-8` before running this script.
 
@@ -44,7 +44,7 @@ def test_all():
 def test_all_in_dir(test_dirname):
     print(test_dirname, file=sys.stderr)
     assert test_dirname in ['fail', 'early', 'pass', 'pass-explicit']
-    output_filename = f'_testing/{test_dirname}_output.new'
+    output_filename = f'_test_parser/{test_dirname}_output.new'
 
     with open(output_filename, 'w', encoding='utf8') as f:
         dirpath = root_test_dirpath + "/" + test_dirname
