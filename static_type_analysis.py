@@ -7723,19 +7723,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return_type = callee_op.return_type
 
         elif opn_before_paren.prod.rhs_s == r'{NUMERIC_TYPE_INDICATOR}::{low_word}':
-            [num_type_indicator, low_word] = opn_before_paren.children
-
-            nti = num_type_indicator.source_text()
-            assert nti in [ 'Number', 'BigInt']
-            for_type = NamedType(nti)
-
             callee_op_name = opn_before_paren.source_text()
             callee_op = spec.alg_info_['op'][callee_op_name]
             assert callee_op.species == 'op: discriminated by type: numeric'
             assert len(callee_op.headers) == 1
 
             [header] = callee_op.headers
-            assert header.tah.for_param_type == for_type
             params = header.tah.parameter_types.items()
             return_type = header.tah.return_type
 

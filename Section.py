@@ -1044,9 +1044,7 @@ def _handle_structured_header(section):
 
         section.section_title = f"{which_semantics}{op_name}{parameter_part}"
 
-    if '::' in op_name:
-        (for_phrase, _) = re.split(r'(?=::)', op_name)
-    elif section_type == 'sdo':
+    if section_type == 'sdo':
         for_phrase = 'Parse Node'
     else:
         for_phrase = None
@@ -1273,7 +1271,6 @@ def _handle_header_with_std_preamble(section):
     if p_dict['kind'] == 'abstract operation':
         if '::' in op_name:
             section.section_kind = 'numeric_method'
-            (for_phrase, _) = re.split(r'(?=::)', op_name)
         else:
             section.section_kind = 'abstract_operation'
 
