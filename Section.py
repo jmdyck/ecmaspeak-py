@@ -800,21 +800,16 @@ def _handle_other_op_section(section):
         # The emu-alg is the 'body' of
         # (this definition of) the operation named by the section_title.
 
-        if section.section_kind == 'abstract_operation':
+        if section.section_kind in ['abstract_operation', 'numeric_method']:
             discriminator = None
 
         elif section.section_kind in [
-            'numeric_method',
             'env_rec_method',
             'module_rec_method',
             'internal_method',
         ]:
             # type-discriminated operation
             discriminator = {
-                # numeric_method:
-                'The Number Type': 'Number',
-                'The BigInt Type': 'BigInt',
-
                 # env_rec_method:
                 'Declarative Environment Records' : 'declarative Environment Record',
                 'Object Environment Records'      : 'object Environment Record',

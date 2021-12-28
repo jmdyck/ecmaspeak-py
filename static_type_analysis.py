@@ -335,6 +335,8 @@ class TypedAlgHeader:
                     isinstance(discriminator, ANode)
                         and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
                 )
+            elif self.species == 'op: discriminated by type: numeric':
+                assert discriminator is None
             elif self.species.startswith('op: discriminated by type'):
                 assert isinstance(discriminator, Type)
             elif self.species == 'op: singular':

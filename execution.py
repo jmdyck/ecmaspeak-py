@@ -1263,7 +1263,6 @@ def apply_op_to_arg_values(de, op_name, arg_values):
         matching_defns = [
             alg_defn
             for alg_defn in alg_info.all_definitions()
-            if alg_defn.discriminator == type_name
         ]
         assert len(matching_defns) == 1
         [relevant_alg_defn] = matching_defns
