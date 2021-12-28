@@ -1186,12 +1186,7 @@ def _(de, opn_before_paren, exlist_opt):
     if opr == '{SIMPLE_OPERATION_NAME}':
         op_name = opn_before_paren.source_text()
     elif opr == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-        [numeric_type_indicator, low_word] = opn_before_paren.children
-        [low_word_str] = low_word.children
-        if numeric_type_indicator.prod.rhs_s == 'Number':
-            op_name = ('Number', low_word_str)
-        else:
-            assert NYI, numeric_type_indicator
+        op_name = opn_before_paren.source_text()
         
     else:
         assert NYI
@@ -1225,7 +1220,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
     if isinstance(op_name, str):
 
         alg_info = spec.alg_info_['op'][op_name]
-        assert alg_info.species == 'op: singular'
+        assert alg_info.species in ['op: singular', 'op: discriminated by type: numeric']
 
         alg_defns = alg_info.all_definitions()
         if len(alg_defns) == 0:
@@ -1254,19 +1249,6 @@ def apply_op_to_arg_values(de, op_name, arg_values):
             [relevant_alg_defn] = matching_defns
 
             return de.execute_alg_defn(relevant_alg_defn, arg_vals=arg_values)
-
-    elif isinstance(op_name, tuple):
-        assert len(op_name) == 2
-        (type_name, method_name) = op_name
-        alg_info = spec.alg_info_['op'][f"{type_name}::{method_name}"]
-        assert alg_info.species == 'op: discriminated by type: numeric'
-        matching_defns = [
-            alg_defn
-            for alg_defn in alg_info.all_definitions()
-        ]
-        assert len(matching_defns) == 1
-        [relevant_alg_defn] = matching_defns
-        return de.execute_alg_defn(relevant_alg_defn, arg_vals=arg_values)
 
     else:
         assert NYI, op_name
