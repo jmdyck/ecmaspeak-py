@@ -653,8 +653,6 @@ def annotate_invocations(anode):
                     # mostly closures created+invoked in RegExp semantics
                     # print('>>>', opn_before_paren.source_text())
                     pass
-            elif opn_before_paren.prod.rhs_s == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-                op_names = [opn_before_paren.source_text()]
             else:
                 assert 0, opn_before_paren.prod.rhs_s
 

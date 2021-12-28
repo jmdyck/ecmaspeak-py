@@ -7724,16 +7724,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             params = callee_op.parameters_with_types
             return_type = callee_op.return_type
 
-        elif opn_before_paren.prod.rhs_s == r'{NUMERIC_TYPE_INDICATOR}::{low_word}':
-            callee_op_name = opn_before_paren.source_text()
-            callee_op = spec.alg_info_['op'][callee_op_name]
-            assert callee_op.species == 'op: discriminated by type: numeric'
-            assert len(callee_op.headers) == 1
-
-            [header] = callee_op.headers
-            params = header.tah.parameter_types.items()
-            return_type = header.tah.return_type
-
         elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
 
@@ -7916,7 +7906,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.species.startswith('op: singular'), callee_op.species
+                    assert callee_op.species.startswith('op: singular') or callee_op.species == 'op: discriminated by type: numeric', callee_op.species
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc

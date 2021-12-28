@@ -1131,7 +1131,6 @@
 
 {OPN_BEFORE_PAREN} :
     {DOTTING}
-    {NUMERIC_TYPE_INDICATOR}::{low_word}
     {SIMPLE_OPERATION_NAME}
     {var}
     {var}.{cap_word}
@@ -1150,6 +1149,7 @@
     thisStringValue
     thisSymbolValue
     thisTimeValue
+    {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}
     {fancy_f}
     {fancy_r}

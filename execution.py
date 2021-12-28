@@ -1185,8 +1185,6 @@ def _(de, opn_before_paren, exlist_opt):
     opr = opn_before_paren.prod.rhs_s
     if opr == '{SIMPLE_OPERATION_NAME}':
         op_name = opn_before_paren.source_text()
-    elif opr == '{NUMERIC_TYPE_INDICATOR}::{low_word}':
-        op_name = opn_before_paren.source_text()
         
     else:
         assert NYI
