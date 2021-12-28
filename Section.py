@@ -905,9 +905,9 @@ other_op_species_for_section_kind_ = {
     'syntax_directed_operation'                : 'op: discriminated by syntax: steps',
     'env_rec_method'                           : 'op: discriminated by type: env rec',
     'module_rec_method'                        : 'op: discriminated by type: module rec',
-    'numeric_method'                           : 'op: discriminated by type: numeric',
     'internal_method'                          : 'op: discriminated by type: object',
     'abstract_operation'                       : 'op: singular',
+    'numeric_method'                           : 'op: singular: numeric method',
     'host-defined_abstract_operation'          : 'op: singular: host-defined',
     'implementation-defined_abstract_operation': 'op: singular: implementation-defined',
 }

@@ -1218,7 +1218,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
     if isinstance(op_name, str):
 
         alg_info = spec.alg_info_['op'][op_name]
-        assert alg_info.species in ['op: singular', 'op: discriminated by type: numeric']
+        assert alg_info.species in ['op: singular', 'op: singular: numeric method']
 
         alg_defns = alg_info.all_definitions()
         if len(alg_defns) == 0:

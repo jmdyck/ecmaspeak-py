@@ -950,7 +950,7 @@ class AlgHeader:
             checked_set('return_nature_normal', pd_return_nature_normal)
             checked_set('return_nature_abrupt', pd_return_nature_abrupt)
 
-        if self.species == 'op: discriminated by type: numeric':
+        if self.species == 'op: singular: numeric method':
             assert self.for_phrase is None
             numeric_type_name = re.fullmatch(r'(\w+)::\w+', self.name).group(1)
             numeric_nature = f"a {numeric_type_name}"

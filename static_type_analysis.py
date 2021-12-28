@@ -335,7 +335,7 @@ class TypedAlgHeader:
                     isinstance(discriminator, ANode)
                         and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
                 )
-            elif self.species == 'op: discriminated by type: numeric':
+            elif self.species == 'op: singular: numeric method':
                 assert discriminator is None
             elif self.species.startswith('op: discriminated by type'):
                 assert isinstance(discriminator, Type)
@@ -7906,7 +7906,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     assert len(args) == 1
                     return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
                 else:
-                    assert callee_op.species.startswith('op: singular') or callee_op.species == 'op: discriminated by type: numeric', callee_op.species
+                    assert callee_op.species.startswith('op: singular'), callee_op.species
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
