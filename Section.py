@@ -484,23 +484,6 @@ def _handle_sdo_section(section):
                 lambda emu_grammar, emu_alg: (emu_grammar, emu_alg)
             ),
             (
-                # 58 cases in RegExp 22.2.2.*
-                [
-                    ('p', "The production <emu-grammar>.+?</emu-grammar> evaluates as follows:"),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: (p.children[1], emu_alg)
-            ),
-            (
-                # 3 cases in RegExp 22.2.2.* (CharacterEscape, DecimalEscape, ClassEscape):
-                [
-                    ('p', "The \|\w+\| productions evaluate as follows:"),
-                    'emu-grammar',
-                    'emu-alg',
-                ],
-                lambda p, emu_grammar, emu_alg: (emu_grammar, emu_alg)
-            ),
-            (
                 # 3 cases
                 [
                     ('p', 'Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of \w+:'),
