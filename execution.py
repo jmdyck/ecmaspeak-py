@@ -2479,6 +2479,7 @@ def _(de, prod_ref):
     return ES_Mathnum(ord(t))
 
 @efd.put('{EXPR} : the code point matched by {PROD_REF}')
+@efd.put('{EX} : the code point matched by {PROD_REF}')
 def _(de, prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     t = pnode.text()

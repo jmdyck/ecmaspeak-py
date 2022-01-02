@@ -7079,7 +7079,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the code point value of some code point matched by the {nonterminal} lexical grammar production":
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production":
         [noi, nont] = children
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
@@ -7312,6 +7312,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : ({EX})",
         r"{EX} : the value of {SETTABLE}",
         r"{EX} : the {var} flag",
+        r"{EX} : {code_point_lit}",
         r"{EX} : {code_unit_lit}",
         r"{EX} : {LITERAL}",
         r"{EX} : {LOCAL_REF}",
@@ -8667,7 +8668,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : the numeric value of {EX}",
     ]:
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
+        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
         return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the integer that is {EXPR}":
@@ -8684,21 +8685,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EX} : the code point value of {PROD_REF}":
-        [prod_ref] = children
-        assert prod_ref.source_text() == '|SourceCharacter|'
-        return (T_MathNonNegativeInteger_, env0)
-
-    elif p in [
-        r"{EXPR} : the code point value of {code_point_lit}",
-        r"{EXPR} : the code point value of {var}",
-        r"{EXPR} : {var}'s code point value",
-    ]:
-        [x] = children
-        env1 = env0.ensure_expr_is_of_type(x, T_code_point_)
-        return (T_MathInteger_, env1)
-
-    elif p == r"{EXPR} : the code point value according to {h_emu_xref}":
+    elif p == r"{EXPR} : the numeric value according to {h_emu_xref}":
         return (T_MathInteger_, env0)
 
     elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number':
@@ -9174,7 +9161,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif expr.prod.lhs_s == '{code_point_lit}':
         return (T_code_point_, env0)
 
-    elif p == r"{EXPR} : the code point matched by {PROD_REF}":
+    elif p in [
+        r"{EXPR} : the code point matched by {PROD_REF}",
+        r"{EX} : the code point matched by {PROD_REF}",
+    ]:
         [nont] = children
         return (T_code_point_, env0)
 

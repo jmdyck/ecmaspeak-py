@@ -863,9 +863,6 @@
     the character {SETTABLE}
     the code point matched by {PROD_REF}
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
-    the code point value according to {h_emu_xref}
-    the code point value of {code_point_lit}
-    the code point value of {var}
     the code point whose numeric value is that of {var}
     the code point whose numeric value is {NAMED_OPERATION_INVOCATION}
     the code point {var}
@@ -913,6 +910,7 @@
     the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
     the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
     the number of non-optional parameters of the function definition in {h_emu_xref}
+    the numeric value according to {h_emu_xref}
     the one character in CharSet {var}
     the other {EX} code units of {var}
     the parse of some source text
@@ -971,7 +969,6 @@
     {EX} - ({EX} &times; {var}) where {var} is an integer that is negative if and only if {var} and {var} have opposite sign, and whose magnitude is as large as possible without exceeding the magnitude of {EX} / {EX}
     {var}'s State
     {var}'s _captures_ List
-    {var}'s code point value
     {var}'s intrinsic object named {var}
     {var}'s own property whose key is {var}
     {var}'s single code unit element
@@ -1029,6 +1026,7 @@
     {RECORD_CONSTRUCTOR}
     {backticked_oth}
     {backticked_word}
+    {code_point_lit}
     {h_code_quote}
     {var} rounded towards 0 to the next integer value
     {var}'s _endIndex_
