@@ -1424,7 +1424,10 @@ def flatten_with_args(with_args):
         assert NYI, p
 
 def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
-    focus_node = de.exec(focus_expr, ParseNode)
+    if isinstance(focus_expr, ParseNode):
+        focus_node = focus_expr
+    else:
+        focus_node = de.exec(focus_expr, ParseNode)
 
     arg_vals = [
         de.exec(arg_expr, E_Value)
@@ -2409,7 +2412,6 @@ def _(de, ex, var):
     return not L.contains(v)
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}')
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}')
 def _(de, noi, ss):
     L = de.exec(noi, ES_List)
     v = de.exec(ss, E_Value)
@@ -2982,11 +2984,49 @@ def each_item_in_left_recursive_list(list_node):
 
 # 13.2.5.1 Static Semantics: Early Errors
 
-@efd.put('{CONDITION_1} : at least two of those entries were obtained from productions of the form {h_emu_grammar}')
-def _(de, h_emu_grammar):
-    # This one's weird, because it's asking "after the fact"
-    # about how the results of PropertyNameList were obtained.
-    return False # TODO
+@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}')
+def _(de, noi, ss, h_emu_grammar):
+    L = de.exec(noi, ES_List)
+    v = de.exec(ss, E_Value)
+    if L.number_of_occurrences_of(v) <= 1: return False
+
+    # Okay, so we know that {L} contains duplicate entries for {v}.
+    # But the second part of the condition is weird,
+    # because it's asking *after the fact*
+    # about how the entries in {L} were obtained.
+    # (The 'proper' way to do this would be to modify the rules involved,
+    # or make a new SDO, to compute the quantity of interest.)
+
+    assert noi.source_text() == 'PropertyNameList of |PropertyDefinitionList|'
+
+    PDL = de.curr_frame().resolve_focus_reference(None, 'PropertyDefinitionList')
+
+    def each_PD_in_PDL(PDL):
+        assert PDL.symbol == 'PropertyDefinitionList'
+        r = PDL.production.og_rhs_reduced
+        if r == 'PropertyDefinition':
+            [PD] = PDL.children
+            yield PD
+        elif r == 'PropertyDefinitionList `,` PropertyDefinition':
+            [PDL, _, PD] = PDL.children
+            yield from each_PD_in_PDL(PDL)
+            yield PD
+        else:
+            assert 0
+
+    n = 0
+    for PD in each_PD_in_PDL(PDL):
+        assert PD.symbol == 'PropertyDefinition'
+        propName = execute_sdo_invocation(de, 'PropName', PD, [])
+        if same_value(propName, v):
+            # This is one of the duplicate entries.
+            # Was it obtained from a production of the given form?
+            # SPEC BUG: s/production/Parse Node/
+            if PD.puk in h_emu_grammar._hnode.puk_set:
+                # Yes, it was.
+                n += 1
+
+    return (n >= 2)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

@@ -41,7 +41,6 @@
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text is matched by this production
-    at least two of those entries were obtained from productions of the form {h_emu_grammar}
     the <sub>[Tagged]</sub> parameter was not set
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
@@ -67,7 +66,7 @@
     {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries
-    {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}
+    {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
     {NAMED_OPERATION_INVOCATION} contains {starred_str}

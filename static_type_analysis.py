@@ -6976,19 +6976,19 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}",
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str}",
     ]:
         [noi, ss] = children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
+        return (env1, env1)
+
+    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}":
+        [noi, ss, emu_grammar] = children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s":
         [noi, nont] = children
         env0.assert_expr_is_of_type(noi, ListType(NamedType('PTN_IdentifierName') | NamedType('PTN_StringLiteral'))) # over-specific (ReferencedBindings)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : at least two of those entries were obtained from productions of the form {h_emu_grammar}":
-        [emu_grammar] = children
         return (env0, env0)
 
     elif p in [
