@@ -31,8 +31,8 @@ def main():
             test_dirname = mo.group(1)
             test_all_in_dir(test_dirname)
         else:
-            for test_file_relpath in sys.argv[1:]:
-                test_one(test_file_relpath)
+            for test_file_arg in sys.argv[1:]:
+                test_one(test_file_arg)
 
 def test_all():
     test_all_in_dir('fail')
@@ -53,16 +53,16 @@ def test_all_in_dir(test_dirname):
         n_failure = 0
         for i, test_filename in enumerate(sorted(os.listdir(dirpath))):
             # if test_filename < 'f7f6': continue
-            test_file_relpath = test_dirname + '/' + test_filename
+            test_file_arg = test_dirname + '/' + test_filename
 
             if 0:
-                sys.stderr.write(test_file_relpath + '\n')
+                sys.stderr.write(test_file_arg + '\n')
             else:
                 if i % 20 == 0:
                     sys.stderr.write('.')
                     sys.stderr.flush()
 
-            success = test_one(test_file_relpath, f)
+            success = test_one(test_file_arg, f)
             if success:
                 n_success += 1
             else:
@@ -74,26 +74,26 @@ def test_all_in_dir(test_dirname):
         print(f"n_success = {n_success}", file=f)
         print(f"n_failure = {n_failure}", file=f)
 
-def test_one(test_file_relpath, f=sys.stdout):
+def test_one(test_file_arg, f=sys.stdout):
     # Returns True if the test succeeded, False if it failed.
 
     print(file=f)
     print('===================', file=f)
-    print(test_file_relpath, file=f)
+    print(test_file_arg, file=f)
     print()
     print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
-    print(test_file_relpath)
+    print(test_file_arg)
 
-    assert test_file_relpath.endswith('.js')
+    assert test_file_arg.endswith('.js')
 
-    (test_dirname, test_filename) = test_file_relpath.split('/')
+    (test_dirname, test_filename) = test_file_arg.split('/')
     expectation = expectation_for_dirname(test_dirname)
-    if test_file_relpath in corrections:
-        new_expectation = expectation_for_dirname(corrections[test_file_relpath])
+    if test_file_arg in corrections:
+        new_expectation = expectation_for_dirname(corrections[test_file_arg])
         print(f"(changing expectation from {expectation} to {new_expectation})", file=f)
         expectation = new_expectation
 
-    test_filepath = root_test_dirpath + '/' + test_file_relpath
+    test_filepath = root_test_dirpath + '/' + test_file_arg
     source_text = open(test_filepath,'r', encoding='utf-8', newline='').read()
     print(source_text, file=f)
 
@@ -113,12 +113,12 @@ def test_one(test_file_relpath, f=sys.stdout):
         if outcome == expectation:
             return True
         else:
-            print(f"TEST {test_file_relpath} FAILED: expected {expectation}, but got {outcome}", file=f)
+            print(f"TEST {test_file_arg} FAILED: expected {expectation}, but got {outcome}", file=f)
             return False
 
     if trace_level > 0: node.dump()
 
-    if test_file_relpath in [
+    if test_file_arg in [
         # 'pass/6b5e7e125097d439.js',
         # 'pass/714be6d28082eaa7.js',
         # 'pass/882910de7dd1aef9.js',
@@ -143,7 +143,7 @@ def test_one(test_file_relpath, f=sys.stdout):
     if outcome == expectation:
         return True
     else:
-        print(f"TEST {test_file_relpath} FAILED: expected {expectation}, but got {outcome}", file=f)
+        print(f"TEST {test_file_arg} FAILED: expected {expectation}, but got {outcome}", file=f)
         node.dump(f=f)
         return False
 
