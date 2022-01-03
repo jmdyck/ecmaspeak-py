@@ -22,7 +22,7 @@ root_test_dirpath = "../test262-parser-tests"
 
 def main():
     if len(sys.argv) == 1:
-        print(f"usage: {sys.argv[0]} [ --all | --all-dir=<dir> | <relpath> ... ]")
+        print(f"usage: {sys.argv[0]} [ --all | --all-dir=<dir> | <filepath> ... ]")
     elif sys.argv[1] == '--all':
         test_all()
     else:
@@ -86,14 +86,21 @@ def test_one(test_file_arg, f=sys.stdout):
 
     assert test_file_arg.endswith('.js')
 
-    (test_dirname, test_filename) = test_file_arg.split('/')
-    expectation = expectation_for_dirname(test_dirname)
-    if test_file_arg in corrections:
-        new_expectation = expectation_for_dirname(corrections[test_file_arg])
-        print(f"(changing expectation from {expectation} to {new_expectation})", file=f)
-        expectation = new_expectation
+    if test_file_arg.startswith('/'):
+        # absolute path
+        test_filepath = test_file_arg
+        expectation = None
+    else:
+        # relative path, assumed to be relative to {root_test_dirpath}
+        (test_dirname, test_filename) = test_file_arg.split('/')
+        expectation = expectation_for_dirname(test_dirname)
+        if test_file_arg in corrections:
+            new_expectation = expectation_for_dirname(corrections[test_file_arg])
+            print(f"(changing expectation from {expectation} to {new_expectation})", file=f)
+            expectation = new_expectation
 
-    test_filepath = root_test_dirpath + '/' + test_file_arg
+        test_filepath = root_test_dirpath + '/' + test_file_arg
+
     source_text = open(test_filepath,'r', encoding='utf-8', newline='').read()
     print(source_text, file=f)
 
@@ -110,7 +117,9 @@ def test_one(test_file_arg, f=sys.stdout):
         for item_string in pe.kernel_item_strings:
             print(f"    {item_string}", file=f)
         outcome = 'ParseError'
-        if outcome == expectation:
+        if expectation is None:
+            print(f"outcome: {outcome}")
+        elif outcome == expectation:
             return True
         else:
             print(f"TEST {test_file_arg} FAILED: expected {expectation}, but got {outcome}", file=f)
@@ -140,7 +149,9 @@ def test_one(test_file_arg, f=sys.stdout):
     else:
         outcome = 'no error'
 
-    if outcome == expectation:
+    if expectation is None:
+        print(f"outcome: {outcome}")
+    elif outcome == expectation:
         return True
     else:
         print(f"TEST {test_file_arg} FAILED: expected {expectation}, but got {outcome}", file=f)
