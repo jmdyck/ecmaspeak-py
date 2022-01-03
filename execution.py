@@ -350,11 +350,12 @@ class Frame:
 
         s = anode.prod.lhs_s
         if s == '{EE_RULE}':
-            try:
-                de.exec(anode, None)
-            except ReferenceToNonexistentThing:
-                # The rule just fails to find an early error.
-                pass
+            if frame.should_apply_the_rule():
+                try:
+                    de.exec(anode, None)
+                except ReferenceToNonexistentThing:
+                    # The rule just fails to find an early error.
+                    pass
             assert not frame.is_returning()
             result = None
 
@@ -381,6 +382,142 @@ class Frame:
             assert 0, s
 
         return result
+
+    def should_apply_the_rule(frame):
+        if frame._alg_defn.kludgey_p is None: return True
+
+        # kludgey_p hasn't been parsed, so we can't simply run de.exec() on it.
+
+        p_ist = frame._alg_defn.kludgey_p.inner_source_text()
+        if p_ist in [
+            "If |LeftHandSideExpression| is an |ObjectLiteral| or an |ArrayLiteral|, the following Early Error rules are applied:",
+            "If |LeftHandSideExpression| is either an |ObjectLiteral| or an |ArrayLiteral|, the following Early Error rules are applied:",
+        ]:
+            # Here, "is" means "contains via one or more unit rules".
+            lhse_node = frame.resolve_focus_reference(None, 'LeftHandSideExpression')
+            if lhse_node.unit_derives_a('ObjectLiteral') or lhse_node.unit_derives_a('ArrayLiteral'):
+                return True # apply the rules
+            else:
+                return False
+
+        elif p_ist == "If |LeftHandSideExpression| is neither an |ObjectLiteral| nor an |ArrayLiteral|, the following Early Error rule is applied:":
+            lhse_node = frame.resolve_focus_reference(None, 'LeftHandSideExpression')
+            if lhse_node.unit_derives_a('ObjectLiteral') or lhse_node.unit_derives_a('ArrayLiteral'):
+                return False
+            else:
+                return True # apply the rule
+
+        elif p_ist == "In addition to describing an actual object initializer the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.":
+            # This <p> precedes two Early Error units,
+            # one headed by `PropertyDefinition : CoverInitializedName`,
+            # and one headed by the non-empty alternatives for `ObjectLiteral`.
+            focus_node = frame._focus_node
+            assert focus_node.symbol in ['PropertyDefinition', 'ObjectLiteral']
+
+            def ObjectLiteral_appears_in_a_context_where_ObjectAssignmentPattern_is_required():
+                # What is the referent for |ObjectLiteral|?
+                if focus_node.symbol == 'PropertyDefinition':
+                    # The PropertyDefinition's derivation chain must end with:
+                    #     ObjectLiteral -> PropertyDefinitionList+ -> PropertyDefinition.
+                    for anc in focus_node.each_ancestor():
+                        assert anc.symbol in ['PropertyDefinitionList', 'ObjectLiteral']
+                        if anc.symbol == 'ObjectLiteral':
+                            ObjectLiteral = anc
+                            break
+                    else:
+                        assert 0
+                elif focus_node.symbol == 'ObjectLiteral':
+                    # The |ObjectLiteral| in question is just the focus node.
+                    ObjectLiteral = focus_node
+                else:
+                    assert 0
+                assert ObjectLiteral.symbol == 'ObjectLiteral'
+
+                # "When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required ..."
+                #
+                # So when is that?
+                #
+                # Note that, although the preceding sentence says:
+                # "the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern|"
+                # that's not the point where such a covering originates.
+                #
+                # Instead, it originates in Early Error rules for some (but not all) productions
+                # that involve a LeftHandSideExpression:
+                #     AssignmentExpression : LeftHandSideExpression `=` AssignmentExpression
+                #     DestructuringAssignmentTarget : LeftHandSideExpression
+                #     ForInOfStatement : ...
+                # In each case, if the LeftHandSideExpression is an ObjectLiteral,
+                # then the LeftHandSideExpression is required to cover an AssignmentPattern,
+                # which causes the text of the LeftHandSideExpression (and the ObjectLiteral)
+                # to be reparsed as an ObjectAssignmentPattern.
+                # This situation is presumably what the quoted condition refers to.
+                #
+                # So we need to:
+                # (a) detect whether ObjectLiteral 'is' a LeftHandSideExpression, and then
+                # (b) detect whether that LeftHandSideExpression is in one of these productions.
+
+                # (a)
+                # The relevant derivation chain is
+                # LeftHandSideExpression -> NewExpression -> MemberExpression -> PrimaryExpression -> ObjectLiteral
+                four_levels_up = ObjectLiteral.parent.parent.parent.parent
+                if four_levels_up.symbol != 'LeftHandSideExpression':
+                    # The ObjectLiteral doesn't appear in a context where ObjectAssignmentPattern could be required.
+                    return False
+
+                # The ObjectLiteral is unit-derived from a LeftHandSideExpression,
+                # so it *might* appear in a contect etc. 
+                LeftHandSideExpression = four_levels_up
+
+                # (b)
+                parent_production = LeftHandSideExpression.parent.production
+                parent_prod_str = f"{parent_production.og_lhs} -> {parent_production.og_rhs_reduced}"
+                assert parent_prod_str in [
+                    "AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression",
+                    "AssignmentExpression -> LeftHandSideExpression `=` AssignmentExpression",
+                    "DestructuringAssignmentTarget -> LeftHandSideExpression",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `in` Expression `)` Statement",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
+                    "UpdateExpression -> LeftHandSideExpression",
+                ], parent_prod_str
+                if parent_prod_str in [
+                    "AssignmentExpression -> LeftHandSideExpression `=` AssignmentExpression",
+                    "DestructuringAssignmentTarget -> LeftHandSideExpression",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `in` Expression `)` Statement",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
+                    "ForInOfStatement -> `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
+                ]:
+                    # something about LeftHandSideExpression.covered_thing?
+
+                    # The LeftHandSideExpression is in a context that requires it to cover an AssignmentPattern.
+                    return True
+
+                else:
+                    return False
+
+            def initially_parsing_a_CoverParenthesizedExpressionAndArrowParameterList_or_CoverCallExpressionAndAsyncArrowHead():
+                for anc in focus_node.each_ancestor():
+                    if anc.symbol in [
+                        'CoverParenthesizedExpressionAndArrowParameterList',
+                        'CoverCallExpressionAndAsyncArrowHead',
+                    ]:
+                        return True
+                else:
+                    return False
+
+            # ----------------------------------------------
+
+            if ObjectLiteral_appears_in_a_context_where_ObjectAssignmentPattern_is_required():
+                # ... the following Early Error rules are <b>not</b> applied.
+                return False
+
+            if initially_parsing_a_CoverParenthesizedExpressionAndArrowParameterList_or_CoverCallExpressionAndAsyncArrowHead():
+                # In addition, they are not applied.
+                return False
+
+            return True
+
+        else:
+            assert 0
 
     def is_returning(frame):
         return hasattr(frame, 'return_value')

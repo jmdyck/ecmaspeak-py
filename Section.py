@@ -353,16 +353,15 @@ def _handle_early_errors_section(section):
         assert isinstance(body, tuple)
         (emu_grammar, p, ul) = body
 
-        # TODO: handle <p>
-
-        handle_early_error(emu_grammar, ul, alg_header)
+        handle_early_error(emu_grammar, p, ul, alg_header)
 
     return True
 
 # ------------------------------------------------------------------------------
 
-def handle_early_error(emu_grammar, ul, alg_header):
+def handle_early_error(emu_grammar, p, ul, alg_header):
     assert emu_grammar.element_name == 'emu-grammar'
+    assert p is None or p.element_name == 'p'
     assert ul.element_name == 'ul'
 
     for li in ul.children:
@@ -374,7 +373,7 @@ def handle_early_error(emu_grammar, ul, alg_header):
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
             if alg_header:
-                AlgHeader_add_definition(alg_header, emu_grammar, ee_rule)
+                AlgHeader_add_definition(alg_header, emu_grammar, (p, ee_rule))
         else:
             assert 0, li.element_name
 
@@ -1793,7 +1792,7 @@ def _handle_changes_section(section):
         Pseudocode.parse(emu_alg)
 
     def blah_early_error(emu_grammar, ul):
-        handle_early_error(emu_grammar, ul, None)
+        handle_early_error(emu_grammar, None, ul, None)
 
     # For calls to scan_section, we're going to assume this holds,
     # but be sure to undo it if we ultimately return False.
@@ -3570,6 +3569,11 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
         isinstance(discriminator, str) # type name
     )
 
+    if isinstance(hnode_or_anode, tuple):
+        (kludgey_p, hnode_or_anode) = hnode_or_anode
+    else:
+        kludgey_p = None
+
     if isinstance(hnode_or_anode, HNode):
         hnode = hnode_or_anode
         assert hnode.element_name in ['emu-alg', 'td']
@@ -3616,7 +3620,7 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
         add_it = True
 
     if add_it:
-        alg_defn = AlgDefn(alg_header, discriminator, anode)
+        alg_defn = AlgDefn(alg_header, discriminator, kludgey_p, anode)
         alg_header.u_defns.append(alg_defn)
 
 # ------------------------------------------------------------------------------
@@ -3625,6 +3629,7 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
 class AlgDefn:
     header: headers.AlgHeader
     discriminator: typing.Union[HNode, str, None]
+    kludgey_p: typing.Union[HNode, None]
     anode: Pseudocode.ANode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
