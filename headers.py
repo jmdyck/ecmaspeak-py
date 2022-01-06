@@ -457,8 +457,6 @@ class PreambleInfoHolder:
 
         poi.name = at_most_one_value('name')
 
-        poi.for_phrase = at_most_one_value('for')
-
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
             poi.params = None
@@ -472,20 +470,6 @@ class PreambleInfoHolder:
         else:
             stderr(f"{poi.name} has multi-pl: {pl_values}")
             assert 0
-
-        also = at_most_one_value('also')
-        if also is None:
-            poi.also = None
-        else:
-            # move to finish_initialization ?
-            (varnames, where) = {
-                'the _comparefn_ and _buffer_ values of the current invocation of the `sort` method':
-                    (['_comparefn_', '_buffer_'], 'from the `sort` method'),
-            }[also]
-            poi.also = [
-                (varname, where)
-                for varname in varnames
-            ]
 
         poi.return_nature_normal = join_field_values('retn', ' or ')
 
@@ -795,12 +779,8 @@ def resolve_oi(hoi, poi):
             oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({poi.name})')
 
     # for_phrase
-    if hoi.for_phrase and poi.for_phrase:
-        assert hoi.for_phrase == poi.for_phrase
-    elif hoi.for_phrase:
-        pass
-    else:
-        hoi.for_phrase = poi.for_phrase # which might or might not be None
+    assert poi.for_phrase is None
+    # so just leave hoi.for_phrase as is
 
     # param_names
     if hoi.params is None:
@@ -836,7 +816,7 @@ def resolve_oi(hoi, poi):
                     assert hoi_param.nature == poi_param.nature
 
     assert hoi.also is None
-    hoi.also = poi.also
+    assert poi.also is None
 
     assert hoi.return_nature_normal is None
     hoi.return_nature_normal = poi.return_nature_normal
