@@ -1156,6 +1156,11 @@ def _handle_structured_header(section):
         also = [
             ('_comparefn_', 'from the current invocation of the `sort` method')
         ]
+    elif op_name == 'TypedArraySortCompare':
+        also = [
+            ('_comparefn_', 'from the %TypedArray%`.prototype.sort` method'),
+            ('_buffer_',    'from the %TypedArray%`.prototype.sort` method'),
+        ]
     elif op_name in [
         'IsWordChar',
         'CharacterSetMatcher',
@@ -1429,6 +1434,7 @@ def _handle_function_section(section):
         params = None
 
     n_emu_algs = section.bcen_list.count('emu-alg')
+    assert n_emu_algs in [0, 1]
 
     # ======================================================
 
@@ -1469,52 +1475,6 @@ def _handle_function_section(section):
 
     if emu_alg_a:
         AlgHeader_add_definition(alg_header, None, emu_alg_a)
-
-    # ======================================================
-
-    # Handle any other algorithm in the section.
-
-    if n_emu_algs > 1:
-        # There's only one case of this left. (see PR #2302 or #2305)
-        assert prop_path == '%TypedArray%.prototype.sort'
-        assert n_emu_algs == 2
-
-        # The first emu-alg is only the *start* of the full algorithm,
-        # but we still want a header for the function. (created above)
-
-        # The second emu-alg defines the TypedArray SortCompare operation.
-        emu_alg_posn_b = section.bcen_list.index('emu-alg', emu_alg_posn_a+1)
-        emu_alg_b = section.block_children[emu_alg_posn_b]
-        op_name = 'TypedArraySortCompare'
-
-        headers.oh_warn()
-        headers.oh_warn(f"In {section.section_num} {section.section_title},")
-        headers.oh_warn(f"    operation {op_name} gets no info from heading")
-
-        assert [
-            p.source_text()
-            for p in section.block_children[emu_alg_posn_a+1:emu_alg_posn_b]
-        ] == [
-            '<p>The following version of SortCompare is used by %TypedArray%`.prototype.sort`. It performs a numeric comparison rather than the string comparison used in <emu-xref href="#sec-array.prototype.sort"></emu-xref>.</p>',
-            '<p>The abstract operation TypedArraySortCompare takes arguments _x_ and _y_. It also has access to the _comparefn_ and _buffer_ values of the current invocation of the `sort` method. It performs the following steps when called:</p>',
-        ]
-
-        alg_header = AlgHeader_make(
-            section = section,
-            species = 'op: singular',
-            name = op_name,
-            params = [
-                AlgParam('_x_', '', 'unknown'),
-                AlgParam('_y_', '', 'unknown'),
-            ],
-            also = [
-                ('_comparefn_', 'from the `sort` method'),
-                ('_buffer_',    'from the `sort` method'),
-            ],
-            node_at_end_of_header = section.block_children[emu_alg_posn_a+1],
-        )
-
-        AlgHeader_add_definition(alg_header, None, emu_alg_b)
 
     return True
 
@@ -2999,13 +2959,12 @@ def _(section, mo):
     (fr"Sets multiple values .+"),
     (fr"Given zero or more arguments, calls ToNumber on each of the arguments .+"),
 
-    (fr"The following version of SortCompare is used .+"),
-    (fr"The abstract operation TypedArraySortCompare takes .+ It performs the following steps when called:", 'emu-alg'), # AO
     (r"The last argument specifies the body .+"),
 
     # Other unique sentences
     (fr"If the String conforms to the {H_EMU_XREF}, .+"),
     (fr"The actual value of the string passed in step {H_EMU_XREF} is either .+"), # Should be emu-note?
+    (r"%TypedArray%`.prototype.sort` calls TypedArraySortCompare rather than SortCompare."),
     (r"Before performing the comparisons, the following steps are performed to prepare the Strings:", 'emu-alg'),
     (r"Each `Math.random` function created for distinct realms must produce a distinct sequence of values from successive calls."),
     (r"For those code units being replaced whose value is .+"),

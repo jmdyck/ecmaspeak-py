@@ -271,8 +271,8 @@ class TypedAlgHeader:
                 ('_Unicode_'         , 'from somewhere'): T_Boolean,
                 ('_WordCharacters_'  , 'from somewhere'): T_CharSet,
 
-                ('_comparefn_' , 'from the `sort` method'): T_function_object_ | T_Undefined,
-                ('_buffer_'    , 'from the `sort` method'): T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
+                ('_comparefn_' , 'from the %TypedArray%`.prototype.sort` method'): T_function_object_ | T_Undefined,
+                ('_buffer_'    , 'from the %TypedArray%`.prototype.sort` method'): T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
             }
             self.typed_alsos = dict(
                 (pn, ahat_[(pn, pt)])
