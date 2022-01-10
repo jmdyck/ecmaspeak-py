@@ -403,7 +403,7 @@ element_info = {
         # block contains inlines:
         'emu-motivation'       : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
         'emu-todo'             : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
-        'emu-alg'              : ('B', '',          'example replaces-step', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
+        'emu-alg'              : ('B', '',          'example replaces-step', '(#TEXT;|a;|b;|code;|del;|emu-grammar;|emu-meta;|emu-not-ref;|emu-xref;|figure;|i;|ins;|pre;|sub;|sup;|table;|var;)+'), # BLOCK INCLUSIONS: figure, pre, table
         'emu-caption'          : ('B', '',          '',           '(#TEXT;|emu-xref;)+'),
         'pre'                  : ('B', '',          'class',      '#TEXT;|code;'),
         'style'                : ('B', '',          '',           '#TEXT;'),
@@ -446,6 +446,7 @@ element_info = {
         'code'              : ('I', '',          'class',      '(#TEXT;|i;|var;)+'),
         'del'               : ('I', '',          '',           '(#TEXT;|emu-xref;)+'), # PROPOSALS
         'dfn'               : ('I', '',          'aoid id oldids variants', '(#TEXT;|emu-eqn;)'),
+        'emu-meta'          : ('I', '',          'effects suppress-effects', '#TEXT;'),
         'emu-not-ref'       : ('I', '',          '',           '#TEXT;'),
         'emu-t'             : ('I', '',          '',           '#TEXT;'),
         'emu-val'           : ('I', '',          '',           '#TEXT;var;#TEXT;'),

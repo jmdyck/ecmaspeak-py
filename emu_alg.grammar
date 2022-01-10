@@ -108,10 +108,6 @@
     Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
-    Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it.
-    Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.
-    Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.
-    Resume the suspended evaluation of {var}. Let {var} be the value returned by the resumed computation.
     Return {EXPR}.
     Return {MULTILINE_EXPR}
     Return {var} as the Completion Record of this abstract operation.
@@ -143,6 +139,10 @@
     While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}
     {IF_CLOSED}
     {IF_OTHER}
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.
     {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.
     {note}
     {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
@@ -1088,6 +1088,7 @@
     {PREFIX_PAREN} (see {h_emu_xref})
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
+    {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}
 
 {LOCAL_REF} :
     the parsed code that is {DOTTING}
@@ -1132,6 +1133,7 @@
 {OPN_BEFORE_PAREN} :
     {DOTTING}
     {SIMPLE_OPERATION_NAME}
+    {h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}
     {var}
     {var}.{cap_word}
 

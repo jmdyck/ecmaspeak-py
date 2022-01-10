@@ -522,7 +522,11 @@ def annotate_invocations(anode):
         if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
             rhs = d.prod.rhs_s
 
-            if rhs in [
+            if rhs == '{h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}':
+                # This will be handled when `d` is set to the inner NOI.
+                pass
+
+            elif rhs in [
                 '{PREFIX_PAREN}',
                 '{PREFIX_PAREN} (see {h_emu_xref})',
             ]:
@@ -591,6 +595,9 @@ def annotate_invocations(anode):
             assert d.prod.rhs_s in ['{OPN_BEFORE_PAREN}({EXLIST_OPT})', '{OPN_BEFORE_PAREN}({EXPR})']
             [opn_before_paren, arg_list] = d.children
             assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
+
+            if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
+                (_, opn_before_paren, _) = opn_before_paren.children
 
             if opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
                 op_names = [opn_before_paren.source_text()]

@@ -132,6 +132,8 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_sub_fancy_f}   : < sub > \U0001d53d < / sub >
     {h_sub_fancy_r}   : < sub > \u211d < / sub >
     {h_sub_fancy_z}   : < sub > \u2124 < / sub >
+    {h_emu_meta_start} : < emu-meta \x20 [\w-]+ = " [^"]+ ">
+    {h_emu_meta_end}   : < / emu-meta >
     {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
     {h_end_tag}      : </ [\w-]+ >
 
@@ -147,7 +149,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     # tokens that begin with '[':
     {dsb_word}         : \[\[ [A-Z][A-Za-z0-9]* \]\]
     {dsb_percent_word} : \[\[ % [A-Z][A-Za-z]* (\. \w+)* % \]\]
-    {step_attribute}   : \[ id = "[^"]+" \]
+    {step_attribute}   : \[ [\w-]+ = "[^"]+" \]
     {punct}            : \[
     {punct}            : \]
 

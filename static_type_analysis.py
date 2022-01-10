@@ -3650,16 +3650,16 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_Tangible_)) # XXX over-specific
         result = env1.plus_new_entry(item_var, T_Tangible_)
 
-    elif p == r"{COMMAND} : Resume the suspended evaluation of {var}. Let {var} be the value returned by the resumed computation.":
-        [ctx_var, b_var] = children
+    elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.":
+        [_, ctx_var, _, b_var] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         result = env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
 
     elif p in [
-        r"{COMMAND} : Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.",
-        r"{COMMAND} : Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.",
+        r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.",
+        r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.",
     ]:
-        [ctx_var, resa_ex, resb_var] = children
+        [_, ctx_var, _, resa_ex, resb_var] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_empty_ | T_return_ | T_throw_)
         result = env1.plus_new_entry(resb_var, T_Tangible_)
@@ -4147,8 +4147,8 @@ def tc_nonvalue(anode, env0):
         [] = children
         result = env0
 
-    elif p == r"{COMMAND} : Resume the suspended evaluation of {var} using {EX} as the result of the operation that suspended it.":
-        [ctx_var, res_ex] = children
+    elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.":
+        [_, ctx_var, _, res_ex] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         env0.assert_expr_is_of_type(res_ex, T_Tangible_ | T_return_ | T_throw_)
         result = env0
@@ -7588,6 +7588,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # invocation of named operation:
 
+    elif p == r"{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}":
+        [_, noi, _] = children
+        return tc_expr(noi, env0)
+
     elif p == r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})":
         [pp, _] = children
         return tc_expr(pp, env0)
@@ -7676,6 +7680,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             args = exes_in_exlist_opt(arglist)
         else:
             args = [arglist]
+
+        if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
+            (_, opn_before_paren, _) = opn_before_paren.children
 
         if opn_before_paren.prod.rhs_s in [
             r'{DOTTING}',
