@@ -1655,6 +1655,7 @@ type_tweaks_tuples = [
     ('FlattenIntoArray'                         , '*return*'               , T_TBD                 , T_MathNonNegativeInteger_ | T_throw_),
     ('GeneratorResume'                          , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
     ('GeneratorValidate'                        , '_generator_'            , T_TBD                 , T_Tangible_),
+    ('GeneratorYield'                           , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
     ('GetIterator'                              , '_method_'               , T_TBD | T_not_passed  , T_function_object_ | T_not_passed),
     ('GetMethod'                                , '*return*'               , T_TBD                 , T_Undefined | T_function_object_ | T_throw_),
     ('GetOwnPropertyKeys'                       , '_O_'                    , T_TBD                 , T_Tangible_),
@@ -3193,6 +3194,8 @@ def tc_header(tah):
                 tah.name == 'ClassElementEvaluation' and pn == '*return*'
                 or
                 tah.name == 'CompilePattern' and pn == '*return*'
+                or
+                tah.name == 'GeneratorYield' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
