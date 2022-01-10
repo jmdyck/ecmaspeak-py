@@ -1085,6 +1085,7 @@
     {LOCAL_REF} Contains {nonterminal}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}
+    {PREFIX_PAREN} (see {h_emu_xref})
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
 
@@ -1127,7 +1128,6 @@
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}({EXLIST_OPT})
-    {OPN_BEFORE_PAREN}({EXLIST_OPT}) (see {h_emu_xref})
 
 {OPN_BEFORE_PAREN} :
     {DOTTING}

@@ -7585,6 +7585,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # invocation of named operation:
 
+    elif p == r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})":
+        [pp, _] = children
+        return tc_expr(pp, env0)
+
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}",
@@ -7663,7 +7667,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXPR})",
         r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})',
-        r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT}) (see {h_emu_xref})',
     ]:
         [opn_before_paren, arglist] = children[0:2]
         if arglist.prod.lhs_s == '{EXLIST_OPT}':

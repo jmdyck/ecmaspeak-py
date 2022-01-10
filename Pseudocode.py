@@ -522,8 +522,11 @@ def annotate_invocations(anode):
         if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
             rhs = d.prod.rhs_s
 
-            if rhs == '{PREFIX_PAREN}':
-                # Handled below, when '{PREFIX_PAREN}' is the lhs.
+            if rhs in [
+                '{PREFIX_PAREN}',
+                '{PREFIX_PAREN} (see {h_emu_xref})',
+            ]:
+                # This will be handled below, when `d` is set to the {PREFIX_PAREN}.
                 pass
 
             elif rhs in [
@@ -585,7 +588,8 @@ def annotate_invocations(anode):
                 args = d.children # XXX incorrect for a few cases
 
         elif d.prod.lhs_s == '{PREFIX_PAREN}':
-            [opn_before_paren, arg_list] = d.children[0:2]
+            assert d.prod.rhs_s in ['{OPN_BEFORE_PAREN}({EXLIST_OPT})', '{OPN_BEFORE_PAREN}({EXPR})']
+            [opn_before_paren, arg_list] = d.children
             assert opn_before_paren.prod.lhs_s == '{OPN_BEFORE_PAREN}'
 
             if opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
