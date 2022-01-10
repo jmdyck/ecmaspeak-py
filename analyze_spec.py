@@ -407,7 +407,7 @@ def check_ids():
 
                 node_with_id_[defid] = node
                 # XXX Should really be the node that will later be constructed
-                # for the step in which this step_label occurs.
+                # for the step in which this step_attribute occurs.
 
                 # ----------
                 # id should begin with "step-"

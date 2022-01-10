@@ -147,7 +147,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     # tokens that begin with '[':
     {dsb_word}         : \[\[ [A-Z][A-Za-z0-9]* \]\]
     {dsb_percent_word} : \[\[ % [A-Z][A-Za-z]* (\. \w+)* % \]\]
-    {step_label}       : \[ id = "[^"]+" \]
+    {step_attribute}   : \[ id = "[^"]+" \]
     {punct}            : \[
     {punct}            : \]
 

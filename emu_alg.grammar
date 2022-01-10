@@ -19,7 +19,7 @@
 
 {_NL_N} :
     {nlai}{dec_int_lit}.
-    {nlai}{dec_int_lit}. {step_label}
+    {nlai}{dec_int_lit}. {step_attribute}
 
 {COMMAND} :
     ? OperationName().
