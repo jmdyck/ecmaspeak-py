@@ -1127,20 +1127,32 @@ def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_s
 
 #> ... In such cases a more restrictive supplemental grammar is provided
 #> that further restricts the acceptable token sequences.
-#> Typically, an early error rule will then define an error condition
-#> if "P is not covering an N",
-#> where P is a Parse Node (an instance of the generalized production)
-#> and N is a nonterminal from the supplemental grammar.
-#> Here, the sequence of tokens originally matched by P
-#> is parsed again using N as the goal symbol.
-#> (If N takes grammatical parameters, then they are set to
-#> the same values used when P was originally parsed.)
+#> Typically, an early error rule will then state that, in certain contexts,
+#> "_P_ <dfn>must cover</dfn> an _N_",
+#> where _P_ is a Parse Node (an instance of the generalized production)
+#> and _N_ is a nonterminal from the supplemental grammar.
+#> This means:
+#>  -- The sequence of tokens originally matched by _P_
+#>     is parsed again using _N_ as the goal symbol.
+#>     If _N_ takes grammatical parameters, then they are set to
+#>     the same values used when _P_ was originally parsed.
+#>  -- If the sequence of tokens can be parsed as a single instance of _N_,
+#>     with no tokens left over, then:
+#>       -- We refer to that instance of _N_ (a Parse Node, unique for a given _P_)
+#>          as "the _N_ that is <dfn>covered</dfn> by _P_".
+#>       -- All Early Error rules for _N_ and its derived productions
+#>          also apply to the _N_ that is covered by _P_.
+#>  -- Otherwise (if the parse fails), it is an early Syntax Error.
 
-@efd.put('{CONDITION_1} : {LOCAL_REF} is not covering an? {nonterminal}')
+@efd.put('{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.')
 def _(de, local_ref, nont):
     pnode = de.exec(local_ref, ParseNode)
     covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
-    return (covered_thing is None)
+    if covered_thing:
+        de.traverse_for_early_errors(covered_thing)
+    else:
+        de.it_is_a_syntax_error(local_ref.parent)
+    return None
 
 @efd.put('{EX} : the {nonterminal} that is covered by {LOCAL_REF}')
 @efd.put('{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}')
@@ -1177,8 +1189,7 @@ class ReferenceToNonexistentThing(BaseException):
 #
 # This has a early error due to:
 #>   ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList
-#>     It is a Syntax Error if |CoverParenthesizedExpressionAndArrowParameterList|
-#>     is not covering an |ArrowFormalParameters|.
+#>     |CoverParenthesizedExpressionAndArrowParameterList| must cover an |ArrowFormalParameters|.
 # (i.e., `(10)` cannot be reparsed as an ArrowFormalParameters)
 # That part is all fine.
 #
@@ -1683,13 +1694,6 @@ def _(de, cond, emu_grammar):
         ee_rules = ee_map[puk]
         for ee_rule in ee_rules:
             de.execute_alg_defn(ee_rule, focus_node=de.curr_frame()._focus_node)
-
-@efd.put('{EE_RULE} : All Early Error rules for {nonterminal} and its derived productions also apply to {EX}.')
-@efd.put('{EE_RULE} : All early error rules for {nonterminal} and its derived productions also apply to {EX}.')
-def _(de, nonta, ex):
-    assert ex.source_text().startswith('the ' + nonta.source_text() + ' that is covered by ')
-    pnode = de.exec(ex, ParseNode)
-    de.traverse_for_early_errors(pnode)
 
 @efd.put('{EE_RULE} : <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>')
 def _(de, local_ref1, h_emu_grammar, local_ref2, local_ref3):

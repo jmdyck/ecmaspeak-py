@@ -4692,11 +4692,6 @@ def tc_nonvalue(anode, env0):
         tc_cond(cond, env0, False)
         result = None
 
-    elif p == r"{EE_RULE} : All Early Error rules for {nonterminal} and its derived productions also apply to {EX}.":
-        [nont, ex] = children
-        env0.assert_expr_is_of_type(ex, T_Parse_Node)
-        result = None
-
     elif p == r"{EE_RULE} : <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>":
         [local_ref1, h_emu_grammar, local_ref2, local_ref3] = children
         env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
@@ -4713,14 +4708,6 @@ def tc_nonvalue(anode, env0):
         [conda, condb] = children
         (tenv, fenv) = tc_cond(conda, env0, False)
         tc_cond(condb, tenv, False)
-        result = None
-
-    elif p in [
-        r"{EE_RULE} : All early error rules for {nonterminal} and its derived productions also apply to {EX}.",
-        r"{EE_RULE} : All Early Error rules for {nonterminal} and its derived productions apply to {EX}.",
-    ]:
-        [nonta, ex] = children
-        env0.assert_expr_is_of_type(ex, T_Parse_Node)
         result = None
 
     elif p == r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}":
@@ -4751,6 +4738,10 @@ def tc_nonvalue(anode, env0):
         tc_cond(cond, env2)
         result = None
 
+    elif p == r"{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.":
+        [local_ref, nont] = children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        result = None
 
     elif p == r"{COMMAND} : Replace {var} in {var} with {var}.":
         [ex_var, list_var, rep_var] = children
@@ -6924,11 +6915,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}":
         [local_ref, g_sym] = children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is not covering an? {nonterminal}":
-        [local_ref, nont] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
@@ -9449,11 +9435,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{PROD_REF} : this production's {nonterminal}",
     ]:
         [nont] = children
-        return (T_Parse_Node, env0)
-
-    elif p == r"{EX} : the {nonterminal} that is covered by {LOCAL_REF}":
-        [nont, local_ref] = children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (T_Parse_Node, env0)
 
     elif p == r"{PROD_REF} : the {nonterminal} containing this {nonterminal}":

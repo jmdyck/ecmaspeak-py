@@ -14,9 +14,6 @@
 {EE_RULE} :
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
     <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>
-    All Early Error rules for {nonterminal} and its derived productions also apply to {EX}.
-    All Early Error rules for {nonterminal} and its derived productions apply to {EX}.
-    All early error rules for {nonterminal} and its derived productions also apply to {EX}.
     For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
     If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
@@ -26,6 +23,7 @@
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.
     It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.
     It is an early Syntax Error if {CONDITION}.
+    {LOCAL_REF} must cover an? {nonterminal}.
 
 {CONDITION} :
     {CONDITION_1}
@@ -59,7 +57,6 @@
     {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}
     {LOCAL_REF} is an {nonterminal} or an {nonterminal}
     {LOCAL_REF} is contained in strict mode code
-    {LOCAL_REF} is not covering an? {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}
     {LOCAL_REF} is {h_emu_grammar}
@@ -123,7 +120,6 @@
     with arguments {EX} and {EX}
 
 {EX} :
-    the {nonterminal} that is covered by {LOCAL_REF}
     &laquo; &raquo;
     {LITERAL}
     {LOCAL_REF}
