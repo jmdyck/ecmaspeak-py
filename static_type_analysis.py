@@ -1737,8 +1737,6 @@ type_tweaks_tuples = [
     ('UpdateEmpty'                              , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
     ('UpdateEmpty'                              , '_completionRecord_'     , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
     ('UpdateEmpty'                              , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
-    ('ValidateAndApplyPropertyDescriptor'       , '_P_'                    , T_String | T_Symbol   , T_String | T_Symbol | T_Undefined),
-    ('ValidateAndApplyPropertyDescriptor'       , '_current_'              , T_Property_Descriptor , T_Property_Descriptor | T_Undefined),
     ('ValidateTypedArray'                       , '_O_'                    , T_TBD                 , T_Tangible_),
     ('[[Call]]'                                 , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
     ('[[Construct]]'                            , '*return*'               , T_TBD                 , T_Object | T_throw_),
@@ -4420,18 +4418,19 @@ def tc_nonvalue(anode, env0):
                 )
         result = env1
 
-    elif p == r"{SMALL_COMMAND} : create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}":
-        [kind, name_var, obj_var, *dsbn_, desc_var, desc_var2, emu_xref] = children
+    elif p == r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}.":
+        [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = children
         assert desc_var.children == desc_var2.children
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
         result = env0
 
-    elif p == r"{SMALL_COMMAND} : convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}":
-        [name_var, obj_var, kind1, kind2, dsbn1, dsbn2, emu_xref] = children
+    elif p == r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property having {dsb_word} and {dsb_word} attributes set to {var} and {var}, respectively, and each other attribute set to its corresponding value in {var} if present, otherwise to its {h_emu_xref}.":
+        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, desc_var, emu_xref] = children
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
         result = env0
 
     elif p == r"{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field":
@@ -5342,6 +5341,13 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return (
             env0.with_expr_type_narrowed(var, T_IntegralNumber_),
+            env0
+        )
+
+    elif p == "{CONDITION_1} : {var} is a fully populated Property Descriptor":
+        [var] = children
+        return (
+            env0.with_expr_type_narrowed(var, T_Property_Descriptor),
             env0
         )
 

@@ -1078,6 +1078,7 @@ def _handle_structured_header(section):
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
                     ("It returns _value_ converted to a numeric value of type Number or BigInt.", 'a Number or a BigInt'),
                     ("It returns a BigInt or \*undefined\*\.", "a BigInt or *undefined*"),
+                    ("It returns a Boolean value which is .+", 'a Boolean'),
                     ("It returns a CharSet.", 'a CharSet'),
                     ("It returns a Matcher.", 'a Matcher'),
                     ("It returns a Number.", 'a Number'),

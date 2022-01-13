@@ -52,6 +52,7 @@
     Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
     Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.
     Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.
+    Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}.
     Create any host-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
     Discard all resources associated with the current execution context.
@@ -106,6 +107,7 @@
     Repeat, while {CONDITION},{IND_COMMANDS}
     Repeat,{IND_COMMANDS}
     Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.
+    Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property having {dsb_word} and {dsb_word} attributes set to {var} and {var}, respectively, and each other attribute set to its corresponding value in {var} if present, otherwise to its {h_emu_xref}.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
     Return {EXPR}.
@@ -194,8 +196,6 @@
     append {EX} to {var}
     append {code_unit_lit} as the last code unit of {var}
     change its bound value to {var}
-    convert the property named {var} of object {var} from an? {PROPERTY_KIND} property to an? {PROPERTY_KIND} property. Preserve the existing values of the converted property's {DSBN} and {DSBN} attributes and set the rest of the property's attributes to their {h_emu_xref}
-    create an own {PROPERTY_KIND} property named {var} of object {var} whose {DSBN}, {DSBN}, {DSBN}, and {DSBN} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}
     let {var} be {EXPR}
     let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
@@ -546,6 +546,7 @@
     {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a bound function exotic object
     {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
+    {var} is a fully populated Property Descriptor
     {var} is a non-empty List of {ERROR_TYPE} objects
     {var} is a non-negative integer which is &le; {EXPR}
     {var} is a non-negative integral Number
