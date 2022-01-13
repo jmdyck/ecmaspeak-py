@@ -386,19 +386,29 @@ def _handle_sdo_section(section):
     # Since the merge of PR #2271,
     # almost all SDO sections are identified by `type="sdo"`.
     if section.attrs.get('type') == 'sdo':
-        alg_header = _handle_structured_header(section)
+        if section.section_title == 'Runtime Semantics: Evaluation':
+            # These don't have a <dl class="header">,
+            # and so don't fit my idea of a structured header.
+            section.section_kind = 'syntax_directed_operation'
+            alg_header = AlgHeader_make(
+                section = section,
+                species = 'op: discriminated by syntax: steps',
+                name = 'Evaluation',
+                params = [],
+                for_phrase = 'Parse Node',
+                node_at_end_of_header = section.heading_child
+            )
+        else:
+            alg_header = _handle_structured_header(section)
 
     else:
-        # But `type="sdo"` really means more like:
-        # "This clause is the complete definition of exactly one SDO."
-        # So there are various clauses that don't get `type="sdo"`
+        # But there are various clauses that don't get `type="sdo"`
         # that we neverthless want to mark as SDO sections...
 
         # A clause that only *partially* defines an SDO:
         if section.section_title in [
             'Runtime Semantics: MV',
             'Static Semantics: MV',
-            'Runtime Semantics: Evaluation',
         ]:
             sdo_name = re.sub('.*: ', '', section.section_title)
 
