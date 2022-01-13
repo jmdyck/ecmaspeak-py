@@ -301,6 +301,7 @@
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
+    {CONDITION_1}, and {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}, or {CONDITION_1}
@@ -344,7 +345,6 @@
     either {PAIR} or {PAIR} is in {EX}
     every field in {var} is absent
     it must be in the object Environment Record
-    its value is {LITERAL}
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
     only one argument was passed
@@ -420,7 +420,6 @@
     {EX} is not {LITERAL}
     {EX} is not {LITERAL} or {LITERAL}
     {EX} is present
-    {EX} is present and has value {LITERAL}
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
     {EX} is {LITERAL}

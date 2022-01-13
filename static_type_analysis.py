@@ -4845,6 +4845,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}",
+        r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}, and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
         r"{CONDITION} : {NUM_COMPARISON} and {NUM_COMPARISON}",
@@ -5130,9 +5131,7 @@ def tc_cond_(cond, env0, asserting):
         r'{CONDITION_1} : {EX} is not present',
     ]:
         [ex] = children
-        if ex.is_a('{DOTTING}'):
-            t = T_not_in_record
-        elif ex.is_a('{PROD_REF}'):
+        if ex.is_a('{PROD_REF}'):
             t = T_not_in_node
         elif ex.is_a('{var}'):
             # todo: get rid of this usage. (roll eyes at PR #953)
@@ -5403,7 +5402,6 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
         r"{CONDITION_1} : {EX} is not {LITERAL}",
-        r"{CONDITION_1} : {EX} is present and has value {LITERAL}",
         r"{CONDITION_1} : {EX} is {LITERAL}",
         r"{CONDITION_1} : {var} is also {LITERAL}",
         r"{CONDITION_1} : {var} is the value {LITERAL}",
@@ -6287,12 +6285,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : every field in {var} is absent":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Property_Descriptor)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : its value is {LITERAL}":
-        # todo: change the grammar or the spec
-        [lit] = children
-        env0.assert_expr_is_of_type(lit, T_Boolean)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} does not include the element {LITERAL}":
