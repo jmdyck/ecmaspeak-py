@@ -9186,11 +9186,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
-    elif p == r"{EXPR} : a List whose elements are the code points of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (ListType(T_code_point_), env0)
-
     elif p == r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
@@ -9261,7 +9256,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ListType(T_code_unit_), env1)
 
     elif p in [
-        r"{EXPR} : a List whose elements are the code unit elements of {var}",
         r"{EXPR} : a List whose elements are the code units that are the elements of {var}",
         r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}",
     ]:
