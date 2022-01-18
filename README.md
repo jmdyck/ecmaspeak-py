@@ -107,7 +107,7 @@ and has a start at the execution part.
 It can execute Early Error rules (and everything that entails),
 enough to process all of test262-parser-tests.
 (It doesn't *pass* all of test262-parser-tests
--- currently it's failing about 10% of the tests --
+-- currently it's failing about 2% of the tests --
 mainly because of the way a few things are expressed in the spec.)
 
 The code is somewhat messy.
