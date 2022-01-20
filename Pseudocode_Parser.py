@@ -115,7 +115,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {space}          : \x20
 
     # tokens that begin with left-angle-bracket:
-    {h_a}            : <a \x20 [^<>]+> [^<>]+ </a> 
+    {h_a}            : <a \x20 [^<>]+> ( [^<>]+ | <code> [^<>]+ </code> ) </a> 
     {h_code_quote}   : <code>"%<var>(NativeError|TypedArray)</var>Prototype%"</code>
     {h_code_quote}   : <code>"%<var>(NativeError|TypedArray)</var>.prototype%"</code>
     {h_code_quote}   : <code>"%(NativeError|TypedArray)Prototype%"</code>

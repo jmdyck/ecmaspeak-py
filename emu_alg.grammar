@@ -365,7 +365,7 @@
     the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits
     the decimal representation of {var} has 20 or fewer significant digits
     the execution context stack is empty
-    the file CaseFolding.txt of the Unicode Character Database provides a simple or common case folding mapping for {var}
+    the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
     the generator either threw an exception or performed either an implicit or explicit return
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object

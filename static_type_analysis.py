@@ -5931,8 +5931,9 @@ def tc_cond_(cond, env0, asserting):
 
         return (env2, env2)
 
-    elif p == r'{CONDITION_1} : the file CaseFolding.txt of the Unicode Character Database provides a simple or common case folding mapping for {var}':
-        [var] = children
+    elif p == r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}':
+        [h_a, var] = children
+        assert h_a.source_text() == '<a href="https://unicode.org/Public/UCD/latest/ucd/CaseFolding.txt"><code>CaseFolding.txt</code></a>'
         env1 = env0.ensure_expr_is_of_type(var, T_character_)
         return (env1, env1)
 
