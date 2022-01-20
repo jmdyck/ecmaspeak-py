@@ -10575,8 +10575,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # explicit-exotics:
     elif p in [
-        r"{EXPR} : the internal slots listed in {h_emu_xref}",
-        r"{EXPR} : the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}",
+        r"{EX} : the internal slots listed in {h_emu_xref}",
     ]:
         # XXX really, the *names* of the internal slots...
         return (ListType(T_SlotName_), env0)

@@ -883,8 +883,6 @@
     the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
     the integral Number closest to {var}, preferring the Number closer to +&infin; in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
-    the internal slots listed in {h_emu_xref}
-    the internal slots listed in {h_emu_xref}, plus {DSBN} and {DSBN}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the last element in {var}
@@ -1000,6 +998,7 @@
     the first code unit of {var}
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
+    the internal slots listed in {h_emu_xref}
     the number of code units in {var}
     the number of elements in {var}
     the number of elements of {var}
