@@ -1674,7 +1674,6 @@ type_tweaks_tuples = [
     ('InitializeBoundName'                      , '_value_'                , T_TBD                 , T_Tangible_),
     ('InitializeReferencedBinding'              , '_V_'                    , T_TBD                 , T_Reference_Record | T_throw_),
     ('InitializeReferencedBinding'              , '_W_'                    , T_TBD                 , T_Tangible_ | T_throw_),
-    ('InnerModuleLinking'                       , '_module_'               , T_Cyclic_Module_Record, T_Module_Record),
     ('IsArray'                                  , '_argument_'             , T_TBD                 , T_Tangible_),
     ('IsConcatSpreadable'                       , '_O_'                    , T_TBD                 , T_Tangible_),
     ('IsIntegralNumber'                         , '_argument_'             , T_TBD                 , T_Tangible_),
