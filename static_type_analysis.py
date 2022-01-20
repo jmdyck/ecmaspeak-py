@@ -1118,7 +1118,6 @@ named_type_hierarchy = {
                 'TildeNamespace_': {},
                 'TrimString_where_': {},
                 'TypedArray_element_type_': {},
-                'Unicode_code_points_': {},
                 'Unresolvable_': {},
                 'WaiterList' : {},
                 'agent_signifier_' : {},
@@ -1232,7 +1231,7 @@ T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), Lis
 T_captures_entry_ = ListType(T_character_) | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
 
-# T_Unicode_code_points_ = ListType(T_code_point_)
+T_Unicode_code_points_ = ListType(T_code_point_)
 
 # ------------------------------------------
 
