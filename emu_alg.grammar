@@ -1109,18 +1109,9 @@
     third
 
 {WITH_ARGS} :
-    {PASSING} argument {EX}
-    {PASSING} arguments {EX} and {EX}
-    {PASSING} arguments {var}, {var}, and {var}
-    {PASSING} {EX} as the argument
-    {PASSING} {var} and {EX} as arguments
-    {PASSING} {var} and {EX} as the arguments
-    {PASSING} {var}, {var}, and {var} as the arguments
-
-{PASSING} :
-    passing
-    using
-    with
+    with argument {EX}
+    with arguments {EX} and {EX}
+    with arguments {var}, {var}, and {var}
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}({EXLIST_OPT})

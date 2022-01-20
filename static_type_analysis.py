@@ -7610,20 +7610,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [callee, local_ref, with_args] = children
         callee_op_name = callee.source_text()
         if with_args.prod.rhs_s in [
-            '{PASSING} argument {EX}',
-            '{PASSING} arguments {EX} and {EX}',
-            '{PASSING} arguments {var}, {var}, and {var}',
-            '{PASSING} {EX} as the argument',
-            '{PASSING} {var} and {EX} as arguments',
-            '{PASSING} {var} and {EX} as the arguments',
-            '{PASSING} {var}, {var}, and {var} as the arguments',
-        ]:
-            args = with_args.children[1:]
-        elif with_args.prod.rhs_s == '{PASSING} arguments {EX} and {EX} as the optional {var} argument':
-            args = with_args.children[1:3]
-        elif with_args.prod.rhs_s in [
             'with argument {EX}',
             'with arguments {EX} and {EX}',
+            'with arguments {var}, {var}, and {var}',
         ]:
             args = with_args.children
         else:
