@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import typing
 
 import shared
-from shared import stderr, spec
+from shared import stderr, spec, msg_at_posn
 
 # ------------------------------------------------------------------------------
 

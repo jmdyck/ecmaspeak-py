@@ -9,7 +9,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 
 import shared
-from shared import stderr, msg_at_posn, spec
+from shared import stderr, msg_at_node, msg_at_posn, spec
 from HTML import HNode
 import Pseudocode
 import headers
@@ -93,8 +93,8 @@ def _make_section_tree_r(section, section_level):
 
     assert not section.inline_child_element_names
     # if section.inline_child_element_names:
-    #     msg_at_posn(
-    #         section.inner_start_posn,
+    #     msg_at_node(
+    #         section,
     #         "'section' node contains inline items"
     #     )
 
@@ -136,8 +136,8 @@ def _make_section_tree_r(section, section_level):
         and
         len(section.section_children) == 0
     ):
-        msg_at_posn(
-            section.start_posn,
+        msg_at_node(
+            section,
             "section is empty!"
         )
 
@@ -1327,7 +1327,7 @@ def _handle_header_with_std_preamble(section):
         lines.append("^^^^^^^^")
         suggestion = '\n'.join(lines)
 
-        msg_at_posn(section.inner_start_posn, f"Should use a structured header? e.g.:\n{suggestion}")
+        msg_at_node(section, f"Should use a structured header? e.g.:\n{suggestion}")
 
     return alg_header
 
@@ -3318,7 +3318,7 @@ def _check_aoids():
                 else:
                     msg = f'Expected aoid="{expected_aoid}"'
 
-                msg_at_posn(section.start_posn, msg)
+                msg_at_node(section, msg)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -3348,7 +3348,7 @@ def _check_section_order():
                     else:
                         t = re.sub(r' \[ @@(\w+) \]', r'.zz_\1', t)
                     if prev_t is not None and t <= prev_t:
-                        msg_at_posn(child.start_posn, '"%s" should be before "%s"' % (child.section_title, prev_title))
+                        msg_at_node(child, '"%s" should be before "%s"' % (child.section_title, prev_title))
                     prev_t = t
                     prev_title = child.section_title
 
@@ -3432,7 +3432,7 @@ def scan_section(section, patterns, counter=None):
             next_i += n
             break
         else:
-            msg_at_posn(hnodes[next_i].start_posn, f"At this point, no pattern matches (in {section.section_kind} section)")
+            msg_at_node(hnodes[next_i], f"At this point, no pattern matches (in {section.section_kind} section)")
             return []
     return results
 

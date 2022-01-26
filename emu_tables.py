@@ -9,7 +9,7 @@ import typing, re
 from dataclasses import dataclass
 
 import HTML
-from shared import msg_at_posn
+from shared import msg_at_node
 
 # ------------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ def analyze_table(emu_table):
     # -----------------------------
 
     if 'id' not in emu_table.attrs:
-        msg_at_posn(emu_table.start_posn, f'no id attribute for table with caption "{caption}"')
+        msg_at_node(emu_table, f'no id attribute for table with caption "{caption}"')
 
     # -----------------------------
 

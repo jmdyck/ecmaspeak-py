@@ -1307,7 +1307,7 @@ def check_order_of_RHSs_within_each_SDO_clause():
                             msg = f"ORDER: This is {d_prodn_n._lhs_symbol}'s RHS #{u_rhs_n.d_i}, but we just handled RHS #{prev_key[1]}"
                         else:
                             msg = f"ORDER: This LHS is {d_prodn_n._lhs_symbol} (#{d_prodn_n.doc_i}), but we just handled LHS #{prev_key[0]}"
-                        msg_at_posn(u_rhs_n.start_posn, msg)
+                        msg_at_node(u_rhs_n, msg)
                     # key == prev_key is okay.
                     # E.g., a defining RHS might have an optional nonterminal,
                     # and an SDO needs to handle presence/absence differently,
@@ -1337,7 +1337,7 @@ def check_emu_prodrefs(doc_node):
             continue
 
         if name in referenced_names:
-            msg_at_posn(emu_prodref.start_posn, f"WARNING: duplicate emu-prodref for '{name}'")
+            msg_at_node(emu_prodref, f"WARNING: duplicate emu-prodref for '{name}'")
 
         referenced_names.append(name)
 

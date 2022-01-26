@@ -10,7 +10,7 @@ from collections import defaultdict, OrderedDict
 
 import HTML, Section, emu_grammars, Pseudocode, headers
 import shared
-from shared import stderr, msg_at_posn, spec
+from shared import stderr, msg_at_node, msg_at_posn, spec
 from emu_tables import analyze_table
 import intrinsics
 from intrinsics import check_references_to_intrinsics, process_intrinsics_facts
@@ -346,7 +346,7 @@ def check_ids():
             # no duplicate ids, of course
 
             if defid in node_with_id_:
-                msg_at_posn(node.start_posn, f"duplicate id: '{defid}'")
+                msg_at_node(node, f"duplicate id: '{defid}'")
 
             node_with_id_[defid] = node
 
@@ -364,7 +364,7 @@ def check_ids():
             }.get(node.element_name, None)
             if id_prefix_expectation:
                 if not defid.startswith(id_prefix_expectation):
-                    msg_at_posn(node.start_posn, f'Expected the id to start with "{id_prefix_expectation}"')
+                    msg_at_node(node, f'Expected the id to start with "{id_prefix_expectation}"')
             else:
                 if (False
                     or defid.startswith('sec-')
@@ -372,7 +372,7 @@ def check_ids():
                     or defid.startswith('figure-')
                     or defid.startswith('table-')
                 ):
-                    msg_at_posn(node.start_posn, f'Did not expect the id to start that way')
+                    msg_at_node(node, f'Did not expect the id to start that way')
 
             # ----------
             # If an element defines an abstract operation,
@@ -395,7 +395,7 @@ def check_ids():
                     id_prefix_expectation + 'runtime-semantics-' + aoid.lower(),
                 ]
                 if defid not in possibles:
-                    msg_at_posn(node.start_posn, f'Expected id="{possibles[0]}"')
+                    msg_at_node(node, f'Expected id="{possibles[0]}"')
 
         if node.element_name == 'emu-alg':
             for mo in re.finditer(r' \[(\w+)="([^"]+)"\]', node.inner_source_text()):
@@ -406,7 +406,7 @@ def check_ids():
                 # no duplicate ids
 
                 if defid in node_with_id_:
-                    msg_at_posn(node.start_posn, f"duplicate id: '{defid}'")
+                    msg_at_node(node, f"duplicate id: '{defid}'")
 
                 node_with_id_[defid] = node
                 # XXX Should really be the node that will later be constructed
@@ -469,9 +469,9 @@ def check_ids():
                         # So we have to use an emu-xref?
                         pass
                     else:
-                        msg_at_posn(refnode.start_posn, f"emu-xref used when auto-linking would work: '{refid}'")
+                        msg_at_node(refnode, f"emu-xref used when auto-linking would work: '{refid}'")
                 else:
-                    msg_at_posn(defnode.start_posn, f"unexpected defnode element-name <{defnode.element_name}>")
+                    msg_at_node(defnode, f"unexpected defnode element-name <{defnode.element_name}>")
 
             else:
                 if refid in [
@@ -484,7 +484,7 @@ def check_ids():
                     pass
 
                 else:
-                    msg_at_posn(refnode.start_posn, f"emu-xref refers to nonexistent id: {refid}")
+                    msg_at_node(refnode, f"emu-xref refers to nonexistent id: {refid}")
 
         for child in refnode.children:
             check_ref_ids(child)
@@ -521,7 +521,7 @@ def check_ids():
             # to this id.
             continue
 
-        msg_at_posn(defnode.start_posn, f"id declared but not referenced: '{id}'")
+        msg_at_node(defnode, f"id declared but not referenced: '{id}'")
 
     spec.node_with_id_ = node_with_id_
 
