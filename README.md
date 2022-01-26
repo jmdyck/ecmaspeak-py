@@ -110,6 +110,9 @@ enough to process all of test262-parser-tests.
 -- currently it's failing about 2% of the tests --
 mainly because of the way a few things are expressed in the spec.)
 
+I have a hidden branch where I'm going further with execution.
+It's promising, but I'm not ready to expose it yet.
+
 The code is somewhat messy.
 Partly this is due to the ad hoc nature of ECMASpeak itself.
 Partly it's because I don't always have a firm idea of how to proceed.
