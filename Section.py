@@ -1073,6 +1073,13 @@ def _handle_structured_header(section):
     if 'for' in dl_dict:
         assert for_phrase is None, for_phrase
         for_phrase = dl_dict['for']
+        mo = re.fullmatch(r'(an? .+?)( _\w+_)?', for_phrase)
+        assert mo, for_phrase
+        for_nature = mo.group(1)
+        for warning in check_nature(for_nature):
+            msg_at_node(dl, f"warning re for-nature: {warning}")
+            # Really, we should do this check while we still have access to the <dd> node,
+            # so that we can place the above msgs better.
 
     if 'description' in dl_dict:
         retn = []
