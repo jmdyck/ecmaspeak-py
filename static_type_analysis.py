@@ -9828,7 +9828,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [record_constructor_prefix, fields] = children
         constructor_prefix = record_constructor_prefix.source_text().replace('the ', '')
 
-        if constructor_prefix == 'Completion':
+        if constructor_prefix == 'Completion Record':
             f_ = dict( get_field_items(fields) )
             assert sorted(f_.keys()) == ['Target', 'Type', 'Value']
             type_ex = f_['Type']
@@ -9928,7 +9928,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             ]:
                 record_type_name = constructor_prefix + ' event'
             elif constructor_prefix in [
-                'Completion',
                 'PromiseReaction',
                 'PromiseCapability',
                 'AsyncGeneratorRequest',

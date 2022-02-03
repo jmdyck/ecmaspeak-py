@@ -1163,7 +1163,7 @@
 {RECORD_CONSTRUCTOR_PREFIX} :
     AsyncGeneratorRequest
     Chosen Value Record
-    Completion
+    Completion Record
     PrivateElement
     PropertyDescriptor
     ReadModifyWriteSharedMemory
