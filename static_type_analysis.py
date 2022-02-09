@@ -307,7 +307,14 @@ class TypedAlgHeader:
                     # and fake_node only points to the abrupt part.
                     # "warning: tweak %s fails old-type check: In %s, existing type of %s is %s, not %s" % (
                     # (ton, tpn, tot, tnt), self.name, tpn, old_type, tot)
-                    assert 0, (ton, tpn, tot, tnt, old_type)
+                    stderr()
+                    stderr('tweak:')
+                    stderr('  op_name  :', ton)
+                    stderr('  param    :', tpn)
+                    stderr('  old_type :', tot)
+                    stderr('  new_type :', tnt)
+                    stderr('stated type:', old_type)
+                    sys.exit(1)
                 self.change_declared_type(tpn, tnt, tweak=True)
             tweaks.n_uses += 1
 
