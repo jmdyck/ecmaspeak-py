@@ -1090,11 +1090,8 @@ def _handle_structured_header(section):
             if sentence.startswith('It returns '):
                 # Maybe if it's a numeric method, we shouldn't bother?
                 for (pattern, nature) in [
-                    ("It returns \*true\* if .+ and \*false\* otherwise.", 'a Boolean'),
                     ("It returns _argument_ converted to a Number value .+.", 'a Number'),
-                    ("It returns _value_ argument converted to a non-negative integer if it is a valid integer index value.", 'a non-negative integer'),
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
-                    ("It returns _value_ converted to a numeric value of type Number or BigInt.", 'a Number or a BigInt'),
                     ("It returns a BigInt or \*undefined\*\.", "a BigInt or *undefined*"),
                     ("It returns a Boolean value which is .+", 'a Boolean'),
                     ("It returns a CharSet.", 'a CharSet'),
@@ -1111,9 +1108,6 @@ def _handle_structured_header(section):
                     ("It returns an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult.", 'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
                     ("It returns an integral Number representing .+", 'an integral Number'),
-                    ("It returns either \*false\* or the end index of a match.", '*false* or a non-negative integer'),
-                    ("It returns either ~not-matched~ or the end index of a match.", '~not-matched~ or a non-negative integer'),
-                    ("It returns the BigInt value that .+", 'a BigInt'),
                     ("It returns the global object used by the currently running execution context.", 'an object'),
                     ("It returns the loaded value.", 'unknown'),
                     ("It returns the one's complement of _x_.+", 'unknown'),
@@ -1121,7 +1115,6 @@ def _handle_structured_header(section):
                     ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
                     ("It returns the value of its bound identifier whose name is the value of the argument _N_.", 'an ECMAScript language value'),
                     ("It returns the value of the \*\"length\"\* property of an array-like object \(as a non-negative integer\).", 'a non-negative integer'),
-                    ("It returns the value of the \*\"length\"\* property of an array-like object.", 'a non-negative integer'),
                 ]:
                     if re.fullmatch(pattern, sentence):
                         retn.append(nature)
