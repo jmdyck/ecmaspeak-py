@@ -1061,11 +1061,12 @@ def _handle_structured_header(section):
     )
     assert re.fullmatch(r'(dt;dd;)*', children_names)
     for i in range(0, len(dl_nw_children), 2):
-        dt = dl_nw_children[0]
-        dd = dl_nw_children[1]
+        dt = dl_nw_children[i+0]
+        dd = dl_nw_children[i+1]
         # This will need to be generalized, but is okay for now:
         dt_s = dt.inner_source_text()
         dd_s = dd.inner_source_text()
+        assert dt_s not in dl_dict
         dl_dict[dt_s] = dd_s
 
     # ----------------------------------
