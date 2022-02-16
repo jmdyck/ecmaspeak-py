@@ -947,98 +947,56 @@ def _handle_structured_header(section):
     # --------------------------------------------
 
     h1 = section.heading_child
-    h1_ist = h1.inner_source_text()
-
-    if '\n' not in h1_ist:
-        # single-line h1:
-        if section_type == 'sdo':
-            mo = re.fullmatch(r'(Static|Runtime) Semantics: ([A-Z][a-zA-Z]+)', h1_ist)
-            assert mo
-            op_name = mo.group(2)
-            params = []
-        else:
-            mo = re.fullmatch(r'([A-Z][a-zA-Z]+|\[\[[A-Z][a-zA-Z]+\]\]) \( \)', h1_ist)
-            assert mo
-            op_name = mo.group(1)
-            params = []
-
-    else:
-        # multi-line h1:
-        posn_of_linestart_before_h1 = 1 + spec.text.rfind('\n', 0, h1.start_posn)
-        h1_indent = h1.start_posn - posn_of_linestart_before_h1
-
-        reo = re.compile(r'(?m)( +)(.*)')
-        posns_for_line_ = []
-        for mo in reo.finditer(spec.text, posn_of_linestart_before_h1, h1.end_posn):
-            assert mo.end(1) == mo.start(2)
-            posns_for_line_.append( (mo.start(1), mo.end(1), mo.end(2)) )
-
-        if section.section_kind == 'numeric_method':
-            op_name_pattern = r'[A-Z][a-zA-Z]+::[a-z][a-zA-Z]+'
-        elif section.section_kind == 'internal_method':
-            op_name_pattern = r'\[\[[A-Z][a-zA-Z]+\]\]'
-        else:
-            op_name_pattern = r'[A-Z][a-zA-Z0-9/]+'
-
-        patterns = [
-            (0, '<h1>'),
-            (2, fr'((?:Static|Runtime) Semantics: )?({op_name_pattern}) \('),
-            (4, r'(optional )?(_\w+_): (.+),'),
-            (2, fr'\)'),
-            (0, '</h1>'),
-        ]
-        which_semantics = 'UNSET'
-        op_name = 'UNSET'
+    h1_body = Pseudocode.parse(h1)
+    L = len(h1_body.children)
+    if L == 2:
+        (which_semantics, op_name) = h1_body.children
         params = []
-        n_lines = len(posns_for_line_)
-        for (line_i, (a,b,c)) in enumerate(posns_for_line_):
-            if line_i in [0, 1]:
-                pattern_i = line_i
-            elif line_i in [n_lines-2, n_lines-1]:
-                pattern_i = line_i - n_lines
+    elif L == 3:
+        (which_semantics, op_name, parameter_lines) = h1_body.children
+        params = []
+        assert parameter_lines.prod.lhs_s == '{PARAMETER_DECLS}'
+        for parameter_line in each_item_in_left_recursive_list(parameter_lines):
+            assert parameter_line.prod.lhs_s == '{PARAMETER_DECL}'
+            [optionality, param_name, param_nature] = parameter_line.children
+            optionality = optionality.source_text()
+            param_name = param_name.source_text()
+            param_nature = param_nature.source_text()
+            param_punct = '[]' if (optionality == 'optional ') else ''
+            params.append( AlgParam(param_name, param_punct, param_nature) )
+    else:
+        assert 0, L
+    which_semantics = which_semantics.source_text()
+    op_name = op_name.source_text()
+
+    if section.section_kind == 'numeric_method':
+        op_name_pattern = r'[A-Z][a-zA-Z]+::[a-z][a-zA-Z]+'
+    elif section.section_kind == 'internal_method':
+        op_name_pattern = r'\[\[[A-Z][a-zA-Z]+\]\]'
+    else:
+        op_name_pattern = r'[A-Z][a-zA-Z0-9/]+'
+    assert re.fullmatch(op_name_pattern, op_name)
+
+    # overwrite section.section_title
+    if section_type == 'sdo':
+        parameter_part = ''
+    else:
+        def brief_params(param_i):
+            if param_i == len(params):
+                return ''
             else:
-                pattern_i = 2
-            (expected_indent_add, expected_pattern) = patterns[pattern_i]
-
-            actual_indent = b - a
-            assert actual_indent == h1_indent + expected_indent_add
-
-            mo = re.compile(expected_pattern).fullmatch(spec.text, b, c)
-            if mo:
-                d = mo.groupdict()
-                if pattern_i == 1:
-                    [which_semantics, op_name] = mo.groups()
-                    if which_semantics is None: which_semantics = ''
-                elif pattern_i == 2:
-                    [optionality, param_name, param_nature] = mo.groups()
-                    param_punct = '[]' if (optionality == 'optional ') else ''
-                    params.append( AlgParam(param_name, param_punct, param_nature) )
-                    for warning in check_nature(param_nature):
-                        msg_at_posn(b, f"warning re nature: {warning}")
+                brief_for_subsequent_params = brief_params(param_i + 1)
+                param = params[param_i]
+                if param.punct == '[]':
+                    comma = ' ' if param_i == 0 else ' , '
+                    return f" [{comma}{param.name}{brief_for_subsequent_params} ]"
                 else:
-                    assert mo.groups() == ()
-            else:
-                msg_at_posn(b, f"line doesn't match pattern /{expected_pattern}/")
+                    comma = ' ' if param_i == 0 else ', '
+                    return f"{comma}{param.name}{brief_for_subsequent_params}"
+        parameter_part = f" ({brief_params(0)} )"
+    section.section_title = f"{which_semantics}{op_name}{parameter_part}"
 
-        # overwrite section.section_title
-        if section_type == 'sdo':
-            parameter_part = ''
-        else:
-            def brief_params(param_i):
-                if param_i == len(params):
-                    return ''
-                else:
-                    brief_for_subsequent_params = brief_params(param_i + 1)
-                    param = params[param_i]
-                    if param.punct == '[]':
-                        comma = ' ' if param_i == 0 else ' , '
-                        return f" [{comma}{param.name}{brief_for_subsequent_params} ]"
-                    else:
-                        comma = ' ' if param_i == 0 else ', '
-                        return f"{comma}{param.name}{brief_for_subsequent_params}"
-            parameter_part = f" ({brief_params(0)} )"
-
-        section.section_title = f"{which_semantics}{op_name}{parameter_part}"
+    # -----
 
     if section_type == 'sdo':
         for_phrase = 'Parse Node'
@@ -3560,6 +3518,19 @@ class AlgDefn:
     discriminator: typing.Union[HNode, str, None]
     kludgey_p: typing.Union[HNode, None]
     anode: Pseudocode.ANode
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def each_item_in_left_recursive_list(list_node):
+    if len(list_node.children) == 1:
+        [item_node] = list_node.children
+        yield item_node
+    elif len(list_node.children) == 2:
+        [list_node, item_node] = list_node.children
+        yield from each_item_in_left_recursive_list(list_node)
+        yield item_node
+    else:
+        assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

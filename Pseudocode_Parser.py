@@ -479,8 +479,8 @@ def convert_grammar_string_to_productions(grammar_string):
 reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
       \x20
 
-    | { [A-Z_][A-Z_0-9]* }
-    | { [a-z_][a-z_A-Z]+ }
+    | { _? [A-Z] [A-Z_0-9]* }
+    | { _? [a-z] \w* }
 
     | < /? (b|br|i|ins|li|p|sub|sup|var)>
 

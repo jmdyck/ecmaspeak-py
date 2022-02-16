@@ -352,6 +352,9 @@ def parse(hnode, what=None):
         assert what is None
         goal = 'ONE_LINE_ALG'
 
+    elif hnode.element_name == 'h1':
+        goal = 'H1_BODY'
+
     elif hnode.element_name == 'li':
         if what == 'early_error':
             goal = 'EARLY_ERROR_RULE'

@@ -2,7 +2,7 @@
 # ecmaspeak-py/pseudocode.grammar:
 # A grammar for the various kinds of pseudocode.
 #
-# Copyright (C) 2018-19  J. Michael Dyck <jmdyck@ibiblio.org>
+# Copyright (C) 2018-22  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
     {ENTRY_POINT}{_eos_}
@@ -11,6 +11,7 @@
     {_early_error_rule_}{EARLY_ERROR_RULE}
     {_emu_alg_body_}{EMU_ALG_BODY}
     {_emu_eqn_def_}{EMU_EQN_DEF}
+    {_h1_body_}{H1_BODY}
     {_inline_sdo_rule_}{INLINE_SDO_RULE}
     {_one_line_alg_}{ONE_LINE_ALG}
 
@@ -79,6 +80,36 @@
 
 {RHS} :
     {nlai}= {EXPR} if {CONDITION}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{H1_BODY} :
+    {WHICH_SEMANTICS}{OP_NAME}
+    {WHICH_SEMANTICS}{OP_NAME} ( )
+    {_indent_}{nlai}{WHICH_SEMANTICS}{OP_NAME} ({_indent_}{PARAMETER_DECLS}{_outdent_}{nlai}){_outdent_}{nlai}
+
+{WHICH_SEMANTICS} :
+    Runtime Semantics: 
+    Static Semantics: 
+    {EPSILON}
+
+{OP_NAME} :
+    ForIn/OfBodyEvaluation
+    ForIn/OfHeadEvaluation
+    {cap_word}
+    {cap_word}::{low_word}
+    {dsb_word}
+
+{PARAMETER_DECLS} :
+    {PARAMETER_DECL}
+    {PARAMETER_DECLS}{PARAMETER_DECL}
+
+{PARAMETER_DECL} :
+    {nlai}{OPTIONALITY}{var}: {VALUE_DESCRIPTION},
+
+{OPTIONALITY} :
+    {EPSILON}
+    optional 
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1432,6 +1463,120 @@
     msPerHour
     msPerMinute
     msPerSecond
+
+# --------------------------------
+
+{VALUE_DESCRIPTION} :
+    {VAL_DESC}
+    {VAL_DESC} or {VAL_DESC}
+    {VAL_DESC}, but not {VALUE_DESCRIPTION}
+    {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+
+{VAL_DESC} :
+    ECMAScript source text
+    a BigInt
+    a Boolean
+    a CharSet
+    a ClassFieldDefinition Record
+    a Completion Record
+    a Completion Record whose {dsb_word} is {tilded_word} or {tilded_word}
+    a Continuation
+    a Cyclic Module Record
+    a Data Block
+    a FinalizationRegistry
+    a Job Abstract Closure
+    a JobCallback Record
+    a List
+    a List of {LIST_ELEMENTS_DESCRIPTION}
+    a Matcher
+    a Module Record
+    a Number
+    a Parse Node
+    a Private Name
+    a PrivateElement
+    a PrivateEnvironment Record
+    a Promise
+    a PromiseCapability Record
+    a PromiseReaction Record
+    a Property Descriptor
+    a ReadSharedMemory or ReadModifyWriteSharedMemory event
+    a Realm Record
+    a Reference Record
+    a Script Record
+    a Shared Data Block
+    a SharedArrayBuffer
+    a State
+    a String
+    a String which is the name of a TypedArray constructor in {h_emu_xref}
+    a Symbol
+    a TypedArray
+    a TypedArray element type
+    a Unicode code point
+    a WaiterList
+    a WeakRef
+    a built-in function object
+    a candidate execution
+    a character
+    a code unit
+    a constructor
+    a function object
+    a mathematical value
+    a non-negative integer
+    a non-negative integer that is evenly divisble by 4
+    a nonterminal in one of the ECMAScript grammars
+    a positive integer
+    a possibly empty List, each of whose elements is a String or *undefined*
+    a property key
+    a property key or Private Name
+    a read-modify-write modification function
+    a sequence of Unicode code points
+    a set of algorithm steps
+    a time value
+    a {nonterminal} Parse Node
+    a {nonterminal} String
+    an Abstract Closure
+    an Abstract Closure with no parameters
+    an Array
+    an ArrayBuffer
+    an ArrayBuffer or SharedArrayBuffer
+    an AsyncGenerator
+    an ECMAScript function
+    an ECMAScript function object
+    an ECMAScript language value
+    an Environment Record
+    an Integer-Indexed exotic object
+    an Iterator Record
+    an Object
+    an Object that conforms to the <i>IteratorResult</i> interface
+    an Object that has a {dsb_word} internal slot
+    an agent signifier
+    an execution context
+    an initialized RegExp instance
+    an instance of a concrete subclass of Module Record
+    an integer
+    an {nonterminal} Parse Node
+    an? {ENVIRONMENT_RECORD_KIND} Environment Record
+    some other definition of a function's behaviour provided in this specification
+    unknown
+    {LITERAL}
+    {backticked_oth}
+
+{LIST_ELEMENTS_DESCRIPTION} :
+    Cyclic Module Records
+    ECMAScript language values
+    ImportEntry Records (see {h_emu_xref})
+    PromiseReaction Records
+    Records that have {dsb_word} and {dsb_word} fields
+    Source Text Module Records
+    Strings
+    Unicode code points
+    WriteSharedMemory or ReadModifyWriteSharedMemory events
+    byte values
+    internal slot names
+    names of ECMAScript Language Types
+    names of internal slots
+    property keys
 
 # --------------------------------
 
