@@ -949,7 +949,6 @@ named_type_hierarchy = {
         'Normal': {
             'Absent': { # not sure this is at the right place in the hierarchy.
                 'not_passed': {},    # for an optional parameter
-                'not_in_record': {}, # for an optional field of a record
                 'not_in_node': {},   # for an optional child of a node
                 'not_set': {},       # for a metavariable that might not be initialized
                 'not_returned': {},  # for when control falls off the end of an operation
@@ -4011,7 +4010,7 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
             env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
 
-        elif each_thing.prod.rhs_s == r"field of {var} that is present":
+        elif each_thing.prod.rhs_s == r"field of {var}":
             [desc_var] = each_thing.children
             loop_var = None # todo: no loop variable!
             env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
@@ -4424,16 +4423,17 @@ def tc_nonvalue(anode, env0):
                 )
         result = env1
 
-    elif p == r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attribute values are described by {var}. If the value of an attribute field of {var} is absent, the attribute of the newly created property is set to its {h_emu_xref}.":
+    elif p == r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.":
         [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = children
-        assert desc_var.children == desc_var2.children
+        assert desc_var.source_text() == desc_var2.source_text()
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
         result = env0
 
-    elif p == r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property having {dsb_word} and {dsb_word} attributes set to {var} and {var}, respectively, and each other attribute set to its corresponding value in {var} if present, otherwise to its {h_emu_xref}.":
-        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, desc_var, emu_xref] = children
+    elif p == r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.":
+        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = children
+        assert desc_var.source_text() == desc_var2.source_text()
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
@@ -5137,12 +5137,6 @@ def tc_cond_(cond, env0, asserting):
             assert 0, ex.source_text()
         copula = 'is a' if 'not present' in p else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
-
-    elif p == r"{CONDITION_1} : {EX} is absent":
-        # todo: eliminate?
-        [ex] = children
-        assert ex.is_a('{DOTTING}')
-        return env0.with_type_test(ex, 'is a', T_not_in_record, asserting)
 
     elif p in [
         r'{CONDITION_1} : {EXPR} is an object',
@@ -5981,18 +5975,6 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : both {EX} and {EX} are absent':
-        [exa, exb] = children
-        (ta, enva) = tc_expr(exa, env0); assert enva is env0
-        (tb, envb) = tc_expr(exb, env0); assert envb is env0
-        # XXX Could assert that T_not_set is a subtype of ta and tb,
-        # but the typing of Property Descriptors is odd.
-        # XXX Could look at exa.source_text() and exb.source_text()
-        # and make a dichotomy re Prop Desc subtypes, but not really worth it.
-        # (because the form only appears in IsAccessorDescriptor and IsDataDescriptor,
-        # which are tiny)
-        return (env0, env0)
-
     elif p == r'{CONDITION_1} : The calling agent is in the critical section for {var}':
         [var] = children
         env0.assert_expr_is_of_type(var, T_WaiterList)
@@ -6280,7 +6262,7 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : every field in {var} is absent":
+    elif p == r"{CONDITION_1} : {var} does not have any fields":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Property_Descriptor)
         return (env0, env0)
@@ -6289,13 +6271,6 @@ def tc_cond_(cond, env0, asserting):
         [list_var, item_lit] = children
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String))
         env0.assert_expr_is_of_type(item_lit, T_String)
-        return (env1, env1)
-
-    elif p == r"{CONDITION_1} : {EX} is absent or is {LITERAL}":
-        [ex, literal] = children
-        (lit_type, env1) = tc_expr(literal, env0); assert env1 is env0
-        assert lit_type == T_Boolean
-        # hrm
         return (env1, env1)
 
     elif p == r"{CONDITION_1} : we return here":
@@ -10989,8 +10964,8 @@ fields_for_record_type_named_ = {
         'Value'       : T_Tangible_,
         'Writable'    : T_Boolean,
         # table 3
-        'Get'         : T_Object | T_Undefined, # | T_not_in_record
-        'Set'         : T_Object | T_Undefined, # | T_not_in_record
+        'Get'         : T_Object | T_Undefined,
+        'Set'         : T_Object | T_Undefined,
         # common
         'Enumerable'  : T_Boolean,
         'Configurable': T_Boolean,
