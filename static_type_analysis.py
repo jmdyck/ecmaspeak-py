@@ -1069,6 +1069,7 @@ named_type_hierarchy = {
                     'ImportEntry Record': {},
                     'ImportMeta_record_': {},
                     'Intrinsics Record': {},
+                    'Iterator Record': {},
                     'JSON_Stringify_state_record_': {},
                     'JobCallback Record': {},
                     'MapData_record_': {},
@@ -1107,7 +1108,6 @@ named_type_hierarchy = {
                         'host-specific event': {},
                     },
                     'integer_value_record_': {},
-                    'iterator_record_': {},
                     'methodDef_record_': {},
                     'templateMap_entry_': {},
                 },
@@ -1405,6 +1405,9 @@ nature_to_type = {
     # 7.3.15 SetIntegrityLevel
         '~sealed~ or ~frozen~' : T_integrity_level_,
 
+    # 7.4.1 Iterator Records
+        'an Iterator Record': T_Iterator_Record,
+
     # (6.2.6 The Environment Record Specification Type)
     # 9.1 Environment Records
         'an Environment Record'            : T_Environment_Record,
@@ -1662,7 +1665,6 @@ type_tweaks_tuples = [
     ('GeneratorResume'                          , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
     ('GeneratorValidate'                        , '_generator_'            , T_TBD                 , T_Tangible_),
     ('GeneratorYield'                           , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
-    ('GetIterator'                              , '_method_'               , T_TBD | T_not_passed  , T_function_object_ | T_not_passed),
     ('GetMethod'                                , '*return*'               , T_TBD                 , T_Undefined | T_function_object_ | T_throw_),
     ('GetOwnPropertyKeys'                       , '_O_'                    , T_TBD                 , T_Tangible_),
     ('GetValue'                                 , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
@@ -1690,7 +1692,6 @@ type_tweaks_tuples = [
     ('IteratorBindingInitialization'            , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
     ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_empty_ | T_throw_),
     ('IteratorDestructuringAssignmentEvaluation', '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_throw_),
-    ('IteratorNext'                             , '_value_'                , T_TBD | T_not_passed  , T_Tangible_ | T_not_passed),
     ('IteratorStep'                             , '*return*'               , T_TBD                 , T_Boolean | T_Object | T_throw_),
     ('IteratorValue'                            , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
     ('KeyedBindingInitialization'               , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
@@ -4486,7 +4487,7 @@ def tc_nonvalue(anode, env0):
     elif p == r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).":
         [vara, varb] = children
         env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
-        env0.assert_expr_is_of_type(varb, T_iterator_record_)
+        env0.assert_expr_is_of_type(varb, T_Iterator_Record)
 
         proc_add_return(env0, T_Tangible_ | T_empty_ | T_throw_, anode)
 
@@ -8150,9 +8151,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert lhs_text == '_module_'
                 lhs_t = T_Cyclic_Module_Record
             elif dsbn_name == 'Done':
-                assert candidate_type_names == ['iterator_record_', 'Object']
+                assert candidate_type_names == ['Iterator Record', 'Object']
                 assert lhs_text == '_iteratorRecord_'
-                lhs_t = T_iterator_record_
+                lhs_t = T_Iterator_Record
             elif dsbn_name in ['Reject', 'Resolve']:
                 assert candidate_type_names == ['PromiseCapability Record', 'ResolvingFunctions_record_']
                 assert lhs_text == '_promiseCapability_'
@@ -8216,7 +8217,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     )
                     for record_type_name in [
                         'Property Descriptor', # for the almost-Property Descriptor in CompletePropertyDescriptor
-                        'iterator_record_',
+                        'Iterator Record',
                         'templateMap_entry_',
                         'methodDef_record_',
                         'CodePointAt_record_',
@@ -9880,7 +9881,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # CompletePropertyDescriptor: the almost-Property Descriptor
                 record_type_name = 'Property Descriptor'
             elif field_names == ['Done', 'Iterator', 'NextMethod']:
-                record_type_name = 'iterator_record_'
+                record_type_name = 'Iterator Record'
             elif field_names == ['ExportName', 'Module']:
                 record_type_name = 'ExportResolveSet_Record_'
             elif field_names == ['Key', 'Symbol']:
@@ -11021,6 +11022,13 @@ fields_for_record_type_named_ = {
         'BodyFunction' : T_function_object_,
     },
 
+    # 7.4.1 Iterator Records
+    'Iterator Record': {
+        'Iterator'  : T_Object, # iterator_object_ ?
+        'NextMethod': T_function_object_,
+        'Done'      : T_Boolean,
+    },
+
     # 8.1
     'Environment Record': {
         'OuterEnv'         : T_Environment_Record,
@@ -11096,13 +11104,6 @@ fields_for_record_type_named_ = {
     'PrivateEnvironment Record': {
         'OuterPrivateEnvironment': T_PrivateEnvironment_Record | T_Null,
         'Names'                  : ListType(T_Private_Name),
-    },
-
-    # 5515+5660: NO TABLE, not even a mention
-    'iterator_record_': {
-        'Iterator'  : T_Object, # iterator_object_ ?
-        'NextMethod': T_function_object_,
-        'Done'      : T_Boolean,
     },
 
     # 11933: NO TABLE, no mention
@@ -11578,7 +11579,7 @@ type_of_internal_thing_ = {
     'Errors' : ListType(T_Tangible_),
 
     # 41310: Table N: Internal Slots of Async-from-Sync Iterator Instances
-    'SyncIteratorRecord' : T_iterator_record_,
+    'SyncIteratorRecord' : T_Iterator_Record,
 
     # 41869: Table N: Internal Slots of AsyncGenerator Instances
     'AsyncGeneratorState'   : T_Undefined | T_generator_state_, # T_String,

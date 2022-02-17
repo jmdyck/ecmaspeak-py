@@ -1168,7 +1168,6 @@
     PropertyDescriptor
     ReadModifyWriteSharedMemory
     ReadSharedMemory
-    Record
     ResolvedBinding Record
     Script Record
     Source Text Module Record
@@ -1177,6 +1176,7 @@
     the ClassStaticBlockDefinition Record
     the ExportEntry Record
     the ImportEntry Record
+    the Iterator Record
     the JobCallback Record
     the PrivateEnvironment Record
     the PromiseCapability Record

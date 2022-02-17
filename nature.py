@@ -158,6 +158,9 @@ def check_simple_nature(nature):
 
     elif nature in [
         "some other definition of a function's behaviour provided in this specification",
+        'A function object', # from 2591, fix spec
+        'An object',         # from 2591, fix spec
+        'Boolean',           # from 2591, fix spec
         'ECMAScript source text',
         'a BigInt',
         'a Boolean',
@@ -252,6 +255,7 @@ def check_simple_nature(nature):
         'an ECMAScript language value',
         'an Environment Record',
         'an Integer-Indexed exotic object',
+        'an Iterator Record',
         'an Object that conforms to the <i>IteratorResult</i> interface',
         'an Object that has a [[StringData]] internal slot',
         'an Object',
