@@ -85,7 +85,7 @@
     Perform an implementation-defined debugging action.
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
-    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter({var}, {var}), and not for any other reasons at all.
+    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Perform {PP_NAMED_OPERATION_INVOCATION}. {note}
     Prepend {var} to {var}.
@@ -635,7 +635,7 @@
     {var} provides the direct binding for this export
     {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits
     {var} starts with {STR_LITERAL}
-    {var} was notified explicitly by another agent calling NotifyWaiter({var}, {var})
+    {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}
     {var}, {var}, and {var} have the same number of elements
 
 {PROPERTY_KIND} :
