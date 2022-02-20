@@ -5,10 +5,10 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
-    {LI}{_eos_}
+    {INLINE_SDO_RULE}{_eos_}
 
-{LI} :
-    <li>{nlai}{ISDO_RULE}{nlai}</li>
+{INLINE_SDO_RULE} :
+    {nlai}{ISDO_RULE}{nlai}
 
 {ISDO_RULE} :
     The {ISDO_NAME} of {h_emu_grammar} is {EXPR}.

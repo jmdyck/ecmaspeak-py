@@ -375,8 +375,6 @@ def parse(hnode, what=None):
             parser = inline_sdo_parser
         else:
             assert 0, what
-        start_posn = hnode.start_posn
-        end_posn = hnode.end_posn
 
     else:
         assert 0, hnode.element_name

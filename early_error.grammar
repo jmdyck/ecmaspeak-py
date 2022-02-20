@@ -5,11 +5,11 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
-    {LI}{_eos_}
+    {EARLY_ERROR_RULE}{_eos_}
 
-{LI} :
-    <li>{EE_RULE}</li>
-    <li>{nlai}{EE_RULE}{nlai}</li>
+{EARLY_ERROR_RULE} :
+    {EE_RULE}
+    {nlai}{EE_RULE}{nlai}
 
 {EE_RULE} :
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}

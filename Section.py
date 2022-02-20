@@ -572,11 +572,11 @@ def handle_inline_sdo_section_body(section, alg_header):
     for li in lis:
         assert li.element_name == 'li'
 
-        LI = Pseudocode.parse(li, 'inline_sdo')
-        if LI is None: continue
+        INLINE_SDO_RULE = Pseudocode.parse(li, 'inline_sdo')
+        if INLINE_SDO_RULE is None: continue
 
-        assert LI.prod.lhs_s == '{LI}'
-        [ISDO_RULE] = LI.children
+        assert INLINE_SDO_RULE.prod.lhs_s == '{INLINE_SDO_RULE}'
+        [ISDO_RULE] = INLINE_SDO_RULE.children
         assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
 
         emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
