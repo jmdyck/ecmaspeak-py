@@ -758,7 +758,7 @@ class ES_Value(E_Value): pass # ECMAScript specification value
 @efd.put('{COMMANDS} : {_NL_N} {COMMAND}')
 @efd.put('{COMMAND} : {IF_OTHER}')
 @efd.put('{COMMAND} : {IF_CLOSED}')
-@efd.put('{ONE_LINE_ALG} : {nlai}{COMMAND}{nlai}')
+@efd.put('{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}')
 def _(de, comm):
     de.exec(comm, None)
 
@@ -797,16 +797,15 @@ def _(de, conda, condb):
 # ==============================================================================
 
 @efd.put('{EXPR} : {EX}')
-@efd.put('{EXPR} : {PP_NAMED_OPERATION_INVOCATION}')
 @efd.put('{EX} : ({EX})')
 @efd.put('{EX} : {LITERAL}')
 @efd.put('{EX} : {LOCAL_REF}')
 @efd.put('{LITERAL} : {BOOL_LITERAL}')
-@efd.put('{LITERAL} : {starred_str}')
 @efd.put('{LITERAL} : {tilded_word}')
 @efd.put('{LOCAL_REF} : {PROD_REF}')
 @efd.put('{LOCAL_REF} : {SETTABLE}')
 @efd.put('{NUM_COMPARAND} : {FACTOR}')
+@efd.put('{NUM_COMPARAND} : {SUM}')
 @efd.put('{SETTABLE} : {var}')
 def _(de, child):
     return de.exec(child, E_Value)
@@ -1154,7 +1153,6 @@ def _(de, local_ref, nont):
         de.it_is_a_syntax_error(local_ref.parent)
     return None
 
-@efd.put('{EX} : the {nonterminal} that is covered by {LOCAL_REF}')
 @efd.put('{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}')
 def _(de, nont, local_ref):
     pnode = de.exec(local_ref, ParseNode)
@@ -1254,10 +1252,6 @@ def _(de, exa, var, exb):
     de.curr_frame().end_contour()
     return result
 
-@efd.put('{LOCAL_REF} : {var}')
-def _(de, var):
-    return de.exec(var, E_Value)
-
 #> Aliases may be modified using the form "Set x to someOtherValue".
 @efd.put('{COMMAND} : Set {SETTABLE} to {EXPR}.')
 def _(de, settable, expr):
@@ -1323,7 +1317,6 @@ def _(de, item_nature, var, ex):
 @efd.put('{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}')
 @efd.put('{EX} : {PP_NAMED_OPERATION_INVOCATION}')
 @efd.put('{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}')
-@efd.put('{EX} : {NAMED_OPERATION_INVOCATION}')
 @efd.put('{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}')
 def _(de, child):
     return de.exec(child, E_Value)
@@ -1340,7 +1333,6 @@ def _(de, opn_before_paren, exlist_opt):
     arg_values = de.exec(exlist_opt, list)
     return apply_op_to_arg_values(de, op_name, arg_values)
 
-@efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word}({EX})')
 @efd.put('{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}') # looks like an SDO invocation, but it isn't
 def _(de, cap_word, arg):
     [op_name] = cap_word.children
@@ -1352,7 +1344,6 @@ def _(de, exlist):
     return de.exec(exlist, list)
 
 @efd.put('{EXLIST} : {EX}')
-@efd.put('{EXLIST_OPT} : {var}')
 def _(de, ex):
     return [ de.exec(ex, E_Value) ]
 
@@ -1411,7 +1402,6 @@ def value_matches_discriminator(value, discriminator):
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}')
 @efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}')
-@efd.put('{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}')
 def _(de, cap_word, local_ref):
     return execute_sdo_invocation(de, cap_word, local_ref, [])
 
@@ -1582,13 +1572,11 @@ def _(de, nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     return de.curr_frame().resolve_focus_reference('derived', nt_name)
 
-@efd.put('{CONDITION_1} : {PROD_REF} is present')
 @efd.put('{CONDITION_1} : {EX} is present')
 def _(de, prod_ref):
     pnode = de.exec(prod_ref, 'ParseNodeOrAbsent')
     return isinstance(pnode, ParseNode)
 
-@efd.put('{CONDITION_1} : {PROD_REF} is not present')
 @efd.put('{CONDITION_1} : {EX} is not present')
 def _(de, prod_ref):
     pnode = de.exec(prod_ref, 'ParseNodeOrAbsent')
@@ -1695,7 +1683,7 @@ def _(de, cond, emu_grammar):
         for ee_rule in ee_rules:
             de.execute_alg_defn(ee_rule, focus_node=de.curr_frame()._focus_node)
 
-@efd.put('{EE_RULE} : <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>')
+@efd.put('{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>')
 def _(de, local_ref1, h_emu_grammar, local_ref2, local_ref3):
     assert len(h_emu_grammar._hnode.puk_set) == 1
     [puk] = list(h_emu_grammar._hnode.puk_set)
@@ -1789,11 +1777,6 @@ def _(de, randA, ratorAB, randB):
     b = de.exec(randB, ES_Mathnum)
     return ES_Mathnum.compare(a, ratorAB, b)
 
-@efd.put('{CONDITION_1} : {var} &ge; 2<sup>32</sup> - 1')
-def _(de, var):
-    val = de.exec(var, ES_Mathnum)
-    return ES_Mathnum.compare(val, '&ge;', ES_Mathnum(pow(2, 32) - 1))
-
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})')
 def _(de, noi, var, _):
     l_val = de.exec(noi, ES_Mathnum)
@@ -1818,6 +1801,11 @@ def _(de, randA, rator, randB):
     elif op in ['&times;', 'times']: return a * b
     elif op == '-': return a - b
     elif op == '/': return a / b
+    elif op == 'modulo':
+        #> The notation "_x_ modulo _y_" (_y_ must be finite and non-zero)
+        #> computes a value _k_ of the same sign as _y_ (or zero) such that
+        #> abs(_k_) < abs(_y_) and _x_ - _k_ = _q_ * _y_ for some integer _q_.
+        return a % b
     else:
         assert NYI, op
 
@@ -1848,15 +1836,6 @@ def _(de, mathnum):
 #> The mathematical function min(_x1_, _x2_, &hellip; , _xN_) ...
 #> The mathematical function max(_x1_, _x2_, ..., _xN_) ...
 
-#> The notation "_x_ modulo _y_" (_y_ must be finite and non-zero)
-#> computes a value _k_ of the same sign as _y_ (or zero) such that
-#> abs(_k_) < abs(_y_) and _x_ - _k_ = _q_ * _y_ for some integer _q_.
-@efd.put('{PRODUCT} : {FACTOR} modulo {FACTOR}')
-def _(de, randA, randB):
-    a = de.exec(randA, ES_Mathnum)
-    b = de.exec(randB, ES_Mathnum)
-    return a % b
-
 #> The mathematical function floor(_x_) produces the largest integer
 #> (closest to +&infin;) that is not larger than _x_.
 @predefined_operations.put('floor')
@@ -1875,24 +1854,22 @@ def _(de, base_expr, exponent_expr):
     exponent_val = de.exec(exponent_expr, ES_Mathnum)
     return ES_Mathnum(base_val.val ** exponent_val.val)
 
+@efd.put('{BASE} : 2')
+def _(de):
+    return ES_Mathnum(2)
+
 @efd.put('{BASE} : 10')
 def _(de):
     return ES_Mathnum(10)
 
 @efd.put('{EX} : {NUM_EXPR}')
-@efd.put('{EX} : {NUM_LITERAL}')
-@efd.put('{EX} : {PRODUCT}')
-@efd.put('{EX} : {SUM}')
-@efd.put('{EX} : {var}')
 @efd.put('{FACTOR} : ({NUM_EXPR})')
-@efd.put('{FACTOR} : {NAMED_OPERATION_INVOCATION}')
 @efd.put('{FACTOR} : {NUM_LITERAL}')
 @efd.put('{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}')
 @efd.put('{FACTOR} : {SETTABLE}')
 @efd.put('{LITERAL} : {NUM_LITERAL}')
 @efd.put('{NUM_EXPR} : {PRODUCT}')
 @efd.put('{NUM_EXPR} : {SUM}')
-@efd.put('{TERM} : ({PRODUCT})')
 @efd.put('{TERM} : {FACTOR}')
 @efd.put('{TERM} : {PRODUCT}')
 def _(de, child):
@@ -1942,21 +1919,17 @@ def same_value(a, b):
         return False
 
 @efd.put('{CONDITION_1} : {EX} is {LITERAL}')
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {LITERAL}')
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {U_LITERAL}')
 def _(de, ex, literal):
     ex_val = de.exec(ex, E_Value)
     lit_val = de.exec(literal, E_Value)
     return same_value(ex_val, lit_val)
 
 @efd.put('{CONDITION_1} : {EX} is not {LITERAL}')
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not {LITERAL}')
 def _(de, ex, literal):
     ex_val = de.exec(ex, E_Value)
     lit_val = de.exec(literal, E_Value)
     return not same_value(ex_val, lit_val)
 
-@efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}')
 @efd.put('{CONDITION_1} : {EX} is {LITERAL} or {LITERAL}')
 def _(de, expr, lita, litb):
     expr_val = de.exec(expr, E_Value)
@@ -1990,13 +1963,9 @@ def _(de, noi, *starred_strs):
 class EL_Undefined(EL_Value):
     pass
 
-@efd.put('{U_LITERAL} : *undefined*')
+@efd.put('{LITERAL} : *undefined*')
 def _(de):
     return EL_Undefined()
-
-@efd.put('{EX} : {U_LITERAL}')
-def _(de, literal):
-    return de.exec(literal, EL_Undefined)
 
 # ------------------------------------------------------------------------------
 # 6.1.3 The Boolean Type
@@ -2005,12 +1974,10 @@ def _(de, literal):
 class EL_Boolean(EL_Value):
     b: bool
 
-@efd.put('{LITERAL} : *true*')
 @efd.put('{BOOL_LITERAL} : *true*')
 def _(de):
     return EL_Boolean(True)
 
-@efd.put('{LITERAL} : *false*')
 @efd.put('{BOOL_LITERAL} : *false*')
 def _(de):
     return EL_Boolean(False)
@@ -2026,15 +1993,14 @@ class ES_CodeUnit(E_Value):
         assert 0 <= numeric_value < 2 ** 16
         object.__setattr__(self, 'numeric_value', numeric_value)
 
-@efd.put('{EX} : {code_unit_lit}')
-def _(de, child):
-    return de.exec(child, ES_CodeUnit)
-
 @efd.put('{EX} : the code unit whose value is {EX}')
-@efd.put('{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}')
 def _(de, ex):
     m = de.exec(ex, ES_Mathnum)
     return ES_CodeUnit(m.val)
+
+@efd.put('{LITERAL} : {code_unit_lit}')
+def _(de, code_unit_lit):
+    return de.exec(code_unit_lit, ES_CodeUnit)
 
 @efd.put('{code_unit_lit} : the \\x20 code \\x20 unit \\x20 0x [0-9A-F]{4} \\x20 \\( [A-Z -]+ \\)')
 def _(de, chars):
@@ -2044,7 +2010,7 @@ def _(de, chars):
     cu_int = int(cu_hex, 16)
     return ES_CodeUnit(cu_int)
 
-@efd.put('{EXPR} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}')
+@efd.put('{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}')
 def _(de, prod_ref, emu_xref):
     pnode = de.exec(prod_ref, ParseNode)
     assert pnode.symbol == 'SingleEscapeCharacter'
@@ -2126,7 +2092,6 @@ def _(de, ex1, ex2):
     return EL_String(code_units1 + code_units2)
 
 @efd.put('{EXPR} : the String value consisting of {EX}')
-@efd.put('{EXPR} : the String value consisting of {EXPR}')
 def _(de, ex):
     val = de.exec(ex, ES_CodeUnit)
     return EL_String([val])
@@ -2164,7 +2129,6 @@ def _(de, noi, *starred_strs):
             return True
     return False
 
-@efd.put('{EX} : {STR_LITERAL}')
 @efd.put('{LITERAL} : {STR_LITERAL}')
 @efd.put('{STR_LITERAL} : {starred_str}')
 @efd.put('{STR_LITERAL} : the String {starred_str}')
@@ -2474,15 +2438,6 @@ class ES_UnicodeCodePoint(ES_Value):
         assert 0 <= scalar <= 0x10ffff
         object.__setattr__(self, 'scalar', scalar)
 
-@efd.put('{EX} : the code point value of {PROD_REF}') # the numeric value of the code point ...
-def _(de, prod_ref):
-    pnode = de.exec(prod_ref, ParseNode)
-    assert pnode.symbol == 'SourceCharacter'
-    t = pnode.text()
-    assert len(t) == 1
-    return ES_Mathnum(ord(t))
-
-@efd.put('{EXPR} : the code point matched by {PROD_REF}')
 @efd.put('{EX} : the code point matched by {PROD_REF}')
 def _(de, prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
@@ -2675,7 +2630,7 @@ def _(de, prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     return ES_UnicodeCodePoints(pnode.text())
 
-@efd.put('{EXPR} : the number of code points in {PROD_REF}') # SPEC BUG: the number of code points in the source text matched by {PROD_REF}
+@efd.put('{EX} : the number of code points in {PROD_REF}') # SPEC BUG: the number of code points in the source text matched by {PROD_REF}
 def _(de, prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     return ES_Mathnum(len(pnode.text()))
@@ -2719,14 +2674,8 @@ def _(de, local_ref, g_sym):
     assert isinstance(boolean_value, EL_Boolean)
     return boolean_value.b
 
-@efd.put('{CONDITION_1} : {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}') # This should be decomposed
-def _(de, local_ref, g_sym, boolean_literal):
-    contains_boolean = execute_sdo_invocation(de, 'Contains', local_ref, [g_sym])
-    test_boolean = de.exec(boolean_literal, EL_Boolean)
-    return same_value(contains_boolean, test_boolean)
-
 @efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}')
-@efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {nonterminal}')
+@efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}')
 def _(de, local_ref, sym):
     return execute_sdo_invocation(de, 'Contains', local_ref, [sym])
 
@@ -2794,7 +2743,6 @@ def _(de, gsym):
 @efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code')
 @efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code')
 @efd.put('{CONDITION_1} : {LOCAL_REF} is contained in strict mode code')
-@efd.put('{CONDITION_1} : {PROD_REF} is contained in strict mode code')
 def _(de, local_ref):
     pnode = de.exec(local_ref, ParseNode)
     return is_strict(pnode)

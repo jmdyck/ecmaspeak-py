@@ -372,6 +372,7 @@ def handle_early_error(emu_grammar, p, ul, alg_header):
         elif li.element_name == 'li':
             tree = Pseudocode.parse(li, 'early_error')
             if tree is None: continue
+            assert tree.prod.lhs_s == '{EARLY_ERROR_RULE}'
             [ee_rule] = tree.children
             assert ee_rule.prod.lhs_s == '{EE_RULE}'
             if alg_header:
@@ -595,9 +596,8 @@ def handle_inline_sdo_section_body(section, alg_header):
 
         for child in ISDO_RULE.children:
             cl = child.prod.lhs_s
-            if cl == '{ISDO_NAME}':
-                [cap_word] = child.children
-                [rule_sdo_name] = cap_word.children
+            if cl == '{cap_word}':
+                [rule_sdo_name] = child.children
                 assert rule_sdo_name == alg_header.name
                 rule_sdo_names.append(rule_sdo_name)
             elif cl == '{h_emu_grammar}':

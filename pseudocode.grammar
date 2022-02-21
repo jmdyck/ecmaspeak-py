@@ -1,11 +1,40 @@
 
-# ecmaspeak-py/emu_alg.grammar:
-# A grammar for the content of <emu-alg> elements.
+# ecmaspeak-py/pseudocode.grammar:
+# A grammar for the various kinds of pseudocode.
 #
-# Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
+# Copyright (C) 2018-19  J. Michael Dyck <jmdyck@ibiblio.org>
 
 {START} :
-    {EMU_ALG_BODY}{_eos_}
+    {ENTRY_POINT}{_eos_}
+
+{ENTRY_POINT} :
+    {_early_error_rule_}{EARLY_ERROR_RULE}
+    {_emu_alg_body_}{EMU_ALG_BODY}
+    {_emu_eqn_def_}{EMU_EQN_DEF}
+    {_inline_sdo_rule_}{INLINE_SDO_RULE}
+    {_one_line_alg_}{ONE_LINE_ALG}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{EARLY_ERROR_RULE} :
+    {EE_RULE}
+    {_indent_}{nlai}{EE_RULE}{_outdent_}{nlai}
+
+{EE_RULE} :
+    <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
+    <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>
+    For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
+    If {CONDITION}, it is a Syntax Error if {CONDITION}.
+    If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
+    It is a Syntax Error if {CONDITION_1}<ins>, unless {CONDITION_1} and {CONDITION_1}</ins>.
+    It is a Syntax Error if {CONDITION}.
+    It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.
+    It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.
+    It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.
+    It is an early Syntax Error if {CONDITION}.
+    {LOCAL_REF} must cover an? {nonterminal}.
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 {EMU_ALG_BODY} :
     {IND_COMMANDS}{nlai}
@@ -20,6 +49,58 @@
 {_NL_N} :
     {nlai}{dec_int_lit}.
     {nlai}{dec_int_lit}. {step_attribute}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{EMU_EQN_DEF} :
+    {CONSTANT_DEF}
+    {OPERATION_DEF}
+
+# --------------------------
+
+{CONSTANT_DEF} :
+    {CONSTANT_NAME} = {dec_int_lit}
+    {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f}
+    {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f} = {EXPR}
+
+# --------------------------
+
+{OPERATION_DEF} :
+    {EMU_EQN_OP_NAME}({var}) = {EXPR}
+    {_indent_}{nlai}{EMU_EQN_OP_NAME}({var}){_indent_}{RHSS}{_outdent_}{_outdent_}{nlai}
+
+{EMU_EQN_OP_NAME} :
+    {cap_word}
+    msFromTime
+
+{RHSS} :
+    {RHSS}{RHS}
+    {RHS}
+
+{RHS} :
+    {nlai}= {EXPR} if {CONDITION}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{INLINE_SDO_RULE} :
+    {_indent_}{nlai}{ISDO_RULE}{_outdent_}{nlai}
+
+{ISDO_RULE} :
+    The {cap_word} of {h_emu_grammar} is {EXPR}.
+    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{ONE_LINE_ALG} :
+    {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}
+    {_indent_}{nlai}{COMMAND}{nlai}{h_emu_note}{_outdent_}{nlai}
+    {_indent_}{nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{_outdent_}{nlai}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 {COMMAND} :
     ? OperationName().
@@ -59,8 +140,8 @@
     Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
-    IfAbruptRejectPromise({var}, {var}).
     IfAbruptCloseIterator({var}, {var}).
+    IfAbruptRejectPromise({var}, {var}).
     Insert {var} as the first element of {var}.
     Leave the critical section for {var}.
     Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.
@@ -110,6 +191,7 @@
     Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
+    Return {EXPR} (no conversion).
     Return {EXPR}.
     Return {MULTILINE_EXPR}
     Return {var} as the Completion Record of this abstract operation.
@@ -152,6 +234,7 @@
 # ----------------------------------------------
 
 {IF_CLOSED} :
+    If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
@@ -288,6 +371,7 @@
 
 {CONDITION} :
     ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
+    either {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}
     {CONDITION_1} and if {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
@@ -298,13 +382,16 @@
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} or if {CONDITION_1}
     {CONDITION_1} or {CONDITION_1}
+    {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
+    {CONDITION_1} unless {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, and {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}, or {CONDITION_1}
+    {CONDITION_1}, unless {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
@@ -340,6 +427,9 @@
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When {SETTABLE} is instantiated it will have a direct binding for {var}
     an implementation-defined debugging facility is available and enabled
+    any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
+    any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
+    any source text is matched by this production
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
     it must be in the object Environment Record
@@ -347,7 +437,11 @@
     no such execution context exists
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
+    the <sub>[Tagged]</sub> parameter was not set
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
     the binding exists
@@ -362,19 +456,27 @@
     the character {EX} is one of {nonterminal}
     the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits
     the decimal representation of {var} has 20 or fewer significant digits
+    the duplicate entries are only bound by {cap_word}
     the execution context stack is empty
     the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
     the generator either threw an exception or performed either an implicit or explicit return
+    the goal symbol of the syntactic grammar is {nonterminal}
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
+    the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
+    the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the parse succeeded and no early errors were found
+    the source text containing {G_SYM} is eval code that is being processed by a direct eval
     the source text matched by the syntactic production that is being evaluated is contained in strict mode code
+    the source text matched by {PROD_REF} is contained in strict mode code
+    the source text matched by {PROD_REF} is not strict mode code
     the source text matched by {PROD_REF} is strict mode code
     the source text matched by {var} is non-strict code
     the source text matched by {var} is strict mode code
+    the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist an element {var} of {var} such that {CONDITION_1}
     there exists a member {var} of {var} such that {CONDITION_1}
@@ -421,27 +523,54 @@
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
+    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number
     {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {PREFIX_PAREN}
     {EX} is {var}
-    {LOCAL_REF} Contains {nonterminal}
+    {LOCAL_REF} Contains {G_SYM}
+    {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
     {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
+    {LOCAL_REF} is contained in strict mode code
     {LOCAL_REF} is either an? {nonterminal} or an? {nonterminal}
     {LOCAL_REF} is either an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}
+    {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
+    {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}
     {LOCAL_REF} is {backticked_oth}
+    {LOCAL_REF} is {h_emu_grammar}
     {LOCAL_REF} is {h_emu_grammar} 
+    {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
+    {NAMED_OPERATION_INVOCATION} contains any duplicate elements
+    {NAMED_OPERATION_INVOCATION} contains any duplicate entries
+    {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}
+    {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s
+    {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
+    {NAMED_OPERATION_INVOCATION} contains {starred_str}
+    {NAMED_OPERATION_INVOCATION} is a {nonterminal}
+    {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
+    {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
+    {NAMED_OPERATION_INVOCATION} is not empty
+    {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production
+    {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
+    {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`
+    {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
     {NUM_COMPARISON}
     {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
     {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
     {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
+    {PROD_REF} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals {NAMED_OPERATION_INVOCATION}
+    {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
-    {PROD_REF} is contained in strict mode code
     {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
+    {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive
@@ -616,6 +745,7 @@
     {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is present in the table in step {h_emu_xref}
     {var} is the String value {STR_LITERAL}
+    {var} is the empty String (its length is 0)
     {var} is the execution context of a generator
     {var} is the same Number value as {var}
     {var} is the same sequence of code units as {var}
@@ -624,17 +754,14 @@
     {var} is the {nonterminal} {TERMINAL}
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} is {LITERAL} because formal parameters mapped by argument objects are always writable
-    {var} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number
-    {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is {nonterminal}
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
     {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}
     {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
-    {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits
     {var} starts with {STR_LITERAL}
+    {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits
     {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}
     {var}, {var}, and {var} have the same number of elements
 
@@ -763,6 +890,7 @@
     a new unique Symbol value whose {DSBN} value is {var}
     a new {ENVIRONMENT_RECORD_KIND} Environment Record
     a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
+    a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects
     a newly created Property Descriptor with no fields
     a newly created object with an internal slot for each name in {var}
     a one-element CharSet containing the character {var}
@@ -856,7 +984,6 @@
     the character value of character {var}
     the character whose character value is {var}
     the character {SETTABLE}
-    the code point matched by {PROD_REF}
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the code point whose numeric value is that of {var}
     the code point whose numeric value is {NAMED_OPERATION_INVOCATION}
@@ -882,6 +1009,7 @@
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
+    the largest integral Number {var} (closest to +&infin;) such that {CONDITION_1}
     the last element in {var}
     the length of {var}
     the list-concatenation of {EX} and {EX}
@@ -890,10 +1018,9 @@
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
     the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
+    the negative of {EX}
     the number of bytes in {var}
     the number of characters contained in {var}
-    the number of code points in {PROD_REF}
-    the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the number of code unit elements in {var}
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
@@ -960,6 +1087,10 @@
     this Date object
     {EX}
     {EX} - ({EX} &times; {var}) where {var} is an integer that is negative if and only if {var} and {var} have opposite sign, and whose magnitude is as large as possible without exceeding the magnitude of {EX} / {EX}
+    {EX} if {CONDITION}. Otherwise, it is {EXPR}
+    {EX}, where {var} is {EX}
+    {EX}, where {var} is {EX} and {var} is {EX}
+    {EX}, where {var} is {EX}, and {var} is {EX}
     {var}'s State
     {var}'s _captures_ List
     {var}'s intrinsic object named {var}
@@ -985,7 +1116,9 @@
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {EX}
     the String {var}
+    the code point matched by {PROD_REF}
     the code unit at index {EX} within {EX}
+    the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the code unit whose value is {EX}
     the code units of {var}
     the current Realm Record
@@ -996,6 +1129,8 @@
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
     the internal slots listed in {h_emu_xref}
+    the number of code points in {PROD_REF}
+    the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the number of code units in {var}
     the number of elements in {var}
     the number of elements of {var}
@@ -1004,11 +1139,13 @@
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
+    the single code point matched by this production
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
     the sum of {var} and {var}
     the value of {SETTABLE}
     the {var} flag
+    {CONSTANT_NAME}
     {DSBN}
     {EX} occurrences of {code_unit_lit}
     {EX}, rounding down to the nearest integer, including for negative numbers
@@ -1069,12 +1206,12 @@
     evaluating {LOCAL_REF}. This may be of type Reference
     evaluating {nonterminal} {var}
     the CharSet returned by {h_emu_grammar} 
+    the result of performing {cap_word} on {EX}
     the {cap_word} of {LOCAL_REF}
     the {cap_word} of {LOCAL_REF} (see {h_emu_xref})
     the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}
     the {cap_word} of {LOCAL_REF} {WITH_ARGS}
-    {LOCAL_REF} Contains {TERMINAL}
-    {LOCAL_REF} Contains {nonterminal}
+    {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}
     {PREFIX_PAREN} (see {h_emu_xref})
@@ -1084,7 +1221,6 @@
 
 {LOCAL_REF} :
     the parsed code that is {DOTTING}
-    the {nonterminal} of {var}
     {PROD_REF}
     {SETTABLE}
 
@@ -1096,7 +1232,11 @@
     the {ORDINAL} {nonterminal}
     the {nonterminal}
     the {nonterminal} contained in {PROD_REF}
+    the {nonterminal} containing this {nonterminal}
+    the {nonterminal} of {LOCAL_REF}
+    this phrase
     this production
+    this production's {nonterminal}
     this {nonterminal}
     {nonterminal}
 
@@ -1104,6 +1244,7 @@
     first
     second
     third
+    fourth
 
 {WITH_ARGS} :
     with argument {EX}
@@ -1259,7 +1400,6 @@
 {PRODUCT} :
     the negation of {EX}
     the quotient {FACTOR} / {FACTOR}
-    {FACTOR} modulo {FACTOR}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
     {UNARY_OPERATOR}{FACTOR}
 
@@ -1269,12 +1409,13 @@
 {PRODUCT_OPERATOR} :
     &times;
     /
+    modulo
+    times
 
 {FACTOR} :
     ({NUM_EXPR})
-    msPerDay
-    msPerMinute
     {BASE}<sup>{EX}</sup>
+    {CONSTANT_NAME}
     {NUM_LITERAL}
     {PP_NAMED_OPERATION_INVOCATION}
     {SETTABLE}
@@ -1282,6 +1423,15 @@
 {BASE} :
     10
     2
+
+{CONSTANT_NAME} :
+    HoursPerDay
+    MinutesPerHour
+    SecondsPerMinute
+    msPerDay
+    msPerHour
+    msPerMinute
+    msPerSecond
 
 # --------------------------------
 
@@ -1293,15 +1443,18 @@
     {dsb_percent_word}
     {dsb_word}
 
+{G_SYM} :
+    {TERMINAL}
+    {nonterminal}
+
 {TERMINAL} :
     {backticked_word}
 
 {LITERAL} :
-    *false*
     *null*
-    *true*
     *undefined*
     the value *undefined*
+    {BOOL_LITERAL}
     {NUM_LITERAL}
     {STR_LITERAL}
     {TYPE_NAME}
@@ -1309,6 +1462,10 @@
     {code_unit_lit}
     {percent_word}
     {tilded_word}
+
+{BOOL_LITERAL} :
+    *false*
+    *true*
 
 {STR_LITERAL} :
     *","* (a comma)
@@ -1324,6 +1481,7 @@
     +&infin;
     -&infin;
     0.5
+    64 (that is, 8<sup>2</sup>)
     8.64
     the *NaN* Number value
     {dec_int_lit}

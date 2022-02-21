@@ -3477,17 +3477,17 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
 
         r"{COMMAND} : Optionally, {SMALL_COMMAND}.",
-        r"{ONE_LINE_ALG} : {nlai}{COMMAND}{nlai}",
+        r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}",
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
 
-    elif p == r"{ONE_LINE_ALG} : {nlai}{COMMAND}{nlai}{h_emu_note}{nlai}":
+    elif p == r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{nlai}{h_emu_note}{_outdent_}{nlai}":
         [command, note] = children
         tc_nonvalue(command, env0)
         result = None
 
-    elif p == r"{ONE_LINE_ALG} : {nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{nlai}":
+    elif p == r"{ONE_LINE_ALG} : {_indent_}{nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{_outdent_}{nlai}":
         [com1, com2] = children
         env1 = tc_nonvalue(com1, env0)
         tc_nonvalue(com2, env1)
@@ -3703,7 +3703,6 @@ def tc_nonvalue(anode, env0):
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.',
         r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.',
-        r'{COMMAND} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.',
     ]:
         [cond, t_command, f_command] = children
         (t_env, f_env) = tc_cond(cond, env0)
@@ -3711,13 +3710,7 @@ def tc_nonvalue(anode, env0):
         f_benv = tc_nonvalue(f_command, f_env)
         result = env_or(t_benv, f_benv)
 
-    elif p == r"{COMMAND} : If {CONDITION}, {SMALL_COMMAND}.":
-        [condition, then_part] = children
-        (t_env, f_env) = tc_cond(condition, env0)
-        benv = tc_nonvalue(then_part, t_env)
-        result = envs_or([benv, f_env])
-
-    elif p == r"{COMMAND} : If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.":
+    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.":
         [cond_a, command_a, cond_b, command_b] = children
         (a_t_env, a_f_env) = tc_cond(cond_a, env0)
         a_benv = tc_nonvalue(command_a, a_t_env)
@@ -3797,7 +3790,6 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Return {MULTILINE_EXPR}",
         r"{MULTILINE_SMALL_COMMAND} : return {MULTILINE_EXPR}",
         r"{SMALL_COMMAND} : return {EXPR}",
-        r"{SMALL_COMMAND} : return {LITERAL}",
     ]:
         [expr] = children
         (t1, env1) = tc_expr(expr, env0)
@@ -4698,7 +4690,7 @@ def tc_nonvalue(anode, env0):
         tc_cond(cond, env0, False)
         result = None
 
-    elif p == r"{EE_RULE} : <p>{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{nlai}</p>":
+    elif p == r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>":
         [local_ref1, h_emu_grammar, local_ref2, local_ref3] = children
         env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
         env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
@@ -4811,7 +4803,6 @@ def tc_cond_(cond, env0, asserting):
 
     if p in [
         r'{CONDITION} : {CONDITION_1}',
-        r'{CONDITION} : {NUM_COMPARISON}',
         r'{CONDITION_1} : {TYPE_TEST}',
         r'{CONDITION_1} : {NUM_COMPARISON}',
     ]:
@@ -4845,7 +4836,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}, and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
-        r"{CONDITION} : {NUM_COMPARISON} and {NUM_COMPARISON}",
     ]:
         logical = ('and', children)
         return tc_logical(logical, env0, asserting)
@@ -5397,7 +5387,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is also {LITERAL}",
         r"{CONDITION_1} : {var} is the value {LITERAL}",
         r"{CONDITION_1} : {var} is {LITERAL} because formal parameters mapped by argument objects are always writable",
-        r"{CONDITION} : {var} is {LITERAL}",
     ]:
         [ex, literal] = children
 
@@ -5583,7 +5572,7 @@ def tc_cond_(cond, env0, asserting):
             env_or(a_f_env, b_f_env)
         )
 
-    elif p == r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number":
+    elif p == r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number":
         [var, lita, litb, litc] = children
         assert lita.source_text() == '*NaN*'
         assert litb.source_text().startswith('*+&infin;*')
@@ -5599,12 +5588,9 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {var} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {var} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION} : {var} is {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
+        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
     ]:
         [var, *lit_] = children
         assert len(lit_) in [3,4,5,6]
@@ -5775,7 +5761,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code",
         r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code",
         r"{CONDITION_1} : the source text matched by {var} is non-strict code",
-        r"{CONDITION_1} : {PROD_REF} is contained in strict mode code",
     ]:
         [prod_ref] = children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
@@ -6450,12 +6435,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {U_LITERAL}":
-        [noi, lit] = children
-        (noi_t, noi_env) = tc_expr(noi, env0); assert noi_env is env0
-        env0.assert_expr_is_of_type(lit, noi_t)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} and {var} each contain exactly one character":
         [a,b] = children
         env0.assert_expr_is_of_type(a, T_CharSet)
@@ -6709,11 +6688,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_code_unit_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {nonterminal}":
-        [local_ref, nonterminal] = children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} or {var} is {LITERAL}":
         [v1, v2, lit] = children
         env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
@@ -6833,11 +6807,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {starred_str} or {starred_str}":
-        [noi, ssa, ssb] = children
-        env1 = env0.ensure_expr_is_of_type(noi, T_String)
-        return (env1, env1)
-
     elif p == r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}":
         [nont] = children
         return (env0, env0)
@@ -6855,16 +6824,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set":
         [] = children
         return (env0, env0)
-
-    elif p in [
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is {LITERAL}",
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not {LITERAL}",
-    ]:
-        [noi, literal] = children
-        (t_lit, env1) = tc_expr(literal, env0); assert env1 is env0
-        (t_noi, env1) = tc_expr(noi, env0)
-        assert t_lit.is_a_subtype_of_or_equal_to(t_noi)
-        return (env1, env1)
 
     elif p in [
         r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}",
@@ -6919,11 +6878,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is an {nonterminal} or an {nonterminal}":
-        [local_ref, nonta, nontb] = children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
     elif p in [
         r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries",
         r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements",
@@ -6960,13 +6914,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, ListType(NamedType('PTN_IdentifierName') | NamedType('PTN_StringLiteral'))) # over-specific (ReferencedBindings)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {PROD_REF} is not present",
-        r"{CONDITION_1} : {PROD_REF} is present",
-    ]:
-        [prod_ref] = children
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}":
         [local_ref, nont] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
@@ -6974,11 +6921,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}":
         [local_ref, nonta, nontb] = children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM} is {BOOL_LITERAL}":
-        [local_ref, g_sym, bool_lit] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
@@ -7000,11 +6942,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noia, T_List)
         env0.assert_expr_is_of_type(noib, T_List)
         env0.assert_expr_is_of_type(noic, T_List)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} &ge; 2<sup>32</sup> - 1":
-        [var] = children
-        assert var.source_text() == '_NcapturingParens_'
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}":
@@ -7113,7 +7050,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION} : {var} is the empty String (its length is 0)":
+    elif p == r"{CONDITION_1} : {var} is the empty String (its length is 0)":
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (env1, env1)
@@ -7273,49 +7210,32 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the result of performing {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
-        r"{EXPR} : {LITERAL}",
-        r"{EXPR} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{EX} : ({EX})",
         r"{EX} : the value of {SETTABLE}",
         r"{EX} : the {var} flag",
         r"{EX} : {code_point_lit}",
-        r"{EX} : {code_unit_lit}",
         r"{EX} : {LITERAL}",
         r"{EX} : {LOCAL_REF}",
-        r"{EX} : {NAMED_OPERATION_INVOCATION}",
         r"{EX} : {NUM_EXPR}",
-        r"{EX} : {NUM_LITERAL}",
         r"{EX} : {PAIR}",
         r"{EX} : {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EX} : {PRODUCT}",
         r"{EX} : {RECORD_CONSTRUCTOR}",
-        r"{EX} : {SUM}",
-        r"{EX} : {U_LITERAL}",
-        r"{EX} : {STR_LITERAL}",
-        r"{EXPR} : {SUM}",
         r"{FACTOR} : ({NUM_EXPR})",
-        r"{FACTOR} : ({SUM})",
-        r"{FACTOR} : {NAMED_OPERATION_INVOCATION}",
         r"{FACTOR} : {NUM_LITERAL}",
         r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}",
-        r"{FACTOR} : {PREFIX_PAREN}",
         r"{FACTOR} : {SETTABLE}",
         r"{LITERAL} : {code_unit_lit}",
         r"{LITERAL} : {NUM_LITERAL}",
         r"{LOCAL_REF} : {PROD_REF}",
         r"{LOCAL_REF} : {SETTABLE}",
         r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}",
-        r"{NUM_COMPARAND} : {EXPR}",
         r"{NUM_COMPARAND} : {FACTOR}",
         r"{NUM_COMPARAND} : {SUM}",
         r"{NUM_COMPARAND} : {PRODUCT}",
         r"{NUM_EXPR} : {PRODUCT}",
         r"{NUM_EXPR} : {SUM}",
-        r"{PRODUCT} : {FACTOR}",
         r"{RHSS} : {RHS}",
         r"{SETTABLE} : {DOTTING}",
-        r"{SUM} : {TERM}",
-        r"{TERM} : ({PRODUCT})",
         r"{TERM} : {FACTOR}",
         r"{TERM} : {PRODUCT}",
         r"{TYPE_ARG} : {DOTTING}",
@@ -7326,12 +7246,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # ------------------------------------------------------
     # literals
-
-    elif p in [
-        "{LITERAL} : *false*",
-        "{LITERAL} : *true*",
-    ]:
-        return (T_Boolean, env0)
 
     elif p == r"{LITERAL} : {BOOL_LITERAL}":
         return (T_Boolean, env0)
@@ -7357,7 +7271,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{LITERAL} : the value *undefined*",
-        r"{U_LITERAL} : *undefined*",
     ]:
         [] = children
         return (T_Undefined, env0)
@@ -7564,7 +7477,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return tc_expr(pp, env0)
 
     elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : the {ISDO_NAME} of {PROD_REF}",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})",
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}",
@@ -7578,13 +7490,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
         else:
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
-
-    elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word}({EX})",
-    ]:
-        [callee, local_ref] = children
-        callee_op_name = callee.source_text()
-        return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}",
@@ -7618,8 +7523,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}",
-        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {nonterminal}",
-        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {TERMINAL}",
+        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}",
     ]:
         [lhs, rhs] = children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
@@ -7628,7 +7532,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ------
 
     elif p in [
-        r"{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXPR})",
         r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})',
     ]:
         [opn_before_paren, arglist] = children[0:2]
@@ -8413,7 +8316,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # return T_MathInteger_
 
     elif p in [
-        r"{EXPR} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
         r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
         r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
     ]:
@@ -8539,7 +8441,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r'{EX} : the number of code points in {PROD_REF}',
-        r"{EXPR} : the number of code points in {PROD_REF}",
     ]:
         [prod_ref] = children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
@@ -8554,7 +8455,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [xref] = children
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{FACTOR} : {CONSTANT_NAME}":
+    elif p in [
+        r"{FACTOR} : {CONSTANT_NAME}",
+        r"{EX} : {CONSTANT_NAME}",
+    ]:
         [constant_name] = children
         constant_name_str = constant_name.source_text()
         # hack:
@@ -8603,14 +8507,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Number)
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_MathInteger_, env0)
-
-    elif p == r"{PRODUCT} : {FACTOR} modulo {FACTOR}":
-        [factor1, factor2] = children
-        #
-        env0.assert_expr_is_of_type(factor2, T_MathInteger_)
-        #
-        env1 = env0.ensure_expr_is_of_type(factor1, T_MathInteger_)
-        return (T_MathInteger_, env1)
 
     elif p == r"{NUM_LITERAL} : 64 (that is, 8<sup>2</sup>)":
         [] = children
@@ -8825,7 +8721,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}",
-        r'{PRODUCT} : -{var}',
     ]:
         ex = children[-1]
         (t, env1) = tc_expr(ex, env0); assert env1 is env0
@@ -8856,7 +8751,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r'{LITERAL} : {STR_LITERAL}',
-        r'{LITERAL} : {starred_str}',
     ]:
         return (T_String, env0)
 
@@ -8949,7 +8843,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_String | T_Undefined, env0)
 
     elif p in [
-        r"{EXPR} : the String value consisting of {EXPR}",
         r"{EXPR} : the String value consisting of {EX}",
     ]:
         [ex] = children
@@ -9065,13 +8958,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_code_unit_, env1)
 
-    elif p == r"{EXPR} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}":
+    elif p == r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}":
         [nonterminal, emu_xref] = children
         return (T_code_unit_, env0)
 
     elif p in [
         r"{EX} : the code unit whose value is {EX}",
-        r"{EXPR} : the code unit whose value is {NAMED_OPERATION_INVOCATION}",
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
@@ -9117,7 +9009,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_code_point_, env0)
 
     elif p in [
-        r"{EXPR} : the code point matched by {PROD_REF}",
         r"{EX} : the code point matched by {PROD_REF}",
     ]:
         [nont] = children
@@ -9338,8 +9229,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----
 
     elif p in [
-        r'{LOCAL_REF} : the {nonterminal} of {var}',
-        r"{PROD_REF} : the {nonterminal} of {PROD_REF}",
+        r"{PROD_REF} : the {nonterminal} of {LOCAL_REF}",
     ]:
         [nonterminal, var] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
@@ -9763,13 +9653,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (T_grammar_symbol_, env0)
 
+    elif p in [
+        r"{G_SYM} : {nonterminal}",
+        r"{G_SYM} : {TERMINAL}",
+    ]:
+        return (T_grammar_symbol_, env0)
+
     elif expr.prod.lhs_s == '{var}':
         [var_name] = children
         return (env0.vars[var_name], env0)
 
     elif p in [
         r'{SETTABLE} : {var}',
-        r'{FACTOR} : {var}',
     ]:
         [var] = children
         [var_name] = var.children
@@ -10263,13 +10158,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         env0.assert_expr_is_of_type(i, T_MathInteger_)
         return (T_WaiterList, env0)
-
-    elif p in [
-        r"{FACTOR} : msPerDay",
-        r"{FACTOR} : msPerMinute",
-    ]:
-        [] = children
-        return (T_IntegralNumber_, env0)
 
     elif p == r"{EXPR} : a reference to the list of waiters in {var}":
         [wl] = children

@@ -242,7 +242,12 @@ class Pseudocode_Parser:
         if self.group_errors_by_expectation:
             self.error_posns = collections.defaultdict(list)
 
-    def parse_and_handle_errors(self, start_posn, end_posn):
+    def parse_and_handle_errors(self, start_posn, end_posn, goal):
+
+        entry_lhs = '{_' + goal.lower() + '_}'
+        entry_rhs = ''
+        entry_prod = Production(True, entry_lhs, entry_rhs)
+        entry_token = (entry_prod, start_posn, start_posn, '')
 
         # hm
         # Find the start of 'this line'
@@ -267,11 +272,11 @@ class Pseudocode_Parser:
             shared.spec_text,
             start_posn,
             end_posn,
-            (self.file_base in ['emu_alg', 'emu_eqn']),
+            True,
             this_line_indentation
         )
 
-        tokens = [ token_info for token_info in token_generator ]
+        tokens = [entry_token] + [ token_info for token_info in token_generator ]
 
         def matcher_for_gparse(curr_tind, terminals):
             assert curr_tind < len(tokens)
@@ -374,9 +379,13 @@ class Pseudocode_Parser:
 
         count(result)
 
-        result.printTree(self.f_parsed)
+        [entry_node, goal_node] = result.children
+        assert entry_node.prod is entry_prod
+        assert goal_node.prod.lhs_s == '{' + goal + '}'
 
-        return result
+        goal_node.printTree(self.f_parsed)
+
+        return goal_node
 
     def report(self):
         report_file_base = self.file_base + '_prod_counts'

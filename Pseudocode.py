@@ -320,27 +320,11 @@ def get_step_line(emu_alg_n, step_id):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def create_all_parsers():
-    global one_line_alg_parser
-    one_line_alg_parser = Pseudocode_Parser('one_line_alg')
-
-    global emu_eqn_parser
-    emu_eqn_parser = Pseudocode_Parser('emu_eqn')
-
-    global inline_sdo_parser
-    inline_sdo_parser = Pseudocode_Parser('inline_SDO')
-
-    global ee_parser
-    ee_parser = Pseudocode_Parser('early_error')
-
-    global emu_alg_parser
-    emu_alg_parser = Pseudocode_Parser('emu_alg')
+    global pseudocode_parser
+    pseudocode_parser = Pseudocode_Parser('pseudocode')
 
 def report_all_parsers():
-    one_line_alg_parser.report()
-    emu_eqn_parser.report()
-    inline_sdo_parser.report()
-    ee_parser.report()
-    emu_alg_parser.report()
+    pseudocode_parser.report()
 
 def parse(hnode, what=None):
     assert isinstance(hnode, HNode)
@@ -352,7 +336,7 @@ def parse(hnode, what=None):
 
     if hnode.element_name == 'emu-alg':
         assert what is None
-        parser = emu_alg_parser
+        goal = 'EMU_ALG_BODY'
 
         # # sneak this in...
         # n_lines = spec.text.count('\n', start_posn, end_posn)
@@ -362,24 +346,24 @@ def parse(hnode, what=None):
 
     elif hnode.element_name == 'emu-eqn':
         assert what is None
-        parser = emu_eqn_parser
+        goal = 'EMU_EQN_DEF'
 
     elif hnode.element_name == 'td':
         assert what is None
-        parser = one_line_alg_parser
+        goal = 'ONE_LINE_ALG'
 
     elif hnode.element_name == 'li':
         if what == 'early_error':
-            parser = ee_parser
+            goal = 'EARLY_ERROR_RULE'
         elif what == 'inline_sdo':
-            parser = inline_sdo_parser
+            goal = 'INLINE_SDO_RULE'
         else:
             assert 0, what
 
     else:
         assert 0, hnode.element_name
 
-    tree = parser.parse_and_handle_errors(start_posn, end_posn)
+    tree = pseudocode_parser.parse_and_handle_errors(start_posn, end_posn, goal)
     hnode._syntax_tree = tree
 
     if tree is None:
@@ -582,8 +566,7 @@ def annotate_invocations(anode):
                     'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
                     'evaluating {nonterminal} {var}'                   : 'Evaluation',
                     "the CharSet returned by {h_emu_grammar} "         : 'CompileToCharSet',
-                    '{LOCAL_REF} Contains {TERMINAL}'                  : 'Contains',
-                    '{LOCAL_REF} Contains {nonterminal}'               : 'Contains',
+                    '{LOCAL_REF} Contains {G_SYM}'                     : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
                 }[rhs]
                 op_names = [callee_name]
@@ -1254,7 +1237,7 @@ def analyze_sdo_coverage_info():
                         'this {nonterminal}',
                         'the {nonterminal} contained in {PROD_REF}',
                         'the {nonterminal} containing this {nonterminal}',
-                        'the {nonterminal} of {PROD_REF}',
+                        'the {nonterminal} of {LOCAL_REF}',
                         'the {nonterminal} that is that single code point',
                         'the {nonterminal} that is that {nonterminal}',
                         'the corresponding {nonterminal}',

@@ -58,32 +58,17 @@ alias gcbn='git rev-parse --abbrev-ref HEAD'
 
 # --------------------------------------------------------------------
 
-D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D msgs_in_spec.html ids sections record_schema_hierarchies intrinsic_facts intrinsics intrinsics_anomalies def_prodns approximate_annex_a grammar_lr step_refs {one_line_alg,emu_eqn,early_error,inline_SDO,emu_alg}_{ambig,errors,prod_counts,parsed} static_deps sdo_coverage oh_warnings header_info
+D=_`gcbn` && $EK/analyze_spec.py $D spec.html && car -d $D msgs_in_spec.html ids sections record_schema_hierarchies intrinsic_facts intrinsics intrinsics_anomalies def_prodns approximate_annex_a grammar_lr step_refs pseudocode_{ambig,errors,prod_counts,parsed} static_deps sdo_coverage oh_warnings header_info
 # (~ 7s)
 
 # {lexical,syntactic}{A,B,J}_{min_len,firstk,expanded_grammar,automaton}
 # {lexical,syntactic}_{min_len,firstk,expanded_grammar} syntactic_automaton
 
+# SLR(1) machine constructed with 15822 states and 508 conflicts
+# analyzing sections took 5.85 seconds
 
-# parse_emu_eqns...
-# SLR(1) machine constructed with 135 states and 4 conflicts
-# LR_Parser construction took 0 seconds
-#
-# parse_early_errors:
-# SLR(1) machine constructed with 1356 states and 5 conflicts
-# LR_Parser construction took 0 seconds
-#
-# parse_inline_SDO:
-# SLR(1) machine constructed with 523 states and 20 conflicts
-# LR_Parser construction took 0 seconds
-#
-# parse_emu_algs:
-# SLR(1) machine constructed with 20499 states and 348 conflicts
-# LR_Parser construction took 0 seconds
-# parsing 1815 emu-algs took 4 seconds
-
-# If emu_alg has ambiguites:
-csplit $D/emu_alg_ambig.new '/^(/' '{*}'
+# If pseudocode has ambiguites:
+csplit $D/pseudocode_ambig.new '/^(/' '{*}'
 # then compare xx* to see where the problem is.
 
 # --------------------------------------------------------------------
