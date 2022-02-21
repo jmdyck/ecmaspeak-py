@@ -78,29 +78,4 @@ D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D unconverted_natures dep
 # (~ 23s)
 	# split_types
 
-# ----------------------------------------------------
-
-git checkout operation_headers
-
-# See `git rebase --help`:
-# "The easy case"
-# git rebase editorial
-# "The hard case"
-git rebase --onto editorial HEAD~1
-
-diff _editorial/spec_w_edits spec.html
-if necc:
-    gdiff _editorial/spec_w_edits spec.html
-    # copy stuff from left to right?
-    git commit --amend spec.html
-
-# ----------------------------
-
-git_review master..editorial
-or
-git_review origin/editorial..editorial
-
-# git push origin -f master reference_abstract_ops simplify_2_repeat_steps editorial ed_merge operation_headers
-git push origin -f master editorial operation_headers
-
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
