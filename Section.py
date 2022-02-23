@@ -17,7 +17,6 @@ import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
 from headers import AlgParam
 import records
-from nature import check_nature
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1031,11 +1030,7 @@ def _handle_structured_header(section):
         for_dd = dl_dict['for']
         assert for_phrase is None, for_phrase
         for_phrase = for_dd.inner_source_text()
-        mo = re.fullmatch(r'(an? .+?)( _\w+_)?', for_phrase)
-        assert mo, for_phrase
-        for_nature = mo.group(1)
-        for warning in check_nature(for_nature):
-            msg_at_node(for_dd, f"warning re for-nature: {warning}")
+        Pseudocode.parse(for_dd)
 
     if 'description' in dl_dict:
         description_dd = dl_dict['description']

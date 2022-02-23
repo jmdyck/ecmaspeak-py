@@ -11,6 +11,7 @@
     {_early_error_rule_}{EARLY_ERROR_RULE}
     {_emu_alg_body_}{EMU_ALG_BODY}
     {_emu_eqn_def_}{EMU_EQN_DEF}
+    {_for_phrase_}{FOR_PHRASE}
     {_h1_body_}{H1_BODY}
     {_inline_sdo_rule_}{INLINE_SDO_RULE}
     {_one_line_alg_}{ONE_LINE_ALG}
@@ -80,6 +81,12 @@
 
 {RHS} :
     {nlai}= {EXPR} if {CONDITION}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{FOR_PHRASE} :
+    {VAL_DESC}
+    {VAL_DESC} {var}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1500,14 +1507,17 @@
     a PromiseCapability Record
     a PromiseReaction Record
     a Property Descriptor
+    a Proxy exotic object
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
     a Realm Record
     a Reference Record
     a Script Record
     a Shared Data Block
     a SharedArrayBuffer
+    a Source Text Module Record
     a State
     a String
+    a String exotic object
     a String which is the name of a TypedArray constructor in {h_emu_xref}
     a Symbol
     a TypedArray
@@ -1515,6 +1525,7 @@
     a Unicode code point
     a WaiterList
     a WeakRef
+    a bound function exotic object
     a built-in function object
     a candidate execution
     a character
@@ -1522,6 +1533,7 @@
     a constructor
     a function object
     a mathematical value
+    a module namespace exotic object
     a non-negative integer
     a non-negative integer that is evenly divisble by 4
     a nonterminal in one of the ECMAScript grammars
@@ -1538,6 +1550,7 @@
     an Abstract Closure
     an Abstract Closure with no parameters
     an Array
+    an Array exotic object
     an ArrayBuffer
     an ArrayBuffer or SharedArrayBuffer
     an AsyncGenerator
@@ -1551,10 +1564,13 @@
     an Object that conforms to the <i>IteratorResult</i> interface
     an Object that has a {dsb_word} internal slot
     an agent signifier
+    an arguments exotic object
     an execution context
+    an immutable prototype exotic object
     an initialized RegExp instance
     an instance of a concrete subclass of Module Record
     an integer
+    an ordinary object
     an {nonterminal} Parse Node
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
     some other definition of a function's behaviour provided in this specification

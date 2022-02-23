@@ -352,6 +352,10 @@ def parse(hnode, what=None):
         assert what is None
         goal = 'ONE_LINE_ALG'
 
+    elif hnode.element_name == 'dd':
+        assert what is None
+        goal = 'FOR_PHRASE'
+
     elif hnode.element_name == 'h1':
         goal = 'H1_BODY'
 
