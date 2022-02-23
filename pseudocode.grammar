@@ -11,6 +11,7 @@
     {_early_error_rule_}{EARLY_ERROR_RULE}
     {_emu_alg_body_}{EMU_ALG_BODY}
     {_emu_eqn_def_}{EMU_EQN_DEF}
+    {_field_value_type_}{FIELD_VALUE_TYPE}
     {_for_phrase_}{FOR_PHRASE}
     {_h1_body_}{H1_BODY}
     {_inline_sdo_rule_}{INLINE_SDO_RULE}
@@ -81,6 +82,13 @@
 
 {RHS} :
     {nlai}= {EXPR} if {CONDITION}
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+{FIELD_VALUE_TYPE} :
+    {VALUE_DESCRIPTION}
+    {_indent_}{nlai}{VALUE_DESCRIPTION}{_outdent_}{nlai}
+    {_indent_}{nlai}{VALUE_DESCRIPTION} (default value is {LITERAL}){_outdent_}{nlai}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1479,8 +1487,12 @@
     {VAL_DESC}, but not {VALUE_DESCRIPTION}
     {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :
+    A function object
+    An object
     ECMAScript source text
     a BigInt
     a Boolean
@@ -1510,9 +1522,11 @@
     a Proxy exotic object
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
     a Realm Record
+    a Record whose field names are intrinsic keys and whose values are objects
     a Reference Record
     a Script Record
     a Shared Data Block
+    a Shared Data Block event
     a SharedArrayBuffer
     a Source Text Module Record
     a State
@@ -1528,10 +1542,14 @@
     a bound function exotic object
     a built-in function object
     a candidate execution
+    a candidate execution Record
     a character
     a code unit
     a constructor
     a function object
+    a globally-unique value
+    a happens-before Relation
+    a host-synchronizes-with Relation
     a mathematical value
     a module namespace exotic object
     a non-negative integer
@@ -1542,9 +1560,13 @@
     a property key
     a property key or Private Name
     a read-modify-write modification function
+    a reads-bytes-from mathematical function
+    a reads-from Relation
     a sequence of Unicode code points
     a set of algorithm steps
+    a synchronizes-with Relation
     a time value
+    a value that admits equality testing
     a {nonterminal} Parse Node
     a {nonterminal} String
     an Abstract Closure
@@ -1554,6 +1576,7 @@
     an ArrayBuffer
     an ArrayBuffer or SharedArrayBuffer
     an AsyncGenerator
+    an ECMAScript execution context
     an ECMAScript function
     an ECMAScript function object
     an ECMAScript language value
@@ -1563,7 +1586,9 @@
     an Object
     an Object that conforms to the <i>IteratorResult</i> interface
     an Object that has a {dsb_word} internal slot
+    an abrupt completion
     an agent signifier
+    an agent-order Relation
     an arguments exotic object
     an execution context
     an immutable prototype exotic object
@@ -1573,25 +1598,35 @@
     an ordinary object
     an {nonterminal} Parse Node
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
+    anything
     some other definition of a function's behaviour provided in this specification
     unknown
     {LITERAL}
     {backticked_oth}
 
 {LIST_ELEMENTS_DESCRIPTION} :
+    Agent Events Records
+    Chosen Value Records
     Cyclic Module Records
     ECMAScript language values
+    ExportEntry Records
+    ImportEntry Records
     ImportEntry Records (see {h_emu_xref})
+    Objects
+    Private Names
     PromiseReaction Records
+    Record { {dsb_word}: Parse Node, {dsb_word}: Object }
     Records that have {dsb_word} and {dsb_word} fields
     Source Text Module Records
     Strings
     Unicode code points
     WriteSharedMemory or ReadModifyWriteSharedMemory events
     byte values
+    events
     internal slot names
     names of ECMAScript Language Types
     names of internal slots
+    pairs of Synchronize events
     property keys
 
 # --------------------------------

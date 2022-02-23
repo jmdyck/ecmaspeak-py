@@ -349,8 +349,12 @@ def parse(hnode, what=None):
         goal = 'EMU_EQN_DEF'
 
     elif hnode.element_name == 'td':
-        assert what is None
-        goal = 'ONE_LINE_ALG'
+        if what == 'one_line_alg':
+            goal = 'ONE_LINE_ALG'
+        elif what == 'field_value_type':
+            goal = 'FIELD_VALUE_TYPE'
+        else:
+            assert 0, what
 
     elif hnode.element_name == 'dd':
         assert what is None

@@ -6,8 +6,8 @@
 import re
 from collections import defaultdict
 
-from shared import spec, msg_at_node, open_for_output
-from nature import check_nature
+from shared import spec, open_for_output
+import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -51,8 +51,7 @@ def process_tables():
                 else:
                     [field_name, value_type, meaning] = row.cell_texts
 
-                for warning in check_nature(value_type):
-                    msg_at_node(row.cell_nodes[-2], warning)
+                Pseudocode.parse(row.cell_nodes[-2], 'field_value_type')
 
                 # `meaning` is arbitrary prose
 

@@ -3459,7 +3459,8 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
     if isinstance(hnode_or_anode, HNode):
         hnode = hnode_or_anode
         assert hnode.element_name in ['emu-alg', 'td']
-        anode = Pseudocode.parse(hnode)
+        what = 'one_line_alg' if hnode.element_name == 'td' else None
+        anode = Pseudocode.parse(hnode, what)
         if anode is None:
             print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
         else:
