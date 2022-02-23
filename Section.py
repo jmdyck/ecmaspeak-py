@@ -1063,29 +1063,28 @@ def _handle_structured_header(section):
     for i in range(0, len(dl_nw_children), 2):
         dt = dl_nw_children[i+0]
         dd = dl_nw_children[i+1]
-        # This will need to be generalized, but is okay for now:
         dt_s = dt.inner_source_text()
-        dd_s = dd.inner_source_text()
+        assert dt_s in ['for', 'description']
         assert dt_s not in dl_dict
-        dl_dict[dt_s] = dd_s
+        dl_dict[dt_s] = dd
 
     # ----------------------------------
 
     if 'for' in dl_dict:
+        for_dd = dl_dict['for']
         assert for_phrase is None, for_phrase
-        for_phrase = dl_dict['for']
+        for_phrase = for_dd.inner_source_text()
         mo = re.fullmatch(r'(an? .+?)( _\w+_)?', for_phrase)
         assert mo, for_phrase
         for_nature = mo.group(1)
         for warning in check_nature(for_nature):
-            msg_at_node(dl, f"warning re for-nature: {warning}")
-            # Really, we should do this check while we still have access to the <dd> node,
-            # so that we can place the above msgs better.
+            msg_at_node(for_dd, f"warning re for-nature: {warning}")
 
     if 'description' in dl_dict:
+        description_dd = dl_dict['description']
         retn = []
         reta = []
-        sentences = re.split('(?<=\.) +', dl_dict['description'])
+        sentences = re.split('(?<=\.) +', description_dd.inner_source_text())
         for sentence in sentences:
             if sentence.startswith('It returns '):
                 # Maybe if it's a numeric method, we shouldn't bother?
