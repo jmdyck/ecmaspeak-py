@@ -15,6 +15,7 @@ from emu_tables import analyze_table
 import intrinsics
 from intrinsics import check_references_to_intrinsics, process_intrinsics_facts
 import records
+import Pseudocode
 
 def main():
     if len(sys.argv) != 3:
@@ -45,6 +46,8 @@ def main():
 
     check_ids()
     check_dfns()
+
+    Pseudocode.create_all_parsers()
 
     check_tables()
     records.process_tables()

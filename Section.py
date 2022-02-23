@@ -24,7 +24,6 @@ from nature import check_nature
 def make_and_check_sections():
     stderr("make_and_check_sections ...")
 
-    Pseudocode.create_all_parsers()
     headers.oh_inc_f = shared.open_for_output('oh_warnings')
 
     spec.root_section = _make_section_tree(spec.doc_node)
