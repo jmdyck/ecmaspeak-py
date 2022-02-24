@@ -399,6 +399,7 @@ def _handle_sdo_section(section):
             )
         else:
             alg_header = _handle_structured_header(section)
+            if alg_header is None: return True
 
     else:
         # But there are various clauses that don't get `type="sdo"`
@@ -763,6 +764,7 @@ def _handle_other_op_section(section):
         # So we can assume that this section has a structured header?
         # (Or might authors add a `type` attribute but use an old-style header?)
         alg_header = _handle_structured_header(section)
+        if alg_header is None: return True
 
     elif (alg_header := _handle_header_with_std_preamble(section)):
         pass
@@ -947,6 +949,8 @@ def _handle_structured_header(section):
 
     h1 = section.heading_child
     h1_body = Pseudocode.parse(h1)
+    if h1_body is None: return None
+
     L = len(h1_body.children)
     if L == 2:
         (which_semantics, op_name) = h1_body.children
