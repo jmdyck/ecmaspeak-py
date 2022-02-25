@@ -24,7 +24,7 @@
     {_indent_}{nlai}{EE_RULE}{_outdent_}{nlai}
 
 {EE_RULE} :
-    <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
+    <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
     <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>
     For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
@@ -99,9 +99,8 @@
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 {H1_BODY} :
-    {WHICH_SEMANTICS}{OP_NAME}
-    {WHICH_SEMANTICS}{OP_NAME} ( )
-    {_indent_}{nlai}{WHICH_SEMANTICS}{OP_NAME} ({_indent_}{PARAMETER_DECLS}{_outdent_}{nlai}){_outdent_}{nlai}
+    {WHICH_SEMANTICS}{OP_NAME} ( ): {VALUE_DESCRIPTION}
+    {_indent_}{nlai}{WHICH_SEMANTICS}{OP_NAME} ({_indent_}{PARAMETER_DECLS}{_outdent_}{nlai}): {VALUE_DESCRIPTION}{_outdent_}{nlai}
 
 {WHICH_SEMANTICS} :
     Runtime Semantics: 
@@ -174,7 +173,6 @@
     Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
     Assert: {CONDITION}.
     Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
-    Call {PREFIX_PAREN}.
     Choose any such {var}.
     Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
     Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.
@@ -240,18 +238,16 @@
     Return {EXPR} (no conversion).
     Return {EXPR}.
     Return {MULTILINE_EXPR}
-    Return {var} as the Completion Record of this abstract operation.
-    Return.
     ReturnIfAbrupt({EX}).
     Search {PROD_REF} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to {NAMED_OPERATION_INVOCATION}.
     Set all of the bytes of {var} to 0.
-    Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
+    Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
     Set {DOTTING} as described in {h_emu_xref}.
     Set {DOTTING} as specified in {h_emu_xref}.
     Set {DOTTING} to the definition specified in {h_emu_xref}.
     Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
-    Set {SETTABLE} such that when evaluation is resumed with a Completion {var} the following steps will be performed:{IND_COMMANDS}
-    Set {SETTABLE} such that when evaluation is resumed with a Completion {var}, the following steps of the algorithm that invoked Await will be performed, with {var} available.
+    Set {SETTABLE} such that when evaluation is resumed with a Completion Record {var} the following steps will be performed:{IND_COMMANDS}
+    Set {SETTABLE} such that when evaluation is resumed with a Completion Record {var}, the following steps of the algorithm that invoked Await will be performed, with {var} available.
     Set {SETTABLE} to {EXPR}.
     Set {SETTABLE} to {MULTILINE_EXPR}
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
@@ -270,7 +266,7 @@
     {IF_CLOSED}
     {IF_OTHER}
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.
     {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.
@@ -333,7 +329,6 @@
     perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
     remove the first code unit from {var}
-    return
     return {EXPR}
     reverse the order of the elements of {var}
     set the corresponding attribute of the property named {var} of object {var} to the value of the field
@@ -457,6 +452,7 @@
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The execution context stack has at least two elements
     The execution context stack is not empty
+    The following Set will succeed, since formal parameters mapped by arguments objects are always writable
     The following loop will terminate
     The length of {var} is {var}
     The mathematical value of {var}'s {starred_str} property is {EX}
@@ -763,7 +759,6 @@
     {var} is not already suspended
     {var} is not an Object
     {var} is not an abrupt completion
-    {var} is not an abrupt completion because of validation preceding step {h_emu_xref}
     {var} is not an array index
     {var} is not an empty List
     {var} is not an integer index
@@ -789,7 +784,6 @@
     {var} is on the list of waiters in {var}
     {var} is one of the code units in {STR_LITERAL}
     {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {var} is present in the table in step {h_emu_xref}
     {var} is the String value {STR_LITERAL}
     {var} is the empty String (its length is 0)
     {var} is the execution context of a generator
@@ -799,7 +793,6 @@
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
-    {var} is {LITERAL} because formal parameters mapped by argument objects are always writable
     {var} is {nonterminal}
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
@@ -817,7 +810,6 @@
 
 {TYPE_TEST} :
     Both Type({var}) and Type({var}) are Number or both are BigInt
-    Type({TYPE_ARG}) is an ECMAScript language type
     Type({TYPE_ARG}) is different from Type({TYPE_ARG})
     Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}
     Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
@@ -896,6 +888,8 @@
 
 {EXPR} :
     (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
+    ? {DOTTING}
+    ? {var}
     Type({var})
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
@@ -933,6 +927,7 @@
     a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
     a new empty List
     a new execution context
+    a new implementation-defined Completion Record
     a new unique Symbol value whose {DSBN} value is {var}
     a new {ENVIRONMENT_RECORD_KIND} Environment Record
     a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
@@ -944,7 +939,6 @@
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
     an implementation-approximated Number value representing {EXPR}
-    an implementation-defined Completion value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
     an implementation-defined choice of either {var} or {var}
@@ -1093,7 +1087,6 @@
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
     the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
-    the result of performing {PP_NAMED_OPERATION_INVOCATION}
     the result of raising {EX} to the {EX} power
     the result of subtracting 1 from the exponential function of {EX}
     the result of the {MATH_FUNC} of {EX}
@@ -1266,7 +1259,6 @@
     {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}
 
 {LOCAL_REF} :
-    the parsed code that is {DOTTING}
     {PROD_REF}
     {SETTABLE}
 
@@ -1482,6 +1474,10 @@
 # --------------------------------
 
 {VALUE_DESCRIPTION} :
+    either {VAL_DESC} or {VAL_DESC}
+    either {VAL_DESC}, or {VAL_DESC}
+    either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}
     {VAL_DESC} or {VAL_DESC}
     {VAL_DESC}, but not {VALUE_DESCRIPTION}
@@ -1489,6 +1485,7 @@
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :
     A function object
@@ -1498,17 +1495,21 @@
     a Boolean
     a CharSet
     a ClassFieldDefinition Record
+    a ClassStaticBlockDefinition Record
     a Completion Record
-    a Completion Record whose {dsb_word} is {tilded_word} or {tilded_word}
     a Continuation
     a Cyclic Module Record
     a Data Block
     a FinalizationRegistry
+    a For-In Iterator
+    a Generator
     a Job Abstract Closure
     a JobCallback Record
     a List
     a List of {LIST_ELEMENTS_DESCRIPTION}
+    a MatchResult
     a Matcher
+    a Module Namespace Object
     a Module Record
     a Number
     a Parse Node
@@ -1517,14 +1518,19 @@
     a PrivateEnvironment Record
     a Promise
     a PromiseCapability Record
+    a PromiseCapability Record for an intrinsic {percent_word}
     a PromiseReaction Record
     a Property Descriptor
     a Proxy exotic object
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
     a Realm Record
     a Record whose field names are intrinsic keys and whose values are objects
+    a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})
+    a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})
     a Reference Record
+    a ResolvedBinding Record
     a Script Record
+    a Set of events
     a Shared Data Block
     a Shared Data Block event
     a SharedArrayBuffer
@@ -1533,10 +1539,13 @@
     a String
     a String exotic object
     a String which is the name of a TypedArray constructor in {h_emu_xref}
+    a Super Reference Record
     a Symbol
     a TypedArray
     a TypedArray element type
     a Unicode code point
+    a Unicode property name
+    a Unicode property value
     a WaiterList
     a WeakRef
     a bound function exotic object
@@ -1544,17 +1553,20 @@
     a candidate execution
     a candidate execution Record
     a character
+    a code point
     a code unit
     a constructor
     a function object
-    a globally-unique value
     a happens-before Relation
     a host-synchronizes-with Relation
     a mathematical value
     a module namespace exotic object
+    a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
     a non-negative integer
     a non-negative integer that is evenly divisble by 4
     a nonterminal in one of the ECMAScript grammars
+    a normal completion
+    a normal completion containing {VALUE_DESCRIPTION}
     a positive integer
     a possibly empty List, each of whose elements is a String or *undefined*
     a property key
@@ -1562,14 +1574,16 @@
     a read-modify-write modification function
     a reads-bytes-from mathematical function
     a reads-from Relation
+    a return completion
     a sequence of Unicode code points
     a set of algorithm steps
     a synchronizes-with Relation
+    a throw completion
     a time value
-    a value that admits equality testing
     a {nonterminal} Parse Node
     a {nonterminal} String
     an Abstract Closure
+    an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}
     an Abstract Closure with no parameters
     an Array
     an Array exotic object
@@ -1582,6 +1596,7 @@
     an ECMAScript language value
     an Environment Record
     an Integer-Indexed exotic object
+    an Iterator
     an Iterator Record
     an Object
     an Object that conforms to the <i>IteratorResult</i> interface
@@ -1595,11 +1610,14 @@
     an initialized RegExp instance
     an instance of a concrete subclass of Module Record
     an integer
+    an integral Number
     an ordinary object
     an {nonterminal} Parse Node
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
+    any value except a Completion Record
     anything
     some other definition of a function's behaviour provided in this specification
+    source text
     unknown
     {LITERAL}
     {backticked_oth}
@@ -1611,23 +1629,29 @@
     ECMAScript language values
     ExportEntry Records
     ImportEntry Records
-    ImportEntry Records (see {h_emu_xref})
     Objects
+    Parse Nodes
     Private Names
     PromiseReaction Records
     Record { {dsb_word}: Parse Node, {dsb_word}: Object }
     Records that have {dsb_word} and {dsb_word} fields
+    Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})
     Source Text Module Records
     Strings
     Unicode code points
-    WriteSharedMemory or ReadModifyWriteSharedMemory events
+    agent signifiers
     byte values
+    code points
+    either Strings or *null*
+    either WriteSharedMemory or ReadModifyWriteSharedMemory events
     events
     internal slot names
     names of ECMAScript Language Types
     names of internal slots
     pairs of Synchronize events
     property keys
+    {ERROR_TYPE} objects
+    {nonterminal} Parse Nodes
 
 # --------------------------------
 
@@ -1649,7 +1673,6 @@
 {LITERAL} :
     *null*
     *undefined*
-    the value *undefined*
     {BOOL_LITERAL}
     {NUM_LITERAL}
     {STR_LITERAL}

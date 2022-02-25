@@ -952,11 +952,11 @@ def _handle_structured_header(section):
     if h1_body is None: return None
 
     L = len(h1_body.children)
-    if L == 2:
-        (which_semantics, op_name) = h1_body.children
+    if L == 3:
+        (which_semantics, op_name, return_nature) = h1_body.children
         params = []
-    elif L == 3:
-        (which_semantics, op_name, parameter_lines) = h1_body.children
+    elif L == 4:
+        (which_semantics, op_name, parameter_lines, return_nature) = h1_body.children
         params = []
         assert parameter_lines.prod.lhs_s == '{PARAMETER_DECLS}'
         for parameter_line in each_item_in_left_recursive_list(parameter_lines):
@@ -1045,31 +1045,19 @@ def _handle_structured_header(section):
             if sentence.startswith('It returns '):
                 # Maybe if it's a numeric method, we shouldn't bother?
                 for (pattern, nature) in [
+                    ("It returns \*true\* if and only if .+", 'a Boolean'), # except...
                     ("It returns _argument_ converted to a Number value .+.", 'a Number'),
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
-                    ("It returns a BigInt or \*undefined\*\.", "a BigInt or *undefined*"),
-                    ("It returns a Boolean value which is .+", 'a Boolean'),
-                    ("It returns a CharSet.", 'a CharSet'),
-                    ("It returns a Matcher.", 'a Matcher'),
-                    ("It returns a Number.", 'a Number'),
-                    ("It returns a Record with fields \[\[CharSet\]\] \(a CharSet\) and \[\[Invert\]\] \(a Boolean\).", 'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)'),
-                    ("It returns a Record with fields \[\[Min\]\] \(a non-negative integer\) and \[\[Max\]\] \(a non-negative integer or \+&infin;\).", 'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)'),
-                    ("It returns a Record with fields \[\[Min\]\] \(a non-negative integer\), \[\[Max\]\] \(a non-negative integer or \+&infin;\), and \[\[Greedy\]\] \(a Boolean\).", 'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)'),
-                    ("It returns a completion record which, if its \[\[Type\]\] is ~normal~, has a \[\[Value\]\] which is a Boolean.", 'a Boolean'),
-                    ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean.", 'a Boolean'),
-                    ("It returns a completion record whose \[\[Type\]\] is ~normal~ and whose \[\[Value\]\] is a Boolean indicating .+", 'a Boolean'),
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
                     ("It returns a new promise resolved with _x_.", 'a promise'),
-                    ("It returns an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult.", 'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
-                    ("It returns an integral Number representing .+", 'an integral Number'),
                     ("It returns the global object used by the currently running execution context.", 'an object'),
                     ("It returns the loaded value.", 'unknown'),
                     ("It returns the one's complement of _x_.+", 'unknown'),
                     ("It returns the sequence of Unicode code points that .+", 'a sequence of Unicode code points'),
                     ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
                     ("It returns the value of its bound identifier whose name is the value of the argument _N_.", 'an ECMAScript language value'),
-                    ("It returns the value of the \*\"length\"\* property of an array-like object \(as a non-negative integer\).", 'a non-negative integer'),
+                    ("It returns the value of the \*\"length\"\* property of an array-like object.", 'a non-negative integer'),
                 ]:
                     if re.fullmatch(pattern, sentence):
                         retn.append(nature)
@@ -1413,6 +1401,7 @@ def _handle_other_section(section):
 
     # We infer a section's kind almost entirely based on its title.
     pattern_results = [
+            (r'Implicit Normal Completion',                        'shorthand'),
             (r'Implicit Completion Values',                        'shorthand'),
             (r'Throw an Exception',                                'shorthand'),
             (r'ReturnIfAbrupt',                                    'shorthand'),

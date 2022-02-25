@@ -1577,6 +1577,9 @@ nts_behind_var_in_sdo_call = {
         'Module',
     ],
 
+    # 13349 OrdinaryCallEvaluateBody
+    ('EvaluateBody', '_F_.[[ECMAScriptCode]]'): all_possibilities_for_func_ECMAScriptCode,
+
     # 15190 IsValidRegularExpressionLiteral
     ('FlagText', '_literal_'): ['RegularExpressionLiteral'],
     ('BodyText', '_literal_'): ['RegularExpressionLiteral'],
