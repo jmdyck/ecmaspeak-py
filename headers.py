@@ -480,95 +480,6 @@ class PreambleInfoHolder:
         return poi
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-rec_method_declarations = '''
-
-    # Table 16: Abstract Methods of Environment Records
-    HasBinding(N)                -> a Boolean
-    CreateMutableBinding(N, D)   -> unknown
-    CreateImmutableBinding(N, S) -> unknown
-    InitializeBinding(N, V)      -> unknown
-    SetMutableBinding(N, V, S)   -> a Boolean or ~empty~ | throw
-    GetBindingValue(N, S)        -> an ECMAScript language value | throw *ReferenceError*
-    DeleteBinding(N)             -> a Boolean
-    HasThisBinding()             -> a Boolean
-    HasSuperBinding()            -> a Boolean
-    WithBaseObject()             -> an Object or *undefined*
-
-    # Table 18: Additional Methods of Function Environment Records
-    BindThisValue(V) -> unknown
-    GetThisBinding() -> an ECMAScript language value | throw *ReferenceError*
-    GetSuperBase()   -> an Object or *null* or *undefined*
-
-    # Table 20: Additional Methods of Global Environment Records
-    # GetThisBinding()                   -> an ECMAScript language value | throw *ReferenceError*
-    HasVarDeclaration(N)                 -> a Boolean
-    HasLexicalDeclaration(N)             -> a Boolean
-    HasRestrictedGlobalProperty(N)       -> a Boolean
-    CanDeclareGlobalVar(N)               -> a Boolean
-    CanDeclareGlobalFunction(N)          -> a Boolean
-    CreateGlobalVarBinding(N, D)         -> unknown
-    CreateGlobalFunctionBinding(N, V, D) -> unknown
-
-    # Table 21: Additional Methods of Module Environment Records
-    CreateImportBinding(N, M, N2) -> unknown
-    # GetThisBinding()            -> an ECMAScript language value | throw *ReferenceError*
-
-    # Table 39: Abstract Methods of Module Records
-    GetExportedNames(exportStarSet)       -> a List of names
-    ResolveExport(exportName, resolveSet) -> a ResolvedBinding Record or *null* or ~ambiguous~
-    Link()                                -> unknown
-    Evaluate()                            -> unknown
-
-    # Table 41: Additional Abstract Methods of Cyclic Module Record
-    InitializeEnvironment() -> unknown
-    ExecuteModule(capability) -> unknown
-'''
-
-rec_method_param_nature_ = {
-    '_D_' : 'a Boolean',
-    '_M_' : 'a Module Record',
-    '_N_' : 'a String',
-    '_N2_': 'a String',
-    '_S_' : 'a Boolean',
-    '_V_' : 'an ECMAScript language value',
-    '_exportStarSet_' : 'unknown',
-    '_exportName_'    : 'a String',
-    '_resolveSet_'    : 'unknown',
-    '_capability_'    : 'an optional PromiseCapability',
-}
-
-predeclared_rec_method_info = {}
-for line in rec_method_declarations.split('\n'):
-    line = line.strip()
-    if line == '':
-        # blank line
-        continue
-    if line.startswith('#'):
-        # comment
-        continue
-    
-    mo = re.fullmatch(r'(\w+)\(([^()]*)\) +-> (.+)', line)
-    assert mo, line
-    (name, params_str, return_nature) = (mo.groups())
-    if params_str == '':
-        param_names = []
-    else:
-        param_names = [
-            ('_' + name + '_')
-            for name in params_str.split(', ')
-        ]
-    param_nature_ = dict(
-        (param_name, rec_method_param_nature_[param_name])
-        for param_name in param_names
-    )
-    if 'throw' in return_nature:
-        (return_nature_normal, return_nature_abrupt) = re.split(r' \| (?=throw)', return_nature)
-    else:
-        (return_nature_normal, return_nature_abrupt) = (return_nature, 'unknown')
-    predeclared_rec_method_info[name] = (param_names, param_nature_, return_nature_normal, return_nature_abrupt)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
@@ -818,11 +729,8 @@ def resolve_oi(hoi, poi):
     assert hoi.also is None
     assert poi.also is None
 
-    assert hoi.return_nature_normal is None
-    hoi.return_nature_normal = poi.return_nature_normal
-
-    assert hoi.return_nature_abrupt is None
-    hoi.return_nature_abrupt = poi.return_nature_abrupt
+    assert hoi.return_nature_node is None
+    hoi.return_nature_node = poi.return_nature_node
 
     assert hoi.description_paras == []
     hoi.description_paras = poi.description_paras
@@ -844,6 +752,7 @@ class AlgParam:
     name: str
     punct: str # '' | '[]' | '...'
     nature: str
+    decl_node: Pseudocode.ANode = None
 
 # ------------------------------------------------
 
@@ -854,8 +763,7 @@ class AlgHeader:
         self.for_phrase = None
         self.params = None
         self.also = None
-        self.return_nature_normal = None
-        self.return_nature_abrupt = None
+        self.return_nature_node = None
         self.description_paras = []
         self.u_defns = []
         self.line_num = None
@@ -873,7 +781,7 @@ class AlgHeader:
                     for param in self.params
                     )
                 }
-                returns: {self.return_nature_normal}
+                returns: {self.return_nature_node.source_text()}
                 # defns: {len(self.u_defns)}
         """
 
@@ -900,69 +808,6 @@ class AlgHeader:
 
         # ------------------------------------------------------------
 
-        # In addition to the clause-heading and the preamble,
-        # there are other sources of information that can contribute to the header.
-        # One is pre-declared info, like a table of method-signatures.
-        # (Properly, we'd scrape that info from the spec itself.)
-
-        def checked_set(prop_name, new_value):
-            curr_value = getattr(self, prop_name)
-            if curr_value is not None and curr_value != new_value:
-                oh_warn()
-                oh_warn(f"{self.name}, {prop_name}:")
-                oh_warn(f"predeclared nature {new_value!r} overrides extracted nature {curr_value!r}")
-            setattr(self, prop_name, new_value)
-
-        if self.name in predeclared_rec_method_info:
-
-            (pd_param_names, pd_param_nature_, pd_return_nature_normal, pd_return_nature_abrupt) = predeclared_rec_method_info[self.name]
-            assert self.param_names() == pd_param_names
-            for param in self.params:
-                pd_nature = pd_param_nature_[param.name]
-                if True: # param.nature == 'unknown'?
-                    if param.nature != pd_nature:
-                        oh_warn()
-                        oh_warn(f"{self.name}, param {param.name}:")
-                        oh_warn(f"predeclared nature {pd_nature!r} != extracted nature {param.nature!r}")
-                else:
-                    param.nature = pd_nature
-
-            checked_set('return_nature_normal', pd_return_nature_normal)
-            checked_set('return_nature_abrupt', pd_return_nature_abrupt)
-
-        if self.species == 'op: singular: numeric method':
-            assert self.for_phrase is None
-            numeric_type_name = re.fullmatch(r'(\w+)::\w+', self.name).group(1)
-            numeric_nature = f"a {numeric_type_name}"
-
-            assert self.param_names()
-            for param in self.params:
-                if param.nature != numeric_nature:
-                    oh_warn()
-                    oh_warn(f"{self.name}, param {param.name}:")
-                    oh_warn(f"predeclared nature {numeric_nature!r} != extracted nature {param.nature!r}")
-
-            if self.name.endswith(('::equal', '::sameValue', '::sameValueZero')):
-                pd_return_nature_normal = 'a Boolean'
-            elif self.name.endswith('::lessThan'):
-                pd_return_nature_normal = 'a Boolean or *undefined*'
-            elif self.name.endswith('::toString'):
-                pd_return_nature_normal = 'a String'
-            else:
-                pd_return_nature_normal = numeric_nature
-
-            if self.name.endswith(('::exponentiate', '::divide', '::remainder')):
-                pd_return_nature_abrupt = 'throw *RangeError*'
-            elif self.name.endswith('::unsignedRightShift'):
-                pd_return_nature_abrupt = 'throw *TypeError*'
-            else:
-                pd_return_nature_abrupt = None
-
-            checked_set('return_nature_normal', pd_return_nature_normal)
-            checked_set('return_nature_abrupt', pd_return_nature_abrupt)
-
-        # --------------------------------------------------------------------------
-
         assert self.params is not None
 
         assert len([
@@ -978,15 +823,6 @@ class AlgHeader:
                         param.nature = 'a List of ECMAScript language values'
                     else:
                         param.nature = 'an ECMAScript language value'
-
-        if self.return_nature_normal is None:
-            if self.name.startswith('Math.'):
-                self.return_nature_normal = 'a Number'
-            else:
-                self.return_nature_normal = 'unknown'
-
-        if self.return_nature_abrupt is None:
-            self.return_nature_abrupt = 'unknown'
 
         # -------------------------
 

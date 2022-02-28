@@ -1580,8 +1580,6 @@
     a synchronizes-with Relation
     a throw completion
     a time value
-    a {nonterminal} Parse Node
-    a {nonterminal} String
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}
     an Abstract Closure with no parameters
@@ -1612,8 +1610,9 @@
     an integer
     an integral Number
     an ordinary object
-    an {nonterminal} Parse Node
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
+    an? {nonterminal} Parse Node
+    an? {nonterminal} String
     any value except a Completion Record
     anything
     some other definition of a function's behaviour provided in this specification

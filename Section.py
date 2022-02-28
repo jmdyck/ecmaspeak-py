@@ -959,14 +959,14 @@ def _handle_structured_header(section):
         (which_semantics, op_name, parameter_lines, return_nature) = h1_body.children
         params = []
         assert parameter_lines.prod.lhs_s == '{PARAMETER_DECLS}'
-        for parameter_line in each_item_in_left_recursive_list(parameter_lines):
-            assert parameter_line.prod.lhs_s == '{PARAMETER_DECL}'
-            [optionality, param_name, param_nature] = parameter_line.children
+        for parameter_decl in each_item_in_left_recursive_list(parameter_lines):
+            assert parameter_decl.prod.lhs_s == '{PARAMETER_DECL}'
+            [optionality, param_name, param_nature] = parameter_decl.children
             optionality = optionality.source_text()
             param_name = param_name.source_text()
             param_nature = param_nature.source_text()
             param_punct = '[]' if (optionality == 'optional ') else ''
-            params.append( AlgParam(param_name, param_punct, param_nature) )
+            params.append( AlgParam(param_name, param_punct, param_nature, parameter_decl) )
     else:
         assert 0, L
     which_semantics = which_semantics.source_text()
@@ -1132,8 +1132,7 @@ def _handle_structured_header(section):
         for_phrase = for_phrase,
         params = params,
         also = also,
-        return_nature_normal = return_nature_normal,
-        return_nature_abrupt = return_nature_abrupt,
+        return_nature_node = return_nature,
         node_at_end_of_header = section.dl_child,
     )
 
@@ -3404,8 +3403,7 @@ def AlgHeader_make(
     params,
     node_at_end_of_header,
     for_phrase           = None,
-    return_nature_normal = None,
-    return_nature_abrupt = None,
+    return_nature_node   = None,
     also                 = None,
     preamble_nodes       = None,
 ):
@@ -3415,8 +3413,7 @@ def AlgHeader_make(
     alg_header.name = name
     alg_header.node_at_end_of_header = node_at_end_of_header
     alg_header.for_phrase = for_phrase
-    alg_header.return_nature_normal = return_nature_normal
-    alg_header.return_nature_abrupt = return_nature_abrupt
+    alg_header.return_nature_node = return_nature_node
     alg_header.also = also
 
     if params is not None:

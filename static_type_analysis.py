@@ -212,7 +212,11 @@ class TypedAlgHeader:
         self.initial_parameter_types = OrderedDict()
 
         for param in header.params:
-            pt = convert_nature_to_type(param.nature)
+            if param.decl_node:
+                (_, _, param_nature_node) = param.decl_node.children
+                pt = convert_nature_node_to_type(param_nature_node)
+            else:
+                pt = convert_nature_to_type(param.nature)
 
             if param.punct == '[]':
                 pt = pt | T_not_passed
@@ -223,18 +227,7 @@ class TypedAlgHeader:
 
         # ----
 
-        rtn = convert_nature_to_type(header.return_nature_normal)
-        rta = convert_nature_to_type(header.return_nature_abrupt)
-
-        if rtn == T_TBD and rta == T_TBD:
-            rt = T_TBD
-        elif rta == T_TBD:
-            rt = rtn
-        elif rtn == T_TBD:
-            rt = rta
-        else:
-            rt = rtn | rta
-        self.initial_return_type = rt
+        self.initial_return_type = convert_nature_node_to_type(header.return_nature_node)
 
         self.return_type = self.initial_return_type
 
@@ -985,7 +978,6 @@ named_type_hierarchy = {
                     'Array_object_': {},
                     'AsyncGenerator_object_': {},
                     'FinalizationRegistry_object_': {},
-                    'Integer_Indexed_object_': {},
                     'Iterator_object_': {},
                     'IteratorResult_object_': {},
                     'Promise_object_': {},
@@ -1070,6 +1062,7 @@ named_type_hierarchy = {
                     'Intrinsics Record': {},
                     'Iterator Record': {},
                     'JSON_Stringify_state_record_': {},
+                    'Job_record_': {},
                     'JobCallback Record': {},
                     'MapData_record_': {},
                     'Module Record': {
@@ -1122,6 +1115,7 @@ named_type_hierarchy = {
                 'TildeAmbiguous_': {},
                 'TildeNamespaceObject_': {},
                 'TildeNamespace_': {},
+                'TildeUnused_': {},
                 'TrimString_where_': {},
                 'TypedArray_element_type_': {},
                 'Unresolvable_': {},
@@ -1239,6 +1233,8 @@ T_captures_list_  = ListType(T_captures_entry_)
 
 T_Unicode_code_points_ = ListType(T_code_point_)
 
+T_Integer_Indexed_object_ = T_TypedArray_object_
+
 # ------------------------------------------
 
 def type_for_ERROR_TYPE(error_type):
@@ -1255,6 +1251,97 @@ def type_for_TYPE_NAME(type_name):
     return NamedType(st)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def convert_nature_node_to_type(nature_node):
+    if nature_node is None: return T_TBD
+
+    return convert_value_description(nature_node)
+
+# --------------------------------------
+
+def convert_value_description(value_description):
+
+    assert value_description.prod.lhs_s == '{VALUE_DESCRIPTION}'
+
+    vd_st = value_description.source_text()
+    if vd_st in nature_to_type:
+        return nature_to_type[vd_st]
+
+    p = str(value_description.prod)
+    if p == '{VALUE_DESCRIPTION} : {VAL_DESC}':
+        [val_desc] = value_description.children
+        return convert_val_desc(val_desc)
+
+    elif p in [
+        '{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
+        '{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
+    ]:
+        t = T_0
+        for val_desc in value_description.children:
+            t |= convert_val_desc(val_desc)
+        return t
+
+    elif p == '{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}':
+        [pos_desc, neg_desc] = value_description.children
+        # t = convert_val_desc(pos_desc) - convert_value_description(neg_desc)
+        text = value_description.source_text()
+        if text == 'an ECMAScript language value, but not a Number or a BigInt':
+            t = T_Undefined | T_Null | T_Boolean | T_String | T_Symbol | T_Object
+        elif text == 'an ECMAScript language value, but not *undefined* or *null*':
+            t = T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
+        elif text == 'an ECMAScript language value, but not a TypedArray':
+            t = T_Tangible_
+        elif text == 'a Number, but not *NaN*':
+            t = T_FiniteNumber_ | T_InfiniteNumber_
+        elif text == 'an Object, but not a TypedArray or an ArrayBuffer':
+            t = T_Object
+        else:
+            assert 0, text
+        return t
+
+    else:
+        assert 0, repr(p)
+
+# --------------------------------------
+
+def convert_val_desc(val_desc):
+    assert val_desc.prod.lhs_s == '{VAL_DESC}'
+
+    if val_desc.prod.rhs_s == '{backticked_oth}':
+        return T_Unicode_code_points_
+
+    if val_desc.prod.rhs_s == '{LITERAL}':
+        [literal] = val_desc.children
+        if literal.prod.rhs_s == '{STR_LITERAL}':
+            return T_String
+
+    if val_desc.prod.rhs_s == 'an? {nonterminal} Parse Node':
+        [nont] = val_desc.children
+        return ptn_type_for(nont)
+
+    if val_desc.prod.rhs_s == 'a normal completion containing {VALUE_DESCRIPTION}':
+        [value_description] = val_desc.children
+        return convert_value_description(value_description)
+
+    nature = val_desc.source_text()
+    try:
+        t = nature_to_type[nature]
+    except KeyError:
+        val_desc.printTree(f=sys.stderr)
+        assert 0
+        print(nature, file=un_f)
+        t = T_TBD
+
+    assert isinstance(t, Type), nature
+    return t
+
+# ------------------------------------------------------------------------------
 
 def convert_nature_to_type(nature):
     assert 'VAR' not in nature, nature
@@ -1292,6 +1379,14 @@ nature_to_type = {
         'a positive integer'        : T_MathNonNegativeInteger_,
         '0 or 1'                    : T_MathNonNegativeInteger_,
         'a non-negative integer that is evenly divisble by 4' : T_MathNonNegativeInteger_,
+        '+&infin;'                  : T_MathPosInfinity_,
+        '-&infin;'                  : T_MathNegInfinity_,
+
+    # 5.2.6 Value Notation
+        '~empty~' : T_empty_,
+
+        '~ambiguous~' : T_TildeAmbiguous_,
+        '~unused~'    : T_TildeUnused_,
 
     # 6.1 ECMAScript language types
 
@@ -1300,11 +1395,15 @@ nature_to_type = {
         'an ECMAScript language value, but not a TypedArray' : T_Tangible_, # loses info
 
     # 6.1.1 The Undefined Type
+        '*undefined*': T_Undefined,
 
     # 6.1.2 The Null Type
+        '*null*': T_Null,
 
     # 6.1.3 The Boolean Type
         'a Boolean' : T_Boolean,
+        '*false*'   : T_Boolean,
+        '*true*'    : T_Boolean,
 
     # 6.1.4 The String Type
         'a String'                  : T_String,
@@ -1343,31 +1442,45 @@ nature_to_type = {
         # constructor_: an object with a [[Construct]] internal method
         'a constructor'          : T_constructor_object_,
 
+        'a property key'                 : T_String | T_Symbol,
+        'a property key or Private Name' : T_String | T_Symbol | T_Private_Name,
+
     # 6.2.1 The List and Record Specification Types
         'a List'                                      : T_List,
         'a List of Cyclic Module Records'             : ListType(T_Cyclic_Module_Record),
         'a List of ECMAScript language values'        : ListType(T_Tangible_),
-        'a List of ImportEntry Records (see <emu-xref href="#table-importentry-record-fields"></emu-xref>)': ListType(T_ImportEntry_Record),
+        'a List of ExportEntry Records'               : ListType(T_ExportEntry_Record),
+        'a List of ImportEntry Records'               : ListType(T_ImportEntry_Record),
+        'a List of Parse Nodes'                       : ListType(T_Parse_Node),
         'a List of PromiseReaction Records'           : ListType(T_PromiseReaction_Record),
         'a List of Records that have [[Module]] and [[ExportName]] fields': ListType(T_ExportResolveSet_Record_),
+        'a List of Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': ListType(T_ImportMeta_record_),
         'a List of Source Text Module Records'        : ListType(T_Source_Text_Module_Record),
         'a List of Strings'                           : ListType(T_String),
         'a List of Unicode code points'               : ListType(T_code_point_),
+        'a List of agent signifiers'                  : ListType(T_agent_signifier_),
         'a List of byte values'                       : ListType(T_MathInteger_),
+        'a List of either Strings or *null*'          : ListType(T_String | T_Null),
         'a List of internal slot names'               : ListType(T_SlotName_),
         'a List of names of ECMAScript Language Types': ListType(T_LangTypeName_),
         'a List of names of internal slots'           : ListType(T_SlotName_),
         'a List of names'                             : ListType(T_String),
         'a List of property keys'                     : ListType(T_String | T_Symbol),
+        'a List of |ClassElement| Parse Nodes'        : ListType(ptn_type_for('ClassElement')),
+        'a non-empty List of *SyntaxError* objects'   : ListType(T_SyntaxError),
         'a possibly empty List of Strings'            : ListType(T_String),
         'a possibly empty List, each of whose elements is a String or *undefined*': ListType(T_String | T_Undefined),
 
     # 6.2.2 The Set and Relation Specification Types
 
-    # 6.2.3 Completion
+    # 6.2.3 The Completion Record Specification Type
         'a Completion Record': T_Abrupt | T_Normal,
         'a Completion Record whose [[Type]] is ~return~ or ~throw~': T_return_ | T_throw_,
 
+        'a normal completion'            : T_Normal,
+        'an abrupt completion'           : T_Abrupt,
+        'a return completion'            : T_return_,
+        'a throw completion'             : T_throw_,
         'throw'                          : T_throw_,
         'throw *RangeError*'             : ThrowType(T_RangeError),
         'throw *ReferenceError*'         : ThrowType(T_ReferenceError),
@@ -1375,15 +1488,18 @@ nature_to_type = {
 
     # 6.2.4 Reference Record
         'a Reference Record' : T_Reference_Record,
+        'a Super Reference Record' : T_Reference_Record,
 
     # 6.2.5 Property Descriptor
         'a Property Descriptor' : T_Property_Descriptor,
 
     # 6.2.7 Abstract Closure
+        'an Abstract Closure': T_proc_,
         'an Abstract Closure with no parameters': ProcType([], T_Top_),
         'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult': T_RegExpMatcher_,
 
     # 6.2.8 Data Block
+        'a Data Block'        : T_Data_Block,
         'a Shared Data Block' : T_Shared_Data_Block,
         # is it a subtype of Data Block? Doesn't seem to be treated that way
 
@@ -1397,6 +1513,7 @@ nature_to_type = {
         'a Private Name': T_Private_Name,
 
     # 6.2.12 ClassStaticBlockDefinition
+        'a ClassStaticBlockDefinition Record': T_ClassStaticBlockDefinition_Record,
 
     # 7.1.1 ToPrimitive
         '~string~ or ~number~' : T_PreferredTypeHint_,
@@ -1406,6 +1523,9 @@ nature_to_type = {
 
     # 7.4.1 Iterator Records
         'an Iterator Record': T_Iterator_Record,
+
+    # 8.5.4 Static Semantics: AssignmentTargetType
+        '~simple~ or ~invalid~' : T_AssignmentTargetType_,
 
     # (6.2.6 The Environment Record Specification Type)
     # 9.1 Environment Records
@@ -1448,6 +1568,10 @@ nature_to_type = {
     # 10.2.3 OrdinaryFunctionCreate
         '~lexical-this~ or ~non-lexical-this~': T_this_mode2_,
 
+    # 10.3.3 CreateBuiltinFunction
+        'a set of algorithm steps' : T_alg_steps,
+        "some other definition of a function's behaviour provided in this specification": T_alg_steps,
+
     # 10.4.1 Bound Function Exotic Objects
         'a bound function exotic object' : T_bound_function_exotic_object_,
 
@@ -1458,7 +1582,7 @@ nature_to_type = {
         'an Array exotic object' : T_Array_object_,
 
     # 10.4.3 String Exotic Objects
-        'a String exotic object' : T_Object,
+        'a String exotic object' : T_String_exotic_object_,
 
     # 10.4.4 Arguments Exotic Objects
         'an arguments exotic object' : T_Object,
@@ -1467,6 +1591,7 @@ nature_to_type = {
         'an Integer-Indexed exotic object': T_Integer_Indexed_object_,
 
     # 10.4.6 Module Namespace Exotic Objects
+        'a Module Namespace Object'        : T_Object,
         'a module namespace exotic object' : T_Object,
 
     # 10.4.7 Immutable Prototype Exotic Objects
@@ -1476,11 +1601,18 @@ nature_to_type = {
         'a Proxy exotic object': T_Proxy_exotic_object_,
 
     # 11.1 Source Text
+        'a code point'         : T_code_point_,
         'a Unicode code point' : T_code_point_,
 
+        'source text'                       : T_Unicode_code_points_,
         '`&amp;`, `^`, or `|`'              : T_Unicode_code_points_,
         'ECMAScript source text'            : T_Unicode_code_points_,
         'a sequence of Unicode code points' : T_Unicode_code_points_,
+        '`**`, `*`, `/`, `%`, `+`, `-`, `&lt;&lt;`, `&gt;&gt;`, `&gt;&gt;&gt;`, `&amp;`, `^`, or `|`': T_Unicode_code_points_,
+        'a List of code points'             : T_Unicode_code_points_,
+
+    # 11.1.4 Static Semantics: CodePointAt
+        'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
 
     # 14.7.5.6 ForIn/OfHeadEvaluation
         '~enumerate~, ~iterate~, or ~async-iterate~' : T_IterationKind_,
@@ -1490,11 +1622,25 @@ nature_to_type = {
 
         '~sync~ or ~async~' : T_IteratorKind_,
 
+    # 14.7.5.10 For-In Iterator Objects
+        'a For-In Iterator' : T_Iterator_object_,
+
+    # 15.4.4 Runtime Semantics: DefineMethod
+        'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
+
+    # 15.7.2 Static Semantics: ClassElementKind
+        '~ConstructorMethod~'   : T_ClassElementKind_,
+        '~NonConstructorMethod~': T_ClassElementKind_,
+
+    # 16.1.4 Script Records
+        'a Script Record' : T_Script_Record,
+
     # 16.2.1.4 Abstract Module Records
         'a Module Record'                                    : T_Module_Record,
         'an instance of a concrete subclass of Module Record': T_Module_Record,
         'a Cyclic Module Record'                             : T_Cyclic_Module_Record,
         'a Source Text Module Record'                        : T_Source_Text_Module_Record,
+        'a ResolvedBinding Record'                           : T_ResolvedBinding_Record,
 
     # 20.1.2.11.1 GetOwnPropertyKeys
         '~string~ or ~symbol~' : T_PropertyKeyKind_,
@@ -1513,11 +1659,18 @@ nature_to_type = {
         '~start~ or ~end~'               : T_TrimString_where_,
         '~start~, ~end~, or ~start+end~' : T_TrimString_where_,
 
+    # 22.2.1 Patterns
+        'a character' : T_code_unit_ | T_code_point_,
+
+        'a Unicode property name'  : T_Unicode_code_points_,
+        'a Unicode property value' : T_Unicode_code_points_,
+
     # 22.2.2.1 Notation:
         'a CharSet'      : T_CharSet,
         'a State'        : T_State,
         'a Continuation' : T_Continuation,
         'a Matcher'      : T_Matcher,
+        'a MatchResult'  : T_MatchResult,
 
         'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
         'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
@@ -1535,6 +1688,7 @@ nature_to_type = {
 
         # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
         'an ArrayBuffer'                        : T_ArrayBuffer_object_,
+        'a SharedArrayBuffer'                   : T_SharedArrayBuffer_object_,
         'an ArrayBuffer or SharedArrayBuffer'   : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
         'an ArrayBuffer or a SharedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
 
@@ -1557,6 +1711,7 @@ nature_to_type = {
         'a FinalizationRegistry' : T_FinalizationRegistry_object_,
 
     # 27.1.1.2 The Iterator Interface
+        'an Iterator'       : T_Iterator_object_,
         'an Iterator object': T_Iterator_object_,
 
         '~key+value~ or ~value~'         : T_iteration_result_kind_,
@@ -1568,11 +1723,30 @@ nature_to_type = {
         'a Promise'    : T_Promise_object_,
         'a new promise': T_Promise_object_,
 
-    # 27.2.1.1: PromiseCapability Record
+    # 27.2.1.1 PromiseCapability Record
         'a PromiseCapability Record'    : T_PromiseCapability_Record,
+        'a PromiseCapability Record for an intrinsic %Promise%': T_PromiseCapability_Record,
 
-    # 27.2.1.2: PromiseReaction Records
+    # 27.2.1.2 PromiseReaction Records
         'a PromiseReaction Record' : T_PromiseReaction_Record,
+
+    # 27.2.1.3 CreateResolvingFunctions
+        'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)' : T_ResolvingFunctions_record_,
+
+    # 27.2.2.1 NewPromiseReactionJob
+        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
+
+    # 27.2.2.2 NewPromiseResolveThenableJob
+        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
+
+    # 27.5 Generator Objects
+        'a Generator' : T_Iterator_object_,
+
+    # 27.5.3.2 GeneratorValidate
+        'either ~suspendedStart~, ~suspendedYield~, or ~completed~' : T_generator_state_,
+
+    # 27.5.3.5 GetGeneratorKind
+        '~non-generator~, ~sync~, or ~async~' : T_IteratorKind_,
 
     # 27.6 AsyncGenerator Objects
         'an AsyncGenerator': T_AsyncGenerator_object_,
@@ -1580,7 +1754,7 @@ nature_to_type = {
     # 29.1 Memory Model Fundamentals
         'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
             T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event,
-        'a List of WriteSharedMemory or ReadModifyWriteSharedMemory events':
+        'a List of either WriteSharedMemory or ReadModifyWriteSharedMemory events':
             ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event),
 
     # 29.4 Candidate Executions
@@ -1589,39 +1763,8 @@ nature_to_type = {
 
         'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_event,
 
-    # -----------------------------
-    # union of named types
-
-    'a BigInt or a Number'                                       : T_BigInt | T_Number,
-    'a BigInt or *undefined*'                                    : T_BigInt | T_Undefined,
-    'a Boolean or *undefined*'                                   : T_Boolean | T_Undefined,
-    'a Boolean or ~empty~'                                       : T_Boolean | T_empty_,
-    'a Data Block or a Shared Data Block'                        : T_Data_Block | T_Shared_Data_Block,
-    'a Number or *undefined*'                                    : T_Number | T_Undefined,
-    'a Number or a BigInt'                                       : T_Number | T_BigInt,
-    'a Number, but not *NaN*'                                    : T_FiniteNumber_ | T_InfiniteNumber_,
-    'a PrivateEnvironment Record or *null*'                      : T_PrivateEnvironment_Record | T_Null,
-    'a Property Descriptor or *undefined*'                       : T_Property_Descriptor | T_Undefined,
-    'a Realm Record or *null*'                                   : T_Realm_Record | T_Null,
-    'a ResolvedBinding Record or *null* or ~ambiguous~'          : T_ResolvedBinding_Record | T_Null | T_TildeAmbiguous_,
-    'a Script Record, a Module Record, or *null*'                : T_Script_Record | T_Module_Record | T_Null,
-    'a character'                                                : T_code_unit_ | T_code_point_,
-    'a non-negative integer or +&infin;'                         : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
-    'a property key or Private Name'                             : T_String | T_Symbol | T_Private_Name,
-    'a property key'                                             : T_String | T_Symbol,
-    'a |FunctionBody| Parse Node or an Abstract Closure with no parameters' : ptn_type_for('FunctionBody') | ProcType([], T_Top_),
-    'an Abstract Closure, a set of algorithm steps, or some other definition of a function\'s behaviour provided in this specification' : T_proc_ | T_alg_steps,
-    'an Array or *null*'                                         : T_Array_object_ | T_Null,
-    'an ECMAScript language value or a Reference Record'         : T_Tangible_ | T_Reference_Record,
-    'an ECMAScript language value, but not *undefined* or *null*': T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object,
-    'an ECMAScript language value, but not a Number or a BigInt' : T_Undefined | T_Null | T_Boolean | T_String | T_Symbol | T_Object,
-    'an Environment Record or *null*'                            : T_Environment_Record | T_Null,
-    'an Environment Record or *undefined*'                       : T_Environment_Record | T_Undefined,
-    'an Object or *null* or *undefined*'                         : T_Object | T_Null | T_Undefined,
-    'an Object or *null*'                                        : T_Object | T_Null,
-    'an Object or *undefined*'                                   : T_Object | T_Undefined,
-    '~empty~ or an |Arguments| Parse Node'                       : ptn_type_for('Arguments') | T_empty_,
-    '~not-matched~ or a non-negative integer'                    : T_NotMatched_ | T_MathNonNegativeInteger_,
+    # 29.5 Abstract Operations for the Memory Model
+        'a Set of events' : T_Set,
 
 }
 
@@ -1629,56 +1772,34 @@ nature_to_type = {
 
 type_tweaks_tuples = [
     ('AllPrivateIdentifiersValid'               , '_names_'                , T_TBD                 , ListType(T_String)),
-    ('ArrayAccumulation'                        , '_nextIndex_'            , T_TBD                 , T_MathInteger_),
     ('AsyncFunctionStart'                       , '_asyncFunctionBody_'    , T_TBD                 , T_Parse_Node),
     ('AsyncGeneratorEnqueue'                    , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
     ('AsyncGeneratorUnwrapYieldResumption'      , '_resumptionValue_'      , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
     ('AsyncIteratorClose'                       , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_empty_ | T_throw_),
-    ('BindingClassDeclarationEvaluation'        , '*return*'               , T_TBD                 , T_function_object_ | T_throw_),
     ('BindingInitialization'                    , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
     ('ClassDefinitionEvaluation'                , '_className_'            , T_TBD                 , T_String | T_Undefined),
-    ('ClassDefinitionEvaluation'                , '*return*'               , T_TBD                 , T_function_object_ | T_throw_),
-    ('ClassElementEvaluation'                   , '*return*'               , T_TBD                 , T_Abrupt | T_ClassFieldDefinition_Record | T_ClassStaticBlockDefinition_Record | T_PrivateElement | T_Undefined | T_empty_),
     ('Construct'                                , '_argumentsList_'        , T_TBD | T_not_passed  , ListType(T_Tangible_) | T_not_passed),
-    ('ConstructorMethod'                        , '*return*'               , T_TBD                 , T_empty_ | ptn_type_for('ClassElement')),
     ('Contains'                                 , '_symbol_'               , T_TBD                 , T_grammar_symbol_),
-    ('ContainsDuplicateLabels'                  , '*return*'               , T_TBD                 , T_Boolean),
     ('ContainsDuplicateLabels'                  , '_labelSet_'             , T_TBD                 , ListType(T_String)),
-    ('ContainsUndefinedBreakTarget'             , '*return*'               , T_TBD                 , T_Boolean),
-    ('ContainsUndefinedContinueTarget'          , '*return*'               , T_TBD                 , T_Boolean),
     ('CreateListFromArrayLike'                  , '_obj_'                  , T_TBD                 , T_Tangible_),
     ('CreateMappedArgumentsObject'              , '_argumentsList_'        , T_List                , ListType(T_Tangible_)),
     ('CreatePerIterationEnvironment'            , '_perIterationBindings_' , T_TBD                 , ListType(T_String)),
     ('DefineMethod'                             , '_functionPrototype_'    , T_TBD | T_not_passed  , T_Object | T_not_passed),
-    ('DefineMethod'                             , '*return*'               , T_TBD                 , T_methodDef_record_ | T_throw_),
-    ('DestructuringAssignmentEvaluation'        , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_throw_),
     ('DetachArrayBuffer'                        , '_key_'                  , T_TBD | T_not_passed  , T_Tangible_ | T_not_passed),
     ('EvalDeclarationInstantiation'             , '_varEnv_'               , T_TBD                 , T_Environment_Record),
     ('EvalDeclarationInstantiation'             , '_lexEnv_'               , T_TBD                 , T_Environment_Record),
     ('EvalDeclarationInstantiation'             , '_privateEnv_'           , T_TBD                 , T_PrivateEnvironment_Record),
-    ('Evaluation'                               , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
+    ('Evaluation'                               , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Reference_Record | T_Abrupt),
     ('ExportEntriesForModule'                   , '_module_'               , T_TBD                 , T_String | T_Null),
     ('FinishDynamicImport'                      , '_referencingScriptOrModule_' , T_TBD            , T_Script_Record | T_Module_Record | T_Null),
     ('FinishDynamicImport'                      , '_specifier_'            , T_TBD                 , T_String),
-    ('FlattenIntoArray'                         , '*return*'               , T_TBD                 , T_MathNonNegativeInteger_ | T_throw_),
     ('GeneratorResume'                          , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
     ('GeneratorValidate'                        , '_generator_'            , T_TBD                 , T_Tangible_),
-    ('GeneratorYield'                           , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
-    ('GetMethod'                                , '*return*'               , T_TBD                 , T_Undefined | T_function_object_ | T_throw_),
     ('GetOwnPropertyKeys'                       , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('GetValue'                                 , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
     ('GetValue'                                 , '_V_'                    , T_TBD                 , T_Tangible_ | T_Reference_Record | T_throw_),
     ('GetViewValue'                             , '_view_'                 , T_TBD                 , T_Tangible_),
     ('GetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
     ('HasCallInTailPosition'                    , '_call_'                 , T_TBD                 , T_Parse_Node),
-    ('HostEnqueuePromiseJob'                    , '*return*'               , T_TBD                 , T_empty_),
-    ('HostEnsureCanCompileStrings'              , '*return*'               , T_TBD                 , T_host_defined_ | T_throw_),
-    ('HostFinalizeImportMeta'                   , '*return*'               , T_TBD                 , T_empty_),
-    ('HostGetImportMetaProperties'              , '*return*'               , T_TBD                 , ListType(T_ImportMeta_record_)),
-    ('HostHasSourceTextAvailable'               , '*return*'               , T_TBD                 , T_Boolean),
-    ('HostImportModuleDynamically'              , '*return*'               , T_TBD                 , T_Undefined),
-    ('HostPromiseRejectionTracker'              , '*return*'               , T_TBD                 , T_empty_),
-    ('HostResolveImportedModule'                , '*return*'               , T_TBD                 , T_Module_Record | ThrowType(T_Error)),
     ('InitializeBoundName'                      , '_value_'                , T_TBD                 , T_Tangible_),
     ('InitializeReferencedBinding'              , '_V_'                    , T_TBD                 , T_Reference_Record | T_throw_),
     ('InitializeReferencedBinding'              , '_W_'                    , T_TBD                 , T_Tangible_ | T_throw_),
@@ -1690,61 +1811,38 @@ type_tweaks_tuples = [
     ('IsRegExp'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
     ('IteratorBindingInitialization'            , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
     ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_empty_ | T_throw_),
-    ('IteratorDestructuringAssignmentEvaluation', '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_throw_),
-    ('IteratorStep'                             , '*return*'               , T_TBD                 , T_Boolean | T_Object | T_throw_),
-    ('IteratorValue'                            , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
     ('KeyedBindingInitialization'               , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
-    ('KeyedDestructuringAssignmentEvaluation'   , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_throw_),
-    ('LabelledEvaluation'                       , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
     ('LoopContinues'                            , '_completion_'           , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
-    ('LoopEvaluation'                           , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('MakeSuperPropertyReference'               , '_actualThis_'           , T_TBD                 , T_Tangible_),
     ('MakeSuperPropertyReference'               , '_propertyKey_'          , T_TBD                 , T_String | T_Symbol),
     ('MakeSuperPropertyReference'               , '_strict_'               , T_TBD                 , T_Boolean),
     ('NewPromiseReactionJob'                    , '_argument_'             , T_TBD                 , T_Tangible_),
     ('OrdinaryHasInstance'                      , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('ParsePattern'                             , '*return*'               , T_TBD                 , ListType(T_SyntaxError) | ptn_type_for('Pattern')),
     ('PerformEval'                              , '_x_'                    , T_TBD                 , T_Tangible_),
     ('PerformPromiseThen'                       , '_onFulfilled_'          , T_TBD                 , T_Tangible_),
     ('PerformPromiseThen'                       , '_onRejected_'           , T_TBD                 , T_Tangible_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-    ('PropertyDefinitionEvaluation'             , '*return*'               , T_TBD                 , T_not_returned | T_throw_),
     ('ProxyCreate'                              , '_handler_'              , T_TBD                 , T_Tangible_),
     ('ProxyCreate'                              , '_target_'               , T_TBD                 , T_Tangible_),
     ('PutValue'                                 , '_V_'                    , T_TBD                 , T_Tangible_ | T_Reference_Record | T_throw_),
     ('PutValue'                                 , '_W_'                    , T_TBD                 , T_Tangible_ | T_throw_),
-    ('QuoteJSONString'                          , '_value_'                , T_TBD                 , T_String),
-    ('RepeatMatcher'                            , '*return*'               , T_TBD                 , T_MatchResult),
     ('RequireInternalSlot'                      , '_O_'                    , T_TBD                 , T_Tangible_),
     ('RequireInternalSlot'                      , '_internalSlot_'         , T_TBD                 , T_SlotName_),
-    ('RequireObjectCoercible'                   , '*return*'               , T_throw_              , T_Boolean | T_Number | T_String | T_Symbol | T_Object | ThrowType(T_TypeError)),
     ('RequireObjectCoercible'                   , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('SV'                                       , '*return*'               , T_TBD                 , T_String),
     ('SetRealmGlobalObject'                     , '_thisValue_'            , T_TBD                 , T_Tangible_),
     ('SetViewValue'                             , '_view_'                 , T_TBD                 , T_Tangible_),
     ('SetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
     ('SortCompare'                              , '_x_'                    , T_TBD                 , T_Tangible_),
     ('SortCompare'                              , '_y_'                    , T_TBD                 , T_Tangible_),
-    ('TRV'                                      , '*return*'               , T_TBD                 , T_String),
-    ('TV'                                       , '*return*'               , T_TBD                 , T_String | T_Undefined),
-    ('TemplateStrings'                          , '*return*'               , T_TBD                 , ListType(T_String)),
-    ('ToBoolean'                                , '*return*'               , T_TBD                 , T_Boolean),
     ('ToBoolean'                                , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('ToNumber'                                 , '*return*'               , T_TBD                 , T_Number | ThrowType(T_TypeError)),
     ('ToNumber'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('ToObject'                                 , '*return*'               , T_TBD                 , T_Object | ThrowType(T_TypeError)),
     ('ToObject'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
     ('ToPropertyDescriptor'                     , '_Obj_'                  , T_TBD                 , T_Tangible_),
-    ('ToString'                                 , '*return*'               , T_TBD                 , T_String | ThrowType(T_TypeError)),
     ('ToString'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
     ('TriggerPromiseReactions'                  , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('UpdateEmpty'                              , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
-    ('UpdateEmpty'                              , '_completionRecord_'     , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
     ('UpdateEmpty'                              , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
     ('ValidateTypedArray'                       , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('[[Call]]'                                 , '*return*'               , T_TBD                 , T_Tangible_ | T_throw_),
-    ('[[Construct]]'                            , '*return*'               , T_TBD                 , T_Object | T_throw_),
     ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
@@ -2175,9 +2273,6 @@ class Env:
             )
         elif expr_t.is_a_subtype_of_or_equal_to(expected_t):
             pass
-        elif expected_t == T_not_returned and expr_t in [T_Undefined, T_empty_]:
-            # todo: why does EnqueueJob return ~empty~ ?
-            pass
         else:
             stderr()
             stderr("assert_expr_is_of_type()")
@@ -2565,6 +2660,8 @@ class Env:
                 '\u211d(_t_ / msPerMinute)', # MinFromTime
                 '\u211d(_t_ / msPerSecond)', # SecFromTime
                 'ReferencedBindings of |NamedExports|',
+                'PrototypePropertyNameList of |ClassElementList|',
+                '_lref_.[[ReferencedName]]',
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -3199,6 +3296,18 @@ def tc_header(tah):
                 tah.name == 'CompilePattern' and pn == '*return*'
                 or
                 tah.name == 'GeneratorYield' and pn == '*return*'
+                or
+                tah.name == 'Evaluation' and pn == '*return*'
+                or
+                tah.name == 'GeneratorValidate' and pn == '*return*'
+                or
+                tah.name == 'ProxyCreate' and pn == '*return*'
+                or
+                tah.name == 'CreateMapIterator' and pn == '*return*'
+                or
+                tah.name == 'CreateSetIterator' and pn == '*return*'
+                or
+                tah.name == 'TypedArrayCreate' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
@@ -3218,6 +3327,7 @@ def tc_header(tah):
                 or
                 init_t.is_a_subtype_of_or_equal_to(final_t)
                 # This pass just widened the type.
+                # [Maybe this is too general.]
                 # ------
                 or
                 final_t.is_a_subtype_of_or_equal_to(init_t) and (
@@ -3229,25 +3339,15 @@ def tc_header(tah):
                     or
                     tah.name == 'SameValueNonNumeric' and init_t == T_Tangible_
                     or
-                    tah.name == 'SetMutableBinding' and pn == '*return*'
-                    or
                     tah.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
-                    or
-                    tah.name in ['Number::divide','Number::exponentiate','Number::remainder'] and pn == '*return*' and init_t == T_Number | ThrowType(T_RangeError) and final_t == T_Number
-                    or
-                    tah.name == 'Number::unsignedRightShift' and pn == '*return*' and init_t == T_Number | ThrowType(T_TypeError) and final_t == T_IntegralNumber_
-                    or
-                    tah.name == 'BigInt::unsignedRightShift' and pn == '*return*' and init_t == T_BigInt | ThrowType(T_TypeError) and final_t == ThrowType(T_TypeError)
-                    or
-                    tah.name in ['BigInt::lessThan'] and pn == '*return*' and init_t == T_Boolean | T_Undefined and final_t == T_Boolean
-                    or
-                    tah.name in ['Number::bitwiseAND', 'Number::bitwiseOR', 'Number::bitwiseXOR', 'Number::leftShift', 'Number::signedRightShift'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_
                     or
                     tah.name == 'AsyncGeneratorResume' and pn == '_completion_'
                     or
                     tah.name == 'AsyncGeneratorCompleteStep' and pn == '_completion_'
                     or
                     tah.name == 'CallDynamicImportFulfilled' and pn == '_result_' and init_t == T_Tangible_ and final_t == T_Undefined
+                    or
+                    pn == '*return*' # too general?
                 )
                 # This pass just narrowed the type.
                 # ----
@@ -3262,27 +3362,13 @@ def tc_header(tah):
                 or
                 init_t == T_Normal and final_t == T_function_object_
                 or
-                tah.name == 'BindingClassDeclarationEvaluation' and pn == '*return*' and init_t == T_Object and final_t == T_function_object_ | T_throw_
-                or
                 tah.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
                 or
                 tah.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_MathInteger_
                 or
-                tah.name == 'RequireInternalSlot' and pn == '*return*' and init_t == T_throw_ and final_t == T_not_returned | ThrowType(T_TypeError)
-                or
-                tah.name in ['Math.clz32', 'Math.imul'] and pn == '*return*' and init_t == T_Number and final_t == T_IntegralNumber_ | ThrowType(T_TypeError)
-                or
-                tah.name == 'NewPromiseReactionJob' and pn == '*return*' and init_t == T_Job and final_t == T_Record
-                or
                 tah.name == 'CodePointsToString' and pn == '_text_' and init_t == T_Unicode_code_points_ and final_t == ListType(T_code_point_)
 
                 # eoh is just wrong, because preamble is misleading
-                or
-                tah.name == 'Math.imul' and pn == '*return*'
-                or
-                tah.name == 'parseFloat' and pn == '*return*'
-                or
-                tah.name == 'Math.sign' and pn == '*return*'
                 or
                 tah.name == 'ObjectDefineProperties' and pn == '_O_'
                 or
@@ -3290,8 +3376,7 @@ def tc_header(tah):
                 or
                 tah.name == 'DateString' and pn == '_tv_'
                 or
-                tah.name == 'Evaluation' and pn == '*return*' and init_t == T_Abrupt | T_Tangible_ | T_empty_
-
+                tah.name == 'SerializeJSONArray' and pn == '_value_'
 
                 # or
                 # tah.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
@@ -3392,7 +3477,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
         print()
         for e in rr_envs:
             print(e.vars['*return*'])
-        assert 0, final_env.vars['*return*']
+        #? assert 0, final_env.vars['*return*']
 
     return final_env
 
@@ -3423,7 +3508,8 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
         )
 
     if type_of_returned_value in [T_Top_, T_Normal]: # , T_TBD]:
-        assert 0, str(type_of_returned_value)
+        #? assert 0, str(type_of_returned_value)
+        pass
 
     aug_env = env_at_return_point.augmented_with_return_type(type_of_returned_value)
 
@@ -3503,8 +3589,12 @@ def tc_nonvalue(anode, env0):
         env1 = tc_nonvalue(ind_commands, env0)
         if env1 is not None:
             # Control falls off the end of the algorithm.
-            proc_add_return(env1, T_not_returned, ind_commands)
-            # spec says we should assume Undefined (wait, does it?), but I don't feel like it.
+            add_pass_error(
+                ind_commands,
+                "Control falls off the end of the algorithm (need an explicit Return?)"
+            )
+            default_return_value = T_not_returned # or T_TildeUnused_, see PR #2397
+            proc_add_return(env1, default_return_value, ind_commands)
             result = None
         else:
             # All control paths end with a 'Return'
@@ -3659,7 +3749,7 @@ def tc_nonvalue(anode, env0):
         result = env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
 
     elif p in [
-        r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the completion record returned by the resumed computation.",
+        r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.",
         r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.",
     ]:
         [_, ctx_var, _, resa_ex, resb_var] = children
@@ -3797,16 +3887,6 @@ def tc_nonvalue(anode, env0):
         if False and trace_this_op:
             print("Return command's expr has type", t1)
         proc_add_return(env1, t1, anode)
-        result = None
-
-    elif p in [
-        r"{COMMAND} : Return.",
-        r"{SMALL_COMMAND} : return",
-    ]:
-        [] = children
-        # A "return" statement without a value in an algorithm step
-        # means the same thing as: Return NormalCompletion(*undefined*).
-        proc_add_return(env0, T_Undefined, anode)
         result = None
 
     elif p == r"{COMMAND} : See grammar and conversion algorithm below.":
@@ -4175,7 +4255,7 @@ def tc_nonvalue(anode, env0):
         env_at_bottom = tc_proc(None, defns, env0)
         result = env0
 
-    elif p == r'{COMMAND} : Set {SETTABLE} such that when evaluation is resumed with a Completion {var} the following steps will be performed:{IND_COMMANDS}':
+    elif p == r'{COMMAND} : Set {SETTABLE} such that when evaluation is resumed with a Completion Record {var} the following steps will be performed:{IND_COMMANDS}':
         [settable, comp_var, commands] = children
         env0.assert_expr_is_of_type(settable, T_host_defined_)
         #
@@ -4390,7 +4470,7 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.":
         [noi, w_var, t_var, *blah] = children
-        env0.assert_expr_is_of_type(noi, T_not_returned)
+        env0.assert_expr_is_of_type(noi, T_TildeUnused_)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(t_var, T_MathNonNegativeInteger_)
         result = env0
@@ -4399,11 +4479,10 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.",
         r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}",
         r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}",
-        r"{COMMAND} : Call {PREFIX_PAREN}.",
     ]:
         noi = children[0]
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
-        if noi_t.is_a_subtype_of_or_equal_to(T_not_returned | T_Undefined | T_empty_):
+        if noi_t.is_a_subtype_of_or_equal_to(T_TildeUnused_ | T_Undefined | T_empty_):
             pass
         else:
             if 0:
@@ -4540,7 +4619,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         result = env0
 
-    elif p == r"{COMMAND} : Set fields of {var} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}":
+    elif p == r"{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}":
         [var, emu_xref, _] = children
         env0.assert_expr_is_of_type(var, T_Intrinsics_Record)
         result = env0
@@ -4708,7 +4787,7 @@ def tc_nonvalue(anode, env0):
         tc_cond(condb, tenv, False)
         result = None
 
-    elif p == r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}":
+    elif p == r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}":
         [cond, bool_lit, h_emu_alg] = children
         tc_cond(cond, env0)
         # XXX should check h_emu_alg
@@ -4916,10 +4995,6 @@ def tc_cond_(cond, env0, asserting):
         copula = 'isnt a' if 'neither' in p else 'is a'
         return env0.with_type_test(type_arg, copula, t, asserting)
 
-    elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is an ECMAScript language type":
-        [type_arg] = children
-        return env0.with_type_test(type_arg, 'is a', T_Tangible_, asserting)
-
     elif p == r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot":
         [var, dsbna, dsbnb] = children
         env0.assert_expr_is_of_type(var, T_Object)
@@ -4987,10 +5062,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is not an abrupt completion",
     ]:
         [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is not an abrupt completion because of validation preceding step {h_emu_xref}":
-        [var, _] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
     elif p == r"{CONDITION_1} : {var} is an Abstract Closure with no parameters":
@@ -5244,8 +5315,8 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
     ]:
         [var, literal, _] = children
-        env0.assert_expr_is_of_type(literal, T_Undefined)
-        return env0.with_type_test(var, 'is a', T_Undefined, asserting)
+        env0.assert_expr_is_of_type(literal, T_TildeUnused_)
+        return env0.with_type_test(var, 'is a', T_TildeUnused_, asserting)
 
     elif p == r'{CONDITION_1} : {var} is a WriteSharedMemory event':
         [var] = children
@@ -5386,7 +5457,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {EX} is {LITERAL}",
         r"{CONDITION_1} : {var} is also {LITERAL}",
         r"{CONDITION_1} : {var} is the value {LITERAL}",
-        r"{CONDITION_1} : {var} is {LITERAL} because formal parameters mapped by argument objects are always writable",
     ]:
         [ex, literal] = children
 
@@ -6786,11 +6856,6 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is present in the table in step {h_emu_xref}":
-        [var, xref] = children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} is an instance of {var}":
         [var1, var2] = children
         env0.assert_expr_is_of_type(var1, T_Parse_Node)
@@ -6911,7 +6976,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s":
         [noi, nont] = children
-        env0.assert_expr_is_of_type(noi, ListType(NamedType('PTN_IdentifierName') | NamedType('PTN_StringLiteral'))) # over-specific (ReferencedBindings)
+        env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}":
@@ -7091,6 +7156,10 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable":
+        [] = children
+        return (env0, env0)
+
     else:
         stderr()
         stderr("tc_cond:")
@@ -7207,7 +7276,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # stderr('>>>', expr.source_text())
 
     if p in [
-        r"{EXPR} : the result of performing {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
         r"{EX} : ({EX})",
@@ -7268,12 +7336,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LITERAL} : {TYPE_NAME}":
         [type_name] = children
         return (T_LangTypeName_, env0)
-
-    elif p in [
-        r"{LITERAL} : the value *undefined*",
-    ]:
-        [] = children
-        return (T_Undefined, env0)
 
     elif p == r"{LITERAL} : {tilded_word}":
         [tilded_word] = children
@@ -7437,6 +7499,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_TildeNamespace_, env0)
         elif chars == 'namespace-object':
             return (T_TildeNamespaceObject_, env0)
+        elif chars == 'unused':
+            return (T_TildeUnused_, env0)
         else:
             assert 0, chars
 
@@ -7874,7 +7938,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype in [T_ClassFieldDefinition_Record, T_ClassStaticBlockDefinition_Record]:
                         # ClassDefinitionEvaluation: `Set _element_ to _element_.[[Value]].`
                         result_memtype = memtype
-                    elif memtype in [T_not_returned, ListType(T_code_unit_), T_Top_]:
+                    elif memtype in [T_TildeUnused_, ListType(T_code_unit_), T_Top_]:
                         # hm.
                         result_memtype = memtype
 
@@ -7968,9 +8032,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         elif lhs_t in [
             T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
-            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned | T_not_set,
-            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned,
-            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned | T_Abrupt,
             T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
             T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_,
         ]:
@@ -8276,11 +8337,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign",
-        r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
+
+    elif p == r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_IntegralNumber_)
+        return (T_IntegralNumber_, env0)
 
     elif p in [
         r"{EX} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
@@ -9275,11 +9340,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Parse_Node, env0)
 
-    elif p == r"{LOCAL_REF} : the parsed code that is {DOTTING}":
-        [dotting] = children
-        env0.assert_expr_is_of_type(dotting, T_Parse_Node)
-        return (T_Parse_Node, env0)
-
     elif p == r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse":
         [var] = children
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
@@ -9897,14 +9957,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return (normal_part_of_type, env1)
 
-    elif p == r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}':
-        [noi] = children
-        (noi_t, env1) = tc_expr(noi, env0)
+    elif p in [
+        r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}',
+        r"{EXPR} : ? {DOTTING}",
+        r"{EXPR} : ? {var}",
+    ]:
+        [operand] = children
+        (operand_t, env1) = tc_expr(operand, env0)
 
-        if noi_t == T_TBD:
+        if operand_t == T_TBD:
             return (T_TBD, env1)
 
-        (abrupt_part_of_type, normal_part_of_type) = noi_t.split_by(T_Abrupt)
+        (abrupt_part_of_type, normal_part_of_type) = operand_t.split_by(T_Abrupt)
 
         if normal_part_of_type == T_0:
             add_pass_error(
@@ -9922,8 +9986,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         # RequireInternalSlot is a quasi-type-test.
         env2 = env1
-        if str(noi.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
-            [pp] = noi.children
+        if str(operand.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
+            [pp] = operand.children
             assert str(pp.prod).startswith(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
             [opn_before_paren, exlist_opt] = pp.children[0:2]
             if opn_before_paren.source_text() == 'RequireInternalSlot':
@@ -10102,10 +10166,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var] = children
         list_type = env0.assert_expr_is_of_type(var, T_List)
         return (list_type.element_type, env0)
-
-    elif p == r"{EXPR} : an implementation-defined Completion value":
-        [] = children
-        return (T_Tangible_ | T_empty_ | T_throw_, env0)
 
     elif p in [
         r"{EXPR} : the element in {EX} whose {DSBN} is {EX}",
@@ -10453,9 +10513,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}":
         [var, xref] = children
-        env0.assert_expr_is_of_type(var, T_Primitive)
+        env1 = env0.ensure_expr_is_of_type(var, T_Primitive)
         assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
-        return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env0)
+        return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
 
     elif p == r"{EXPR} : a new Synchronize event":
         [] = children
@@ -10585,6 +10645,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (t_env, f_env) = tc_cond(cond, env0)
         (t, env1) = tc_expr(expr, t_env)
         return (t, env1)
+
+    elif p == r"{EXPR} : a new implementation-defined Completion Record":
+        [] = children
+        return (T_Abrupt | T_Normal, env0)
 
     else:
         stderr()
