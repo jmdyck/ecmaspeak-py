@@ -1645,7 +1645,7 @@ def _(de, conda, condb):
     if not de.exec(condb, bool) and de.exec(conda, bool):
         de.it_is_a_syntax_error(conda.parent)
 
-@efd.put('{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm evaluates to {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}')
+@efd.put('{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}')
 def _(de, cond, bool_lit, h_emu_alg):
     if de.exec(cond, bool):
         bool_val = de.exec(bool_lit, EL_Boolean)
