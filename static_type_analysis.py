@@ -8322,12 +8322,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathInteger_, env1)
 
     elif p in [
-        r"{EXPR} : the Element Size value specified in {h_emu_xref} for {var}",
+        r"{EXPR} : the Element Size value specified in {h_emu_xref} for {EX}",
     ]:
-        [emu_xref, var] = children
-        assert var.source_text() in ['_constructorName_', '_srcName_', '_arrayTypeName_', '_targetName_', '_typedArrayName_', '_srcType_']
-        # print(p, var.source_text(), file=sta_misc_f)
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        [emu_xref, ex] = children
+        env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)":
@@ -8877,13 +8875,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
         return (ListType(T_code_unit_), env1)
 
-    elif p == r"{EXPR} : the String value of {DOTTING}":
-        # todo: sounds like "String value" is an operation applied to the result of DOTTING
-        [dotting] = children
-        env0.assert_expr_is_of_type(dotting, T_String)
-        return (T_String, env0)
-
-    elif p == r"{EXPR} : the Element Type value in {h_emu_xref} for {EX}":
+    elif p == r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}":
         [emu_xref, ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_TypedArray_element_type_, env0)

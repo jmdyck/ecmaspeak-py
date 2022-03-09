@@ -970,8 +970,8 @@
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
     the Element Size value specified in {h_emu_xref} for Element Type {var}
-    the Element Size value specified in {h_emu_xref} for {var}
-    the Element Type value in {h_emu_xref} for {EX}
+    the Element Size value specified in {h_emu_xref} for {EX}
+    the Element Type value specified in {h_emu_xref} for {EX}
     the List of Unicode code points {var}
     the List of arguments that was passed to this function by {dsb_word} or {dsb_word}
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
@@ -999,7 +999,6 @@
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String
     the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor
     the String value of the property name
-    the String value of {DOTTING}
     the String value that is a copy of {var} with both leading and trailing white space removed
     the String value that is a copy of {var} with leading white space removed
     the String value that is a copy of {var} with trailing white space removed
