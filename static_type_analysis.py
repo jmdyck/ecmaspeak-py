@@ -4756,7 +4756,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
         result = env0
 
-    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that completion.":
+    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that Completion Record.":
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         result = env1
@@ -5312,7 +5312,7 @@ def tc_cond_(cond, env0, asserting):
         return (env2, env2)
 
     elif p in [
-        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of completion values are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
+        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
     ]:
         [var, literal, _] = children
         env0.assert_expr_is_of_type(literal, T_TildeUnused_)
