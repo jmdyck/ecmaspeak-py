@@ -253,7 +253,7 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
-    Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that Completion Record.
+    Sort {var} using an implementation-defined sequence of calls to {var}. If any such call returns an abrupt completion, stop before performing any further calls to {var} or steps in this algorithm and return that Completion Record.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
     Suspend the currently running execution context.
     Suspend {var} and remove it from the execution context stack.
@@ -1582,6 +1582,7 @@
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}
     an Abstract Closure with no parameters
+    an Abstract Closure with two parameters
     an Array
     an Array exotic object
     an ArrayBuffer

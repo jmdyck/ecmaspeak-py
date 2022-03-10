@@ -250,9 +250,6 @@ class TypedAlgHeader:
             self.typed_alsos = {}
         else:
             ahat_ = {
-                ('_comparefn_', 'from the current invocation of the `sort` method'):
-                    T_Undefined | T_function_object_,
-
                 ('_IgnoreCase_', 'Boolean'): T_Boolean,
 
                 ('_Input_'           , 'from somewhere'): ListType(T_character_),
@@ -263,9 +260,6 @@ class TypedAlgHeader:
                 ('_Multiline_'       , 'from somewhere'): T_Boolean,
                 ('_Unicode_'         , 'from somewhere'): T_Boolean,
                 ('_WordCharacters_'  , 'from somewhere'): T_CharSet,
-
-                ('_comparefn_' , 'from the %TypedArray%`.prototype.sort` method'): T_function_object_ | T_Undefined,
-                ('_buffer_'    , 'from the %TypedArray%`.prototype.sort` method'): T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
             }
             self.typed_alsos = dict(
                 (pn, ahat_[(pn, pt)])
@@ -762,10 +756,15 @@ def member_is_a_subtype_or_equal(A, B):
 
     elif isinstance(A, ProcType):
         if isinstance(B, ProcType):
-            if A.param_types == B.param_types:
-                return A.return_type.is_a_subtype_of_or_equal_to(B.return_type)
-            else:
-                assert 0, (A, B)
+            assert len(A.param_types) == len(B.param_types)
+            return (
+                (
+                    bpt.is_a_subtype_of_or_equal_to(apt) # contra-variance
+                    for (apt, bpt) in zip(A.param_types, B.param_types)
+                )
+                and
+                A.return_type.is_a_subtype_of_or_equal_to(B.return_type)
+            )
         elif isinstance(B, NamedType):
             return (T_proc_.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
@@ -1496,6 +1495,7 @@ nature_to_type = {
     # 6.2.7 Abstract Closure
         'an Abstract Closure': T_proc_,
         'an Abstract Closure with no parameters': ProcType([], T_Top_),
+        'an Abstract Closure with two parameters': ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_),
         'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult': T_RegExpMatcher_,
 
     # 6.2.8 Data Block
@@ -1833,8 +1833,6 @@ type_tweaks_tuples = [
     ('SetRealmGlobalObject'                     , '_thisValue_'            , T_TBD                 , T_Tangible_),
     ('SetViewValue'                             , '_view_'                 , T_TBD                 , T_Tangible_),
     ('SetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
-    ('SortCompare'                              , '_x_'                    , T_TBD                 , T_Tangible_),
-    ('SortCompare'                              , '_y_'                    , T_TBD                 , T_Tangible_),
     ('ToBoolean'                                , '_argument_'             , T_TBD                 , T_Tangible_),
     ('ToNumber'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
     ('ToObject'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
@@ -4756,8 +4754,8 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
         result = env0
 
-    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to SortCompare. If any such call returns an abrupt completion, stop before performing any further calls to SortCompare or steps in this algorithm and return that Completion Record.":
-        [var] = children
+    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to {var}. If any such call returns an abrupt completion, stop before performing any further calls to {var} or steps in this algorithm and return that Completion Record.":
+        [var, comparator, comparator] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         result = env1
 

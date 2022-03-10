@@ -1100,16 +1100,7 @@ def _handle_structured_header(section):
     # --------------------------------------------------------------------------
 
     # Hack this for now:
-    if op_name == 'SortCompare':
-        also = [
-            ('_comparefn_', 'from the current invocation of the `sort` method')
-        ]
-    elif op_name == 'TypedArraySortCompare':
-        also = [
-            ('_comparefn_', 'from the %TypedArray%`.prototype.sort` method'),
-            ('_buffer_',    'from the %TypedArray%`.prototype.sort` method'),
-        ]
-    elif op_name in [
+    if op_name in [
         'IsWordChar',
         'CharacterSetMatcher',
         'Canonicalize',
@@ -2699,16 +2690,10 @@ def _(section, mo, emu_alg):
         fr"The elements of this array are sorted. .+",
         fr"When the `sort` method is called, the following steps are taken:",
         'emu-alg',
-        fr"The <em>sort order</em> is .+",
-        fr"The sort order is .+",
-        'ul',
-        fr"Unless the sort order is .+",
-        'ul',
-        fr"Here the notation .+",
-        fr"A function _comparefn_ is a consistent comparison function .+",
-        'ul',
+        'emu-note',
+        'emu-note',
+        'emu-note',
     ),
-    (fr"Upon entry, the following steps are performed to initialize evaluation of {THIS_FUNCTION}. .+:", 'emu-alg'),
 
     # Comment out this one to find cases where a function's <emu-alg> appears without a preamble,
     # or with a preamble that doesn't mention "the following steps" or some such.
@@ -2879,7 +2864,6 @@ def _(section, mo):
     # Other unique sentences
     (fr"If the String conforms to the {H_EMU_XREF}, .+"),
     (fr"The actual value of the string passed in step {H_EMU_XREF} is either .+"), # Should be emu-note?
-    (r"%TypedArray%`.prototype.sort` calls TypedArraySortCompare rather than SortCompare."),
     (r"Before performing the comparisons, the following steps are performed to prepare the Strings:", 'emu-alg'),
     (r"Each `Math.random` function created for distinct realms must produce a distinct sequence of values from successive calls."),
     (r"For those code units being replaced whose value is .+"),
