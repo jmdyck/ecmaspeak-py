@@ -104,7 +104,7 @@ def each_step_ref():
                 yield (referring_section, referring_line, step_ref, refd_line)
             continue
 
-        elif ref_is_followed_by(' of the IsLooselyEqual algorithm'):
+        elif ref_is_preceded_by('During IsLooselyEqual the following steps are performed in place of '):
             refd_alg_name = 'IsLooselyEqual'
             refd_section_id = 'sec-islooselyequal'
         elif ref_is_followed_by(' of the IsLessThan algorithm'):
