@@ -1036,6 +1036,7 @@ named_type_hierarchy = {
                 'Private Name': {},
                 'PrivateElementKind_': {},
                 'PropertyKeyKind_': {},
+                'Range': {},
                 'Record': {
                     'Agent Record': {},
                     'Agent Events Record': {},
@@ -1064,6 +1065,7 @@ named_type_hierarchy = {
                     'Job_record_': {},
                     'JobCallback Record': {},
                     'MapData_record_': {},
+                    'Match Record': {},
                     'Module Record': {
                         'Cyclic Module Record': {
                             'Source Text Module Record': {},
@@ -1222,12 +1224,12 @@ T_MathNonNegativeInteger_ = T_MathInteger_ # for now
 
 T_Continuation    = ProcType([T_State                ], T_MatchResult)
 T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
-T_RegExpMatcher_  = ProcType([T_String, T_MathNonNegativeInteger_], T_MatchResult)
+T_RegExpMatcher_  = ProcType([ListType(T_character_), T_MathNonNegativeInteger_], T_MatchResult)
 T_Job             = ProcType([                       ], T_Undefined)
 
 T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), ListType(T_MathInteger_)], ListType(T_MathInteger_))
 
-T_captures_entry_ = ListType(T_character_) | T_Undefined
+T_captures_entry_ = T_Range | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
 
 T_Unicode_code_points_ = ListType(T_code_point_)
@@ -1459,7 +1461,9 @@ nature_to_type = {
         'a List of Unicode code points'               : ListType(T_code_point_),
         'a List of agent signifiers'                  : ListType(T_agent_signifier_),
         'a List of byte values'                       : ListType(T_MathInteger_),
+        'a List of either Match Records or *undefined*': ListType(T_Match_Record | T_Undefined),
         'a List of either Strings or *null*'          : ListType(T_String | T_Null),
+        'a List of either Strings or *undefined*'     : ListType(T_String | T_Undefined),
         'a List of internal slot names'               : ListType(T_SlotName_),
         'a List of names of ECMAScript Language Types': ListType(T_LangTypeName_),
         'a List of names of internal slots'           : ListType(T_SlotName_),
@@ -1496,7 +1500,7 @@ nature_to_type = {
         'an Abstract Closure': T_proc_,
         'an Abstract Closure with no parameters': ProcType([], T_Top_),
         'an Abstract Closure with two parameters': ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_),
-        'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult': T_RegExpMatcher_,
+        'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult': ProcType([T_String, T_MathNonNegativeInteger_], T_MatchResult),
 
     # 6.2.8 Data Block
         'a Data Block'        : T_Data_Block,
@@ -1670,6 +1674,7 @@ nature_to_type = {
         'a State'        : T_State,
         'a Continuation' : T_Continuation,
         'a Matcher'      : T_Matcher,
+        'a Match Record' : T_Match_Record,
         'a MatchResult'  : T_MatchResult,
 
         'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
@@ -2338,6 +2343,9 @@ class Env:
 
         elif list_type == ListType(T_PromiseReaction_Record) | T_Undefined and item_type == T_PromiseReaction_Record:
             result = item_env.with_expr_type_narrowed(list_ex, ListType(T_PromiseReaction_Record))
+
+        elif list_type == ListType(T_Match_Record) and item_type == T_Undefined and list_ex.source_text() == '_indices_':
+            result = item_env.with_expr_type_replaced(list_ex, ListType(T_Match_Record | T_Undefined))
 
         # ----------------------------------------
         # cases where we change the ST of item_ex:
@@ -3755,8 +3763,8 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_empty_ | T_return_ | T_throw_)
         result = env1.plus_new_entry(resb_var, T_Tangible_)
 
-    elif p == r"{COMMAND} : {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.":
-        # Once, in RegExpBuiltinExec
+    elif p == r"{COMMAND} : Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.":
+        # Once, in GetStringIndex.
         # This step is quite odd, because it refers to _Input_,
         # which you wouldn't think would still exist.
         # (It gets defined in the invocation of _matcher_, i.e. of _R_.[[RegExpMatcher]],
@@ -3814,13 +3822,6 @@ def tc_nonvalue(anode, env0):
         b_benv = tc_nonvalue(command_b, b_t_env)
         c_benv = tc_nonvalue(command_c, b_f_env)
         result = envs_or([a_benv, b_benv, c_benv])
-
-    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.":
-        [cond, t_command, f_command, _, _, _] = children
-        (t_env, f_env) = tc_cond(cond, env0)
-        t_env2 = tc_nonvalue(t_command, t_env)
-        f_env2 = tc_nonvalue(f_command, f_env)
-        result = env_or(t_env2, f_env2)
 
     elif p == r'{IF_OTHER} : {IF_OPEN}{IF_TAIL}':
         [if_open, if_tail] = children
@@ -5126,13 +5127,9 @@ def tc_cond_(cond, env0, asserting):
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', T_List, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a List of code points":
+    elif p == r"{CONDITION_1} : {var} is a List of characters":
         [list_var] = children
-        return env0.with_type_test(list_var, 'is a', ListType(T_code_point_), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List of code units":
-        [list_var] = children
-        return env0.with_type_test(list_var, 'is a', ListType(T_code_unit_), asserting)
+        return env0.with_type_test(list_var, 'is a', ListType(T_character_), asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of property keys":
         [var] = children
@@ -6393,7 +6390,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(pn_var, T_String | T_Symbol)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
+    elif p == r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
         [var] = children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
@@ -7156,6 +7153,25 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable":
         [] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} has {EX} elements":
+        [var, ex] = children
+        env0.assert_expr_is_of_type(var, T_List)
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {EX} is a non-negative integer less than or equal to {EX}":
+        [exa, exb] = children
+        env0.assert_expr_is_of_type(exa, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(exb, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {EX} is an integer between {EX} and {EX}, inclusive":
+        [exa, exb, exc] = children
+        env0.assert_expr_is_of_type(exa, T_MathInteger_)
+        env0.assert_expr_is_of_type(exb, T_MathInteger_)
+        env0.assert_expr_is_of_type(exc, T_MathInteger_)
         return (env0, env0)
 
     else:
@@ -8477,7 +8493,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{NUM_COMPARAND} : the length of {var}",
-        r"{EXPR} : the length of {var}",
+        r"{EX} : the length of {var}",
         r"{EX} : the number of code units in {var}",
         r"{EXPR} : the number of code unit elements in {var}",
     ]:
@@ -8487,6 +8503,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the number of characters contained in {var}",
+        r"{EXPR} : the number of characters in {var}",
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : the number of elements in {var}",
         r"{NUM_COMPARAND} : the number of elements in {var}",
@@ -8617,7 +8634,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_COMPARAND} : {var}'s _endIndex_",
     ]:
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_State)
+        env1 = env0.ensure_expr_is_of_type(var, T_State | T_Range)
+        return (T_MathInteger_, env1)
+
+    elif p == r"{EX} : {var}'s _startIndex_":
+        [var] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_Range)
         return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}":
@@ -9152,13 +9174,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ListType(T_code_unit_)
 
     elif p in [
-        r"{EX} : the code units of {var}",
-    ]:
-        [noi] = children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_unit_))
-        return (ListType(T_code_unit_), env1)
-
-    elif p in [
         r"{EXPR} : a List whose elements are the code units that are the elements of {var}",
         r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}",
     ]:
@@ -9254,13 +9269,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
-
-    elif p == r"{EXPR} : a List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)":
-        [list_var, s_var, e_var] = children
-        env0.assert_expr_is_of_type(list_var, ListType(T_character_))
-        env0.assert_expr_is_of_type(s_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(e_var, T_MathInteger_)
-        return (ListType(T_character_), env0)
 
     elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)":
         [data_var, lo_var, hi_ex] = children
@@ -10507,6 +10515,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
         return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
 
+    elif p == r"{EX} : the Range {PAIR}":
+        [pair] = children
+        # XXX
+        return (T_Range, env0)
+
     elif p == r"{EXPR} : a new Synchronize event":
         [] = children
         return (T_Synchronize_event, env0)
@@ -11160,6 +11173,12 @@ fields_for_record_type_named_ = {
     'CharacterClassResultRecord_': {
         'CharSet': T_CharSet,
         'Invert' : T_Boolean,
+    },
+
+    # 22.2.5.2.5 Match Record Fields
+    'Match Record': {
+        'StartIndex': T_MathInteger_,
+        'EndIndex'  : T_MathInteger_,
     },
 
     # 38121 24.5.2: JSON.stringify: no table, no mention

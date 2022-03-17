@@ -193,6 +193,7 @@
     Let {var} and {var} be {LITERAL}.
     Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
+    Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
     Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
     Let {var} be {EXPR}.
     Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
@@ -271,7 +272,6 @@
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.
     {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.
     {note}
-    {var} is an index into the {var} character list, derived from {var}, matched by {var}. Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.
 
 # ----------------------------------------------
 
@@ -279,7 +279,6 @@
     If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
-    If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}. {var} will be used throughout the algorithms in {h_emu_xref}. Each element of {var} is considered to be a character.
     If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
@@ -542,9 +541,11 @@
     {EX} is -1
     {EX} is a Private Name
     {EX} is a String
+    {EX} is a non-negative integer less than or equal to {EX}
     {EX} is a sequence of Unicode code points
     {EX} is an Environment Record
     {EX} is an element of {var}
+    {EX} is an integer between {EX} and {EX}, inclusive
     {EX} is different from {EX}
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
@@ -643,7 +644,7 @@
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
     {var} contains a {nonterminal}
-    {var} contains any code unit other than *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
+    {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
@@ -680,6 +681,7 @@
     {var} has no elements
     {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}
     {var} has {DSBN} and {DSBN} internal slots
+    {var} has {EX} elements
     {var} has {var} in its range
     {var} imports a specific binding for this export
     {var} is a ClassFieldDefinition Record
@@ -690,8 +692,7 @@
     {var} is a Data Block
     {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}
     {var} is a List of a single Number
-    {var} is a List of code points
-    {var} is a List of code units
+    {var} is a List of characters
     {var} is a List of errors
     {var} is a List of property keys
     {var} is a Parse Node
@@ -900,7 +901,6 @@
     a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)
     a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List whose elements are the characters of {var} at indices {var} (inclusive) through {var} (exclusive)
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
     a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}
@@ -1050,7 +1050,6 @@
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the largest integral Number {var} (closest to +&infin;) such that {CONDITION_1}
     the last element in {var}
-    the length of {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {var}, {var}, and {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
@@ -1060,6 +1059,7 @@
     the negative of {EX}
     the number of bytes in {var}
     the number of characters contained in {var}
+    the number of characters in {var}
     the number of code unit elements in {var}
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
@@ -1153,12 +1153,12 @@
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {EX}
+    the Range {PAIR}
     the String {var}
     the code point matched by {PROD_REF}
     the code unit at index {EX} within {EX}
     the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
     the code unit whose value is {EX}
-    the code units of {var}
     the current Realm Record
     the difference {var} minus {var}
     the digits of the decimal representation of {var} (in order, with no leading zeroes)
@@ -1167,6 +1167,7 @@
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
     the internal slots listed in {h_emu_xref}
+    the length of {var}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the number of code units in {var}
@@ -1200,6 +1201,7 @@
     {var} rounded towards 0 to the next integer value
     {var}'s _endIndex_
     {var}'s _endIndex_ value
+    {var}'s _startIndex_
 
 {MATH_FUNC} :
     base 10 logarithm
@@ -1353,6 +1355,7 @@
     the ImportEntry Record
     the Iterator Record
     the JobCallback Record
+    the Match Record
     the PrivateEnvironment Record
     the PromiseCapability Record
     the PromiseReaction
@@ -1506,6 +1509,7 @@
     a JobCallback Record
     a List
     a List of {LIST_ELEMENTS_DESCRIPTION}
+    a Match Record
     a MatchResult
     a Matcher
     a Module Namespace Object
@@ -1608,6 +1612,7 @@
     an initialized RegExp instance
     an instance of a concrete subclass of Module Record
     an integer
+    an integer &ge; {dsb_word}
     an integral Number
     an ordinary object
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
@@ -1641,7 +1646,9 @@
     agent signifiers
     byte values
     code points
+    either Match Records or *undefined*
     either Strings or *null*
+    either Strings or *undefined*
     either WriteSharedMemory or ReadModifyWriteSharedMemory events
     events
     internal slot names
