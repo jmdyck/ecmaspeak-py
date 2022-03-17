@@ -122,6 +122,9 @@ def each_step_ref():
         elif ref_is_followed_by(' of <emu-xref href="#sec-json.parse">JSON.parse</emu-xref>'):
             refd_alg_name = 'JSON.parse'
             refd_section_id = 'sec-json.parse'
+        elif ref_is_followed_by(' of <emu-xref href="#sec-typeof-operator-runtime-semantics-evaluation">the evaluation semantics for `typeof`</emu-xref>'):
+            refd_alg_name = 'Evaluation for `typeof` expression'
+            refd_section_id = 'sec-typeof-operator-runtime-semantics-evaluation'
         elif ref_is_preceded_by('the same as [[Call]] (see <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>) except that '):
             refd_alg_name = '[[Call]] for built-in functions'
             refd_section_id = 'sec-built-in-function-objects-call-thisargument-argumentslist'

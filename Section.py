@@ -1666,7 +1666,7 @@ def _handle_changes_section(section):
 
     def e(s):
         return (s
-            .replace('EMU-XREF',    r'<emu-xref [^<>]+></emu-xref>')
+            .replace('EMU-XREF',    r'<emu-xref [^<>]+>[^<>]*</emu-xref>')
             .replace('EMU-GRAMMAR', r'<emu-grammar>[^<>]+</emu-grammar>')
             .replace('NONTERMINAL', r'\|\w+\|')
         )
@@ -1871,14 +1871,14 @@ def _handle_changes_section(section):
     elif (mo := re.fullmatch('Changes to (.+)', section.section_title)):
         # B.3.6.3
         assert mo.group(1) == 'the `typeof` Operator'
-        assert section.bcen_str == 'p emu-table'
+        assert section.bcen_str == 'p emu-alg'
         patterns = [
             (
                 [
-                    ('p', e('The following table entry is inserted into EMU-XREF immediately preceding the entry for "Object \(implements \[\[Call\]\]\)":')),
-                    'emu-table'
+                    ('p', e('The following step replaces step EMU-XREF of EMU-XREF:')),
+                    'emu-alg'
                 ],
-                lambda p, emu_table: None
+                lambda p, emu_alg: None
             ),
         ]
         scan_section(section, patterns)
