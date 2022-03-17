@@ -4755,7 +4755,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
         result = env0
 
-    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to {var}. If any such call returns an abrupt completion, stop before performing any further calls to {var} or steps in this algorithm and return that Completion Record.":
+    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of calls to {var}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.":
         [var, comparator, comparator] = children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         result = env1
