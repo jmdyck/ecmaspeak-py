@@ -1552,6 +1552,7 @@
     a WeakRef
     a bound function exotic object
     a built-in function object
+    a callable Object
     a candidate execution
     a candidate execution Record
     a character
@@ -1559,6 +1560,10 @@
     a code unit
     a constructor
     a function object
+    a function that returns a promise for an <i>IteratorResult</i> object
+    a function that returns an <i>AsyncIterator</i> object
+    a function that returns an <i>Iterator</i> object
+    a function that returns an <i>IteratorResult</i> object
     a happens-before Relation
     a host-synchronizes-with Relation
     a mathematical value
@@ -1627,7 +1632,9 @@
 
 {LIST_ELEMENTS_DESCRIPTION} :
     Agent Events Records
+    AsyncGeneratorRequest Records
     Chosen Value Records
+    ClassFieldDefinition Records
     Cyclic Module Records
     ECMAScript language values
     ExportEntry Records
@@ -1635,6 +1642,7 @@
     Objects
     Parse Nodes
     Private Names
+    PrivateElements
     PromiseReaction Records
     Record { {dsb_word}: Parse Node, {dsb_word}: Object }
     Records that have {dsb_word} and {dsb_word} fields

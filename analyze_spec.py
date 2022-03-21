@@ -564,13 +564,22 @@ def check_tables():
         caption = et._caption
         header_line = '; '.join(et._header_row.cell_texts)
 
+        def check_value_descriptions_in_column(col_index):
+            for row in et._data_rows:
+                col_name = et._header_row.cell_texts[col_index]
+                cell_value = row.cell_texts[col_index]
+                Pseudocode.parse(row.cell_nodes[col_index], 'field_value_type')
+
         if 'Field' in caption or ('Method' in caption and 'Record' in caption):
             # See records.process_tables()
             pass
 
         elif 'Slot' in caption:
             if re.match(r'^Internal Slots of (.+)$', caption):
-                pass
+                if header_line == 'Internal Slot; Type; Description':
+                    check_value_descriptions_in_column(1)
+                else:
+                    assert 0, header_line
             else:
                 assert 0
 
@@ -586,6 +595,11 @@ def check_tables():
         elif 'Properties' in caption:
             assert re.fullmatch(r'<i>\w+</i> Interface( (Required|Optional))? Properties', caption)
             assert header_line == 'Property; Value; Requirements'
+            check_value_descriptions_in_column(1)
+
+        elif caption == 'Attributes of an Object property':
+            assert header_line == 'Attribute Name; Types of property for which it is present; Value Domain; Default Value; Description'
+            check_value_descriptions_in_column(2)
 
         elif 'Intrinsic Objects' in caption:
             # see Section.extract_intrinsic_info_from_WKI_section()
