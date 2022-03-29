@@ -994,7 +994,6 @@
     the String value containing only the code unit {var}
     the String value containing the single code unit {var}
     the String value containing {var} occurrences of {code_unit_lit}
-    the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String
     the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor
@@ -1040,6 +1039,7 @@
     the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
     the grammar symbol {nonterminal}
     the greatest (closest to +&infin;) integral Number value that is not greater than {var}
+    the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})
     the index into {var} of the character that was obtained from element {EX} of {var}
     the index within {var} of the first such code unit
     the integer that is {EXPR}

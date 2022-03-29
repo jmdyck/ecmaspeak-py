@@ -2734,7 +2734,6 @@ def _(section, mo, emu_alg):
     (fr"{THIS_FUNCTION} is a function whose behaviour differs .+"),
     (fr"{THIS_FUNCTION} takes .+, and returns .+"),
 
-    (fr"{THIS_FUNCTION}, if considered as a function of two arguments .+, is a consistent .+"),
     (r"If this time value is not a finite Number .+, this function throws .+"), # Date.prototype.toISOString
     (r"Returns a Number .+ This function takes no arguments."), # Math.random
 )

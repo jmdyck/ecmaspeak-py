@@ -10389,8 +10389,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [percent_word] = children
         return (T_function_object_, env0)
 
-    elif p == r"{EXPR} : the String value for the list-separator String appropriate for the host environment's current locale (this is derived in an implementation-defined way)":
-        [] = children
+    elif p == r"{EXPR} : the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})":
+        [str_lit] = children
         return (T_String, env0)
 
     elif p == r"{EXPR} : the index within {var} of the first such code unit":
