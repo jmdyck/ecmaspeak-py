@@ -1379,7 +1379,7 @@ nature_to_type = {
         'a non-negative integer'    : T_MathNonNegativeInteger_, # currently mapped to MathInteger_
         'a positive integer'        : T_MathNonNegativeInteger_,
         '0 or 1'                    : T_MathNonNegativeInteger_,
-        'a non-negative integer that is evenly divisble by 4' : T_MathNonNegativeInteger_,
+        'a non-negative integer that is evenly divisible by 4' : T_MathNonNegativeInteger_,
         '+&infin;'                  : T_MathPosInfinity_,
         '-&infin;'                  : T_MathNegInfinity_,
 

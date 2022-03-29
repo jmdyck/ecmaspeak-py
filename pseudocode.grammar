@@ -1570,7 +1570,7 @@
     a module namespace exotic object
     a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
     a non-negative integer
-    a non-negative integer that is evenly divisble by 4
+    a non-negative integer that is evenly divisible by 4
     a nonterminal in one of the ECMAScript grammars
     a normal completion
     a normal completion containing {VALUE_DESCRIPTION}
