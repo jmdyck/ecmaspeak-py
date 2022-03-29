@@ -8960,11 +8960,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String representation of {EX}, formatted as a two-digit decimal number, padded to the left with {code_unit_lit} if necessary":
-        [ex, code_unit_lit] = children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
-        return (T_String, env1)
-
     elif p == r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}":
         [exa, exb] = children
         env0.assert_expr_is_of_type(exa, T_String)
