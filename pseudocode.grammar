@@ -1651,6 +1651,7 @@
     Unicode code points
     agent signifiers
     byte values
+    characters
     code points
     either Match Records or *undefined*
     either Strings or *null*

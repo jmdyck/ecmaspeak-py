@@ -1500,7 +1500,7 @@ nature_to_type = {
         'an Abstract Closure': T_proc_,
         'an Abstract Closure with no parameters': ProcType([], T_Top_),
         'an Abstract Closure with two parameters': ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_),
-        'an Abstract Closure that takes a String and a non-negative integer and returns a MatchResult': ProcType([T_String, T_MathNonNegativeInteger_], T_MatchResult),
+        'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult': T_RegExpMatcher_,
 
     # 6.2.8 Data Block
         'a Data Block'        : T_Data_Block,
