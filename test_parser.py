@@ -52,6 +52,10 @@ def test_all_in_dir(test_dirname):
         n_success = 0
         n_failure = 0
         for i, test_filename in enumerate(sorted(os.listdir(dirpath))):
+            if re.fullmatch(r'\.\w+\.js.swp', test_filename):
+                # vim temp file
+                continue
+
             # if test_filename < 'f7f6': continue
             test_file_arg = test_dirname + '/' + test_filename
 
