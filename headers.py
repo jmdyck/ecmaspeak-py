@@ -761,6 +761,7 @@ class AlgHeader:
         self.species = None
         self.name = None
         self.for_phrase = None
+        self.for_phrase_node = None
         self.params = None
         self.also = None
         self.return_nature_node = None

@@ -1009,6 +1009,7 @@ def _handle_structured_header(section):
         for_phrase = 'Parse Node'
     else:
         for_phrase = None
+    for_phrase_node = None
 
     # --------------------------------------------------------------------------
     # Extract info from the <dl>
@@ -1038,7 +1039,7 @@ def _handle_structured_header(section):
         for_dd = dl_dict['for']
         assert for_phrase is None, for_phrase
         for_phrase = for_dd.inner_source_text()
-        Pseudocode.parse(for_dd)
+        for_phrase_node = Pseudocode.parse(for_dd)
 
     if 'description' in dl_dict:
         description_dd = dl_dict['description']
@@ -1125,6 +1126,7 @@ def _handle_structured_header(section):
         species = op_species,
         name = op_name,
         for_phrase = for_phrase,
+        for_phrase_node = for_phrase_node,
         params = params,
         also = also,
         return_nature_node = return_nature,
@@ -3390,6 +3392,7 @@ def AlgHeader_make(
     params,
     node_at_end_of_header,
     for_phrase           = None,
+    for_phrase_node      = None,
     return_nature_node   = None,
     also                 = None,
     preamble_nodes       = None,
@@ -3400,6 +3403,7 @@ def AlgHeader_make(
     alg_header.name = name
     alg_header.node_at_end_of_header = node_at_end_of_header
     alg_header.for_phrase = for_phrase
+    alg_header.for_phrase_node = for_phrase_node
     alg_header.return_nature_node = return_nature_node
     alg_header.also = also
 
