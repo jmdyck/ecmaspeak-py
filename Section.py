@@ -437,6 +437,7 @@ def _handle_sdo_section(section):
             # Copy params from parent
             [parent_alg_header] = section.parent.alg_headers
             params = parent_alg_header.params.copy()
+            return_nature_node = parent_alg_header.return_nature_node
 
         else:
             # Parameters, if any, are stated in the section's first paragraph.
@@ -468,6 +469,7 @@ def _handle_sdo_section(section):
                             params.append( AlgParam(param_name, part_punct, param_nature) )
                     section.block_children.pop(0)
                     _set_bcen_attributes(section)
+            return_nature_node = None
 
         also = []
 
@@ -479,6 +481,7 @@ def _handle_sdo_section(section):
             params = params,
             also = also,
             node_at_end_of_header = section.heading_child,
+            return_nature_node = return_nature_node,
         )
 
     # ------------------------------------------------------------------------------
