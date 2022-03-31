@@ -434,8 +434,9 @@ def _handle_sdo_section(section):
         section.section_kind = 'syntax_directed_operation'
 
         if section.section_title in ['Statement Rules', 'Expression Rules']:
-            # TODO: Should copy this from section.parent
-            params = [ AlgParam('_call_', '', 'unknown') ]
+            # Copy params from parent
+            [parent_alg_header] = section.parent.alg_headers
+            params = parent_alg_header.params.copy()
 
         else:
             # Parameters, if any, are stated in the section's first paragraph.
