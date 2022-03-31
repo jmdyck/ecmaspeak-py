@@ -2011,8 +2011,8 @@ class ParseNode:
 
     # ------------------------------------------------------------------
 
-    def __str__(self):
-        return "<ParseNode symbol=%s, %d children>" % (self.symbol, len(self.children))
+    def __repr__(self):
+        return "<ParseNode (%d-%d) symbol=%s, %d children>" % (self.start_posn, self.end_posn, self.symbol, len(self.children))
 
     def text(self):
         return self.whole_text[self.start_posn:self.end_posn]
