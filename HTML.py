@@ -309,6 +309,41 @@ def _validate(node):
     if not (attrs <= required_attrs | optional_attrs):
         msg_at_posn(node.start_posn, f"unexpected attribute(s): {stringify_set(attrs - (required_attrs | optional_attrs))}")
 
+    for (attr_name, attr_value) in node.attrs.items():
+        assert attr_value is None or isinstance(attr_value, str)
+        for key in [
+            f"{node.element_name}.{attr_name}",
+            attr_name
+        ]:
+            if key in attribute_info:
+                value_pattern = attribute_info[key]
+                break
+        else:
+            msg_at_posn(
+                node.start_posn,
+                f"Unknown attribute {attr_name!r}"
+            )
+            continue
+
+        if value_pattern is None and attr_value is None:
+            pass
+        elif value_pattern is None:
+            msg_at_posn(
+                node.start_posn,
+                f"For attribute {attr_name!r}, expected no value, but got {attr_value!r}"
+            )
+        elif attr_value is None:
+            msg_at_posn(
+                node.start_posn,
+                f"For attribute {attr_name!r}, expected a value matching {value_pattern!r}, but got nothing"
+            )
+        else:
+            if not re.fullmatch(value_pattern, attr_value):
+                msg_at_posn(
+                    node.start_posn,
+                    f"For attribute {attr_name!r}, expected a value matching {value_pattern!r}, but got {attr_value!r}"
+                )
+
     # ------------------------
 
     # First do a pass to figure whether the content of this node
@@ -463,6 +498,53 @@ element_info = {
 
         '#COMMENT'          : (None, '',          '',           ''),
 
+}
+
+id_pattern = r'[-\w.%@]+'
+
+attribute_info = {
+    'pre.class'          : r'metadata',
+    'code.class'         : r'javascript|html',
+    'dl.class'           : r'header',
+    'div.class'          : r'math-display|rhs',
+    'table.class'        : r'lightweight-table',
+    'emu-table.class'    : r'module-overflow',
+    'emu-note.class'     : r'module-overflow-note',
+
+    'object.type'        : r'image/svg\+xml',
+    'emu-grammar.type'   : r'definition',
+    'emu-clause.type'    : r'abstract operation|concrete method|(host|implementation)-defined abstract operation|internal method|numeric method|sdo',
+    'emu-annex.type'     : r'abstract operation',
+
+    'a'                  : r'\w+',
+    'alt'                : r'[\w .,()?]+',
+    'aoid'               : r'[-\w]+',
+    'caption'            : r'[-\w /()<>]+',
+    'charset'            : r'utf-8',
+    'colspan'            : r'\d',
+    'data'               : r'img/figure-1.svg',
+    'effects'            : r'user-code',
+    'height'             : r'\d+',
+    'href'               : r'[-\w:/.#%@]+',
+    'id'                 : id_pattern,
+    'lang'               : r'en-GB-oxendict',
+    'name'               : r'\w+',
+    'namespace'          : r'grammar-notation|asi-rules|annexB',
+    'oldids'             : f"{id_pattern}(,{id_pattern})*",
+    'rel'                : r'icon',
+    'replaces-step'      : id_pattern,
+    'rowspan'            : r'\d',
+    'src'                : r'img/[-\w.]+',
+    'suppress-effects'   : r'user-code',
+    'variants'           : r'\w+([ -]\w+)*',
+    'width'              : r'\d+',
+
+    'example'            : None,
+    'informative'        : None,
+    'legacy'             : None,
+    'normative'          : None,
+    'normative-optional' : None,
+    'title'              : None,
 }
 
 kind_ = {}
