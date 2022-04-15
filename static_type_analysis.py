@@ -6003,7 +6003,7 @@ def tc_cond_(cond, env0, asserting):
         # XXX check that prod_ref makes sense
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : The calling agent is not in the critical section for any WaiterList':
+    elif p == r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList':
         # nothing to check
         return (env0, env0)
 
@@ -6025,7 +6025,7 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : The calling agent is in the critical section for {var}':
+    elif p == r'{CONDITION_1} : The surrounding agent is in the critical section for {var}':
         [var] = children
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
@@ -9886,14 +9886,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # XXX: Should also ensure that each declared field is specified exactly once.
 
         return ( NamedType(record_type_name), env2 )
-
-    elif p in [
-        r"{SETTABLE} : the {DSBN} field of the calling surrounding's Agent Record", # XXX
-    ]:
-        [dsbn] = children
-        dsbn_name = dsbn.source_text()[2:-2]
-        assert dsbn_name in fields_for_record_type_named_['Agent Record'], dsbn_name
-        return ( fields_for_record_type_named_['Agent Record'][dsbn_name], env0 )
 
     elif p == r'{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below':
         [emu_xref, var] = children

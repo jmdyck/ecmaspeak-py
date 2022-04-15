@@ -447,8 +447,8 @@
     Evaluate has already been invoked on {var} and successfully completed
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     GlobalSymbolRegistry does not currently contain an entry for {var}
-    The calling agent is in the critical section for {var}
-    The calling agent is not in the critical section for any WaiterList
+    The surrounding agent is in the critical section for {var}
+    The surrounding agent is not in the critical section for any WaiterList
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The execution context stack has at least two elements
     The execution context stack is not empty
@@ -1377,7 +1377,6 @@
     the Synchronize event in {var}
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
-    the {DSBN} field of the calling surrounding's Agent Record
     the {DSBN} field of {EXPR}
     the {DSBN} internal slot of this Date object
     the {EXECUTION_CONTEXT_COMPONENT} component of {var}
