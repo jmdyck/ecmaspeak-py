@@ -238,7 +238,7 @@ class TypedAlgHeader:
             self.for_param_type = None
             self.for_param_name = None
         else:
-            mo = re.fullmatch(r'(.+) (_\w+_)', self.for_phrase)
+            mo = re.fullmatch(r'(.+) (_\w+_)(?: \(.+\))?', self.for_phrase)
             if mo:
                 (for_param_nature, self.for_param_name) = mo.groups()
             else:
