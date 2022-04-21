@@ -598,7 +598,6 @@
     {NAMED_OPERATION_INVOCATION} contains {starred_str}
     {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
-    {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})
     {NAMED_OPERATION_INVOCATION} is not empty
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
@@ -737,6 +736,7 @@
     {var} is an extensible object that does not have a {starred_str} own property
     {var} is an extensible ordinary object with no own properties
     {var} is an instance of a nonterminal
+    {var} is an instance of a production in {h_emu_xref}
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
     {var} is an integer
@@ -1066,10 +1066,9 @@
     the number of elements in {var}'s _captures_ List
     the number of leading 1 bits in {var}
     the number of leading zero bits in the unsigned 32-bit binary representation of {var}
-    the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}
-    the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}
-    the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}
     the number of non-optional parameters of the function definition in {h_emu_xref}
+    the number of {h_emu_grammar} Parse Nodes contained within {var}
+    the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}
     the numeric value according to {h_emu_xref}
     the one character in CharSet {var}
     the other {EX} code units of {var}
@@ -1272,7 +1271,7 @@
     the {ORDINAL} {nonterminal}
     the {nonterminal}
     the {nonterminal} contained in {PROD_REF}
-    the {nonterminal} containing this {nonterminal}
+    the {nonterminal} containing {LOCAL_REF}
     the {nonterminal} of {LOCAL_REF}
     this phrase
     this production

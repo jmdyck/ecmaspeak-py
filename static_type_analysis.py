@@ -7031,12 +7031,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {var} ({h_emu_xref})":
-        [noi, var, h_emu_xref] = children
-        assert var.source_text() == '_NcapturingParens_'
-        env0.assert_expr_is_of_type(noi, T_MathInteger_)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production":
         [noi, nont] = children
         env0.assert_expr_is_of_type(noi, T_code_point_)
@@ -7107,6 +7101,11 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {var} is an instance of a nonterminal":
         [var] = children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is an instance of a production in {h_emu_xref}":
+        [var, emu_xref] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
@@ -8649,13 +8648,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
         return (T_MathInteger_, env0)
 
-    elif p in [
-        r"{EXPR} : the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}, including its immediately enclosing {nonterminal}",
-        r"{EXPR} : the number of left-capturing parentheses in the entire regular expression that occur to the left of {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes prior to or enclosing {PROD_REF}",
-        r"{EXPR} : the number of left-capturing parentheses in {PROD_REF}. This is the total number of {h_emu_grammar} Parse Nodes enclosed by {PROD_REF}",
-    ]:
-        [prod_ref, emu_grammar, prod_ref2] = children[0:3]
-        assert same_source_text(prod_ref, prod_ref2)
+    elif p == r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}":
+        [emu_grammar, root_var] = children
+        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
+        return (T_MathNonNegativeInteger_, env0)
+
+    elif p == r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}":
+        [emu_grammar, root_var, x_var, x_var2] = children
+        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
+        env0.assert_expr_is_of_type(x_var, T_Parse_Node)
+        assert x_var.source_text() == x_var2.source_text()
         return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}":
@@ -9323,6 +9325,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (ptn_type_for(nont), env0)
 
+    elif p == r"{PROD_REF} : the located {nonterminal}":
+        [nont] = children
+        return (ptn_type_for(nont), env0)
+
     elif p == r"{EXPR} : an instance of the production {h_emu_grammar}":
         [emu_grammar] = children
         assert emu_grammar.source_text() == '<emu-grammar>FormalParameters : [empty]</emu-grammar>'
@@ -9351,8 +9357,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [nont] = children
         return (T_Parse_Node, env0)
 
-    elif p == r"{PROD_REF} : the {nonterminal} containing this {nonterminal}":
-        [nonta, nontb] = children
+    elif p == r"{PROD_REF} : the {nonterminal} containing {LOCAL_REF}":
+        [nonta, local_ref] = children
         return (T_Parse_Node, env0)
 
     # --------------------------------------------------------

@@ -1058,6 +1058,7 @@ def _handle_structured_header(section):
                     ("It returns an implementation-approximated value .+", 'a Number'),
                     ("It returns the global object used by the currently running execution context.", 'an object'),
                     ("It returns the loaded value.", 'unknown'),
+                    ("It returns the number of left-capturing parentheses.+", 'a non-negative integer'),
                     ("It returns the one's complement of _x_.+", 'unknown'),
                     ("It returns the sequence of Unicode code points that .+", 'a sequence of Unicode code points'),
                     ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
