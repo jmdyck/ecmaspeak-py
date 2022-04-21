@@ -3204,8 +3204,6 @@ def tc_header(tah):
                 init_t == T_Abrupt | T_Tangible_ | T_empty_ and final_t == ListType(T_code_unit_) | T_Top_
                 # Evaluation
                 or
-                tah.name == 'GetMethod'
-                or
                 tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_' and init_t == T_Tangible_
                 or
                 tah.name == 'SetRealmGlobalObject' and pn == '_globalObj_' and init_t == T_Object | T_Undefined
@@ -3313,7 +3311,11 @@ def tc_header(tah):
                 or
                 tah.name == 'CreateSetIterator' and pn == '*return*'
                 or
-                tah.name == 'TypedArrayCreate' and pn == '*return*'
+                tah.name == 'TypedArrayCreate' and pn == '*return*' # should handle ValidateTypedArray() as a type-check
+                or
+                tah.name == 'EvaluateGeneratorBody' and pn == '*return*'
+                or
+                tah.name == 'EvaluateAsyncGeneratorBody' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
