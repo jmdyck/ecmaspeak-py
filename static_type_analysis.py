@@ -3765,7 +3765,7 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_empty_ | T_return_ | T_throw_)
         result = env1.plus_new_entry(resb_var, T_Tangible_)
 
-    elif p == r"{COMMAND} : Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the number of code units in {var}.":
+    elif p == r"{COMMAND} : Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the length of {var}.":
         # Once, in GetStringIndex.
         # This step is quite odd, because it refers to _Input_,
         # which you wouldn't think would still exist.
@@ -8495,7 +8495,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{NUM_COMPARAND} : the length of {var}",
         r"{EX} : the length of {var}",
-        r"{EX} : the number of code units in {var}",
         r"{EXPR} : the number of code unit elements in {var}",
     ]:
         [var] = children
