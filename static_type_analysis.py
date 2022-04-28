@@ -1358,24 +1358,16 @@ def convert_nature_to_type(nature):
 
 nature_to_type = {
         'unknown': T_TBD,
-        'N/A': T_0,
 
     # 5.1.4 The Syntactic Grammar
         'a nonterminal in one of the ECMAScript grammars' : T_grammar_symbol_,
 
         'Parse Node'                                                            : T_Parse_Node,
         'a Parse Node'                                                          : T_Parse_Node,
-        'a |CaseClause| Parse Node'                                             : ptn_type_for('CaseClause'),
-        'a |NewExpression| Parse Node or a |MemberExpression| Parse Node'       : ptn_type_for('NewExpression') | ptn_type_for('MemberExpression'),
-        'a |RegularExpressionLiteral| Parse Node'                               : ptn_type_for('RegularExpressionLiteral'),
-        'a |ScriptBody| Parse Node'                                             : ptn_type_for('ScriptBody'),
-        'an |AssignmentExpression| Parse Node or an |Initializer| Parse Node'   : ptn_type_for('AssignmentExpression') | ptn_type_for('Initializer'),
-        'an |IdentifierName| Parse Node'                                        : ptn_type_for('IdentifierName'),
 
     # 5.2.5 Mathematical Operations
         'a mathematical value'      : T_MathReal_,
         'an integer'                : T_MathInteger_,
-        '1 or -1'                   : T_MathInteger_,
         'a non-negative integer'    : T_MathNonNegativeInteger_, # currently mapped to MathInteger_
         'a positive integer'        : T_MathNonNegativeInteger_,
         '0 or 1'                    : T_MathNonNegativeInteger_,
@@ -1393,7 +1385,6 @@ nature_to_type = {
 
         'an ECMAScript language value'                       : T_Tangible_,
         'a value'                                            : T_Tangible_,
-        'an ECMAScript language value, but not a TypedArray' : T_Tangible_, # loses info
 
     # 6.1.1 The Undefined Type
         '*undefined*': T_Undefined,
@@ -1408,7 +1399,6 @@ nature_to_type = {
 
     # 6.1.4 The String Type
         'a String'                  : T_String,
-        'a String value'            : T_String,
         '*"reject"* or *"handle"*'  : T_String,
         'a |ModuleSpecifier| String': T_String, # TODO
         'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': T_String,
@@ -1419,22 +1409,17 @@ nature_to_type = {
         'a Symbol' : T_Symbol,
 
     # 6.1.6.1 The Number Type
-        'Number'         : T_Number,
         'a Number'       : T_Number,
-        'a Number value' : T_Number,
 
         'an integral Number' : T_IntegralNumber_,
 
     # 6.1.6.2 The BigInt Type
-        'BigInt'      : T_BigInt,
         'a BigInt'    : T_BigInt,
 
     # 6.1.7 The Object Type
         'an Object'                                                      : T_Object,
-        'an object'                                                      : T_Object,
         'an Object that conforms to the <i>IteratorResult</i> interface' : T_Object,
         'an Object that has a [[StringData]] internal slot'              : T_Object,
-        'an Object, but not a TypedArray or an ArrayBuffer'              : T_Object,
         'an initialized RegExp instance'                                 : T_Object,
 
         # function_: an object with a [[Call]] internal method
@@ -1467,27 +1452,20 @@ nature_to_type = {
         'a List of internal slot names'               : ListType(T_SlotName_),
         'a List of names of ECMAScript Language Types': ListType(T_LangTypeName_),
         'a List of names of internal slots'           : ListType(T_SlotName_),
-        'a List of names'                             : ListType(T_String),
         'a List of property keys'                     : ListType(T_String | T_Symbol),
         'a List of |ClassElement| Parse Nodes'        : ListType(ptn_type_for('ClassElement')),
         'a non-empty List of *SyntaxError* objects'   : ListType(T_SyntaxError),
-        'a possibly empty List of Strings'            : ListType(T_String),
         'a possibly empty List, each of whose elements is a String or *undefined*': ListType(T_String | T_Undefined),
 
     # 6.2.2 The Set and Relation Specification Types
 
     # 6.2.3 The Completion Record Specification Type
         'a Completion Record': T_Abrupt | T_Normal,
-        'a Completion Record whose [[Type]] is ~return~ or ~throw~': T_return_ | T_throw_,
 
         'a normal completion'            : T_Normal,
         'an abrupt completion'           : T_Abrupt,
         'a return completion'            : T_return_,
         'a throw completion'             : T_throw_,
-        'throw'                          : T_throw_,
-        'throw *RangeError*'             : ThrowType(T_RangeError),
-        'throw *ReferenceError*'         : ThrowType(T_ReferenceError),
-        'throw *TypeError*'              : ThrowType(T_TypeError),
 
     # 6.2.4 Reference Record
         'a Reference Record' : T_Reference_Record,
@@ -1582,7 +1560,6 @@ nature_to_type = {
     # 10.4.2 Array Exotic Objects
     # 23.1 Array Objects
         'an Array' : T_Array_object_,
-        'an array' : T_Array_object_,
         'an Array exotic object' : T_Array_object_,
 
     # 10.4.3 String Exotic Objects
@@ -1684,7 +1661,6 @@ nature_to_type = {
 
     # 23.2 TypedArray Objects
         'a TypedArray'       : T_TypedArray_object_,
-        'a new _TypedArray_' : T_TypedArray_object_,
 
         'a TypedArray element type' : T_TypedArray_element_type_,
 
@@ -1717,16 +1693,13 @@ nature_to_type = {
 
     # 27.1.1.2 The Iterator Interface
         'an Iterator'       : T_Iterator_object_,
-        'an Iterator object': T_Iterator_object_,
 
         '~key+value~ or ~value~'         : T_iteration_result_kind_,
         '~key+value~, ~key~, or ~value~' : T_iteration_result_kind_,
         '~key~, ~value~, or ~key+value~' : T_iteration_result_kind_,
 
     # 27.2 Promise Objects
-        'a promise'    : T_Promise_object_,
         'a Promise'    : T_Promise_object_,
-        'a new promise': T_Promise_object_,
 
     # 27.2.1.1 PromiseCapability Record
         'a PromiseCapability Record'    : T_PromiseCapability_Record,
