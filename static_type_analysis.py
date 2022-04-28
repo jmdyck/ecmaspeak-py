@@ -1061,7 +1061,7 @@ named_type_hierarchy = {
                     'ImportMeta_record_': {},
                     'Intrinsics Record': {},
                     'Iterator Record': {},
-                    'JSON_Stringify_state_record_': {},
+                    'JSON Serialization Record': {},
                     'Job_record_': {},
                     'JobCallback Record': {},
                     'MapData_record_': {},
@@ -1685,6 +1685,9 @@ nature_to_type = {
 
     # 25.4.1 WaiterList Objects
         'a WaiterList' : T_WaiterList,
+
+    # 25.5.2.1
+        'a JSON Serialization Record' : T_JSON_Serialization_Record,
 
     # 26.1 WeakRef Objects
         'a WeakRef': T_WeakRef_object_,
@@ -9780,7 +9783,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif field_names == ['Initializer', 'IsAnonymousFunctionDefinition', 'Name']:
                 record_type_name = 'ClassFieldDefinition Record'
             elif field_names == ['Gap', 'Indent', 'PropertyList', 'ReplacerFunction', 'Stack']:
-                record_type_name = 'JSON_Stringify_state_record_'
+                record_type_name = 'JSON Serialization Record'
             elif field_names == ['HeldValue', 'UnregisterToken', 'WeakRefTarget']:
                 record_type_name = 'FinalizationRegistryCellRecord_'
             elif field_names == ['Greedy', 'Max', 'Min']:
@@ -11139,7 +11142,7 @@ fields_for_record_type_named_ = {
     },
 
     # 38121 24.5.2: JSON.stringify: no table, no mention
-    'JSON_Stringify_state_record_': {
+    'JSON Serialization Record': {
         'ReplacerFunction': T_function_object_ | T_Undefined,
         'Stack'           : ListType(T_Object),
         'Indent'          : T_String,

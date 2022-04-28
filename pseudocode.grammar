@@ -1349,6 +1349,7 @@
     the ExportEntry Record
     the ImportEntry Record
     the Iterator Record
+    the JSON Serialization Record
     the JobCallback Record
     the Match Record
     the PrivateEnvironment Record
@@ -1497,6 +1498,7 @@
     a FinalizationRegistry
     a For-In Iterator
     a Generator
+    a JSON Serialization Record
     a Job Abstract Closure
     a JobCallback Record
     a List
