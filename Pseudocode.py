@@ -1248,13 +1248,12 @@ def analyze_sdo_coverage_info():
                 elif u_lhs == '{PROD_REF}':
                     u_rhs = uprimary.prod.rhs_s
                     if u_rhs in [
+                        "that {nonterminal}",
                         'this {nonterminal}',
-                        'the {nonterminal} contained in {PROD_REF}',
                         'the {nonterminal} containing {LOCAL_REF}',
                         'the {nonterminal} of {LOCAL_REF}',
                         'the {nonterminal} that is that single code point',
                         'the {nonterminal} that is that {nonterminal}',
-                        'the corresponding {nonterminal}',
                         'the derived {nonterminal}',
                     ]:
                         nonterminal = uprimary.children[0]
@@ -1727,6 +1726,14 @@ nts_behind_var_in_sdo_call = {
 
     # 30931 RegExpInitialize
     ('CompilePattern', '_parseResult_'): ['Pattern'],
+
+    # 34988 GroupSpecifiersThatMatch
+    ('CapturingGroupName', '_thisGroupName_'): [
+        'GroupName',
+    ],
+    ('CapturingGroupName', '_gs_'): [
+        'GroupSpecifier',
+    ],
 
     # 37399 JSON.parse
     ('Evaluation', '_script_'): ['Script'],

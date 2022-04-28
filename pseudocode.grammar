@@ -242,7 +242,6 @@
     Return {EXPR}.
     Return {MULTILINE_EXPR}
     ReturnIfAbrupt({EX}).
-    Search {PROD_REF} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to {NAMED_OPERATION_INVOCATION}.
     Set all of the bytes of {var} to 0.
     Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
     Set {DOTTING} as described in {h_emu_xref}.
@@ -358,6 +357,7 @@
     {ITEM_NATURE} {var} such that {CONDITION}, in ascending order
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
     {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
+    {nonterminal} {var} that {var} contains
 
 {ITEM_NATURE} :
     Agent Events Record
@@ -442,7 +442,6 @@
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
-    A unique such {nonterminal} is found
     All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
     All named exports from {var} are resolvable
     Evaluate has already been invoked on {var} and successfully completed
@@ -552,6 +551,7 @@
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
+    {EX} is empty
     {EX} is in {EX}
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
     {EX} is neither {LITERAL} nor the active function
@@ -565,6 +565,7 @@
     {EX} is present
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
+    {EX} is the same value as {EX}
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
@@ -575,7 +576,7 @@
     {EX} is {PREFIX_PAREN}
     {EX} is {var}
     {LOCAL_REF} Contains {G_SYM}
-    {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}
+    {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same
     {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
     {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
@@ -610,7 +611,6 @@
     {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
     {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
-    {PROD_REF} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals {NAMED_OPERATION_INVOCATION}
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
     {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
@@ -644,6 +644,7 @@
     {var} contains a PrivateElement whose {dsb_word} is {DOTTING}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
+    {var} contains a single {nonterminal}
     {var} contains a {nonterminal}
     {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
     {var} contains any duplicate entries
@@ -749,7 +750,6 @@
     {var} is an? {nonterminal} Parse Node
     {var} is as small as possible
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
-    {var} is empty
     {var} is finite
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
     {var} is never an abrupt completion
@@ -1263,18 +1263,14 @@
     {SETTABLE}
 
 {PROD_REF} :
-    the corresponding {nonterminal}
+    that {nonterminal}
     the derived {nonterminal}
-    the enclosing {nonterminal}
-    the located {nonterminal}
     the {ORDINAL} {nonterminal}
     the {nonterminal}
-    the {nonterminal} contained in {PROD_REF}
     the {nonterminal} containing {LOCAL_REF}
     the {nonterminal} of {LOCAL_REF}
     this phrase
     this production
-    this production's {nonterminal}
     this {nonterminal}
     {nonterminal}
 

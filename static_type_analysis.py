@@ -1454,6 +1454,7 @@ nature_to_type = {
         'a List of names of internal slots'           : ListType(T_SlotName_),
         'a List of property keys'                     : ListType(T_String | T_Symbol),
         'a List of |ClassElement| Parse Nodes'        : ListType(ptn_type_for('ClassElement')),
+        'a List of |GroupSpecifier| Parse Nodes'      : ListType(ptn_type_for('GroupSpecifier')),
         'a non-empty List of *SyntaxError* objects'   : ListType(T_SyntaxError),
         'a possibly empty List, each of whose elements is a String or *undefined*': ListType(T_String | T_Undefined),
 
@@ -4056,6 +4057,11 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
             env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
 
+        elif each_thing.prod.rhs_s == r"{nonterminal} {var} that {var} contains":
+            [nont, loop_var, root_var] = each_thing.children
+            env0.assert_expr_is_of_type(root_var, T_Parse_Node)
+            env_for_commands = env0.plus_new_entry(loop_var, ptn_type_for(nont))
+
         elif each_thing.prod.rhs_s == r"field of {var}":
             [desc_var] = each_thing.children
             loop_var = None # todo: no loop variable!
@@ -4601,10 +4607,6 @@ def tc_nonvalue(anode, env0):
     elif p == r"{COMMAND} : Remove the last element of {SETTABLE}.":
         [settable] = children
         env0.assert_expr_is_of_type(settable, T_List)
-        result = env0
-
-    elif p == r"{COMMAND} : Search {PROD_REF} for an instance of a {nonterminal} containing a {nonterminal} which has a {cap_word} equal to {NAMED_OPERATION_INVOCATION}.":
-        [prod_ref1, nont2, nont3, cw4, noi5] = children
         result = env0
 
     elif p == r"{COMMAND} : Create any host-defined global object properties on {var}.":
@@ -6125,7 +6127,10 @@ def tc_cond_(cond, env0, asserting):
         assert dsbn2.source_text() == '[[Enumerable]]'
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {EX} is {var}':
+    elif p in [
+        r'{CONDITION_1} : {EX} is {var}',
+        r"{CONDITION_1} : {EX} is the same value as {EX}",
+    ]:
         [a_ex, b_ex] = children
         (a_t, a_env) = tc_expr(a_ex, env0)
         (b_t, b_env) = tc_expr(b_ex, env0); assert b_env is env0
@@ -6225,7 +6230,7 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r'{CONDITION_1} : {var} is empty',
+        r'{CONDITION_1} : {EX} is empty',
         r"{CONDITION_1} : {var} is not empty",
     ]:
         [var] = children
@@ -6486,14 +6491,15 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
+    elif p == r"{CONDITION_1} : {var} contains a single {nonterminal}":
+        [var, nonterminal] = children    
+        env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}":
         [ivar, rvar, nonterminal] = children
         env0.assert_expr_is_of_type(ivar, T_MathInteger_)
         env0.assert_expr_is_of_type(rvar, T_Object)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : A unique such {nonterminal} is found":
-        [nonterminal] = children
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}":
@@ -6979,23 +6985,16 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noic, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} contains multiple {nonterminal}s whose enclosed {nonterminal}s have the same {cap_word}":
-        [local_ref, nonta, nontb, cap_word] = children
+    elif p == r"{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same":
+        [local_ref, nonta, noi] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        # XXX cap_word
+        # XXX noi
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}":
         [noia, noib] = children
         env0.assert_expr_is_of_type(noia, T_MathInteger_)
         env0.assert_expr_is_of_type(noib, T_MathInteger_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {PROD_REF} does not contain a {nonterminal} with an enclosed {nonterminal} whose {cap_word} equals {NAMED_OPERATION_INVOCATION}":
-        [prod_ref1, nont2, nont3, cap_word4, noi5] = children
-        env0.assert_expr_is_of_type(prod_ref1, T_Parse_Node)
-        env0.assert_expr_is_of_type(noi5, T_String) # over-specific
-        # XXX cap_word
         return (env0, env0)
 
     elif p in [
@@ -8876,14 +8875,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_TypedArray_element_type_, env0)
 
-    elif p in [
-        r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the sole element of {var}",
-    ]:
-        [noi] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_String)) # not justified
-        return (T_String, env0)
-
     elif p == r"{EXPR} : the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}":
         [noi] = children
         env0.assert_expr_is_of_type(noi, ListType(T_String))
@@ -9291,15 +9282,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         nonterminal = children[-1]
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r"{PROD_REF} : the corresponding {nonterminal}":
-        [nont] = children
-        return (ptn_type_for(nont), env0)
-
-    elif p == r"{PROD_REF} : the enclosing {nonterminal}":
-        [nont] = children
-        return (ptn_type_for(nont), env0)
-
-    elif p == r"{PROD_REF} : the located {nonterminal}":
+    elif p == r"{PROD_REF} : that {nonterminal}":
         [nont] = children
         return (ptn_type_for(nont), env0)
 
@@ -9326,7 +9309,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{PROD_REF} : the derived {nonterminal}",
-        r"{PROD_REF} : this production's {nonterminal}",
     ]:
         [nont] = children
         return (T_Parse_Node, env0)
@@ -10130,6 +10112,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # todo: replace with ad hoc record
         [var] = children
         list_type = env0.assert_expr_is_of_type(var, T_List)
+        return (list_type.element_type, env0)
+
+    elif p in [
+        r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}",
+        r"{EXPR} : the sole element of {var}",
+    ]:
+        [noi] = children
+        list_type = env0.assert_expr_is_of_type(noi, T_List)
         return (list_type.element_type, env0)
 
     elif p in [
