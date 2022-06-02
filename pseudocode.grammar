@@ -835,7 +835,6 @@
 
 {NUM_COMPARAND} :
     the length of {var}
-    the number of elements in {var}
     the numeric value of {var}
     {FACTOR}
     {PRODUCT}

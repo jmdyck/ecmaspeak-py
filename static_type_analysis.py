@@ -8481,7 +8481,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the number of characters in {var}",
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : the number of elements in {var}",
-        r"{NUM_COMPARAND} : the number of elements in {var}",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
