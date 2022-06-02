@@ -6769,7 +6769,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once":
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once":
         [noi, *bw_] = children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         for bw in bw_:
