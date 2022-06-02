@@ -3667,14 +3667,6 @@ def tc_nonvalue(anode, env0):
         (t, env1) = tc_expr(expr, env0)
         result = env1.plus_new_entry(let_var, t)
 
-    elif p in [
-        r"{COMMAND} : Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)",
-    ]:
-        [let_var, cond] = children[0:2]
-        env_for_cond = env0.plus_new_entry(let_var, T_MathInteger_)
-        (t_env, f_env) = tc_cond(cond, env_for_cond)
-        result = t_env
-
     elif p == r"{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.":
         [let_var, num_expr, var2, var3] = children
         assert same_source_text(var2, let_var)

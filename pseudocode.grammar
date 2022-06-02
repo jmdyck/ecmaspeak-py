@@ -195,7 +195,6 @@
     Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
     Let {var} be the first element of {var} and remove that element from {var}.
     Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the length of {var}.
-    Let {var} be the smallest non-negative integer such that {CONDITION}. (There must be such a {var}, for neither String is a prefix of the other.)
     Let {var} be {EXPR}.
     Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
