@@ -726,9 +726,6 @@ def resolve_oi(hoi, poi):
                 else:
                     assert hoi_param.nature == poi_param.nature
 
-    assert hoi.also is None
-    assert poi.also is None
-
     assert hoi.return_nature_node is None
     hoi.return_nature_node = poi.return_nature_node
 
@@ -763,7 +760,6 @@ class AlgHeader:
         self.for_phrase = None
         self.for_phrase_node = None
         self.params = None
-        self.also = None
         self.return_nature_node = None
         self.description_paras = []
         self.u_defns = []
@@ -869,7 +865,6 @@ def write_header_info():
                 put(f"      --")
                 if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
                 # alg_header.params
-                # alg_header.also
                 # alg_header.return_nature_{normal,abrupt}
                 # alg_header.description_paras
                 put(f"        {len(alg_header.u_defns)} defns")

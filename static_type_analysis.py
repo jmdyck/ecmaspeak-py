@@ -246,16 +246,6 @@ class TypedAlgHeader:
                 self.for_param_name = None
             self.for_param_type = convert_nature_to_type(for_param_nature)
 
-        if header.also is None:
-            self.typed_alsos = {}
-        else:
-            ahat_ = {
-            }
-            self.typed_alsos = dict(
-                (pn, ahat_[(pn, pt)])
-                for (pn, pt) in header.also
-            )
-
         self.fake_node_for_ = {}
         for pname in self.param_names:
             self.fake_node_for_[pname] = ANode(None, None, 0, 0)
@@ -486,10 +476,6 @@ class TypedAlgHeader:
             assert isinstance(pt, Type)
             e.vars[pn] = pt
             e.parameter_names.add(pn)
-
-        for (vn, vt) in self.typed_alsos.items():
-            assert isinstance(vt, Type)
-            e.vars[vn] = vt
 
         e.vars['*return*'] = self.return_type
 

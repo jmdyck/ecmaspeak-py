@@ -284,7 +284,6 @@ def _handle_early_errors_section(section):
         name = 'Early Errors',
         for_phrase = 'Parse Node',
         params = [],
-        also = [],
         node_at_end_of_header = section.heading_child,
     )
 
@@ -471,15 +470,12 @@ def _handle_sdo_section(section):
                     _set_bcen_attributes(section)
             return_nature_node = None
 
-        also = []
-
         alg_header = AlgHeader_make(
             section = section,
             species = 'op: discriminated by syntax: steps',
             name = sdo_name,
             for_phrase = 'Parse Node',
             params = params,
-            also = also,
             node_at_end_of_header = section.heading_child,
             return_nature_node = return_nature_node,
         )
@@ -1105,21 +1101,6 @@ def _handle_structured_header(section):
 
     # --------------------------------------------------------------------------
 
-    # Hack this for now:
-    if op_name in [
-        'IsWordChar',
-        'CharacterSetMatcher',
-        'Canonicalize',
-        'BackreferenceMatcher',
-        'RegExpBuiltinExec',
-        'CharacterRangeOrUnion',
-    ]:
-        also = regexp_also
-    elif op_name.startswith('Compile'):
-        also = regexp_also
-    else:
-        also = None
-
     op_species = other_op_species_for_section_kind_[section.section_kind]
 
     alg_header = AlgHeader_make(
@@ -1129,17 +1110,11 @@ def _handle_structured_header(section):
         for_phrase = for_phrase,
         for_phrase_node = for_phrase_node,
         params = params,
-        also = also,
         return_nature_node = return_nature,
         node_at_end_of_header = section.dl_child,
     )
 
     return alg_header
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-regexp_also = [
-]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -3385,7 +3360,6 @@ def AlgHeader_make(
     for_phrase           = None,
     for_phrase_node      = None,
     return_nature_node   = None,
-    also                 = None,
     preamble_nodes       = None,
 ):
     alg_header = headers.AlgHeader()
@@ -3396,7 +3370,6 @@ def AlgHeader_make(
     alg_header.for_phrase = for_phrase
     alg_header.for_phrase_node = for_phrase_node
     alg_header.return_nature_node = return_nature_node
-    alg_header.also = also
 
     if params is not None:
         assert all(isinstance(param, AlgParam) for param in params)
