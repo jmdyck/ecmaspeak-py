@@ -198,8 +198,6 @@
     Let {var} be {EXPR}.
     Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
-    Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)
-    Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.
     Let {var} be {MULTILINE_EXPR}
     Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
     Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
@@ -897,7 +895,7 @@
     a List of length {var} whose elements are nondeterministically chosen byte values
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present
-    a List of {var} {LITERAL} values, indexed 1 through {var}
+    a List of {EX} {LITERAL} values, indexed 1 through {EX}
     a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)
     a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
@@ -960,11 +958,13 @@
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
+    the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
     the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}
     the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
+    the CharSet containing all sixty-three characters in {starred_str}
     the CharSet of all characters
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
@@ -983,7 +983,7 @@
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
-    the State ({EX}, {var})
+    the State ({var}, {EX}, {var})
     the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}
     the String representation of {EX}, formatted as a decimal number
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
@@ -1057,8 +1057,6 @@
     the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
     the negative of {EX}
     the number of bytes in {var}
-    the number of characters contained in {var}
-    the number of characters in {var}
     the number of code unit elements in {var}
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
@@ -1198,6 +1196,7 @@
     {var} rounded towards 0 to the next integer value
     {var}'s _endIndex_
     {var}'s _endIndex_ value
+    {var}'s _input_
     {var}'s _startIndex_
 
 {MATH_FUNC} :
@@ -1356,6 +1355,7 @@
     the PropertyDescriptor
     the Record
     the Reference Record
+    the RegExp Record
 
 {FIELDS} :
     {FIELDS}, {FIELD}
@@ -1523,6 +1523,7 @@
     a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})
     a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})
     a Reference Record
+    a RegExp Record
     a ResolvedBinding Record
     a Script Record
     a Set of events

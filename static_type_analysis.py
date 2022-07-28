@@ -250,16 +250,6 @@ class TypedAlgHeader:
             self.typed_alsos = {}
         else:
             ahat_ = {
-                ('_IgnoreCase_', 'Boolean'): T_Boolean,
-
-                ('_Input_'           , 'from somewhere'): ListType(T_character_),
-                ('_InputLength_'     , 'from somewhere'): T_MathInteger_,
-                ('_NcapturingParens_', 'from somewhere'): T_MathInteger_,
-                ('_DotAll_'          , 'from somewhere'): T_Boolean,
-                ('_IgnoreCase_'      , 'from somewhere'): T_Boolean,
-                ('_Multiline_'       , 'from somewhere'): T_Boolean,
-                ('_Unicode_'         , 'from somewhere'): T_Boolean,
-                ('_WordCharacters_'  , 'from somewhere'): T_CharSet,
             }
             self.typed_alsos = dict(
                 (pn, ahat_[(pn, pt)])
@@ -1084,6 +1074,7 @@ named_type_hierarchy = {
                     'QuantifierResultRecord_': {},
                     'Realm Record': {},
                     'Reference Record': {},
+                    'RegExp Record': {},
                     'ResolvedBinding Record': {},
                     'ResolvingFunctions_record_': {},
                     'Script Record': {},
@@ -1446,6 +1437,7 @@ nature_to_type = {
         'a List of Unicode code points'               : ListType(T_code_point_),
         'a List of agent signifiers'                  : ListType(T_agent_signifier_),
         'a List of byte values'                       : ListType(T_MathInteger_),
+        'a List of characters'                        : ListType(T_character_),
         'a List of either Match Records or *undefined*': ListType(T_Match_Record | T_Undefined),
         'a List of either Strings or *null*'          : ListType(T_String | T_Null),
         'a List of either Strings or *undefined*'     : ListType(T_String | T_Undefined),
@@ -1654,6 +1646,7 @@ nature_to_type = {
         'a Matcher'      : T_Matcher,
         'a Match Record' : T_Match_Record,
         'a MatchResult'  : T_MatchResult,
+        'a RegExp Record': T_RegExp_Record,
 
         'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
         'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
@@ -2849,8 +2842,6 @@ class Env:
         nointersect_env = env1.copy()
         intersect_env.vars[expr_text] = part_inside_target_t
         nointersect_env.vars[expr_text] = part_outside_target_t
-        # if expr_text == '_Input_' and part_inside_target_t == T_List: assert 0
-        # if expr_text == '_Input_' and part_outside_target_t == T_List: assert 0
 
         if copula == 'is a':
             return (intersect_env, nointersect_env)
@@ -3598,7 +3589,6 @@ def tc_nonvalue(anode, env0):
 
     elif p in [
         r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)",
-        r"{COMMAND} : Let {var} be {EXPR}. This alias will be used throughout the algorithms in {h_emu_xref}.",
         r"{COMMAND} : Let {var} be {EXPR}.",
         r"{COMMAND} : Let {var} be {MULTILINE_EXPR}",
         r"{SMALL_COMMAND} : let {var} be {EXPR}",
@@ -3650,13 +3640,6 @@ def tc_nonvalue(anode, env0):
         else:
             # The normal case.
             result = env1.plus_new_entry(var, expr_t)
-
-    elif p in [
-        r"{COMMAND} : Let {var} be {EXPR}. (This is the same value as {h_emu_xref}'s {var}.)",
-    ]:
-        [let_var, expr] = children[0:2]
-        (t, env1) = tc_expr(expr, env0)
-        result = env1.plus_new_entry(let_var, t)
 
     elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)":
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = children
@@ -8469,8 +8452,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathNonNegativeInteger_, env1)
 
     elif p in [
-        r"{EXPR} : the number of characters contained in {var}",
-        r"{EXPR} : the number of characters in {var}",
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : the number of elements in {var}",
     ]:
@@ -9219,12 +9200,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(state_var, T_State)
         return (T_captures_entry_, env0)
 
-    elif p == r"{EXPR} : a List of {var} {LITERAL} values, indexed 1 through {var}":
+    elif p == r"{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}":
         [var, literal, var2] = children
-        assert var.children == var2.children
+        assert var.source_text() == var2.source_text()
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
+
+    elif p == r"{EX} : {var}'s _input_":
+        [var] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_State)
+        return (ListType(T_character_), env1)
 
     elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)":
         [data_var, lo_var, hi_ex] = children
@@ -9394,6 +9380,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_CharSet, env0)
 
+    elif p == r"{EXPR} : the CharSet containing all sixty-three characters in {starred_str}":
+        [ss] = children
+        return (T_CharSet, env0)
+
     elif p == r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}":
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_CharSet)
@@ -9429,6 +9419,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [noi] = children
         env0.assert_expr_is_of_type(noi, T_CharSet)
+        return (T_CharSet, env0)
+
+    elif p == r"{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}":
+        [loop_var, loop_var2, cs_var, noi, cs_var2] = children
+        assert loop_var.source_text() == loop_var2.source_text()
+        assert cs_var.source_text() == cs_var2.source_text()
+        env0.assert_expr_is_of_type(cs_var, T_CharSet)
+        env1 = env0.plus_new_entry(loop_var, T_character_)
+        env1.assert_expr_is_of_type(noi, T_character_)
         return (T_CharSet, env0)
 
     elif p == r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar} ":
@@ -9577,24 +9576,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         if clo_kind == 'Abstract Closure':
             clo_param_types = [T_TBD] * n_parameters
             alsos = [
-                # See #sec-pattern
-                ('_Unicode_',          T_Boolean),
-                ('_NcapturingParens_', T_MathInteger_),
             ]
         elif clo_kind == 'Continuation':
             assert n_parameters == 1
             clo_param_types = [T_State]
             alsos = [
-                ('_Input_',       ListType(T_character_)),
             ]
         elif clo_kind == 'Matcher':
             assert n_parameters == 2
             clo_param_types = [T_State, T_Continuation]
             alsos = [
-                # See BackreferenceMatcher
-                ('_InputLength_', T_MathInteger_),
-                ('_Input_',       ListType(T_character_)),
-                ('_Multiline_',   T_Boolean),
             ]
         elif clo_kind == 'Job Abstract Closure':
             assert n_parameters == 0
@@ -9993,8 +9984,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, seq_type
         return (item_type, env0)
 
-    elif p == r"{EXPR} : the State ({EX}, {var})":
-        [ex, var] = children
+    elif p == r"{EXPR} : the State ({var}, {EX}, {var})":
+        [input_var, ex, var] = children
+        env0.assert_expr_is_of_type(input_var, ListType(T_character_))
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
         env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
         return (T_State, env0)
@@ -11126,6 +11118,15 @@ fields_for_record_type_named_ = {
         'Invert' : T_Boolean,
     },
 
+    'RegExp Record': {
+        'IgnoreCase'    : T_Boolean,
+        'Multiline'     : T_Boolean,
+        'DotAll'        : T_Boolean,
+        'Unicode'       : T_Boolean,
+        'WordCharacters': T_CharSet,
+        'CapturingGroupsCount': T_MathNonNegativeInteger_,
+    },
+
     # 22.2.5.2.5 Match Record Fields
     'Match Record': {
         'StartIndex': T_MathInteger_,
@@ -11377,6 +11378,7 @@ type_of_internal_thing_ = {
     'RegExpMatcher'  : T_RegExpMatcher_,
     'OriginalSource' : T_String,
     'OriginalFlags'  : T_String,
+    'RegExpRecord'   : T_RegExp_Record,
 
     # 34123: Table 48: Internal Slots of Array Iterator Instances
     'IteratedArrayLike'      : T_Object,

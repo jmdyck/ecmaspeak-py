@@ -496,6 +496,7 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | \| [A-Za-z][A-Za-z0-9]* \|
     | _captures_
     | _endIndex_
+    | _input_
     | _startIndex_
     | _withEnvironment_
 

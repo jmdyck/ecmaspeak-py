@@ -1139,16 +1139,6 @@ def _handle_structured_header(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 regexp_also = [
-    # 21.2.2.1 Notation says:
-    # "The descriptions below use the following variables:"
-    ('_Input_'           , 'from somewhere'),
-    ('_DotAll_'          , 'from somewhere'),
-    ('_InputLength_'     , 'from somewhere'),
-    ('_NcapturingParens_', 'from somewhere'),
-    ('_IgnoreCase_'      , 'from somewhere'),
-    ('_Multiline_'       , 'from somewhere'),
-    ('_Unicode_'         , 'from somewhere'),
-    ('_WordCharacters_'  , 'from somewhere'),
 ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
