@@ -285,6 +285,13 @@ class TypedAlgHeader:
                 self.change_declared_type(tpn, tnt, tweak=True)
             tweaks.n_uses += 1
 
+        elif self.name == 'Evaluation':
+            # too weird to handle above
+            tpn = '*return*'
+            assert self.return_type in [(T_Normal | T_Abrupt), T_TBD]
+            tnt = T_Tangible_ | T_empty_ | T_Reference_Record | T_Abrupt
+            self.change_declared_type(tpn, tnt, tweak=True)
+
         # -------------------------
 
         self.t_defns = []
@@ -1750,7 +1757,6 @@ type_tweaks_tuples = [
     ('EvalDeclarationInstantiation'             , '_varEnv_'               , T_TBD                 , T_Environment_Record),
     ('EvalDeclarationInstantiation'             , '_lexEnv_'               , T_TBD                 , T_Environment_Record),
     ('EvalDeclarationInstantiation'             , '_privateEnv_'           , T_TBD                 , T_PrivateEnvironment_Record),
-    ('Evaluation'                               , '*return*'               , T_TBD                 , T_Tangible_ | T_empty_ | T_Reference_Record | T_Abrupt),
     ('ExportEntriesForModule'                   , '_module_'               , T_TBD                 , T_String | T_Null),
     ('FinishDynamicImport'                      , '_referencingScriptOrModule_' , T_TBD            , T_Script_Record | T_Module_Record | T_Null),
     ('FinishDynamicImport'                      , '_specifier_'            , T_TBD                 , T_String),
@@ -2560,23 +2566,6 @@ class Env:
                 'the TV of |NoSubstitutionTemplate|',
                 'the VarDeclaredNames of |Statement|',
                 'the VarScopedDeclarations of |Statement|',
-                'the result of evaluating _body_', # PerformEval
-                'the result of evaluating |Assertion|',
-                'the result of evaluating |AtomEscape|',
-                'the result of evaluating |AtomEscape| with argument _direction_',
-                'the result of evaluating |Atom|',
-                'the result of evaluating |Atom| with argument _direction_',
-                'the result of evaluating |CharacterClassEscape|',
-                'the result of evaluating |CharacterEscape|',
-                'the result of evaluating |ClassAtom|',
-                'the result of evaluating |ClassAtomNoDash|',
-                'the result of evaluating |ClassEscape|',
-                'the result of evaluating |Disjunction|',
-                'the result of evaluating |Disjunction| with argument _direction_',
-                'the result of evaluating |LeadSurrogate|',
-                'the result of evaluating |NonSurrogate|',
-                'the result of evaluating |NonemptyClassRanges|',
-                'the result of evaluating |TrailSurrogate|',
                 'the result of performing ArrayAccumulation of |ElementList| with arguments _array_ and _nextIndex_',
                 'the result of performing ArrayAccumulation of |Elision| with arguments _array_ and _nextIndex_',
                 'the result of performing IteratorDestructuringAssignmentEvaluation of |AssignmentRestElement| with _iteratorRecord_ as the argument',
@@ -3816,6 +3805,7 @@ def tc_nonvalue(anode, env0):
     elif p in [
         r"{COMMAND} : Return {EXPR} (no conversion).",
         r"{COMMAND} : Return {EXPR}.",
+        r"{COMMAND} : Return {EXPR}. This may be of type Reference.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
         r"{MULTILINE_SMALL_COMMAND} : return {MULTILINE_EXPR}",
         r"{SMALL_COMMAND} : return {EXPR}",
@@ -7523,20 +7513,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
 
     elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF}",
-        r"{NAMED_OPERATION_INVOCATION} : evaluating {LOCAL_REF}. This may be of type Reference",
-    ]:
-        [local_ref] = children
-        op_name = 'Evaluation'
-        return tc_sdo_invocation(op_name, local_ref, [], expr, env0)
-
-    elif p == r"{NAMED_OPERATION_INVOCATION} : evaluating {nonterminal} {var}":
-        [nont, var] = children
-        assert nont.source_text() == '|CaseClause|'
-        env0.assert_expr_is_of_type(var, ptn_type_for(nont))
-        return tc_sdo_invocation('Evaluation', var, [], expr, env0)
-
-    elif p in [
         r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}",
         r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}",
     ]:
@@ -9236,6 +9212,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r'{PROD_REF} : {nonterminal}':
         [nonterminal] = children
         return (ptn_type_for(nonterminal), env0)
+
+    elif p == r"{PROD_REF} : {nonterminal} {var}":
+        [nonterminal, var] = children
+        t = ptn_type_for(nonterminal)
+        env0.assert_expr_is_of_type(var, t)
+        return (t, env0)
 
     elif p == r'{PROD_REF} : the {ORDINAL} {nonterminal}':
         [ordinal, nonterminal] = children

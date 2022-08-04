@@ -562,11 +562,6 @@ def annotate_invocations(anode):
                     else:
                         args.extend(with_args.children)
 
-            elif rhs == 'evaluating {LOCAL_REF}':
-                [local_ref] = d.children
-                op_names = ['Evaluation']
-                args = d.children
-
             elif rhs == 'the abstract operation named by {DOTTING} using the elements of {DOTTING} as its arguments':
                 op_names = [ 'ScriptEvaluationJob', 'TopLevelModuleEvaluationJob']
                 args = [d.children[1]] # XXX
@@ -577,8 +572,6 @@ def annotate_invocations(anode):
                     'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}' :  'Abstract Relational Comparison',
                     'Abstract Relational Comparison {var} &lt; {var}'  : 'Abstract Relational Comparison',
                     'Strict Equality Comparison {var} === {EX}'        : 'Strict Equality Comparison',
-                    'evaluating {LOCAL_REF}. This may be of type Reference' : 'Evaluation',
-                    'evaluating {nonterminal} {var}'                   : 'Evaluation',
                     "the CharSet returned by {h_emu_grammar} "         : 'CompileToCharSet',
                     '{LOCAL_REF} Contains {G_SYM}'                     : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
@@ -1255,6 +1248,7 @@ def analyze_sdo_coverage_info():
                         'the {nonterminal} that is that single code point',
                         'the {nonterminal} that is that {nonterminal}',
                         'the derived {nonterminal}',
+                        '{nonterminal} {var}',
                     ]:
                         nonterminal = uprimary.children[0]
                     elif u_rhs == 'the {ORDINAL} {nonterminal}':

@@ -237,6 +237,7 @@
     Resume the context that is now on the top of the execution context stack as the running execution context.
     Return {EXPR} (no conversion).
     Return {EXPR}.
+    Return {EXPR}. This may be of type Reference.
     Return {MULTILINE_EXPR}
     ReturnIfAbrupt({EX}).
     Set all of the bytes of {var} to 0.
@@ -1238,9 +1239,6 @@
     {NAMED_OPERATION_INVOCATION}
 
 {NAMED_OPERATION_INVOCATION} :
-    evaluating {LOCAL_REF}
-    evaluating {LOCAL_REF}. This may be of type Reference
-    evaluating {nonterminal} {var}
     the CharSet returned by {h_emu_grammar} 
     the result of performing {cap_word} on {EX}
     the {cap_word} of {LOCAL_REF}
@@ -1270,6 +1268,7 @@
     this production
     this {nonterminal}
     {nonterminal}
+    {nonterminal} {var}
 
 {ORDINAL} :
     first
