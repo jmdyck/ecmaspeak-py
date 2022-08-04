@@ -550,9 +550,10 @@ def check_dfns():
 
         variants = dfn.attrs.get('variants')
         if variants:
-            if ',' in variants: assert NYI
-            assert variants not in spec.dfn_for_term_
-            spec.dfn_for_term_[variants] = dfn
+            variants = variants.split(',')
+            for variant in variants:
+                assert variant not in spec.dfn_for_term_
+                spec.dfn_for_term_[variant] = dfn
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

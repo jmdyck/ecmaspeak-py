@@ -536,7 +536,7 @@ attribute_info = {
     'rowspan'            : r'\d',
     'src'                : r'img/[-\w.]+',
     'suppress-effects'   : r'user-code',
-    'variants'           : r'\w+([ -]\w+)*',
+    'variants'           : r'(\w+([ -]\w+)*)(,\w+([ -]\w+)*)*',
     'width'              : r'\d+',
 
     'example'            : None,
