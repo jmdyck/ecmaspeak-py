@@ -1605,7 +1605,6 @@
     an ordinary object
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
     an? {nonterminal} Parse Node
-    an? {nonterminal} String
     any value except a Completion Record
     anything
     some other definition of a function's behaviour provided in this specification

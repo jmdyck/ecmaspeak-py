@@ -1384,7 +1384,6 @@ nature_to_type = {
     # 6.1.4 The String Type
         'a String'                  : T_String,
         '*"reject"* or *"handle"*'  : T_String,
-        'a |ModuleSpecifier| String': T_String, # TODO
         'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': T_String,
 
         'a code unit' : T_code_unit_,
