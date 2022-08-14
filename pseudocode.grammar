@@ -151,10 +151,6 @@
 {COMMAND} :
     ? OperationName().
     ? {var}.OperationName().
-    Add {EX} as the last element of {var}.
-    Add {var} as an element of the list {var}.
-    Add {var} to the end of the list of waiters in {var}.
-    Add {var} to the end of {var}.
     Add {var} to {var}.
     Append in List order the elements of {var} to the end of the List {var}.
     Append the code unit elements of {var} to the end of {var}.
@@ -163,9 +159,6 @@
     Append to {var} the elements of {var}.
     Append {EX} and {EX} to {var}.
     Append {EX} as an element of {var}.
-    Append {EX} as the last element of the List that is {DOTTING}.
-    Append {EX} as the last element of {var}.
-    Append {EX} to the end of the List {var}.
     Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
@@ -255,7 +248,7 @@
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
     Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
-    Suspend the currently running execution context.
+    Suspend the running execution context.
     Suspend {var} and remove it from the execution context stack.
     Suspend {var}.
     The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.
@@ -552,7 +545,7 @@
     {EX} is empty
     {EX} is in {EX}
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
-    {EX} is neither {LITERAL} nor the active function
+    {EX} is neither {LITERAL} nor the active function object
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not -1
     {EX} is not an element of {var}
@@ -761,7 +754,6 @@
     {var} is not an Object
     {var} is not an abrupt completion
     {var} is not an array index
-    {var} is not an empty List
     {var} is not an integer index
     {var} is not an integral Number
     {var} is not an? {ENVIRONMENT_RECORD_KIND} Environment Record
@@ -1099,7 +1091,6 @@
     the source text matched by {PROD_REF}
     the source text that was recognized as {PROD_REF}
     the square root of the sum of squares of the mathematical values of the elements of {var}
-    the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}
     the string-concatenation of {EX} and {EX}
     the string-concatenation of {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, and {EX}

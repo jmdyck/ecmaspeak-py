@@ -4168,7 +4168,7 @@ def tc_nonvalue(anode, env0):
         result = env0
 
     elif p in [
-        r"{COMMAND} : Suspend the currently running execution context.",
+        r"{COMMAND} : Suspend the running execution context.",
     ]:
         [] = children
         result = env0
@@ -4242,12 +4242,7 @@ def tc_nonvalue(anode, env0):
         result = env1
 
     elif p in [
-        r"{COMMAND} : Add {EX} as the last element of {var}.",
-        r"{COMMAND} : Add {var} as an element of the list {var}.",
         r"{COMMAND} : Append {EX} as an element of {var}.",
-        r"{COMMAND} : Append {EX} as the last element of the List that is {DOTTING}.",
-        r"{COMMAND} : Append {EX} as the last element of {var}.",
-        r"{COMMAND} : Append {EX} to the end of the List {var}.",
         r"{COMMAND} : Append {EX} to the end of {EX}.",
         r"{COMMAND} : Append {EX} to {EX}.",
         r"{COMMAND} : Insert {var} as the first element of {var}.",
@@ -4570,22 +4565,11 @@ def tc_nonvalue(anode, env0):
 
     # -----
 
-    elif p == r"{COMMAND} : Add {var} to the end of the list of waiters in {var}.":
-        [w, wl] = children
-        env0.assert_expr_is_of_type(w, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl, T_WaiterList)
-        result = env0
-
     elif p == r"{COMMAND} : Remove {var} from the list of waiters in {var}.":
         [sig, wl] = children
         env0.assert_expr_is_of_type(sig, T_agent_signifier_)
         env0.assert_expr_is_of_type(wl, T_WaiterList)
         result = env0
-
-    elif p == r"{COMMAND} : Add {var} to the end of {var}.":
-        [el, list_var] = children
-        env1 = env0.ensure_A_can_be_element_of_list_B(el, list_var)
-        result = env1
 
     elif p == r"{COMMAND} : Notify the agent {var}.":
         [var] = children
@@ -5098,11 +5082,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is not an empty List":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_List | T_WaiterList)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {EX} is a sequence of Unicode code points":
@@ -6598,7 +6577,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(x, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is neither {LITERAL} nor the active function":
+    elif p == r"{CONDITION_1} : {EX} is neither {LITERAL} nor the active function object":
         [ex, lit] = children
         return (env0, env0)
 
@@ -8811,11 +8790,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref, ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_TypedArray_element_type_, env0)
-
-    elif p == r"{EXPR} : the string that is the only element of {PP_NAMED_OPERATION_INVOCATION}":
-        [noi] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_String))
-        return (T_String, env0)
 
     elif p == r"{EXPR} : {var}'s {DSBN} value":
         [var, dsbn] = children
