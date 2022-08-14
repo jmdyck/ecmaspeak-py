@@ -1029,12 +1029,12 @@ named_type_hierarchy = {
                     'ClassStaticBlockDefinition Record': {},
                     'CharacterClassResultRecord_': {},
                     'Environment Record': {
-                        'declarative Environment Record': {
-                            'function Environment Record': {},
-                            'module Environment Record': {},
+                        'Declarative Environment Record': {
+                            'Function Environment Record': {},
+                            'Module Environment Record': {},
                         },
-                        'object Environment Record': {},
-                        'global Environment Record': {},
+                        'Object Environment Record': {},
+                        'Global Environment Record': {},
                     },
                     'ExportEntry Record': {},
                     'ExportResolveSet_Record_': {},
@@ -1498,11 +1498,11 @@ nature_to_type = {
     # (6.2.6 The Environment Record Specification Type)
     # 9.1 Environment Records
         'an Environment Record'            : T_Environment_Record,
-        'a declarative Environment Record' : T_declarative_Environment_Record,
-        'a global Environment Record'      : T_global_Environment_Record,
-        'a module Environment Record'      : T_module_Environment_Record,
-        'a function Environment Record'    : T_function_Environment_Record,
-        'an object Environment Record'     : T_object_Environment_Record,
+        'a Declarative Environment Record' : T_Declarative_Environment_Record,
+        'a Global Environment Record'      : T_Global_Environment_Record,
+        'a Module Environment Record'      : T_Module_Environment_Record,
+        'a Function Environment Record'    : T_Function_Environment_Record,
+        'an Object Environment Record'     : T_Object_Environment_Record,
 
     # 9.2 PrivateEnvironment Records
         'a PrivateEnvironment Record': T_PrivateEnvironment_Record,
@@ -5602,7 +5602,7 @@ def tc_cond_(cond, env0, asserting):
             )
             # We could confirm if we looked at the subtypes and what fields they have.
             return (
-                env0.with_expr_type_narrowed(settable, T_function_Environment_Record),
+                env0.with_expr_type_narrowed(settable, T_Function_Environment_Record),
                 env0
             )
         else:
@@ -6264,7 +6264,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : it must be in the object Environment Record":
+    elif p == r"{CONDITION_1} : it must be in the Object Environment Record":
         # elliptical
         [] = children
         return (env0, env0)
@@ -10850,18 +10850,18 @@ fields_for_record_type_named_ = {
         'OuterEnv'         : T_Environment_Record,
     },
 
-    'declarative Environment Record': {
+    'Declarative Environment Record': {
         'OuterEnv' : T_Environment_Record,
     },
 
-    'object Environment Record': {
+    'Object Environment Record': {
         'OuterEnv'           : T_Environment_Record,
         'BindingObject'      : T_Object,
         'IsWithEnvironment'  : T_Boolean,
     },
 
     # 8.1.1.3 Table 16: Additional Fields of Function Environment Records
-    'function Environment Record': {
+    'Function Environment Record': {
         'OuterEnv'         : T_Environment_Record,
         'ThisValue'        : T_Tangible_,
         'ThisBindingStatus': T_this_binding_status_, # T_String, # enumeration
@@ -10871,15 +10871,15 @@ fields_for_record_type_named_ = {
     },
 
     # 8.1.1.4 Table 18: Additional Fields of Global Environment Records
-    'global Environment Record': {
+    'Global Environment Record': {
         'OuterEnv'         : T_Environment_Record,
-        'ObjectRecord'     : T_object_Environment_Record,
+        'ObjectRecord'     : T_Object_Environment_Record,
         'GlobalThisValue'  : T_Object,
-        'DeclarativeRecord': T_declarative_Environment_Record,
+        'DeclarativeRecord': T_Declarative_Environment_Record,
         'VarNames'         : ListType(T_String),
     },
 
-    'module Environment Record': {
+    'Module Environment Record': {
         'OuterEnv'         : T_Environment_Record,
     },
 

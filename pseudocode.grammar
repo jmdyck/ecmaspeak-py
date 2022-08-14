@@ -464,7 +464,7 @@
     any source text is matched by this production
     both {EX} and {EX} are {LITERAL}
     either {PAIR} or {PAIR} is in {EX}
-    it must be in the object Environment Record
+    it must be in the Object Environment Record
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
     only one argument was passed
@@ -1212,11 +1212,11 @@
     tangent
 
 {ENVIRONMENT_RECORD_KIND} :
-    declarative
-    function
-    global
-    module
-    object
+    Declarative
+    Function
+    Global
+    Module
+    Object
 
 {PAIR} :
     ({EX}, {EX})
