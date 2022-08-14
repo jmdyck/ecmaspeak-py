@@ -338,7 +338,7 @@ metagrammar = {
     'LABEL'            : ('/', 'n', r'#\w+'),
     'EMPTY'            : ('/', 'n', r'\[empty\]'),
     'NLTH'             : ('/', 'n', r'\[no LineTerminator here\]'),
-    'U_RANGE'          : ('/', 'n', r'&gt; any Unicode code point in the inclusive range (0x[0-9A-F]+) to (0x[0-9A-F]+)'),
+    'U_RANGE'          : ('/', 'n', r'&gt; any Unicode code point in the inclusive range (U\+[0-9A-F]+) to (U\+[0-9A-F]+)'),
     'U_PROP'           : ('/', 'n', r'&gt; any Unicode code point with the Unicode property &ldquo;(\w+)&rdquo;'),
     'U_ANY'            : ('/', 'n', r'&gt; any Unicode code point'),
     'BACKTICKED_THING' : ('/', 'n', r'`([^` ]+|`)`'),
