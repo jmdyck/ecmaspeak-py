@@ -6390,6 +6390,10 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
         return (env1, env1)
 
+    elif p == r"{CONDITION_1} : the host is a web browser":
+        [] = children
+        return (env0, env0)
+
     elif p == r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object":
         [var] = children
         env0.assert_expr_is_of_type(var, T_Realm_Record)

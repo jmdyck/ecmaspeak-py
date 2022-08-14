@@ -494,6 +494,7 @@
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
     the generator either threw an exception or performed either an implicit or explicit return
     the goal symbol of the syntactic grammar is {nonterminal}
+    the host is a web browser
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
