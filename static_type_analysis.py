@@ -8833,6 +8833,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the String representation of {EX}, formatted as a decimal number",
+        r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number",
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
