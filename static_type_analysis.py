@@ -1763,13 +1763,10 @@ type_tweaks_tuples = [
     ('GeneratorResume'                          , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
     ('GeneratorValidate'                        , '_generator_'            , T_TBD                 , T_Tangible_),
     ('GetOwnPropertyKeys'                       , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('GetValue'                                 , '_V_'                    , T_TBD                 , T_Tangible_ | T_Reference_Record | T_throw_),
     ('GetViewValue'                             , '_view_'                 , T_TBD                 , T_Tangible_),
     ('GetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
     ('HasCallInTailPosition'                    , '_call_'                 , T_TBD                 , T_Parse_Node),
     ('InitializeBoundName'                      , '_value_'                , T_TBD                 , T_Tangible_),
-    ('InitializeReferencedBinding'              , '_V_'                    , T_TBD                 , T_Reference_Record | T_throw_),
-    ('InitializeReferencedBinding'              , '_W_'                    , T_TBD                 , T_Tangible_ | T_throw_),
     ('IsArray'                                  , '_argument_'             , T_TBD                 , T_Tangible_),
     ('IsConcatSpreadable'                       , '_O_'                    , T_TBD                 , T_Tangible_),
     ('IsIntegralNumber'                         , '_argument_'             , T_TBD                 , T_Tangible_),
@@ -1792,8 +1789,6 @@ type_tweaks_tuples = [
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
     ('ProxyCreate'                              , '_handler_'              , T_TBD                 , T_Tangible_),
     ('ProxyCreate'                              , '_target_'               , T_TBD                 , T_Tangible_),
-    ('PutValue'                                 , '_V_'                    , T_TBD                 , T_Tangible_ | T_Reference_Record | T_throw_),
-    ('PutValue'                                 , '_W_'                    , T_TBD                 , T_Tangible_ | T_throw_),
     ('RequireInternalSlot'                      , '_O_'                    , T_TBD                 , T_Tangible_),
     ('RequireInternalSlot'                      , '_internalSlot_'         , T_TBD                 , T_SlotName_),
     ('RequireObjectCoercible'                   , '_argument_'             , T_TBD                 , T_Tangible_),
@@ -9853,8 +9848,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}',
-        r"{EXPR} : ? {DOTTING}",
-        r"{EXPR} : ? {var}",
+        r"{EX} : ? {DOTTING}",
+        r"{EX} : ? {var}",
     ]:
         [operand] = children
         (operand_t, env1) = tc_expr(operand, env0)

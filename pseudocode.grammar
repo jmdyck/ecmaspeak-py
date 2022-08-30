@@ -877,8 +877,6 @@
 
 {EXPR} :
     (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
-    ? {DOTTING}
-    ? {var}
     Type({var})
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
@@ -1128,6 +1126,8 @@
     &laquo; {EXLIST} &raquo;
     ({EX})
     *this* value
+    ? {DOTTING}
+    ? {var}
     NewTarget
     The number of elements in {var}
     The remainder of dividing {EX} by {EX}
