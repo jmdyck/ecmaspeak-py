@@ -1356,6 +1356,7 @@ nature_to_type = {
         'a positive integer'        : T_MathNonNegativeInteger_,
         '0 or 1'                    : T_MathNonNegativeInteger_,
         'a non-negative integer that is evenly divisible by 4' : T_MathNonNegativeInteger_,
+        'an integer in the inclusive interval from 2 to 36': T_MathNonNegativeInteger_,
         '+&infin;'                  : T_MathPosInfinity_,
         '-&infin;'                  : T_MathNegInfinity_,
 
@@ -3657,8 +3658,9 @@ def tc_nonvalue(anode, env0):
         result = t_env
 
     elif p in [
-        r"{SMALL_COMMAND} : let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria",
+        r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.",
         r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.",
+        r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.",
     ]:
         [vara, varb, varc, cond] = children[0:4]
         env_for_cond = (
@@ -3760,7 +3762,6 @@ def tc_nonvalue(anode, env0):
             r'If {CONDITION}, {SMALL_COMMAND}.',
             # r'If {CONDITION}, then {SMALL_COMMAND}.', # 2218
             r'If {CONDITION}, then{IND_COMMANDS}',
-            r'If {CONDITION}, {MULTILINE_SMALL_COMMAND}',
         ]:
             [condition, then_part] = if_open.children[0:2]
             (t_env, f_env) = tc_cond(condition, env0)
@@ -3806,7 +3807,6 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Return {EXPR}.",
         r"{COMMAND} : Return {EXPR}. This may be of type Reference.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
-        r"{MULTILINE_SMALL_COMMAND} : return {MULTILINE_EXPR}",
         r"{SMALL_COMMAND} : return {EXPR}",
     ]:
         [expr] = children
@@ -6390,6 +6390,16 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
         return (env1, env1)
 
+    elif p in [
+        r"{CONDITION_1} : {var} is in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}",
+        r"{CONDITION_1} : {var} is not in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}",
+    ]:
+        [var, lita, litb] = children
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
+        env1.assert_expr_is_of_type(lita, T_MathInteger_)
+        env1.assert_expr_is_of_type(litb, T_MathInteger_)
+        return (env1, env1)
+
     elif p == r"{CONDITION_1} : the host is a web browser":
         [] = children
         return (env0, env0)
@@ -8448,10 +8458,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{NUM_LITERAL} : {hex_int_lit}",
         r"{NUM_LITERAL} : {dec_int_lit}",
+        r"{NUM_LITERAL} : -5",
         r"{BASE} : 10",
         r"{BASE} : 2",
     ]:
         # [] = children
+        return (T_MathInteger_, env0)
+
+    elif p == r"{BASE} : {var}":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_MathInteger_, env0)
 
     elif p in [

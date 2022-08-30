@@ -193,7 +193,9 @@
     Let {var} be {EXPR}. (It may be evaluated repeatedly.)
     Let {var} be {MULTILINE_EXPR}
     Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
+    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
     Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
+    Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     No action is required.
     Notify the agent {var}.
     Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
@@ -281,7 +283,6 @@
 
 {IF_OPEN} :
     If {CONDITION}, then{IND_COMMANDS}
-    If {CONDITION}, {MULTILINE_SMALL_COMMAND}
     If {CONDITION}, {SMALL_COMMAND}.
 
 {IF_TAIL} :
@@ -292,7 +293,6 @@
 {ELSEIF_PART} :
     Else if {CONDITION}, then{IND_COMMANDS}
     Else if {CONDITION}, {SMALL_COMMAND}.
-    Otherwise, if {CONDITION}, {MULTILINE_SMALL_COMMAND}
 
 {ELSE_PART} :
     Else, {CONDITION_1}. {COMMAND}
@@ -301,9 +301,6 @@
     Otherwise, {SMALL_COMMAND}.
 
 # ----------------------------------------------
-
-{MULTILINE_SMALL_COMMAND} :
-    return {MULTILINE_EXPR}
 
 {SMALL_COMMAND} :
     ReturnIfAbrupt({var})
@@ -315,7 +312,6 @@
     let {var} be {EXPR}
     let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
-    let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the decimal representation of {var}, that {var} is not divisible by {NUM_LITERAL}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria
     perform any host-defined steps for reporting the error
     perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
@@ -384,16 +380,15 @@
 
     {B} the String representation of {EX}, formatted as a four-digit uppercase hexadecimal number, padded to the left with zeroes if necessary
     {B} the String representation of {EX}, formatted as a two-digit uppercase hexadecimal number, padded to the left with a zero if necessary
+    {B} the code unit of the most significant digit of the decimal representation of {var}
     {B} the code unit of the single digit of {var}
-    {B} the code units of the decimal representation of the integer abs({var} - 1) (with no leading zeroes)
-    {B} the code units of the most significant digit of the decimal representation of {var}
-    {B} the code units of the most significant {var} digits of the decimal representation of {var}
+    {B} the code units of the decimal representation of abs({var} - 1)
+    {B} the code units of the most significant {var} digits of the representation of {var} using radix {var}
     {B} the code units of the remaining {NUM_EXPR} digits of the decimal representation of {var}
-    {B} the code units of the {var} digits of the decimal representation of {var}
-    {B} the code units of the {var} digits of the decimal representation of {var} (in order, with no leading zeroes)
+    {B} the code units of the remaining {NUM_EXPR} digits of the representation of {var} using radix {var}
+    {B} the code units of the {var} digits of the representation of {var} using radix {var}
     {B} {EX} occurrences of {code_unit_lit}
     {B} {LITERAL}
-    {B} {code_unit_lit} or {code_unit_lit} according to whether {var} - 1 is positive or negative
     {B} {var}
 
 {B} :
@@ -743,6 +738,7 @@
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
     {var} is finite
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
+    {var} is in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
     {var} is not a Reference Record
@@ -763,6 +759,7 @@
     {var} is not finite
     {var} is not in {PREFIX_PAREN}
     {var} is not in {var}
+    {var} is not in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
     {var} is not on the list of waiters in any WaiterList
     {var} is not on the list of waiters in {var}
     {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
@@ -1445,6 +1442,7 @@
     {SETTABLE}
 
 {BASE} :
+    {var}
     10
     2
 
@@ -1602,6 +1600,7 @@
     an instance of a concrete subclass of Module Record
     an integer
     an integer &ge; {dsb_word}
+    an integer in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
     an integral Number
     an ordinary object
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
@@ -1697,6 +1696,7 @@
     *0.5*{h_sub_fancy_f}
     +&infin;
     -&infin;
+    -5
     0.5
     64 (that is, 8<sup>2</sup>)
     8.64
