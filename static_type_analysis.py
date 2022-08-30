@@ -5410,7 +5410,7 @@ def tc_cond_(cond, env0, asserting):
         assert lit_env is env0
 
         if lit_type in [T_Undefined, T_Null, T_empty_, T_not_in_node, T_match_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_, T_TildeAmbiguous_, T_TildeNamespace_, T_TildeAllButDefault_, T_TildeAll_, T_TildeNamespaceObject_]:
-            # i.e., the literal is *undefined* or *null* or ~empty~ or ~[empty]~ or ~failure~ or *NaN* or +&infin; or -&infin;
+            # i.e., the literal is *undefined* or *null* or ~empty~ or ~failure~ or *NaN* or +&infin; or -&infin;
             # Because the type has only one value,
             # a value-comparison is equivalent to a type-comparison.
             return env0.with_type_test(ex, copula, lit_type, asserting)
@@ -7268,13 +7268,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LITERAL} : {tilded_word}":
         [tilded_word] = children
         chars = tilded_word.source_text()[1:-1]
-        if chars == '[empty]':
-            # The spec uses ~[empty]~ to denote
-            # what you get when you ask for, e.g.
-            # "the second |Expression|",
-            # and it's not present.
-            return (T_not_in_node, env0)
-        elif chars == 'empty':
+        if chars == 'empty':
             return (T_empty_, env0)
         elif chars == 'failure':
             return (T_match_failure_, env0)
