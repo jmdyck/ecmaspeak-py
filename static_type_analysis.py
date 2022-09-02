@@ -1429,7 +1429,6 @@ nature_to_type = {
         'a List of Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': ListType(T_ImportMeta_record_),
         'a List of Source Text Module Records'        : ListType(T_Source_Text_Module_Record),
         'a List of Strings'                           : ListType(T_String),
-        'a List of Unicode code points'               : ListType(T_code_point_),
         'a List of agent signifiers'                  : ListType(T_agent_signifier_),
         'a List of byte values'                       : ListType(T_MathInteger_),
         'a List of characters'                        : ListType(T_character_),
@@ -6452,7 +6451,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}":
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}":
         [noi, h_a] = children
         env0.assert_expr_is_of_type(noi, ListType(T_code_point_))
         return (env0, env0)
@@ -6944,21 +6943,17 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
-        [noi, h_emu_xref] = children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
-        return (env1, env1)
+    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+        [prod_ref, h_emu_xref] = children
+        return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
-        [noi, h_a, h_emu_xref] = children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
-        return (env1, env1)
+    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+        [prod_ref, h_a, h_emu_xref] = children
+        return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a property value or property value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in {h_a}":
-        [noia, noib, h_a] = children
-        env1 = env0.ensure_expr_is_of_type(noia, ListType(T_code_point_))
-        env2 = env1.ensure_expr_is_of_type(noib, ListType(T_code_point_))
-        return (env2, env2)
+    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}":
+        [prod_refa, prod_refb, h_a] = children
+        return (env0, env0)
 
     elif p == r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static":
         [] = children
@@ -10090,10 +10085,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row":
         [v] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (ListType(T_code_point_), env0)
-
-    elif p == r"{EXPR} : the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}":
-        [prod_ref] = children
         return (ListType(T_code_point_), env0)
 
     # ----

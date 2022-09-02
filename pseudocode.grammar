@@ -464,9 +464,6 @@
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
     the <sub>[Tagged]</sub> parameter was not set
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
-    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a property value or property value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in {h_a}
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
     the binding exists
@@ -498,6 +495,9 @@
     the source text containing {G_SYM} is eval code that is being processed by a direct eval
     the source text matched by the syntactic production that is being evaluated is contained in strict mode code
     the source text matched by {PROD_REF} is contained in strict mode code
+    the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}
     the source text matched by {PROD_REF} is not strict mode code
     the source text matched by {PROD_REF} is strict mode code
     the source text matched by {var} is non-strict code
@@ -596,7 +596,7 @@
     {NUM_COMPARISON}
     {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
     {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
-    {PP_NAMED_OPERATION_INVOCATION} is identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
+    {PP_NAMED_OPERATION_INVOCATION} is a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
@@ -963,7 +963,6 @@
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
-    the List, in source text order, of Unicode code points in the source text matched by {PROD_REF}
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
@@ -1628,7 +1627,6 @@
     Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})
     Source Text Module Records
     Strings
-    Unicode code points
     agent signifiers
     byte values
     characters
