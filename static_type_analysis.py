@@ -3688,16 +3688,6 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_empty_ | T_return_ | T_throw_)
         result = env1.plus_new_entry(resb_var, T_Tangible_)
 
-    elif p == r"{COMMAND} : Let {var} be the smallest index into {var} that corresponds to the character at element {var} of {var}. If {var} is greater than or equal to the number of elements in {var}, then {var} is the length of {var}.":
-        # Once, in GetStringIndex.
-        # This step is quite odd, because it refers to _Input_,
-        # which you wouldn't think would still exist.
-        # (It gets defined in the invocation of _matcher_, i.e. of _R_.[[RegExpMatcher]],
-        # i.e., of the internal closure returned by the algorithm
-        # associated with <emu-grammar>Pattern :: Disjunction</emu-grammar>)
-        # todo: move this step to that closure.
-        result = env0.plus_new_entry('_eUTF_', T_MathInteger_)
-
     elif p == r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
         [var, cond, literal] = children
         # once, in MakeDay
