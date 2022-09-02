@@ -971,11 +971,10 @@
     the Private Name in {var} whose {dsb_word} is {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the State ({var}, {EX}, {var})
-    the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
-    the String value consisting of the code units of the digits of the decimal representation of {var}
+    the String value consisting of the representation of {var} using radix {var}
     the String value consisting of {EX}
     the String value consisting solely of {code_unit_lit}
     the String value containing only the code unit {var}

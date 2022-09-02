@@ -8772,9 +8772,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value consisting of the code units of the digits of the decimal representation of {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_MathInteger_ | T_BigInt)
+    elif p == r"{EXPR} : the String value consisting of the representation of {var} using radix {var}":
+        [x_var, radix_var] = children
+        env0.assert_expr_is_of_type(x_var, T_BigInt)
+        env0.assert_expr_is_of_type(radix_var, T_MathInteger_)
         return (T_String, env0)
 
     elif p == r"{EX} : {EX} occurrences of {code_unit_lit}":
@@ -10180,11 +10181,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [summ, var] = children
         env0.assert_expr_is_of_type(var, T_String)
         env1 = env0.ensure_expr_is_of_type(summ, T_MathInteger_)
-        return (T_String, env1)
-
-    elif p == r"{EXPR} : the String representation of this Number value using the radix specified by {var}. Letters `a`-`z` are used for digits with values 10 through 35. The precise algorithm is implementation-defined, however the algorithm should be a generalization of that specified in {h_emu_xref}":
-        [var, emu_xref] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env1)
 
     elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned":
