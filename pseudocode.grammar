@@ -991,7 +991,6 @@
     the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}
     the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}
     the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned
-    the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned
     the String value {SETTABLE}
     the WaiterList that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
@@ -1014,6 +1013,7 @@
     the code point {var}
     the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}
     the code unit whose numeric value is that of {EXPR}
+    the code unit whose numeric value is {EX}
     the element in {EX} whose {DSBN} is {EX}
     the element of {EX} whose {DSBN} field is {var}
     the element of {EX} whose {DSBN} is the same as {EX}

@@ -8925,6 +8925,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_code_unit_, env0)
 
+    elif p == r"{EXPR} : the code unit whose numeric value is {EX}":
+        [ex] = children
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (T_code_unit_, env0)
+
     # ----
 
     elif p == r"{EX} : the code unit at index {EX} within {EX}":
@@ -10183,12 +10188,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [summ, var] = children
         env0.assert_expr_is_of_type(var, T_String)
         env1 = env0.ensure_expr_is_of_type(summ, T_MathInteger_)
-        return (T_String, env1)
-
-    elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} is empty, the empty String is returned":
-        [list_var, other_var] = children
-        env0.assert_expr_is_of_type(other_var, T_List)
-        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_code_unit_))
         return (T_String, env1)
 
     elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned":
