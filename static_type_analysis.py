@@ -1278,6 +1278,8 @@ def convert_value_description(value_description):
         text = value_description.source_text()
         if text == 'an ECMAScript language value, but not a Number or a BigInt':
             t = T_Undefined | T_Null | T_Boolean | T_String | T_Symbol | T_Object
+        elif text == 'an ECMAScript language value, but not a Number':
+            t = T_Undefined | T_Null | T_Boolean | T_BigInt | T_String | T_Symbol | T_Object
         elif text == 'an ECMAScript language value, but not *undefined* or *null*':
             t = T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
         elif text == 'an ECMAScript language value, but not a TypedArray':
