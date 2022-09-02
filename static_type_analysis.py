@@ -4872,29 +4872,6 @@ def tc_cond_(cond, env0, asserting):
     # ---------------
     # Type-conditions
 
-    elif p in [
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME}',
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is not {TYPE_NAME}',
-    ]:
-        [type_arg, type_name] = children
-        t = type_for_TYPE_NAME(type_name)
-        copula = 'is a' if ' is {' in p else 'isnt a'
-        return env0.with_type_test(type_arg, copula, t, asserting)
-
-    elif p in [
-        r"{TYPE_TEST} : Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}",
-        r"{TYPE_TEST} : Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}",
-        r"{TYPE_TEST} : Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}",
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}',
-    ]:
-        [type_arg, *type_name_] = children
-        t = union_of_types([
-            type_for_TYPE_NAME(tn)
-            for tn in type_name_
-        ])
-        copula = 'isnt a' if 'neither' in p else 'is a'
-        return env0.with_type_test(type_arg, copula, t, asserting)
-
     elif p == r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot":
         [var, dsbna, dsbnb] = children
         env0.assert_expr_is_of_type(var, T_Object)
@@ -4975,6 +4952,14 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} is a UTF-16 code unit':
         [var] = children
         return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
+
+    elif p == r'{CONDITION_1} : {EX} is a BigInt':
+        [ex] = children
+        return env0.with_type_test(ex, 'is a', T_BigInt, asserting)
+
+    elif p == r'{CONDITION_1} : {var} is a Boolean':
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Boolean, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a ClassFieldDefinition Record":
         [var] = children
@@ -5065,6 +5050,10 @@ def tc_cond_(cond, env0, asserting):
         [ex] = children
         return env0.with_type_test(ex, 'is a', T_String, asserting)
 
+    elif p == r"{CONDITION_1} : {var} is not a String":
+        [var] = children
+        return env0.with_type_test(var, 'isnt a', T_String, asserting)
+
     elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
@@ -5090,15 +5079,21 @@ def tc_cond_(cond, env0, asserting):
         copula = 'is a' if 'not present' in p else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
 
-    elif p in [
-        r'{CONDITION_1} : {EXPR} is an object',
-    ]:
-        [expr] = children
-        return env0.with_type_test(expr, 'is a', T_Object, asserting)
+    elif p == r'{CONDITION_1} : {var} is a Number':
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Number, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is not an Object":
-        [expr] = children
-        return env0.with_type_test(expr, 'isnt a', T_Object, asserting)
+    elif p == r'{CONDITION_1} : {var} is not a Number':
+        [var] = children
+        return env0.with_type_test(var, 'isnt a', T_Number, asserting)
+
+    elif p == r'{CONDITION_1} : {EX} is an Object':
+        [ex] = children
+        return env0.with_type_test(ex, 'is a', T_Object, asserting)
+
+    elif p == r"{CONDITION_1} : {EX} is not an Object":
+        [ex] = children
+        return env0.with_type_test(ex, 'isnt a', T_Object, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a Parse Node":
         [var] = children
@@ -5195,12 +5190,13 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0
 
-    elif p == r"{TYPE_TEST} : Both Type({var}) and Type({var}) are Number or both are BigInt":
-        [vara, varb] = children
-        assert asserting
-        env1 = env0.ensure_expr_is_of_type(vara, T_Number | T_BigInt)
-        env2 = env1.ensure_expr_is_of_type(varb, T_Number | T_BigInt)
-        return (env2, env2)
+    elif p == r'{CONDITION_1} : {var} is a Symbol':
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_Symbol, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is not a Symbol":
+        [var] = children
+        return env0.with_type_test(var, 'isnt a', T_Symbol, asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
@@ -5220,6 +5216,10 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}":
         [var, nonta, nontb] = children
         return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is either a String, a Number, a BigInt, or a Symbol":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_String | T_Number | T_BigInt | T_Symbol, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a bound function exotic object":
         [var] = children
@@ -10377,11 +10377,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         # XXX really, the *names* of the internal slots...
         return (ListType(T_SlotName_), env0)
-
-    elif p == r"{EXPR} : Type({var})":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Number | T_BigInt)
-        return (T_LangTypeName_, env0)
 
     elif p == r"{EX} : {backticked_oth}":
         [_] = children

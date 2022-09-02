@@ -525,11 +525,13 @@
     {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} does not contain {EX}
     {EX} is -1
+    {EX} is a BigInt
     {EX} is a Private Name
     {EX} is a String
     {EX} is a non-negative integer less than or equal to {EX}
     {EX} is a sequence of Unicode code points
     {EX} is an Environment Record
+    {EX} is an Object
     {EX} is an element of {var}
     {EX} is an integer between {EX} and {EX}, inclusive
     {EX} is different from {EX}
@@ -543,6 +545,7 @@
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not -1
     {EX} is not an element of {var}
+    {EX} is not an Object
     {EX} is not present
     {EX} is not the same value as {var}
     {EX} is not {LITERAL}
@@ -671,6 +674,7 @@
     {var} has {EX} elements
     {var} has {var} in its range
     {var} imports a specific binding for this export
+    {var} is a Boolean
     {var} is a ClassFieldDefinition Record
     {var} is a ClassStaticBlockDefinition Record
     {var} is a Completion Record
@@ -682,6 +686,7 @@
     {var} is a List of characters
     {var} is a List of errors
     {var} is a List of property keys
+    {var} is a Number
     {var} is a Parse Node
     {var} is a PrivateElement
     {var} is a PromiseCapability Record
@@ -694,6 +699,7 @@
     {var} is a Shared Data Block
     {var} is a Source Text Module Record
     {var} is a State
+    {var} is a Symbol
     {var} is a UTF-16 code unit
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
@@ -735,18 +741,21 @@
     {var} is an? {nonterminal} Parse Node
     {var} is as small as possible
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
+    {var} is either a String, a Number, a BigInt, or a Symbol
     {var} is finite
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
     {var} is in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
+    {var} is not a Number
     {var} is not a Reference Record
     {var} is not a Shared Data Block
+    {var} is not a String
+    {var} is not a Symbol
     {var} is not a {h_emu_xref}
     {var} is not a {h_emu_xref} or {h_emu_xref}
     {var} is not a {nonterminal}
     {var} is not already suspended
-    {var} is not an Object
     {var} is not an abrupt completion
     {var} is not an array index
     {var} is not an integer index
@@ -798,19 +807,11 @@
     data
 
 {TYPE_TEST} :
-    Both Type({var}) and Type({var}) are Number or both are BigInt
     Type({TYPE_ARG}) is different from Type({TYPE_ARG})
-    Type({TYPE_ARG}) is either {TYPE_NAME} or {TYPE_NAME}
-    Type({TYPE_ARG}) is either {TYPE_NAME}, {TYPE_NAME}, {TYPE_NAME}, or {TYPE_NAME}
-    Type({TYPE_ARG}) is neither {TYPE_NAME} nor {TYPE_NAME}
     Type({TYPE_ARG}) is not an element of {var}
-    Type({TYPE_ARG}) is not {TYPE_NAME}
     Type({TYPE_ARG}) is the same as Type({TYPE_ARG})
-    Type({TYPE_ARG}) is {TYPE_NAME}
-    Type({TYPE_ARG}) is {TYPE_NAME} or {TYPE_NAME}
 
 {TYPE_ARG} :
-    {DOTTING}
     {var}
 
 {NUM_COMPARISON} :
@@ -876,7 +877,6 @@
 
 {EXPR} :
     (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)
-    Type({var})
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
     a List of length {var} whose elements are nondeterministically chosen byte values
