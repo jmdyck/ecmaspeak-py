@@ -1045,7 +1045,6 @@
     the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
     the negative of {EX}
     the number of bytes in {var}
-    the number of code unit elements in {var}
     the number of elements in the List {var}
     the number of elements in {var}'s _captures_ List
     the number of leading 1 bits in {var}

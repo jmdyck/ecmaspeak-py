@@ -8378,7 +8378,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{NUM_COMPARAND} : the length of {var}",
         r"{EX} : the length of {var}",
-        r"{EXPR} : the number of code unit elements in {var}",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
