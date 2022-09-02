@@ -4616,10 +4616,6 @@ def tc_nonvalue(anode, env0):
 
         result = env0.with_expr_type_replaced(list_var, ListType(T_String | T_IntegralNumber_))
 
-    elif p == r"{COMMAND} : No action is required.":
-        [] = children
-        result = env0
-
     elif p == r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.":
         # XXX
         result = env0
