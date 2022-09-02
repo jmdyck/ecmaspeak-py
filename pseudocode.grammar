@@ -465,9 +465,9 @@
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
     the <sub>[Tagged]</sub> parameter was not set
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
-    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a property value or property value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in {h_a}
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
     the async generator either threw an exception or performed either an implicit or explicit return
     the binding exists
@@ -594,7 +594,7 @@
     {NUM_COMPARISON}
     {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
     {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
-    {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}
+    {PP_NAMED_OPERATION_INVOCATION} is identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
@@ -708,7 +708,7 @@
     {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is a possibly empty List
-    {var} is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
+    {var} is a property value or property value alias for the Unicode property {var} listed in {h_a}
     {var} is a {h_emu_xref}
     {var} is also {LITERAL}
     {var} is an Abstract Closure with no parameters

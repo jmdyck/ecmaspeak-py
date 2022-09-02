@@ -6438,8 +6438,8 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a property value or property value alias for Unicode property {var} listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
-        [va, vb, emu_xref1, emu_xref2] = children
+    elif p == r"{CONDITION_1} : {var} is a property value or property value alias for the Unicode property {var} listed in {h_a}":
+        [va, vb, h_a] = children
         env0.assert_expr_is_of_type(va, ListType(T_code_point_))
         env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
         return (env0, env0)
@@ -6454,8 +6454,8 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is identical to a List of Unicode code points that is the name of a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}":
-        [noi, emu_xref] = children
+    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}":
+        [noi, h_a] = children
         env0.assert_expr_is_of_type(noi, ListType(T_code_point_))
         return (env0, env0)
 
@@ -6951,16 +6951,16 @@ def tc_cond_(cond, env0, asserting):
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a value or value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in the &ldquo;Property value and aliases&rdquo; column of the corresponding tables {h_emu_xref} or {h_emu_xref}":
-        [noia, noib, h_emu_xref_a, h_emu_xref_b] = children
+    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+        [noi, h_a, h_emu_xref] = children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
+        return (env1, env1)
+
+    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a property value or property value alias for the Unicode property or property alias given by {NAMED_OPERATION_INVOCATION} listed in {h_a}":
+        [noia, noib, h_a] = children
         env1 = env0.ensure_expr_is_of_type(noia, ListType(T_code_point_))
         env2 = env1.ensure_expr_is_of_type(noib, ListType(T_code_point_))
         return (env2, env2)
-
-    elif p == r"{CONDITION_1} : the List of Unicode code points that is {NAMED_OPERATION_INVOCATION} is not identical to a List of Unicode code points that is a Unicode general category or general category alias listed in the &ldquo;Property value and aliases&rdquo; column of {h_emu_xref}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
-        [noi, h_emu_xref_a, h_emu_xref_b] = children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_code_point_))
-        return (env1, env1)
 
     elif p == r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static":
         [] = children
