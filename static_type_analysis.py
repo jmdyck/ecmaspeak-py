@@ -4457,16 +4457,6 @@ def tc_nonvalue(anode, env0):
         env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
         result = env2
 
-    elif p == r"{SMALL_COMMAND} : remove the first code unit from {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        result = env0
-
-    elif p == r"{COMMAND} : Remove the first two code units from {var}.":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_String)
-        result = env0
-
     elif p == r"{COMMAND} : Remove the first element from {var}.":
         [var] = children
         env0.assert_expr_is_of_type(var, T_List)
@@ -4507,12 +4497,6 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.":
         # XXX
-        result = env0
-
-    elif p == r"{SMALL_COMMAND} : append {code_unit_lit} as the last code unit of {var}":
-        [cu_lit, var] = children
-        env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
-        env0.assert_expr_is_of_type(var, T_String)
         result = env0
 
     # explicit-exotics:
@@ -8236,6 +8220,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert x_var.source_text() == x_var2.source_text()
         return (T_MathNonNegativeInteger_, env0)
 
+    elif p == r"{dec_int_lit} : \b [0-9]+ \b":
+        return (T_MathNonNegativeInteger_, env0)
+
     elif p == r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}":
         [posa, posb] = children
         env0.assert_expr_is_of_type(posa, T_MathInteger_)
@@ -8513,7 +8500,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env2 = env1.ensure_expr_is_of_type(end_var, T_MathNonNegativeInteger_)
         return (T_String, env2)
 
-    elif p == r"{EX} : the substring of {var} from {EX}":
+    elif p in [
+        r"{EX} : the substring of {var} from index {dec_int_lit}",
+        r"{EX} : the substring of {var} from {EX}",
+    ]:
         [s_var, start_var] = children
         env0.assert_expr_is_of_type(s_var, T_String)
         env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
