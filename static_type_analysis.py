@@ -2225,11 +2225,7 @@ class Env:
         (list_type, list_env) = tc_expr(list_ex, self)
         (item_type, item_env) = tc_expr(item_ex, list_env)
 
-        if list_type == T_String and item_type.is_a_subtype_of_or_equal_to(T_String | T_code_unit_):
-            # String-contains rather than List-contains
-            result = item_env
-
-        elif (list_type == T_List or list_type == ListType(T_TBD)) and item_type == T_TBD:
+        if (list_type == T_List or list_type == ListType(T_TBD)) and item_type == T_TBD:
             # shrug
             result = item_env
 
@@ -5747,8 +5743,12 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {SETTABLE} contains {EX}",
         r"{CONDITION_1} : {EX} does not contain {EX}",
     ]:
-        [list_var, value_var] = children
-        env1 = env0.ensure_A_can_be_element_of_list_B(value_var, list_var)
+        [container_ex, value_var] = children
+        (container_type, container_env) = tc_expr(container_ex, env0)
+        if container_type.is_a_subtype_of_or_equal_to(T_String):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
+        else:
+            env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
         return (env1, env1)
 
     elif p == r"{CONDITION_1} : {var} is not in {PREFIX_PAREN}":
