@@ -1751,7 +1751,6 @@ type_tweaks_tuples = [
     ('Contains'                                 , '_symbol_'               , T_TBD                 , T_grammar_symbol_),
     ('ContainsDuplicateLabels'                  , '_labelSet_'             , T_TBD                 , ListType(T_String)),
     ('CreateListFromArrayLike'                  , '_obj_'                  , T_TBD                 , T_Tangible_),
-    ('CreateMappedArgumentsObject'              , '_argumentsList_'        , T_List                , ListType(T_Tangible_)),
     ('CreatePerIterationEnvironment'            , '_perIterationBindings_' , T_TBD                 , ListType(T_String)),
     ('DefineMethod'                             , '_functionPrototype_'    , T_TBD | T_not_passed  , T_Object | T_not_passed),
     ('DetachArrayBuffer'                        , '_key_'                  , T_TBD | T_not_passed  , T_Tangible_ | T_not_passed),

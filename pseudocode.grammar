@@ -1483,7 +1483,6 @@
     a JSON Serialization Record
     a Job Abstract Closure
     a JobCallback Record
-    a List
     a List of {LIST_ELEMENTS_DESCRIPTION}
     a Match Record
     a MatchResult
