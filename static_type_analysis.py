@@ -9321,14 +9321,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [h_code_quote] = children
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the {var} that was passed to this function by {DSBN} or {DSBN}":
-        [var, dsbna, dsbnb] = children
-        assert var.source_text() == '_argumentsList_'
-        # It's not a reference to an in-scope variable,
-        # it's a reference to a variable at a higher level.
-        # It's more of a reminder of where the '_args_' parameter comes from.
-        return (ListType(T_Tangible_), env0)
-
     elif p == r"{EXPR} : the time value (UTC) identifying the current time":
         [] = children
         return (T_IntegralNumber_, env0)

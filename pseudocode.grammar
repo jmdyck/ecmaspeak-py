@@ -958,7 +958,6 @@
     the value that {var} corresponds to in {h_emu_xref}
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
-    the {var} that was passed to this function by {DSBN} or {DSBN}
     this Date object
     {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}

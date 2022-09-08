@@ -1508,12 +1508,6 @@ def convert_parameter_listing_to_params(parameter_listing):
     params = []
     parameter_listing = parameter_listing.strip()
     if parameter_listing != '':
-        if parameter_listing in [
-            '_p1_, _p2_, \u2026 , _pn_, _body_' # new
-        ]:
-            # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction
-            parameter_listing = '..._args_ [ , _body_ ]'
-
         param_strs = parameter_listing.split(', ')
         subsequent_are_optional = False
         for param_str in param_strs:
