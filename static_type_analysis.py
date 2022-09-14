@@ -3630,11 +3630,6 @@ def tc_nonvalue(anode, env0):
 
     # Let {var} and {var} ... be ...
 
-    elif p == r"{COMMAND} : Let {var} and {var} be {LITERAL}.":
-        [alet, blet, lit] = children
-        (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
-        result = env0.plus_new_entry(alet, lit_type).plus_new_entry(blet, lit_type)
-
     elif p == r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.":
         [m_var, n2_var, n_var] = children
         env0.assert_expr_is_of_type(n_var, T_String)
