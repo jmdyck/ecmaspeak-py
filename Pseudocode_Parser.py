@@ -163,7 +163,6 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {tilded_word}    : ~ [-A-Za-z0-9+]+ ~
 
     # tokens that begin with other distinctive characters:
-    {named_char}     : &lt; ([A-Z]+) &gt;
     {char_ref}       : & [a-z]+ ;
     {atat_word}      : @@ \w+ \b
     {percent_word}   : % \w+ (\. \w+)* %

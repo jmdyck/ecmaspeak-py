@@ -983,7 +983,6 @@ named_type_hierarchy = {
                 'CharSet': {},
                 'ClassElementKind_': {},
                 'Data Block': {},
-                'FunctionKind1_': {},
                 'FunctionKind2_': {},
                 'event_pair_': {},
                 'IEEE_binary32_': {},
@@ -1276,9 +1275,7 @@ def convert_value_description(value_description):
         [pos_desc, neg_desc] = value_description.children
         # t = convert_val_desc(pos_desc) - convert_value_description(neg_desc)
         text = value_description.source_text()
-        if text == 'an ECMAScript language value, but not a Number or a BigInt':
-            t = T_Undefined | T_Null | T_Boolean | T_String | T_Symbol | T_Object
-        elif text == 'an ECMAScript language value, but not a Number':
+        if text == 'an ECMAScript language value, but not a Number':
             t = T_Undefined | T_Null | T_Boolean | T_BigInt | T_String | T_Symbol | T_Object
         elif text == 'an ECMAScript language value, but not *undefined* or *null*':
             t = T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
@@ -2270,9 +2267,6 @@ class Env:
                 result_env = expr_env
             elif expr_text == '&laquo; &raquo;':
                 result_env = expr_env
-            elif expr_text == '_len_' and expr_type == T_MathInteger_ and expected_t == T_Tangible_:
-                # skip this for now
-                result_env = expr_env
             else:
                 result_env = expr_env.with_expr_type_replaced(expr, expected_t)
         return result_env
@@ -2310,39 +2304,12 @@ class Env:
         elif item_type == T_TBD:
             result = item_env.with_expr_type_replaced(item_ex, list_type.element_type)
 
-        elif list_type == ListType(T_String) and item_type == ListType(T_code_unit_):
-            # TemplateStrings
-            result = item_env.with_expr_type_replaced(item_ex, T_String)
-
         elif list_type == ListType(T_String) and item_type == T_String | T_Null:
             # ParseModule
             result = item_env.with_expr_type_replaced(item_ex, T_String)
 
-        elif list_type == ListType(T_String) and item_type == T_String | ListType(T_code_unit_):
-            # ContainsDuplicateLabels
-            result = item_env.with_expr_type_replaced(item_ex, T_String)
-
         # ----------------------------------------
         # cases where we don't change either ST:
-
-        elif list_type == ListType(T_String) and item_type == T_String | T_Symbol:
-            # [[Delete]] for module namespace exotic object _O_:
-            # If _P_ is an element of _exports_
-            # (if _P_ is a Symbol, it just won't be an element of _exports_)
-            result = item_env
-
-#        elif list_type == T_Normal and item_type == T_0:
-#            # ArgumentListEvaluation
-#            env1 = item_env.with_expr_type_narrowed(list_ex, ListType(T_Tangible_))
-#            element_type = T_Tangible_
-#            assert item_type.is_a_subtype_of_or_equal_to(element_type)
-#            result = env1
-
-        elif list_type == ListType(T_String) and item_type == ListType(T_code_unit_) | T_code_unit_ | T_Undefined:
-            # TemplateStrings
-            # The "Undefined" alternative can't actially happen,
-            # but STA can't see that.
-            result = item_env
 
         elif list_type.is_a_subtype_of_or_equal_to(T_List):
             # use list_type to check type of item_ex
@@ -3797,12 +3764,6 @@ def tc_nonvalue(anode, env0):
         proc_add_return(env1, t1, anode)
         result = None
 
-    elif p == r"{COMMAND} : See grammar and conversion algorithm below.":
-        # ToNumber's case for String
-        [] = children
-        proc_add_return(env0, T_Number, anode)
-        result = None
-
     elif p in [
         r"{COMMAND} : Throw a {ERROR_TYPE} exception.",
         r"{SMALL_COMMAND} : throw a {ERROR_TYPE} exception because the structure is cyclical",
@@ -4035,11 +3996,6 @@ def tc_nonvalue(anode, env0):
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
-        elif each_thing.prod.rhs_s == r"character {var} in the CharSet of all characters":
-            [loop_var] = each_thing.children
-            env1 = env0.plus_new_entry(loop_var, T_character_)
-            env_for_commands = env1
-
         elif each_thing.prod.rhs_s == r"child node {var} of this Parse Node":
             [loop_var] = each_thing.children
             env1 = env0.plus_new_entry(loop_var, T_Parse_Node)
@@ -4063,12 +4019,8 @@ def tc_nonvalue(anode, env0):
         #     result = env_after_commands
 
         # The only variables that 'exit' the loop are those that existed beforehand.
-        if env_after_commands is None:
-            # happens in Coherent Reads
-            result = None
-        else:
-            names = env0.vars.keys()
-            result = env_after_commands.reduce(names)
+        names = env0.vars.keys()
+        result = env_after_commands.reduce(names)
 
     # ----------------------------------
     # Assert
@@ -4133,12 +4085,6 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.":
         [] = children
-        result = env0
-
-    elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.":
-        [_, ctx_var, _, res_ex] = children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env0.assert_expr_is_of_type(res_ex, T_Tangible_ | T_return_ | T_throw_)
         result = env0
 
     elif p == r"{COMMAND} : Suspend {var} and remove it from the execution context stack.":
@@ -4347,8 +4293,6 @@ def tc_nonvalue(anode, env0):
         (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
         (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
         if item_type.is_a_subtype_of_or_equal_to(T_event_) and collection_type == T_Set:
-            pass
-        elif item_type == T_character_ and collection_type == T_CharSet:
             pass
         else:
             assert 0
@@ -4970,12 +4914,6 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Cyclic_Module_Record, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a Completion Record":
-        # In a sense, this is a vacuous condition,
-        # because any? value can be coerced into a Completion Record.
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Tangible_ | T_empty_ | T_Abrupt, asserting)
-
     elif p == r'{CONDITION_1} : {var} is a Data Block':
         [var] = children
         return env0.with_type_test(var, 'is a', T_Data_Block, asserting)
@@ -5022,11 +4960,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a non-empty List of {ERROR_TYPE} objects":
         [var, error_type] = children
         return env0.with_type_test(var, 'is a', ListType(type_for_ERROR_TYPE(error_type)), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List in which each element is a String or a Symbol":
-        [var] = children
-        env0.assert_expr_is_of_type(var, ListType(T_String | T_Symbol))
-        return (env0, env0)
 
     elif p in [
         r"{CONDITION_1} : {var} is now an empty List",
@@ -5150,34 +5083,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a State":
         [var] = children
         return env0.with_type_test(var, 'is a', T_State, asserting)
-
-    elif p in [
-        r'{CONDITION_1} : {EX} is a String value',
-    ]:
-        [ex] = children
-        if ex.prod.lhs_s == '{var}':
-            return env0.with_type_test(ex, 'is a', T_String, asserting)
-        elif (
-            ex.prod.rhs_s == '{LOCAL_REF}'
-            and
-            ex.children[0].prod.rhs_s == '{SETTABLE}'
-            and
-            ex.children[0].children[0].prod.rhs_s == '{var}'
-        ):
-            [var] = ex.children[0].children[0].children
-            return env0.with_type_test(var, 'is a', T_String, asserting)
-        elif (
-            ex.prod.rhs_s == '{LOCAL_REF}'
-            and
-            ex.children[0].prod.rhs_s == '{SETTABLE}'
-            and
-            ex.children[0].children[0].prod.rhs_s == '{DOTTING}'
-        ):
-            [dotting] = ex.children[0].children[0].children
-            # XXX
-            return (env0, env0)
-        else:
-            assert 0
 
     elif p == r'{CONDITION_1} : {var} is a Symbol':
         [var] = children
@@ -5356,8 +5261,6 @@ def tc_cond_(cond, env0, asserting):
             elif callee_op_name == 'IsPropertyKey':
                 t = T_String | T_Symbol
             elif callee_op_name == 'IsIntegralNumber':
-                t = T_IntegralNumber_
-            elif callee_op_name == 'IsNonNegativeInteger':
                 t = T_IntegralNumber_
             else:
                 t = None
@@ -5562,8 +5465,7 @@ def tc_cond_(cond, env0, asserting):
         elif dsbn_name == 'Construct':
             return env1.with_type_test(var, 'is a', T_constructor_object_, asserting)
         else:
-            assert dsbn_name == 'Construct'
-            return (env1, env1)
+            assert 0, dsbn_name
 
     elif p == r"{CONDITION_1} : {SETTABLE} has an? {DSBN} field":
         [settable, dsbn] = children
@@ -5639,11 +5541,7 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is an? {nonterminal} Parse Node",
     ]:
         [var, nont] = children
-        if var.source_text() == '_symbol_' and nont.source_text() in ['|ReservedWord|', '|Identifier|']:
-            t = T_grammar_symbol_
-        else:
-            t = T_Parse_Node
-        env1 = env0.ensure_expr_is_of_type(var, t)
+        env1 = env0.ensure_expr_is_of_type(var, T_Parse_Node)
         return (env1, env1)
         #return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
 
@@ -5846,26 +5744,6 @@ def tc_cond_(cond, env0, asserting):
                 f"comparison has incompatible types: {a_t} vs. {b_t}"
             )
         return (env2, env2)
-        # -----------------
-
-        if (
-            a_t.is_a_subtype_of_or_equal_to(T_MathReal_)
-            or
-            b_t.is_a_subtype_of_or_equal_to(T_MathReal_)
-        ):
-            assert a_t == T_MathInteger_
-            assert b_t == T_MathInteger_
-            env2 = env0
-        elif a_t == T_code_unit_ and b_t == T_MathInteger_:
-            env2 = env0
-        elif a_t == T_BigInt and b_t == T_MathInteger_:
-            env2 = env0
-        else:
-            env1 = env0.ensure_expr_is_of_type(a, T_Number)
-            env2 = env1.ensure_expr_is_of_type(b, T_Number)
-            # It's almost always T_MathInteger_ for both.
-
-        return (env2, env2)
 
     elif p == r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}':
         [h_a, var] = children
@@ -5959,11 +5837,7 @@ def tc_cond_(cond, env0, asserting):
             env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exb_type == T_TBD:
             env1 = env0.with_expr_type_replaced(exb, exa_type)
-        elif exa_type == T_Environment_Record | T_Undefined and exb_type == T_Environment_Record:
-            env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
-            env1 = env0
-        elif exa_type == T_MathInteger_ and exb_type == T_ExtendedMathReal_: # Number::toString, over-specific
             env1 = env0
         else:
             assert 0, (exa_type, exb_type)
@@ -6045,11 +5919,6 @@ def tc_cond_(cond, env0, asserting):
         assert a_t != T_TBD
         if b_t == T_TBD:
             env1 = env0.with_expr_type_replaced(b_ex, a_t)
-        elif a_t == T_Number and b_t == T_MathInteger_:
-            env1 = env0
-        elif a_t == T_throw_ | T_Undefined and b_t == T_throw_:
-            # Evaluate()
-            env1 = env0
         else:
             # assert a_t.is_a_subtype_of_or_equal_to(b_t)
             (common_t, _) = a_t.split_by(b_t)
@@ -6985,17 +6854,6 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an instance of {var}":
-        [vara, varb] = children
-        env0.assert_expr_is_of_type(vara, T_Parse_Node)
-        env0.assert_expr_is_of_type(varb, T_grammar_symbol_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is an instance of a nonterminal":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} is an instance of a production in {h_emu_xref}":
         [var, emu_xref] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
@@ -7249,14 +7107,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_empty_, env0)
         elif chars == 'failure':
             return (T_match_failure_, env0)
-        elif chars == 'strict':
-            # T_this_mode or T_AssignmentTargetType_, depending on context
-            # super-kludge to get context:
-            if 'Mode' in spec.text[expr.start_posn-20:expr.start_posn]:
-                return (T_this_mode, env0)
-            else:
-                assert 0 # since PR #1652 was merged
-                return (T_AssignmentTargetType_, env0)
 
         elif chars == 'lexical':
             # T_this_mode or T_this_binding_status_, depending on context
@@ -7322,14 +7172,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             else:
                 assert 0, text
 
-        elif chars in ['global']:
+        elif chars in ['global', 'strict']:
             return (T_this_mode, env0)
         elif chars in ['initialized', 'uninitialized']:
             return (T_this_binding_status_, env0)
         elif chars in ['enumerate', 'iterate', 'async-iterate']:
             return (T_IterationKind_, env0)
-        elif chars in ['Normal', 'Arrow', 'Method']:
-            return (T_FunctionKind1_, env0)
         elif chars in ['assignment', 'varBinding', 'lexicalBinding']:
             return (T_LhsKind_, env0)
         elif chars in ['non-generator', 'async', 'sync']:
@@ -7380,8 +7228,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_ClassElementKind_, env0)
         elif chars in ['number']:
             return (T_PreferredTypeHint_, env0)
-        elif chars == 'not-matched':
-            return (T_NotMatched_, env0)
         elif chars == 'unresolvable':
             return (T_Unresolvable_, env0)
         elif chars in ['field', 'method', 'accessor']:
@@ -7484,10 +7330,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})',
     ]:
         [opn_before_paren, arglist] = children[0:2]
-        if arglist.prod.lhs_s == '{EXLIST_OPT}':
-            args = exes_in_exlist_opt(arglist)
-        else:
-            args = [arglist]
+        args = exes_in_exlist_opt(arglist)
 
         if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
             (_, opn_before_paren, _) = opn_before_paren.children
@@ -7840,15 +7683,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 elif dsbn_name == 'Target':
                     if memtype in [T_continue_, T_break_, T_Abrupt]:
                         result_memtype = T_String | T_empty_
-                    elif memtype == T_throw_:
-                        result_memtype = T_empty_
-                    elif memtype in [T_TBD, T_Top_]:
-                        result_memtype = T_String | T_empty_
-                    elif memtype in [T_Tangible_, T_empty_]:
-                        result_memtype = T_empty_
-                    elif memtype in [T_not_returned, ListType(T_code_unit_)]: # T_Reference_Record?
-                        # hm.
-                        result_memtype = T_empty_
                     else:
                         assert 0, memtype
 
@@ -7880,16 +7714,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # with a wider type for _starResolution_.
                 # But I'm hoping to avoid the need to re-STA loop-bodies.
                 lhs_t = T_ResolvedBinding_Record
-            elif lhs_text == '_received_':
-                # Similar to the above,
-                # in Evaluation of YieldExpression
-                lhs_t = T_Tangible_ | T_throw_ # ?
-            elif lhs_text == '_declResult_':
-                # EvaluateBody: See Issue 837
-                lhs_t = T_throw_
-            elif lhs_text == '_ref_':
-                # EvaluateCall
-                lhs_t = T_Reference_Record
             elif lhs_text == '_element_':
                 lhs_t = T_PrivateElement
             else:
@@ -7913,14 +7737,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         ]:
             # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
             lhs_t = T_Object
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t in [
-            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_Abrupt,
-            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_set,
-            T_Private_Name | T_Reference_Record | T_Tangible_ | T_empty_,
-        ]:
-            lhs_t =  T_Reference_Record
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t == T_boolean_value_record_ | T_Boolean:
@@ -7966,22 +7782,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert candidate_type_names == ['Cyclic Module Record', 'Job_record_', 'Module Record', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
                 if lhs_text == '_scriptRecord_':
                     lhs_t = T_Script_Record
-                elif lhs_text == '_module_':
-                    lhs_t = T_Source_Text_Module_Record
                 else:
                     assert 0
-            elif dsbn_name in ['Status', 'AsyncEvaluation']:
-                assert candidate_type_names == ['Cyclic Module Record', 'Source Text Module Record']
-                assert lhs_text == '_module_'
-                lhs_t = T_Cyclic_Module_Record
             elif dsbn_name == 'Done':
                 assert candidate_type_names == ['Iterator Record', 'Object']
                 assert lhs_text == '_iteratorRecord_'
                 lhs_t = T_Iterator_Record
-            elif dsbn_name in ['Reject', 'Resolve']:
-                assert candidate_type_names == ['PromiseCapability Record', 'ResolvingFunctions_record_']
-                assert lhs_text == '_promiseCapability_'
-                lhs_t = T_PromiseCapability_Record
             else:
                 assert len(candidate_type_names) == 1, (dsbn_name, candidate_type_names)
                 [type_name] = candidate_type_names
@@ -7996,15 +7802,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         if lhs_t.is_a_subtype_of_or_equal_to(T_Object):
             # _foo_.[[Bar]] references an object's internal method or internal slot.
-            if dsbn_name not in type_of_internal_thing_:
-                add_pass_error(
-                    dsbn,
-                    f"unknown internal slot/method: {dsbn_name}"
-                )
-                it_type = T_TBD
-            else:
-                it_type = type_of_internal_thing_[dsbn_name]
-                # XXX We should require that lhs_t is allowed to have this internal thing.
+
+            it_type = type_of_internal_thing_[dsbn_name]
+
+            # XXX We should require that lhs_t is allowed to have this internal thing.
 
             # But for some subtypes of Object, we can give a narrower type for the slot
             if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == 'ArrayBufferData':
@@ -8021,14 +7822,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         elif lhs_t == T_Private_Name:
             assert dsbn_name == 'Description'
             return (T_String, env2)
-
-        elif lhs_t.is_a_subtype_of_or_equal_to(T_Abrupt):
-            # Handle "Completion Records" specially.
-            t = {
-                'Value'  : T_Tangible_ | T_empty_,
-                'Target' : T_String | T_empty_,
-            }[dsbn_name]
-            return (t, env2)
 
         elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
             # _foo_.[[Bar]] references a record's field
@@ -8058,9 +7851,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 elif lhs_t.name == 'Intrinsics Record':
                     field_type = {
                         '%Array%'               : T_constructor_object_,
-                        # '%FunctionPrototype%' : T_Object,
                         '%Function.prototype%'  : T_Object,
-                        # '%ObjectPrototype%'   : T_Object,
                         '%Object.prototype%'    : T_Object,
                         '%ThrowTypeError%'      : T_function_object_,
                     }[dsbn_name]
@@ -8072,18 +7863,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     else:
                         add_pass_error(
                             expr,
-                            "STA can't confirm that `%s` has a `%s` field"
-                            % (lhs_text, dsbn_name)
+                            f"`{lhs_text}` has type {lhs_t}, which doesn't have a `{dsbn_name}` field"
                         )
-
-                        field_type = {
-                            (T_Environment_Record, 'NewTarget')        : T_Object | T_Undefined,
-                            (T_Module_Record,      'DFSAncestorIndex') : T_MathInteger_,
-                            (T_Module_Record,      'DFSIndex')         : T_MathInteger_ | T_empty_,
-                            (T_Module_Record,      'EvaluationError')  : T_throw_ | T_empty_,
-                        }[(lhs_t, dsbn_name)]
-                        # KeyError here might mean you need to add something to
+                        # Probably you need to add something to
                         # fields_for_record_type_named_
+
+                        field_type = T_TBD
 
                 return (field_type, env2)
 
@@ -8253,12 +8038,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [var, _] = children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
-
-    elif p == r"{PRODUCT} : {FACTOR} / {FACTOR}":
-        [vara, varb] = children
-        env1 = env0.ensure_expr_is_of_type(vara, T_FiniteNumber_)
-        env2 = env1.ensure_expr_is_of_type(varb, T_FiniteNumber_)
-        return (T_FiniteNumber_, env2)
 
     # --------------------------------------------------------
     # return T_MathInteger_
@@ -8430,11 +8209,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # [] = children
         return (T_MathInteger_, env0)
 
-    elif p == r"{BASE} : {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
     elif p in [
         r"{FACTOR} : {BASE}<sup>{EX}</sup>",
     ]:
@@ -8573,33 +8347,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         (a_t, env1) = tc_expr(a, env0)
         (b_t, env2) = tc_expr(b, env1)
 
-        if a_t == T_TBD:
-            return (b_t, env2)
-        elif b_t == T_TBD:
-            return (a_t, env2)
-
-        elif (
-            a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_)
-            and
-            b_t.is_a_subtype_of_or_equal_to(T_Number)
-        ):
-            add_pass_error(expr,
-                "MathReal and Number are incompatible types for arithmetic"
-            )
-            # But what's the result type? Flip a coin?
-            return (T_TBD, env2)
-
-        elif (
-            a_t.is_a_subtype_of_or_equal_to(T_Number)
-            and
-            b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_)
-        ):
-            add_pass_error(expr,
-                "Number and MathReal are incompatible types for arithmetic"
-            )
-            return (T_TBD, env2)
-
-        elif a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) or b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+        if a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) or b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
 
             if (
                 T_MathPosInfinity_.is_a_subtype_of_or_equal_to(a_t)
@@ -8669,12 +8417,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             else:
                 return (T_Number, env2)
 
-            assert 0, (a_t, b_t)
-
         elif a_t.is_a_subtype_of_or_equal_to(T_BigInt) and b_t.is_a_subtype_of_or_equal_to(T_BigInt):
             return (T_BigInt, env2)
 
         else:
+            add_pass_error(expr,
+                f"{a_t} and {b_t} are incompatible types for arithmetic"
+            )
             assert 0, (a_t, b_t)
 
     elif p in [
@@ -8692,17 +8441,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             t.is_a_subtype_of_or_equal_to(T_BigInt)
         )
         return (t, env1)
-
-        # almost: env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
-        # but's a vaguer type-requirement, and we need the actual type out.
-
-        if t == T_TBD:
-            t = T_MathInteger_ # maybe
-            env2 = env1.with_expr_type_replaced(ex, t)
-        else:
-            assert t.is_a_subtype_of_or_equal_to(T_Number), t
-            env2 = env1
-        return (t, env2)
 
     # -------------------------
     # return T_String
@@ -8957,9 +8695,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EX} : the single code point matched by this production":
         [] = children
-        return (T_code_point_, env0)
-
-    elif p == r"{named_char} : &lt; ([A-Z]+) &gt;":
         return (T_code_point_, env0)
 
     # ----------------------------------------------------------
@@ -9383,16 +9118,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [emu_xref] = children
         return (T_alg_steps, env0)
 
-    elif p == r"{EXPR} : the algorithm steps defined in (.+) ({h_emu_xref})":
-        [_, emu_xref] = children
-        return (T_alg_steps, env0)
-
-    elif p in [
-        r"{EXPR} : the steps of an? {cap_word} function as specified below",
-    ]:
-        [cap_word] = children
-        return (T_alg_steps, env0)
-
     # ------------------------------------------------
     # return T_execution_context
 
@@ -9508,26 +9233,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         n_parameters = len(clo_parameters.children)
         if clo_kind == 'Abstract Closure':
             clo_param_types = [T_TBD] * n_parameters
-            alsos = [
-            ]
         elif clo_kind == 'Continuation':
             assert n_parameters == 1
             clo_param_types = [T_State]
-            alsos = [
-            ]
         elif clo_kind == 'Matcher':
             assert n_parameters == 2
             clo_param_types = [T_State, T_Continuation]
-            alsos = [
-            ]
         elif clo_kind == 'Job Abstract Closure':
             assert n_parameters == 0
             clo_param_types = []
-            alsos = []
         elif clo_kind == 'read-modify-write modification function':
             assert n_parameters == 2
             clo_param_types = [ListType(T_MathInteger_), ListType(T_MathInteger_)]
-            alsos = []
         else:
             assert 0, clo_kind
 
@@ -9537,9 +9254,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         for clo_capture_var in clo_captures.children:
             clo_capture_type = env0.lookup(clo_capture_var)
             env_for_commands = env_for_commands.plus_new_entry(clo_capture_var, clo_capture_type)
-
-        for (pn, pt) in alsos:
-            env_for_commands = env_for_commands.plus_new_entry(pn, pt)
 
         env_for_commands.vars['*return*'] = T_0
 
@@ -9683,8 +9397,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif field_names == ['Configurable', 'Enumerable', 'Get', 'Set', 'Value', 'Writable']:
                 # CompletePropertyDescriptor: the almost-Property Descriptor
                 record_type_name = 'Property Descriptor'
-            elif field_names == ['Done', 'Iterator', 'NextMethod']:
-                record_type_name = 'Iterator Record'
             elif field_names == ['ExportName', 'Module']:
                 record_type_name = 'ExportResolveSet_Record_'
             elif field_names == ['Key', 'Symbol']:
@@ -9695,10 +9407,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 record_type_name = 'ResolvingFunctions_record_'
             elif field_names == ['CodePoint', 'CodeUnitCount', 'IsUnpairedSurrogate']:
                 record_type_name = 'CodePointAt_record_'
-            elif field_names == ['Initializer', 'IsAnonymousFunctionDefinition', 'Name']:
-                record_type_name = 'ClassFieldDefinition Record'
-            elif field_names == ['Gap', 'Indent', 'PropertyList', 'ReplacerFunction', 'Stack']:
-                record_type_name = 'JSON Serialization Record'
             elif field_names == ['HeldValue', 'UnregisterToken', 'WeakRefTarget']:
                 record_type_name = 'FinalizationRegistryCellRecord_'
             elif field_names == ['Greedy', 'Max', 'Min']:
@@ -9948,11 +9656,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         for ex in exes_in_exlist(exlist):
             (ex_type, env1) = tc_expr(ex, env0); assert env1 is env0
             ex_types.add(ex_type)
-        if len(ex_types) == 0:
-            list_type = T_List # ListType(T_0)
-        else:
-            element_type = union_of_types(ex_types)
-            list_type = ListType(element_type)
+        element_type = union_of_types(ex_types)
+        list_type = ListType(element_type)
         return (list_type, env0)
 
     elif p == r"{EXPR} : {var}'s _captures_ List":
@@ -10229,9 +9934,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EX} : {backticked_word}":
         [backticked_word] = children
         word = backticked_word.source_text()[1:-1]
-        if word in ['add', 'and', 'second', 'or', 'subtract', 'xor', 'compareExchange']:
-            return (T_ReadModifyWrite_modification_closure, env0)
-        elif word == 'General_Category':
+        if word == 'General_Category':
             return (T_Unicode_code_points_, env0)
         else:
             assert 0, word
@@ -10362,9 +10065,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [_] = children
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{backticked_oth} : ` [^`]+ `":
-        return (T_Unicode_code_points_, env0)
-
     elif p == r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}":
         [var, xref] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Primitive)
@@ -10426,11 +10126,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the result of clamping {var} between 0 and {EX}":
         [var, upper_ex] = children
         env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
-        (var_t, env1) = tc_expr(var, env0)
-        if var_t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
-            return (T_MathNonNegativeInteger_, env0)
-        else:
-            return (T_MathReal_, env0)
+        env0.assert_expr_is_of_type(var, T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
+        return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present":
         [error_type] = children
@@ -10484,9 +10181,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(varb, T_MathReal_)
         return (T_MathReal_, env0)
 
-    elif p == r"{TERMINAL} : {backticked_word}":
-        return (T_grammar_symbol_, env0)
-
     elif p == r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}":
         [var, dsb_word, literal, cap_word] = children
         assert dsb_word.source_text() == '[[AsyncEvaluation]]'
@@ -10536,9 +10230,6 @@ def exes_in_exlist_opt(exlist_opt):
     elif exlist_opt.prod.rhs_s == '{EXLIST}':
         [exlist] = exlist_opt.children
         return exes_in_exlist(exlist)
-    elif exlist_opt.prod.rhs_s == '{var}':
-        [var] = exlist_opt.children
-        return [var]
     else:
         assert 0, exlist_opt.prod.rhs_s
 
@@ -10586,18 +10277,8 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
         # So sometimes, we can provide a narrower return type.
         assert T_Abrupt.is_a_subtype_of_or_equal_to(rt)
         mast = main_arg.source_text()
-        if mast in [
-            '|AsyncArrowFunction|',
-            'this |FunctionExpression|',
-            'this |ArrowFunction|',
-            'this |GeneratorExpression|',
-            'this |AsyncGeneratorExpression|',
-            'this |AsyncFunctionExpression|',
-            'this |AsyncArrowFunction|',
-        ]:
-            rt = T_function_object_
 
-        elif mast in [
+        if mast in [
             '|FunctionStatementList|',
         ]:
             # Might return a throw|return completion, but not continue|break

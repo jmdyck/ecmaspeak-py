@@ -421,7 +421,6 @@ def _handle_sdo_section(section):
         elif section.section_title in [
             'Static Semantics: IsCharacterClass',
             'Static Semantics: CharacterValue',
-            'Static Semantics: NumericValue',
         ]:
             # B.1.4.2
             # B.1.4.3
@@ -440,35 +439,8 @@ def _handle_sdo_section(section):
             return_nature_node = parent_alg_header.return_nature_node
 
         else:
-            # Parameters, if any, are stated in the section's first paragraph.
+            # The others have no parameters
             params = []
-            c0 = section.block_children[0]
-            if c0.element_name == 'p':
-                p_text = c0.source_text()
-                if p_text.startswith('<p>With '):
-                    mo = re.match(r'^<p>With (.+)\.</p>$', p_text)
-                    assert mo, p_text
-                    params_s = mo.group(1)
-                    if mo := re.match(r'(.+?),? and (optional .+)', params_s):
-                        parts = mo.groups()
-                    else:
-                        parts = [params_s]
-
-                    for part in parts:
-                        part_punct = '[]' if part.startswith('optional') else ''
-                        part_params_s = re.sub('^(optional )?parameters? ', '', part)
-
-                        for param in re.split(r', and |, | and ', part_params_s):
-                            if param == '_argumentsList_ (a List)':
-                                param_name = '_argumentsList_'
-                                param_nature = 'a List'
-                            else:
-                                assert re.match(r'^_[a-zA-Z]+_$', param), param
-                                param_name = param
-                                param_nature = 'unknown'
-                            params.append( AlgParam(param_name, part_punct, param_nature) )
-                    section.block_children.pop(0)
-                    _set_bcen_attributes(section)
             return_nature_node = None
 
         alg_header = AlgHeader_make(
@@ -602,18 +574,9 @@ def handle_inline_sdo_section_body(section, alg_header):
                 rule_sdo_names.append(rule_sdo_name)
             elif cl == '{h_emu_grammar}':
                 rule_grammars.append(child._hnode)
-            elif cl == '{nonterminal}':
-                rule_grammars.append(child)
             elif cl == '{EXPR}':
                 assert rule_expr is None
                 rule_expr = child
-            elif cl in ['{NAMED_OPERATION_INVOCATION}', '{h_sub_fancy_f}']:
-                if 'Note that if {NAMED_OPERATION_INVOCATION}' in ISDO_RULE.prod.rhs_s:
-                    # skip it
-                    pass
-                else:
-                    assert rule_expr is None
-                    rule_expr = child
             else:
                 assert 0, cl
 
@@ -816,13 +779,7 @@ def _handle_other_op_section(section):
             AlgHeader_add_definition(alg_header, None, emu_alg)
 
     elif emu_alg is None:
-        if op_name == 'StringToBigInt':
-            # StringToBigInt says:
-            # "Apply the algorithm in 7.1.4.1 with the following changes: ..."
-            # (ick)
-            Pseudocode.ensure_alg(op_species, op_name)
-        else:
-            assert 0, (section.section_num, section.section_title)
+        assert 0, (section.section_num, section.section_title)
 
     else:
         # The emu-alg is the 'body' of
@@ -1071,9 +1028,6 @@ def _handle_structured_header(section):
             elif 'returning *true*, *false*, or *undefined*' in sentence:
                 retn.append('a Boolean or *undefined*')
 
-            elif 'returning *true* or *false*' in sentence:
-                retn.append('a Boolean')
-
             elif sentence == 'Otherwise, it returns *undefined*.':
                 retn.append('*undefined*'),
 
@@ -1088,10 +1042,6 @@ def _handle_structured_header(section):
                         break
                 else:
                     assert 0, sentence
-
-            # kludgey:
-            if sentence == "It returns a completion record whose [[Type]] is ~normal~ and whose [[Value]] is a Boolean.":
-                reta.append('N/A')
 
         return_nature_normal = ' or '.join(retn) if retn else None
         return_nature_abrupt = ' or '.join(reta) if reta else None
@@ -1578,11 +1528,7 @@ def convert_parameter_listing_to_params(parameter_listing):
     params = []
     parameter_listing = parameter_listing.strip()
     if parameter_listing != '':
-        if parameter_listing == '_value1_, _value2_, ..._values_':
-            # Math.{hypot,max,min}
-            parameter_listing = '..._values_'
-        elif parameter_listing in [
-            '_p1_, _p2_, ..., _pn_, _body_', # old
+        if parameter_listing in [
             '_p1_, _p2_, &hellip; , _pn_, _body_' # new
         ]:
             # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction

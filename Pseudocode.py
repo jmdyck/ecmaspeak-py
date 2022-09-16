@@ -543,12 +543,8 @@ def annotate_invocations(anode):
                 'the {cap_word} of {LOCAL_REF} (see {h_emu_xref})',
                 'the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}',
                 'the {cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                'the {cap_word} of {LOCAL_REF}; if {LOCAL_REF} is not present, use the numeric value zero',
                 '{cap_word} of {LOCAL_REF}',
                 '{cap_word} of {LOCAL_REF} {WITH_ARGS}',
-                '{cap_word}({EX})',
-                '{cap_word}({var})',
-                '{cap_word}({named_char})',
                 'the result of performing {cap_word} on {EX}',
             ]:
                 cap_word = d.children[0]

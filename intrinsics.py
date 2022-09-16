@@ -666,18 +666,18 @@ def merge_propAttrs(propAttrs_a, propAttrs_b):
             propAttrs_m[n] = v
     return propAttrs_m
 
-def merge_values(va, vb):
-    if va == vb: return va
-
-    if va is None: return vb
-    if vb is None: return va
-
-    if va in intrinsic_named_ and vb in intrinsic_named_:
-        ia = intrinsic_named_[va]
-        ib = intrinsic_named_[vb]
-        if ia is ib: return ia.name
-
-    assert 0, (va, vb)
+# def merge_values(va, vb):
+#     if va == vb: return va
+# 
+#     if va is None: return vb
+#     if vb is None: return va
+# 
+#     if va in intrinsic_named_ and vb in intrinsic_named_:
+#         ia = intrinsic_named_[va]
+#         ib = intrinsic_named_[vb]
+#         if ia is ib: return ia.name
+# 
+#     assert 0, (va, vb)
 
 def check_s_value(v):
     if v in intrinsic_named_:

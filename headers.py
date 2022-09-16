@@ -11,7 +11,7 @@ from collections import OrderedDict, defaultdict
 from dataclasses import dataclass
 
 import shared
-from shared import spec, stderr, RE, DL
+from shared import spec, stderr, DL
 import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -492,16 +492,6 @@ def resolve_oi(hoi, poi):
 
     assert hoi.description_paras == []
     hoi.description_paras = poi.description_paras
-
-# --------------------------------------------------------------------
-
-def sub_many(subject, pattern_repls):
-    # Apply each of `pattern_repls` to `subject`
-    # and return the result.
-    result = subject
-    for (pattern, repl) in pattern_repls:
-        result = re.sub(pattern, repl, result)
-    return result
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

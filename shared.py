@@ -371,27 +371,6 @@ class DL:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class rem: # re with a memory
-
-    def _init__(self):
-        self.mo = None
-
-    def fullmatch(self, pattern, subject):
-        self.mo = re.fullmatch(pattern, subject)
-        return self.mo
-
-    def group(self, i):
-        assert self.mo
-        return self.mo.group(i)
-
-    def groups(self):
-        assert self.mo
-        return self.mo.groups()
-
-RE = rem()
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 def decode_entities(text):
     assert '<' not in text, text
     # assert '>' not in text 
