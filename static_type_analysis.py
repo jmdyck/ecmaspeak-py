@@ -5623,8 +5623,10 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}":
         [ex, var, cond] = children
-        env0.assert_expr_is_of_type(ex, ListType(T_Record))
-        env_for_cond = env0.plus_new_entry(var, T_Record)
+        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
+        assert ex_t.is_a_subtype_of_or_equal_to(T_List)
+        assert ex_t.element_type.is_a_subtype_of_or_equal_to(T_Record)
+        env_for_cond = env0.plus_new_entry(var, ex_t.element_type)
         (cond_t_env, cond_f_env) = tc_cond(cond, env_for_cond)
         return (cond_t_env, env0)
 
