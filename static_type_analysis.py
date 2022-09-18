@@ -10740,7 +10740,7 @@ fields_for_record_type_named_ = {
 
     # 25.2.3.2 FinalizationRegistry.prototype.register
     'FinalizationRegistryCellRecord_': {
-        'WeakRefTarget'  : T_Object,
+        'WeakRefTarget'  : T_Object | T_empty_,
         'HeldValue'      : T_Tangible_,
         'UnregisterToken': T_Object | T_empty_,
     },
