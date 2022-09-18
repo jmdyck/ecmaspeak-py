@@ -1208,7 +1208,7 @@ T_MathNonNegativeInteger_ = T_MathInteger_ # for now
 T_Continuation    = ProcType([T_State                ], T_MatchResult)
 T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
 T_RegExpMatcher_  = ProcType([ListType(T_character_), T_MathNonNegativeInteger_], T_MatchResult)
-T_Job             = ProcType([                       ], T_Undefined)
+T_Job             = ProcType([                       ], T_Tangible_ | T_empty_ | T_throw_)
 
 T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), ListType(T_MathInteger_)], ListType(T_MathInteger_))
 
@@ -9417,6 +9417,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 record_type_name = 'QuantifierPrefixResultRecord_'
             elif field_names == ['CharSet', 'Invert']:
                 record_type_name = 'CharacterClassResultRecord_'
+            elif field_names == ['Job', 'Realm']:
+                record_type_name = 'Job_record_'
 
             elif field_names == ['Value']:
                 fst = fields.source_text()
@@ -10802,7 +10804,7 @@ fields_for_record_type_named_ = {
     # 39769: NO TABLE, not even mentioned
     'Job_record_': {
         'Job'  : T_Job,
-        'Realm': T_Realm_Record,
+        'Realm': T_Realm_Record | T_Null,
     },
 
     # 39784: PerformPromiseAll NO TABLE, not even mentioned
