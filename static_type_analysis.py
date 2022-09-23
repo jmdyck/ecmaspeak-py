@@ -6354,12 +6354,6 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(lit, var_t)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is one of the code units in {STR_LITERAL}":
-        [var, lit] = children
-        env0.assert_expr_is_of_type(var, T_code_unit_)
-        env0.assert_expr_is_of_type(lit, T_String)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}":
         [var, nont] = children
         env0.assert_expr_is_of_type(var, T_String)
@@ -8559,6 +8553,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the String representation of {EX}, formatted as a decimal number",
         r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number",
+        r"{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number",
     ]:
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
@@ -8662,12 +8657,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(str_ex, T_String)
         env1 = env0.ensure_expr_is_of_type(index_ex, T_MathInteger_)
         return (T_code_unit_, env1)
-
-    elif p == r"{EXPR} : the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}":
-        [ivar, svar] = children
-        env0.assert_expr_is_of_type(ivar, T_MathInteger_)
-        env0.assert_expr_is_of_type(svar, T_String)
-        return (T_code_unit_, env0)
 
     # ----------------------------------------------------------
     # return T_code_point_
@@ -9050,8 +9039,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all sixty-three characters in {starred_str}":
-        [ss] = children
+    elif p == r"{EXPR} : the CharSet containing every character in {STR_LITERAL}":
+        [strlit] = children
         return (T_CharSet, env0)
 
     elif p == r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}":
@@ -9903,20 +9892,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert dsbn.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String | T_Undefined)
         return (T_Symbol, env0)
-
-    elif p == r"{EXPR} : a String containing one instance of each code unit valid in {nonterminal}":
-        [nont] = children
-        return (T_String, env0)
-
-    elif p == r"{EXPR} : a String containing one instance of each code unit valid in {nonterminal} plus {STR_LITERAL}":
-        [nont, strlit] = children
-        env0.assert_expr_is_of_type(strlit, T_String)
-        return (T_String, env0)
-
-    elif p == r"{EXPR} : a String containing one instance of each code unit valid in {nonterminal} and {nonterminal} plus {STR_LITERAL}":
-        [nonta, nontb, strlit] = children
-        env0.assert_expr_is_of_type(strlit, T_String)
-        return (T_String, env0)
 
     elif p == r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35":
         [zvar, rvar] = children

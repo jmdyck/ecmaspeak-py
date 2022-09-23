@@ -374,9 +374,6 @@
     {BULLET_LINE}
 
 {BULLET_LINE} :
-
-    {B} the String representation of {EX}, formatted as a four-digit uppercase hexadecimal number, padded to the left with zeroes if necessary
-    {B} the String representation of {EX}, formatted as a two-digit uppercase hexadecimal number, padded to the left with a zero if necessary
     {B} the code unit of the most significant digit of the decimal representation of {var}
     {B} the code unit of the single digit of {var}
     {B} the code units of the decimal representation of abs({var} - 1)
@@ -778,7 +775,6 @@
     {var} is now the running execution context
     {var} is odd
     {var} is on the list of waiters in {var}
-    {var} is one of the code units in {STR_LITERAL}
     {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {var} is the String value {STR_LITERAL}
     {var} is the empty String (its length is 0)
@@ -892,9 +888,6 @@
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order
     a List whose sole element is {EX}
     a String according to {h_emu_xref}
-    a String containing one instance of each code unit valid in {nonterminal}
-    a String containing one instance of each code unit valid in {nonterminal} and {nonterminal} plus {STR_LITERAL}
-    a String containing one instance of each code unit valid in {nonterminal} plus {STR_LITERAL}
     a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {var}
@@ -946,10 +939,10 @@
     the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
     the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}
+    the CharSet containing every character in {STR_LITERAL}
     the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
-    the CharSet containing all sixty-three characters in {starred_str}
     the CharSet of all characters
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
@@ -970,6 +963,7 @@
     the State ({var}, {EX}, {var})
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
+    the String representation of {EX}, formatted as an uppercase hexadecimal number
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
     the String value consisting of the representation of {var} using radix {var}
     the String value consisting of {EX}
@@ -1008,7 +1002,6 @@
     the code point whose numeric value is that of {var}
     the code point whose numeric value is {NAMED_OPERATION_INVOCATION}
     the code point {var}
-    the code unit (represented as a 16-bit unsigned integer) at index {var} within {var}
     the code unit whose numeric value is that of {EXPR}
     the code unit whose numeric value is {EX}
     the element in {EX} whose {DSBN} is {EX}
@@ -1677,6 +1670,7 @@
 
 {STR_LITERAL} :
     *","* (a comma)
+    the ASCII word characters
     the String {starred_str}
     the empty String
     the single-element String *","*

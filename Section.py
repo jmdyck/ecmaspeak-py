@@ -2764,7 +2764,7 @@ def _(section, mo):
     (r"The actual value of the string passed in step {H_EMU_XREF} is either .+"), # Should be emu-note?
     (r"Before performing the comparisons, this method performs the following steps to prepare the Strings:", 'emu-alg'),
     (r"Each `Math.random` function created for distinct realms must produce a distinct sequence of values from successive calls."),
-    (r"For those code units being replaced whose value is .+"),
+    (r"When replacing a code unit of numeric value .+"),
     (r"If _start_ is larger than _end_, they are swapped."),
     (r"If either argument is \*NaN\* or negative, it is replaced with zero; .+"),
     (r"In the IEEE 754-2019 double precision binary representation, .+"),
@@ -3217,10 +3217,14 @@ def _check_section_order():
                     prev_title = child.section_title
 
                 else:
-                    assert child.section_kind in [
-                        '- // properties',
-                        'catchall',
-                    ]
+                    if section.section_title == 'URI Handling Functions':
+                        # PR #2839 made AOs 'Encode' + 'Decode' siblings of functions
+                        assert child.section_kind == 'abstract_operation'
+                    else:
+                        assert child.section_kind in [
+                            '- // properties',
+                            'catchall',
+                        ]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

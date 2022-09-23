@@ -728,7 +728,6 @@ def check_reachability():
     reach('InputElementRegExp')
     reach('InputElementRegExpOrTemplateTail')
     reach('InputElementTemplateTail')
-    reach('uri')
     reach('StringNumericLiteral')
     reach('Pattern')
 
@@ -1398,9 +1397,6 @@ def approximate_annex_A():
         elif section.section_title == 'Type Conversion':
             caast = 'Number Conversions'
 
-        elif section.section_title == 'URI Syntax and Semantics':
-            caast = 'Universal Resource Identifier Character Classes'
-
         elif section.section_title in ['Patterns', 'Syntax for Patterns']: # "Syntax for Patterns" is from #1651
             caast = 'Regular Expressions'
         
@@ -1544,7 +1540,7 @@ def approximate_annex_A():
     move('Number Conversions',
         # to between:
         '# Scripts and Modules !end',
-        '# Universal Resource Identifier Character Classes !start',
+        '# Regular Expressions !start',
     )
 
     move('Left-Hand-Side Expressions / Supplemental Syntax',
