@@ -4743,9 +4743,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1} and {CONDITION_1}',
         r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, and {CONDITION_1}, and {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
         r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
     ]:
@@ -5139,7 +5136,6 @@ def tc_cond_(cond, env0, asserting):
         )
 
     elif p in [
-        r'{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar} ',
         r"{CONDITION_1} : {var} is an instance of the production {h_emu_grammar}",
     ]:
         [local_ref, emu_grammar] = children
@@ -5596,7 +5592,7 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : When {SETTABLE} is instantiated it will have a direct binding for {var}':
+    elif p == r'{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}':
         [settable, var] = children
         env0.assert_expr_is_of_type(settable, T_Environment_Record | T_empty_)
         env0.assert_expr_is_of_type(var, T_String)
@@ -5654,13 +5650,13 @@ def tc_cond_(cond, env0, asserting):
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : there is a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}":
+    elif p == r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}":
         [let_var, i, cond] = children
         env0.assert_expr_is_of_type(i, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : there is an event {var} such that {CONDITION}":
+    elif p == r"{CONDITION_1} : there exists an event {var} such that {CONDITION}":
         [let_var, cond] = children
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(cond, env_for_cond)
@@ -9089,7 +9085,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1.assert_expr_is_of_type(noi, T_character_)
         return (T_CharSet, env0)
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar} ":
+    elif p == r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar}":
         [emu_grammar] = children
         return (T_CharSet, env0)
 
