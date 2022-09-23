@@ -542,6 +542,7 @@
     {EX} is not the same value as {var}
     {EX} is not {LITERAL}
     {EX} is not {LITERAL} or {LITERAL}
+    {EX} is not {var}
     {EX} is present
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
@@ -766,7 +767,6 @@
     {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super`, or `this`
     {var} is not the Environment Record for a |Catch| clause
     {var} is not the same as {var}
-    {var} is not {var}
     {var} is now an empty List
     {var} is now the running execution context
     {var} is odd
@@ -1529,6 +1529,7 @@
     a function that returns an <i>AsyncIterator</i> object
     a function that returns an <i>Iterator</i> object
     a function that returns an <i>IteratorResult</i> object
+    a grammar symbol
     a happens-before Relation
     a host-synchronizes-with Relation
     a mathematical value
@@ -1584,6 +1585,7 @@
     an integer &ge; {dsb_word}
     an integer in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
     an integral Number
+    an internal slot name
     an ordinary object
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
     an? {nonterminal} Parse Node
@@ -1591,7 +1593,6 @@
     anything
     some other definition of a function's behaviour provided in this specification
     source text
-    unknown
     {LITERAL}
     {backticked_oth}
 

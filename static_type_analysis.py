@@ -1341,8 +1341,12 @@ def convert_nature_to_type(nature):
 
 nature_to_type = {
         'unknown': T_TBD,
+        'anything': T_host_defined_,
+
+        'any value except a Completion Record': T_Tangible_ | T_Intangible_,
 
     # 5.1.4 The Syntactic Grammar
+        'a grammar symbol'                                : T_grammar_symbol_,
         'a nonterminal in one of the ECMAScript grammars' : T_grammar_symbol_,
 
         'Parse Node'                                                            : T_Parse_Node,
@@ -1404,6 +1408,8 @@ nature_to_type = {
         'an Object that conforms to the <i>IteratorResult</i> interface' : T_Object,
         'an Object that has a [[StringData]] internal slot'              : T_Object,
         'an initialized RegExp instance'                                 : T_Object,
+
+        'an internal slot name' : T_SlotName_,
 
         # function_: an object with a [[Call]] internal method
         'a function object'                                           : T_function_object_,
@@ -1580,6 +1586,7 @@ nature_to_type = {
         'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
 
     # 14.7.5.6 ForIn/OfHeadEvaluation
+        '~enumerate~ or ~iterate~': T_IterationKind_,
         '~enumerate~, ~iterate~, or ~async-iterate~' : T_IterationKind_,
 
     # 14.7.5.7 ForIn/OfBodyEvaluation
@@ -1737,69 +1744,12 @@ nature_to_type = {
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 type_tweaks_tuples = [
-    ('AllPrivateIdentifiersValid'               , '_names_'                , T_TBD                 , ListType(T_String)),
-    ('AsyncFunctionStart'                       , '_asyncFunctionBody_'    , T_TBD                 , T_Parse_Node),
     ('AsyncGeneratorEnqueue'                    , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
     ('AsyncGeneratorUnwrapYieldResumption'      , '_resumptionValue_'      , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
     ('AsyncIteratorClose'                       , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_empty_ | T_throw_),
-    ('BindingInitialization'                    , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
-    ('ClassDefinitionEvaluation'                , '_className_'            , T_TBD                 , T_String | T_Undefined),
-    ('Construct'                                , '_argumentsList_'        , T_TBD | T_not_passed  , ListType(T_Tangible_) | T_not_passed),
-    ('Contains'                                 , '_symbol_'               , T_TBD                 , T_grammar_symbol_),
-    ('ContainsDuplicateLabels'                  , '_labelSet_'             , T_TBD                 , ListType(T_String)),
-    ('CreateListFromArrayLike'                  , '_obj_'                  , T_TBD                 , T_Tangible_),
-    ('CreatePerIterationEnvironment'            , '_perIterationBindings_' , T_TBD                 , ListType(T_String)),
-    ('DefineMethod'                             , '_functionPrototype_'    , T_TBD | T_not_passed  , T_Object | T_not_passed),
-    ('DetachArrayBuffer'                        , '_key_'                  , T_TBD | T_not_passed  , T_Tangible_ | T_not_passed),
-    ('EvalDeclarationInstantiation'             , '_varEnv_'               , T_TBD                 , T_Environment_Record),
-    ('EvalDeclarationInstantiation'             , '_lexEnv_'               , T_TBD                 , T_Environment_Record),
-    ('EvalDeclarationInstantiation'             , '_privateEnv_'           , T_TBD                 , T_PrivateEnvironment_Record),
-    ('ExportEntriesForModule'                   , '_module_'               , T_TBD                 , T_String | T_Null),
-    ('FinishDynamicImport'                      , '_referencingScriptOrModule_' , T_TBD            , T_Script_Record | T_Module_Record | T_Null),
-    ('FinishDynamicImport'                      , '_specifier_'            , T_TBD                 , T_String),
-    ('GeneratorResume'                          , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
-    ('GeneratorValidate'                        , '_generator_'            , T_TBD                 , T_Tangible_),
-    ('GetOwnPropertyKeys'                       , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('GetViewValue'                             , '_view_'                 , T_TBD                 , T_Tangible_),
-    ('GetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
-    ('HasCallInTailPosition'                    , '_call_'                 , T_TBD                 , T_Parse_Node),
-    ('InitializeBoundName'                      , '_value_'                , T_TBD                 , T_Tangible_),
-    ('IsArray'                                  , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('IsConcatSpreadable'                       , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('IsIntegralNumber'                         , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('IsLabelledFunction'                       , '_stmt_'                 , T_TBD                 , T_Parse_Node),
-    ('IsPromise'                                , '_x_'                    , T_TBD                 , T_Tangible_),
-    ('IsRegExp'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('IteratorBindingInitialization'            , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
     ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_empty_ | T_throw_),
-    ('KeyedBindingInitialization'               , '_environment_'          , T_TBD                 , T_Environment_Record | T_Undefined),
-    ('LoopContinues'                            , '_completion_'           , T_TBD                 , T_Tangible_ | T_empty_ | T_Abrupt),
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
-    ('MakeSuperPropertyReference'               , '_actualThis_'           , T_TBD                 , T_Tangible_),
-    ('MakeSuperPropertyReference'               , '_propertyKey_'          , T_TBD                 , T_String | T_Symbol),
-    ('MakeSuperPropertyReference'               , '_strict_'               , T_TBD                 , T_Boolean),
-    ('NewPromiseReactionJob'                    , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('OrdinaryHasInstance'                      , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('PerformEval'                              , '_x_'                    , T_TBD                 , T_Tangible_),
-    ('PerformPromiseThen'                       , '_onFulfilled_'          , T_TBD                 , T_Tangible_),
-    ('PerformPromiseThen'                       , '_onRejected_'           , T_TBD                 , T_Tangible_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-    ('ProxyCreate'                              , '_handler_'              , T_TBD                 , T_Tangible_),
-    ('ProxyCreate'                              , '_target_'               , T_TBD                 , T_Tangible_),
-    ('RequireInternalSlot'                      , '_O_'                    , T_TBD                 , T_Tangible_),
-    ('RequireInternalSlot'                      , '_internalSlot_'         , T_TBD                 , T_SlotName_),
-    ('RequireObjectCoercible'                   , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('SetRealmGlobalObject'                     , '_thisValue_'            , T_TBD                 , T_Tangible_),
-    ('SetViewValue'                             , '_view_'                 , T_TBD                 , T_Tangible_),
-    ('SetViewValue'                             , '_isLittleEndian_'       , T_TBD                 , T_Tangible_),
-    ('ToBoolean'                                , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('ToNumber'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('ToObject'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('ToPropertyDescriptor'                     , '_Obj_'                  , T_TBD                 , T_Tangible_),
-    ('ToString'                                 , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('TriggerPromiseReactions'                  , '_argument_'             , T_TBD                 , T_Tangible_),
-    ('UpdateEmpty'                              , '_value_'                , T_TBD                 , T_Tangible_ | T_empty_),
-    ('ValidateTypedArray'                       , '_O_'                    , T_TBD                 , T_Tangible_),
     ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
@@ -3221,6 +3171,10 @@ def tc_header(tah):
                 tah.name == 'EvaluateGeneratorBody' and pn == '*return*'
                 or
                 tah.name == 'EvaluateAsyncGeneratorBody' and pn == '*return*'
+                or
+                tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_'
+                or
+                tah.name == 'DetachArrayBuffer' and pn == '_key_'
             ):
                 # -------------------------
                 # Don't change header types
@@ -3290,6 +3244,8 @@ def tc_header(tah):
                 tah.name == 'DateString' and pn == '_tv_'
                 or
                 tah.name == 'SerializeJSONArray' and pn == '_value_'
+                or
+                tah.name == 'NormalCompletion' and pn == '_value_' and init_t == T_Tangible_ | T_Intangible_ and final_t == T_Tangible_ | T_empty_ # TODO
 
                 # or
                 # tah.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
@@ -5835,6 +5791,8 @@ def tc_cond_(cond, env0, asserting):
             env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exb_type == T_TBD:
             env1 = env0.with_expr_type_replaced(exb, exa_type)
+        elif exa_type == T_Declarative_Environment_Record and exb_type == T_Environment_Record:
+            env1 = env0.with_expr_type_narrowed(exb, exa_type)
         elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
             env1 = env0
         else:
@@ -6472,11 +6430,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is not {var}":
+    elif p == r"{CONDITION_1} : {EX} is not {var}":
         [ea, eb] = children
         # over-specific:
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
+        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
+        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}":
@@ -10980,7 +10938,7 @@ type_of_internal_thing_ = {
     'ArrayBufferData': T_Data_Block | T_Shared_Data_Block | T_Null,
         # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
     'ArrayBufferByteLength' : T_MathInteger_,
-    'ArrayBufferDetachKey'  : T_Tangible_, # could be anything, really
+    'ArrayBufferDetachKey'  : T_host_defined_,
 
     # 38581: Table 56: Internal Slots of Generator Instances
     'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
