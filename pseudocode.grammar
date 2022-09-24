@@ -414,7 +414,6 @@
     {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
-    {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
@@ -550,7 +549,6 @@
     {EX} is {LITERAL}
     {EX} is {LITERAL} or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number
     {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
@@ -784,7 +782,6 @@
     {var} is {nonterminal}
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
-    {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}
     {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
     {var} starts with {STR_LITERAL}

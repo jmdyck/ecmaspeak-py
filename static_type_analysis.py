@@ -4690,7 +4690,6 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
         r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
     ]:
         logical = ('or', children)
         return tc_logical(logical, env0, asserting)
@@ -5360,7 +5359,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is not finite":
         [var] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t.is_a_subtype_of_or_equal_to(T_Number):
+        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
             return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
         elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
             return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
@@ -5375,17 +5374,6 @@ def tc_cond_(cond, env0, asserting):
         return (
             env_and(a_t_env, b_t_env),
             env_or(a_f_env, b_f_env)
-        )
-
-    elif p == r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or an integral Number":
-        [var, lita, litb, litc] = children
-        assert lita.source_text() == '*NaN*'
-        assert litb.source_text().startswith('*+&infin;*')
-        assert litc.source_text().startswith('*-&infin;*')
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (
-            env0.with_expr_type_narrowed(var, T_NaN_Number_ | T_InfiniteNumber_ | T_IntegralNumber_),
-            env0.with_expr_type_narrowed(var, T_NonIntegralFiniteNumber_)
         )
 
     elif p in [
@@ -6480,15 +6468,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
         env0.assert_expr_is_of_type(v2, T_Number|T_BigInt)
         env0.assert_expr_is_of_type(lit, T_Number)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} or {var} are any of {LITERAL}, {LITERAL}, or {LITERAL}":
-        [v1, v2, lita, litb, litc] = children
-        env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(v2, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(lita, T_Number)
-        env0.assert_expr_is_of_type(litb, T_Number)
-        env0.assert_expr_is_of_type(litc, T_Number)
         return (env0, env0)
 
     elif p in [
