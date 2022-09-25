@@ -7800,12 +7800,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 assert 0, (expr.source_text(), lhs_t)
 
         else:
-            # assert 0, (expr.source_text(), str(lhs_t))
+            # lhs_t is presumably a union of types, only one/some of which supports dot-operator
+            # In practice, this is a Record type.
+            # (In fact, in practice, it's a T_Reference_Record, but I don't need to be that specific.)
+
+            (record_part_of_type, nonrecord_part_of_type) = lhs_t.split_by(T_Record)
+            assert record_part_of_type != T_0
+            assert nonrecord_part_of_type != T_0
+
             add_pass_error(
                 lhs_var,
-                f"How does something of type {lhs_t} support a dot-operator?"
+                f"Narrowing type {lhs_t} to {record_part_of_type} to support a dot-operator"
             )
-            return (T_TBD, env2)
+
+            # Okay, but then what's the type of the dotting?
+            # Properly, this should be re-submitted.
+            assert isinstance(record_part_of_type, NamedType)
+            t = fields_for_record_type_named_[record_part_of_type.name][dsbn_name]
+            return (t, env2)
 
     # -------------------------------------------------
 
