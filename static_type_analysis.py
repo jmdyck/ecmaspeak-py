@@ -3908,6 +3908,12 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(root_var, T_Parse_Node)
             env_for_commands = env0.plus_new_entry(loop_var, ptn_type_for(nont))
 
+        elif each_thing.prod.rhs_s == r"integer {var} in the inclusive interval from {EX} to {EX}":
+            [loop_var, start_ex, end_ex] = each_thing.children
+            env0.assert_expr_is_of_type(start_ex, T_MathInteger_)
+            env0.assert_expr_is_of_type(end_ex, T_MathInteger_)
+            env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
+
         elif each_thing.prod.rhs_s == r"field of {var}":
             [desc_var] = each_thing.children
             loop_var = None # todo: no loop variable!
@@ -3920,6 +3926,7 @@ def tc_nonvalue(anode, env0):
         elif each_thing.prod.rhs_s in [
             r"{ITEM_NATURE} {var} such that {CONDITION}",
             r"{ITEM_NATURE} {var} such that {CONDITION}, in ascending order",
+            r"{ITEM_NATURE} {var} such that {CONDITION}, in descending order",
         ]:
             [item_nature, loop_var, condition] = each_thing.children
             item_type = {
@@ -3931,20 +3938,6 @@ def tc_nonvalue(anode, env0):
                 "integer"             : T_MathInteger_,
             }[item_nature.prod.rhs_s]
             env1 = env0.plus_new_entry(loop_var, item_type)
-            (tenv, fenv) = tc_cond(condition, env1)
-            env_for_commands = tenv
-
-        elif each_thing.prod.rhs_s == r"integer {var} starting with {EX} such that {CONDITION}, in ascending order":
-            [loop_var, start_ex, condition] = each_thing.children
-            env0.assert_expr_is_of_type(start_ex, T_MathInteger_)
-            env1 = env0.plus_new_entry(loop_var, T_MathInteger_)
-            (tenv, fenv) = tc_cond(condition, env1)
-            env_for_commands = tenv
-
-        elif each_thing.prod.rhs_s == r"non-negative integer {var} starting with {var} such that {CONDITION}, in descending order":
-            [loop_var, start_ex, condition] = each_thing.children
-            env0.assert_expr_is_of_type(start_ex, T_MathNonNegativeInteger_)
-            env1 = env0.plus_new_entry(loop_var, T_MathNonNegativeInteger_)
             (tenv, fenv) = tc_cond(condition, env1)
             env_for_commands = tenv
 
@@ -5568,7 +5561,7 @@ def tc_cond_(cond, env0, asserting):
         assert t_env is f_env
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : there exists an integer {var} between 0 (inclusive) and {var} (exclusive) such that {CONDITION_1}":
+    elif p == r"{CONDITION_1} : there exists an integer {var} in the interval from 0 (inclusive) to {var} (exclusive) such that {CONDITION_1}":
         [i_var, m_var, cond] = children
         env0.assert_expr_is_of_type(m_var, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
@@ -5585,7 +5578,7 @@ def tc_cond_(cond, env0, asserting):
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : {SETTABLE} &ne; {SETTABLE} for any integer value {var} in the range {LITERAL} through {var}, exclusive":
+    elif p == r"{CONDITION_1} : {SETTABLE} &ne; {SETTABLE} for some integer {var} in the interval from {LITERAL} (inclusive) to {var} (exclusive)":
         [seta, setb, let_var, lo, hi] = children
         env0.assert_expr_is_of_type(lo, T_MathInteger_)
         env0.assert_expr_is_of_type(hi, T_MathInteger_)
@@ -6829,7 +6822,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(exb, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is an integer between {EX} and {EX}, inclusive":
+    elif p == r"{CONDITION_1} : {EX} is an integer in the inclusive interval from {EX} to {EX}":
         [exa, exb, exc] = children
         env0.assert_expr_is_of_type(exa, T_MathInteger_)
         env0.assert_expr_is_of_type(exb, T_MathInteger_)
@@ -8800,7 +8793,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_State)
         return (ListType(T_character_), env1)
 
-    elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices {var} (inclusive) through {EX} (exclusive)":
+    elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices in the interval from {var} (inclusive) to {EX} (exclusive)":
         [data_var, lo_var, hi_ex] = children
         env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
         env1.assert_expr_is_of_type(lo_var, T_MathNonNegativeInteger_)

@@ -442,7 +442,7 @@ element_info = {
         'emu-caption'          : ('B', '',          '',           '(#TEXT;|emu-xref;)+'),
         'pre'                  : ('B', '',          'class',      '#TEXT;|code;'),
         'style'                : ('B', '',          '',           '#TEXT;'),
-        'p'                    : ('B', '',          '',           'img;|(#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
+        'p'                    : ('B', '',          '',           'img;|(#COMMENT;|#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
         'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-xref;|i;|ins;)+'), # though dfn is pretty odd
         'h2'                   : ('B', '',          '',           '#TEXT;'),
         'th'                   : ('B', '',          '',           '#TEXT;(sup;#TEXT;)?'),
