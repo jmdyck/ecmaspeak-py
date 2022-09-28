@@ -327,7 +327,7 @@
     element {var} of {var}, in reverse List order
     field of {var}
     index {var} of {var}
-    integer {var} in the inclusive interval from {EX} to {EX}
+    integer {var} in {INTERVAL}
     own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
@@ -497,7 +497,7 @@
     there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}
     there exists a member {var} of {var} such that {CONDITION_1}
     there exists an event {var} such that {CONDITION}
-    there exists an integer {var} in the interval from 0 (inclusive) to {var} (exclusive) such that {CONDITION_1}
+    there exists an integer {var} in {INTERVAL} such that {CONDITION_1}
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
     {DOTTING} contains a Record {var} such that {CONDITION_1}
@@ -521,7 +521,7 @@
     {EX} is an Environment Record
     {EX} is an Object
     {EX} is an element of {var}
-    {EX} is an integer in the inclusive interval from {EX} to {EX}
+    {EX} is an integer in {INTERVAL}
     {EX} is different from {EX}
     {EX} is either {LITERAL} or {LITERAL}
     {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
@@ -592,7 +592,7 @@
     {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
-    {SETTABLE} &ne; {SETTABLE} for some integer {var} in the interval from {LITERAL} (inclusive) to {var} (exclusive)
+    {SETTABLE} &ne; {SETTABLE} for some integer {var} in {INTERVAL}
     {SETTABLE} contains {EX}
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
@@ -731,7 +731,7 @@
     {var} is either a String, a Number, a BigInt, or a Symbol
     {var} is finite
     {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
-    {var} is in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
+    {var} is in {INTERVAL}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
     {var} is not a Number
@@ -754,7 +754,7 @@
     {var} is not finite
     {var} is not in {PREFIX_PAREN}
     {var} is not in {var}
-    {var} is not in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
+    {var} is not in {INTERVAL}
     {var} is not on the list of waiters in any WaiterList
     {var} is not on the list of waiters in {var}
     {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
@@ -867,7 +867,7 @@
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
     a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present
     a List of {EX} {LITERAL} values, indexed 1 through {EX}
-    a List whose elements are bytes from {var} at indices in the interval from {var} (inclusive) to {EX} (exclusive)
+    a List whose elements are bytes from {var} at indices in {INTERVAL}
     a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. If {var} is {LITERAL}, the bytes are arranged in big endian order. Otherwise, the bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the code units that are the elements of {var}
@@ -1196,6 +1196,10 @@
 
 {PAIR} :
     ({EX}, {EX})
+
+{INTERVAL} :
+    the inclusive interval from {EX} to {EX}
+    the interval from {EX} (inclusive) to {EX} (exclusive)
 
 # ------------------------------------------------------
 
@@ -1578,7 +1582,7 @@
     an instance of a concrete subclass of Module Record
     an integer
     an integer &ge; {dsb_word}
-    an integer in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}
+    an integer in {INTERVAL}
     an integral Number
     an internal slot name
     an ordinary object
@@ -1674,7 +1678,6 @@
     *0.5*{h_sub_fancy_f}
     +&infin;
     -&infin;
-    -5
     0.5
     64 (that is, 8<sup>2</sup>)
     8.64

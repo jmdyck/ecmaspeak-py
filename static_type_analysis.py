@@ -3908,10 +3908,9 @@ def tc_nonvalue(anode, env0):
             env0.assert_expr_is_of_type(root_var, T_Parse_Node)
             env_for_commands = env0.plus_new_entry(loop_var, ptn_type_for(nont))
 
-        elif each_thing.prod.rhs_s == r"integer {var} in the inclusive interval from {EX} to {EX}":
-            [loop_var, start_ex, end_ex] = each_thing.children
-            env0.assert_expr_is_of_type(start_ex, T_MathInteger_)
-            env0.assert_expr_is_of_type(end_ex, T_MathInteger_)
+        elif each_thing.prod.rhs_s == r"integer {var} in {INTERVAL}":
+            [loop_var, interval] = each_thing.children
+            env0.assert_expr_is_of_type(interval, T_MathInteger_)
             env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
 
         elif each_thing.prod.rhs_s == r"field of {var}":
@@ -5561,9 +5560,9 @@ def tc_cond_(cond, env0, asserting):
         assert t_env is f_env
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : there exists an integer {var} in the interval from 0 (inclusive) to {var} (exclusive) such that {CONDITION_1}":
-        [i_var, m_var, cond] = children
-        env0.assert_expr_is_of_type(m_var, T_MathInteger_)
+    elif p == r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}":
+        [i_var, interval, cond] = children
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(cond, env_for_cond)
 
@@ -5578,10 +5577,9 @@ def tc_cond_(cond, env0, asserting):
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : {SETTABLE} &ne; {SETTABLE} for some integer {var} in the interval from {LITERAL} (inclusive) to {var} (exclusive)":
-        [seta, setb, let_var, lo, hi] = children
-        env0.assert_expr_is_of_type(lo, T_MathInteger_)
-        env0.assert_expr_is_of_type(hi, T_MathInteger_)
+    elif p == r"{CONDITION_1} : {SETTABLE} &ne; {SETTABLE} for some integer {var} in {INTERVAL}":
+        [seta, setb, let_var, interval] = children
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
         env_for_settables = env0.plus_new_entry(let_var, T_MathInteger_)
         env_for_settables.assert_expr_is_of_type(seta, T_MathInteger_)
         env_for_settables.assert_expr_is_of_type(setb, T_MathInteger_)
@@ -6157,13 +6155,12 @@ def tc_cond_(cond, env0, asserting):
         return (env1, env1)
 
     elif p in [
-        r"{CONDITION_1} : {var} is in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}",
-        r"{CONDITION_1} : {var} is not in the inclusive interval from {NUM_LITERAL} to {NUM_LITERAL}",
+        r"{CONDITION_1} : {var} is in {INTERVAL}",
+        r"{CONDITION_1} : {var} is not in {INTERVAL}",
     ]:
-        [var, lita, litb] = children
+        [var, interval] = children
         env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
-        env1.assert_expr_is_of_type(lita, T_MathInteger_)
-        env1.assert_expr_is_of_type(litb, T_MathInteger_)
+        env1.assert_expr_is_of_type(interval, T_MathInteger_)
         return (env1, env1)
 
     elif p == r"{CONDITION_1} : the host is a web browser":
@@ -6822,11 +6819,10 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(exb, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is an integer in the inclusive interval from {EX} to {EX}":
-        [exa, exb, exc] = children
+    elif p == r"{CONDITION_1} : {EX} is an integer in {INTERVAL}":
+        [exa, interval] = children
         env0.assert_expr_is_of_type(exa, T_MathInteger_)
-        env0.assert_expr_is_of_type(exb, T_MathInteger_)
-        env0.assert_expr_is_of_type(exc, T_MathInteger_)
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
         return (env0, env0)
 
     else:
@@ -8793,11 +8789,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1 = env0.ensure_expr_is_of_type(var, T_State)
         return (ListType(T_character_), env1)
 
-    elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices in the interval from {var} (inclusive) to {EX} (exclusive)":
-        [data_var, lo_var, hi_ex] = children
+    elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}":
+        [data_var, interval] = children
         env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
-        env1.assert_expr_is_of_type(lo_var, T_MathNonNegativeInteger_)
-        env1.assert_expr_is_of_type(hi_ex, T_MathNonNegativeInteger_)
+        env1.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
         return (ListType(T_MathNonNegativeInteger_), env1)
 
     elif p == r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created":
@@ -10109,6 +10104,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : a new implementation-defined Completion Record":
         [] = children
         return (T_Abrupt | T_Normal, env0)
+
+    elif p in [
+        r"{INTERVAL} : the inclusive interval from {EX} to {EX}",
+        r"{INTERVAL} : the interval from {EX} (inclusive) to {EX} (exclusive)",
+    ]:
+        [lo, hi] = children
+        env0.assert_expr_is_of_type(lo, T_MathInteger_)
+        env0.assert_expr_is_of_type(hi, T_MathInteger_)
+        return (T_MathInteger_, env0)
+        # Should maybe be ListType(T_MathInteger_) or something similar
 
     else:
         stderr()
