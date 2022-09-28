@@ -419,8 +419,6 @@
     Evaluate has already been invoked on {var} and successfully completed
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     GlobalSymbolRegistry does not currently contain an entry for {var}
-    The surrounding agent is in the critical section for {var}
-    The surrounding agent is not in the critical section for any WaiterList
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The execution context stack has at least two elements
     The execution context stack is not empty
@@ -429,6 +427,8 @@
     The length of {var} is {var}
     The mathematical value of {var}'s {starred_str} property is {EX}
     The next step never returns an abrupt completion because {CONDITION_1}
+    The surrounding agent is in the critical section for {var}
+    The surrounding agent is not in the critical section for any WaiterList
     The value of {SETTABLE} is {LITERAL}
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
     There is more than one `*` import that includes the requested name
@@ -532,8 +532,8 @@
     {EX} is neither {LITERAL} nor the active function object
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not -1
-    {EX} is not an element of {var}
     {EX} is not an Object
+    {EX} is not an element of {var}
     {EX} is not present
     {EX} is not the same value as {var}
     {EX} is not {LITERAL}
@@ -752,9 +752,9 @@
     {var} is not currently an element of {var}
     {var} is not empty
     {var} is not finite
+    {var} is not in {INTERVAL}
     {var} is not in {PREFIX_PAREN}
     {var} is not in {var}
-    {var} is not in {INTERVAL}
     {var} is not on the list of waiters in any WaiterList
     {var} is not on the list of waiters in {var}
     {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
