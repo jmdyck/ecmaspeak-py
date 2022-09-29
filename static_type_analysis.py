@@ -289,7 +289,7 @@ class TypedAlgHeader:
             # too weird to handle above
             tpn = '*return*'
             assert self.return_type in [(T_Normal | T_Abrupt), T_TBD]
-            tnt = T_Tangible_ | T_empty_ | T_Reference_Record | T_Abrupt
+            tnt = T_Tangible_ | T_tilde_empty_ | T_Reference_Record | T_Abrupt
             self.change_declared_type(tpn, tnt, tweak=True)
 
         # -------------------------
@@ -994,7 +994,7 @@ named_type_hierarchy = {
                 'List': {},
                 'MatchResult': {
                     'State': {},
-                    'match_failure_': {},
+                    'tilde_failure_': {},
                 },
                 'ExtendedMathReal_': {
                     'MathReal_': {
@@ -1094,15 +1094,8 @@ named_type_hierarchy = {
                 'Shared Data Block': {},
                 'SharedMemory_ordering_': {},
                 'SlotName_': {},
-                'TildeAllButDefault_': {},
-                'TildeAll_': {},
-                'TildeAmbiguous_': {},
-                'TildeNamespaceObject_': {},
-                'TildeNamespace_': {},
-                'TildeUnused_': {},
                 'TrimString_where_': {},
                 'TypedArray_element_type': {},
-                'Unresolvable_': {},
                 'WaiterList' : {},
                 'agent_signifier_' : {},
                 'alg_steps': {},
@@ -1112,7 +1105,6 @@ named_type_hierarchy = {
                 # },
                 'completion_kind_': {},
                 'constructor_kind_': {},
-                'empty_': {},
                 'iteration_result_kind_': {},
                 'execution context': {},
                 'generator_state_': {},
@@ -1131,6 +1123,16 @@ named_type_hierarchy = {
                 'this_binding_status_': {},
                 'this_mode': {},
                 'this_mode2_': {},
+                'tilde_': {
+                    'tilde_all_': {},
+                    'tilde_all_but_default_': {},
+                    'tilde_ambiguous_': {},
+                    'tilde_empty_': {},
+                    'tilde_namespace_': {},
+                    'tilde_namespace_object_': {},
+                    'tilde_unresolvable_': {},
+                    'tilde_unused_': {},
+                },
                 'tuple_': {},
                 'other_': {},
             },
@@ -1208,7 +1210,7 @@ T_MathNonNegativeInteger_ = T_MathInteger_ # for now
 T_Continuation    = ProcType([T_State                ], T_MatchResult)
 T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
 T_RegExpMatcher_  = ProcType([ListType(T_character_), T_MathNonNegativeInteger_], T_MatchResult)
-T_Job             = ProcType([                       ], T_Tangible_ | T_empty_ | T_throw_)
+T_Job             = ProcType([                       ], T_Tangible_ | T_tilde_empty_ | T_throw_)
 
 T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), ListType(T_MathInteger_)], ListType(T_MathInteger_))
 
@@ -1364,10 +1366,10 @@ nature_to_type = {
         '-&infin;'                  : T_MathNegInfinity_,
 
     # 5.2.6 Value Notation
-        '~empty~' : T_empty_,
+        '~empty~' : T_tilde_empty_,
 
-        '~ambiguous~' : T_TildeAmbiguous_,
-        '~unused~'    : T_TildeUnused_,
+        '~ambiguous~' : T_tilde_ambiguous_,
+        '~unused~'    : T_tilde_unused_,
 
     # 6.1 ECMAScript language types
 
@@ -1746,8 +1748,8 @@ nature_to_type = {
 type_tweaks_tuples = [
     ('AsyncGeneratorEnqueue'                    , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
     ('AsyncGeneratorUnwrapYieldResumption'      , '_resumptionValue_'      , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
-    ('AsyncIteratorClose'                       , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_empty_ | T_throw_),
-    ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_empty_ | T_throw_),
+    ('AsyncIteratorClose'                       , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_tilde_empty_ | T_throw_),
+    ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_tilde_empty_ | T_throw_),
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
     ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
@@ -2329,7 +2331,7 @@ class Env:
                 old_t == T_Tangible_ | T_not_set and new_t == T_Tangible_
                 # CaseBlockEvaluation, will go away with refactoring
                 or
-                old_t == T_empty_ and new_t == ptn_type_for('MethodDefinition')
+                old_t == T_tilde_empty_ and new_t == ptn_type_for('MethodDefinition')
                 # ClassDefinitionEvaluation
                 or
                 old_t == T_Normal and new_t == T_methodDef_record_
@@ -2357,7 +2359,7 @@ class Env:
                 or
                 old_t | T_throw_ == new_t
                 or
-                old_t == T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String
+                old_t == T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String
                 # Evaluation for TemplateLiteral
                 or
                 expr_text in ['_test_', '_increment_'] and new_t == T_Parse_Node
@@ -2377,20 +2379,20 @@ class Env:
                 old_t == T_Null | T_Object and new_t == T_Object
                 # [[Construct]]
                 or
-                old_t == T_Tangible_ | T_empty_ and new_t == T_Tangible_
+                old_t == T_Tangible_ | T_tilde_empty_ and new_t == T_Tangible_
                 # ??
                 or
-                old_t == T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
-                or old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
+                old_t == T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
+                or old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
                 # Evaluation of TemplateLiteral : TemplateHead Expression TemplateSpans
                 or
-                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ and new_t == ListType(T_code_unit_) | T_String
+                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String
                 # Evaluation of TemplateMiddleList : TemplateMiddleList TemplateMiddle Expression
                 or
-                old_t == T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
+                old_t == T_Tangible_ | T_tilde_empty_ and new_t == T_String | T_Symbol
                 # DefineMethod
                 or
-                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ and new_t == T_String | T_Symbol
+                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ and new_t == T_String | T_Symbol
                 # DefineMethod
                 or
                 old_t == T_MathInteger_ | T_Tangible_ | T_code_unit_ and new_t == T_MathInteger_ | T_Number | T_code_unit_
@@ -2418,7 +2420,7 @@ class Env:
                 old_t == ListType(T_code_unit_) | T_Undefined | T_code_unit_ and new_t == ListType(T_code_unit_) | T_String
                 # Evaluation of TemplateMiddleList
                 or
-                old_t == T_Abrupt | T_Tangible_ | T_empty_ and new_t == T_Abrupt | T_Tangible_
+                old_t == T_Abrupt | T_Tangible_ | T_tilde_empty_ and new_t == T_Abrupt | T_Tangible_
                 # AsyncGeneratorResumeNext
                 or
                 old_t == T_Undefined and new_t == T_Object #???
@@ -2994,8 +2996,8 @@ def tc_header(tah):
     # that do not conform.
     # In the meantime, ...
     if tah.species.startswith('bif:'):
-        expected_return_type = T_Tangible_ | T_throw_ | T_empty_
-        # T_empty_ shouldn't really be allowed,
+        expected_return_type = T_Tangible_ | T_throw_ | T_tilde_empty_
+        # T_tilde_empty_ shouldn't really be allowed,
         # but if I leave it out,
         # I get a bunch of complaints that I think are false positives.
     else:
@@ -3052,7 +3054,7 @@ def tc_header(tah):
                 init_t == T_String | T_Symbol and final_t == T_String
                 # SetFunctionName
                 or
-                init_t == T_Abrupt | T_Tangible_ | T_empty_ and final_t == ListType(T_code_unit_) | T_Top_
+                init_t == T_Abrupt | T_Tangible_ | T_tilde_empty_ and final_t == ListType(T_code_unit_) | T_Top_
                 # Evaluation
                 or
                 tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_' and init_t == T_Tangible_
@@ -3241,19 +3243,19 @@ def tc_header(tah):
                 or
                 tah.name == 'SerializeJSONArray' and pn == '_value_'
                 or
-                tah.name == 'NormalCompletion' and pn == '_value_' and init_t == T_Tangible_ | T_Intangible_ and final_t == T_Tangible_ | T_empty_ # TODO
+                tah.name == 'NormalCompletion' and pn == '_value_' and init_t == T_Tangible_ | T_Intangible_ and final_t == T_Tangible_ | T_tilde_empty_ # TODO
 
                 # or
                 # tah.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
                 # # cheater artifact
                 # or
-                # tah.name == 'InitializeReferencedBinding' and init_t == T_Boolean | T_empty_ | T_throw_ and final_t == T_empty_ | T_throw_
+                # tah.name == 'InitializeReferencedBinding' and init_t == T_Boolean | T_tilde_empty_ | T_throw_ and final_t == T_tilde_empty_ | T_throw_
                 # # cheater artifact
                 # or
-                # tah.name == 'PutValue' and init_t == T_Boolean | T_Undefined | T_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
+                # tah.name == 'PutValue' and init_t == T_Boolean | T_Undefined | T_tilde_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
                 # # cheater artifact
                 # or
-                # tah.name == 'InitializeBoundName' and init_t == T_Boolean | T_Undefined | T_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
+                # tah.name == 'InitializeBoundName' and init_t == T_Boolean | T_Undefined | T_tilde_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
             ):
                 # fall through to change the header types
                 pass
@@ -3384,7 +3386,7 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
             #     print("`%s` : # member_types = %d" % (pn, len(ptype.member_types)))
             #     if len(ptype.member_types) == 41: assert 0
 
-            if pn == '*return*' and T_not_returned.is_a_subtype_of_or_equal_to(ptype) and ptype != T_Abrupt | ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_empty_ | T_not_returned:
+            if pn == '*return*' and T_not_returned.is_a_subtype_of_or_equal_to(ptype) and ptype != T_Abrupt | ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ | T_not_returned:
                 add_pass_error(
                     node,
                     "At exit, ST of `%s` is `%s`" % (pn, ptype)
@@ -3458,7 +3460,7 @@ def tc_nonvalue(anode, env0):
                 ind_commands,
                 "Control falls off the end of the algorithm (need an explicit Return?)"
             )
-            default_return_value = T_not_returned # or T_TildeUnused_, see PR #2397
+            default_return_value = T_not_returned # or T_tilde_unused_, see PR #2397
             proc_add_return(env1, default_return_value, ind_commands)
             result = None
         else:
@@ -3599,7 +3601,7 @@ def tc_nonvalue(anode, env0):
     ]:
         [_, ctx_var, _, resa_ex, resb_var] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_empty_ | T_return_ | T_throw_)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
         result = env1.plus_new_entry(resb_var, T_Tangible_)
 
     elif p == r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
@@ -4266,7 +4268,7 @@ def tc_nonvalue(anode, env0):
 
     elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.":
         [noi, w_var, t_var, *blah] = children
-        env0.assert_expr_is_of_type(noi, T_TildeUnused_)
+        env0.assert_expr_is_of_type(noi, T_tilde_unused_)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(t_var, T_MathNonNegativeInteger_)
         result = env0
@@ -4278,7 +4280,7 @@ def tc_nonvalue(anode, env0):
     ]:
         noi = children[0]
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
-        if noi_t.is_a_subtype_of_or_equal_to(T_TildeUnused_ | T_Undefined | T_empty_):
+        if noi_t.is_a_subtype_of_or_equal_to(T_tilde_unused_ | T_Undefined | T_tilde_empty_):
             pass
         else:
             if 0:
@@ -4356,7 +4358,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
         env0.assert_expr_is_of_type(varb, T_Iterator_Record)
 
-        proc_add_return(env0, T_Tangible_ | T_empty_ | T_throw_, anode)
+        proc_add_return(env0, T_Tangible_ | T_tilde_empty_ | T_throw_, anode)
 
         (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
         (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
@@ -5020,8 +5022,8 @@ def tc_cond_(cond, env0, asserting):
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
     ]:
         [var, literal, _] = children
-        env0.assert_expr_is_of_type(literal, T_TildeUnused_)
-        return env0.with_type_test(var, 'is a', T_TildeUnused_, asserting)
+        env0.assert_expr_is_of_type(literal, T_tilde_unused_)
+        return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
 
     elif p == r'{CONDITION_1} : {var} is a WriteSharedMemory event':
         [var] = children
@@ -5216,7 +5218,7 @@ def tc_cond_(cond, env0, asserting):
         (lit_type, lit_env) = tc_expr(literal, env0)
         assert lit_env is env0
 
-        if lit_type in [T_Undefined, T_Null, T_empty_, T_not_in_node, T_match_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_, T_TildeAmbiguous_, T_TildeNamespace_, T_TildeAllButDefault_, T_TildeAll_, T_TildeNamespaceObject_]:
+        if lit_type in [T_Undefined, T_Null, T_tilde_empty_, T_not_in_node, T_tilde_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_, T_tilde_ambiguous_, T_tilde_namespace_, T_tilde_all_but_default_, T_tilde_all_, T_tilde_namespace_object_]:
             # i.e., the literal is *undefined* or *null* or ~empty~ or ~failure~ or *NaN* or +&infin; or -&infin;
             # Because the type has only one value,
             # a value-comparison is equivalent to a type-comparison.
@@ -5268,8 +5270,8 @@ def tc_cond_(cond, env0, asserting):
         ):
             return env0.with_type_test(ex, copula, T_Null | T_Undefined, asserting)
 
-        elif lita_type == T_Null and litb_type == T_TildeAmbiguous_:
-            return env0.with_type_test(ex, copula, T_Null | T_TildeAmbiguous_, asserting)
+        elif lita_type == T_Null and litb_type == T_tilde_ambiguous_:
+            return env0.with_type_test(ex, copula, T_Null | T_tilde_ambiguous_, asserting)
 
         elif lita_type == litb_type:
             (t, env1) = tc_expr(ex, env0)
@@ -5510,7 +5512,7 @@ def tc_cond_(cond, env0, asserting):
 
     elif p == r'{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}':
         [settable, var] = children
-        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_empty_)
+        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_tilde_empty_)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
@@ -7006,9 +7008,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [tilded_word] = children
         chars = tilded_word.source_text()[1:-1]
         if chars == 'empty':
-            return (T_empty_, env0)
+            return (T_tilde_empty_, env0)
         elif chars == 'failure':
-            return (T_match_failure_, env0)
+            return (T_tilde_failure_, env0)
 
         elif chars == 'lexical':
             # T_this_mode or T_this_binding_status_, depending on context
@@ -7131,23 +7133,23 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         elif chars in ['number']:
             return (T_PreferredTypeHint_, env0)
         elif chars == 'unresolvable':
-            return (T_Unresolvable_, env0)
+            return (T_tilde_unresolvable_, env0)
         elif chars in ['field', 'method', 'accessor']:
             return (T_PrivateElementKind_, env0)
         elif chars in ['forward', 'backward']:
             return (T_RegExpDirection_, env0)
         elif chars == 'all':
-            return (T_TildeAll_, env0)
+            return (T_tilde_all_, env0)
         elif chars == 'all-but-default':
-            return (T_TildeAllButDefault_, env0)
+            return (T_tilde_all_but_default_, env0)
         elif chars == 'ambiguous':
-            return (T_TildeAmbiguous_, env0)
+            return (T_tilde_ambiguous_, env0)
         elif chars == 'namespace':
-            return (T_TildeNamespace_, env0)
+            return (T_tilde_namespace_, env0)
         elif chars == 'namespace-object':
-            return (T_TildeNamespaceObject_, env0)
+            return (T_tilde_namespace_object_, env0)
         elif chars == 'unused':
-            return (T_TildeUnused_, env0)
+            return (T_tilde_unused_, env0)
         else:
             assert 0, chars
 
@@ -7325,8 +7327,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             elif callee_op_name == 'Await':
                 assert len(args) == 1
                 [arg] = args
-                env0.assert_expr_is_of_type(arg, T_Tangible_|T_empty_)
-                return (T_Tangible_|T_empty_|T_return_|T_throw_, env0)
+                env0.assert_expr_is_of_type(arg, T_Tangible_|T_tilde_empty_)
+                return (T_Tangible_|T_tilde_empty_|T_return_|T_throw_, env0)
 
             elif callee_op_name == 'abs':
                 assert len(args) == 1
@@ -7404,7 +7406,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         add_pass_error(arg,
                             f"arg is of type {t} but param requires ExtendedMathReal"
                         )
-                        if t == T_MathInteger_ | T_empty_:
+                        if t == T_MathInteger_ | T_tilde_empty_:
                             # InnerModuleEvaluation
                             t = T_MathInteger_
                     argtypes.append(t)
@@ -7553,10 +7555,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 if dsbn_name == 'Value':
                     # Lots of things have a '[[Value]]' field.
                     if memtype.is_a_subtype_of_or_equal_to(T_Abrupt):
-                        result_memtype = T_Tangible_ | T_empty_
+                        result_memtype = T_Tangible_ | T_tilde_empty_
                     elif memtype == T_Normal:
-                        result_memtype = T_Tangible_ | T_empty_
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Tangible_ | T_empty_):
+                        result_memtype = T_Tangible_ | T_tilde_empty_
+                    elif memtype.is_a_subtype_of_or_equal_to(T_Tangible_ | T_tilde_empty_):
                         result_memtype = memtype
 
                     elif memtype.is_a_subtype_of_or_equal_to(T_Reference_Record):
@@ -7568,7 +7570,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype in [T_ClassFieldDefinition_Record, T_ClassStaticBlockDefinition_Record]:
                         # ClassDefinitionEvaluation: `Set _element_ to _element_.[[Value]].`
                         result_memtype = memtype
-                    elif memtype in [T_TildeUnused_, ListType(T_code_unit_), T_Top_]:
+                    elif memtype in [T_tilde_unused_, ListType(T_code_unit_), T_Top_]:
                         # hm.
                         result_memtype = memtype
 
@@ -7584,7 +7586,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
                 elif dsbn_name == 'Target':
                     if memtype in [T_continue_, T_break_, T_Abrupt]:
-                        result_memtype = T_String | T_empty_
+                        result_memtype = T_String | T_tilde_empty_
                     else:
                         assert 0, memtype
 
@@ -7649,7 +7651,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             lhs_t = T_Realm_Record
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
-        elif lhs_t == T_Cyclic_Module_Record | T_empty_:
+        elif lhs_t == T_Cyclic_Module_Record | T_tilde_empty_:
             assert lhs_text in ['_m_.[[CycleRoot]]', '_module_', '_requiredModule_']
             lhs_t = T_Cyclic_Module_Record
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
@@ -7659,9 +7661,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             T_Top_,
             T_Tangible_,
             T_Normal,
-            T_empty_,
-            T_Tangible_ | T_empty_,
-            T_Tangible_ | T_empty_ | T_Abrupt,
+            T_tilde_empty_,
+            T_Tangible_ | T_tilde_empty_,
+            T_Tangible_ | T_tilde_empty_ | T_Abrupt,
         ]:
             # Have to peek at the dsbn to infer the type of the lhs_var.
 
@@ -9280,16 +9282,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 # In the context there,
                 # the static type of _completionRecord_ is
                 # (or would be, if STA were smart enough)
-                # T_empty_ | T_continue_ | T_break_,
-                # and the static type of _value_ is T_Tangible_ | T_empty_
+                # T_tilde_empty_ | T_continue_ | T_break_,
+                # and the static type of _value_ is T_Tangible_ | T_tilde_empty_
 
-                return (T_Tangible_ | T_empty_ | T_continue_ | T_break_, env0)
+                return (T_Tangible_ | T_tilde_empty_ | T_continue_ | T_break_, env0)
 
             else:
-                env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_empty_)
+                env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_tilde_empty_)
                 (value_type, _) = tc_expr(value_ex, env1) # bleah
 
-                env0.assert_expr_is_of_type(target_ex, T_String | T_empty_)
+                env0.assert_expr_is_of_type(target_ex, T_String | T_tilde_empty_)
 
                 ct = type_corresponding_to_comptype_literal(type_ex)
                 if ct == T_Normal:
@@ -10356,10 +10358,10 @@ fields_for_record_type_named_ = {
 
     # 6.2.4
     'Reference Record': {
-        'Base'           : T_Tangible_ | T_Environment_Record | T_Unresolvable_,
+        'Base'           : T_Tangible_ | T_Environment_Record | T_tilde_unresolvable_,
         'ReferencedName' : T_String | T_Symbol | T_Private_Name,
         'Strict'         : T_Boolean,
-        'ThisValue'      : T_Tangible_ | T_empty_,
+        'ThisValue'      : T_Tangible_ | T_tilde_empty_,
     },
 
     # 6.2.5
@@ -10378,8 +10380,8 @@ fields_for_record_type_named_ = {
     #? # 2651: Table 8: Completion Record Fields
     #? 'Completion Record': {
     #?     'Type'   : T_completion_kind_,
-    #?     'Value'  : T_Tangible_ | T_empty_,
-    #?     'Target' : T_String | T_empty_,
+    #?     'Value'  : T_Tangible_ | T_tilde_empty_,
+    #?     'Target' : T_String | T_tilde_empty_,
     #? },
 
     # 6.2.9 The PrivateElement Specification Type
@@ -10393,7 +10395,7 @@ fields_for_record_type_named_ = {
     # 6.2.10 The ClassFieldDefinition Record Specification Type
     'ClassFieldDefinition Record' : {
         'Name'                          : T_Private_Name | T_String | T_Symbol,
-        'Initializer'                   : T_function_object_ | T_empty_,
+        'Initializer'                   : T_function_object_ | T_tilde_empty_,
         'IsAnonymousFunctionDefinition' : T_Boolean,
     },
 
@@ -10515,61 +10517,61 @@ fields_for_record_type_named_ = {
     # 22437: Table 36: Module Record Fields
     'Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_empty_,
-        'Namespace'       : T_Object | T_empty_,
+        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Namespace'       : T_Object | T_tilde_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
     },
 
     'other Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_empty_,
-        'Namespace'       : T_Object | T_empty_,
+        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Namespace'       : T_Object | T_tilde_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
     },
 
     #
     'Cyclic Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_empty_,
-        'Namespace'       : T_Object | T_empty_,
+        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Namespace'       : T_Object | T_tilde_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
         'Status'          : T_module_record_status_, # T_String,
-        'EvaluationError'  : T_throw_ | T_empty_,
-        'DFSIndex'         : T_MathInteger_ | T_empty_,
-        'DFSAncestorIndex' : T_MathInteger_ | T_empty_,
+        'EvaluationError'  : T_throw_ | T_tilde_empty_,
+        'DFSIndex'         : T_MathInteger_ | T_tilde_empty_,
+        'DFSAncestorIndex' : T_MathInteger_ | T_tilde_empty_,
         'RequestedModules' : ListType(T_String),
-        'CycleRoot'        : T_Cyclic_Module_Record | T_empty_,
+        'CycleRoot'        : T_Cyclic_Module_Record | T_tilde_empty_,
         'HasTLA'           : T_Boolean,
         'AsyncEvaluation'  : T_Boolean,
-        'TopLevelCapability': T_PromiseCapability_Record | T_empty_,
+        'TopLevelCapability': T_PromiseCapability_Record | T_tilde_empty_,
         'AsyncParentModules': ListType(T_Cyclic_Module_Record),
-        'PendingAsyncDependencies': T_MathInteger_ | T_empty_,
+        'PendingAsyncDependencies': T_MathInteger_ | T_tilde_empty_,
     },
 
     # 23406: Table 38: Additional Fields of Source Text Module Records
     'Source Text Module Record': {
         'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_empty_,
-        'Namespace'       : T_Object | T_empty_,
+        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Namespace'       : T_Object | T_tilde_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
         'Status'          : T_module_record_status_, # T_String,
-        'EvaluationError'  : T_throw_ | T_empty_,
-        'DFSIndex'         : T_MathInteger_ | T_empty_,
-        'DFSAncestorIndex' : T_MathInteger_ | T_empty_,
+        'EvaluationError'  : T_throw_ | T_tilde_empty_,
+        'DFSIndex'         : T_MathInteger_ | T_tilde_empty_,
+        'DFSAncestorIndex' : T_MathInteger_ | T_tilde_empty_,
         'RequestedModules' : ListType(T_String),
-        'CycleRoot'        : T_Cyclic_Module_Record | T_empty_,
+        'CycleRoot'        : T_Cyclic_Module_Record | T_tilde_empty_,
         'HasTLA'           : T_Boolean,
         'AsyncEvaluation'  : T_Boolean,
-        'TopLevelCapability': T_PromiseCapability_Record | T_empty_,
+        'TopLevelCapability': T_PromiseCapability_Record | T_tilde_empty_,
         'AsyncParentModules': ListType(T_Cyclic_Module_Record),
-        'PendingAsyncDependencies': T_MathInteger_ | T_empty_,
+        'PendingAsyncDependencies': T_MathInteger_ | T_tilde_empty_,
         #
-        'Context'              : T_execution_context | T_empty_,
+        'Context'              : T_execution_context | T_tilde_empty_,
         'ECMAScriptCode'       : T_Parse_Node,
-        'Context'              : T_execution_context | T_empty_, # PR 1670
-        'ImportMeta'           : T_Object | T_empty_, # PR 1892
+        'Context'              : T_execution_context | T_tilde_empty_, # PR 1670
+        'ImportMeta'           : T_Object | T_tilde_empty_, # PR 1892
         'ImportEntries'        : ListType(T_ImportEntry_Record),
         'LocalExportEntries'   : ListType(T_ExportEntry_Record),
         'IndirectExportEntries': ListType(T_ExportEntry_Record),
@@ -10579,13 +10581,13 @@ fields_for_record_type_named_ = {
     # 23376
     'ResolvedBinding Record': {
         'Module'      : T_Module_Record,
-        'BindingName' : T_String | T_TildeNamespace_,
+        'BindingName' : T_String | T_tilde_namespace_,
     },
 
     # 23490: Table 39: ImportEntry Record Fields
     'ImportEntry Record': {
         'ModuleRequest': T_String,
-        'ImportName'   : T_String | T_TildeNamespaceObject_,
+        'ImportName'   : T_String | T_tilde_namespace_object_,
         'LocalName'    : T_String,
     },
 
@@ -10593,7 +10595,7 @@ fields_for_record_type_named_ = {
     'ExportEntry Record': {
         'ExportName'    : T_String | T_Null,
         'ModuleRequest' : T_String | T_Null,
-        'ImportName'    : T_String | T_Null | T_TildeAll_ | T_TildeAllButDefault_,
+        'ImportName'    : T_String | T_Null | T_tilde_all_ | T_tilde_all_but_default_,
         'LocalName'     : T_String | T_Null,
     },
 
@@ -10650,9 +10652,9 @@ fields_for_record_type_named_ = {
 
     # 25.2.3.2 FinalizationRegistry.prototype.register
     'FinalizationRegistryCellRecord_': {
-        'WeakRefTarget'  : T_Object | T_empty_,
+        'WeakRefTarget'  : T_Object | T_tilde_empty_,
         'HeldValue'      : T_Tangible_,
-        'UnregisterToken': T_Object | T_empty_,
+        'UnregisterToken': T_Object | T_tilde_empty_,
     },
 
     # 26.6.1.1 PromiseCapability Record Fields
@@ -10666,13 +10668,13 @@ fields_for_record_type_named_ = {
     'PromiseReaction Record': {
         'Capability' : T_PromiseCapability_Record | T_Undefined,
         'Type'       : T_settlement_type_, # T_String,
-        'Handler'    : T_JobCallback_Record | T_empty_,
+        'Handler'    : T_JobCallback_Record | T_tilde_empty_,
     },
 
     # 39099: no table, no mention
     'MapData_record_': {
-        'Key'   : T_Tangible_ | T_empty_,
-        'Value' : T_Tangible_ | T_empty_,
+        'Key'   : T_Tangible_ | T_tilde_empty_,
+        'Value' : T_Tangible_ | T_tilde_empty_,
         # but Value is empty only if Key is empty?
         # So if you establish that _e_.[[Key]] isn't ~empty~,
         # you know that _e_.[[Value]] isn't ~empty~ ?
@@ -10764,7 +10766,7 @@ fields_for_record_type_named_ = {
     },
     # 41899: AsyncGeneratorRequest Record Fields
     'AsyncGeneratorRequest Record': {
-        'Completion' : T_Tangible_ | T_empty_ | T_return_ | T_throw_,
+        'Completion' : T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_,
         'Capability' : T_PromiseCapability_Record,
     },
 
@@ -10824,7 +10826,7 @@ type_of_internal_thing_ = {
     'SourceText'       : T_Unicode_code_points_,
     'Fields'           : ListType(T_ClassFieldDefinition_Record),
     'PrivateMethods'   : ListType(T_PrivateElement),
-    'ClassFieldInitializerName': T_String | T_Symbol | T_Private_Name | T_empty_,
+    'ClassFieldInitializerName': T_String | T_Symbol | T_Private_Name | T_tilde_empty_,
 
     # 8860:
     'InitialName' : T_Null | T_String,
@@ -10922,7 +10924,7 @@ type_of_internal_thing_ = {
     # 38581: Table 56: Internal Slots of Generator Instances
     'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
     'GeneratorContext': T_execution_context,
-    'GeneratorBrand'  : T_String | T_empty_,
+    'GeneratorBrand'  : T_String | T_tilde_empty_,
 
     # 25.1.1.1 WeakRef ( _target_ ) NO TABLE
     'WeakRefTarget' : T_Object,
@@ -10949,7 +10951,7 @@ type_of_internal_thing_ = {
     'PromiseIsHandled'       : T_Boolean,
 
     # 39763
-    'SetData'    : ListType(T_Tangible_ | T_empty_),
+    'SetData'    : ListType(T_Tangible_ | T_tilde_empty_),
 
     # 39781 AsyncFunction Awaited Fulfilled/Rejected NO TABLE
     'AsyncContext' : T_execution_context,
@@ -10968,7 +10970,7 @@ type_of_internal_thing_ = {
     'Done'              : T_Boolean,
 
     # 40254:
-    'WeakSetData' : ListType(T_Tangible_ | T_empty_),
+    'WeakSetData' : ListType(T_Tangible_ | T_tilde_empty_),
 
     # 40578: NO TABLE
     'Errors' : ListType(T_Tangible_),
