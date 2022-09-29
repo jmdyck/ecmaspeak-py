@@ -8540,14 +8540,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (ListType(T_MathInteger_), env1)
 
     elif p in [
-        r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order',
-        r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. If {var} is {LITERAL}, the bytes are ordered in big endian order. Otherwise, the bytes are ordered in little endian order",
+        r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order',
+        r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order",
     ]:
-        [n_var, v_var, i_var, literal] = children
+        [n_var, v_var] = children
         env0.assert_expr_is_of_type(n_var, T_MathNonNegativeInteger_)
         env0.assert_expr_is_of_type(v_var, T_MathNonNegativeInteger_)
-        env0.assert_expr_is_of_type(i_var, T_Boolean)
-        env0.assert_expr_is_of_type(literal, T_Boolean)
         return (ListType(T_MathInteger_), env0)
 
     elif p == r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values":
