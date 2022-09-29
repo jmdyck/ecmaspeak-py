@@ -979,18 +979,12 @@ named_type_hierarchy = {
                 },
             },
             'Intangible_': {
-                'AssignmentTargetType_': {},
                 'CharSet': {},
-                'ClassElementKind_': {},
                 'Data Block': {},
-                'FunctionKind2_': {},
                 'event_pair_': {},
                 'IEEE_binary32_': {},
                 'IEEE_binary64_': {},
-                'IterationKind_': {},
-                'IteratorKind_': {},
                 'LangTypeName_': {},
-                'LhsKind_': {},
                 'List': {},
                 'MatchResult': {
                     'State': {},
@@ -1008,16 +1002,12 @@ named_type_hierarchy = {
                     'MathPosInfinity_': {},
                     'MathNegInfinity_': {},
                 },
-                'NotMatched_' : {},
                 'Parse Node' : {
                     'PTN_ForBinding': {},
                     'PTN_Script': {},
                     'PTN_Pattern': {},
                 },
-                'PreferredTypeHint_': {},
                 'Private Name': {},
-                'PrivateElementKind_': {},
-                'PropertyKeyKind_': {},
                 'Range': {},
                 'Record': {
                     'Agent Record': {},
@@ -1088,14 +1078,23 @@ named_type_hierarchy = {
                     'templateMap_entry_': {},
                 },
                 # 'Reference': {}, # 2085
-                'RegExpDirection_': {},
                 'Relation': {},
                 'Set': {},
                 'Shared Data Block': {},
-                'SharedMemory_ordering_': {},
                 'SlotName_': {},
-                'TrimString_where_': {},
-                'TypedArray_element_type': {},
+                'TypedArray_element_type': {
+                    'tilde_Int8_': {},
+                    'tilde_Uint8_': {},
+                    'tilde_Uint8C_': {},
+                    'tilde_Int16_': {},
+                    'tilde_Uint16_': {},
+                    'tilde_Int32_': {},
+                    'tilde_Uint32_': {},
+                    'tilde_BigInt64_': {},
+                    'tilde_BigUint64_': {},
+                    'tilde_Float32_': {},
+                    'tilde_Float64_': {},
+                },
                 'WaiterList' : {},
                 'agent_signifier_' : {},
                 'alg_steps': {},
@@ -1104,34 +1103,85 @@ named_type_hierarchy = {
                 #     'code_point_': {},
                 # },
                 'completion_kind_': {},
-                'constructor_kind_': {},
-                'iteration_result_kind_': {},
                 'execution context': {},
-                'generator_state_': {},
                 'grammar_symbol_': {},
                 'host_defined_': {},
-                'integrity_level_': {},
-                'module_record_status_': {},
-                'numeric_primitive_type_': {},
                 'proc_': {},
-                'promise_state_': {},
                 'property_': {
                     'data_property_': {},
                     'accessor_property_': {},
                 },
-                'settlement_type_': {},
-                'this_binding_status_': {},
-                'this_mode': {},
-                'this_mode2_': {},
                 'tilde_': {
+                    'tilde_BigInt_': {},
+                    'tilde_ConstructorMethod_': {},
+                    'tilde_Fulfill_': {},
+                    'tilde_Init_': {},
+                    'tilde_NonConstructorMethod_': {},
+                    'tilde_Number_': {},
+                    'tilde_Reject_': {},
+                    'tilde_SeqCst_': {},
+                    'tilde_Unordered_': {},
+                    'tilde_accessor_': {},
                     'tilde_all_': {},
                     'tilde_all_but_default_': {},
                     'tilde_ambiguous_': {},
+                    'tilde_assignment_': {},
+                    'tilde_asyncGenerator_': {},
+                    'tilde_async_': {},
+                    'tilde_async_iterate_': {},
+                    'tilde_awaiting_return_': {},
+                    'tilde_backward_': {},
+                    'tilde_base_': {},
+                    'tilde_completed_': {},
+                    'tilde_derived_': {},
                     'tilde_empty_': {},
+                    'tilde_end_': {},
+                    'tilde_enumerate_': {},
+                    'tilde_evaluated_': {},
+                    'tilde_evaluating_': {},
+                    'tilde_evaluating_async_': {},
+                    'tilde_executing_': {},
+                    'tilde_field_': {},
+                    'tilde_forward_': {},
+                    'tilde_frozen_': {},
+                    'tilde_fulfilled_': {},
+                    'tilde_generator_': {},
+                    'tilde_global_': {},
+                    'tilde_initialized_': {},
+                    'tilde_invalid_': {},
+                    'tilde_iterate_': {},
+                    'tilde_key_': {},
+                    'tilde_key_value_': {},
+                    'tilde_lexicalBinding_': {},
+                    'tilde_lexical_': {},
+                    'tilde_lexical_this_': {},
+                    'tilde_linked_': {},
+                    'tilde_linking_': {},
+                    'tilde_method_': {},
                     'tilde_namespace_': {},
                     'tilde_namespace_object_': {},
+                    'tilde_non_generator_': {},
+                    'tilde_non_lexical_this_': {},
+                    'tilde_normal_': {},
+                    'tilde_number_': {},
+                    'tilde_pending_': {},
+                    'tilde_rejected_': {},
+                    'tilde_sealed_': {},
+                    'tilde_simple_': {},
+                    'tilde_start_': {},
+                    'tilde_start_end_': {},
+                    'tilde_strict_': {},
+                    'tilde_string_': {},
+                    'tilde_suspendedStart_': {},
+                    'tilde_suspendedYield_': {},
+                    'tilde_symbol_': {},
+                    'tilde_sync_': {},
+                    'tilde_uninitialized_': {},
+                    'tilde_unlinked_': {},
                     'tilde_unresolvable_': {},
                     'tilde_unused_': {},
+                    'tilde_value_': {},
+                    'tilde_varBinding_': {},
                 },
                 'tuple_': {},
                 'other_': {},
@@ -1221,6 +1271,43 @@ T_Unicode_code_points_ = ListType(T_code_point_)
 
 T_Integer_Indexed_object_ = T_TypedArray_object_
 
+single_value_types = [
+    T_MathNegInfinity_,
+    T_MathPosInfinity_,
+    T_NaN_Number_,
+    T_Null,
+    T_Undefined,
+    T_tilde_empty_,
+    T_tilde_failure_,
+    T_not_in_node,
+    T_tilde_BigInt64_,
+    T_tilde_BigUint64_,
+    T_tilde_Init_,
+    T_tilde_Unordered_,
+    T_tilde_accessor_,
+    T_tilde_all_,
+    T_tilde_all_but_default_,
+    T_tilde_ambiguous_,
+    T_tilde_assignment_,
+    T_tilde_async_iterate_,
+    T_tilde_awaiting_return_,
+    T_tilde_completed_,
+    T_tilde_evaluated_,
+    T_tilde_evaluating_,
+    T_tilde_evaluating_async_,
+    T_tilde_executing_,
+    T_tilde_field_,
+    T_tilde_iterate_,
+    T_tilde_linking_,
+    T_tilde_method_,
+    T_tilde_namespace_,
+    T_tilde_namespace_object_,
+    T_tilde_suspendedStart_,
+    T_tilde_suspendedYield_,
+    T_tilde_varBinding_,
+]
+# This isn't the complete list, but it doesn't need to be.
+
 # ------------------------------------------
 
 def type_for_ERROR_TYPE(error_type):
@@ -1307,6 +1394,10 @@ def convert_val_desc(val_desc):
         if literal.prod.rhs_s == '{STR_LITERAL}':
             return T_String
 
+        elif literal.prod.rhs_s == '{tilded_word}':
+            [tilded_word] = literal.children
+            return type_for_tilded_word(tilded_word)
+
     if val_desc.prod.rhs_s == 'an? {nonterminal} Parse Node':
         [nont] = val_desc.children
         return ptn_type_for(nont)
@@ -1326,6 +1417,14 @@ def convert_val_desc(val_desc):
 
     assert isinstance(t, Type), nature
     return t
+
+def type_for_tilded_word(tilded_word):
+    assert tilded_word.prod.lhs_s == '{tilded_word}'
+    [chars] = tilded_word.children
+    assert chars[0] == '~'
+    assert chars[-1] == '~'
+    uchars = chars[1:-1].replace('-', '_').replace('+', '_')
+    return NamedType(f"tilde_{uchars}_")
 
 # ------------------------------------------------------------------------------
 
@@ -1364,12 +1463,6 @@ nature_to_type = {
         'an integer in the inclusive interval from 2 to 36': T_MathNonNegativeInteger_,
         '+&infin;'                  : T_MathPosInfinity_,
         '-&infin;'                  : T_MathNegInfinity_,
-
-    # 5.2.6 Value Notation
-        '~empty~' : T_tilde_empty_,
-
-        '~ambiguous~' : T_tilde_ambiguous_,
-        '~unused~'    : T_tilde_unused_,
 
     # 6.1 ECMAScript language types
 
@@ -1489,17 +1582,8 @@ nature_to_type = {
     # 6.2.12 ClassStaticBlockDefinition
         'a ClassStaticBlockDefinition Record': T_ClassStaticBlockDefinition_Record,
 
-    # 7.1.1 ToPrimitive
-        '~string~ or ~number~' : T_PreferredTypeHint_,
-
-    # 7.3.15 SetIntegrityLevel
-        '~sealed~ or ~frozen~' : T_integrity_level_,
-
     # 7.4.1 Iterator Records
         'an Iterator Record': T_Iterator_Record,
-
-    # 8.5.4 Static Semantics: AssignmentTargetType
-        '~simple~ or ~invalid~' : T_AssignmentTargetType_,
 
     # (6.2.6 The Environment Record Specification Type)
     # 9.1 Environment Records
@@ -1538,9 +1622,6 @@ nature_to_type = {
         'an ECMAScript function object or a built-in function object' : T_function_object_,
         'an ECMAScript function'                                      : T_function_object_,
         'a built-in function object'                                  : T_function_object_,
-
-    # 10.2.3 OrdinaryFunctionCreate
-        '~lexical-this~ or ~non-lexical-this~': T_this_mode2_,
 
     # 10.3.3 CreateBuiltinFunction
         'a set of algorithm steps' : T_alg_steps,
@@ -1587,24 +1668,11 @@ nature_to_type = {
     # 11.1.4 Static Semantics: CodePointAt
         'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
 
-    # 14.7.5.6 ForIn/OfHeadEvaluation
-        '~enumerate~ or ~iterate~': T_IterationKind_,
-        '~enumerate~, ~iterate~, or ~async-iterate~' : T_IterationKind_,
-
-    # 14.7.5.7 ForIn/OfBodyEvaluation
-        '~assignment~, ~varBinding~, or ~lexicalBinding~' : T_LhsKind_,
-
-        '~sync~ or ~async~' : T_IteratorKind_,
-
     # 14.7.5.10 For-In Iterator Objects
         'a For-In Iterator' : T_Iterator_object_,
 
     # 15.4.4 Runtime Semantics: DefineMethod
         'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
-
-    # 15.7.2 Static Semantics: ClassElementKind
-        '~ConstructorMethod~'   : T_ClassElementKind_,
-        '~NonConstructorMethod~': T_ClassElementKind_,
 
     # 16.1.4 Script Records
         'a Script Record' : T_Script_Record,
@@ -1616,22 +1684,12 @@ nature_to_type = {
         'a Source Text Module Record'                        : T_Source_Text_Module_Record,
         'a ResolvedBinding Record'                           : T_ResolvedBinding_Record,
 
-    # 20.1.2.11.1 GetOwnPropertyKeys
-        '~string~ or ~symbol~' : T_PropertyKeyKind_,
-
-    # 20.2.1.1.1 CreateDynamicFunction
-        '~normal~, ~generator~, ~async~, or ~asyncGenerator~' : T_FunctionKind2_,
-
     # 21.4.1.1 TimeValues
         'a time value'       : T_IntegralNumber_,
         # time value is defined to be 'IntegralNumber_ | NaN_Number_',
         # but the only use (so far) is for LocalTime()'s _t_ param,
         # which probably shouldn't accept NaN.
         # I.e., it should be marked "a *finite* time value".
-
-    # 22.1.3.30.1 TrimString
-        '~start~ or ~end~'               : T_TrimString_where_,
-        '~start~, ~end~, or ~start+end~' : T_TrimString_where_,
 
     # 22.2.1 Patterns
         'a character' : T_code_unit_ | T_code_point_,
@@ -1651,7 +1709,6 @@ nature_to_type = {
         'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
         'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
         'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
-        '~forward~ or ~backward~' : T_RegExpDirection_,
 
     # 23.2 TypedArray Objects
         'a TypedArray'       : T_TypedArray_object_,
@@ -1670,12 +1727,6 @@ nature_to_type = {
     # 25.1.1 [ArrayBuffer Objects] Notation
         'a read-modify-write modification function': T_ReadModifyWrite_modification_closure,
 
-    # 25.1.2.10 GetValueFromBuffer
-        '~SeqCst~ or ~Unordered~'          : T_SharedMemory_ordering_,
-
-    # 25.1.2.12 SetValueInBuffer
-        '~SeqCst~, ~Unordered~, or ~Init~' : T_SharedMemory_ordering_,
-
     # 25.4.1 WaiterList Objects
         'a WaiterList' : T_WaiterList,
 
@@ -1690,10 +1741,6 @@ nature_to_type = {
 
     # 27.1.1.2 The Iterator Interface
         'an Iterator'       : T_Iterator_object_,
-
-        '~key+value~ or ~value~'         : T_iteration_result_kind_,
-        '~key+value~, ~key~, or ~value~' : T_iteration_result_kind_,
-        '~key~, ~value~, or ~key+value~' : T_iteration_result_kind_,
 
     # 27.2 Promise Objects
         'a Promise'    : T_Promise_object_,
@@ -1716,12 +1763,6 @@ nature_to_type = {
 
     # 27.5 Generator Objects
         'a Generator' : T_Iterator_object_,
-
-    # 27.5.3.2 GeneratorValidate
-        'either ~suspendedStart~, ~suspendedYield~, or ~completed~' : T_generator_state_,
-
-    # 27.5.3.5 GetGeneratorKind
-        '~non-generator~, ~sync~, or ~async~' : T_IteratorKind_,
 
     # 27.6 AsyncGenerator Objects
         'an AsyncGenerator': T_AsyncGenerator_object_,
@@ -2944,7 +2985,6 @@ def mytrace(env):
         # print("resulting env:", env)
         for var_name in ['_number_']:
             print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
-            # assert 'LhsKind' not in str(env.vars.get(var_name, "(not set)"))
 
 def tc_alg(alg):
     print()
@@ -5218,8 +5258,7 @@ def tc_cond_(cond, env0, asserting):
         (lit_type, lit_env) = tc_expr(literal, env0)
         assert lit_env is env0
 
-        if lit_type in [T_Undefined, T_Null, T_tilde_empty_, T_not_in_node, T_tilde_failure_, T_NaN_Number_, T_MathPosInfinity_, T_MathNegInfinity_, T_tilde_ambiguous_, T_tilde_namespace_, T_tilde_all_but_default_, T_tilde_all_, T_tilde_namespace_object_]:
-            # i.e., the literal is *undefined* or *null* or ~empty~ or ~failure~ or *NaN* or +&infin; or -&infin;
+        if lit_type in single_value_types:
             # Because the type has only one value,
             # a value-comparison is equivalent to a type-comparison.
             return env0.with_type_test(ex, copula, lit_type, asserting)
@@ -5263,15 +5302,9 @@ def tc_cond_(cond, env0, asserting):
         copula = 'isnt a' if ('never' in p or 'neither' in p or 'not' in p) else 'is a'
 
         # It's only a type-test if the literals are from very small types.
-        if (
-            lita_type == T_Null and litb_type == T_Undefined
-            or
-            lita_type == T_Undefined and litb_type == T_Null
-        ):
-            return env0.with_type_test(ex, copula, T_Null | T_Undefined, asserting)
 
-        elif lita_type == T_Null and litb_type == T_tilde_ambiguous_:
-            return env0.with_type_test(ex, copula, T_Null | T_tilde_ambiguous_, asserting)
+        if lita_type in single_value_types and litb_type in single_value_types:
+            return env0.with_type_test(ex, copula, lita_type | litb_type, asserting)
 
         elif lita_type == litb_type:
             (t, env1) = tc_expr(ex, env0)
@@ -5295,7 +5328,7 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}':
         [exa, exb, lit] = children
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
-        if lit_type in [T_Undefined, T_NaN_Number_]:
+        if lit_type in [T_Undefined, T_NaN_Number_, T_tilde_accessor_]:
             (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', lit_type, asserting)
             (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', lit_type, asserting)
             return (
@@ -7006,152 +7039,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{LITERAL} : {tilded_word}":
         [tilded_word] = children
-        chars = tilded_word.source_text()[1:-1]
-        if chars == 'empty':
-            return (T_tilde_empty_, env0)
-        elif chars == 'failure':
-            return (T_tilde_failure_, env0)
-
-        elif chars == 'lexical':
-            # T_this_mode or T_this_binding_status_, depending on context
-            # super-kludge:
-            text = spec.text[expr.start_posn-30:expr.start_posn]
-            if 'ThisBindingStatus' in text:
-                return (T_this_binding_status_, env0)
-            elif 'ThisMode' in text or '_thisMode_' in text:
-                return (T_this_mode, env0)
-            assert 0, text
-
-        elif chars == 'async':
-            # T_IteratorKind_ or T_FunctionKind2_
-            text = spec.text[expr.start_posn-32:expr.start_posn]
-            if (
-                '~non-constructor~' in text
-                or
-                '_functionPrototype_,' in text
-                or
-                '_kind_ is' in text
-                or
-                'DynamicFunction(_C_, NewTarget,' in text
-            ):
-                return (T_FunctionKind2_, env0)
-            elif (
-                'State]]' in text
-                or
-                'GetGeneratorKind()' in text
-                or
-                '_generatorKind_' in text
-                or
-                '_iteratorKind_' in text
-                or
-                '_iteratorHint_' in text
-                or
-                '~sync~' in text
-                or
-                '_hint_' in text
-                or
-                '_labelSet_,' in text
-            ):
-                return (T_IteratorKind_, env0)
-
-            assert 0, text
-
-        elif chars == 'string':
-            # T_PropertyKeyKind_ or T_PreferredTypeHint_
-            text = spec.text[expr.start_posn-32:expr.start_posn+32]
-            if (
-                'GetOwnPropertyKeys' in text
-                or
-                '_type_' in text
-            ):
-                return (T_PropertyKeyKind_, env0)
-            elif (
-                '_hint_' in text
-                or
-                'ToPrimitive' in text
-                or
-                '_tryFirst_' in text
-            ):
-                return (T_PreferredTypeHint_, env0)
-            else:
-                assert 0, text
-
-        elif chars in ['global', 'strict']:
-            return (T_this_mode, env0)
-        elif chars in ['initialized', 'uninitialized']:
-            return (T_this_binding_status_, env0)
-        elif chars in ['enumerate', 'iterate', 'async-iterate']:
-            return (T_IterationKind_, env0)
-        elif chars in ['assignment', 'varBinding', 'lexicalBinding']:
-            return (T_LhsKind_, env0)
-        elif chars in ['non-generator', 'async', 'sync']:
-            return (T_IteratorKind_, env0)
-        elif chars in ['simple', 'invalid']:
-            return (T_AssignmentTargetType_, env0)
-        elif chars in ['SeqCst', 'Unordered', 'Init']:
-            return (T_SharedMemory_ordering_, env0)
-        elif chars in ['normal', 'non-constructor', 'classConstructor', 'generator', 'async', 'asyncGenerator']:
-            return (T_FunctionKind2_, env0)
-        elif chars in ['base', 'derived']:
-            return (T_constructor_kind_, env0)
-        elif chars in [
-            'BigInt64',
-            'BigUint64',
-            'Float32',
-            'Float64',
-            'Int16',
-            'Int32',
-            'Int8',
-            'Uint16',
-            'Uint32',
-            'Uint8',
-            'Uint8C',
-        ]:
-            return (T_TypedArray_element_type, env0)
-        elif chars in ['BigInt', 'Number']:
-            return (T_numeric_primitive_type_, env0)
-        elif chars in ['suspendedStart', 'suspendedYield', 'executing', 'completed', 'awaiting-return']:
-            return (T_generator_state_, env0)
-        elif chars in ['start', 'end', 'start+end']:
-            return (T_TrimString_where_, env0)
-        elif chars in ['key', 'value', 'key+value']:
-            return (T_iteration_result_kind_, env0)
-        elif chars in ['Fulfill', 'Reject']:
-            return (T_settlement_type_, env0)
-        elif chars in ['pending', 'fulfilled', 'rejected']:
-            return (T_promise_state_, env0)
-        elif chars in ['unlinked', 'linking', 'linked', 'evaluating', 'evaluating-async', 'evaluated']:
-            return (T_module_record_status_, env0)
-        elif chars in ['frozen', 'sealed']:
-            return (T_integrity_level_, env0)
-        elif chars in ['lexical-this', 'non-lexical-this']:
-            return (T_this_mode2_, env0)
-        elif chars in ['symbol']:
-            return (T_PropertyKeyKind_, env0)
-        elif chars in ['ConstructorMethod', 'NonConstructorMethod']:
-            return (T_ClassElementKind_, env0)
-        elif chars in ['number']:
-            return (T_PreferredTypeHint_, env0)
-        elif chars == 'unresolvable':
-            return (T_tilde_unresolvable_, env0)
-        elif chars in ['field', 'method', 'accessor']:
-            return (T_PrivateElementKind_, env0)
-        elif chars in ['forward', 'backward']:
-            return (T_RegExpDirection_, env0)
-        elif chars == 'all':
-            return (T_tilde_all_, env0)
-        elif chars == 'all-but-default':
-            return (T_tilde_all_but_default_, env0)
-        elif chars == 'ambiguous':
-            return (T_tilde_ambiguous_, env0)
-        elif chars == 'namespace':
-            return (T_tilde_namespace_, env0)
-        elif chars == 'namespace-object':
-            return (T_tilde_namespace_object_, env0)
-        elif chars == 'unused':
-            return (T_tilde_unused_, env0)
-        else:
-            assert 0, chars
+        return (type_for_tilded_word(tilded_word), env0)
 
     # --------------------------------------------------------
     # introduce metavariables:
@@ -10387,7 +10275,7 @@ fields_for_record_type_named_ = {
     # 6.2.9 The PrivateElement Specification Type
     'PrivateElement': {
         'Key'  : T_Private_Name,
-        'Kind' : T_PrivateElementKind_,
+        'Kind' : T_tilde_field_ | T_tilde_method_ | T_tilde_accessor_,
         'Value': T_Tangible_,
         'Get'  : T_Undefined | T_function_object_,
         'Set'  : T_Undefined | T_function_object_,
@@ -10429,7 +10317,7 @@ fields_for_record_type_named_ = {
     'Function Environment Record': {
         'OuterEnv'         : T_Environment_Record,
         'ThisValue'        : T_Tangible_,
-        'ThisBindingStatus': T_this_binding_status_, # T_String, # enumeration
+        'ThisBindingStatus': T_tilde_lexical_ | T_tilde_initialized_ | T_tilde_uninitialized_,
         'FunctionObject'   : T_function_object_,
         'HomeObject'       : T_Object | T_Undefined,
         'NewTarget'        : T_Object | T_Undefined,
@@ -10536,7 +10424,7 @@ fields_for_record_type_named_ = {
         'Namespace'       : T_Object | T_tilde_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
-        'Status'          : T_module_record_status_, # T_String,
+        'Status'           : T_tilde_unlinked_ | T_tilde_linking_ | T_tilde_linked_ | T_tilde_evaluating_ | T_tilde_evaluating_async_ | T_tilde_evaluated_,
         'EvaluationError'  : T_throw_ | T_tilde_empty_,
         'DFSIndex'         : T_MathInteger_ | T_tilde_empty_,
         'DFSAncestorIndex' : T_MathInteger_ | T_tilde_empty_,
@@ -10556,7 +10444,7 @@ fields_for_record_type_named_ = {
         'Namespace'       : T_Object | T_tilde_empty_,
         'HostDefined'     : T_host_defined_ | T_Undefined,
         #
-        'Status'          : T_module_record_status_, # T_String,
+        'Status'           : T_tilde_unlinked_ | T_tilde_linking_ | T_tilde_linked_ | T_tilde_evaluating_ | T_tilde_evaluating_async_ | T_tilde_evaluated_,
         'EvaluationError'  : T_throw_ | T_tilde_empty_,
         'DFSIndex'         : T_MathInteger_ | T_tilde_empty_,
         'DFSAncestorIndex' : T_MathInteger_ | T_tilde_empty_,
@@ -10667,7 +10555,7 @@ fields_for_record_type_named_ = {
     # 26.6.1.2 PromiseReaction Record Fields
     'PromiseReaction Record': {
         'Capability' : T_PromiseCapability_Record | T_Undefined,
-        'Type'       : T_settlement_type_, # T_String,
+        'Type'       : T_tilde_Fulfill_ | T_tilde_Reject_,
         'Handler'    : T_JobCallback_Record | T_tilde_empty_,
     },
 
@@ -10724,7 +10612,7 @@ fields_for_record_type_named_ = {
 
     # 40060 ...
     'Shared Data Block event': {
-        'Order'       : T_SharedMemory_ordering_, # T_String,
+        'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_ | T_tilde_Init_,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_MathInteger_,
@@ -10733,7 +10621,7 @@ fields_for_record_type_named_ = {
 
     # repetitive, but easier than factoring out...
     'ReadSharedMemory event': {
-        'Order'       : T_SharedMemory_ordering_, # T_String,
+        'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_MathInteger_,
@@ -10741,7 +10629,7 @@ fields_for_record_type_named_ = {
     },
 
     'WriteSharedMemory event': {
-        'Order'       : T_SharedMemory_ordering_, # T_String,
+        'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_ | T_tilde_Init_,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_MathInteger_,
@@ -10750,7 +10638,7 @@ fields_for_record_type_named_ = {
     },
 
     'ReadModifyWriteSharedMemory event': {
-        'Order'       : T_SharedMemory_ordering_, # T_String,
+        'Order'       : T_tilde_SeqCst_,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
         'ByteIndex'   : T_MathInteger_,
@@ -10814,19 +10702,18 @@ type_of_internal_thing_ = {
     'Environment'      : T_Environment_Record,
     'PrivateEnvironment' : T_PrivateEnvironment_Record | T_Null,
     'FormalParameters' : T_Parse_Node,
-    'FunctionKind'     : T_FunctionKind2_, # T_String, # could be more specific
-    'IsClassConstructor': T_Boolean, # PR 15xx re FunctionKind
     'ECMAScriptCode'   : T_Parse_Node,
-    'ConstructorKind'  : T_constructor_kind_, # T_String, # could be more specific
+    'ConstructorKind'  : T_tilde_base_ | T_tilde_derived_,
     'Realm'            : T_Realm_Record,
     'ScriptOrModule'   : T_Script_Record | T_Module_Record | T_Null, # XXX must add Null to spec
-    'ThisMode'         : T_this_mode,
+    'ThisMode'         : T_tilde_lexical_ | T_tilde_strict_ | T_tilde_global_,
     'Strict'           : T_Boolean,
     'HomeObject'       : T_Object,
     'SourceText'       : T_Unicode_code_points_,
     'Fields'           : ListType(T_ClassFieldDefinition_Record),
     'PrivateMethods'   : ListType(T_PrivateElement),
     'ClassFieldInitializerName': T_String | T_Symbol | T_Private_Name | T_tilde_empty_,
+    'IsClassConstructor': T_Boolean,
 
     # 8860:
     'InitialName' : T_Null | T_String,
@@ -10850,7 +10737,7 @@ type_of_internal_thing_ = {
     'ViewedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_, #?
     'ArrayLength'       : T_MathInteger_,
     'ByteOffset'        : T_MathInteger_,
-    'ContentType'       : T_numeric_primitive_type_, # T_String,
+    'ContentType'       : T_tilde_BigInt_ | T_tilde_Number_,
     'TypedArrayName'    : T_String,
 
     # 10066: Table 29: Internal Slots of Module Namespace Exotic Objects
@@ -10891,7 +10778,7 @@ type_of_internal_thing_ = {
     # 34123: Table 48: Internal Slots of Array Iterator Instances
     'IteratedArrayLike'      : T_Object,
     'ArrayLikeNextIndex'     : T_MathInteger_,
-    'ArrayLikeIterationKind' : T_iteration_result_kind_, # T_String,
+    'ArrayLikeIterationKind' : T_tilde_key_ | T_tilde_value_ | T_tilde_key_value_,
 
     # 35373 + 37350 NO TABLE
     'ByteLength' : T_MathInteger_,
@@ -10899,12 +10786,12 @@ type_of_internal_thing_ = {
     # 35719: Table 50: Internal Slots of Map Iterator Instances
     'IteratedMap'      : T_Object,
     'MapNextIndex'     : T_MathInteger_,
-    'MapIterationKind' : T_iteration_result_kind_, # T_String,
+    'MapIterationKind' : T_tilde_key_ | T_tilde_value_ | T_tilde_key_value_,
 
     # 36073: Table 51: Internal Slots of Set Iterator Instances
     'IteratedSet'      : T_Object,
     'SetNextIndex'     : T_MathInteger_,
-    'SetIterationKind' : T_iteration_result_kind_, # T_String,
+    'SetIterationKind' : T_tilde_key_ | T_tilde_value_ | T_tilde_key_value_,
 
     # 36630: Table 58: Internal Slots of RegExp String Iterator Instances
     'IteratingRegExp'  : T_Object,
@@ -10922,7 +10809,7 @@ type_of_internal_thing_ = {
     'ArrayBufferDetachKey'  : T_host_defined_,
 
     # 38581: Table 56: Internal Slots of Generator Instances
-    'GeneratorState'  : T_Undefined | T_generator_state_, # T_String,
+    'GeneratorState'  : T_Undefined | T_tilde_suspendedStart_ | T_tilde_suspendedYield_ | T_tilde_executing_ | T_tilde_completed_,
     'GeneratorContext': T_execution_context,
     'GeneratorBrand'  : T_String | T_tilde_empty_,
 
@@ -10944,7 +10831,7 @@ type_of_internal_thing_ = {
     'Capability' : T_PromiseCapability_Record,
 
     # 39537: Table 59: Internal Slots of Promise Instances
-    'PromiseState'           : T_promise_state_, # T_String,
+    'PromiseState'           : T_tilde_pending_ | T_tilde_fulfilled_ | T_tilde_rejected_,
     'PromiseResult'          : T_Tangible_,
     'PromiseFulfillReactions': ListType(T_PromiseReaction_Record) | T_Undefined,
     'PromiseRejectReactions' : ListType(T_PromiseReaction_Record) | T_Undefined,
@@ -10979,7 +10866,7 @@ type_of_internal_thing_ = {
     'SyncIteratorRecord' : T_Iterator_Record,
 
     # 41869: Table N: Internal Slots of AsyncGenerator Instances
-    'AsyncGeneratorState'   : T_Undefined | T_generator_state_, # T_String,
+    'AsyncGeneratorState'   : T_Undefined | T_tilde_suspendedStart_ | T_tilde_suspendedYield_ | T_tilde_executing_ | T_tilde_awaiting_return_ | T_tilde_completed_,
     'AsyncGeneratorContext' : T_execution_context,
     'AsyncGeneratorQueue'   : ListType(T_AsyncGeneratorRequest_Record),
 
