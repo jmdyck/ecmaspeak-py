@@ -8842,7 +8842,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the ten-element CharSet containing the characters `0` through `9` inclusive":
+    elif p == r"{EXPR} : the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`":
         [] = children
         return (T_CharSet, env0)
 

@@ -1071,7 +1071,7 @@
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}
     the surrounding agent's Agent Record
-    the ten-element CharSet containing the characters `0` through `9` inclusive
+    the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`
     the time value (UTC) identifying the current time
     the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}
     the union of CharSets {var} and {var}
