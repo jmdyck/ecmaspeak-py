@@ -1101,7 +1101,7 @@ named_type_hierarchy = {
                 'TildeNamespace_': {},
                 'TildeUnused_': {},
                 'TrimString_where_': {},
-                'TypedArray_element_type_': {},
+                'TypedArray_element_type': {},
                 'Unresolvable_': {},
                 'WaiterList' : {},
                 'agent_signifier_' : {},
@@ -1654,7 +1654,7 @@ nature_to_type = {
     # 23.2 TypedArray Objects
         'a TypedArray'       : T_TypedArray_object_,
 
-        'a TypedArray element type' : T_TypedArray_element_type_,
+        'a TypedArray element type' : T_TypedArray_element_type,
 
     # 25.1 ArrayBuffer Objects
     # 25.2 SharedArrayBuffer Objects
@@ -5882,7 +5882,7 @@ def tc_cond_(cond, env0, asserting):
         [ab_var, st_var, t_var] = children
         env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
         env0.assert_expr_is_of_type(st_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type_)
+        env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}":
@@ -7105,7 +7105,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             'Uint8',
             'Uint8C',
         ]:
-            return (T_TypedArray_element_type_, env0)
+            return (T_TypedArray_element_type, env0)
         elif chars in ['BigInt', 'Number']:
             return (T_numeric_primitive_type_, env0)
         elif chars in ['suspendedStart', 'suspendedYield', 'executing', 'completed', 'awaiting-return']:
@@ -7902,7 +7902,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     ]:
         [emu_xref, var] = children
         assert var.source_text() in ['_type_', '_srcType_', '_elementType_']
-        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
+        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
         return (T_MathInteger_, env1)
 
     elif p in [
@@ -8429,7 +8429,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}":
         [emu_xref, ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
-        return (T_TypedArray_element_type_, env0)
+        return (T_TypedArray_element_type, env0)
 
     elif p == r"{EXPR} : {var}'s {DSBN} value":
         [var, dsbn] = children
@@ -9131,7 +9131,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}':
         [emu_xref, var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type_)
+        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
         return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
 
     elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}":
