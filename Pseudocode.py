@@ -1654,6 +1654,10 @@ nts_behind_var_in_sdo_call = {
     # 18548 ForIn/OfBodyEvaluation
     ('BindingInitialization', '_lhs_'): ['ForBinding'],
 
+    # 18632 TemplateString
+    ('TRV', '_templateToken_'): ['NoSubstitutionTemplate', 'TemplateHead', 'TemplateMiddle', 'TemplateTail'],
+    ('TV',  '_templateToken_'): ['NoSubstitutionTemplate', 'TemplateHead', 'TemplateMiddle', 'TemplateTail'],
+
     # 18694 ForIn/OfBodyEvaluation
     ('IsDestructuring', '_lhs_'): [
         'LeftHandSideExpression',
