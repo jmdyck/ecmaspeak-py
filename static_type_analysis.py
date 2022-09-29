@@ -4501,12 +4501,6 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_A_can_be_element_of_list_B(el_var, list_var)
         result = env1
 
-    elif p == r"{COMMAND} : Append the code unit elements of {var} to the end of {var}.":
-        [a, b] = children
-        env0.assert_expr_is_of_type(a, T_String)
-        env1 = env0.ensure_expr_is_of_type(b, ListType(T_code_unit_))
-        result = env1
-
     elif p == r"{COMMAND} : Append in List order the elements of {var} to the end of the List {var}.":
         [a, b] = children
         env0.assert_expr_is_of_type(a, T_List)

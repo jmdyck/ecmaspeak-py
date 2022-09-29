@@ -153,7 +153,6 @@
     ? {var}.OperationName().
     Add {var} to {var}.
     Append in List order the elements of {var} to the end of the List {var}.
-    Append the code unit elements of {var} to the end of {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} each element of {var} that is not already an element of {var}.
     Append to {var} the elements of {var}.
