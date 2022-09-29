@@ -916,9 +916,9 @@
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
-    the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}
     the BigInt value that corresponds to {var}
     the BigInt value that represents {EX}
+    the BigInt whose sign is the sign of {var} and whose magnitude is {EX}
     the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
@@ -1084,7 +1084,6 @@
     the {var} that was passed to this function by {DSBN} or {DSBN}
     this Date object
     {EX}
-    {EX} - ({EX} &times; {var}) where {var} is an integer that is negative if and only if {var} and {var} have opposite sign, and whose magnitude is as large as possible without exceeding the magnitude of {EX} / {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}

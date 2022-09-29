@@ -6162,7 +6162,12 @@ def tc_cond_(cond, env0, asserting):
         [avar, bvar] = children
         env0.assert_expr_is_of_type(avar, T_Number)
         env0.assert_expr_is_of_type(bvar, T_Number)
-        return (env0, env0)
+        return (
+            env0
+                .with_expr_type_narrowed(avar, T_FiniteNumber_)
+                .with_expr_type_narrowed(bvar, T_FiniteNumber_),
+            env0
+        )
 
     elif p == r"{CONDITION_1} : the character {EX} is one of {nonterminal}":
         [ex, nonterminal] = children
@@ -7723,8 +7728,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_BigInt, env0)
 
-    elif p == r"{EXPR} : the BigInt defined by the mathematical relation {var} = {var} - ({var} &times; {var}) where {var} is a BigInt that is negative only if {var}/{var} is negative and positive only if {var}/{var} is positive, and whose magnitude is as large as possible without exceeding the magnitude of the true mathematical quotient of {var} and {var}":
-        # XXX
+    elif p == r"{EXPR} : the BigInt whose sign is the sign of {var} and whose magnitude is {EX}":
+        [sign_var, mag_ex] = children
+        env0.assert_expr_is_of_type(sign_var, T_MathReal_)
+        env0.assert_expr_is_of_type(mag_ex, T_MathInteger_)
         return (T_BigInt, env0)
 
     elif p in [
@@ -7930,12 +7937,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_List)
         return (T_MathReal_, env0)
 
-    elif p == r"{EXPR} : {EX} - ({EX} &times; {var}) where {var} is an integer that is negative if and only if {var} and {var} have opposite sign, and whose magnitude is as large as possible without exceeding the magnitude of {EX} / {EX}":
-        [exa, exb, _, _, _, _, _, _] = children # XXX
-        env1 = env0.ensure_expr_is_of_type(exa, T_MathReal_)
-        env2 = env1.ensure_expr_is_of_type(exb, T_MathReal_)
-        return (T_MathReal_, env2)
-
     # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:
 
@@ -8026,7 +8027,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}":
         [var, ex] = children
-        env0.assert_expr_is_of_type(var, T_Number)
+        env0.assert_expr_is_of_type(var, T_MathReal_ | T_Number)
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
