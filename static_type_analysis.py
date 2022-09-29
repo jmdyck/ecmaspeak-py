@@ -826,8 +826,8 @@ class ProcType(Type):
         return tuple.__new__(cls, ('ProcType', tuple(param_types), return_type))
     def __repr__(self): return "%s(%r, %r)" % self
     def __str__(self):
-        if self == T_Continuation:
-            return "Continuation"
+        if self == T_MatcherContinuation:
+            return "MatcherContinuation"
         elif self == T_Matcher:
             return "Matcher"
         elif self == T_ReadModifyWrite_modification_closure:
@@ -979,6 +979,7 @@ named_type_hierarchy = {
                 },
             },
             'Intangible_': {
+                'CaptureRange': {},
                 'CharSet': {},
                 'Data Block': {},
                 'event_pair_': {},
@@ -987,7 +988,7 @@ named_type_hierarchy = {
                 'LangTypeName_': {},
                 'List': {},
                 'MatchResult': {
-                    'State': {},
+                    'MatchState': {},
                     'tilde_failure_': {},
                 },
                 'ExtendedMathReal_': {
@@ -1008,7 +1009,6 @@ named_type_hierarchy = {
                     'PTN_Pattern': {},
                 },
                 'Private Name': {},
-                'Range': {},
                 'Record': {
                     'Agent Record': {},
                     'Agent Events Record': {},
@@ -1257,14 +1257,14 @@ T_character_ = T_code_unit_ | T_code_point_
 
 T_MathNonNegativeInteger_ = T_MathInteger_ # for now
 
-T_Continuation    = ProcType([T_State                ], T_MatchResult)
-T_Matcher         = ProcType([T_State, T_Continuation], T_MatchResult)
+T_MatcherContinuation = ProcType([T_MatchState                       ], T_MatchResult)
+T_Matcher             = ProcType([T_MatchState, T_MatcherContinuation], T_MatchResult)
 T_RegExpMatcher_  = ProcType([ListType(T_character_), T_MathNonNegativeInteger_], T_MatchResult)
 T_Job             = ProcType([                       ], T_Tangible_ | T_tilde_empty_ | T_throw_)
 
 T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), ListType(T_MathInteger_)], ListType(T_MathInteger_))
 
-T_captures_entry_ = T_Range | T_Undefined
+T_captures_entry_ = T_CaptureRange | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
 
 T_Unicode_code_points_ = ListType(T_code_point_)
@@ -1699,8 +1699,8 @@ nature_to_type = {
 
     # 22.2.2.1 Notation:
         'a CharSet'      : T_CharSet,
-        'a State'        : T_State,
-        'a Continuation' : T_Continuation,
+        'a MatchState'          : T_MatchState,
+        'a MatcherContinuation' : T_MatcherContinuation,
         'a Matcher'      : T_Matcher,
         'a Match Record' : T_Match_Record,
         'a MatchResult'  : T_MatchResult,
@@ -3812,7 +3812,7 @@ def tc_nonvalue(anode, env0):
             # survive the loop.
             # (It doesn't have to survive from one iteration to the next,
             # just from the last iteration to after.)
-            result = result.plus_new_entry('_r_', T_State)
+            result = result.plus_new_entry('_r_', T_MatchState)
 
     elif p == r"{COMMAND} : While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}":
         [cond, commands] = children
@@ -4862,9 +4862,9 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_ClassStaticBlockDefinition_Record, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a Continuation":
+    elif p == r"{CONDITION_1} : {var} is a MatcherContinuation":
         [var] = children
-        return env0.with_type_test(var, 'is a', T_Continuation, asserting)
+        return env0.with_type_test(var, 'is a', T_MatcherContinuation, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a Cyclic Module Record":
         [var] = children
@@ -5040,9 +5040,9 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_Source_Text_Module_Record, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a State":
+    elif p == r"{CONDITION_1} : {var} is a MatchState":
         [var] = children
-        return env0.with_type_test(var, 'is a', T_State, asserting)
+        return env0.with_type_test(var, 'is a', T_MatchState, asserting)
 
     elif p == r'{CONDITION_1} : {var} is a Symbol':
         [var] = children
@@ -7957,7 +7957,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the number of elements in {var}'s _captures_ List":
         [var] = children
-        env0.assert_expr_is_of_type(var, T_State)
+        env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MathNonNegativeInteger_, env0)
 
     elif p in [
@@ -8078,12 +8078,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{NUM_COMPARAND} : {var}'s _endIndex_",
     ]:
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_State | T_Range)
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState | T_CaptureRange)
         return (T_MathInteger_, env1)
 
     elif p == r"{EX} : {var}'s _startIndex_":
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Range)
+        env1 = env0.ensure_expr_is_of_type(var, T_CaptureRange)
         return (T_MathInteger_, env1)
 
     elif p == r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}":
@@ -8658,7 +8658,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List":
         [n_var, state_var] = children
         env0.assert_expr_is_of_type(n_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(state_var, T_State)
+        env0.assert_expr_is_of_type(state_var, T_MatchState)
         return (T_captures_entry_, env0)
 
     elif p == r"{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}":
@@ -8670,7 +8670,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EX} : {var}'s _input_":
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_State)
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (ListType(T_character_), env1)
 
     elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}":
@@ -9031,12 +9031,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         n_parameters = len(clo_parameters.children)
         if clo_kind == 'Abstract Closure':
             clo_param_types = [T_TBD] * n_parameters
-        elif clo_kind == 'Continuation':
+        elif clo_kind == 'MatcherContinuation':
             assert n_parameters == 1
-            clo_param_types = [T_State]
+            clo_param_types = [T_MatchState]
         elif clo_kind == 'Matcher':
             assert n_parameters == 2
-            clo_param_types = [T_State, T_Continuation]
+            clo_param_types = [T_MatchState, T_MatcherContinuation]
         elif clo_kind == 'Job Abstract Closure':
             assert n_parameters == 0
             clo_param_types = []
@@ -9398,7 +9398,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : a copy of {var}'s _captures_ List":
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_State)
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
 
     elif p in [
@@ -9425,18 +9425,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, seq_type
         return (item_type, env0)
 
-    elif p == r"{EXPR} : the State ({var}, {EX}, {var})":
+    elif p == r"{EXPR} : the MatchState ({var}, {EX}, {var})":
         [input_var, ex, var] = children
         env0.assert_expr_is_of_type(input_var, ListType(T_character_))
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
         env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
-        return (T_State, env0)
+        return (T_MatchState, env0)
 
-    elif p == r"{EXPR} : {var}'s State":
-        # todo?: change to Assert: _r_ is a State
+    elif p == r"{EXPR} : {var}'s MatchState":
+        # todo?: change to Assert: _r_ is a MatchState
         [var] = children
-        env0.assert_expr_is_of_type(var, T_State)
-        return (T_State, env0)
+        env0.assert_expr_is_of_type(var, T_MatchState)
+        return (T_MatchState, env0)
 
     elif p == r"{EXPR} : an empty Set":
         [] = children
@@ -9462,7 +9462,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : {var}'s _captures_ List":
         [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_State)
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
 
     elif p == r"{EX} : {DSBN}":
@@ -9857,10 +9857,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
         return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
 
-    elif p == r"{EX} : the Range {PAIR}":
+    elif p == r"{EX} : the CaptureRange {PAIR}":
         [pair] = children
         # XXX
-        return (T_Range, env0)
+        return (T_CaptureRange, env0)
 
     elif p == r"{EXPR} : a new Synchronize event":
         [] = children

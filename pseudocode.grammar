@@ -664,7 +664,6 @@
     {var} is a ClassFieldDefinition Record
     {var} is a ClassStaticBlockDefinition Record
     {var} is a Completion Record
-    {var} is a Continuation
     {var} is a Cyclic Module Record
     {var} is a Data Block
     {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}
@@ -672,6 +671,8 @@
     {var} is a List of characters
     {var} is a List of errors
     {var} is a List of property keys
+    {var} is a MatchState
+    {var} is a MatcherContinuation
     {var} is a Number
     {var} is a Parse Node
     {var} is a PrivateElement
@@ -684,7 +685,6 @@
     {var} is a ResolvedBinding Record
     {var} is a Shared Data Block
     {var} is a Source Text Module Record
-    {var} is a State
     {var} is a Symbol
     {var} is a UTF-16 code unit
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
@@ -830,9 +830,9 @@
 
 {CLOSURE_KIND} :
     Abstract Closure
-    Continuation
     Job Abstract Closure
     Matcher
+    MatcherContinuation
     read-modify-write modification function
 
 {CLOSURE_PARAMETERS} :
@@ -944,12 +944,12 @@
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the List that is {DOTTING}
+    the MatchState ({var}, {EX}, {var})
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
-    the State ({var}, {EX}, {var})
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
     the String representation of {EX}, formatted as an uppercase hexadecimal number
@@ -1089,7 +1089,7 @@
     {EX}, where {var} is {EX}
     {EX}, where {var} is {EX} and {var} is {EX}
     {EX}, where {var} is {EX}, and {var} is {EX}
-    {var}'s State
+    {var}'s MatchState
     {var}'s _captures_ List
     {var}'s intrinsic object named {var}
     {var}'s own property whose key is {var}
@@ -1112,10 +1112,10 @@
     an implementation-defined timezone name
     the *this* value
     the BigInt value for {EX}
+    the CaptureRange {PAIR}
     the GlobalSymbolRegistry List
     the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {EX}
-    the Range {PAIR}
     the String {var}
     the code point matched by {PROD_REF}
     the code unit at index {EX} within {EX}
@@ -1460,7 +1460,6 @@
     a ClassFieldDefinition Record
     a ClassStaticBlockDefinition Record
     a Completion Record
-    a Continuation
     a Cyclic Module Record
     a Data Block
     a FinalizationRegistry
@@ -1472,7 +1471,9 @@
     a List of {LIST_ELEMENTS_DESCRIPTION}
     a Match Record
     a MatchResult
+    a MatchState
     a Matcher
+    a MatcherContinuation
     a Module Namespace Object
     a Module Record
     a Number
@@ -1500,7 +1501,6 @@
     a Shared Data Block event
     a SharedArrayBuffer
     a Source Text Module Record
-    a State
     a String
     a String exotic object
     a String which is the name of a TypedArray constructor in {h_emu_xref}
