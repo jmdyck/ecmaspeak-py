@@ -5643,15 +5643,23 @@ def tc_cond_(cond, env0, asserting):
         [a, op, b] = children
         (a_t, env1) = tc_expr(a, env0);
         (b_t, env2) = tc_expr(b, env1);
+        op_st = op.source_text()
 
         if a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) and b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
             # great!
 
             # XXX: `_x_ &lt; Y` excludes _x_ being +&infin;
-            # kludge:
-            if op.source_text() in ['&lt;', 'is less than', '&le;'] and b.source_text() == '0':
+            if op_st in ['&lt;', 'is less than', '&le;'] and b_t.is_a_subtype_of_or_equal_to(T_MathReal_):
                 (is_t,   _) = a_t.split_by(T_MathReal_ | T_MathNegInfinity_)
                 (isnt_t, _) = a_t.split_by(T_MathReal_ | T_MathPosInfinity_)
+                return (
+                    env2.with_expr_type_narrowed(a, is_t),
+                    env2.with_expr_type_narrowed(a, isnt_t)
+                )
+
+            if op_st in ['&gt;', 'is greater than', '&ge;'] and b_t.is_a_subtype_of_or_equal_to(T_MathReal_):
+                (is_t,   _) = a_t.split_by(T_MathReal_ | T_MathPosInfinity_)
+                (isnt_t, _) = a_t.split_by(T_MathReal_ | T_MathNegInfinity_)
                 return (
                     env2.with_expr_type_narrowed(a, is_t),
                     env2.with_expr_type_narrowed(a, isnt_t)
@@ -5674,7 +5682,7 @@ def tc_cond_(cond, env0, asserting):
                     "possible comparison involving NaN"
                 )
 
-            if op.source_text() in ['=', '&ne;']:
+            if op_st in ['=', '&ne;']:
                 add_pass_error(
                     cond,
                     "We avoid Number comparisons involving = or &ne;"
