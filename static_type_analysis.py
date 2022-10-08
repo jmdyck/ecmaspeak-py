@@ -7272,13 +7272,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     result_type = T_IntegralNumber_
                 elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
                     result_type = T_IntegralNumber_ | T_InfiniteNumber_
-                elif t.is_a_subtype_of_or_equal_to(T_MathReal_):
-                    result_type = T_Number
+                elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+                    result_type = T_FiniteNumber_ | T_InfiniteNumber_
                 elif t == T_TBD:
                     result_type = T_IntegralNumber_ # hm
                 else:
                     add_pass_error(arg,
-                        f"ERROR: arg is of type {t} but fancy_f requires MathReal"
+                        f"ERROR: arg is of type {t} but fancy_f requires ExtendedMathReal"
                     )
                     result_type = T_Number
                 return (result_type, env1)
