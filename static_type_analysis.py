@@ -6191,7 +6191,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(bnoi, T_character_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}":
+    elif p == r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}":
         [var, lita, litb] = children
         env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
         env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
@@ -6998,11 +6998,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EX} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{EX} : {RECORD_CONSTRUCTOR}",
         r"{FACTOR} : ({NUM_EXPR})",
-        r"{FACTOR} : {NUM_LITERAL}",
+        r"{FACTOR} : {BIGINT_LITERAL}",
+        r"{FACTOR} : {MATH_LITERAL}",
+        r"{FACTOR} : {NUMBER_LITERAL}",
         r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}",
         r"{FACTOR} : {SETTABLE}",
+        r"{LITERAL} : {BIGINT_LITERAL}",
+        r"{LITERAL} : {MATH_LITERAL}",
+        r"{LITERAL} : {NUMBER_LITERAL}",
         r"{LITERAL} : {code_unit_lit}",
-        r"{LITERAL} : {NUM_LITERAL}",
         r"{LOCAL_REF} : {PROD_REF}",
         r"{LOCAL_REF} : {SETTABLE}",
         r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}",
@@ -7036,10 +7040,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LITERAL} : {atat_word}":
         return (T_Symbol, env0)
 
-    elif p == r"{NUM_LITERAL} : +&infin;":
+    elif p == r"{MATH_LITERAL} : +&infin;":
         return (T_MathPosInfinity_, env0)
 
-    elif p == r"{NUM_LITERAL} : -&infin;":
+    elif p == r"{MATH_LITERAL} : -&infin;":
         return (T_MathNegInfinity_, env0)
 
     elif p == r"{LITERAL} : {TYPE_NAME}":
@@ -7719,7 +7723,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_BigInt
 
-    elif p == r"{NUM_LITERAL} : {starred_int_lit}{h_sub_fancy_z}":
+    elif p == r"{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}":
         [_, _] = children
         return (T_BigInt, env0)
 
@@ -7757,22 +7761,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_Number
 
-    elif p == r"{NUM_LITERAL} : {starred_infinite_lit}{h_sub_fancy_f}":
+    elif p == r"{NUMBER_LITERAL} : {starred_infinite_lit}{h_sub_fancy_f}":
         return (T_InfiniteNumber_, env0)
 
     elif p in [
-        r"{NUM_LITERAL} : {starred_nan_lit}",
-        r'{NUM_LITERAL} : the *NaN* Number value',
+        r"{NUMBER_LITERAL} : {starred_nan_lit}",
+        r'{NUMBER_LITERAL} : the *NaN* Number value',
     ]:
         return (T_NaN_Number_, env0)
 
     elif p in [
-        r"{NUM_LITERAL} : *0.5*{h_sub_fancy_f}",
-        r"{NUM_LITERAL} : *-0.5*{h_sub_fancy_f}",
+        r"{NUMBER_LITERAL} : *0.5*{h_sub_fancy_f}",
+        r"{NUMBER_LITERAL} : *-0.5*{h_sub_fancy_f}",
     ]:
         return (T_NonIntegralFiniteNumber_, env0)
 
-    elif p == r"{NUM_LITERAL} : {starred_int_lit}{h_sub_fancy_f}":
+    elif p == r"{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}":
         [_, _] = children
         return (T_IntegralNumber_, env0)
 
@@ -7889,8 +7893,8 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # return T_MathReal_
 
     elif p in [
-        r"{NUM_LITERAL} : 8.64",
-        r"{NUM_LITERAL} : 0.5",
+        r"{MATH_LITERAL} : 8.64",
+        r"{MATH_LITERAL} : 0.5",
     ]:
         return (T_MathReal_, env0)
 
@@ -8009,9 +8013,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # return T_MathInteger_: arithmetic:
 
     elif p in [
-        r"{NUM_LITERAL} : {hex_int_lit}",
-        r"{NUM_LITERAL} : {dec_int_lit}",
-        r"{NUM_LITERAL} : -5",
+        r"{MATH_LITERAL} : {hex_int_lit}",
+        r"{MATH_LITERAL} : {dec_int_lit}",
+        r"{MATH_LITERAL} : -5",
         r"{BASE} : 10",
         r"{BASE} : 2",
     ]:
@@ -8041,7 +8045,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{NUM_LITERAL} : 64 (that is, 8<sup>2</sup>)":
+    elif p == r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)":
         [] = children
         return (T_MathInteger_, env0)
 

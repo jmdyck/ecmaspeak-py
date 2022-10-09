@@ -729,7 +729,7 @@
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
     {var} is either a String, a Number, a BigInt, or a Symbol
     {var} is finite
-    {var} is finite and is neither {NUM_LITERAL} nor {NUM_LITERAL}
+    {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
@@ -1416,8 +1416,10 @@
 {FACTOR} :
     ({NUM_EXPR})
     {BASE}<sup>{EX}</sup>
+    {BIGINT_LITERAL}
     {CONSTANT_NAME}
-    {NUM_LITERAL}
+    {MATH_LITERAL}
+    {NUMBER_LITERAL}
     {PP_NAMED_OPERATION_INVOCATION}
     {SETTABLE}
 
@@ -1649,8 +1651,10 @@
 {LITERAL} :
     *null*
     *undefined*
+    {BIGINT_LITERAL}
     {BOOL_LITERAL}
-    {NUM_LITERAL}
+    {MATH_LITERAL}
+    {NUMBER_LITERAL}
     {STR_LITERAL}
     {TYPE_NAME}
     {atat_word}
@@ -1671,20 +1675,24 @@
     {starred_str}
     {starred_str} ({code_unit_lit} followed by {code_unit_lit})
 
-{NUM_LITERAL} :
-    *-0.5*{h_sub_fancy_f}
-    *0.5*{h_sub_fancy_f}
+{BIGINT_LITERAL} :
+    {starred_int_lit}{h_sub_fancy_z}
+
+{MATH_LITERAL} :
     +&infin;
     -&infin;
     0.5
     64 (that is, 8<sup>2</sup>)
     8.64
-    the *NaN* Number value
     {dec_int_lit}
     {hex_int_lit}
+
+{NUMBER_LITERAL} :
+    *-0.5*{h_sub_fancy_f}
+    *0.5*{h_sub_fancy_f}
+    the *NaN* Number value
     {starred_infinite_lit}{h_sub_fancy_f}
     {starred_int_lit}{h_sub_fancy_f}
-    {starred_int_lit}{h_sub_fancy_z}
     {starred_nan_lit}
 
 {ERROR_TYPE} :
