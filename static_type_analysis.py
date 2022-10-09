@@ -1794,9 +1794,9 @@ type_tweaks_tuples = [
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
     ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
+    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
     ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
@@ -1805,7 +1805,7 @@ type_tweaks_tuples = [
     ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
     ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
+    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
 ]
 class TypeTweaks:
     def __init__(self):
@@ -2564,6 +2564,8 @@ class Env:
                 'ReferencedBindings of |NamedExports|',
                 'PrototypePropertyNameList of |ClassElementList|',
                 '_lref_.[[ReferencedName]]',
+                '1 + \u211d(_n_)', # Math.log1p
+                '\u211d(_m_) / 12', # MakeDay
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -8156,85 +8158,116 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [a, op, b] = children
         (a_t, env1) = tc_expr(a, env0)
         (b_t, env2) = tc_expr(b, env1)
+        op_st = op.source_text()
 
-        if a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) or b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+        def type_arithmetic(a_mt, op_st, b_mt, a, b):
+            triple = (a_mt, op_st, b_mt)
+            result_t = {
 
-            if (
-                T_MathPosInfinity_.is_a_subtype_of_or_equal_to(a_t)
-                or
-                T_MathNegInfinity_.is_a_subtype_of_or_equal_to(a_t)
-            ):
-                add_pass_error(a,
-                    "ST includes Math-infinity, which you can't do arithmetic on"
-                )
-                return (T_MathReal_, env2)
+                # --------
 
-            if (
-                T_MathPosInfinity_.is_a_subtype_of_or_equal_to(b_t)
-                or
-                T_MathNegInfinity_.is_a_subtype_of_or_equal_to(b_t)
-            ):
-                add_pass_error(b,
-                    "ST includes Math-infinity, which you can't do arithmetic on"
-                )
-                return (T_MathReal_, env2)
+                # Mathematical values:
 
-            if (
-                a_t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-                and
-                b_t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-                and
-                op.source_text() not in ['&divide;', 'divided by', '/']
-            ):
-                return (T_MathInteger_, env2)
+                (T_ExtendedMathReal_, 'modulo', T_MathInteger_): 'ST of A includes infinities',
+                (T_ExtendedMathReal_, 'modulo', T_MathReal_   ): 'ST of A includes infinities',
+
+                (T_ExtendedMathReal_, '&times;', T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '&times;', T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '+'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '-'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '/'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '/'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_MathInteger_     , '&times;', T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_MathInteger_     , '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+
+                (T_MathInteger_    , '+'      , T_MathNegInfinity_): T_MathNegInfinity_,
+
+                (T_MathInteger_, '&times;', T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '+'      , T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '-'      , T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '/'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '&times;', T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '+'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '+'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , '-'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '-'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , '/'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '/'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , 'modulo' , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , 'modulo' , T_MathReal_   ): T_MathReal_,
+
+                (T_MathInteger_, '&times;', T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, '+'      , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, '-'      , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, 'modulo' , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, 'plus'   , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, 'times'  , T_MathInteger_): T_MathInteger_,
+                (T_code_point_ , '-'      , T_MathInteger_): T_MathInteger_, # warn
+                (T_code_unit_  , '-'      , T_MathInteger_): T_MathInteger_, # warn
+
+                # --------
+
+                # Numbers:
+
+                (T_Number       , '-'      , T_IntegralNumber_): 'A could be NaN',
+
+                (T_FiniteNumber_  , '&times;', T_InfiniteNumber_): T_InfiniteNumber_, # warn
+                (T_FiniteNumber_  , '+'      , T_InfiniteNumber_): T_InfiniteNumber_, # warn
+                (T_FiniteNumber_  , '-'      , T_InfiniteNumber_): T_InfiniteNumber_, # warn
+                (T_InfiniteNumber_, '+'      , T_IntegralNumber_): T_InfiniteNumber_, # warn
+                (T_InfiniteNumber_, '-'      , T_IntegralNumber_): T_InfiniteNumber_, # warn
+                (T_InfiniteNumber_, '/'      , T_FiniteNumber_  ): T_InfiniteNumber_, # warn
+
+                (T_FiniteNumber_  , '&times;', T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '+'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '+'      , T_IntegralNumber_): T_FiniteNumber_,
+                (T_FiniteNumber_  , '-'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '-'      , T_IntegralNumber_): T_FiniteNumber_,
+                (T_FiniteNumber_  , '/'      , T_FiniteNumber_  ): T_FiniteNumber_, # assuming that b isn't 0
+                (T_IntegralNumber_, '/'      , T_FiniteNumber_  ): T_FiniteNumber_,
+
+                (T_IntegralNumber_, '+', T_IntegralNumber_): T_IntegralNumber_,
+                (T_IntegralNumber_, '-', T_IntegralNumber_): T_IntegralNumber_,
+
+                # --------
+
+                # BigInts:
+
+                (T_BigInt, '&times;', T_BigInt): T_BigInt,
+                (T_BigInt, '-'      , T_BigInt): T_BigInt,
+
+                # --------
+
+                # misc:
+
+                (T_not_set     , '&times;', T_MathInteger_): 'A is non-numeric',
+                (T_tilde_empty_, '-'      , T_MathInteger_): 'A is non-numeric',
+
+            }[triple]
+
+            if result_t == 'A is non-numeric':
+                add_pass_error(a, f"ST of operand is {a_t}, which includes {a_mt}, which is non-numeric")
+                result_t = T_MathInteger_ # XXX
+            elif result_t == 'A could be NaN':
+                add_pass_error(a, f"ST of operand is {a_t}, which includes *NaN*, which you can't do arithmetic on")
+                result_t = T_Number
+            elif result_t == 'B could be NaN':
+                add_pass_error(b, f"ST of operand is {b_t}, which includes *NaN*, which you can't do arithmetic on")
+                result_t = T_Number
+            elif result_t == 'ST of A includes infinities':
+                add_pass_error(a, "operand could be infinite, which doesn't make sense with 'modulo'")
+                result_t = T_MathInteger_
             else:
-                return (T_MathReal_, env2)
+                assert isinstance(result_t, Type)
 
+            return result_t
+                    
 
-        elif a_t.is_a_subtype_of_or_equal_to(T_Number) and b_t.is_a_subtype_of_or_equal_to(T_Number):
-
-            for (x, x_t) in [(a, a_t), (b, b_t)]:
-                if T_NaN_Number_.is_a_subtype_of_or_equal_to(x_t):
-                    add_pass_error(x,
-                        "ST includes NaN, which you can't do arithmetic on"
-                    )
-                #if T_InfiniteNumber_.is_a_subtype_of_or_equal_to(x_t):
-                #    add_pass_error(x,
-                #        "ST includes Number-infinities, which you can't do arithmetic on"
-                #    )
-
-            if (
-                a_t.is_a_subtype_of_or_equal_to(T_IntegralNumber_)
-                and
-                b_t.is_a_subtype_of_or_equal_to(T_IntegralNumber_)
-            ):
-                return (T_IntegralNumber_, env2) # XXX except for division
-
-            elif (
-                a_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_)
-                and
-                b_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_)
-            ):
-                return (T_FiniteNumber_, env2) # unless the operands are finite-but-really-big, so their product is infinity?
-
-            elif (
-                a_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_)
-                and
-                b_t.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_)
-            ):
-                return (T_FiniteNumber_ | T_InfiniteNumber_, env2)
-
-            else:
-                return (T_Number, env2)
-
-        elif a_t.is_a_subtype_of_or_equal_to(T_BigInt) and b_t.is_a_subtype_of_or_equal_to(T_BigInt):
-            return (T_BigInt, env2)
-
-        else:
-            add_pass_error(expr,
-                f"{a_t} and {b_t} are incompatible types for arithmetic"
-            )
-            assert 0, (a_t, b_t)
+        result_t = T_0
+        for a_mt in a_t.set_of_types():
+            for b_mt in b_t.set_of_types():
+                result_t = result_t | type_arithmetic(a_mt, op_st, b_mt, a, b)
+        return (result_t, env2)
 
     elif p in [
         r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}",
