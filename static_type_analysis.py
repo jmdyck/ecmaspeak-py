@@ -1277,33 +1277,58 @@ single_value_types = [
     T_NaN_Number_,
     T_Null,
     T_Undefined,
-    T_tilde_empty_,
-    T_tilde_failure_,
     T_not_in_node,
     T_tilde_BigInt64_,
     T_tilde_BigUint64_,
+    T_tilde_Fulfill_,
     T_tilde_Init_,
+    T_tilde_Reject_,
     T_tilde_Unordered_,
     T_tilde_accessor_,
     T_tilde_all_,
     T_tilde_all_but_default_,
     T_tilde_ambiguous_,
     T_tilde_assignment_,
+    T_tilde_asyncGenerator_,
+    T_tilde_async_,
     T_tilde_async_iterate_,
     T_tilde_awaiting_return_,
+    T_tilde_backward_,
     T_tilde_completed_,
+    T_tilde_empty_,
+    T_tilde_end_,
     T_tilde_evaluated_,
     T_tilde_evaluating_,
     T_tilde_evaluating_async_,
     T_tilde_executing_,
+    T_tilde_failure_,
     T_tilde_field_,
+    T_tilde_forward_,
+    T_tilde_frozen_,
+    T_tilde_fulfilled_,
+    T_tilde_generator_,
     T_tilde_iterate_,
+    T_tilde_key_,
+    T_tilde_key_value_,
+    T_tilde_linked_,
     T_tilde_linking_,
     T_tilde_method_,
     T_tilde_namespace_,
     T_tilde_namespace_object_,
+    T_tilde_non_generator_,
+    T_tilde_normal_,
+    T_tilde_number_,
+    T_tilde_pending_,
+    T_tilde_rejected_,
+    T_tilde_sealed_,
+    T_tilde_start_,
+    T_tilde_start_end_,
+    T_tilde_string_,
     T_tilde_suspendedStart_,
     T_tilde_suspendedYield_,
+    T_tilde_sync_,
+    T_tilde_unlinked_,
+    T_tilde_value_,
     T_tilde_varBinding_,
 ]
 # This isn't the complete list, but it doesn't need to be.
@@ -5117,17 +5142,12 @@ def tc_cond_(cond, env0, asserting):
         r'{CONDITION_1} : {var} is an ECMAScript function object',
     ]:
         [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_function_object_),
-            env0
-        )
+        # ECMAScript function objects are a subset of function objects
+        return env0.with_type_test(var, 'is a', [T_0, T_function_object_], asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of a single Number":
         [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, ListType(T_Number)),
-            env0
-        )
+        return env0.with_type_test(var, 'is a', [T_0, ListType(T_Number)], asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is an instance of the production {h_emu_grammar}",
@@ -5137,73 +5157,49 @@ def tc_cond_(cond, env0, asserting):
         lhs = re.sub(r'<emu-grammar>(\w+) :.*', r'\1', emu_grammar_text)
         prodn_type = ptn_type_for(lhs)
         #
-        (ref_type, env1) = tc_expr(local_ref, env0); assert env1 is env0
-        assert prodn_type.is_a_subtype_of_or_equal_to(ref_type)
-        # but whether or not it's an instance of that particular production
-        # doesn't narrow its type.
-        return (env1.with_expr_type_narrowed(local_ref, prodn_type), env1)
+        return env0.with_type_test(local_ref, 'is a', [T_0, prodn_type], asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is an Object that has an? {DSBN} internal slot",
         r'{CONDITION_1} : {var} is an extensible object that does not have a {starred_str} own property',
     ]:
         [var, _] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_Object),
-            env0
-        )
+        return env0.with_type_test(var, 'is a', [T_0, T_Object], asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is an ordinary, extensible object with no non-configurable properties",
         r"{CONDITION_1} : {var} is an extensible ordinary object with no own properties",
     ]:
         [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_Object),
-            env0
-        )
+        return env0.with_type_test(var, 'is a', [T_0, T_Object], asserting)
 
     elif p == r"{CONDITION_1} : {var} is a non-negative integral Number":
         [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_IntegralNumber_),
-            env0
-        )
+        return env0.with_type_test(var, 'is a', [T_0, T_IntegralNumber_], asserting)
 
     elif p == "{CONDITION_1} : {var} is a fully populated Property Descriptor":
         [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_Property_Descriptor),
-            env0
-        )
+        return env0.with_type_test(var, 'is a', [T_0, T_Property_Descriptor], asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is an integer index",
         r"{CONDITION_1} : {var} is an array index",
     ]:
         [var] = children
-        return (
-            env0.with_expr_type_narrowed(var, T_String),
-            env0
-        )
+        return env0.with_type_test(var, 'is a', [T_0, T_String], asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is not an array index",
         r"{CONDITION_1} : {var} is not an integer index",
     ]:
         [var] = children
-        return (
-            env0,
-            env0.with_expr_type_narrowed(var, T_String)
-        )
+        return env0.with_type_test(var, 'isnt a', [T_0, T_String], asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is a {h_emu_xref}",
         r"{CONDITION_1} : {var} is not a {h_emu_xref}",
     ]:
         [var, emu_xref] = children
-
-        # copula = 'isnt a' if 'not' in p else 'is a'
 
         if emu_xref.source_text() in [
             '<emu-xref href="#leading-surrogate"></emu-xref>',
@@ -5215,16 +5211,9 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0
 
-        if 'is a' in p:
-            return (
-                env0.with_expr_type_narrowed(var, t),
-                env0
-            )
-        else:
-            return (
-                env0,
-                env0.with_expr_type_narrowed(var, t)
-            )
+        copula = 'isnt a' if 'not' in p else 'is a'
+
+        return env0.with_type_test(var, copula, [T_0, t], asserting)
 
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
@@ -5291,13 +5280,7 @@ def tc_cond_(cond, env0, asserting):
             # The type has more than one value.
             # So, while the is-case is type-constraining,
             # the isn't-case isn't.
-            is_env = env0.with_expr_type_narrowed(ex, lit_type)
-            isnt_env = env0
-
-            if copula == 'is a':
-                return (is_env, isnt_env)
-            else:
-                return (isnt_env, is_env)
+            return env0.with_type_test(ex, copula, [T_0, lit_type], asserting)
 
     elif p in [
         r'{CONDITION_1} : {EX} is {LITERAL} or {LITERAL}',
@@ -5450,10 +5433,7 @@ def tc_cond_(cond, env0, asserting):
                 % ( settable.source_text(), dsbn_name )
             )
             # We could confirm if we looked at the subtypes and what fields they have.
-            return (
-                env0.with_expr_type_narrowed(settable, T_Function_Environment_Record),
-                env0
-            )
+            return env0.with_type_test(settable, 'is a', [T_0, T_Function_Environment_Record], asserting)
         else:
             assert dsbn_name in fields_for_record_type_named_[t.name], (t.name, dsbn_name)
             return (env0, env0)
