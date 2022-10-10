@@ -1669,9 +1669,7 @@
 {STR_LITERAL} :
     *","* (a comma)
     the ASCII word characters
-    the String {starred_str}
     the empty String
-    the single-element String *","*
     {starred_str}
     {starred_str} ({code_unit_lit} followed by {code_unit_lit})
 
