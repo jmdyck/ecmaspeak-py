@@ -216,6 +216,27 @@ class TypedAlgHeader:
                 (_, _, param_nature_node) = param.decl_node.children
                 pt = convert_nature_node_to_type(param_nature_node)
             else:
+                # This parameter doesn't have a param.decl_node.
+                # That's because the algorithm doesn't have a structured header,
+                # which happens for various reasons...
+                #
+                # - Built-in functions don't have structured headers,
+                #   because they'd be uninformative,
+                #   because every parameter is an ECMAScript language value,
+                #   except when it's a spread parameter,
+                #   when it's a List of ECMAScript language values.
+                #
+                # - Algorithms defined by <emu-eqn> (e.g., Day, TimeWithinDay)
+                #   don't have structured headers
+                #   because it wouldn't really fit the format?
+                #
+                # - In the memory model, algorithms that aren't abstract ops
+                #   have parameters (sort of), but don't have a header that lists them.
+                #
+                # - Two Environment Record 'concrete methods' are never called,
+                #   so they don't get a structured header.
+                #     - (Object Env Rec).CreateImmutableBinding
+                #     - (Module Env Rec).DeleteBinding
                 pt = convert_nature_to_type(param.nature)
 
             if param.punct == '[]':
@@ -244,6 +265,9 @@ class TypedAlgHeader:
             else:
                 for_param_nature = self.for_phrase
                 self.for_param_name = None
+            # The for_phrase occurs in a <dt> of the <dl> of the structured header.
+            # Maybe someday we'll parse that content,
+            # in which case we'll get a {VAL_DESC} node.
             self.for_param_type = convert_nature_to_type(for_param_nature)
 
         self.fake_node_for_ = {}
