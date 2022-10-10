@@ -2670,12 +2670,22 @@ class Env:
     # ----------------------------------------------------------------
 
     def with_type_test(self, expr, copula, target_t, asserting):
-        # Returns a pair of Envs:
-        # one in which the the type-test is true, and one in which it's false.
-        # i.e.,
-        # - one in which the expr's current type is narrowed to be <: target_t; and
-        # - one in which its type is narrowed to have no intersection with target_t
-        # (either respectively or anti-respectively, depending on copula.)
+        # The caller is handling a {CONDITION} that hinges on whether
+        # the value of `expr` is in a target set of values
+        # (represented by `target_t`, in a way that's explained below).
+        # This method returns a pair of Envs (each consistent with `self`):
+        # one that holds whenever the condition is true, and
+        # one that holds whenever the condition is false.
+        #
+        # In general, `target_t` is a pair of static types (sub_t, sup_t)
+        # that 'bracket' the target set of values.
+        #   I.e., sub_t <= target-set <= sup_t
+        #   (where we interpret a static type as a set of values,
+        #   and '<=' means 'is a subset of').
+        # 
+        # (When there's a static type whose set of values exactly matches the target set,
+        # then sub_t == sup_t, and `target_t` can be just that type,
+        # rather than a pair of types.)
 
         expr_text = expr.source_text()
 
@@ -2691,12 +2701,21 @@ class Env:
         # No, e.g. expr_text is '_R_.[[Value]]', where the out-env
         # has a narrower binding for _R_.
 
-        assert target_t != T_TBD
+        if isinstance(target_t, Type):
+            sub_t = target_t
+            sup_t = target_t
+        else:
+            (sub_t, sup_t) = target_t
+            assert isinstance(sub_t, Type)
+            assert isinstance(sup_t, Type)
+
+        assert sup_t != T_TBD
+        assert sub_t != T_TBD
 
         if asserting and expr_t == T_TBD:
             if copula == 'is a':
                 true_env = env1.copy()
-                true_env.vars[expr_text] = target_t
+                true_env.vars[expr_text] = sup_t
                 false_env = None
                 return (true_env, false_env)
             else:
@@ -2705,27 +2724,34 @@ class Env:
 
             # pdb.set_trace()
 
-        (part_inside_target_t, part_outside_target_t) = expr_t.split_by(target_t)
+        (part_inside_sup_t, part_outside_sup_t) = expr_t.split_by(sup_t)
+        assert isinstance(part_outside_sup_t, Type)
+        assert isinstance(part_inside_sup_t, Type)
 
-        assert isinstance(part_outside_target_t, Type)
-        assert isinstance(part_inside_target_t, Type)
+        (part_inside_sub_t, part_outside_sub_t) = expr_t.split_by(sub_t)
+        assert isinstance(part_outside_sub_t, Type)
+        assert isinstance(part_inside_sub_t, Type)
+
+        # sub_t is often T_0, in which case
+        # part_inside_sub_t == T_0
+        # part_outside_sub_t == expr_t
 
         if asserting:
             if copula == 'is a':
-                # We are asserting that the value of `expr` is of the target type.
-                # So it'd be nice if the static type of `expr` were a subtype of the target type.
-                if part_inside_target_t == T_0:
+                # We are asserting that the value of `expr` is in the target set of values.
+                # For that to be possible, expr_t must have some intersection with sup_t.
+                if part_inside_sup_t == T_0:
                     add_pass_error(
                         expr,
                         "ST of `%s` is `%s`, so can't be a `%s`"
-                        % (expr_text, expr_t, target_t)
+                        % (expr_text, expr_t, sup_t)
                     )
 
-                if part_outside_target_t != T_0:
+                if part_outside_sup_t != T_0:
                     add_pass_error(
                         expr,
                         "STA fails to confirm that %s is a %s; could also be %s" %
-                        (expr_text, target_t, part_outside_target_t)
+                        (expr_text, sup_t, part_outside_sup_t)
                     )
                     # e.g. a parameter type starts as TBD.
                     # but because the Assert will only propagate the 'true' env,
@@ -2733,48 +2759,51 @@ class Env:
 
 
             elif copula == 'isnt a':
-                # We expect that the static type of the expr has no intersection with the target type.
-
-                if part_inside_target_t != T_0:
+                # We are asserting that the value of `expr` is NOT in the target set of values.
+                # For that to be possible, expr_t must have no intersection with sub_t.
+                if part_inside_sub_t != T_0:
                     add_pass_error(
                         expr,
                         "ST of `%s` is `%s`, so can't confirm the assertion -- value might be `%s`"
-                        % (expr_text, expr_t, part_inside_target_t)
+                        % (expr_text, expr_t, part_inside_sub_t)
                     )
-                assert part_outside_target_t != T_0
+                assert part_outside_sub_t != T_0
             else:
                 assert 0, copula
+
         else:
             # Outside of an assertion,
             # you're presumably doing the type-test
             # with the expectation that either outcome is possible.
-            if part_outside_target_t == T_0:
+            if part_outside_sub_t == T_0:
                 add_pass_error(
                     expr,
                     # XXX "static type is X, so must be Y"
                     "STA indicates that it's unnecessary to test whether `%s` is %s, because it must be" % (
-                        expr_text, target_t)
+                        expr_text, sub_t)
                 )
                 # ResolveExport _starResolution_ loop thing
 
-            if part_inside_target_t == T_0:
+            if part_inside_sup_t == T_0:
                 add_pass_error(
                     expr,
                     # XXX "static type is X, so can't be Y"
                     "STA indicates that it's unnecessary to test whether `%s` is %s, because it can't be" % (
-                        expr_text, target_t)
+                        expr_text, sup_t)
                 )
                 # Perhaps a parameter-type was too restrictive.
 
-        intersect_env = env1.copy()
-        nointersect_env = env1.copy()
-        intersect_env.vars[expr_text] = part_inside_target_t
-        nointersect_env.vars[expr_text] = part_outside_target_t
+        is_env   = env1.copy()
+        isnt_env = env1.copy()
+        is_env  .vars[expr_text] = part_inside_sup_t
+        isnt_env.vars[expr_text] = part_outside_sub_t
 
         if copula == 'is a':
-            return (intersect_env, nointersect_env)
+            return (is_env, isnt_env)
+        elif copula == 'isnt a':
+            return (isnt_env, is_env)
         else:
-            return (nointersect_env, intersect_env)
+            assert 0, copula
 
     def reduce(self, header_names):
         e = Env()
