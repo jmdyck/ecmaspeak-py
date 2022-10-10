@@ -3790,10 +3790,29 @@ def tc_nonvalue(anode, env0):
 
         result = envs_or(benvs)
 
-        if if_open.source_text() == 'If |BooleanLiteral| is the token `true`, return *true*.':
-            # After this step, the possibilities for BooleanLiteral have been exhausted,
-            # but that's not obvious from the code.
+        # kludges to detect no-fall-through when STA can't:
+
+        if_open_st = if_open.source_text()
+
+        if if_open_st == 'If |BooleanLiteral| is the token `true`, return *true*.':
+            # This occurs once, in the Evaluation semantics for `Literal : BooleanLiteral`:
+            #     1. If |BooleanLiteral| is the token `false`, return *false*.
+            #     1. If |BooleanLiteral| is the token `true`, return *true*.
+            # These two steps exhaust the possibilities for |BooleanLiteral|,
+            # and each one results in a 'return',
+            # so it's impossible for control to fall through the second one.
             # todo: change "If" to "Else"?
+            result = None
+
+        if if_open_st.startswith('If abs(\u211d(_base_)) &lt; 1, return'):
+            # Twice, near the bottom of Number::exponentiate,
+            # there are 3 steps of the form:
+            #     1. If abs(R(_base_)) &gt; 1, return ...
+            #     1. If abs(R(_base_)) is 1, return ...
+            #     1. If abs(R(_base_)) &lt; 1, return ...
+            # These steps exhaust the possibilities for abs(R(_base_)),
+            # and since each one does a return,
+            # it's impossible for control to fall through the last one.
             result = None
 
     # ----------------------------------
