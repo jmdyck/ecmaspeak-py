@@ -346,8 +346,15 @@ class TypedAlgHeader:
                 assert isinstance(discriminator, Type)
             elif self.species == 'op: singular':
                 assert discriminator is None or isinstance(discriminator, Type)
-            elif self.species.startswith('bif:') or self.species == 'op: singular: host-defined':
-                # The latter because HostMakeJobCallback has a default implementation
+            elif (
+                self.species.startswith('bif:')
+                or
+                self.species == 'op: singular: host-defined'
+                    # because HostMakeJobCallback has a default implementation
+                or
+                self.species == 'op: singular: implementation-defined'
+                    # because PR #2781 introduced 3 with default implementations
+            ):
                 assert discriminator is None
             else:
                 assert 0, self.species
@@ -1509,6 +1516,11 @@ nature_to_type = {
         'a positive integer'        : T_MathNonNegativeInteger_,
         '0 or 1'                    : T_MathNonNegativeInteger_,
         'a non-negative integer that is evenly divisible by 4' : T_MathNonNegativeInteger_,
+        'an integer in the inclusive interval from 0 to 23': T_MathNonNegativeInteger_,
+        'an integer in the inclusive interval from 0 to 59': T_MathNonNegativeInteger_,
+        'an integer in the inclusive interval from 0 to 999': T_MathNonNegativeInteger_,
+        'an integer in the inclusive interval from 1 to 12': T_MathNonNegativeInteger_,
+        'an integer in the inclusive interval from 1 to 31': T_MathNonNegativeInteger_,
         'an integer in the inclusive interval from 2 to 36': T_MathNonNegativeInteger_,
         '+&infin;'                  : T_MathPosInfinity_,
         '-&infin;'                  : T_MathNegInfinity_,
@@ -1541,6 +1553,7 @@ nature_to_type = {
 
     # 6.1.6.1 The Number Type
         'a Number'       : T_Number,
+        '*NaN*'          : T_NaN_Number_,
 
         'an integral Number' : T_IntegralNumber_,
 
@@ -1566,6 +1579,7 @@ nature_to_type = {
 
     # 6.2.1 The List and Record Specification Types
         'a List'                                      : T_List,
+        'a List of BigInts'                           : ListType(T_BigInt),
         'a List of Cyclic Module Records'             : ListType(T_Cyclic_Module_Record),
         'a List of ECMAScript language values'        : ListType(T_Tangible_),
         'a List of ExportEntry Records'               : ListType(T_ExportEntry_Record),
@@ -1739,6 +1753,8 @@ nature_to_type = {
         # but the only use (so far) is for LocalTime()'s _t_ param,
         # which probably shouldn't accept NaN.
         # I.e., it should be marked "a *finite* time value".
+
+        'a finite time value' : T_IntegralNumber_,
 
     # 22.2.1 Patterns
         'a character' : T_code_unit_ | T_code_point_,
@@ -3293,6 +3309,8 @@ def tc_header(tah):
                 tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_'
                 or
                 tah.name == 'DetachArrayBuffer' and pn == '_key_'
+                or
+                tah.name == 'ParseTimeZoneOffsetString' and pn == '*return*'
             ):
                 # -------------------------
                 # Don't change header types
@@ -4995,6 +5013,14 @@ def tc_cond_(cond, env0, asserting):
         copula = 'isnt a' if 'not' in p else 'is a'
         return env0.with_type_test(var, copula, type_for_environment_record_kind(kind), asserting)
 
+    elif p == r"{CONDITION_1} : {var} is an integral Number":
+        [var] = children
+        return env0.with_type_test(var, 'is a', T_IntegralNumber_, asserting)
+
+    elif p == r"{CONDITION_1} : {var} is not an integral Number":
+        [var] = children
+        return env0.with_type_test(var, 'isnt a', T_IntegralNumber_, asserting)
+
     elif p == r"{CONDITION_1} : {var} is a possibly empty List":
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', T_List, asserting)
@@ -5010,6 +5036,10 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} is a List of errors':
         [var] = children
         return env0.with_type_test(var, 'is a', ListType(T_SyntaxError | T_ReferenceError), asserting)
+
+    elif p == r"{CONDITION_1} : {var} is not a List of errors":
+        [list_var] = children
+        return env0.with_type_test(list_var, 'isnt a', ListType(T_SyntaxError | T_ReferenceError), asserting)
 
     elif p == r'{CONDITION_1} : {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}':
         [var, ex] = children
@@ -5216,7 +5246,10 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', [T_0, T_Object], asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a non-negative integral Number":
+    elif p in [
+        r"{CONDITION_1} : {var} is a non-negative integral Number",
+        r"{CONDITION_1} : {var} is an odd integral Number",
+    ]:
         [var] = children
         return env0.with_type_test(var, 'is a', [T_0, T_IntegralNumber_], asserting)
 
@@ -6514,7 +6547,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains a {nonterminal}":
+    elif p in [
+        r"{CONDITION_1} : {var} contains a {nonterminal}",
+        r"{CONDITION_1} : {var} contains an? {nonterminal} Parse Node",
+        r"{CONDITION_1} : {var} does not contain an? {nonterminal} Parse Node",
+        r"{CONDITION_1} : {var} does not contain two {nonterminal} Parse Nodes",
+    ]:
         [var, nont] = children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         env0.assert_expr_is_of_type(nont, T_grammar_symbol_)
@@ -6607,15 +6645,6 @@ def tc_cond_(cond, env0, asserting):
         [list_var, len_var] = children
         env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is an integral Number",
-        r"{CONDITION_1} : {var} is not an integral Number",
-        r"{CONDITION_1} : {var} is an odd integral Number",
-    ]:
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_Number)
         return (env0, env0)
 
     elif p == r"{CONDITION_1} : the parse succeeded and no early errors were found":
@@ -6919,6 +6948,11 @@ def tc_cond_(cond, env0, asserting):
         [exa, interval] = children
         env0.assert_expr_is_of_type(exa, T_MathInteger_)
         env0.assert_expr_is_of_type(interval, T_MathInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is the single code point {code_point_lit} or {code_point_lit}":
+        [var, lita, litb] = children
+        env0.assert_expr_is_of_type(var, ListType(T_code_point_))
         return (env0, env0)
 
     else:
@@ -7298,7 +7332,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     )
                     return (T_MathReal_, env0)
 
-            elif callee_op_name == 'floor':
+            elif callee_op_name in ['floor', 'truncate']:
                 assert len(args) == 1
                 [arg] = args
                 env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
@@ -8229,6 +8263,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
                 (T_ExtendedMathReal_, '&times;', T_ExtendedMathReal_): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '&times;', T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '+'      , T_MathInteger_     ): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '-'      , T_MathInteger_     ): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '/'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
@@ -9628,6 +9663,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the first element of {var}",
         r"{EXPR} : the second element of {var}",
         r"{EXPR} : the last element in {var}",
+        r"{EXPR} : the last element of {var}",
     ]:
         # todo: replace with ad hoc record
         [var] = children
@@ -9885,7 +9921,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p == r"{EXPR} : the time value (UTC) identifying the current time":
         [] = children
-        return (T_Number, env0)
+        return (T_IntegralNumber_, env0)
 
     elif p == r"{EXPR} : the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})":
         [var, emu_xref] = children
@@ -10094,6 +10130,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(hi, T_MathInteger_)
         return (T_MathInteger_, env0)
         # Should maybe be ListType(T_MathInteger_) or something similar
+
+    elif p == r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)":
+        [vara, cond, varb] = children
+        # (t_env, f_env) = tc_cond(cond, env0)
+        # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
+        return (T_IntegralNumber_, env0)
 
     else:
         stderr()

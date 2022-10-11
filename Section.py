@@ -1007,6 +1007,7 @@ def _handle_structured_header(section):
                     ("It returns \*true\* if and only if .+", 'a Boolean'), # except...
                     ("It returns _argument_ converted to a Number value .+.", 'a Number'),
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
+                    ("It returns a String value representing .+", 'a String'),
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
                     ("It returns a new promise resolved with _x_.", 'a promise'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
@@ -1392,6 +1393,7 @@ def _handle_other_section(section):
             Pseudocode.ensure_alg('op: singular', 'min')
             Pseudocode.ensure_alg('op: singular', 'max')
             Pseudocode.ensure_alg('op: singular', 'floor')
+            Pseudocode.ensure_alg('op: singular', 'truncate')
             Pseudocode.ensure_alg('op: singular', '\U0001d53d')
             Pseudocode.ensure_alg('op: singular', '\u211d')
             Pseudocode.ensure_alg('op: singular', '\u2124')

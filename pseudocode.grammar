@@ -620,6 +620,7 @@
     {var} contains a formal parameter mapping for {var}
     {var} contains a single {nonterminal}
     {var} contains a {nonterminal}
+    {var} contains an? {nonterminal} Parse Node
     {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
@@ -628,7 +629,9 @@
     {var} does not consist of a single code unit
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
     {var} does not contain a valid UTF-8 encoding of a Unicode code point
+    {var} does not contain an? {nonterminal} Parse Node
     {var} does not contain exactly one character
+    {var} does not contain two {nonterminal} Parse Nodes
     {var} does not currently have a property {var}
     {var} does not have a Generator component
     {var} does not have a binding for {var}
@@ -733,6 +736,7 @@
     {var} is in {INTERVAL}
     {var} is never an abrupt completion
     {var} is not a Cyclic Module Record
+    {var} is not a List of errors
     {var} is not a Number
     {var} is not a Reference Record
     {var} is not a Shared Data Block
@@ -771,6 +775,7 @@
     {var} is the execution context of a generator
     {var} is the same Number value as {var}
     {var} is the same sequence of code units as {var}
+    {var} is the single code point {code_point_lit} or {code_point_lit}
     {var} is the value {LITERAL}
     {var} is the {nonterminal} of an? {nonterminal}
     {var} is the {nonterminal} {TERMINAL}
@@ -1015,6 +1020,7 @@
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the largest integral Number {var} (closest to +&infin;) such that {CONDITION_1}
     the last element in {var}
+    the last element of {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {var}, {var}, and {var}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
@@ -1128,6 +1134,7 @@
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
     the internal slots listed in {h_emu_xref}
+    the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)
     the length of {var}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
@@ -1230,7 +1237,9 @@
     that {nonterminal}
     the derived {nonterminal}
     the {ORDINAL} {nonterminal}
+    the {ORDINAL} {nonterminal} Parse Node contained within {var}
     the {nonterminal}
+    the {nonterminal} Parse Node contained within {var}
     the {nonterminal} containing {LOCAL_REF}
     the {nonterminal} of {LOCAL_REF}
     this phrase
@@ -1274,6 +1283,7 @@
     thisStringValue
     thisSymbolValue
     thisTimeValue
+    truncate
     {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}
     {fancy_f}
@@ -1523,6 +1533,7 @@
     a code point
     a code unit
     a constructor
+    a finite time value
     a function object
     a function that returns a promise for an <i>IteratorResult</i> object
     a function that returns an <i>AsyncIterator</i> object
@@ -1598,6 +1609,7 @@
 {LIST_ELEMENTS_DESCRIPTION} :
     Agent Events Records
     AsyncGeneratorRequest Records
+    BigInts
     Chosen Value Records
     ClassFieldDefinition Records
     Cyclic Module Records
