@@ -2621,7 +2621,7 @@ def mytrace(env):
     else:
         # print("resulting env:", env)
         for var_name in ['_number_']:
-            print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not set)")))
+            print("---> %s : %s" % (var_name, env.vars.get(var_name, "(not in env)")))
 
 def tc_alg(alg):
     print()
@@ -4533,7 +4533,7 @@ def tc_cond_(cond, env0, asserting):
         else:
             copula = 'is a'
 
-        # special handling for Completion Records:
+        # special handling for Completion Records' [[Type]] field:
         while True: # ONCE
             dotting = ex.is_a('{DOTTING}')
             if dotting is None: break
