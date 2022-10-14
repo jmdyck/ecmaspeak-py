@@ -512,19 +512,9 @@
     {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} does not contain {EX}
     {EX} is -1
-    {EX} is a BigInt
-    {EX} is a Private Name
-    {EX} is a String
     {EX} is a non-negative integer less than or equal to {EX}
-    {EX} is a sequence of Unicode code points
-    {EX} is an Environment Record
-    {EX} is an Object
     {EX} is an element of {var}
-    {EX} is an integer in {INTERVAL}
     {EX} is different from {EX}
-    {EX} is either {LITERAL} or {LITERAL}
-    {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is empty
     {EX} is in {EX}
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
@@ -542,13 +532,8 @@
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
     {EX} is the same value as {EX}
-    {EX} is {LITERAL}
-    {EX} is {LITERAL} or {LITERAL}
-    {EX} is {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
     {EX} is {PREFIX_PAREN}
+    {EX} is {VALUE_DESCRIPTION}
     {EX} is {var}
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same
@@ -562,7 +547,6 @@
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}
-    {LOCAL_REF} is {backticked_oth}
     {LOCAL_REF} is {h_emu_grammar}
     {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements
@@ -663,56 +647,28 @@
     {var} has {EX} elements
     {var} has {var} in its range
     {var} imports a specific binding for this export
-    {var} is a Boolean
-    {var} is a ClassFieldDefinition Record
-    {var} is a ClassStaticBlockDefinition Record
-    {var} is a Completion Record
-    {var} is a Cyclic Module Record
-    {var} is a Data Block
     {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}
     {var} is a List of a single Number
-    {var} is a List of characters
     {var} is a List of errors
-    {var} is a List of property keys
-    {var} is a MatchState
-    {var} is a MatcherContinuation
-    {var} is a Number
-    {var} is a Parse Node
-    {var} is a PrivateElement
-    {var} is a PromiseCapability Record
-    {var} is a Proxy exotic object
     {var} is a Proxy object
     {var} is a ReadModifyWriteSharedMemory event
     {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
-    {var} is a Reference Record
-    {var} is a ResolvedBinding Record
-    {var} is a Shared Data Block
-    {var} is a Source Text Module Record
-    {var} is a Symbol
     {var} is a UTF-16 code unit
     {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     {var} is a WriteSharedMemory event
     {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    {var} is a bound function exotic object
     {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
     {var} is a fully populated Property Descriptor
-    {var} is a non-empty List of {ERROR_TYPE} objects
     {var} is a non-negative integer which is &le; {EXPR}
     {var} is a non-negative integral Number
-    {var} is a normal completion
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is a possibly empty List
     {var} is a property value or property value alias for the Unicode property {var} listed in {h_a}
     {var} is a {h_emu_xref}
     {var} is also {LITERAL}
-    {var} is an Abstract Closure with no parameters
-    {var} is an Array exotic object
-    {var} is an ECMAScript function object
     {var} is an IEEE 754-2019 binary32 NaN value
     {var} is an IEEE 754-2019 binary64 NaN value
-    {var} is an Object that has an? {DSBN} internal slot
-    {var} is an abrupt completion
     {var} is an array index
     {var} is an extensible object that does not have a {starred_str} own property
     {var} is an extensible ordinary object with no own properties
@@ -720,17 +676,12 @@
     {var} is an instance of a production in {h_emu_xref}
     {var} is an instance of the production {h_emu_grammar}
     {var} is an instance of {var}
-    {var} is an integer
-    {var} is an integral Number
     {var} is an odd integral Number
     {var} is an ordinary, extensible object with no non-configurable properties
-    {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is an? {PROPERTY_KIND} property
     {var} is an? {nonterminal}
-    {var} is an? {nonterminal} Parse Node
     {var} is as small as possible
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
-    {var} is either a String, a Number, a BigInt, or a Symbol
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}

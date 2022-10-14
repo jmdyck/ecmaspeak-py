@@ -4565,10 +4565,6 @@ def tc_cond_(cond, env0, asserting):
 
     # ---
 
-    elif p == r"{CONDITION_1} : {var} is an abrupt completion":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Abrupt, asserting)
-
     elif p in [
         r"{CONDITION_1} : {var} is never an abrupt completion",
         r"{CONDITION_1} : {var} is not an abrupt completion",
@@ -4576,71 +4572,24 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is an Abstract Closure with no parameters":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_proc_, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is an Array exotic object':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Array_object_, asserting)
-
     elif p == r'{CONDITION_1} : {var} is a UTF-16 code unit':
         [var] = children
         return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
 
-    elif p == r'{CONDITION_1} : {EX} is a BigInt':
-        [ex] = children
-        return env0.with_type_test(ex, 'is a', T_BigInt, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a Boolean':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Boolean, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a ClassFieldDefinition Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_ClassFieldDefinition_Record, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a ClassStaticBlockDefinition Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_ClassStaticBlockDefinition_Record, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a MatcherContinuation":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_MatcherContinuation, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a Cyclic Module Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Cyclic_Module_Record, asserting)
-
     elif p == r"{CONDITION_1} : {var} is not a Cyclic Module Record":
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Cyclic_Module_Record, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a Data Block':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Data_Block, asserting)
 
     elif p == r'{CONDITION_1} : {var} is the execution context of a generator':
         [var] = children
         return env0.with_type_test(var, 'is a', T_execution_context, asserting)
 
     elif p in [
-        r"{CONDITION_1} : {EX} is an Environment Record",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Environment_Record, asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is an? {ENVIRONMENT_RECORD_KIND} Environment Record",
         r"{CONDITION_1} : {var} is not an? {ENVIRONMENT_RECORD_KIND} Environment Record",
     ]:
         [var, kind] = children
         copula = 'isnt a' if 'not' in p else 'is a'
         return env0.with_type_test(var, copula, type_for_environment_record_kind(kind), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is an integral Number":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_IntegralNumber_, asserting)
 
     elif p == r"{CONDITION_1} : {var} is not an integral Number":
         [var] = children
@@ -4649,14 +4598,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a possibly empty List":
         [list_var] = children
         return env0.with_type_test(list_var, 'is a', T_List, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List of characters":
-        [list_var] = children
-        return env0.with_type_test(list_var, 'is a', ListType(T_character_), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a List of property keys":
-        [var] = children
-        return env0.with_type_test(var, 'is a', ListType(T_String | T_Symbol), asserting)
 
     elif p == r'{CONDITION_1} : {var} is a List of errors':
         [var] = children
@@ -4671,20 +4612,12 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return env0.with_type_test(var, 'is a', ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event), asserting)
 
-    elif p == r"{CONDITION_1} : {var} is a non-empty List of {ERROR_TYPE} objects":
-        [var, error_type] = children
-        return env0.with_type_test(var, 'is a', ListType(type_for_ERROR_TYPE(error_type)), asserting)
-
     elif p in [
         r"{CONDITION_1} : {var} is now an empty List",
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {EX} is a String":
-        [ex] = children
-        return env0.with_type_test(ex, 'is a', T_String, asserting)
 
     elif p == r"{CONDITION_1} : {var} is not a String":
         [var] = children
@@ -4693,11 +4626,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {EX} is a sequence of Unicode code points":
-        [ex] = children
-        env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
         return (env0, env0)
 
     elif p in [
@@ -4715,37 +4643,13 @@ def tc_cond_(cond, env0, asserting):
         copula = 'is a' if 'not present' in p else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is a Number':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Number, asserting)
-
     elif p == r'{CONDITION_1} : {var} is not a Number':
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Number, asserting)
 
-    elif p == r'{CONDITION_1} : {EX} is an Object':
-        [ex] = children
-        return env0.with_type_test(ex, 'is a', T_Object, asserting)
-
     elif p == r"{CONDITION_1} : {EX} is not an Object":
         [ex] = children
         return env0.with_type_test(ex, 'isnt a', T_Object, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a Parse Node":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Parse_Node, asserting)
-
-    elif p == r"{CONDITION_1} : {EX} is a Private Name":
-        [ex] = children
-        return env0.with_type_test(ex, 'is a', T_Private_Name, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a PrivateElement":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_PrivateElement, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a PromiseCapability Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_PromiseCapability_Record, asserting)
 
     elif p == r'{CONDITION_1} : {var} is an? {PROPERTY_KIND} property':
         [var, kind] = children
@@ -4756,7 +4660,6 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(var, 'is a', t, asserting)
 
     elif p in [
-        r'{CONDITION_1} : {var} is a Proxy exotic object',
         r"{CONDITION_1} : {var} is a Proxy object",
     ]:
         [var] = children
@@ -4766,21 +4669,9 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_ReadModifyWriteSharedMemory_event, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is a Reference Record':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Reference_Record, asserting)
-
     elif p == r'{CONDITION_1} : {var} is not a Reference Record':
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Reference_Record, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a ResolvedBinding Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_ResolvedBinding_Record, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a Shared Data Block':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Shared_Data_Block, asserting)
 
     elif p == r'{CONDITION_1} : {var} is not a Shared Data Block':
         [var] = children
@@ -4789,18 +4680,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r'{CONDITION_1} : {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event':
         [var] = children
         return env0.with_type_test(var, 'is a', T_Shared_Data_Block_event, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a Source Text Module Record":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Source_Text_Module_Record, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a MatchState":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_MatchState, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a Symbol':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Symbol, asserting)
 
     elif p == r"{CONDITION_1} : {var} is not a Symbol":
         [var] = children
@@ -4817,31 +4696,12 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_WriteSharedMemory_event, asserting)
 
-    elif p ==  r"{CONDITION_1} : {var} is a normal completion":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Normal, asserting)
-
     elif p == r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}":
         [var, nonta, nontb] = children
         return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is either a String, a Number, a BigInt, or a Symbol":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_String | T_Number | T_BigInt | T_Symbol, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a bound function exotic object":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_bound_function_exotic_object_, asserting)
-
     # ----------------------
     # quasi-type-conditions
-
-    elif p in [
-        r'{CONDITION_1} : {var} is an ECMAScript function object',
-    ]:
-        [var] = children
-        # ECMAScript function objects are a subset of function objects
-        return env0.with_type_test(var, 'is a', [T_0, T_function_object_], asserting)
 
     elif p == r"{CONDITION_1} : {var} is a List of a single Number":
         [var] = children
@@ -4858,7 +4718,6 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(local_ref, 'is a', [T_0, prodn_type], asserting)
 
     elif p in [
-        r"{CONDITION_1} : {var} is an Object that has an? {DSBN} internal slot",
         r'{CONDITION_1} : {var} is an extensible object that does not have a {starred_str} own property',
     ]:
         [var, _] = children
@@ -4919,15 +4778,17 @@ def tc_cond_(cond, env0, asserting):
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
         r"{CONDITION_1} : {EX} is not {LITERAL}",
-        r"{CONDITION_1} : {EX} is {LITERAL}",
         r"{CONDITION_1} : {var} is also {LITERAL}",
         r"{CONDITION_1} : {var} is the value {LITERAL}",
+        r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}",
     ]:
-        [ex, literal] = children
+        [ex, vd] = children
 
         # kludgey?
         r = is_simple_call(ex)
         if r:
+            assert p == r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}"
+
             (callee_op_name, var) = r
             #
             if callee_op_name == 'IsSharedArrayBuffer':
@@ -4946,10 +4807,9 @@ def tc_cond_(cond, env0, asserting):
                 t = None
             #
             if t:
-                assert 'not' not in p
-                if literal.source_text() == '*true*':
+                if vd.source_text() == '*true*':
                     copula = 'is a'
-                elif literal.source_text() == '*false*':
+                elif vd.source_text() == '*false*':
                     copula = 'isnt a'
                 else:
                     assert 0
@@ -4965,28 +4825,13 @@ def tc_cond_(cond, env0, asserting):
             (lhs, dsbn) = dotting.children
             dsbn_name = dsbn.source_text()[2:-2]
             if dsbn_name != 'Type': break
-            t = type_corresponding_to_comptype_literal(literal)
+            t = type_corresponding_to_comptype_literal(vd)
             return env0.with_type_test(lhs, copula, t, asserting)
 
-        # ------------
-
-        (lit_type, lit_env) = tc_expr(literal, env0)
-        assert lit_env is env0
-
-        if lit_type in single_value_types:
-            # Because the type has only one value,
-            # a value-comparison is equivalent to a type-comparison.
-            return env0.with_type_test(ex, copula, lit_type, asserting)
-        else:
-            # The type has more than one value.
-            # So, while the is-case is type-constraining,
-            # the isn't-case isn't.
-            return env0.with_type_test(ex, copula, [T_0, lit_type], asserting)
+        (sub_t, sup_t) = type_bracket_for(vd, env0)
+        return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
 
     elif p in [
-        r'{CONDITION_1} : {EX} is {LITERAL} or {LITERAL}',
-        r'{CONDITION_1} : {EX} is either {LITERAL} or {LITERAL}',
-        # ---
         r"{CONDITION_1} : {EX} is not {LITERAL} or {LITERAL}",
         r"{CONDITION_1} : {EX} is neither {LITERAL} nor {LITERAL}",
     ]:
@@ -5049,10 +4894,6 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(exb, lit_type)
             return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an integer":
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_MathInteger_, asserting)
-
     elif p == r"{CONDITION_1} : {var} is finite":
         [var] = children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
@@ -5093,13 +4934,7 @@ def tc_cond_(cond, env0, asserting):
         )
 
     elif p in [
-        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {EX} is either {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
         r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-        r"{CONDITION_1} : {EX} is {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
     ]:
         [var, *lit_] = children
         assert len(lit_) in [3,4,5,6]
@@ -5191,7 +5026,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {var} is an? {nonterminal}",
-        r"{CONDITION_1} : {var} is an? {nonterminal} Parse Node",
     ]:
         [var, nont] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Parse_Node)
@@ -6203,12 +6037,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(lit, T_Number)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {LOCAL_REF} is {backticked_oth}",
-    ]:
-        [prod_ref, oth] = children
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} has a Synchronize event":
         [var] = children
         env0.assert_expr_is_of_type(var, T_WaiterList)
@@ -6569,12 +6397,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(exb, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is an integer in {INTERVAL}":
-        [exa, interval] = children
-        env0.assert_expr_is_of_type(exa, T_MathInteger_)
-        env0.assert_expr_is_of_type(interval, T_MathInteger_)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} is the single code point {code_point_lit} or {code_point_lit}":
         [var, lita, litb] = children
         env0.assert_expr_is_of_type(var, ListType(T_code_point_))
@@ -6640,7 +6462,9 @@ def type_bracket_for(vd, env):
         '{LIST_ELEMENTS_DESCRIPTION}',
     ], str(vd.prod)
 
-    assert env is None
+    assert env is None or isinstance(env, Env)
+    # It's None when {vd} comes from a parameter-decl or a field-decl.
+    # It's an Env when {vd} comes from a condition in a step in an algorithm.
 
     vd_p = str(vd.prod)
 
@@ -6688,6 +6512,8 @@ def _(vd, env):
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 def _(value_description, env):
     result_sub_t = T_0
@@ -6856,6 +6682,7 @@ tbd['{VAL_DESC} : a Unicode property name'] = a_subset_of(T_Unicode_code_points_
 tbd['{VAL_DESC} : a Unicode property value'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
 tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
+tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
 tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
 tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
@@ -6978,6 +6805,10 @@ def _(literal, env):
     r = number_literal.prod.rhs_s
     if r == '{starred_nan_lit}':
         return T_NaN_Number_
+    elif r == '{starred_infinite_lit}{h_sub_fancy_f}':
+        return a_subset_of(T_InfiniteNumber_)
+    elif r == '{starred_int_lit}{h_sub_fancy_f}':
+        return a_subset_of(T_IntegralNumber_)
     else:
         assert 0, r
 
@@ -6996,8 +6827,10 @@ def type_for_tilded_word(tilded_word):
 
 tbd['{LITERAL} : *null*'] = T_Null
 tbd['{LITERAL} : *undefined*'] = T_Undefined
+tbd['{LITERAL} : {BIGINT_LITERAL}'] = a_subset_of(T_BigInt)
 tbd['{LITERAL} : {BOOL_LITERAL}'] = a_subset_of(T_Boolean)
 tbd['{LITERAL} : {STR_LITERAL}'] = a_subset_of(T_String)
+tbd['{LITERAL} : {code_unit_lit}'] = a_subset_of(T_code_unit_)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -10244,6 +10077,7 @@ def type_corresponding_to_comptype_literal(comptype_literal):
         '~break~'   : T_break_,
         '~return~'  : T_return_,
         '~throw~'   : T_throw_,
+        'either ~return~ or ~throw~': T_return_ | T_throw_,
     }[comptype_literal.source_text()]
 
 def tc_args( params, args, env0, context ):
