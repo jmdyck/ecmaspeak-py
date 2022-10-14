@@ -2498,7 +2498,7 @@ def do_static_type_analysis(levels):
         print("X" * 60)
         print("X" * 60)
         print("level", L)
-        time.sleep(1)
+        time.sleep(0.5)
         g_level_prefix = '[%d] ' % L
         n_clusters_this_level = len(clusters_on_level_L)
         for (c, cluster) in enumerate(clusters_on_level_L):
