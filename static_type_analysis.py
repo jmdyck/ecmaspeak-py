@@ -4573,7 +4573,6 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
 
     elif p in [
-        r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
         r"{CONDITION_1} : {EX} is also {VAL_DESC}",
         r"{CONDITION_1} : {EX} is never {VAL_DESC}",
         r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}",
@@ -6625,6 +6624,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
         r"{EXPR} : {EX}",
         r"{EX} : ({EX})",
+        r"{EX} : The value of {SETTABLE}",
         r"{EX} : the value of {SETTABLE}",
         r"{EX} : the {var} flag",
         r"{EX} : {code_point_lit}",

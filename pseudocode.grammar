@@ -428,7 +428,6 @@
     The next step never returns an abrupt completion because {CONDITION_1}
     The surrounding agent is in the critical section for {var}
     The surrounding agent is not in the critical section for any WaiterList
-    The value of {SETTABLE} is {LITERAL}
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
     There is more than one `*` import that includes the requested name
     This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent
@@ -990,6 +989,7 @@
     NewTarget
     The number of elements in {var}
     The remainder of dividing {EX} by {EX}
+    The value of {SETTABLE}
     a newly created {ERROR_TYPE} object
     a nondeterministically chosen byte value
     an implementation-defined timezone name
