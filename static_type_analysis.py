@@ -4567,7 +4567,6 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : {var} is never an abrupt completion",
-        r"{CONDITION_1} : {var} is not an abrupt completion",
     ]:
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
@@ -4576,24 +4575,9 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is not a Cyclic Module Record":
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Cyclic_Module_Record, asserting)
-
     elif p == r'{CONDITION_1} : {var} is the execution context of a generator':
         [var] = children
         return env0.with_type_test(var, 'is a', T_execution_context, asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is not an? {ENVIRONMENT_RECORD_KIND} Environment Record",
-    ]:
-        [var, kind] = children
-        copula = 'isnt a' if 'not' in p else 'is a'
-        return env0.with_type_test(var, copula, type_for_environment_record_kind(kind), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is not an integral Number":
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_IntegralNumber_, asserting)
 
     elif p == r"{CONDITION_1} : {var} is a possibly empty List":
         [list_var] = children
@@ -4619,10 +4603,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is not a String":
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_String, asserting)
-
     elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
         [v, _, _, emu_xref1, emu_xref2] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
@@ -4643,14 +4623,6 @@ def tc_cond_(cond, env0, asserting):
         copula = 'is a' if 'not present' in p else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is not a Number':
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Number, asserting)
-
-    elif p == r"{CONDITION_1} : {EX} is not an Object":
-        [ex] = children
-        return env0.with_type_test(ex, 'isnt a', T_Object, asserting)
-
     elif p == r'{CONDITION_1} : {var} is an? {PROPERTY_KIND} property':
         [var, kind] = children
         t = {
@@ -4669,21 +4641,9 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'is a', T_ReadModifyWriteSharedMemory_event, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is not a Reference Record':
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Reference_Record, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is not a Shared Data Block':
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Shared_Data_Block, asserting)
-
     elif p == r'{CONDITION_1} : {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event':
         [var] = children
         return env0.with_type_test(var, 'is a', T_Shared_Data_Block_event, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is not a Symbol":
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Symbol, asserting)
 
     elif p in [
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
@@ -4777,9 +4737,9 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
-        r"{CONDITION_1} : {EX} is not {LITERAL}",
         r"{CONDITION_1} : {var} is also {LITERAL}",
         r"{CONDITION_1} : {var} is the value {LITERAL}",
+        r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}",
         r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}",
     ]:
         [ex, vd] = children
@@ -4832,7 +4792,6 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
 
     elif p in [
-        r"{CONDITION_1} : {EX} is not {LITERAL} or {LITERAL}",
         r"{CONDITION_1} : {EX} is neither {LITERAL} nor {LITERAL}",
     ]:
         [ex, lita, litb] = children

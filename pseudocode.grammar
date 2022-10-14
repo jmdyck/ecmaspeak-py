@@ -521,12 +521,10 @@
     {EX} is neither {LITERAL} nor the active function object
     {EX} is neither {LITERAL} nor {LITERAL}
     {EX} is not -1
-    {EX} is not an Object
     {EX} is not an element of {var}
     {EX} is not present
     {EX} is not the same value as {var}
-    {EX} is not {LITERAL}
-    {EX} is not {LITERAL} or {LITERAL}
+    {EX} is not {VALUE_DESCRIPTION}
     {EX} is not {var}
     {EX} is present
     {EX} is the same Parse Node as {EX}
@@ -686,22 +684,13 @@
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}
     {var} is never an abrupt completion
-    {var} is not a Cyclic Module Record
     {var} is not a List of errors
-    {var} is not a Number
-    {var} is not a Reference Record
-    {var} is not a Shared Data Block
-    {var} is not a String
-    {var} is not a Symbol
     {var} is not a {h_emu_xref}
     {var} is not a {h_emu_xref} or {h_emu_xref}
     {var} is not a {nonterminal}
     {var} is not already suspended
-    {var} is not an abrupt completion
     {var} is not an array index
     {var} is not an integer index
-    {var} is not an integral Number
-    {var} is not an? {ENVIRONMENT_RECORD_KIND} Environment Record
     {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}
     {var} is not currently an element of {var}
     {var} is not empty
