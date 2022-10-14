@@ -15,6 +15,7 @@ import shared, HTML
 from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
 from Graph import Graph
+from DecoratedFuncDict import DecoratedFuncDict
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1112,6 +1113,8 @@ named_type_hierarchy = {
                 'Relation': {},
                 'Set': {},
                 'Shared Data Block': {},
+                    # The name suggests a subtype of Data Block,
+                    # but doesn't seem to be treated that way.
                 'SlotName_': {},
                 'TypedArray_element_type': {
                     'tilde_Int8_': {},
@@ -1384,103 +1387,8 @@ def type_for_TYPE_NAME(type_name):
 def convert_nature_node_to_type(nature_node):
     if nature_node is None: return T_TBD
 
-    return convert_value_description(nature_node)
-
-# --------------------------------------
-
-def convert_value_description(value_description):
-
-    assert value_description.prod.lhs_s == '{VALUE_DESCRIPTION}'
-
-    vd_st = value_description.source_text()
-    if vd_st in nature_to_type:
-        return nature_to_type[vd_st]
-
-    p = str(value_description.prod)
-    if p == '{VALUE_DESCRIPTION} : {VAL_DESC}':
-        [val_desc] = value_description.children
-        return convert_val_desc(val_desc)
-
-    elif p in [
-        '{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
-        '{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}',
-    ]:
-        t = T_0
-        for val_desc in value_description.children:
-            t |= convert_val_desc(val_desc)
-        return t
-
-    elif p == '{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}':
-        [pos_desc, neg_desc] = value_description.children
-        # t = convert_val_desc(pos_desc) - convert_value_description(neg_desc)
-        text = value_description.source_text()
-        if text == 'an ECMAScript language value, but not a Number':
-            t = T_Undefined | T_Null | T_Boolean | T_BigInt | T_String | T_Symbol | T_Object
-        elif text == 'an ECMAScript language value, but not *undefined* or *null*':
-            t = T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
-        elif text == 'an ECMAScript language value, but not a TypedArray':
-            t = T_Tangible_
-        elif text == 'a Number, but not *NaN*':
-            t = T_FiniteNumber_ | T_InfiniteNumber_
-        elif text == 'an Object, but not a TypedArray or an ArrayBuffer':
-            t = T_Object
-        else:
-            assert 0, text
-        return t
-
-    else:
-        assert 0, repr(p)
-
-# --------------------------------------
-
-def convert_val_desc(val_desc):
-    assert val_desc.prod.lhs_s == '{VAL_DESC}'
-
-    if val_desc.prod.rhs_s == '{backticked_oth}':
-        return T_Unicode_code_points_
-
-    if val_desc.prod.rhs_s == '{LITERAL}':
-        [literal] = val_desc.children
-        if literal.prod.rhs_s == '{STR_LITERAL}':
-            return T_String
-
-        elif literal.prod.rhs_s == '{tilded_word}':
-            [tilded_word] = literal.children
-            return type_for_tilded_word(tilded_word)
-
-    if val_desc.prod.rhs_s == 'an? {nonterminal} Parse Node':
-        [nont] = val_desc.children
-        return ptn_type_for(nont)
-
-    if val_desc.prod.rhs_s == 'a normal completion containing {VALUE_DESCRIPTION}':
-        [value_description] = val_desc.children
-        return convert_value_description(value_description)
-
-    nature = val_desc.source_text()
-    try:
-        t = nature_to_type[nature]
-    except KeyError:
-        val_desc.printTree(f=sys.stderr)
-        assert 0
-        print(nature, file=un_f)
-        t = T_TBD
-
-    assert isinstance(t, Type), nature
-    return t
-
-def type_for_tilded_word(tilded_word):
-    assert tilded_word.prod.lhs_s == '{tilded_word}'
-    [chars] = tilded_word.children
-    assert chars[0] == '~'
-    assert chars[-1] == '~'
-    uchars = chars[1:-1].replace('-', '_').replace('+', '_')
-    return NamedType(f"tilde_{uchars}_")
+    (_, sup_t) = type_bracket_for(nature_node, None)
+    return sup_t
 
 # ------------------------------------------------------------------------------
 
@@ -1498,182 +1406,29 @@ def convert_nature_to_type(nature):
 
 nature_to_type = {
         'unknown': T_TBD,
-        'anything': T_host_defined_,
-
-        'any value except a Completion Record': T_Tangible_ | T_Intangible_,
 
     # 5.1.4 The Syntactic Grammar
-        'a grammar symbol'                                : T_grammar_symbol_,
-        'a nonterminal in one of the ECMAScript grammars' : T_grammar_symbol_,
-
         'Parse Node'                                                            : T_Parse_Node,
-        'a Parse Node'                                                          : T_Parse_Node,
-
-    # 5.2.5 Mathematical Operations
-        'a mathematical value'      : T_MathReal_,
-        'an integer'                : T_MathInteger_,
-        'a non-negative integer'    : T_MathNonNegativeInteger_, # currently mapped to MathInteger_
-        'a positive integer'        : T_MathNonNegativeInteger_,
-        '0 or 1'                    : T_MathNonNegativeInteger_,
-        'a non-negative integer that is evenly divisible by 4' : T_MathNonNegativeInteger_,
-        'an integer in the inclusive interval from 0 to 23': T_MathNonNegativeInteger_,
-        'an integer in the inclusive interval from 0 to 59': T_MathNonNegativeInteger_,
-        'an integer in the inclusive interval from 0 to 999': T_MathNonNegativeInteger_,
-        'an integer in the inclusive interval from 1 to 12': T_MathNonNegativeInteger_,
-        'an integer in the inclusive interval from 1 to 31': T_MathNonNegativeInteger_,
-        'an integer in the inclusive interval from 2 to 36': T_MathNonNegativeInteger_,
-        '+&infin;'                  : T_MathPosInfinity_,
-        '-&infin;'                  : T_MathNegInfinity_,
 
     # 6.1 ECMAScript language types
-
         'an ECMAScript language value'                       : T_Tangible_,
-        'a value'                                            : T_Tangible_,
-
-    # 6.1.1 The Undefined Type
-        '*undefined*': T_Undefined,
-
-    # 6.1.2 The Null Type
-        '*null*': T_Null,
 
     # 6.1.3 The Boolean Type
         'a Boolean' : T_Boolean,
-        '*false*'   : T_Boolean,
-        '*true*'    : T_Boolean,
 
     # 6.1.4 The String Type
         'a String'                  : T_String,
-        '*"reject"* or *"handle"*'  : T_String,
-        'a String which is the name of a TypedArray constructor in <emu-xref href="#table-the-typedarray-constructors"></emu-xref>': T_String,
-
-        'a code unit' : T_code_unit_,
-
-    # 6.1.5 The Symbol Type
-        'a Symbol' : T_Symbol,
-
-    # 6.1.6.1 The Number Type
-        'a Number'       : T_Number,
-        '*NaN*'          : T_NaN_Number_,
-
-        'an integral Number' : T_IntegralNumber_,
-
-    # 6.1.6.2 The BigInt Type
-        'a BigInt'    : T_BigInt,
-
-    # 6.1.7 The Object Type
-        'an Object'                                                      : T_Object,
-        'an Object that conforms to the <i>IteratorResult</i> interface' : T_Object,
-        'an Object that has a [[StringData]] internal slot'              : T_Object,
-        'an initialized RegExp instance'                                 : T_Object,
-
-        'an internal slot name' : T_SlotName_,
-
-        # function_: an object with a [[Call]] internal method
-        'a function object'                                           : T_function_object_,
-
-        # constructor_: an object with a [[Construct]] internal method
-        'a constructor'          : T_constructor_object_,
-
-        'a property key'                 : T_String | T_Symbol,
-        'a property key or Private Name' : T_String | T_Symbol | T_Private_Name,
 
     # 6.2.1 The List and Record Specification Types
-        'a List'                                      : T_List,
-        'a List of BigInts'                           : ListType(T_BigInt),
-        'a List of Cyclic Module Records'             : ListType(T_Cyclic_Module_Record),
         'a List of ECMAScript language values'        : ListType(T_Tangible_),
-        'a List of ExportEntry Records'               : ListType(T_ExportEntry_Record),
-        'a List of ImportEntry Records'               : ListType(T_ImportEntry_Record),
-        'a List of Parse Nodes'                       : ListType(T_Parse_Node),
-        'a List of PromiseReaction Records'           : ListType(T_PromiseReaction_Record),
-        'a List of Records that have [[Module]] and [[ExportName]] fields': ListType(T_ExportResolveSet_Record_),
-        'a List of Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': ListType(T_ImportMeta_record_),
-        'a List of Source Text Module Records'        : ListType(T_Source_Text_Module_Record),
-        'a List of Strings'                           : ListType(T_String),
-        'a List of agent signifiers'                  : ListType(T_agent_signifier_),
-        'a List of byte values'                       : ListType(T_MathInteger_),
-        'a List of characters'                        : ListType(T_character_),
-        'a List of either Match Records or *undefined*': ListType(T_Match_Record | T_Undefined),
-        'a List of either Strings or *null*'          : ListType(T_String | T_Null),
-        'a List of either Strings or *undefined*'     : ListType(T_String | T_Undefined),
-        'a List of internal slot names'               : ListType(T_SlotName_),
-        'a List of names of ECMAScript Language Types': ListType(T_LangTypeName_),
-        'a List of names of internal slots'           : ListType(T_SlotName_),
-        'a List of property keys'                     : ListType(T_String | T_Symbol),
-        'a List of |ClassElement| Parse Nodes'        : ListType(ptn_type_for('ClassElement')),
-        'a List of |GroupSpecifier| Parse Nodes'      : ListType(ptn_type_for('GroupSpecifier')),
-        'a non-empty List of *SyntaxError* objects'   : ListType(T_SyntaxError),
-        'a possibly empty List, each of whose elements is a String or *undefined*': ListType(T_String | T_Undefined),
-
-    # 6.2.2 The Set and Relation Specification Types
-
-    # 6.2.3 The Completion Record Specification Type
-        'a Completion Record': T_Abrupt | T_Normal,
-
-        'a normal completion'            : T_Normal,
-        'an abrupt completion'           : T_Abrupt,
-        'a return completion'            : T_return_,
-        'a throw completion'             : T_throw_,
-
-    # 6.2.4 Reference Record
-        'a Reference Record' : T_Reference_Record,
-        'a Super Reference Record' : T_Reference_Record,
-
-    # 6.2.5 Property Descriptor
-        'a Property Descriptor' : T_Property_Descriptor,
-
-    # 6.2.7 Abstract Closure
-        'an Abstract Closure': T_proc_,
-        'an Abstract Closure with no parameters': ProcType([], T_Top_),
-        'an Abstract Closure with two parameters': ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_),
-        'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult': T_RegExpMatcher_,
-
-    # 6.2.8 Data Block
-        'a Data Block'        : T_Data_Block,
-        'a Shared Data Block' : T_Shared_Data_Block,
-        # is it a subtype of Data Block? Doesn't seem to be treated that way
-
-    # 6.2.9 The PrivateElement Specification Type
-        'a PrivateElement': T_PrivateElement,
-
-    # 6.2.10 The ClassFieldDefinition Record Specification Type
-        'a ClassFieldDefinition Record': T_ClassFieldDefinition_Record,
-
-    # 6.2.11 Private Name
-        'a Private Name': T_Private_Name,
-
-    # 6.2.12 ClassStaticBlockDefinition
-        'a ClassStaticBlockDefinition Record': T_ClassStaticBlockDefinition_Record,
-
-    # 7.4.1 Iterator Records
-        'an Iterator Record': T_Iterator_Record,
 
     # (6.2.6 The Environment Record Specification Type)
     # 9.1 Environment Records
-        'an Environment Record'            : T_Environment_Record,
         'a Declarative Environment Record' : T_Declarative_Environment_Record,
         'a Global Environment Record'      : T_Global_Environment_Record,
         'a Module Environment Record'      : T_Module_Environment_Record,
         'a Function Environment Record'    : T_Function_Environment_Record,
         'an Object Environment Record'     : T_Object_Environment_Record,
-
-    # 9.2 PrivateEnvironment Records
-        'a PrivateEnvironment Record': T_PrivateEnvironment_Record,
-
-    # 9.3 Realms
-        'a Realm Record' : T_Realm_Record,
-
-    # 9.4 Execution Contexts
-        'an execution context' : T_execution_context,
-
-    # 9.5 Jobs etc
-        'a Job Abstract Closure' : T_Job,
-
-    # 9.5.1 JobCallback Record
-        'a JobCallback Record': T_JobCallback_Record,
-
-    # 9.7 Agents
-        'an agent signifier' : T_agent_signifier_,
 
     # 10.1 Ordinary Object
         'an ordinary object' : T_Object,
@@ -1682,20 +1437,13 @@ nature_to_type = {
     # 10.3 Built-in Function Objects
     # 20.2 Function Objects
         'an ECMAScript function object'                               : T_function_object_,
-        'an ECMAScript function object or a built-in function object' : T_function_object_,
-        'an ECMAScript function'                                      : T_function_object_,
         'a built-in function object'                                  : T_function_object_,
-
-    # 10.3.3 CreateBuiltinFunction
-        'a set of algorithm steps' : T_alg_steps,
-        "some other definition of a function's behaviour provided in this specification": T_alg_steps,
 
     # 10.4.1 Bound Function Exotic Objects
         'a bound function exotic object' : T_bound_function_exotic_object_,
 
     # 10.4.2 Array Exotic Objects
     # 23.1 Array Objects
-        'an Array' : T_Array_object_,
         'an Array exotic object' : T_Array_object_,
 
     # 10.4.3 String Exotic Objects
@@ -1708,7 +1456,6 @@ nature_to_type = {
         'an Integer-Indexed exotic object': T_Integer_Indexed_object_,
 
     # 10.4.6 Module Namespace Exotic Objects
-        'a Module Namespace Object'        : T_Object,
         'a module namespace exotic object' : T_Object,
 
     # 10.4.7 Immutable Prototype Exotic Objects
@@ -1717,135 +1464,13 @@ nature_to_type = {
     # 10.5 Proxy Object ...
         'a Proxy exotic object': T_Proxy_exotic_object_,
 
-    # 11.1 Source Text
-        'a code point'         : T_code_point_,
-        'a Unicode code point' : T_code_point_,
-
-        'source text'                       : T_Unicode_code_points_,
-        '`&amp;`, `^`, or `|`'              : T_Unicode_code_points_,
-        'ECMAScript source text'            : T_Unicode_code_points_,
-        'a sequence of Unicode code points' : T_Unicode_code_points_,
-        '`**`, `*`, `/`, `%`, `+`, `-`, `&lt;&lt;`, `&gt;&gt;`, `&gt;&gt;&gt;`, `&amp;`, `^`, or `|`': T_Unicode_code_points_,
-        'a List of code points'             : T_Unicode_code_points_,
-
-    # 11.1.4 Static Semantics: CodePointAt
-        'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
-
-    # 14.7.5.10 For-In Iterator Objects
-        'a For-In Iterator' : T_Iterator_object_,
-
-    # 15.4.4 Runtime Semantics: DefineMethod
-        'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
-
-    # 16.1.4 Script Records
-        'a Script Record' : T_Script_Record,
-
     # 16.2.1.4 Abstract Module Records
-        'a Module Record'                                    : T_Module_Record,
-        'an instance of a concrete subclass of Module Record': T_Module_Record,
         'a Cyclic Module Record'                             : T_Cyclic_Module_Record,
         'a Source Text Module Record'                        : T_Source_Text_Module_Record,
-        'a ResolvedBinding Record'                           : T_ResolvedBinding_Record,
-
-    # 21.4.1.1 TimeValues
-        'a time value'       : T_IntegralNumber_,
-        # time value is defined to be 'IntegralNumber_ | NaN_Number_',
-        # but the only use (so far) is for LocalTime()'s _t_ param,
-        # which probably shouldn't accept NaN.
-        # I.e., it should be marked "a *finite* time value".
-
-        'a finite time value' : T_IntegralNumber_,
-
-    # 22.2.1 Patterns
-        'a character' : T_code_unit_ | T_code_point_,
-
-        'a Unicode property name'  : T_Unicode_code_points_,
-        'a Unicode property value' : T_Unicode_code_points_,
-
-    # 22.2.2.1 Notation:
-        'a CharSet'      : T_CharSet,
-        'a MatchState'          : T_MatchState,
-        'a MatcherContinuation' : T_MatcherContinuation,
-        'a Matcher'      : T_Matcher,
-        'a Match Record' : T_Match_Record,
-        'a MatchResult'  : T_MatchResult,
-        'a RegExp Record': T_RegExp_Record,
-
-        'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)' : T_CharacterClassResultRecord_,
-        'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
-        'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
-
-    # 23.2 TypedArray Objects
-        'a TypedArray'       : T_TypedArray_object_,
-
-        'a TypedArray element type' : T_TypedArray_element_type,
-
-    # 25.1 ArrayBuffer Objects
-    # 25.2 SharedArrayBuffer Objects
-
-        # ArrayBuffer_: an object with an [[ArrayBufferData]] internal slot
-        'an ArrayBuffer'                        : T_ArrayBuffer_object_,
-        'a SharedArrayBuffer'                   : T_SharedArrayBuffer_object_,
-        'an ArrayBuffer or SharedArrayBuffer'   : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
-        'an ArrayBuffer or a SharedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
-
-    # 25.1.1 [ArrayBuffer Objects] Notation
-        'a read-modify-write modification function': T_ReadModifyWrite_modification_closure,
-
-    # 25.4.1 WaiterList Objects
-        'a WaiterList' : T_WaiterList,
-
-    # 25.5.2.1
-        'a JSON Serialization Record' : T_JSON_Serialization_Record,
-
-    # 26.1 WeakRef Objects
-        'a WeakRef': T_WeakRef_object_,
-
-    # 26.2 FinalizationRegistry Objects
-        'a FinalizationRegistry' : T_FinalizationRegistry_object_,
-
-    # 27.1.1.2 The Iterator Interface
-        'an Iterator'       : T_Iterator_object_,
-
-    # 27.2 Promise Objects
-        'a Promise'    : T_Promise_object_,
-
-    # 27.2.1.1 PromiseCapability Record
-        'a PromiseCapability Record'    : T_PromiseCapability_Record,
-        'a PromiseCapability Record for an intrinsic %Promise%': T_PromiseCapability_Record,
-
-    # 27.2.1.2 PromiseReaction Records
-        'a PromiseReaction Record' : T_PromiseReaction_Record,
-
-    # 27.2.1.3 CreateResolvingFunctions
-        'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)' : T_ResolvingFunctions_record_,
-
-    # 27.2.2.1 NewPromiseReactionJob
-        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
-
-    # 27.2.2.2 NewPromiseResolveThenableJob
-        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
-
-    # 27.5 Generator Objects
-        'a Generator' : T_Iterator_object_,
-
-    # 27.6 AsyncGenerator Objects
-        'an AsyncGenerator': T_AsyncGenerator_object_,
-
-    # 29.1 Memory Model Fundamentals
-        'a ReadSharedMemory or ReadModifyWriteSharedMemory event':
-            T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event,
-        'a List of either WriteSharedMemory or ReadModifyWriteSharedMemory events':
-            ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event),
 
     # 29.4 Candidate Executions
-        'a candidate execution': T_candidate_execution,
         'an execution'         : T_candidate_execution, # ???
-
         'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_event,
-
-    # 29.5 Abstract Operations for the Memory Model
-        'a Set of events' : T_Set,
 
 }
 
@@ -7002,7 +6627,379 @@ def tc_logical(logical_structure, env0, asserting):
     else:
         assert 0
 
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# type-bracket dict (unfortunately same initials as 'to be determined')
+tbd = DecoratedFuncDict()
+
+def type_bracket_for(vd, env):
+    assert vd.prod.lhs_s in [
+        '{VALUE_DESCRIPTION}',
+        '{VAL_DESC}',
+        '{LITERAL}',
+        '{LIST_ELEMENTS_DESCRIPTION}',
+    ], str(vd.prod)
+
+    assert env is None
+
+    vd_p = str(vd.prod)
+
+    try:
+        result = tbd[vd_p]
+    except KeyError:
+        stderr()
+        stderr("No handler:")
+        stderr(f"@tbd.put({vd_p!r})")
+        stderr("or")
+        stderr(f"tbd[{vd_p!r}] = ")
+        sys.exit(1)
+
+    if callable(result):
+        result = result(vd, env)
+
+    if isinstance(result, Type):
+        # It's a type that exactly represents
+        # the set of values described by {vd}.
+        type_bracket = (result, result)
+    elif len(result) == 2:
+        assert isinstance(result[0], Type)
+        assert isinstance(result[1], Type)
+        type_bracket = result
+    else:
+        assert 0, result
+
+    return type_bracket
+
 # ------------------------------------------------------------------------------
+
+def a_subset_of(t): return (T_0, t)
+
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}')
+@tbd.put('{VAL_DESC} : {LITERAL}')
+@tbd.put('{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}')
+def _(vd, env):
+    [child] = vd.children
+    return type_bracket_for(child, env)
+
+@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+def _(value_description, env):
+    result_sub_t = T_0
+    result_sup_t = T_0
+    for val_desc in value_description.children:
+        (sub_t, sup_t) = type_bracket_for(val_desc, env)
+        result_sub_t |= sub_t
+        result_sup_t |= sup_t
+    return (result_sub_t, result_sup_t)
+
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}')
+def _(value_description, env):
+    # [pos_desc, neg_desc] = value_description.children
+    # t = type_bracket_for(pos_desc) - type_bracket_for(neg_desc)
+    vd_st = value_description.source_text()
+    if vd_st == 'an ECMAScript language value, but not a Number':
+        return T_Undefined | T_Null | T_Boolean | T_BigInt | T_String | T_Symbol | T_Object
+    elif vd_st == 'an ECMAScript language value, but not *undefined* or *null*':
+        return T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
+    elif vd_st == 'an ECMAScript language value, but not a TypedArray':
+        return a_subset_of(T_Tangible_)
+    elif vd_st == 'a Number, but not *NaN*':
+        return T_FiniteNumber_ | T_InfiniteNumber_
+    elif vd_st == 'an Object, but not a TypedArray or an ArrayBuffer':
+        return a_subset_of(T_Object)
+    else:
+        assert 0, vd_st
+
+# ------------------
+
+@tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION}')
+def _(val_desc, env):
+    [led] = val_desc.children
+    (sub_t, sup_t) = type_bracket_for(led, env)
+    return (ListType(sub_t), ListType(sup_t))
+
+@tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})')
+@tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})')
+@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})')
+@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records that have {dsb_word} and {dsb_word} fields')
+def _(val_desc, env):
+    vd_st = val_desc.source_text()
+    t = {
+        'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)': T_CharacterClassResultRecord_,
+        'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
+        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
+        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
+        'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
+        'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
+        'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
+        'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)': T_ResolvingFunctions_record_,
+        'Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': T_ImportMeta_record_,
+        'Records that have [[Module]] and [[ExportName]] fields': T_ExportResolveSet_Record_,
+    }[vd_st]
+    return t
+
+@tbd.put('{VAL_DESC} : a non-empty List of {LIST_ELEMENTS_DESCRIPTION}')
+def _(val_desc, env):
+    [led] = val_desc.children
+    (led_sub_t, led_sup_t) = type_bracket_for(led, env)
+    return a_subset_of(ListType(led_sup_t))
+    # inexact because of 'non-empty'
+
+
+@tbd.put('{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}')
+def _(val_desc, env):
+    assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
+    return T_RegExpMatcher_
+
+@tbd.put('{VAL_DESC} : an integer in {INTERVAL}')
+def _(val_desc, env):
+    [interval] = val_desc.children
+    if env is None:
+        if interval.source_text() in [
+            'the inclusive interval from 0 to 23',
+            'the inclusive interval from 0 to 59',
+            'the inclusive interval from 0 to 999',
+            'the inclusive interval from 1 to 12',
+            'the inclusive interval from 1 to 31',
+            'the inclusive interval from 2 to 36',
+        ]:
+            sup_t = T_MathNonNegativeInteger_
+        else:
+            assert 0, interval
+    else:
+        env.assert_expr_is_of_type(interval, T_MathInteger_)
+        sup_t = T_MathInteger_
+    return a_subset_of(sup_t)
+
+@tbd.put('{VAL_DESC} : an? {ENVIRONMENT_RECORD_KIND} Environment Record')
+def _(val_desc, env):
+    [kind] = val_desc.children
+    return type_for_environment_record_kind(kind)
+
+@tbd.put('{VAL_DESC} : an? {nonterminal} Parse Node')
+def _(val_desc, env):
+    [nonterminal] = val_desc.children
+
+    if val_desc.source_text() == 'a |ReservedWord|':
+        # In Early Errors for ExportDeclaration, there is the condition
+        #     StringValue of _n_ is a |ReservedWord|
+        # This isn't asking if StringValue of _n_ is a Parse Node
+        # that is an instance of |ReservedWord|.
+        # Rather, it's asking if it's a String that could be matched by |ReservedWord|.
+        return a_subset_of(T_String)
+
+    return ptn_type_for(nonterminal)
+
+    # '_x_ is a {nonterminal}'
+    # might also mean that _x_ is a Parse Node
+    # that isn't itself an instance of {nonterminal},
+    # but connects by unit derivations to one that is.
+
+tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
+tbd['{VAL_DESC} : a BigInt'] = T_BigInt
+tbd['{VAL_DESC} : a Boolean'] = T_Boolean
+tbd['{VAL_DESC} : a CharSet'] = T_CharSet
+tbd['{VAL_DESC} : a ClassFieldDefinition Record'] = T_ClassFieldDefinition_Record
+tbd['{VAL_DESC} : a ClassStaticBlockDefinition Record'] = T_ClassStaticBlockDefinition_Record
+tbd['{VAL_DESC} : a Completion Record'] = T_Abrupt | T_Normal
+tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
+tbd['{VAL_DESC} : a Data Block'] = T_Data_Block
+tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
+tbd['{VAL_DESC} : a For-In Iterator'] = T_Iterator_object_
+tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
+tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
+tbd['{VAL_DESC} : a Job Abstract Closure'] = T_Job
+tbd['{VAL_DESC} : a JobCallback Record'] = T_JobCallback_Record
+tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
+tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
+tbd['{VAL_DESC} : a MatchState'] = T_MatchState
+tbd['{VAL_DESC} : a Matcher'] = T_Matcher
+tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
+tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
+tbd['{VAL_DESC} : a Module Record'] = T_Module_Record
+tbd['{VAL_DESC} : a Number'] = T_Number
+tbd['{VAL_DESC} : a Parse Node'] = T_Parse_Node
+tbd['{VAL_DESC} : a Private Name'] = T_Private_Name
+tbd['{VAL_DESC} : a PrivateElement'] = T_PrivateElement
+tbd['{VAL_DESC} : a PrivateEnvironment Record'] = T_PrivateEnvironment_Record
+tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
+tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
+tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
+tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
+tbd['{VAL_DESC} : a Property Descriptor'] = T_Property_Descriptor
+tbd['{VAL_DESC} : a Proxy exotic object'] = T_Proxy_exotic_object_
+tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+tbd['{VAL_DESC} : a Realm Record'] = T_Realm_Record
+tbd['{VAL_DESC} : a Reference Record'] = T_Reference_Record
+tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
+tbd['{VAL_DESC} : a ResolvedBinding Record'] = T_ResolvedBinding_Record
+tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
+tbd['{VAL_DESC} : a Set of events'] = T_Set
+tbd['{VAL_DESC} : a Shared Data Block'] = T_Shared_Data_Block
+tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
+tbd['{VAL_DESC} : a Source Text Module Record'] = T_Source_Text_Module_Record
+tbd['{VAL_DESC} : a String exotic object'] = T_String_exotic_object_
+tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
+tbd['{VAL_DESC} : a String'] = T_String
+tbd['{VAL_DESC} : a Super Reference Record'] = a_subset_of(T_Reference_Record)
+tbd['{VAL_DESC} : a Symbol'] = T_Symbol
+tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
+tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
+tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
+tbd['{VAL_DESC} : a Unicode property name'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a Unicode property value'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
+tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
+tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
+tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
+tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
+tbd['{VAL_DESC} : a code point'] = T_code_point_
+tbd['{VAL_DESC} : a code unit'] = T_code_unit_
+tbd['{VAL_DESC} : a constructor'] = T_constructor_object_
+tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
+tbd['{VAL_DESC} : a function object'] = T_function_object_
+tbd['{VAL_DESC} : a grammar symbol'] = T_grammar_symbol_
+tbd['{VAL_DESC} : a mathematical value'] = T_MathReal_
+tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
+tbd['{VAL_DESC} : a non-negative integer that is evenly divisible by 4'] = a_subset_of(T_MathNonNegativeInteger_)
+tbd['{VAL_DESC} : a non-negative integer'] = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
+tbd['{VAL_DESC} : a nonterminal in one of the ECMAScript grammars'] = a_subset_of(T_grammar_symbol_)
+tbd['{VAL_DESC} : a normal completion'] = T_Normal
+tbd['{VAL_DESC} : a positive integer'] = a_subset_of(T_MathNonNegativeInteger_)
+tbd['{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*'] = ListType(T_String | T_Undefined)
+tbd['{VAL_DESC} : a property key or Private Name'] = T_String | T_Symbol | T_Private_Name
+tbd['{VAL_DESC} : a property key'] = T_String | T_Symbol
+tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
+tbd['{VAL_DESC} : a return completion'] = T_return_
+tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
+tbd['{VAL_DESC} : a set of algorithm steps'] = T_alg_steps
+tbd['{VAL_DESC} : a throw completion'] = T_throw_
+tbd['{VAL_DESC} : a time value'] = T_IntegralNumber_
+tbd['{VAL_DESC} : an Abstract Closure with no parameters'] = ProcType([], T_Top_)
+tbd['{VAL_DESC} : an Abstract Closure with two parameters'] = ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_)
+tbd['{VAL_DESC} : an Abstract Closure'] = T_proc_
+tbd['{VAL_DESC} : an Array exotic object'] = T_Array_object_
+tbd['{VAL_DESC} : an Array'] = T_Array_object_
+tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
+tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
+tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
+tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_object_)
+tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
+tbd['{VAL_DESC} : an ECMAScript language value'] = T_Tangible_
+tbd['{VAL_DESC} : an Environment Record'] = T_Environment_Record
+tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
+tbd['{VAL_DESC} : an Iterator Record'] = T_Iterator_Record
+tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
+tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an Object that has a {dsb_word} internal slot'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an Object'] = T_Object
+tbd['{VAL_DESC} : an abrupt completion'] = T_Abrupt
+tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
+tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an execution context'] = T_execution_context
+tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
+tbd['{VAL_DESC} : an integer'] = T_MathInteger_
+tbd['{VAL_DESC} : an integral Number'] = T_IntegralNumber_
+tbd['{VAL_DESC} : an internal slot name'] = T_SlotName_
+tbd['{VAL_DESC} : an ordinary object'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : any value except a Completion Record'] = T_Tangible_ | T_Intangible_
+tbd['{VAL_DESC} : anything'] = T_host_defined_
+tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
+tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
+tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
+
+# Note re 'a time value':
+# time value is defined to be 'IntegralNumber_ | NaN_Number_',
+# but the only use is for UTC()'s return value,
+# which is the result of a subtraction,
+# so probably shouldn't be NaN.
+# So I've translated it as T_IntegralNumber_.
+# I.e., the spec should say "a *finite* time value".
+
+# ------------------
+
+@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : {ERROR_TYPE} objects')
+def _(led, env):
+    [error_type] = led.children
+    return type_for_ERROR_TYPE(error_type)
+
+@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : {nonterminal} Parse Nodes')
+def _(led, env):
+    [nonterminal] = led.children
+    return ptn_type_for(nonterminal)
+
+tbd['{LIST_ELEMENTS_DESCRIPTION} : BigInts'                            ] = T_BigInt
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records'              ] = T_Cyclic_Module_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values'         ] = T_Tangible_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'                ] = T_ExportEntry_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_ImportEntry_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes'                        ] = T_Parse_Node
+tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Strings'                            ] = T_String
+tbd['{LIST_ELEMENTS_DESCRIPTION} : agent signifiers'                   ] = T_agent_signifier_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
+tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_character_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Match_Record | T_Undefined
+tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*'           ] = T_String | T_Null
+tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*'      ] = T_String | T_Undefined
+tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+tbd['{LIST_ELEMENTS_DESCRIPTION} : internal slot names'                ] = T_SlotName_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types' ] = T_LangTypeName_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : names of internal slots'            ] = T_SlotName_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_String | T_Symbol
+
+# ------------------
+
+@tbd.put('{LITERAL} : {MATH_LITERAL}')
+def _(literal, env):
+    [math_literal] = literal.children
+    r = math_literal.prod.rhs_s
+    if r == '+&infin;':
+        return T_MathPosInfinity_
+    elif r == '-&infin;':
+        return T_MathNegInfinity_
+    elif r == '{dec_int_lit}':
+        return a_subset_of(T_MathInteger_)
+    else:
+        assert 0, r
+
+@tbd.put('{LITERAL} : {NUMBER_LITERAL}')
+def _(literal, env):
+    [number_literal] = literal.children
+    r = number_literal.prod.rhs_s
+    if r == '{starred_nan_lit}':
+        return T_NaN_Number_
+    else:
+        assert 0, r
+
+@tbd.put('{LITERAL} : {tilded_word}')
+def _(literal, env):
+    [tilded_word] = literal.children
+    return type_for_tilded_word(tilded_word)
+
+def type_for_tilded_word(tilded_word):
+    assert tilded_word.prod.lhs_s == '{tilded_word}'
+    [chars] = tilded_word.children
+    assert chars[0] == '~'
+    assert chars[-1] == '~'
+    uchars = chars[1:-1].replace('-', '_').replace('+', '_')
+    return NamedType(f"tilde_{uchars}_")
+
+tbd['{LITERAL} : *null*'] = T_Null
+tbd['{LITERAL} : *undefined*'] = T_Undefined
+tbd['{LITERAL} : {BOOL_LITERAL}'] = a_subset_of(T_Boolean)
+tbd['{LITERAL} : {STR_LITERAL}'] = a_subset_of(T_String)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def tc_expr(expr, env0, expr_value_will_be_discarded=False):
     p = str(expr.prod)
