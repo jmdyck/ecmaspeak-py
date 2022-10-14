@@ -511,13 +511,15 @@
     {EX} contains a Private Name whose {dsb_word} is {var}
     {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} does not contain {EX}
+    {EX} is also {VAL_DESC}
     {EX} is an element of {var}
     {EX} is different from {EX}
     {EX} is empty
     {EX} is in {EX}
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
-    {EX} is neither {LITERAL} nor the active function object
-    {EX} is neither {LITERAL} nor {LITERAL}
+    {EX} is neither {VAL_DESC} nor {VAL_DESC}
+    {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
+    {EX} is never {VAL_DESC}
     {EX} is not an element of {var}
     {EX} is not present
     {EX} is not the same value as {var}
@@ -533,8 +535,6 @@
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same
     {LOCAL_REF} is contained in strict mode code
-    {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}
-    {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}
     {LOCAL_REF} is {h_emu_grammar}
@@ -635,13 +635,11 @@
     {var} has {var} in its range
     {var} imports a specific binding for this export
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
-    {var} is also {LITERAL}
     {var} is as small as possible
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}
-    {var} is never an abrupt completion
     {var} is not a {h_emu_xref} or {h_emu_xref}
     {var} is not already suspended
     {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}
@@ -1523,6 +1521,7 @@
     source text
     the Environment Record for a |Catch| clause
     the String value {STR_LITERAL}
+    the active function object
     the empty String (its length is 0)
     the execution context of a generator
     the single code point {code_point_lit} or {code_point_lit}

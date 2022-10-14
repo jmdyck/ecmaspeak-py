@@ -4540,28 +4540,6 @@ def tc_cond_(cond, env0, asserting):
     # ---
 
     elif p in [
-        r"{CONDITION_1} : {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}",
-        r"{CONDITION_1} : {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}",
-    ]:
-        [local_ref, *nont_] = children
-        types = []
-        for nonterminal in nont_:
-            types.append(ptn_type_for(nonterminal))
-        target_t = union_of_types(types)
-        copula = 'isnt a' if 'neither' in p else 'is a'
-        return env0.with_type_test(local_ref, copula, target_t, asserting)
-        # XXX at least some of these are using
-        # a more complicated meaning for "is a".
-
-    # ---
-
-    elif p in [
-        r"{CONDITION_1} : {var} is never an abrupt completion",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
-
-    elif p in [
         r"{CONDITION_1} : {var} is now an empty List",
     ]:
         [var] = children
@@ -4596,7 +4574,8 @@ def tc_cond_(cond, env0, asserting):
 
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
-        r"{CONDITION_1} : {var} is also {LITERAL}",
+        r"{CONDITION_1} : {EX} is also {VAL_DESC}",
+        r"{CONDITION_1} : {EX} is never {VAL_DESC}",
         r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}",
         r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}",
     ]:
@@ -4634,7 +4613,10 @@ def tc_cond_(cond, env0, asserting):
                 #
                 return env0.with_type_test(var, copula, t, asserting)
 
-        copula = 'isnt a' if 'is not' in p else 'is a'
+        if 'not' in p or 'never' in p:
+            copula = 'isnt a'
+        else:
+            copula = 'is a'
 
         # special handling for Completion Records:
         while True: # ONCE
@@ -4650,51 +4632,21 @@ def tc_cond_(cond, env0, asserting):
         return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
 
     elif p in [
-        r"{CONDITION_1} : {EX} is neither {LITERAL} nor {LITERAL}",
+        r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}",
+        r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC}",
     ]:
-        [ex, lita, litb] = children
+        [ex, *vds] = children
 
-        # special handling for Completion Records' [[Type]] field
-        while True: # ONCE
-            dotting = ex.is_a('{DOTTING}')
-            if dotting is None: break
-            (lhs, dsbn) = dotting.children
-            dsbn_name = dsbn.source_text()[2:-2]
-            if dsbn_name != 'Type': break
-            ta = type_corresponding_to_comptype_literal(lita)
-            tb = type_corresponding_to_comptype_literal(litb)
-            assert 'never' not in p
-            assert 'neither' not in p
-            return env0.with_type_test(lhs, 'is a', ta | tb, asserting)
+        sub_t = T_0
+        sup_t = T_0
+        for vd in vds:
+            (x_sub_t, x_sup_t) = type_bracket_for(vd, env0)
+            sub_t |= x_sub_t
+            sup_t |= x_sup_t
 
-        (lita_type, lita_env) = tc_expr(lita, env0); assert lita_env is env0
-        (litb_type, litb_env) = tc_expr(litb, env0); assert litb_env is env0
+        return env0.with_type_test(ex, 'isnt a', [sub_t, sup_t], asserting)
 
-        copula = 'isnt a' if ('never' in p or 'neither' in p or 'not' in p) else 'is a'
-
-        # It's only a type-test if the literals are from very small types.
-
-        if lita_type in single_value_types and litb_type in single_value_types:
-            return env0.with_type_test(ex, copula, lita_type | litb_type, asserting)
-
-        elif lita_type == litb_type:
-            (t, env1) = tc_expr(ex, env0)
-            if t == lita_type:
-                pass
-            else:
-                env1 = env1.with_expr_type_replaced(ex, lita_type)
-            return (env1, env0)
-
-        elif lita_type == T_Boolean and litb_type == T_Undefined:
-            # Evaluation of RelationalExpression: If _r_ is *true* or *undefined*, ...
-            env0.assert_expr_is_of_type(ex, T_Boolean | T_Undefined)
-            return (env0, env0)
-
-        elif lita_type == T_NaN_Number_ and litb_type == T_InfiniteNumber_:
-            return (env0, env0) #XXX
-
-        else:
-            assert 0, (lita_type, litb_type)
+    # -------
 
     elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}':
         [exa, exb, lit] = children
@@ -5637,10 +5589,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(x, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is neither {LITERAL} nor the active function object":
-        [ex, lit] = children
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context":
         [vara, varb] = children
         env0.assert_expr_is_of_type(vara, T_execution_context)
@@ -6505,6 +6453,7 @@ tbd['{VAL_DESC} : anything'] = T_host_defined_
 tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
 tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : the String value {STR_LITERAL}'] = a_subset_of(T_String)
+tbd['{VAL_DESC} : the active function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : the empty String (its length is 0)'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
