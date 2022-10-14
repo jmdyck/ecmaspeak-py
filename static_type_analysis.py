@@ -1390,90 +1390,6 @@ def convert_nature_node_to_type(nature_node):
     (_, sup_t) = type_bracket_for(nature_node, None)
     return sup_t
 
-# ------------------------------------------------------------------------------
-
-def convert_nature_to_type(nature):
-    assert 'VAR' not in nature, nature
-
-    try:
-        t = nature_to_type[nature]
-        assert isinstance(t, Type), nature
-    except KeyError:
-        print(nature, file=un_f)
-        t = NamedType(nature)
-
-    return t
-
-nature_to_type = {
-        'unknown': T_TBD,
-
-    # 5.1.4 The Syntactic Grammar
-        'Parse Node'                                                            : T_Parse_Node,
-
-    # 6.1 ECMAScript language types
-        'an ECMAScript language value'                       : T_Tangible_,
-
-    # 6.1.3 The Boolean Type
-        'a Boolean' : T_Boolean,
-
-    # 6.1.4 The String Type
-        'a String'                  : T_String,
-
-    # 6.2.1 The List and Record Specification Types
-        'a List of ECMAScript language values'        : ListType(T_Tangible_),
-
-    # (6.2.6 The Environment Record Specification Type)
-    # 9.1 Environment Records
-        'a Declarative Environment Record' : T_Declarative_Environment_Record,
-        'a Global Environment Record'      : T_Global_Environment_Record,
-        'a Module Environment Record'      : T_Module_Environment_Record,
-        'a Function Environment Record'    : T_Function_Environment_Record,
-        'an Object Environment Record'     : T_Object_Environment_Record,
-
-    # 10.1 Ordinary Object
-        'an ordinary object' : T_Object,
-
-    # 10.2 ECMAScript Function Objects
-    # 10.3 Built-in Function Objects
-    # 20.2 Function Objects
-        'an ECMAScript function object'                               : T_function_object_,
-        'a built-in function object'                                  : T_function_object_,
-
-    # 10.4.1 Bound Function Exotic Objects
-        'a bound function exotic object' : T_bound_function_exotic_object_,
-
-    # 10.4.2 Array Exotic Objects
-    # 23.1 Array Objects
-        'an Array exotic object' : T_Array_object_,
-
-    # 10.4.3 String Exotic Objects
-        'a String exotic object' : T_String_exotic_object_,
-
-    # 10.4.4 Arguments Exotic Objects
-        'an arguments exotic object' : T_Object,
-
-    # 10.4.5 Integer-Indexed Exotic Objects
-        'an Integer-Indexed exotic object': T_Integer_Indexed_object_,
-
-    # 10.4.6 Module Namespace Exotic Objects
-        'a module namespace exotic object' : T_Object,
-
-    # 10.4.7 Immutable Prototype Exotic Objects
-        'an immutable prototype exotic object' : T_Object,
-
-    # 10.5 Proxy Object ...
-        'a Proxy exotic object': T_Proxy_exotic_object_,
-
-    # 16.2.1.4 Abstract Module Records
-        'a Cyclic Module Record'                             : T_Cyclic_Module_Record,
-        'a Source Text Module Record'                        : T_Source_Text_Module_Record,
-
-    # 29.4 Candidate Executions
-        'an execution'         : T_candidate_execution, # ???
-        'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_event,
-
-}
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 type_tweaks_tuples = [
@@ -6551,6 +6467,45 @@ tbd['{LITERAL} : {BIGINT_LITERAL}'] = a_subset_of(T_BigInt)
 tbd['{LITERAL} : {BOOL_LITERAL}'] = a_subset_of(T_Boolean)
 tbd['{LITERAL} : {STR_LITERAL}'] = a_subset_of(T_String)
 tbd['{LITERAL} : {code_unit_lit}'] = a_subset_of(T_code_unit_)
+
+# ------------------------------------------------------------------------------
+
+def convert_nature_to_type(nature):
+    fake_p = '{VAL_DESC} : ' + nature
+    if fake_p in tbd:
+        tb = tbd[fake_p]
+        if isinstance(tb, Type):
+            return tb
+        elif len(tb) == 2:
+            (_, sup_t) = tb
+            return sup_t
+        else:
+            assert 0, tb
+
+    else:
+        return {
+            # built-ins:
+            'a List of ECMAScript language values': ListType(T_Tangible_),
+
+            # emu-eqn:
+            'unknown': T_TBD,
+
+            # memory model:
+            'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_event,
+
+            # for phrase:
+            'Parse Node': T_Parse_Node,
+
+            'an immutable prototype exotic object': T_Object,
+
+            'an execution': T_candidate_execution, # ???
+
+            'a Declarative Environment Record': T_Declarative_Environment_Record,
+            'a Function Environment Record': T_Function_Environment_Record,
+            'a Global Environment Record': T_Global_Environment_Record,
+            'a Module Environment Record': T_Module_Environment_Record,
+            'an Object Environment Record': T_Object_Environment_Record,
+        }[nature]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
