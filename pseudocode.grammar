@@ -511,8 +511,6 @@
     {EX} contains a Private Name whose {dsb_word} is {var}
     {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} does not contain {EX}
-    {EX} is -1
-    {EX} is a non-negative integer less than or equal to {EX}
     {EX} is an element of {var}
     {EX} is different from {EX}
     {EX} is empty
@@ -520,7 +518,6 @@
     {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
     {EX} is neither {LITERAL} nor the active function object
     {EX} is neither {LITERAL} nor {LITERAL}
-    {EX} is not -1
     {EX} is not an element of {var}
     {EX} is not present
     {EX} is not the same value as {var}
@@ -535,12 +532,7 @@
     {EX} is {var}
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same
-    {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}
-    {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
-    {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is contained in strict mode code
-    {LOCAL_REF} is either an? {nonterminal} or an? {nonterminal}
-    {LOCAL_REF} is either an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
@@ -553,19 +545,16 @@
     {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
     {NAMED_OPERATION_INVOCATION} contains {starred_str}
-    {NAMED_OPERATION_INVOCATION} is a {nonterminal}
     {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is not empty
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
     {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`
     {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
     {NUM_COMPARISON}
     {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
     {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
-    {PP_NAMED_OPERATION_INVOCATION} is a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
     {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
@@ -645,52 +634,16 @@
     {var} has {EX} elements
     {var} has {var} in its range
     {var} imports a specific binding for this export
-    {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}
-    {var} is a List of a single Number
-    {var} is a List of errors
-    {var} is a Proxy object
-    {var} is a ReadModifyWriteSharedMemory event
-    {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
-    {var} is a UTF-16 code unit
-    {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
-    {var} is a WriteSharedMemory event
-    {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
-    {var} is a fully populated Property Descriptor
-    {var} is a non-negative integer which is &le; {EXPR}
-    {var} is a non-negative integral Number
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
-    {var} is a possibly empty List
-    {var} is a property value or property value alias for the Unicode property {var} listed in {h_a}
-    {var} is a {h_emu_xref}
     {var} is also {LITERAL}
-    {var} is an IEEE 754-2019 binary32 NaN value
-    {var} is an IEEE 754-2019 binary64 NaN value
-    {var} is an array index
-    {var} is an extensible object that does not have a {starred_str} own property
-    {var} is an extensible ordinary object with no own properties
-    {var} is an instance of a nonterminal
-    {var} is an instance of a production in {h_emu_xref}
-    {var} is an instance of the production {h_emu_grammar}
-    {var} is an instance of {var}
-    {var} is an odd integral Number
-    {var} is an ordinary, extensible object with no non-configurable properties
-    {var} is an? {PROPERTY_KIND} property
-    {var} is an? {nonterminal}
     {var} is as small as possible
     {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}
     {var} is never an abrupt completion
-    {var} is not a List of errors
-    {var} is not a {h_emu_xref}
     {var} is not a {h_emu_xref} or {h_emu_xref}
-    {var} is not a {nonterminal}
     {var} is not already suspended
-    {var} is not an array index
-    {var} is not an integer index
     {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}
     {var} is not currently an element of {var}
     {var} is not empty
@@ -700,27 +653,14 @@
     {var} is not in {var}
     {var} is not on the list of waiters in any WaiterList
     {var} is not on the list of waiters in {var}
-    {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super` or `this`
-    {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super`, or `this`
-    {var} is not the Environment Record for a |Catch| clause
     {var} is not the same as {var}
     {var} is now an empty List
     {var} is now the running execution context
     {var} is odd
     {var} is on the list of waiters in {var}
-    {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}
-    {var} is the String value {STR_LITERAL}
-    {var} is the empty String (its length is 0)
-    {var} is the execution context of a generator
     {var} is the same Number value as {var}
     {var} is the same sequence of code units as {var}
-    {var} is the single code point {code_point_lit} or {code_point_lit}
-    {var} is the value {LITERAL}
-    {var} is the {nonterminal} of an? {nonterminal}
-    {var} is the {nonterminal} {TERMINAL}
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
-    {var} is {nonterminal}
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
     {var} or {var} is {LITERAL}
@@ -1394,6 +1334,10 @@
     either {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of: {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}
     {VAL_DESC} or {VAL_DESC}
     {VAL_DESC}, but not {VALUE_DESCRIPTION}
@@ -1404,6 +1348,7 @@
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :
+    -1
     ECMAScript source text
     a BigInt
     a Boolean
@@ -1419,7 +1364,9 @@
     a JSON Serialization Record
     a Job Abstract Closure
     a JobCallback Record
+    a List of a single Number
     a List of {LIST_ELEMENTS_DESCRIPTION}
+    a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}
     a Match Record
     a MatchResult
     a MatchState
@@ -1438,7 +1385,10 @@
     a PromiseReaction Record
     a Property Descriptor
     a Proxy exotic object
+    a Proxy object
+    a ReadModifyWriteSharedMemory event
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
+    a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
     a Realm Record
     a Record whose field names are intrinsic keys and whose values are objects
     a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})
@@ -1459,21 +1409,29 @@
     a Symbol
     a TypedArray
     a TypedArray element type
+    a UTF-16 code unit
     a Unicode code point
     a Unicode property name
+    a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     a Unicode property value
+    a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
+    a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
     a WaiterList
     a WeakRef
+    a WriteSharedMemory event
+    a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
     a bound function exotic object
     a built-in function object
     a callable Object
     a candidate execution
     a candidate execution Record
+    a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
     a character
     a code point
     a code unit
     a constructor
     a finite time value
+    a fully populated Property Descriptor
     a function object
     a function that returns a promise for an <i>IteratorResult</i> object
     a function that returns an <i>AsyncIterator</i> object
@@ -1486,14 +1444,19 @@
     a module namespace exotic object
     a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
     a non-negative integer
+    a non-negative integer less than or equal to {EX}
     a non-negative integer that is evenly divisible by 4
+    a non-negative integer which is &le; {EXPR}
+    a non-negative integral Number
     a nonterminal in one of the ECMAScript grammars
     a normal completion
     a normal completion containing {VALUE_DESCRIPTION}
     a positive integer
+    a possibly empty List
     a possibly empty List, each of whose elements is a String or *undefined*
     a property key
     a property key or Private Name
+    a property value or property value alias for the Unicode property {var} listed in {h_a}
     a read-modify-write modification function
     a reads-bytes-from mathematical function
     a reads-from Relation
@@ -1503,6 +1466,7 @@
     a synchronizes-with Relation
     a throw completion
     a time value
+    a {h_emu_xref}
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}
     an Abstract Closure with no parameters
@@ -1517,6 +1481,8 @@
     an ECMAScript function object
     an ECMAScript language value
     an Environment Record
+    an IEEE 754-2019 binary32 NaN value
+    an IEEE 754-2019 binary64 NaN value
     an Integer-Indexed exotic object
     an Iterator
     an Iterator Record
@@ -1527,24 +1493,45 @@
     an agent signifier
     an agent-order Relation
     an arguments exotic object
+    an array index
     an execution context
+    an extensible object that does not have a {starred_str} own property
+    an extensible ordinary object with no own properties
     an immutable prototype exotic object
     an initialized RegExp instance
     an instance of a concrete subclass of Module Record
+    an instance of a nonterminal
+    an instance of a production in {h_emu_xref}
+    an instance of the production {h_emu_grammar}
+    an instance of {var}
     an integer
     an integer &ge; {dsb_word}
     an integer in {INTERVAL}
+    an integer index
     an integral Number
     an internal slot name
+    an odd integral Number
     an ordinary object
+    an ordinary, extensible object with no non-configurable properties
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
+    an? {PROPERTY_KIND} property
+    an? {nonterminal}
     an? {nonterminal} Parse Node
     any value except a Completion Record
     anything
     some other definition of a function's behaviour provided in this specification
     source text
+    the Environment Record for a |Catch| clause
+    the String value {STR_LITERAL}
+    the empty String (its length is 0)
+    the execution context of a generator
+    the single code point {code_point_lit} or {code_point_lit}
+    the {nonterminal} of an? {nonterminal}
+    the {nonterminal} {TERMINAL}
     {LITERAL}
     {backticked_oth}
+    {backticked_word}
+    {nonterminal}
 
 {LIST_ELEMENTS_DESCRIPTION} :
     Agent Events Records
@@ -1566,6 +1553,7 @@
     Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})
     Source Text Module Records
     Strings
+    WriteSharedMemory or ReadModifyWriteSharedMemory events
     agent signifiers
     byte values
     characters
@@ -1574,6 +1562,7 @@
     either Strings or *null*
     either Strings or *undefined*
     either WriteSharedMemory or ReadModifyWriteSharedMemory events
+    errors
     events
     internal slot names
     names of ECMAScript Language Types
@@ -1603,6 +1592,7 @@
 {LITERAL} :
     *null*
     *undefined*
+    the value *null*
     {BIGINT_LITERAL}
     {BOOL_LITERAL}
     {MATH_LITERAL}

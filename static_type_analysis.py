@@ -4540,11 +4540,6 @@ def tc_cond_(cond, env0, asserting):
     # ---
 
     elif p in [
-        r"{CONDITION_1} : {LOCAL_REF} is an? {nonterminal} or an? {nonterminal}",
-        r"{CONDITION_1} : {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}",
-        r"{CONDITION_1} : {LOCAL_REF} is an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}",
-        r"{CONDITION_1} : {LOCAL_REF} is either an? {nonterminal} or an? {nonterminal}",
-        r"{CONDITION_1} : {LOCAL_REF} is either an? {nonterminal}, an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}",
         r"{CONDITION_1} : {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal}",
         r"{CONDITION_1} : {LOCAL_REF} is neither an? {nonterminal} nor an? {nonterminal} nor an? {nonterminal}",
     ]:
@@ -4558,11 +4553,6 @@ def tc_cond_(cond, env0, asserting):
         # XXX at least some of these are using
         # a more complicated meaning for "is a".
 
-    elif p == r'{CONDITION_1} : {var} is not a {nonterminal}':
-        [var, nonterminal] = children
-        target_t = ptn_type_for(nonterminal)
-        return env0.with_type_test(var, 'isnt a', target_t, asserting)
-
     # ---
 
     elif p in [
@@ -4571,41 +4561,11 @@ def tc_cond_(cond, env0, asserting):
         [var] = children
         return env0.with_type_test(var, 'isnt a', T_Abrupt, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is a UTF-16 code unit':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_code_unit_, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is the execution context of a generator':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_execution_context, asserting)
-
-    elif p == r"{CONDITION_1} : {var} is a possibly empty List":
-        [list_var] = children
-        return env0.with_type_test(list_var, 'is a', T_List, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a List of errors':
-        [var] = children
-        return env0.with_type_test(var, 'is a', ListType(T_SyntaxError | T_ReferenceError), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is not a List of errors":
-        [list_var] = children
-        return env0.with_type_test(list_var, 'isnt a', ListType(T_SyntaxError | T_ReferenceError), asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a List of WriteSharedMemory or ReadModifyWriteSharedMemory events with length equal to {EX}':
-        [var, ex] = children
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return env0.with_type_test(var, 'is a', ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event), asserting)
-
     elif p in [
         r"{CONDITION_1} : {var} is now an empty List",
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_List)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}":
-        [v, _, _, emu_xref1, emu_xref2] = children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (env0, env0)
 
     elif p in [
@@ -4623,28 +4583,6 @@ def tc_cond_(cond, env0, asserting):
         copula = 'is a' if 'not present' in p else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is an? {PROPERTY_KIND} property':
-        [var, kind] = children
-        t = {
-            'accessor': T_accessor_property_,
-            'data'    : T_data_property_,
-        }[kind.source_text()]
-        return env0.with_type_test(var, 'is a', t, asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is a Proxy object",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Proxy_exotic_object_, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a ReadModifyWriteSharedMemory event':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_ReadModifyWriteSharedMemory_event, asserting)
-
-    elif p == r'{CONDITION_1} : {var} is a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_Shared_Data_Block_event, asserting)
-
     elif p in [
         r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
     ]:
@@ -4652,93 +4590,13 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(literal, T_tilde_unused_)
         return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
 
-    elif p == r'{CONDITION_1} : {var} is a WriteSharedMemory event':
-        [var] = children
-        return env0.with_type_test(var, 'is a', T_WriteSharedMemory_event, asserting)
-
     elif p == r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}":
         [var, nonta, nontb] = children
         return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
 
-    # ----------------------
-    # quasi-type-conditions
-
-    elif p == r"{CONDITION_1} : {var} is a List of a single Number":
-        [var] = children
-        return env0.with_type_test(var, 'is a', [T_0, ListType(T_Number)], asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is an instance of the production {h_emu_grammar}",
-    ]:
-        [local_ref, emu_grammar] = children
-        emu_grammar_text = emu_grammar.source_text()
-        lhs = re.sub(r'<emu-grammar>(\w+) :.*', r'\1', emu_grammar_text)
-        prodn_type = ptn_type_for(lhs)
-        #
-        return env0.with_type_test(local_ref, 'is a', [T_0, prodn_type], asserting)
-
-    elif p in [
-        r'{CONDITION_1} : {var} is an extensible object that does not have a {starred_str} own property',
-    ]:
-        [var, _] = children
-        return env0.with_type_test(var, 'is a', [T_0, T_Object], asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is an ordinary, extensible object with no non-configurable properties",
-        r"{CONDITION_1} : {var} is an extensible ordinary object with no own properties",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', [T_0, T_Object], asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is a non-negative integral Number",
-        r"{CONDITION_1} : {var} is an odd integral Number",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', [T_0, T_IntegralNumber_], asserting)
-
-    elif p == "{CONDITION_1} : {var} is a fully populated Property Descriptor":
-        [var] = children
-        return env0.with_type_test(var, 'is a', [T_0, T_Property_Descriptor], asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is an integer index",
-        r"{CONDITION_1} : {var} is an array index",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'is a', [T_0, T_String], asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is not an array index",
-        r"{CONDITION_1} : {var} is not an integer index",
-    ]:
-        [var] = children
-        return env0.with_type_test(var, 'isnt a', [T_0, T_String], asserting)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is a {h_emu_xref}",
-        r"{CONDITION_1} : {var} is not a {h_emu_xref}",
-    ]:
-        [var, emu_xref] = children
-
-        if emu_xref.source_text() in [
-            '<emu-xref href="#leading-surrogate"></emu-xref>',
-            '<emu-xref href="#trailing-surrogate"></emu-xref>',
-        ]:
-            t = T_code_unit_
-        elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
-            t = T_function_object_
-        else:
-            assert 0
-
-        copula = 'isnt a' if 'not' in p else 'is a'
-
-        return env0.with_type_test(var, copula, [T_0, t], asserting)
-
     elif p in [
         r"{CONDITION_1} : The value of {SETTABLE} is {LITERAL}",
         r"{CONDITION_1} : {var} is also {LITERAL}",
-        r"{CONDITION_1} : {var} is the value {LITERAL}",
         r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}",
         r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}",
     ]:
@@ -4892,19 +4750,6 @@ def tc_cond_(cond, env0, asserting):
             env_or(a_f_env, b_f_env)
         )
 
-    elif p in [
-        r"{CONDITION_1} : {var} is one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}",
-    ]:
-        [var, *lit_] = children
-        assert len(lit_) in [3,4,5,6]
-        lit_types = []
-        for lit in lit_:
-            (ti, envi) = tc_expr(lit, env0)
-            # assert envi is env0
-            lit_types.append(ti)
-        lt = union_of_types(lit_types)
-        return env0.with_type_test(var, 'is a', lt, asserting)
-
     elif p == r'{CONDITION_1} : {var} has an? {DSBN} internal method':
         [var, dsbn] = children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
@@ -4962,47 +4807,6 @@ def tc_cond_(cond, env0, asserting):
         # Whether or not it has that particular slot, it's still an Object.
         # XXX we could be more specific about the sub-kind of Object
         return (env1, env1)
-
-    elif p == r'{CONDITION_1} : {var} is an IEEE 754-2019 binary32 NaN value':
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_)
-        return (env1, env1)
-
-    elif p == r'{CONDITION_1} : {var} is an IEEE 754-2019 binary64 NaN value':
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary64_)
-        return (env1, env1)
-
-    # --------
-    # These 4 are affected by the strangeness described in Issue #831
-
-    elif p == r"{CONDITION_1} : {var} is the {nonterminal} {TERMINAL}":
-        [var, nont, term] = children
-        assert nont.source_text() == '|ReservedWord|'
-        assert term.source_text() == "`super`"
-        env0.ensure_expr_is_of_type(var, T_grammar_symbol_)
-        return (env0, env0)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is an? {nonterminal}",
-    ]:
-        [var, nont] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_Parse_Node)
-        return (env1, env1)
-        #return env0.with_type_test(var, 'is a', ptn_type_for(nont), asserting)
-
-    elif p == r"{CONDITION_1} : {var} is {nonterminal}":
-        [var, nont] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_grammar_symbol_)
-        return (env1, env1)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super` or `this`",
-        r"{CONDITION_1} : {var} is not one of {nonterminal}, {nonterminal}, {nonterminal}, `super`, or `this`",
-    ]:
-        [local_ref, *_] = children
-        env0.ensure_expr_is_of_type(local_ref, T_grammar_symbol_)
-        return (env0, env0)
 
     # ------------------------
     # relating to Environment Record bindings:
@@ -5500,19 +5304,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is the {nonterminal} of an? {nonterminal}":
-        [var, nont1, nont2] = children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
-    elif p in [
-        r"{CONDITION_1} : {EX} is -1",
-        r"{CONDITION_1} : {EX} is not -1",
-    ]:
-        [ex] = children
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}":
         [dotting, emu_xref] = children
         env0.assert_expr_is_of_type(dotting, T_proc_)
@@ -5758,32 +5549,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}":
-        [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is a property value or property value alias for the Unicode property {var} listed in {h_a}":
-        [va, vb, h_a] = children
-        env0.assert_expr_is_of_type(va, ListType(T_code_point_))
-        env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
-        [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
-        [v, emu_xref] = children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}":
-        [noi, h_a] = children
-        env0.assert_expr_is_of_type(noi, ListType(T_code_point_))
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {var} does not have a Generator component":
         [var] = children
         env0.assert_expr_is_of_type(var, T_execution_context)
@@ -5808,14 +5573,6 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(offset2, T_MathInteger_)
         env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         return (env1, env1)
-
-    elif p == r"{CONDITION_1} : {var} is not one of {LITERAL}, {LITERAL}, {LITERAL}, or {LITERAL}":
-        [var, *lit_] = children
-        tc_expr
-        (var_t, var_env) = tc_expr(var, env0); assert var_env is env0
-        for lit in lit_:
-            env0.assert_expr_is_of_type(lit, var_t)
-        return (env0, env0)
 
     elif p == r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}":
         [var, nont] = children
@@ -5846,12 +5603,6 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(rvar, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is the String value {STR_LITERAL}":
-        [var, lit] = children
-        env0.assert_expr_is_of_type(lit, T_String)
-        env1 = env0.ensure_expr_is_of_type(var, T_Tangible_) # you'd expect T_String, but _hint_ in Date.prototype [ @@toPrimitive ]
-        return (env1, env1)
-
     elif p == r"{CONDITION_1} : {var} starts with {STR_LITERAL}":
         [var, str_literal] = children
         env0.assert_expr_is_of_type(var, T_String)
@@ -5868,14 +5619,6 @@ def tc_cond_(cond, env0, asserting):
     ]:
         [] = children
         return (env0, env0)
-
-    elif p in [
-        r"{CONDITION_1} : {var} is a non-negative integer which is &le; {EXPR}",
-    ]:
-        [a, b] = children
-        env0.assert_expr_is_of_type(b, T_MathInteger_)
-        env1 = env0.ensure_expr_is_of_type(a, T_MathInteger_)
-        return (env1, env1)
 
     elif p == r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}":
         [exa, exb, lit] = children
@@ -6063,17 +5806,6 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an instance of {var}":
-        [var1, var2] = children
-        env0.assert_expr_is_of_type(var1, T_Parse_Node)
-        env0.assert_expr_is_of_type(var2, T_grammar_symbol_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is an instance of a nonterminal":
-        [var1] = children
-        env0.assert_expr_is_of_type(var1, T_Parse_Node)
-        return (env0, env0)
-
     elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production":
         [noi, nont] = children
         env0.assert_expr_is_of_type(noi, T_code_point_)
@@ -6098,7 +5830,6 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is one of: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}",
         r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}",
     ]:
         [noi, *ss_] = children
@@ -6139,15 +5870,6 @@ def tc_cond_(cond, env0, asserting):
     elif p == r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}":
         [local_ref, *h_emu_grammar_] = children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is a {nonterminal}":
-        [noi, nont] = children
-        # env0.assert_expr_is_of_type(noi, T_Parse_Node)
-        assert nont.source_text() == '|ReservedWord|'
-        # This isn't asking if {noi} is a Parse Node that is an instance of |ReservedWord|.
-        # Rather, it's asking if {noi} is a String that could match |ReservedWord|.
-        env0.assert_expr_is_of_type(noi, T_String)
         return (env0, env0)
 
     elif p in [
@@ -6294,16 +6016,6 @@ def tc_cond_(cond, env0, asserting):
         [] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is an instance of a production in {h_emu_xref}":
-        [var, emu_xref] = children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is the empty String (its length is 0)":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (env1, env1)
-
     elif p == r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits":
         [var] = children
         env0.assert_expr_is_of_type(var, T_MathReal_)
@@ -6348,17 +6060,6 @@ def tc_cond_(cond, env0, asserting):
         [var, ex] = children
         env0.assert_expr_is_of_type(var, T_List)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {EX} is a non-negative integer less than or equal to {EX}":
-        [exa, exb] = children
-        env0.assert_expr_is_of_type(exa, T_MathNonNegativeInteger_)
-        env0.assert_expr_is_of_type(exb, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-    elif p == r"{CONDITION_1} : {var} is the single code point {code_point_lit} or {code_point_lit}":
-        [var, lita, litb] = children
-        env0.assert_expr_is_of_type(var, ListType(T_code_point_))
         return (env0, env0)
 
     else:
@@ -6468,6 +6169,10 @@ def _(vd, env):
 @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : one of: {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
@@ -6509,6 +6214,14 @@ def _(val_desc, env):
     (sub_t, sup_t) = type_bracket_for(led, env)
     return (ListType(sub_t), ListType(sup_t))
 
+@tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}')
+def _(val_desc, env):
+    [led, ex] = val_desc.children
+    env.assert_expr_is_of_type(ex, T_MathInteger_)
+    (led_sub_t, led_sup_t) = type_bracket_for(led, env)
+    return a_subset_of(ListType(led_sup_t))
+    # inexact because of length restriction 
+
 @tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})')
 @tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})')
 @tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})')
@@ -6536,11 +6249,51 @@ def _(val_desc, env):
     return a_subset_of(ListType(led_sup_t))
     # inexact because of 'non-empty'
 
+@tbd.put('{VAL_DESC} : a non-negative integer less than or equal to {EX}')
+@tbd.put('{VAL_DESC} : a non-negative integer which is &le; {EXPR}')
+def _(val_desc, env):
+    [ex] = val_desc.children
+    env.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+    return a_subset_of(T_MathNonNegativeInteger_)
+
+@tbd.put('{VAL_DESC} : a property value or property value alias for the Unicode property {var} listed in {h_a}')
+def _(val_desc, env):
+    [var, h_a] = val_desc.children
+    env.assert_expr_is_of_type(var, T_Unicode_code_points_)
+    return T_Unicode_code_points_
+
+@tbd.put('{VAL_DESC} : a {h_emu_xref}')
+def _(val_desc, env):
+    [emu_xref] = val_desc.children
+
+    if emu_xref.source_text() in [
+        '<emu-xref href="#leading-surrogate"></emu-xref>',
+        '<emu-xref href="#trailing-surrogate"></emu-xref>',
+    ]:
+        return a_subset_of(T_code_unit_)
+    elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
+        return a_subset_of(T_function_object_)
+    else:
+        assert 0, emu_xref
 
 @tbd.put('{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}')
 def _(val_desc, env):
     assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
     return T_RegExpMatcher_
+
+@tbd.put('{VAL_DESC} : an instance of the production {h_emu_grammar}')
+def _(val_desc, env):
+    [emu_grammar] = val_desc.children
+    emu_grammar_text = emu_grammar.source_text()
+    lhs = re.sub(r'<emu-grammar>(\w+) :.*', r'\1', emu_grammar_text)
+    prodn_type = ptn_type_for(lhs)
+    return a_subset_of(prodn_type)
+
+@tbd.put('{VAL_DESC} : an instance of {var}')
+def _(val_desc, env):
+    [var] = val_desc.children
+    env.assert_expr_is_of_type(var, T_grammar_symbol_)
+    return a_subset_of(T_Parse_Node)
 
 @tbd.put('{VAL_DESC} : an integer in {INTERVAL}')
 def _(val_desc, env):
@@ -6567,6 +6320,16 @@ def _(val_desc, env):
     [kind] = val_desc.children
     return type_for_environment_record_kind(kind)
 
+@tbd.put('{VAL_DESC} : an? {PROPERTY_KIND} property')
+def _(val_desc, env):
+    [kind] = val_desc.children
+    t = {
+        'accessor': T_accessor_property_,
+        'data'    : T_data_property_,
+    }[kind.source_text()]
+    return t
+
+@tbd.put('{VAL_DESC} : an? {nonterminal}')
 @tbd.put('{VAL_DESC} : an? {nonterminal} Parse Node')
 def _(val_desc, env):
     [nonterminal] = val_desc.children
@@ -6586,6 +6349,24 @@ def _(val_desc, env):
     # that isn't itself an instance of {nonterminal},
     # but connects by unit derivations to one that is.
 
+@tbd.put('{VAL_DESC} : the {nonterminal} of an? {nonterminal}')
+def _(val_desc, env):
+    [nont1, nont2] = val_desc.children
+    return a_subset_of(ptn_type_for(nont1))
+
+@tbd.put('{VAL_DESC} : the {nonterminal} {TERMINAL}')
+def _(val_desc, env):
+    [nont, term] = val_desc.children
+    assert nont.source_text() == '|ReservedWord|'
+    assert term.source_text() == "`super`"
+    return a_subset_of(T_grammar_symbol_)
+
+@tbd.put('{VAL_DESC} : {nonterminal}')
+def _(val_desc, env):
+    [nont] = val_desc.children
+    return a_subset_of(T_grammar_symbol_)
+
+tbd['{VAL_DESC} : -1'] = a_subset_of(T_MathInteger_)
 tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a BigInt'] = T_BigInt
 tbd['{VAL_DESC} : a Boolean'] = T_Boolean
@@ -6601,6 +6382,7 @@ tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
 tbd['{VAL_DESC} : a Job Abstract Closure'] = T_Job
 tbd['{VAL_DESC} : a JobCallback Record'] = T_JobCallback_Record
+tbd['{VAL_DESC} : a List of a single Number'] = a_subset_of(ListType(T_Number))
 tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
 tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
 tbd['{VAL_DESC} : a MatchState'] = T_MatchState
@@ -6619,7 +6401,10 @@ tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
 tbd['{VAL_DESC} : a Property Descriptor'] = T_Property_Descriptor
 tbd['{VAL_DESC} : a Proxy exotic object'] = T_Proxy_exotic_object_
+tbd['{VAL_DESC} : a Proxy object'] = T_Proxy_exotic_object_
+tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a Realm Record'] = T_Realm_Record
 tbd['{VAL_DESC} : a Reference Record'] = T_Reference_Record
 tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
@@ -6636,28 +6421,38 @@ tbd['{VAL_DESC} : a Super Reference Record'] = a_subset_of(T_Reference_Record)
 tbd['{VAL_DESC} : a Symbol'] = T_Symbol
 tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
 tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
+tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
+tbd['{VAL_DESC} : a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a Unicode property name'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a Unicode property value'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
 tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
+tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
+tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
 tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
+tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
 tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a constructor'] = T_constructor_object_
 tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
+tbd['{VAL_DESC} : a fully populated Property Descriptor'] = a_subset_of(T_Property_Descriptor)
 tbd['{VAL_DESC} : a function object'] = T_function_object_
 tbd['{VAL_DESC} : a grammar symbol'] = T_grammar_symbol_
 tbd['{VAL_DESC} : a mathematical value'] = T_MathReal_
 tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
 tbd['{VAL_DESC} : a non-negative integer that is evenly divisible by 4'] = a_subset_of(T_MathNonNegativeInteger_)
 tbd['{VAL_DESC} : a non-negative integer'] = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
+tbd['{VAL_DESC} : a non-negative integral Number'] = a_subset_of(T_IntegralNumber_)
 tbd['{VAL_DESC} : a nonterminal in one of the ECMAScript grammars'] = a_subset_of(T_grammar_symbol_)
 tbd['{VAL_DESC} : a normal completion'] = T_Normal
 tbd['{VAL_DESC} : a positive integer'] = a_subset_of(T_MathNonNegativeInteger_)
+tbd['{VAL_DESC} : a possibly empty List'] = T_List
 tbd['{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*'] = ListType(T_String | T_Undefined)
 tbd['{VAL_DESC} : a property key or Private Name'] = T_String | T_Symbol | T_Private_Name
 tbd['{VAL_DESC} : a property key'] = T_String | T_Symbol
@@ -6679,6 +6474,8 @@ tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_objec
 tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : an ECMAScript language value'] = T_Tangible_
 tbd['{VAL_DESC} : an Environment Record'] = T_Environment_Record
+tbd['{VAL_DESC} : an IEEE 754-2019 binary32 NaN value'] = a_subset_of(T_IEEE_binary32_)
+tbd['{VAL_DESC} : an IEEE 754-2019 binary64 NaN value'] = a_subset_of(T_IEEE_binary64_)
 tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
 tbd['{VAL_DESC} : an Iterator Record'] = T_Iterator_Record
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
@@ -6688,18 +6485,31 @@ tbd['{VAL_DESC} : an Object'] = T_Object
 tbd['{VAL_DESC} : an abrupt completion'] = T_Abrupt
 tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
 tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an array index'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : an execution context'] = T_execution_context
+tbd['{VAL_DESC} : an extensible object that does not have a {starred_str} own property'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an extensible ordinary object with no own properties'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
+tbd['{VAL_DESC} : an instance of a nonterminal'] = a_subset_of(T_Parse_Node)
+tbd['{VAL_DESC} : an instance of a production in {h_emu_xref}'] = a_subset_of(T_Parse_Node)
+tbd['{VAL_DESC} : an integer index'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : an integer'] = T_MathInteger_
 tbd['{VAL_DESC} : an integral Number'] = T_IntegralNumber_
 tbd['{VAL_DESC} : an internal slot name'] = T_SlotName_
+tbd['{VAL_DESC} : an odd integral Number'] = a_subset_of(T_IntegralNumber_)
 tbd['{VAL_DESC} : an ordinary object'] = a_subset_of(T_Object)
+tbd['{VAL_DESC} : an ordinary, extensible object with no non-configurable properties'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : any value except a Completion Record'] = T_Tangible_ | T_Intangible_
 tbd['{VAL_DESC} : anything'] = T_host_defined_
 tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
 tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
+tbd['{VAL_DESC} : the String value {STR_LITERAL}'] = a_subset_of(T_String)
+tbd['{VAL_DESC} : the empty String (its length is 0)'] = a_subset_of(T_String)
+tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
+tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : {backticked_word}'] = a_subset_of(T_grammar_symbol_)
 
 # Note re 'a time value':
 # time value is defined to be 'IntegralNumber_ | NaN_Number_',
@@ -6730,6 +6540,7 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes'                        ] = T_Par
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Strings'                            ] = T_String
+tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : agent signifiers'                   ] = T_agent_signifier_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
 tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_character_
@@ -6738,6 +6549,7 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Mat
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*'           ] = T_String | T_Null
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*'      ] = T_String | T_Undefined
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+tbd['{LIST_ELEMENTS_DESCRIPTION} : errors'                             ] = T_SyntaxError | T_ReferenceError
 tbd['{LIST_ELEMENTS_DESCRIPTION} : internal slot names'                ] = T_SlotName_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types' ] = T_LangTypeName_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : names of internal slots'            ] = T_SlotName_
@@ -6786,6 +6598,7 @@ def type_for_tilded_word(tilded_word):
 
 tbd['{LITERAL} : *null*'] = T_Null
 tbd['{LITERAL} : *undefined*'] = T_Undefined
+tbd['{LITERAL} : the value *null*'] = T_Null
 tbd['{LITERAL} : {BIGINT_LITERAL}'] = a_subset_of(T_BigInt)
 tbd['{LITERAL} : {BOOL_LITERAL}'] = a_subset_of(T_Boolean)
 tbd['{LITERAL} : {STR_LITERAL}'] = a_subset_of(T_String)
