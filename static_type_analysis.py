@@ -319,6 +319,17 @@ class TypedAlgHeader:
 
         # -------------------------
 
+        self.started_with_TBD = set()
+
+        for (pn, pt) in self.parameter_types.items():
+            if pt == T_TBD:
+                self.started_with_TBD.add(pn)
+
+        if self.return_type == T_TBD:
+            self.started_with_TBD.add('*return*')
+
+        # -------------------------
+
         self.t_defns = []
 
         for alg_defn in header.u_defns:
@@ -2708,249 +2719,54 @@ def tc_header(tah):
             init_t = init_env.vars[pn]
             final_t = final_env.vars[pn]
 
-            # if final_t == T_Top_: final_t = T_TBD
-
-            # if init_t == T_TBD and final_t == T_TBD:
-            #     add_pass_error(
-            #         tah.fake_node_for_[pn],
-            #         'param %r is still TBD' % (pn,)
-            #     )
-
-            # if isinstance(final_t, UnionType) and len(final_t.member_types) >= 12:
-            #     print("%s : %s : # member_types = %d" % (tah.name, pn, len(final_t.member_types)))
-
             if init_t == final_t: continue
 
-            # if tah.name == 'RequireInternalSlot': pdb.set_trace()
-            if (
-                # cases in which we don't want to change header types:
-                init_t == ListType(T_code_unit_) and final_t == T_code_unit_ | ListType(T_code_unit_)
-                or
-                final_t not in [T_TBD, T_0] and init_t == final_t | T_not_passed
-                # ObjectCreate's _internalSlotsList_
-                # Call's _argumentsList_
-                or
-                init_t == T_String | T_Symbol and final_t == T_String
-                # SetFunctionName
-                or
-                init_t == T_Abrupt | T_Tangible_ | T_tilde_empty_ and final_t == ListType(T_code_unit_) | T_Top_
-                # Evaluation
-                or
-                tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_' and init_t == T_Tangible_
-                or
-                tah.name == 'SetRealmGlobalObject' and pn == '_globalObj_' and init_t == T_Object | T_Undefined
-                or
-                tah.name == 'UTF16EncodeCodePoint' and pn == '*return*' and init_t == ListType(T_code_unit_)
-                or
-                tah.name == 'PerformPromiseThen' and pn in ['_onFulfilled_', '_onRejected_'] and init_t == T_Tangible_
-                or
-                tah.name == 'TemplateStrings' and pn == '*return*' and init_t == ListType(T_String)
-                or
-                tah.name == 'Construct' and pn == '_newTarget_' and init_t == T_Tangible_ | T_not_passed
-                or
-                tah.name == 'OrdinaryHasInstance' and pn == '_O_'
-                or
-                tah.name == 'GetIterator' and pn == '_method_'
-                or
-                tah.name == 'ResolveBinding' and pn == '_env_'
-                or
-                tah.name == 'ToLength' and pn == '*return*' and init_t == T_IntegralNumber_ | ThrowType(T_TypeError)
-                # STA isn't smart enough to detect that the normal return is always integer,
-                # wants to change it to Number
-                or
-                tah.name == 'PerformPromiseThen' and pn == '_resultCapability_'
-                # STA wants to add T_Undefined, which is in the body type, but not the param type
-                or
-                tah.name == 'FlattenIntoArray' and pn == '*return*' and init_t == T_MathInteger_ | T_throw_ and final_t == T_throw_
-                # not sure why STA isn't picking up Integer
-                or
-                tah.name == 'SetFunctionName' and pn == '_name_' and init_t == T_Private_Name | T_String | T_Symbol and final_t == T_String
-                or
-                (
-                    # This is a somewhat hacky way to prevent 'throw_' being widened to 'Abrupt'
-                    # in the return type of various evaluation-relevant SDOs.
-                    tah.name in [
-                        'BindingClassDeclarationEvaluation',
-                        'ClassDefinitionEvaluation',
-                        'ClassElementEvaluation',
-                        'ClassFieldDefinitionEvaluation',
-                        'DefineMethod',
-                        'NamedEvaluation',
-                        'PropertyDefinitionEvaluation',
-                    ]
-                    and
-                    pn == '*return*'
-                    and
-                    T_throw_.is_a_subtype_of_or_equal_to(init_t)
-                    and
-                    not T_continue_.is_a_subtype_of_or_equal_to(init_t)
-                    and
-                    T_continue_.is_a_subtype_of_or_equal_to(final_t)
-                )
-                or
-                tah.name == 'MakeConstructor' and pn == '_F_' and init_t == T_function_object_
-                or
-                tah.name == 'String.prototype.localeCompare' and pn == '*return*'
-                # The algo is incomplete, so doesn't result in a reasonable return type.
-                or
-                tah.name == '[[Call]]' and pn == '*return*'
-                or
-                tah.name == '[[Construct]]' and pn == '*return*'
-                or
-                tah.name == 'StringToCodePoints' and pn == '*return*'
-                or
-                tah.name == 'UTF16EncodeCodePoint' and pn == '_cp_'
-                or
-                tah.name == 'UTF16Encoding' and pn == '_cp_'
-                or
-                tah.name == 'BigIntBitwiseOp' and pn in ['_x_', '_y_']
-                # algo just overwrites them with different types
-                or
-                tah.name == 'LocalTime' and pn == '*return*' and init_t == T_MathInteger_ and  final_t == T_Number
-                # mess
-                or
-                tah.name == 'ToInteger'
-                or
-                tah.name == 'Math.fround' and pn == '_x_'
-                or
-                tah.name == 'Number.isFinite' and pn == '_number_'
-                or
-                tah.name == 'IsIntegralNumber' and pn == '_argument_'
-                or
-                tah.name == 'AdvanceStringIndex' and pn == '_index_'
-                or
-                tah.name == 'ArrayAccumulation' and pn == '_nextIndex_'
-                or
-                tah.name == 'BigInt.asIntN' and pn == '_bits_'
-                or
-                tah.name == 'BigInt.asUintN' and pn == '_bits_'
-                or
-                tah.name == 'CreateBuiltinFunction' and pn == '_realm_'
-                or
-                tah.name == 'ClassElementEvaluation' and pn == '*return*'
-                or
-                tah.name == 'CompilePattern' and pn == '*return*'
-                or
-                tah.name == 'GeneratorYield' and pn == '*return*'
-                or
-                tah.name == 'Evaluation' and pn == '*return*'
-                or
-                tah.name == 'GeneratorValidate' and pn == '*return*'
-                or
-                tah.name == 'ProxyCreate' and pn == '*return*'
-                or
-                tah.name == 'CreateMapIterator' and pn == '*return*'
-                or
-                tah.name == 'CreateSetIterator' and pn == '*return*'
-                or
-                tah.name == 'TypedArrayCreate' and pn == '*return*' # should handle ValidateTypedArray() as a type-check
-                or
-                tah.name == 'EvaluateGeneratorBody' and pn == '*return*'
-                or
-                tah.name == 'EvaluateAsyncGeneratorBody' and pn == '*return*'
-                or
-                tah.name == 'SetRealmGlobalObject' and pn == '_thisValue_'
-                or
-                tah.name == 'DetachArrayBuffer' and pn == '_key_'
-                or
-                tah.name == 'ParseTimeZoneOffsetString' and pn == '*return*'
-            ):
-                # -------------------------
-                # Don't change header types
-                continue
+            if pn in tah.started_with_TBD:
+                # Change it.
+                if trace_this_op:
+                    print(f"About to change the declared_type of {pn} to {final_t}")
+                    input('hit return to continue ')
 
-            elif (
-                # cases in which we *do* want to change header types:
-                # ----
-                init_t == T_TBD
-                or
-                init_t == T_TBD | T_not_passed
-                or
-                init_t == ListType(T_TBD)
-                or
-                init_t == T_List and isinstance(final_t, ListType)
-                # ----
-                or
-                init_t.is_a_subtype_of_or_equal_to(final_t)
-                # This pass just widened the type.
-                # [Maybe this is too general.]
-                # ------
-                or
-                final_t.is_a_subtype_of_or_equal_to(init_t) and (
-                    tah.name == 'InstantiateFunctionObject'
-                    or
-                    tah.name == 'GetThisBinding' and init_t == T_Tangible_ | ThrowType(T_ReferenceError)
-                    or
-                    tah.name == 'WithBaseObject' and init_t == T_Object | T_Undefined
-                    or
-                    tah.name == 'SameValueNonNumeric' and init_t == T_Tangible_
-                    or
-                    tah.name.endswith('DeclarationInstantiation') and pn == '_env_' and init_t == T_Environment_Record
-                    or
-                    tah.name == 'AsyncGeneratorResume' and pn == '_completion_'
-                    or
-                    tah.name == 'AsyncGeneratorCompleteStep' and pn == '_completion_'
-                    or
-                    tah.name == 'CallDynamicImportFulfilled' and pn == '_result_' and init_t == T_Tangible_ and final_t == T_Undefined
-                    or
-                    pn == '*return*' # too general?
-                )
-                # This pass just narrowed the type.
-                # ----
-                or
-                init_t == T_Tangible_ and tah.name == 'SameValueNonNumber'
-                or
-                init_t == T_Tangible_ and final_t == T_Object | T_Undefined and tah.name == 'PrepareForOrdinaryCall'
-                # eoh is just wrong
-                or
-                init_t == T_Tangible_ and final_t == T_Null | T_Object and tah.name == 'OrdinarySetPrototypeOf'
-                # eoh is just wrong
-                or
-                init_t == T_Normal and final_t == T_function_object_
-                or
-                tah.name == 'MakeConstructor' and init_t == T_function_object_ and final_t == T_constructor_object_
-                or
-                tah.name == 'SetFunctionLength' and pn == '_length_' and init_t == T_Number and final_t == T_MathInteger_
-                or
-                tah.name == 'CodePointsToString' and pn == '_text_' and init_t == T_Unicode_code_points_ and final_t == ListType(T_code_point_)
+                tah.change_declared_type(pn, final_t)
 
-                # eoh is just wrong, because preamble is misleading
-                or
-                tah.name == 'ObjectDefineProperties' and pn == '_O_'
-                or
-                tah.name == 'TimeString' and pn == '_tv_'
-                or
-                tah.name == 'DateString' and pn == '_tv_'
-                or
-                tah.name == 'SerializeJSONArray' and pn == '_value_'
-                or
-                tah.name == 'NormalCompletion' and pn == '_value_' and init_t == T_Tangible_ | T_Intangible_ and final_t == T_Tangible_ | T_tilde_empty_ # TODO
+                changed_op_info = True
 
-                # or
-                # tah.name == 'CreatePerIterationEnvironment' and init_t == T_Undefined | T_throw_ and final_t == T_Undefined | ThrowType(T_ReferenceError)
-                # # cheater artifact
-                # or
-                # tah.name == 'InitializeReferencedBinding' and init_t == T_Boolean | T_tilde_empty_ | T_throw_ and final_t == T_tilde_empty_ | T_throw_
-                # # cheater artifact
-                # or
-                # tah.name == 'PutValue' and init_t == T_Boolean | T_Undefined | T_tilde_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
-                # # cheater artifact
-                # or
-                # tah.name == 'InitializeBoundName' and init_t == T_Boolean | T_Undefined | T_tilde_empty_ | T_throw_ and final_t == T_Boolean | T_Undefined | T_throw_
-            ):
-                # fall through to change the header types
-                pass
             else:
-                assert 0, (tah.name, pn, str(init_t), str(final_t))
-                # We should deal with this case above.
+                # Don't change it.
+                # But maybe convey that STA wants to change it.
 
-            if trace_this_op:
-                print(f"About to change the declared_type of {pn} to {final_t}")
-                input('hit return to continue ')
+                # Note that final_env is the env at the end of the algorithm
+                # (i.e., the union of envs at the return points).
+                # But its type for {pn} might legitimately be
+                # wider or narrower than {pn}'s declared type,
+                # if there are steps that overwrite ('Set') the value of {pn}.
 
-            tah.change_declared_type(pn, final_t)
+                # E.g., if _x_ is declared as "(optional) Foo"
+                # and there's a step
+                #     "If _x_ is absent, then set _x_ to some Foo."
+                # then at the end of the algorithm, the static type of _x_ will be just Foo.
+                # But we shouldn't suggest removing "(optional)" from the declared type of _x_.
+                #
+                # You could construct a similar example for widening,
+                # but I'm not sure it ever occurs in practice.
 
-            changed_op_info = True
+                if final_t.is_a_subtype_of_or_equal_to(init_t):
+                    continue
+                    level = 'info'
+                    verbing = "narrowing"
+                elif init_t.is_a_subtype_of_or_equal_to(final_t):
+                    level = "warning"
+                    verbing = "widening"
+                else:
+                    level = "warning"
+                    verbing = "changing"
+
+                # It's a warning when it's suggesting that there's a spec bug.
+
+                add_pass_error(
+                    tah.fake_node_for_[pn],
+                    f"{level}: STA suggests {verbing} the type of {pn} to {final_t}"
+                )
 
         return changed_op_info
 
@@ -4047,7 +3863,7 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(varb, T_PromiseCapability_Record)
         (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
 
-        env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
+        env0.assert_expr_is_of_type(vara, T_Top_)
         (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
 
         proc_add_return(env0, T_Promise_object_, anode)
