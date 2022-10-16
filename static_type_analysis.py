@@ -2173,6 +2173,7 @@ class Env:
                 '_lref_.[[ReferencedName]]',
                 '1 + \u211d(_n_)', # Math.log1p
                 '\u211d(_m_) / 12', # MakeDay
+                '\u211d(_number_)', # ToUint8Clamp
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -4822,55 +4823,180 @@ def tc_cond_(cond, env0, asserting):
         (b_t, env2) = tc_expr(b, env1);
         op_st = op.source_text()
 
-        if a_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_) and b_t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            # great!
+        t_envs = []
+        f_envs = []
 
-            # XXX: `_x_ &lt; Y` excludes _x_ being +&infin;
-            if op_st in ['&lt;', 'is less than', '&le;'] and b_t.is_a_subtype_of_or_equal_to(T_MathReal_):
-                (is_t,   _) = a_t.split_by(T_MathReal_ | T_MathNegInfinity_)
-                (isnt_t, _) = a_t.split_by(T_MathReal_ | T_MathPosInfinity_)
-                return (
-                    env2.with_expr_type_narrowed(a, is_t),
-                    env2.with_expr_type_narrowed(a, isnt_t)
+        a_memtypes = sorted(a_t.set_of_types())
+        b_memtypes = sorted(b_t.set_of_types())
+
+        for a_memtype in a_memtypes:
+            for b_memtype in b_memtypes:
+                triple = (a_memtype, op_st, b_memtype)
+                something = {
+
+                    # always error:
+                    (T_BigInt            , '&gt;', T_FiniteNumber_     ): 'E',
+                    (T_BigInt            , '&gt;', T_NegInfinityNumber_): 'E',
+                    (T_BigInt            , '&gt;', T_PosInfinityNumber_): 'E',
+                    (T_BigInt            , '&lt;', T_FiniteNumber_     ): 'E',
+                    (T_BigInt            , '&lt;', T_NegInfinityNumber_): 'E',
+                    (T_BigInt            , '&lt;', T_PosInfinityNumber_): 'E',
+                    (T_BigInt            , '&ne;', T_Number            ): 'E',
+                    (T_FiniteNumber_     , '&gt;', T_BigInt            ): 'E',
+                    (T_FiniteNumber_     , '&lt;', T_BigInt            ): 'E',
+                    (T_IntegralNumber_   , '&ne;', T_BigInt            ): 'E',
+                    (T_NegInfinityNumber_, '&gt;', T_BigInt            ): 'E',
+                    (T_NegInfinityNumber_, '&lt;', T_BigInt            ): 'E',
+                    (T_PosInfinityNumber_, '&lt;', T_BigInt            ): 'E',
+                    (T_PosInfinityNumber_, '&gt;', T_BigInt            ): 'E',
+                    (T_tilde_empty_      , '&gt;', T_MathInteger_      ): 'E',
+                    #
+                    # Comparisons between Number and BigInt mostly come from
+                    # %TypedArray%.prototype.sort, which has:
+                    # 1. Assert: _x_ is a Number and _y_ is a Number, or _x_ is a BigInt and _y_ is a BigInt.
+                    # which this STA doesn't represent well.
+                    #
+                    # Also Atomics.wait (`If _v_ &ne; _w_, ...`)
+
+                    # could be error:
+                    (T_IntegralNumber_, '&ne;', T_Number   ): 'TFE', # because the Number might be NaN
+                    (T_IntegralNumber_, '&ge;', T_Tangible_): 'TFE',
+
+                    # ------------
+                    # Mathematical:
+
+                    # always true:
+                    (T_MathInteger_    , '&le;', T_MathPosInfinity_): 'T',
+                    (T_MathNegInfinity_, '&le;', T_MathInteger_    ): 'T',
+                    (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '&ge;', T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '&gt;', T_FiniteNumber_   ): 'T',
+                    (T_MathPosInfinity_, '&gt;', T_MathInteger_    ): 'T',
+
+                    # always false:
+                    (T_MathNegInfinity_, '&ge;', T_MathInteger_): 'F',
+                    (T_MathNegInfinity_, '='   , T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '&le;', T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '&lt;', T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '='   , T_MathInteger_): 'F',
+
+                    # can be true or false:
+                    (T_ExtendedMathReal_, '&ge;', T_MathInteger_     ): 'TF',
+                    (T_ExtendedMathReal_, '&le;', T_MathInteger_     ): 'TF',
+                    (T_ExtendedMathReal_, '&lt;', T_ExtendedMathReal_): 'TF',
+                    (T_ExtendedMathReal_, '&lt;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&ge;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&gt;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&le;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&lt;', T_ExtendedMathReal_): 'TF',
+                    (T_MathInteger_     , '&lt;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&ne;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&ne;', T_MathReal_        ): 'TF',
+                    (T_MathInteger_     , '='   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '&ge;', T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '&gt;', T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '&gt;', T_MathReal_        ): 'TF',
+                    (T_MathReal_        , '&lt;', T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '&lt;', T_MathReal_        ): 'TF',
+                    (T_MathReal_        , '&ne;', T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '='   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '='   , T_MathReal_        ): 'TF',
+
+                    (T_MathInteger_, 'is at least', T_MathInteger_): 'TF',
+
+                    (T_code_point_ , '&le;', T_MathInteger_): 'TF', # but deserves a warning
+
+                    # -------
+                    # Number:
+
+                    # always true:
+                    (T_FiniteNumber_     , '&gt;', T_NegInfinityNumber_): 'T',
+                    (T_FiniteNumber_     , '&lt;', T_PosInfinityNumber_): 'T',
+                    (T_NegInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'T',
+                    (T_NegInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'T',
+                    (T_NegInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'T',
+                    (T_PosInfinityNumber_, '&gt;', T_FiniteNumber_     ): 'T',
+                    (T_PosInfinityNumber_, '&gt;', T_IntegralNumber_   ): 'T',
+                    (T_PosInfinityNumber_, '&gt;', T_NegInfinityNumber_): 'T',
+
+                    # always false:
+                    (T_FiniteNumber_     , '&gt;', T_PosInfinityNumber_): 'F',
+                    (T_FiniteNumber_     , '&lt;', T_NegInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '&gt;', T_FiniteNumber_     ): 'F',
+                    (T_NegInfinityNumber_, '&gt;', T_IntegralNumber_   ): 'F',
+                    (T_NegInfinityNumber_, '&gt;', T_NegInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '&gt;', T_PosInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '&gt;', T_PosInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'F',
+
+                    # true or false:
+                    (T_FiniteNumber_           , '&gt;', T_FiniteNumber_           ): 'TF',
+                    (T_FiniteNumber_           , '&gt;', T_IntegralNumber_         ): 'TF',
+                    (T_FiniteNumber_           , '&lt;', T_FiniteNumber_           ): 'TF',
+                    (T_FiniteNumber_           , '&lt;', T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '&ge;', T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '&gt;', T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '='   , T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '&ge;', T_NonIntegralFiniteNumber_): 'TF',
+                    (T_NonIntegralFiniteNumber_, '&gt;', T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '&lt;', T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '&lt;', T_NonIntegralFiniteNumber_): 'TF',
+
+                    # -------
+                    # BigInt:
+
+                    (T_BigInt, '&gt;', T_BigInt): 'TF',
+                    (T_BigInt, '&lt;', T_BigInt): 'TF',
+                    (T_BigInt, '&ne;', T_BigInt): 'TF',
+
+                    # --------
+                    # Using the mathematical operator '&ne;' to compare non-numeric values:
+                    #
+                    # SetTypedArrayFromTypedArray has:
+                    #   1. If _target_.[[ContentType]] &ne; _source_.[[ContentType]], ...
+                    # TypedArraySpeciesCreate has:
+                    #   1. If _result_.[[ContentType]] &ne; _exemplar_.[[ContentType]], ...
+                    # InitializeTypedArrayFromTypedArray has:
+                    #   1. If _srcArray_.[[ContentType]] &ne; _O_.[[ContentType]], ...
+
+                    (T_tilde_BigInt_, '&ne;', T_tilde_Number_): 'TE',
+                    (T_tilde_Number_, '&ne;', T_tilde_BigInt_): 'TE',
+
+                    (T_tilde_BigInt_, '&ne;', T_tilde_BigInt_): 'FE',
+                    (T_tilde_Number_, '&ne;', T_tilde_Number_): 'FE',
+
+                }[triple]
+
+                env3 = (
+                    env2
+                    .with_expr_type_narrowed(a, a_memtype)
+                    .with_expr_type_narrowed(b, b_memtype)
                 )
 
-            if op_st in ['&gt;', 'is greater than', '&ge;'] and b_t.is_a_subtype_of_or_equal_to(T_MathReal_):
-                (is_t,   _) = a_t.split_by(T_MathReal_ | T_MathPosInfinity_)
-                (isnt_t, _) = a_t.split_by(T_MathReal_ | T_MathNegInfinity_)
-                return (
-                    env2.with_expr_type_narrowed(a, is_t),
-                    env2.with_expr_type_narrowed(a, isnt_t)
-                )
+                if 'T' in something:
+                    # There is at least one pair of values
+                    # conforming to the given pair of static types
+                    # for which the comparison holds (is true).
+                    t_envs.append(env3)
 
-        elif a_t.is_a_subtype_of_or_equal_to(T_BigInt) and b_t.is_a_subtype_of_or_equal_to(T_BigInt):
-            # great!
-            pass
+                if 'F' in something:
+                    # There is at least one pair of values
+                    # for which the comparison does not hold (is false).
+                    f_envs.append(env3)
 
-        elif (a_t.is_a_subtype_of_or_equal_to(T_Number) and b_t.is_a_subtype_of_or_equal_to(T_Number)):
-            # Probably good, except for NaN
+                if 'E' in something:
+                    # There is at least one pair of values
+                    # for which the comparison is ill-defined/non-sensical.
+                    add_pass_error(
+                        cond,
+                        f"comparison has incompatible types: {a_memtype} vs. {b_memtype}"
+                    )
 
-            if (
-                T_NaN_Number_.is_a_subtype_of_or_equal_to(a_t)
-                or
-                T_NaN_Number_.is_a_subtype_of_or_equal_to(b_t)
-            ):
-                add_pass_error(
-                    cond,
-                    "possible comparison involving NaN"
-                )
-
-            if op_st in ['=', '&ne;']:
-                add_pass_error(
-                    cond,
-                    "We avoid Number comparisons involving = or &ne;"
-                )
-
-        else:
-            add_pass_error(
-                cond,
-                f"comparison has incompatible types: {a_t} vs. {b_t}"
-            )
-        return (env2, env2)
+        return (envs_or(t_envs), envs_or(f_envs))
 
     elif p == r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}':
         [h_a, var] = children
