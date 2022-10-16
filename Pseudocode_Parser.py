@@ -141,7 +141,8 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {starred_int_lit}       : \* [+-] 0 \*
     {starred_int_lit}       : \* [+-]? \d+ \*
     {starred_bigint_lit}    : \* [01] n \*
-    {starred_infinite_lit}  : \* [+-]? &infin; \*
+    {starred_neg_infinity_lit} : \*  - &infin; \*
+    {starred_pos_infinity_lit} : \* \+ &infin; \*
     {starred_nan_lit}       : \* NaN \*
     {starred_word}          : \* [A-Za-z]+ \*
     {starred_str}           : \* " ( [^"*] | \\ \* )* " \*

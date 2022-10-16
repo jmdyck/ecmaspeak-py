@@ -972,7 +972,8 @@ named_type_hierarchy = {
                             'IntegralNumber_': {},
                             'NonIntegralFiniteNumber_' : {}
                         },
-                        'InfiniteNumber_': {},
+                        'NegInfinityNumber_': {},
+                        'PosInfinityNumber_': {},
                         'NaN_Number_': {},
                     },
                     'BigInt': {},
@@ -1399,18 +1400,18 @@ type_tweaks_tuples = [
     ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_tilde_empty_ | T_throw_),
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-    ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
+    ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
     ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
     ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
     ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
-    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_InfiniteNumber_),
+    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
+    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_),
     ('msFromTime'                               , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
 ]
 class TypeTweaks:
@@ -2251,7 +2252,7 @@ class Env:
         (expr_t, env1) = tc_expr(expr, self)
 
         # super-kludge:
-        if expr.source_text() in ['_highest_', '_lowest_'] and expr_t == T_InfiniteNumber_:
+        if expr.source_text() in ['_highest_', '_lowest_'] and expr_t == T_NegInfinityNumber_ | T_PosInfinityNumber_:
             # Math.max, Math.min
             expr_t = T_Number
 
@@ -6063,7 +6064,7 @@ def _(value_description, env):
     elif vd_st == 'an ECMAScript language value, but not a TypedArray':
         return a_subset_of(T_Tangible_)
     elif vd_st == 'a Number, but not *NaN*':
-        return T_FiniteNumber_ | T_InfiniteNumber_
+        return T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
     elif vd_st == 'an Object, but not a TypedArray or an ArrayBuffer':
         return a_subset_of(T_Object)
     else:
@@ -6440,8 +6441,10 @@ def _(literal, env):
     r = number_literal.prod.rhs_s
     if r == '{starred_nan_lit}':
         return T_NaN_Number_
-    elif r == '{starred_infinite_lit}{h_sub_fancy_f}':
-        return a_subset_of(T_InfiniteNumber_)
+    elif r == '{starred_neg_infinity_lit}{h_sub_fancy_f}':
+        return T_NegInfinityNumber_
+    elif r == '{starred_pos_infinity_lit}{h_sub_fancy_f}':
+        return T_PosInfinityNumber_
     elif r == '{starred_int_lit}{h_sub_fancy_f}':
         return a_subset_of(T_IntegralNumber_)
     else:
@@ -6852,7 +6855,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     return (T_MathInteger_, arg_env)
                 elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
                     return (T_MathReal_, env0)
-                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_InfiniteNumber_):
+                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_):
                     # This isn't correct: fancy_r is "mathematical value",
                     # which is not defined on non-finite values.
                     # However, it makes lots of invalid complaints go away.
@@ -6877,9 +6880,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 if t.is_a_subtype_of_or_equal_to(T_MathInteger_):
                     result_type = T_IntegralNumber_
                 elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
-                    result_type = T_IntegralNumber_ | T_InfiniteNumber_
+                    result_type = T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
                 elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-                    result_type = T_FiniteNumber_ | T_InfiniteNumber_
+                    result_type = T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
                 elif t == T_TBD:
                     result_type = T_IntegralNumber_ # hm
                 else:
@@ -7353,8 +7356,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_Number
 
-    elif p == r"{NUMBER_LITERAL} : {starred_infinite_lit}{h_sub_fancy_f}":
-        return (T_InfiniteNumber_, env0)
+    elif p == r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}":
+        return (T_NegInfinityNumber_, env0)
+
+    elif p == r"{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}":
+        return (T_PosInfinityNumber_, env0)
 
     elif p in [
         r"{NUMBER_LITERAL} : {starred_nan_lit}",
@@ -7384,7 +7390,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         if ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
             return (T_IntegralNumber_, env1)
         elif ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
-            return (T_IntegralNumber_ | T_InfiniteNumber_, env1)
+            return (T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_, env1)
         elif ex_type.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
             return (T_Number, env1)
         else:
@@ -7784,6 +7790,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 (T_MathInteger_, '-'      , T_MathReal_   ): T_MathReal_,
                 (T_MathInteger_, '/'      , T_MathInteger_): T_MathReal_,
                 (T_MathReal_   , '&times;', T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '&times;', T_MathReal_   ): T_MathReal_,
                 (T_MathReal_   , '+'      , T_MathInteger_): T_MathReal_,
                 (T_MathReal_   , '+'      , T_MathReal_   ): T_MathReal_,
                 (T_MathReal_   , '-'      , T_MathInteger_): T_MathReal_,
@@ -7808,12 +7815,19 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
                 (T_Number       , '-'      , T_IntegralNumber_): 'A could be NaN',
 
-                (T_FiniteNumber_  , '&times;', T_InfiniteNumber_): T_InfiniteNumber_, # warn
-                (T_FiniteNumber_  , '+'      , T_InfiniteNumber_): T_InfiniteNumber_, # warn
-                (T_FiniteNumber_  , '-'      , T_InfiniteNumber_): T_InfiniteNumber_, # warn
-                (T_InfiniteNumber_, '+'      , T_IntegralNumber_): T_InfiniteNumber_, # warn
-                (T_InfiniteNumber_, '-'      , T_IntegralNumber_): T_InfiniteNumber_, # warn
-                (T_InfiniteNumber_, '/'      , T_FiniteNumber_  ): T_InfiniteNumber_, # warn
+                (T_FiniteNumber_     , '&times;', T_NegInfinityNumber_): T_NegInfinityNumber_, # warn [assuming finite is > 0]
+                (T_FiniteNumber_     , '+'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn
+                (T_FiniteNumber_     , '-'      , T_PosInfinityNumber_): T_NegInfinityNumber_, # warn
+                (T_NegInfinityNumber_, '+'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
+                (T_NegInfinityNumber_, '-'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
+                (T_NegInfinityNumber_, '/'      , T_FiniteNumber_     ): T_NegInfinityNumber_, # warn [assuming finite is > 0]
+
+                (T_FiniteNumber_     , '&times;', T_PosInfinityNumber_): T_PosInfinityNumber_, # warn [assuming finite is > 0]
+                (T_FiniteNumber_     , '+'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn
+                (T_FiniteNumber_     , '-'      , T_NegInfinityNumber_): T_PosInfinityNumber_, # warn
+                (T_PosInfinityNumber_, '+'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
+                (T_PosInfinityNumber_, '-'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
+                (T_PosInfinityNumber_, '/'      , T_FiniteNumber_     ): T_PosInfinityNumber_, # warn [assuming finite is > 0]
 
                 (T_FiniteNumber_  , '&times;', T_FiniteNumber_  ): T_FiniteNumber_,
                 (T_FiniteNumber_  , '+'      , T_FiniteNumber_  ): T_FiniteNumber_,

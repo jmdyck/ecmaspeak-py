@@ -1630,9 +1630,10 @@
     *-0.5*{h_sub_fancy_f}
     *0.5*{h_sub_fancy_f}
     the *NaN* Number value
-    {starred_infinite_lit}{h_sub_fancy_f}
     {starred_int_lit}{h_sub_fancy_f}
     {starred_nan_lit}
+    {starred_neg_infinity_lit}{h_sub_fancy_f}
+    {starred_pos_infinity_lit}{h_sub_fancy_f}
 
 {ERROR_TYPE} :
     *AggregateError*
