@@ -1299,9 +1299,7 @@ def check_order_of_RHSs_within_each_SDO_clause():
         for emu_grammar in section.each_descendant_named('emu-grammar'):
             # We only want <emu-grammar> elements that are directly contained by this section,
             # and not by a nested section.
-            # HasCallInTailPosition is the only example, I think.
-            if emu_grammar.closest_containing_section() is not section:
-                continue
+            assert emu_grammar.closest_containing_section() is section
 
             # We only want <emu-grammar> elements that are the "syntax-directed" part of the SDO,
             # and not embedded within an emu-alg, e.g.:

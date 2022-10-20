@@ -412,11 +412,6 @@ def _handle_sdo_section(section):
         ]:
             sdo_name = re.sub('.*: ', '', section.section_title)
 
-        elif section.parent.section_id == 'sec-static-semantics-hascallintailposition':
-            # 15.10.2.1 Statement Rules
-            # 15.10.2.2 Expression Rules
-            sdo_name = 'HasCallInTailPosition'
-
         # An Annex B clause that extends the semantics of a main-body SDO:
         elif section.section_title in [
             'Static Semantics: IsCharacterClass',
@@ -431,17 +426,8 @@ def _handle_sdo_section(section):
             return False
 
         section.section_kind = 'syntax_directed_operation'
-
-        if section.section_title in ['Statement Rules', 'Expression Rules']:
-            # Copy params from parent
-            [parent_alg_header] = section.parent.alg_headers
-            params = parent_alg_header.params.copy()
-            return_nature_node = parent_alg_header.return_nature_node
-
-        else:
-            # The others have no parameters
-            params = []
-            return_nature_node = None
+        params = []
+        return_nature_node = None
 
         alg_header = AlgHeader_make(
             section = section,

@@ -910,13 +910,6 @@ def analyze_static_dependencies():
         if section.section_title.startswith('Static Semantics:'):
             op_names_labelled_ss.add(op_name)
 
-        elif section.section_title in ['Statement Rules', 'Expression Rules']:
-            assert op_name == 'HasCallInTailPosition'
-            # Without this special case, the code would add 'HasCallInTailPosition'
-            # to op_names_not_labelled, but that doesn't really make sense,
-            # because it's labelled by the parent section:
-            assert op_name in op_names_labelled_ss
-
         elif section.section_title.startswith('Runtime Semantics:'):
             op_names_labelled_rs.add(op_name)
 
