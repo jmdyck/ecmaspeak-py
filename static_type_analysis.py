@@ -6797,15 +6797,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     return (T_MathInteger_, arg_env)
                 elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
                     return (T_MathReal_, env0)
-                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_):
-                    # This isn't correct: fancy_r is "mathematical value",
-                    # which is not defined on non-finite values.
-                    # However, it makes lots of invalid complaints go away.
-                    return (T_ExtendedMathReal_, env0)
                 else:
                     add_pass_error(
                         arg,
-                        f"expected a BigInt or a non-NaN Number, got {arg_type}"
+                        f"expected a BigInt or a finite Number, got {arg_type}"
                     )
                     return (T_ExtendedMathReal_, env0)
 
