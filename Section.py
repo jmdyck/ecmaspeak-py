@@ -536,41 +536,24 @@ def handle_inline_sdo_section_body(section, alg_header):
 
         assert INLINE_SDO_RULE.prod.lhs_s == '{INLINE_SDO_RULE}'
         [ISDO_RULE] = INLINE_SDO_RULE.children
-        assert ISDO_RULE.prod.lhs_s == '{ISDO_RULE}'
+        assert str(ISDO_RULE.prod) == '{ISDO_RULE} : The {cap_word} {OF_PRODUCTIONS} is {EXPR}.'
 
+        [cap_word, of_productions, rule_expr] = ISDO_RULE.children
+
+        [rule_sdo_name] = cap_word.children
+        assert rule_sdo_name == alg_header.name
+
+        emu_grammar_anodes = of_productions.children
         emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
-        emu_grammar_anodes = [
-            child
-            for child in ISDO_RULE.children
-            if child.prod.lhs_s == '{h_emu_grammar}'
-        ]
+
         assert len(emu_grammar_hnodes) == len(emu_grammar_anodes)
         for (emu_grammar_hnode, emu_grammar_anode) in zip(emu_grammar_hnodes, emu_grammar_anodes):
             emu_grammar_anode._hnode = emu_grammar_hnode
 
-        rule_sdo_names = []
-        rule_grammars = []
-        rule_expr = None
+        assert len(emu_grammar_hnodes) > 0
 
-        for child in ISDO_RULE.children:
-            cl = child.prod.lhs_s
-            if cl == '{cap_word}':
-                [rule_sdo_name] = child.children
-                assert rule_sdo_name == alg_header.name
-                rule_sdo_names.append(rule_sdo_name)
-            elif cl == '{h_emu_grammar}':
-                rule_grammars.append(child._hnode)
-            elif cl == '{EXPR}':
-                assert rule_expr is None
-                rule_expr = child
-            else:
-                assert 0, cl
-
-        assert len(rule_sdo_names) == 1 # and so could simplify
-        assert 0 < len(rule_grammars) <= 5
-        for rule_sdo_name in rule_sdo_names:
-            for rule_grammar in rule_grammars:
-                AlgHeader_add_definition(alg_header, rule_grammar, rule_expr)
+        for emu_grammar_hnode in emu_grammar_hnodes:
+            AlgHeader_add_definition(alg_header, emu_grammar_hnode, rule_expr)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

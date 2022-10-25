@@ -132,11 +132,14 @@
     {_indent_}{nlai}{ISDO_RULE}{_outdent_}{nlai}
 
 {ISDO_RULE} :
-    The {cap_word} of {h_emu_grammar} is {EXPR}.
-    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
-    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
-    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
-    The {cap_word} of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} is {EXPR}.
+    The {cap_word} {OF_PRODUCTIONS} is {EXPR}.
+
+{OF_PRODUCTIONS} :
+    of {h_emu_grammar}
+    of {h_emu_grammar} or of {h_emu_grammar}
+    of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar}
+    of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar}
+    of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
