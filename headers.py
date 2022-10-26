@@ -614,6 +614,8 @@ def write_header_info():
                 assert alg_header.name == alg_name
                 assert alg_header.species == alg_info.species
                 put(f"      --")
+                section = alg_header.section
+                put(f"      {section.section_num} {section.section_title}")
                 if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
                 # alg_header.params
                 # alg_header.return_nature_{normal,abrupt}
