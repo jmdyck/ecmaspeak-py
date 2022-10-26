@@ -381,8 +381,8 @@ def parse(hnode, what=None):
     hnode._syntax_tree = tree
 
     if tree is None:
-        # cc_section = hnode.closest_containing_section()
-        # stderr(f"Failed to parse <{hnode.element_name}> in {cc_section.section_num} {cc_section.section_title}")
+        cc_section = hnode.closest_containing_section()
+        stderr(f"\nFailed to parse <{hnode.element_name}> in {cc_section.section_num} {cc_section.section_title}")
         # (Messes up the "progress bar")
         return None
 

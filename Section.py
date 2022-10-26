@@ -3256,7 +3256,7 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
         what = 'one_line_alg' if hnode.element_name == 'td' else None
         anode = Pseudocode.parse(hnode, what)
         if anode is None:
-            print(f"\nparse failed in {alg_header.section.section_num} {alg_header.section.section_title}")
+            pass
         else:
             assert anode.prod.lhs_s in [
                 '{EMU_ALG_BODY}',
