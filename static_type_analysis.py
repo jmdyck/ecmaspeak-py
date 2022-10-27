@@ -42,11 +42,40 @@ def prep_for_STA():
 
     for bif_or_op in ['bif', 'op']:
         for alg in spec.alg_info_[bif_or_op].values():
+            # Ignore most headers in Annex B
+            alg.headers = [
+                header
+                for header in alg.headers
+                if retain_for_sta(header)
+            ]
             for header in alg.headers:
                 header.tah = TypedAlgHeader(header)
 
     un_f.close()
     print_unused_type_tweaks()
+
+def retain_for_sta(header):
+    if header.section.section_num.startswith('B'):
+        # We're in Annex B. Do we want to create this {alg_defn} and add it to {header}?
+        if header.species.startswith('op: discriminated by syntax'):
+            return False
+            # These are additional/replacement units of
+            # discriminated operations that are invoked in the main body,
+            # so including them will mess up main-body semantics
+            # until we can handle Annex B stuff properly.
+        elif header.species in ['op: singular', 'bif: intrinsic']:
+            return True
+            # This is 2 ops (CharacterRangeOrUnion & CreateHTML) that are only
+            # referenced from within Annex B,
+            # plus a bunch of built-in functions.
+            # So it doesn't hurt main-body semantics to include them.
+            # (The reason to include them is that they are then
+            # subjected to static type analysis.)
+        else:
+            assert 0, header.species
+    else:
+        # Main-body, so definitely include it.
+        return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

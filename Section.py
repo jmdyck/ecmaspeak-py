@@ -3274,31 +3274,8 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
     else:
         assert 0
 
-    if alg_header.section.section_num.startswith('B'):
-        # We're in Annex B. Do we want to create this {alg_defn} and add it to {alg_header}?
-        if alg_header.species.startswith('op: discriminated by syntax'):
-            add_it = False
-            # These are additional/replacement units of
-            # discriminated operations that are invoked in the main body,
-            # so including them will mess up main-body semantics
-            # until we can handle Annex B stuff properly.
-        elif alg_header.species in ['op: singular', 'bif: intrinsic']:
-            add_it = True
-            # This is 2 ops (CharacterRangeOrUnion & CreateHTML) that are only
-            # referenced from within Annex B,
-            # plus a bunch of built-in functions.
-            # So it doesn't hurt main-body semantics to include them.
-            # (The reason to include them is that they are then
-            # subjected to static type analysis.)
-        else:
-            assert 0, alg_header.species
-    else:
-        # Main-body, so definitely include it.
-        add_it = True
-
-    if add_it:
-        alg_defn = AlgDefn(alg_header, discriminator, kludgey_p, anode)
-        alg_header.u_defns.append(alg_defn)
+    alg_defn = AlgDefn(alg_header, discriminator, kludgey_p, anode)
+    alg_header.u_defns.append(alg_defn)
 
 # ------------------------------------------------------------------------------
 
