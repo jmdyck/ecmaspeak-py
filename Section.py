@@ -353,13 +353,18 @@ def _handle_early_errors_section(section):
         assert isinstance(body, tuple)
         (emu_grammar, p, ul) = body
 
-        handle_early_error(emu_grammar, p, ul, alg_header)
+        handle_early_error_block(emu_grammar, p, ul, alg_header)
 
     return True
 
 # ------------------------------------------------------------------------------
 
-def handle_early_error(emu_grammar, p, ul, alg_header):
+def handle_early_error_block(emu_grammar, p, ul, alg_header):
+    # An early error block consists of:
+    # - an <emu-grammar> element (containing 1 or more productions),
+    # - a <ul> element (containing 1 or more "It is a Syntax Error" items), and
+    # - rarely, a <p> element that constrains the applicability of the rules.
+
     assert emu_grammar.element_name == 'emu-grammar'
     assert p is None or p.element_name == 'p'
     assert ul.element_name == 'ul'
@@ -1547,8 +1552,8 @@ def _handle_changes_section(section):
     def blah_composite_sdo(op_name, emu_grammar, emu_alg):
         Pseudocode.parse(emu_alg)
 
-    def blah_early_error(emu_grammar, ul):
-        handle_early_error(emu_grammar, None, ul, None)
+    def blah_early_error_block(emu_grammar, ul):
+        handle_early_error_block(emu_grammar, None, ul, None)
 
     # For calls to scan_section, we're going to assume this holds,
     # but be sure to undo it if we ultimately return False.
@@ -1690,7 +1695,7 @@ def _handle_changes_section(section):
                     'emu-grammar',
                     'ul',
                 ],
-                lambda p, emu_grammar, ul: blah_early_error(emu_grammar, ul)
+                lambda p, emu_grammar, ul: blah_early_error_block(emu_grammar, ul)
             ),
         ]
         scan_section(section, patterns)
@@ -1705,7 +1710,7 @@ def _handle_changes_section(section):
                     'emu-grammar',
                     'ul'
                 ],
-                lambda p, emu_grammar, ul: blah_early_error(emu_grammar, ul)
+                lambda p, emu_grammar, ul: blah_early_error_block(emu_grammar, ul)
             ),
             (
                 ['emu-note'],
