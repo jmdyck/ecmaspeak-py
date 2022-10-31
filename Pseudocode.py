@@ -33,7 +33,7 @@ def check_step_references():
     def put(*args): print(*args, file=f_step_refs)
 
     curr_referring_section = None
-    for (referring_section, referring_line, step_ref, refd_line) in each_step_ref():
+    for (referring_section, referring_line, refd_section, refd_line) in each_step_ref():
         if referring_section != curr_referring_section:
             put()
             put('-' * 40)
@@ -50,7 +50,10 @@ def check_step_references():
             curr_referring_line = referring_line
 
         put()
-        put(f"        step {step_ref}:")
+        if refd_section is referring_section:
+            put(f"        (same section):")
+        else:
+            put(f"        {refd_section.section_num} {refd_section.section_title}:")
         put(f"        {refd_line}")
 
     f_step_refs.close()
@@ -74,6 +77,9 @@ def each_step_ref():
             fr'steps {x}-{x}',
              f'steps {x}\u2013{x}',
             fr'steps {x} and {x}',
+            # kludgey for 13.15.2:
+            fr'step {x}, {x}, {x}, {x}, {x}',
+            fr'step {x}, {x}, {x}, {x}',
             fr'step {x}',
         ]
         for pattern in patterns:
@@ -84,134 +90,19 @@ def each_step_ref():
             assert 0, spec.text[st:st+200].replace('\n', '\\n')
 
         step_ids = mo.groups()
-        ref_start_posn = mo.start()
-        ref_end_posn = mo.end()
-
-        def ref_is_preceded_by(s):
-            return spec.text[ref_start_posn-len(s) : ref_start_posn] == s
-
-        def ref_is_followed_by(s):
-            return spec.text[ref_end_posn : ref_end_posn+len(s)] == s
-
-        # -------------
-
-        # Pin down which emu-alg is being referenced:
-
-        if ref_is_followed_by(' in previous editions of this specification'):
-            for step_id in step_ids:
-                step_ref = step_id + ' in previous editions'
-                refd_line = 'SKIP'
-                yield (referring_section, referring_line, step_ref, refd_line)
-            continue
-
-        elif ref_is_preceded_by('During IsLooselyEqual the following steps are performed in place of '):
-            refd_alg_name = 'IsLooselyEqual'
-            refd_section_id = 'sec-islooselyequal'
-        elif ref_is_followed_by(' of the IsLessThan algorithm'):
-            refd_alg_name = 'IsLessThan'
-            refd_section_id = 'sec-islessthan'
-        elif ref_is_followed_by(' in the algorithm for the addition operator `+`'):
-            refd_alg_name = 'evaluation of the `+` operator'
-            refd_section_id = 'sec-addition-operator-plus-runtime-semantics-evaluation'
-        elif ref_is_followed_by(' in the algorithm that handles the addition operator `+`'): # compound_assignment branch
-            refd_alg_name = 'ApplyStringOrNumericBinaryOperator'
-            refd_section_id = 'sec-applystringornumericbinaryoperator'
-        elif ref_is_followed_by(' in <emu-xref href="#sec-array.prototype.sort"></emu-xref>'):
-            refd_alg_name = 'Array.prototype.sort'
-            refd_section_id = 'sec-array.prototype.sort'
-        elif ref_is_followed_by(' of <emu-xref href="#sec-json.parse">JSON.parse</emu-xref>'):
-            refd_alg_name = 'JSON.parse'
-            refd_section_id = 'sec-json.parse'
-        elif ref_is_followed_by(' of <emu-xref href="#sec-typeof-operator-runtime-semantics-evaluation">the evaluation semantics for `typeof`</emu-xref>'):
-            refd_alg_name = 'Evaluation for `typeof` expression'
-            refd_section_id = 'sec-typeof-operator-runtime-semantics-evaluation'
-        elif ref_is_preceded_by('the same as [[Call]] (see <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>) except that '):
-            refd_alg_name = '[[Call]] for built-in functions'
-            refd_section_id = 'sec-built-in-function-objects-call-thisargument-argumentslist'
-        elif ref_is_preceded_by('During FunctionDeclarationInstantiation the following steps are performed in place of '):
-            refd_alg_name = 'FunctionDeclarationInstantiation'
-            refd_section_id = 'sec-functiondeclarationinstantiation'
-        elif ref_is_preceded_by('During GlobalDeclarationInstantiation the following steps are performed in place of '):
-            refd_alg_name = 'GlobalDeclarationInstantiation'
-            refd_section_id = 'sec-globaldeclarationinstantiation'
-        elif ref_is_preceded_by('During EvalDeclarationInstantiation the following steps are performed in place of '):
-            refd_alg_name = 'EvalDeclarationInstantiation'
-            refd_section_id = 'sec-evaldeclarationinstantiation'
-        elif ref_is_preceded_by('During BlockDeclarationInstantiation the following steps are performed in place of '):
-            refd_alg_name = 'BlockDeclarationInstantiation'
-            refd_section_id = 'sec-blockdeclarationinstantiation'
-        elif referring_section.section_id == 'sec-variablestatements-in-catch-blocks':
-            assert len(step_ids) == 1
-            [step_id] = step_ids
-            if 'throw' in step_id:
-                refd_alg_name = 'EvalDeclarationInstantiation'
-                refd_section_id = 'sec-evaldeclarationinstantiation'
-            elif 'web-compat-bindingexists' in step_id:
-                # super-kludge:
-                # See https://github.com/tc39/ecma262/pull/1697#discussion_r411874379
-                refd_alg_name = 'EvalDeclarationInstantiation as modified in B.3.3.3'
-                refd_section_id = 'sec-web-compat-evaldeclarationinstantiation'
-                # step_ids = [step_ids[0].replace('7.', '1.', 1)]
-            else:
-                assert 0, step_ids
-        else:
-            refd_alg_name = None
-            refd_section_id = referring_section.section_id
-
-        refd_section = spec.node_with_id_[refd_section_id]
-
-        refd_section_algs = [
-            node
-            for node in refd_section.block_children
-            if node.element_name == 'emu-alg'
-        ]
-
-        if len(refd_section_algs) == 0:
-            assert 0
-        elif len(refd_section_algs) == 1:
-            [refd_alg] = refd_section_algs
-        else:
-            # somewhat kludgey:
-            # (It would be more robust to know where the step-ref occurs
-            # with respect to the algs, and then usually pick the preceding alg.)
-            if refd_section.section_id == 'sec-algorithm-conventions-syntax-directed-operations':
-                assert len(refd_section_algs) == 2
-                refd_alg = refd_section_algs[0]
-            elif refd_section.section_id == 'sec-function-calls-runtime-semantics-evaluation':
-                assert len(refd_section_algs) == 2
-                refd_alg = refd_section_algs[0]
-            elif refd_section.section_id == 'sec-assignment-operators-runtime-semantics-evaluation':
-                assert len(refd_section_algs) == 5
-                if ref_is_followed_by(' of the first algorithm'):
-                    refd_alg_name = "the first algorithm"
-                    refd_alg = refd_section_algs[0]
-                elif ref_is_followed_by(' of the second algorithm'):
-                    refd_alg_name = "the second algorithm"
-                    refd_alg = refd_section_algs[1]
-                else:
-                    continue # XXX PR 2030: I can't be bothered right now.
-                    assert 0
-            elif refd_section.section_id == 'sec-variable-statement-runtime-semantics-evaluation':
-                assert len(refd_section_algs) == 5
-                refd_alg = refd_section_algs[3]
-            else:
-                # Will create an error message in the step_refs file
-                refd_alg = None
-
-        # -------------
 
         for step_id in step_ids:
 
-            if refd_alg is None:
-                step_path = '???'
-                refd_line = 'XXX: what should refd_alg be?'
-            else:
-                (step_path, refd_line) = get_step_line(refd_alg, step_id)
+            refd_emu_alg = spec.node_with_id_[step_id]
+            assert refd_emu_alg.element_name == 'emu-alg'
 
-            extra = f" in {refd_alg_name}" if refd_alg_name else ''
-            step_ref = step_path + extra
+            refd_section = refd_emu_alg.closest_containing_section()
 
-            yield (referring_section, referring_line, step_ref, refd_line)
+            mo = re.search(rf'.*id="{step_id}".*', refd_emu_alg.source_text())
+            assert mo
+            refd_line = mo.group(0).lstrip()
+
+            yield (referring_section, referring_line, refd_section, refd_line)
 
 # ------------------------------------------------------------------------------
 
@@ -228,96 +119,6 @@ def find_deepest_node_covering_posn(posn):
             return node
 
     return recurse(spec.doc_node)
-
-# ------------------------------------------------------------------------------
-
-def get_step_line(emu_alg_n, step_id):
-
-    # --------
-
-    ist = emu_alg_n.inner_source_text().rstrip()
-    alg_lines = [
-        ( len(mo.group(1)), mo.group(2) )
-        for mo in re.compile(r'\n( *)(.+)').finditer(ist)
-    ]
-    # pprint.pprint(alg_lines, stream=sys.stderr)
-
-    def nestify(start_i, end_i):
-        # Return a structure that captures the hierarchy
-        # of alg_lines[start_i:end_i]
-
-        if start_i == end_i: return []
-
-        (indent_for_this_level, _) = alg_lines[start_i]
-        i_of_lines_at_this_level = [
-            i
-            for i in range(start_i, end_i)
-            if alg_lines[i][0] == indent_for_this_level
-        ]
-        assert i_of_lines_at_this_level[0] == start_i
-
-        tups = []
-        for (i, j) in zip(
-            i_of_lines_at_this_level,
-            i_of_lines_at_this_level[1:] + [end_i]
-        ):
-            # The lines that are subordinate to line `i`
-            # run from `i+1` up to (but not including) line `j`.
-            tup = (
-                alg_lines[i][1],
-                nestify(i+1, j)
-            )
-            tups.append(tup)
-
-        return tups
-
-    alg_tups = nestify(0, len(alg_lines))
-    # pprint.pprint(alg_tups, stream=sys.stderr)
-
-    # ----------
-
-    level_formats = ['1', 'a', 'i', '1', 'a', 'i', 'i', 'i', 'i']
-
-    level_formatters = {
-        # arabic numerals:
-        '1': lambda i: str(i+1),
-
-        # lower-case alpha:
-        'a': lambda i: string.ascii_lowercase[i],
-
-        # lower-case roman:
-        'i': lambda i: ['i', 'ii', 'iii', 'iv', 'v', 'vi'][i],
-    }
-
-    labelled_steps = {}
-
-    def extract_labelled_steps(tups, path_to_parent):
-        level = len(path_to_parent)
-        level_format = level_formats[level]
-        level_formatter = level_formatters[level_format]
-
-        for (i, (line, subtups)) in enumerate(tups):
-            path_piece = level_formatter(i)
-            path_to_this_step = path_to_parent + [path_piece]
-            mo = re.fullmatch(r'\d+\. \[id="([^"]+)"\] (.+)', line)
-            if mo:
-                (step_id, rest_of_line) = mo.groups()
-                assert step_id not in labelled_steps
-                labelled_steps[step_id] = (path_to_this_step, rest_of_line)
-
-            extract_labelled_steps(subtups, path_to_this_step)
-
-    extract_labelled_steps(alg_tups, [])
-
-    # print(labelled_steps)
-
-    # ----------
-
-    if step_id not in labelled_steps:
-        return (f"XXX index error: step_id {step_id} does not exist in this alg", 'xxx')
-
-    (path_to_step, step_line) = labelled_steps[step_id]
-    return ('.'.join(path_to_step), '1. ' + step_line)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
