@@ -141,8 +141,8 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {starred_int_lit}       : \* [+-] 0 \*
     {starred_int_lit}       : \* [+-]? \d+ \*
     {starred_bigint_lit}    : \* [01] n \*
-    {starred_neg_infinity_lit} : \*  - &infin; \*
-    {starred_pos_infinity_lit} : \* \+ &infin; \*
+    {starred_neg_infinity_lit} : \*  - ∞ \*
+    {starred_pos_infinity_lit} : \* \+ ∞ \*
     {starred_nan_lit}       : \* NaN \*
     {starred_word}          : \* [A-Za-z]+ \*
     {starred_str}           : \* " ( [^"*] | \\ \* )* " \*
@@ -176,11 +176,15 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     # tokens that begin with a digit:
     {code_unit_lit}  : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)
     {hex_int_lit}    : \b 0x [0-9A-F]{2,6} \b
-    {dec_int_lit}    : \b [0-9]+ \b
+    {dec_int_lit}    : \b [0-9]+ (?![0-9A-Za-z])
+        # We can't end with \b,
+        # because there's an occurrence of 3π,
+        # and π is a word-character, so \b doesn't match after the '3'.
     {wordish}        : \b 20th \b
 
-    # single-character punctuation:
-    {punct}          : [-()=/+,.:?!;{}*@\u2265\u00ab\u00bb]
+    # single-character symbols:
+    {punct}          : [-()=/+,.:?!;{}*@>]
+    {nonascii}       : [ « » × π “ ” ∞ ≠ ≤ ≥ ]
 
     # tokens that begin with a letter:
 
@@ -485,7 +489,6 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
 
     | \* [+-] 0 \*
     | \* [A-Za-z]+ \*
-    | \* [+-] &infin; \*
     | \* " [^"]? " \*
 
     | ` " [^"`]+ " `
@@ -499,9 +502,10 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | _startIndex_
     | _withEnvironment_
 
-    | \b [0-9]+ \b
+    | \b [0-9]+ (?![0-9A-Za-z])
 
-    | [-!()*+,./:;=?@{}]
+    | [-!()*+,./:;=>?@{}]
+    | [ « » × π “ ” ∞ ≠ ≤ ≥ ]
     | \[
     | \]
 

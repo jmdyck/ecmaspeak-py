@@ -183,7 +183,11 @@ def parse(hnode, what=None):
 
     if tree is None:
         cc_section = hnode.closest_containing_section()
-        stderr(f"\nFailed to parse <{hnode.element_name}> in {cc_section.section_num} {cc_section.section_title}")
+        if hasattr(cc_section, 'section_num'):
+            identification = f"{cc_section.section_num} {cc_section.section_title}"
+        else:
+            identification = f"{cc_section.element_name} id={cc_section.attrs['id']!r}"
+        stderr(f"\nFailed to parse <{hnode.element_name}> in {identification}")
         # (Messes up the "progress bar")
         return None
 

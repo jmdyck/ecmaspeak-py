@@ -1905,7 +1905,7 @@ class Env:
             if expr_text == '*null*':
                 # Don't try to change the type of *null*!
                 result_env = expr_env
-            elif expr_text == '&laquo; &raquo;':
+            elif expr_text == '« »':
                 result_env = expr_env
             else:
                 result_env = expr_env.with_expr_type_replaced(expr, expected_t)
@@ -3237,7 +3237,7 @@ def tc_nonvalue(anode, env0):
         if if_open_st.startswith('If abs(\u211d(_base_)) &lt; 1, return'):
             # Twice, near the bottom of Number::exponentiate,
             # there are 3 steps of the form:
-            #     1. If abs(R(_base_)) &gt; 1, return ...
+            #     1. If abs(R(_base_)) > 1, return ...
             #     1. If abs(R(_base_)) is 1, return ...
             #     1. If abs(R(_base_)) &lt; 1, return ...
             # These steps exhaust the possibilities for abs(R(_base_)),
@@ -4020,7 +4020,7 @@ def tc_nonvalue(anode, env0):
 
         (list_type, list_env) = tc_expr(list_var, env0); assert list_env is env0
         assert list_type == ListType(T_String)
-        # because it was created via: Let _replacerArgs_ be &laquo; _matched_ &raquo;.
+        # because it was created via: Let _replacerArgs_ be « _matched_ ».
 
         # so this is fine:
         env0.assert_expr_is_of_type(svar, T_String)
@@ -4629,7 +4629,7 @@ def tc_cond_(cond, env0, asserting):
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(cond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : {SETTABLE} &ne; {SETTABLE} for some integer {var} in {INTERVAL}":
+    elif p == r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}":
         [seta, setb, let_var, interval] = children
         env0.assert_expr_is_of_type(interval, T_MathInteger_)
         env_for_settables = env0.plus_new_entry(let_var, T_MathInteger_)
@@ -4680,139 +4680,139 @@ def tc_cond_(cond, env0, asserting):
                 something = {
 
                     # always error:
-                    (T_BigInt            , '&gt;', T_FiniteNumber_     ): 'E',
-                    (T_BigInt            , '&gt;', T_NegInfinityNumber_): 'E',
-                    (T_BigInt            , '&gt;', T_PosInfinityNumber_): 'E',
+                    (T_BigInt            , '>'   , T_FiniteNumber_     ): 'E',
+                    (T_BigInt            , '>'   , T_NegInfinityNumber_): 'E',
+                    (T_BigInt            , '>'   , T_PosInfinityNumber_): 'E',
                     (T_BigInt            , '&lt;', T_FiniteNumber_     ): 'E',
                     (T_BigInt            , '&lt;', T_NegInfinityNumber_): 'E',
                     (T_BigInt            , '&lt;', T_PosInfinityNumber_): 'E',
-                    (T_BigInt            , '&ne;', T_Number            ): 'E',
-                    (T_FiniteNumber_     , '&gt;', T_BigInt            ): 'E',
+                    (T_BigInt            , '≠'   , T_Number            ): 'E',
+                    (T_FiniteNumber_     , '>'   , T_BigInt            ): 'E',
                     (T_FiniteNumber_     , '&lt;', T_BigInt            ): 'E',
-                    (T_IntegralNumber_   , '&ne;', T_BigInt            ): 'E',
-                    (T_NegInfinityNumber_, '&gt;', T_BigInt            ): 'E',
+                    (T_IntegralNumber_   , '≠'   , T_BigInt            ): 'E',
+                    (T_NegInfinityNumber_, '>'   , T_BigInt            ): 'E',
                     (T_NegInfinityNumber_, '&lt;', T_BigInt            ): 'E',
                     (T_PosInfinityNumber_, '&lt;', T_BigInt            ): 'E',
-                    (T_PosInfinityNumber_, '&gt;', T_BigInt            ): 'E',
-                    (T_tilde_empty_      , '&gt;', T_MathInteger_      ): 'E',
+                    (T_PosInfinityNumber_, '>'   , T_BigInt            ): 'E',
+                    (T_tilde_empty_      , '>'   , T_MathInteger_      ): 'E',
                     #
                     # Comparisons between Number and BigInt mostly come from
                     # %TypedArray%.prototype.sort, which has:
                     # 1. Assert: _x_ is a Number and _y_ is a Number, or _x_ is a BigInt and _y_ is a BigInt.
                     # which this STA doesn't represent well.
                     #
-                    # Also Atomics.wait (`If _v_ &ne; _w_, ...`)
+                    # Also Atomics.wait (`If _v_ ≠ _w_, ...`)
 
                     # could be error:
-                    (T_IntegralNumber_, '&ne;', T_Number   ): 'TFE', # because the Number might be NaN
-                    (T_IntegralNumber_, '&ge;', T_Tangible_): 'TFE',
+                    (T_IntegralNumber_, '≠', T_Number   ): 'TFE', # because the Number might be NaN
+                    (T_IntegralNumber_, '≥', T_Tangible_): 'TFE',
 
                     # ------------
                     # Mathematical:
 
                     # always true:
-                    (T_MathInteger_    , '&le;', T_MathPosInfinity_): 'T',
-                    (T_MathNegInfinity_, '&le;', T_MathInteger_    ): 'T',
+                    (T_MathInteger_    , '≤'   , T_MathPosInfinity_): 'T',
+                    (T_MathNegInfinity_, '≤'   , T_MathInteger_    ): 'T',
                     (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
-                    (T_MathPosInfinity_, '&ge;', T_MathInteger_    ): 'T',
-                    (T_MathPosInfinity_, '&gt;', T_FiniteNumber_   ): 'T',
-                    (T_MathPosInfinity_, '&gt;', T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '≥'   , T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '>'   , T_FiniteNumber_   ): 'T',
+                    (T_MathPosInfinity_, '>'   , T_MathInteger_    ): 'T',
 
                     # always false:
-                    (T_MathNegInfinity_, '&ge;', T_MathInteger_): 'F',
+                    (T_MathNegInfinity_, '≥'   , T_MathInteger_): 'F',
                     (T_MathNegInfinity_, '='   , T_MathInteger_): 'F',
-                    (T_MathPosInfinity_, '&le;', T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '≤'   , T_MathInteger_): 'F',
                     (T_MathPosInfinity_, '&lt;', T_MathInteger_): 'F',
                     (T_MathPosInfinity_, '='   , T_MathInteger_): 'F',
 
                     # can be true or false:
-                    (T_ExtendedMathReal_, '&ge;', T_MathInteger_     ): 'TF',
-                    (T_ExtendedMathReal_, '&le;', T_MathInteger_     ): 'TF',
+                    (T_ExtendedMathReal_, '≥'   , T_MathInteger_     ): 'TF',
+                    (T_ExtendedMathReal_, '≤'   , T_MathInteger_     ): 'TF',
                     (T_ExtendedMathReal_, '&lt;', T_ExtendedMathReal_): 'TF',
                     (T_ExtendedMathReal_, '&lt;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&ge;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&gt;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&le;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≥'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '>'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≤'   , T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '&lt;', T_ExtendedMathReal_): 'TF',
                     (T_MathInteger_     , '&lt;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&ne;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&ne;', T_MathReal_        ): 'TF',
+                    (T_MathInteger_     , '≠'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≠'   , T_MathReal_        ): 'TF',
                     (T_MathInteger_     , '='   , T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '&ge;', T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '&gt;', T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '&gt;', T_MathReal_        ): 'TF',
+                    (T_MathReal_        , '≥'   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '>'   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '>'   , T_MathReal_        ): 'TF',
                     (T_MathReal_        , '&lt;', T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '&lt;', T_MathReal_        ): 'TF',
-                    (T_MathReal_        , '&ne;', T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '≠'   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '='   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '='   , T_MathReal_        ): 'TF',
 
                     (T_MathInteger_, 'is at least', T_MathInteger_): 'TF',
 
-                    (T_code_point_ , '&le;', T_MathInteger_): 'TF', # but deserves a warning
+                    (T_code_point_ , '≤', T_MathInteger_): 'TF', # but deserves a warning
 
                     # -------
                     # Number:
 
                     # always true:
-                    (T_FiniteNumber_     , '&gt;', T_NegInfinityNumber_): 'T',
+                    (T_FiniteNumber_     , '>'   , T_NegInfinityNumber_): 'T',
                     (T_FiniteNumber_     , '&lt;', T_PosInfinityNumber_): 'T',
                     (T_NegInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'T',
                     (T_NegInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'T',
                     (T_NegInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'T',
-                    (T_PosInfinityNumber_, '&gt;', T_FiniteNumber_     ): 'T',
-                    (T_PosInfinityNumber_, '&gt;', T_IntegralNumber_   ): 'T',
-                    (T_PosInfinityNumber_, '&gt;', T_NegInfinityNumber_): 'T',
+                    (T_PosInfinityNumber_, '>'   , T_FiniteNumber_     ): 'T',
+                    (T_PosInfinityNumber_, '>'   , T_IntegralNumber_   ): 'T',
+                    (T_PosInfinityNumber_, '>'   , T_NegInfinityNumber_): 'T',
 
                     # always false:
-                    (T_FiniteNumber_     , '&gt;', T_PosInfinityNumber_): 'F',
+                    (T_FiniteNumber_     , '>'   , T_PosInfinityNumber_): 'F',
                     (T_FiniteNumber_     , '&lt;', T_NegInfinityNumber_): 'F',
-                    (T_NegInfinityNumber_, '&gt;', T_FiniteNumber_     ): 'F',
-                    (T_NegInfinityNumber_, '&gt;', T_IntegralNumber_   ): 'F',
-                    (T_NegInfinityNumber_, '&gt;', T_NegInfinityNumber_): 'F',
-                    (T_NegInfinityNumber_, '&gt;', T_PosInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_FiniteNumber_     ): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_IntegralNumber_   ): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_NegInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_PosInfinityNumber_): 'F',
                     (T_NegInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
-                    (T_PosInfinityNumber_, '&gt;', T_PosInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '>'   , T_PosInfinityNumber_): 'F',
                     (T_PosInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'F',
                     (T_PosInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'F',
                     (T_PosInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
                     (T_PosInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'F',
 
                     # true or false:
-                    (T_FiniteNumber_           , '&gt;', T_FiniteNumber_           ): 'TF',
-                    (T_FiniteNumber_           , '&gt;', T_IntegralNumber_         ): 'TF',
+                    (T_FiniteNumber_           , '>'   , T_FiniteNumber_           ): 'TF',
+                    (T_FiniteNumber_           , '>'   , T_IntegralNumber_         ): 'TF',
                     (T_FiniteNumber_           , '&lt;', T_FiniteNumber_           ): 'TF',
                     (T_FiniteNumber_           , '&lt;', T_IntegralNumber_         ): 'TF',
-                    (T_IntegralNumber_         , '&ge;', T_IntegralNumber_         ): 'TF',
-                    (T_IntegralNumber_         , '&gt;', T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '≥'   , T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '>'   , T_IntegralNumber_         ): 'TF',
                     (T_IntegralNumber_         , '='   , T_IntegralNumber_         ): 'TF',
-                    (T_NonIntegralFiniteNumber_, '&ge;', T_NonIntegralFiniteNumber_): 'TF',
-                    (T_NonIntegralFiniteNumber_, '&gt;', T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '≥'   , T_NonIntegralFiniteNumber_): 'TF',
+                    (T_NonIntegralFiniteNumber_, '>'   , T_IntegralNumber_         ): 'TF',
                     (T_NonIntegralFiniteNumber_, '&lt;', T_IntegralNumber_         ): 'TF',
                     (T_NonIntegralFiniteNumber_, '&lt;', T_NonIntegralFiniteNumber_): 'TF',
 
                     # -------
                     # BigInt:
 
-                    (T_BigInt, '&gt;', T_BigInt): 'TF',
+                    (T_BigInt, '>'   , T_BigInt): 'TF',
                     (T_BigInt, '&lt;', T_BigInt): 'TF',
-                    (T_BigInt, '&ne;', T_BigInt): 'TF',
+                    (T_BigInt, '≠'   , T_BigInt): 'TF',
 
                     # --------
-                    # Using the mathematical operator '&ne;' to compare non-numeric values:
+                    # Using the mathematical operator '≠' to compare non-numeric values:
                     #
                     # SetTypedArrayFromTypedArray has:
-                    #   1. If _target_.[[ContentType]] &ne; _source_.[[ContentType]], ...
+                    #   1. If _target_.[[ContentType]] ≠ _source_.[[ContentType]], ...
                     # TypedArraySpeciesCreate has:
-                    #   1. If _result_.[[ContentType]] &ne; _exemplar_.[[ContentType]], ...
+                    #   1. If _result_.[[ContentType]] ≠ _exemplar_.[[ContentType]], ...
                     # InitializeTypedArrayFromTypedArray has:
-                    #   1. If _srcArray_.[[ContentType]] &ne; _O_.[[ContentType]], ...
+                    #   1. If _srcArray_.[[ContentType]] ≠ _O_.[[ContentType]], ...
 
-                    (T_tilde_BigInt_, '&ne;', T_tilde_Number_): 'TE',
-                    (T_tilde_Number_, '&ne;', T_tilde_BigInt_): 'TE',
+                    (T_tilde_BigInt_, '≠', T_tilde_Number_): 'TE',
+                    (T_tilde_Number_, '≠', T_tilde_BigInt_): 'TE',
 
-                    (T_tilde_BigInt_, '&ne;', T_tilde_BigInt_): 'FE',
-                    (T_tilde_Number_, '&ne;', T_tilde_Number_): 'FE',
+                    (T_tilde_BigInt_, '≠', T_tilde_BigInt_): 'FE',
+                    (T_tilde_Number_, '≠', T_tilde_Number_): 'FE',
 
                 }[triple]
 
@@ -5524,7 +5524,7 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}":
+    elif p == r"{CONDITION_1} : {EX} is listed in the “Code Point” column of {h_emu_xref}":
         [ex, emu_xref] = children
         env0.assert_expr_is_of_type(ex, T_code_point_)
         return (env0, env0)
@@ -5803,11 +5803,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}":
         [prod_ref, h_emu_xref] = children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}":
+    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}":
         [prod_ref, h_a, h_emu_xref] = children
         return (env0, env0)
 
@@ -6085,7 +6085,7 @@ def _(val_desc, env):
     # inexact because of 'non-empty'
 
 @tbd.put('{VAL_DESC} : a non-negative integer less than or equal to {EX}')
-@tbd.put('{VAL_DESC} : a non-negative integer which is &le; {EXPR}')
+@tbd.put('{VAL_DESC} : a non-negative integer which is ≤ {EXPR}')
 def _(val_desc, env):
     [ex] = val_desc.children
     env.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
@@ -6258,19 +6258,19 @@ tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
 tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
-tbd['{VAL_DESC} : a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a Unicode property name'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a Unicode property value'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
 tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
 tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
-tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
 tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
-tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
 tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
@@ -6397,9 +6397,9 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_Str
 def _(literal, env):
     [math_literal] = literal.children
     r = math_literal.prod.rhs_s
-    if r == '+&infin;':
+    if r in ['+&infin;', '+∞']:
         return T_MathPosInfinity_
-    elif r == '-&infin;':
+    elif r in ['-&infin;', '-∞']:
         return T_MathNegInfinity_
     elif r == '{dec_int_lit}':
         return a_subset_of(T_MathInteger_)
@@ -6606,10 +6606,16 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p == r"{LITERAL} : {atat_word}":
         return (T_Symbol, env0)
 
-    elif p == r"{MATH_LITERAL} : +&infin;":
+    elif p in [
+        r"{MATH_LITERAL} : +&infin;",
+        r"{MATH_LITERAL} : +∞",
+    ]:
         return (T_MathPosInfinity_, env0)
 
-    elif p == r"{MATH_LITERAL} : -&infin;":
+    elif p in [
+        r"{MATH_LITERAL} : -&infin;",
+        r"{MATH_LITERAL} : -∞",
+    ]:
         return (T_MathNegInfinity_, env0)
 
     elif p == r"{LITERAL} : {TYPE_NAME}":
@@ -7409,9 +7415,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_IntegralNumber_, env1)
 
     elif p in [
-        r"{EXPR} : the smallest (closest to -&infin;) integral Number value that is not less than {var}",
-        r"{EXPR} : the greatest (closest to +&infin;) integral Number value that is not greater than {var}",
-        r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +&infin; in the case of a tie",
+        r"{EXPR} : the smallest (closest to -∞) integral Number value that is not less than {var}",
+        r"{EXPR} : the greatest (closest to +∞) integral Number value that is not greater than {var}",
+        r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie",
     ]:
         [var] = children
         env0.assert_expr_is_of_type(var, T_Number)
@@ -7482,14 +7488,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_MathReal_, env2)
 
     elif p in [
-        "{NUM_EXPR} : &pi; / 2",
-        "{NUM_EXPR} : &pi; / 4",
-        "{NUM_EXPR} : &pi;",
-        "{NUM_EXPR} : 3&pi; / 4",
-        "{NUM_EXPR} : -&pi; / 2",
-        "{NUM_EXPR} : -&pi; / 4",
-        "{NUM_EXPR} : -&pi;",
-        "{NUM_EXPR} : -3&pi; / 4",
+        "{NUM_EXPR} : π / 2",
+        "{NUM_EXPR} : π / 4",
+        "{NUM_EXPR} : π",
+        "{NUM_EXPR} : 3π / 4",
+        "{NUM_EXPR} : -π / 2",
+        "{NUM_EXPR} : -π / 4",
+        "{NUM_EXPR} : -π",
+        "{NUM_EXPR} : -3π / 4",
     ]:
         [] = children
         return (T_MathReal_, env0)
@@ -7684,7 +7690,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert x_var.source_text() == x_var2.source_text()
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{dec_int_lit} : \b [0-9]+ \b":
+    elif p == r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])":
         return (T_MathNonNegativeInteger_, env0)
 
     elif p == r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}":
@@ -7739,24 +7745,24 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 (T_ExtendedMathReal_, 'modulo', T_MathInteger_): 'ST of A includes infinities',
                 (T_ExtendedMathReal_, 'modulo', T_MathReal_   ): 'ST of A includes infinities',
 
-                (T_ExtendedMathReal_, '&times;', T_ExtendedMathReal_): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '&times;', T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '×'      , T_MathInteger_     ): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '+'      , T_MathInteger_     ): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '-'      , T_MathInteger_     ): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '/'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
                 (T_ExtendedMathReal_, '/'      , T_MathInteger_     ): T_ExtendedMathReal_,
-                (T_MathInteger_     , '&times;', T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_MathInteger_     , '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
                 (T_MathInteger_     , '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
 
                 (T_MathInteger_    , '+'      , T_MathNegInfinity_): T_MathNegInfinity_,
 
-                (T_MathInteger_, '&times;', T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '×'      , T_MathReal_   ): T_MathReal_,
                 (T_MathInteger_, '+'      , T_MathReal_   ): T_MathReal_,
                 (T_MathInteger_, '-'      , T_MathReal_   ): T_MathReal_,
                 (T_MathInteger_, '/'      , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '&times;', T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '&times;', T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , '×'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '×'      , T_MathReal_   ): T_MathReal_,
                 (T_MathReal_   , '+'      , T_MathInteger_): T_MathReal_,
                 (T_MathReal_   , '+'      , T_MathReal_   ): T_MathReal_,
                 (T_MathReal_   , '-'      , T_MathInteger_): T_MathReal_,
@@ -7766,7 +7772,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 (T_MathReal_   , 'modulo' , T_MathInteger_): T_MathReal_,
                 (T_MathReal_   , 'modulo' , T_MathReal_   ): T_MathReal_,
 
-                (T_MathInteger_, '&times;', T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, '×'      , T_MathInteger_): T_MathInteger_,
                 (T_MathInteger_, '+'      , T_MathInteger_): T_MathInteger_,
                 (T_MathInteger_, '-'      , T_MathInteger_): T_MathInteger_,
                 (T_MathInteger_, 'modulo' , T_MathInteger_): T_MathInteger_,
@@ -7781,21 +7787,21 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
                 (T_Number       , '-'      , T_IntegralNumber_): 'A could be NaN',
 
-                (T_FiniteNumber_     , '&times;', T_NegInfinityNumber_): T_NegInfinityNumber_, # warn [assuming finite is > 0]
+                (T_FiniteNumber_     , '×'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn [assuming finite is > 0]
                 (T_FiniteNumber_     , '+'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn
                 (T_FiniteNumber_     , '-'      , T_PosInfinityNumber_): T_NegInfinityNumber_, # warn
                 (T_NegInfinityNumber_, '+'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
                 (T_NegInfinityNumber_, '-'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
                 (T_NegInfinityNumber_, '/'      , T_FiniteNumber_     ): T_NegInfinityNumber_, # warn [assuming finite is > 0]
 
-                (T_FiniteNumber_     , '&times;', T_PosInfinityNumber_): T_PosInfinityNumber_, # warn [assuming finite is > 0]
+                (T_FiniteNumber_     , '×'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn [assuming finite is > 0]
                 (T_FiniteNumber_     , '+'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn
                 (T_FiniteNumber_     , '-'      , T_NegInfinityNumber_): T_PosInfinityNumber_, # warn
                 (T_PosInfinityNumber_, '+'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
                 (T_PosInfinityNumber_, '-'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
                 (T_PosInfinityNumber_, '/'      , T_FiniteNumber_     ): T_PosInfinityNumber_, # warn [assuming finite is > 0]
 
-                (T_FiniteNumber_  , '&times;', T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '×'      , T_FiniteNumber_  ): T_FiniteNumber_,
                 (T_FiniteNumber_  , '+'      , T_FiniteNumber_  ): T_FiniteNumber_,
                 (T_FiniteNumber_  , '+'      , T_IntegralNumber_): T_FiniteNumber_,
                 (T_FiniteNumber_  , '-'      , T_FiniteNumber_  ): T_FiniteNumber_,
@@ -7810,14 +7816,14 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
                 # BigInts:
 
-                (T_BigInt, '&times;', T_BigInt): T_BigInt,
+                (T_BigInt, '×'      , T_BigInt): T_BigInt,
                 (T_BigInt, '-'      , T_BigInt): T_BigInt,
 
                 # --------
 
                 # misc:
 
-                (T_not_set     , '&times;', T_MathInteger_): 'A is non-numeric',
+                (T_not_set     , '×'      , T_MathInteger_): 'A is non-numeric',
                 (T_tilde_empty_, '-'      , T_MathInteger_): 'A is non-numeric',
 
             }[triple]
@@ -7993,7 +7999,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_String, env0)
 
-    elif p == r"{EX} : the escape sequence for {var} as specified in the &ldquo;Escape Sequence&rdquo; column of the corresponding row":
+    elif p == r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row":
         [var] = children
         return (T_String, env0)
 
@@ -8133,7 +8139,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm":
+    elif p == r"{EXPR} : the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm":
         [var] = children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_Unicode_code_points_, env0)
@@ -8486,12 +8492,12 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}":
+    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}":
         [v] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;":
+    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”":
         [v] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
@@ -9060,13 +9066,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (T_Set, env0)
 
     elif p in [
-        r"{EX} : &laquo; &raquo;",
+        r"{EX} : « »",
     ]:
         [] = children
         return (T_List, env0)
 
     elif p in [
-        r"{EX} : &laquo; {EXLIST} &raquo;",
+        r"{EX} : « {EXLIST} »",
     ]:
         [exlist] = children
         ex_types = set()
@@ -9189,7 +9195,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [] = children
         return (T_Object, env0)
 
-    elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row":
+    elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row":
         [_, v, _] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
@@ -9199,7 +9205,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-    elif p == r"{EXPR} : the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row":
+    elif p == r"{EXPR} : the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row":
         [v] = children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)

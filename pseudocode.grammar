@@ -485,8 +485,8 @@
     the source text containing {G_SYM} is eval code that is being processed by a direct eval
     the source text matched by the syntactic production that is being evaluated is contained in strict mode code
     the source text matched by {PROD_REF} is contained in strict mode code
-    the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
-    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
+    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}
     the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}
     the source text matched by {PROD_REF} is not strict mode code
     the source text matched by {PROD_REF} is strict mode code
@@ -518,7 +518,7 @@
     {EX} is different from {EX}
     {EX} is empty
     {EX} is in {EX}
-    {EX} is listed in the &ldquo;Code Point&rdquo; column of {h_emu_xref}
+    {EX} is listed in the “Code Point” column of {h_emu_xref}
     {EX} is neither {VAL_DESC} nor {VAL_DESC}
     {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
     {EX} is never {VAL_DESC}
@@ -564,7 +564,7 @@
     {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
-    {SETTABLE} &ne; {SETTABLE} for some integer {var} in {INTERVAL}
+    {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}
     {SETTABLE} contains {EX}
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
@@ -697,11 +697,11 @@
     {var}'s _endIndex_
 
 {NUM_COMPARATOR} :
-    &ge;
-    &gt;
-    &le;
+    ≥
+    >
+    ≤
     &lt;
-    &ne;
+    ≠
     =
     is at least
 
@@ -806,8 +806,8 @@
     the BigInt whose sign is the sign of {var} and whose magnitude is {EX}
     the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}
-    the CharSet containing all Unicode code points whose character database definition includes the property &ldquo;General_Category&rdquo; with value {var}
-    the CharSet containing all Unicode code points whose character database definition includes the property {var} with value &ldquo;True&rdquo;
+    the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}
+    the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
     the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
@@ -865,8 +865,8 @@
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
-    the canonical property value of {var} as given in the &ldquo;Canonical property value&rdquo; column of the corresponding row
-    the canonical {h_emu_not_ref_property_name} of {var} as given in the &ldquo;Canonical {h_emu_not_ref_property_name}&rdquo; column of the corresponding row
+    the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row
+    the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row
     the character matched by {PROD_REF}
     the character represented by {PROD_REF}
     the character value of character {var}
@@ -888,17 +888,17 @@
     the first waiter in {var}
     the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
     the grammar symbol {nonterminal}
-    the greatest (closest to +&infin;) integral Number value that is not greater than {var}
+    the greatest (closest to +∞) integral Number value that is not greater than {var}
     the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})
     the index into {var} of the character that was obtained from element {EX} of {var}
     the index within {var} of the first such code unit
     the integer that is {EXPR}
     the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
-    the integral Number closest to {var}, preferring the Number closer to +&infin; in the case of a tie
+    the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
-    the largest integral Number {var} (closest to +&infin;) such that {CONDITION_1}
+    the largest integral Number {var} (closest to +∞) such that {CONDITION_1}
     the last element in {var}
     the last element of {var}
     the list-concatenation of {EX} and {EX}
@@ -937,13 +937,13 @@
     the result of subtracting 1 from the exponential function of {EX}
     the result of the {MATH_FUNC} of {EX}
     the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
-    the result of toUppercase(&laquo; {var} &raquo;), according to the Unicode Default Case Conversion algorithm
+    the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
     the second element of {var}
     the second to top element of the execution context stack
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
-    the smallest (closest to -&infin;) integral Number value that is not less than {var}
+    the smallest (closest to -∞) integral Number value that is not less than {var}
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
     the source text matched by {PROD_REF}
@@ -983,8 +983,8 @@
     {var}<sup>th</sup> element of {var}'s _captures_ List
 
 {EX} :
-    &laquo; &raquo;
-    &laquo; {EXLIST} &raquo;
+    « »
+    « {EXLIST} »
     ({EX})
     *this* value
     ? {DOTTING}
@@ -1010,7 +1010,7 @@
     the current Realm Record
     the difference {var} minus {var}
     the digits of the decimal representation of {var} (in order, with no leading zeroes)
-    the escape sequence for {var} as specified in the &ldquo;Escape Sequence&rdquo; column of the corresponding row
+    the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row
     the first code unit of {var}
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
@@ -1255,14 +1255,14 @@
 # --------------------------------
 
 {NUM_EXPR} :
-    &pi;
-    &pi; / 2
-    &pi; / 4
-    -&pi;
-    -&pi; / 2
-    -&pi; / 4
-    -3&pi; / 4
-    3&pi; / 4
+    π
+    π / 2
+    π / 4
+    -π
+    -π / 2
+    -π / 4
+    -3π / 4
+    3π / 4
     {EX} raised to the power {EX}
     {PRODUCT}
     {SUM}
@@ -1299,7 +1299,7 @@
     -
 
 {PRODUCT_OPERATOR} :
-    &times;
+    ×
     /
     modulo
     times
@@ -1413,20 +1413,20 @@
     a UTF-16 code unit
     a Unicode code point
     a Unicode property name
-    a Unicode property name or property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
     a Unicode property value
     a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
-    a Unicode {h_emu_not_ref_property_name} or property alias listed in the &ldquo;{h_emu_not_ref_Property_name} and aliases&rdquo; column of {h_emu_xref} or {h_emu_xref}
+    a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}
     a WaiterList
     a WeakRef
     a WriteSharedMemory event
-    a binary Unicode property or binary property alias listed in the &ldquo;Property name and aliases&rdquo; column of {h_emu_xref}
+    a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}
     a bound function exotic object
     a built-in function object
     a callable Object
     a candidate execution
     a candidate execution Record
-    a canonical, unaliased Unicode property name listed in the &ldquo;Canonical property name&rdquo; column of {h_emu_xref}
+    a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}
     a character
     a code point
     a code unit
@@ -1447,7 +1447,7 @@
     a non-negative integer
     a non-negative integer less than or equal to {EX}
     a non-negative integer that is evenly divisible by 4
-    a non-negative integer which is &le; {EXPR}
+    a non-negative integer which is ≤ {EXPR}
     a non-negative integral Number
     a nonterminal in one of the ECMAScript grammars
     a normal completion
@@ -1506,7 +1506,7 @@
     an instance of the production {h_emu_grammar}
     an instance of {var}
     an integer
-    an integer &ge; {dsb_word}
+    an integer ≥ {dsb_word}
     an integer in {INTERVAL}
     an integer index
     an integral Number
@@ -1622,7 +1622,9 @@
 
 {MATH_LITERAL} :
     +&infin;
+    +∞
     -&infin;
+    -∞
     0.5
     64 (that is, 8<sup>2</sup>)
     8.64

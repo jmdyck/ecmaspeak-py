@@ -1505,7 +1505,7 @@ def convert_parameter_listing_to_params(parameter_listing):
     parameter_listing = parameter_listing.strip()
     if parameter_listing != '':
         if parameter_listing in [
-            '_p1_, _p2_, &hellip; , _pn_, _body_' # new
+            '_p1_, _p2_, \u2026 , _pn_, _body_' # new
         ]:
             # Function, GeneratorFunction, AsyncGeneratorFunction, AsyncFunction
             parameter_listing = '..._args_ [ , _body_ ]'
@@ -2192,9 +2192,9 @@ def extract_intrinsic_info_from_p_ul_section(section):
                 # The preamble to an emu-alg. Handled in _handle_other_section().
                 pass
             elif (
-                cst.startswith('In following descriptions of functions that are properties of the Date prototype object, the phrase &ldquo;<dfn id="this-Date-object">this Date object</dfn>&rdquo; refers to')
+                cst.startswith('In following descriptions of functions that are properties of the Date prototype object, the phrase “<dfn id="this-Date-object">this Date object</dfn>” refers to')
                 or
-                re.match(r'The phrase &ldquo;this (Number|BigInt) value&rdquo; within the specification of a method refers to', cst)
+                re.match(r'The phrase “this (Number|BigInt) value” within the specification of a method refers to', cst)
             ):
                 # I just hard-code these. They're unlikely to change.
                 pass

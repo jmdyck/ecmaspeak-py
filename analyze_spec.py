@@ -307,31 +307,33 @@ def check_trailing_whitespace():
 
 def check_characters():
     stderr("checking characters...")
-    for mo in re.finditer(r'[^\n -~]', spec.text):
+    pattern = r'''(?x)[^
+        \n    # newline
+        \x20  # space
+        !-~   # printable ASCII chars
+
+        « # U+000ab (&laquo;)
+        » # U+000bb (&raquo;)
+        × # U+000d7 (&times;)
+        π # U+003c0 (&pi;)
+        — # U+02014 (&mdash;)
+        “ # U+0201c (&ldquo;)
+        ” # U+0201d (&rdquo;)
+        … # U+02026 (&hellip;)
+        ℝ # U+0211d (DOUBLE-STRUCK CAPITAL R) {fancy_r}
+        ℤ # U+02124 (DOUBLE-STRUCK CAPITAL Z) {fancy_z}
+        → # U+02192 (&rarr;)
+        ∞ # U+0221e (&infin;)
+        ≠ # U+02260 (&ne;)
+        ≤ # U+02264 (&le;)
+        ≥ # U+02265 (&ge;)
+        𝔽 # U+1d53d (DOUBLE-STRUCK CAPITAL F) {fancy_f}
+    ]'''
+    for mo in re.finditer(pattern, spec.text):
         # Note that this will (among other things) find and complain about TAB characters.
         posn = mo.start()
         character = spec.text[posn]
-        if character == '\u211d':
-            # PR 1135 introduced tons of these
-            continue
-        elif character in ['\u2124', '\U0001d53d']:
-            continue
-
-        if character in ascii_replacement:
-            suggestion = ": maybe change to %s" % ascii_replacement[character]
-        else:
-            suggestion = ''
-        msg_at_posn(posn, "non-ASCII character U+%04x%s" %
-            (ord(character), suggestion) )
-
-ascii_replacement = {
-    '\u00ae': '&reg;',    # REGISTERED SIGN
-    '\u00ab': '&laquo;',  # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    '\u00bb': '&raquo;',  # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
-    '\u2019': "'",        # RIGHT SINGLE QUOTATION MARK
-    '\u2026': '&hellip;', # HORIZONTAL ELLIPSIS
-    '\u2265': '&ge;',     # GREATER-THAN OR EQUAL TO
-}
+        msg_at_posn(posn, "unusual character U+%04x" % ord(character))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -402,8 +404,11 @@ def check_ids():
 
         if node.element_name == 'emu-alg':
             for mo in re.finditer(r' \[(\w+)="([^"]+)"\]', node.inner_source_text()):
-                assert mo.group(1) == 'id'
-                defid = mo.group(2)
+                (attr_name, attr_value) = mo.groups()
+                assert attr_name in ['id', 'declared']
+                if attr_name != 'id': continue
+
+                defid = attr_value
 
                 # ----------
                 # no duplicate ids
