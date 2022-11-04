@@ -422,8 +422,8 @@ def _handle_sdo_section(section):
             'Static Semantics: IsCharacterClass',
             'Static Semantics: CharacterValue',
         ]:
-            # B.1.4.2
-            # B.1.4.3
+            # B.1.2.3
+            # B.1.2.4
             sdo_name = re.sub('.*: ', '', section.section_title)
 
         else:
@@ -1561,19 +1561,13 @@ def _handle_changes_section(section):
 
     # --------------------------------------------------------------------------
     if section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileSubpattern':
-        # B.1.2.4
+        # B.1.2.5
         patterns = [
             (
                 [
                     ('p', "The semantics of \w+ is extended as follows:"),
                 ],
                 None
-            ),
-            (
-                [
-                    ('p', "Within the rule for EMU-GRAMMAR, references to &ldquo;EMU-GRAMMAR &rdquo; are to be interpreted as meaning &ldquo;EMU-GRAMMAR &rdquo; or &ldquo;EMU-GRAMMAR &rdquo;."),
-                ],
-                lambda p: None
             ),
             (
                 [
@@ -1586,7 +1580,7 @@ def _handle_changes_section(section):
 
     # --------------------------------------------------------------------------
     elif section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileAssertion':
-        # B.1.2.5
+        # B.1.2.6
         patterns = [
             (
                 [
@@ -1599,7 +1593,7 @@ def _handle_changes_section(section):
 
     # --------------------------------------------------------------------------
     elif section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileAtom':
-        # B.1.2.6
+        # B.1.2.7
         patterns = [
             (
                 [
@@ -1619,7 +1613,7 @@ def _handle_changes_section(section):
 
     # --------------------------------------------------------------------------
     elif section.section_num.startswith('B.') and section.section_title == 'Runtime Semantics: CompileToCharSet':
-        # B.1.2.7
+        # B.1.2.8
         patterns = [
             (
                 [
@@ -1670,14 +1664,6 @@ def _handle_changes_section(section):
                 # B.3.6.1:
                 [
                     ('p', 'The result column in EMU-XREF for an argument type of Object is replaced with the following algorithm:'),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
-            ),
-            (
-                # B.3.6.2:
-                [
-                    ('p', f'The following steps replace step EMU-XREF of the {op_name} algorithm:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
