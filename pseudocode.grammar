@@ -145,8 +145,6 @@
 
 {ONE_LINE_ALG} :
     {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}
-    {_indent_}{nlai}{COMMAND}{nlai}{h_emu_note}{_outdent_}{nlai}
-    {_indent_}{nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{_outdent_}{nlai}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -228,7 +226,6 @@
     Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
-    Return {EXPR} (no conversion).
     Return {EXPR}.
     Return {EXPR}. This may be of type Reference.
     Return {MULTILINE_EXPR}
@@ -268,7 +265,6 @@
 # ----------------------------------------------
 
 {IF_CLOSED} :
-    If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
@@ -761,7 +757,6 @@
     a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order
     a List whose sole element is {EX}
-    a String according to {h_emu_xref}
     a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {var}
@@ -1331,6 +1326,7 @@
 # --------------------------------
 
 {VALUE_DESCRIPTION} :
+    any of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC} or {VAL_DESC}
     either {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
@@ -1525,7 +1521,6 @@
     the Environment Record for a |Catch| clause
     the String value {STR_LITERAL}
     the active function object
-    the empty String (its length is 0)
     the execution context of a generator
     the single code point {code_point_lit} or {code_point_lit}
     the {nonterminal} of an? {nonterminal}

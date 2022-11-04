@@ -2834,7 +2834,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
         print()
 
         # kludge:
-        if op_name in ['ToBoolean', 'ToNumber', 'ToString', 'ToObject', 'RequireObjectCoercible']:
+        if op_name in ['ToObject', 'RequireObjectCoercible']:
             # not ToBigInt
             assert isinstance(discriminator, NamedType)
             # in_env = init_env.with_expr_type_narrowed('_argument_', discriminator)
@@ -2960,17 +2960,6 @@ def tc_nonvalue(anode, env0):
     ]:
         [child] = children
         result = tc_nonvalue(child, env0)
-
-    elif p == r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{nlai}{h_emu_note}{_outdent_}{nlai}":
-        [command, note] = children
-        tc_nonvalue(command, env0)
-        result = None
-
-    elif p == r"{ONE_LINE_ALG} : {_indent_}{nlai}<p>{COMMAND}</p>{nlai}<p>{COMMAND}</p>{_outdent_}{nlai}":
-        [com1, com2] = children
-        env1 = tc_nonvalue(com1, env0)
-        tc_nonvalue(com2, env1)
-        result = None
 
     elif p == r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}":
         [cond, comm] = children
@@ -3163,14 +3152,6 @@ def tc_nonvalue(anode, env0):
         f_benv = tc_nonvalue(f_command, f_env)
         result = env_or(t_benv, f_benv)
 
-    elif p == r"{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. If {CONDITION}, {SMALL_COMMAND}.":
-        [cond_a, command_a, cond_b, command_b] = children
-        (a_t_env, a_f_env) = tc_cond(cond_a, env0)
-        a_benv = tc_nonvalue(command_a, a_t_env)
-        (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
-        b_benv = tc_nonvalue(command_b, b_t_env)
-        result = envs_or([a_benv, b_benv])
-
     elif p == r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.':
         [cond_a, command_a, cond_b, command_b, command_c] = children
         (a_t_env, a_f_env) = tc_cond(cond_a, env0)
@@ -3249,7 +3230,6 @@ def tc_nonvalue(anode, env0):
     # Returning (normally or abruptly)
 
     elif p in [
-        r"{COMMAND} : Return {EXPR} (no conversion).",
         r"{COMMAND} : Return {EXPR}.",
         r"{COMMAND} : Return {EXPR}. This may be of type Reference.",
         r"{COMMAND} : Return {MULTILINE_EXPR}",
@@ -6000,6 +5980,7 @@ def _(vd, env):
     [child] = vd.children
     return type_bracket_for(child, env)
 
+@tbd.put('{VALUE_DESCRIPTION} : any of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
@@ -6341,7 +6322,6 @@ tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in t
 tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : the String value {STR_LITERAL}'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : the active function object'] = a_subset_of(T_function_object_)
-tbd['{VAL_DESC} : the empty String (its length is 0)'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
@@ -7952,10 +7932,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         [ex] = children
         env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
-
-    elif p == r"{EXPR} : a String according to {h_emu_xref}":
-        [emu_xref] = children
-        return (T_String, env0)
 
     elif p == r"{EXPR} : the String value of the property name":
         # property of the Global Object

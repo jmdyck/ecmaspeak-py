@@ -1663,7 +1663,15 @@ def _handle_changes_section(section):
             (
                 # B.3.6.1:
                 [
-                    ('p', 'The result column in EMU-XREF for an argument type of Object is replaced with the following algorithm:'),
+                    ('p', f'The following step replaces step EMU-XREF of {op_name}:'),
+                    'emu-alg'
+                ],
+                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
+            ),
+            (
+                # B.3.6.2:
+                [
+                    ('p', f'The following steps replace step EMU-XREF of {op_name}:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
