@@ -3986,36 +3986,8 @@ def tc_nonvalue(anode, env0):
         env1 = env0.ensure_A_can_be_element_of_list_B(el_var, list_var)
         result = env1
 
-    elif p == r"{COMMAND} : Append in List order the elements of {var} to the end of the List {var}.":
-        [a, b] = children
-        env0.assert_expr_is_of_type(a, T_List)
-        env0.assert_expr_is_of_type(b, T_List)
-        result = env0
-
-    elif p == r"{COMMAND} : Append {EX} and {EX} to {var}.":
-        [pvar, svar, list_var] = children
-
-        # only one occurrence, in RegExp.prototype [ @@replace ]
-        assert list_var.source_text() == '_replacerArgs_'
-
-        (list_type, list_env) = tc_expr(list_var, env0); assert list_env is env0
-        assert list_type == ListType(T_String)
-        # because it was created via: Let _replacerArgs_ be « _matched_ ».
-
-        # so this is fine:
-        env0.assert_expr_is_of_type(svar, T_String)
-        env0.assert_expr_is_of_type(pvar, T_IntegralNumber_)
-
-        result = env0.with_expr_type_replaced(list_var, ListType(T_String | T_IntegralNumber_))
-
     elif p == r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.":
         # XXX
-        result = env0
-
-    # explicit-exotics:
-    elif p == r"{SMALL_COMMAND} : append each of its elements to {var}":
-        [var] = children
-        env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
     elif p == r"{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.":
@@ -8223,13 +8195,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             # assert t1.element_type == t2.element_type
         return (list_type, env0)
 
-    elif p == r"{EXPR} : the list-concatenation of {var}, {var}, and {var}":
+    elif p == r"{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}":
         [exa, exb, exc] = children
         # kludge
         if exa.source_text() == '_names1_':
             et = T_String
         elif exa.source_text() == '_declarations1_':
             et = T_Parse_Node
+        elif exa.source_text() == '« _matched_ »':
+            et = T_String | T_IntegralNumber_
         else:
             assert 0, exa
         lt = ListType(et)

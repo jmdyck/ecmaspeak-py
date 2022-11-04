@@ -153,11 +153,9 @@
     ? OperationName().
     ? {var}.OperationName().
     Add {var} to {var}.
-    Append in List order the elements of {var} to the end of the List {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} each element of {var} that is not already an element of {var}.
     Append to {var} the elements of {var}.
-    Append {EX} and {EX} to {var}.
     Append {EX} as an element of {var}.
     Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
@@ -299,7 +297,6 @@
 {SMALL_COMMAND} :
     ReturnIfAbrupt({var})
     add {var} to {var}
-    append each of its elements to {var}
     append {EX} to {var}
     change its bound value to {var}
     let {var} be {EXPR}
@@ -897,7 +894,7 @@
     the last element in {var}
     the last element of {var}
     the list-concatenation of {EX} and {EX}
-    the list-concatenation of {var}, {var}, and {var}
+    the list-concatenation of {EX}, {EX}, and {EX}
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
