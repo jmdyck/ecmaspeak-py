@@ -3099,12 +3099,6 @@ def tc_nonvalue(anode, env0):
 
     # ---
 
-    elif p == r"{COMMAND} : Let {var} be the first element of {var} and remove that element from {var}.":
-        [item_var, list_var, list_var2] = children
-        assert same_source_text(list_var, list_var2)
-        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_Tangible_)) # XXX over-specific
-        result = env1.plus_new_entry(item_var, T_Tangible_)
-
     elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.":
         [_, ctx_var, _, b_var] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
@@ -3981,10 +3975,11 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(var, T_List)
         result = env0
 
-    elif p == r"{COMMAND} : Remove {var} from the front of {var}.":
-        [el_var, list_var] = children
-        env1 = env0.ensure_A_can_be_element_of_list_B(el_var, list_var)
-        result = env1
+    elif p == r"{COMMAND} : Remove the first {var} elements of {var}.":
+        [nvar, listvar] = children
+        env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(listvar, T_List)
+        result = env0
 
     elif p == r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.":
         # XXX
@@ -8218,6 +8213,13 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
 
+    elif p == r'{EXPR} : a List whose elements are the first {var} elements of {var}':
+        [nvar, listvar] = children
+        env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
+        (t, env1) = tc_expr(listvar, env0); assert env1 is env0
+        assert t.is_a_subtype_of_or_equal_to(T_List)
+        return (t, env0)
+
     elif p == r"{EXPR} : the List of {nonterminal} items in {PROD_REF}, in source text order":
         [nont, prod_ref] = children
         return (ListType(T_Parse_Node), env0)
@@ -9173,11 +9175,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(wl, T_WaiterList)
         return (ListType(T_agent_signifier_), env0)
 
-    elif p == r"{EXPR} : the first waiter in {var}":
-        [wl] = children
-        env0.assert_expr_is_of_type(wl, ListType(T_agent_signifier_))
-        return (T_agent_signifier_, env0)
-
     elif p in [
         r"{EX} : *this* value",
         r"{EX} : the *this* value",
@@ -9285,11 +9282,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env0.assert_expr_is_of_type(ex, T_String)
         env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env1)
-
-    elif p == r"{EXPR} : the first agent in {var}":
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_agent_signifier_))
-        return (T_agent_signifier_, env1)
 
     elif p == r"{EX} : {backticked_word}":
         [backticked_word] = children
