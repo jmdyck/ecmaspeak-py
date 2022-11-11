@@ -264,7 +264,6 @@ def _validate(node):
 
     if node.element_name == '#LITERAL':
         # Check for runs of multiple space characters.
-
         for mo in re.compile(r' {2,}').finditer(shared.spec.text, node.start_posn, node.end_posn):
             s_posn = mo.start()
             n_spaces = mo.end() - mo.start()
@@ -279,7 +278,76 @@ def _validate(node):
                 s_posn,
                 f"{n_spaces} space characters"
             )
-        return
+
+        # Check for HTML entities
+        allowed_and_disallowed = [
+            ('&amp;' , '&'   ),
+            ('&lt;'  , '<'   ),
+            ('&nbsp;', '\xa0'),
+            ('&reg;' , '\xae'),
+        ]
+        if node.parent.element_name in ['emu-grammar']:
+            allowed_and_disallowed.extend([
+                ('&gt;'   , None    ), # emu-grammar has both
+                ('&ldquo;', '\u201c'),
+                ('&rdquo;', '\u201d'),
+                ('&isin;' , '\u2208'),
+                ('&notin;', '\u2209'),
+                ('&le;'   , '\u2264'),
+            ])
+        if node.parent.element_name in ['h1']:
+            allowed_and_disallowed.extend([
+                ('&infin;', '\u221e'),
+                ('&gt;'   , None    ),
+            ])
+        if node.parent.element_name in ['code', 'td']:
+            allowed_and_disallowed.extend([
+                ('&gt;'    , None    ),
+                ('&hellip;', '\u2026'),
+                ('&#x0307;', '\u0307'),
+                ('&#x030A;', '\u030A'),
+                ('&#x0323;', '\u0323'),
+                ('&#x03A9;', '\u03A9'),
+                ('&#x1100;', '\u1100'),
+                ('&#x1161;', '\u1161'),
+                ('&#x1E0B;', '\u1E0B'),
+                ('&#x1E0D;', '\u1E0D'),
+                ('&#x1E69;', '\u1E69'),
+                ('&#x2126;', '\u2126'),
+                ('&#x212B;', '\u212B'),
+                ('&#xAC00;', '\uAC00'),
+            ])
+
+        allowed_entities = []
+        disallowed_characters = []
+        for (entity_text, character) in allowed_and_disallowed:
+            allowed_entities.append(entity_text)
+            if character is not None:
+                disallowed_characters.append(character)
+
+        for mo in re.compile(r'&#?\w+;|.').finditer(shared.spec.text, node.start_posn, node.end_posn):
+            s_posn = mo.start()
+            n_chars = mo.end() - mo.start()
+            match_text = mo.group(0)
+            assert n_chars > 0
+            if n_chars == 1:
+                # literal character
+                if match_text in disallowed_characters:
+                    msg_at_posn(
+                        s_posn,
+                        f"literal {match_text!r} should be an entity"
+                    )
+            else:
+                # entity
+                if match_text not in allowed_entities:
+                    msg_at_posn(
+                        s_posn,
+                        f"entity {match_text!r} should be literal character"
+                    )
+            continue
+
+
+        return # because nothing else in this function will apply
 
     # ------------------------
 
