@@ -515,11 +515,9 @@
     {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
     {EX} is never {VAL_DESC}
     {EX} is not an element of {var}
-    {EX} is not present
     {EX} is not the same value as {var}
     {EX} is not {VALUE_DESCRIPTION}
     {EX} is not {var}
-    {EX} is present
     {EX} is the same Parse Node as {EX}
     {EX} is the same as {EX}
     {EX} is the same value as {EX}
@@ -531,6 +529,8 @@
     {LOCAL_REF} is contained in strict mode code
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}
+    {LOCAL_REF} is not present
+    {LOCAL_REF} is present
     {LOCAL_REF} is {h_emu_grammar}
     {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any duplicate elements

@@ -4257,8 +4257,8 @@ def tc_cond_(cond, env0, asserting):
         return (env0, env0)
 
     elif p in [
-        r'{CONDITION_1} : {EX} is present',
-        r'{CONDITION_1} : {EX} is not present',
+        r'{CONDITION_1} : {LOCAL_REF} is present',
+        r'{CONDITION_1} : {LOCAL_REF} is not present',
     ]:
         [ex] = children
         if ex.is_a('{PROD_REF}'):
