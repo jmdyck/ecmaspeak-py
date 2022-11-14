@@ -485,13 +485,12 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | { _? [A-Z] [A-Z_0-9]* }
     | { _? [a-z] \w* }
 
-    | < /? (b|br|i|ins|li|p|sub|sup|var)>
+    | < /? (b|br|i|ins|p|sub|sup|var)>
 
     | \* [+-] 0 \*
     | \* [A-Za-z]+ \*
     | \* " [^"]? " \*
 
-    | ` " [^"`]+ " `
     | ` [^`]+ `
 
     | & [a-z]+ ;
@@ -500,19 +499,16 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | _endIndex_
     | _input_
     | _startIndex_
-    | _withEnvironment_
 
     | \b [0-9]+ (?![0-9A-Za-z])
 
-    | [-!()*+,./:;=>?@{}]
+    | [-!()*+,./:;=>?{}]
     | [ « » × π “ ” ∞ ≠ ≤ ≥ ]
     | \[
     | \]
 
-    | \\ u [0-9a-f]{4}
-
     | \b an\?
-    | \b (don't | doesn't | We've) \b
+    | \b (doesn't | We've) \b
     | \b 20th \b
     | \b   [A-Za-z][A-Za-z0-9]* \b
     | \b General_Category \b

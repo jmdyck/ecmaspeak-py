@@ -369,10 +369,6 @@ def annotate_invocations(anode):
 
             else:
                 callee_name = {
-                    'Abstract Equality Comparison {var} == {var}'      : 'Abstract Equality Comparison',
-                    'Abstract Relational Comparison {var} &lt; {var} with {var} equal to {LITERAL}' :  'Abstract Relational Comparison',
-                    'Abstract Relational Comparison {var} &lt; {var}'  : 'Abstract Relational Comparison',
-                    'Strict Equality Comparison {var} === {EX}'        : 'Strict Equality Comparison',
                     "the CharSet returned by {h_emu_grammar}"          : 'CompileToCharSet',
                     '{LOCAL_REF} Contains {G_SYM}'                     : 'Contains',
                     '{LOCAL_REF} Contains {var}'                       : 'Contains',
