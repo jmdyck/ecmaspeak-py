@@ -3552,6 +3552,13 @@ def tc_nonvalue(anode, env0):
         [] = children
         result = env0
 
+    elif p == r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.":
+        [vara, exb, varc, vard] = children
+        env0.assert_expr_is_of_type(vara, T_execution_context)
+        env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
+        env0.assert_expr_is_of_type(varc, T_execution_context)
+        result = env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_)
+
     elif p == r"{COMMAND} : Suspend {var} and remove it from the execution context stack.":
         [var] = children
         env0.assert_expr_is_of_type(var, T_execution_context)
@@ -3577,16 +3584,6 @@ def tc_nonvalue(anode, env0):
         env0.assert_expr_is_of_type(settable, T_host_defined_)
         defns = [(None, commands)]
         env_at_bottom = tc_proc(None, defns, env0)
-        result = env0
-
-    elif p == r'{COMMAND} : Set {SETTABLE} such that when evaluation is resumed with a Completion Record {var} the following steps will be performed:{IND_COMMANDS}':
-        [settable, comp_var, commands] = children
-        env0.assert_expr_is_of_type(settable, T_host_defined_)
-        #
-        env_for_commands = env0.plus_new_entry(comp_var, T_Tangible_ | T_throw_)
-        defns = [(None, commands)]
-        env_at_bottom = tc_proc(None, defns, env_for_commands)
-        #
         result = env0
 
     elif p == r"{COMMAND} : Perform any necessary implementation-defined initialization of {var}.":
@@ -5842,6 +5839,15 @@ def tc_cond_(cond, env0, asserting):
         [var, ex] = children
         env0.assert_expr_is_of_type(var, T_List)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : control reaches here":
+        [] = children
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : {var} is the running execution context again":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
     else:

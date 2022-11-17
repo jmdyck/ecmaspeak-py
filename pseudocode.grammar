@@ -223,6 +223,7 @@
     Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
+    Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.
     Return {EXPR}.
     Return {EXPR}. This may be of type Reference.
     Return {MULTILINE_EXPR}
@@ -233,8 +234,6 @@
     Set {DOTTING} as specified in {h_emu_xref}.
     Set {DOTTING} to the definition specified in {h_emu_xref}.
     Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
-    Set {SETTABLE} such that when evaluation is resumed with a Completion Record {var} the following steps will be performed:{IND_COMMANDS}
-    Set {SETTABLE} such that when evaluation is resumed with a Completion Record {var}, the following steps of the algorithm that invoked Await will be performed, with {var} available.
     Set {SETTABLE} to {EXPR}.
     Set {SETTABLE} to {MULTILINE_EXPR}
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
@@ -438,6 +437,7 @@
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text is matched by this production
     both {EX} and {EX} are {LITERAL}
+    control reaches here
     either {PAIR} or {PAIR} is in {EX}
     it must be in the Object Environment Record
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
@@ -650,6 +650,7 @@
     {var} is now the running execution context
     {var} is odd
     {var} is on the list of waiters in {var}
+    {var} is the running execution context again
     {var} is the same Number value as {var}
     {var} is the same sequence of code units as {var}
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
