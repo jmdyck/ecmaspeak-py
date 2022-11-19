@@ -2214,6 +2214,7 @@ class Env:
                 '1 + \u211d(_n_)', # Math.log1p
                 '\u211d(_m_) / 12', # MakeDay
                 '\u211d(_number_)', # ToUint8Clamp
+                'NormalCompletion(_value_)', # Await
             ], expr_text.encode('unicode_escape')
         #
         e = self.copy()
@@ -3103,6 +3104,12 @@ def tc_nonvalue(anode, env0):
         [_, ctx_var, _, b_var] = children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         result = env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
+
+    elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.":
+        [_, ctx_var, _, resa_ex] = children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
+        result = env1
 
     elif p in [
         r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.",
@@ -6749,12 +6756,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 (arg_type, env1) = tc_expr(arg, env0)
                 return_type = arg_type # bleah
                 return (return_type, env1)
-
-            elif callee_op_name == 'Await':
-                assert len(args) == 1
-                [arg] = args
-                env0.assert_expr_is_of_type(arg, T_Tangible_|T_tilde_empty_)
-                return (T_Tangible_|T_tilde_empty_|T_return_|T_throw_, env0)
 
             elif callee_op_name == 'abs':
                 assert len(args) == 1

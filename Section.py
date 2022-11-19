@@ -1299,7 +1299,6 @@ def _handle_other_section(section):
             (r'Throw an Exception',                                'shorthand'),
             (r'ReturnIfAbrupt',                                    'shorthand'),
             (r'ReturnIfAbrupt Shorthands',                         'shorthand'),
-            (r'Await',                                             'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
             (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
 
