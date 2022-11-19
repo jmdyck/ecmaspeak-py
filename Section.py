@@ -957,7 +957,7 @@ def _handle_structured_header(section):
         dt = dl_nw_children[i+0]
         dd = dl_nw_children[i+1]
         dt_s = dt.inner_source_text()
-        assert dt_s in ['for', 'description']
+        assert dt_s in ['for', 'effects', 'description']
         assert dt_s not in dl_dict
         dl_dict[dt_s] = dd
 
@@ -968,6 +968,11 @@ def _handle_structured_header(section):
         assert for_phrase is None, for_phrase
         for_phrase = for_dd.inner_source_text()
         for_phrase_node = Pseudocode.parse(for_dd)
+
+    if 'effects' in dl_dict:
+        effect_dd = dl_dict['effects']
+        assert effect_dd.inner_source_text() == 'user-code'
+        pass
 
     if 'description' in dl_dict:
         description_dd = dl_dict['description']
