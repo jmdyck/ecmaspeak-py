@@ -12,12 +12,14 @@ from HTML import HNode
 from Pseudocode_Parser import Pseudocode_Parser, ANode
 import emu_grammars
 import shared
-from shared import spec, stderr
+from shared import spec, stderr, msg_at_node
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def do_stuff_with_pseudocode():
     check_step_references()
+
+    check_vars()
 
     analyze_static_dependencies()
     check_sdo_coverage()
@@ -560,6 +562,272 @@ def ensure_alg(alg_species, alg_name):
         iffn[alg_name] = alg_info
 
     return alg_info
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_vars():
+    stderr('check_vars ...')
+
+    # Check algorithms for used-but-not-defined
+    # and defined-but-not-used.
+    #
+    # The approach here is fairly simplistic,
+    # not caring about scope or use-before-def
+    # or whether a var is defined on all possible paths
+    # that reach a particular use.
+
+    for (alg_name, alg_info) in (
+        sorted(spec.alg_info_['op'].items())
+        +
+        sorted(spec.alg_info_['bif'].items())
+    ):
+        for alg_defn in alg_info.all_definitions():
+            check_vars_in_alg_defn(alg_defn)
+
+def check_vars_in_alg_defn(alg_defn):
+
+    # If an algorithm is incomplete in some way,
+    # it's pointless to check the vars in an algorithm.
+    # Detect those cases and do an early return.
+    #
+    # (This way of checking is fairly kludgey.)
+
+    s = alg_defn.anode.start_posn
+    preceding_text = shared.spec_text[s-100:s].replace('\n', r'\n')
+
+    if ' replaces-step=' in preceding_text:
+        # This is a chunk of pseudocode
+        # that replaces a step in some other algorithm.
+        # So it probably refers to vars that are defined there,
+        # and might define vars that are referenced only there.
+        return
+
+    if 'this method performs the following steps to prepare the Strings:' in preceding_text:
+        # String.prototype.localeCompare
+        # It's the start of an algorithm,
+        # so we'd expect unused vars.
+        # (Though not undefined vars, so we could just check for those.)
+        return
+
+    # -------------
+
+    class Thing:
+        def __init__(self):
+            self.defs = []
+            self.uses = []
+            self.okay_if_unused = False
+
+    things = defaultdict(Thing)
+
+    for param in alg_defn.header.params:
+        if param.decl_node:
+            d = param.decl_node.children[0]
+        else:
+            d = None
+        d_thing = things[param.name]
+        d_thing.defs.append(d)
+        d_thing.okay_if_unused = alg_defn.header.species.startswith('op: discriminated by')
+        # It's okay if some of the defns in a discriminated union
+        # don't use all the parameters
+
+    fp = alg_defn.header.for_phrase_node
+    if fp and '{var}' in fp.prod.rhs_s:
+        d = fp.children[1]
+        d_thing = things[d.source_text()]
+        d_thing.defs.append(d)
+        d_thing.okay_if_unused = alg_defn.header.species.startswith('op: discriminated by')
+
+    for d in alg_defn.anode.each_descendant_or_self():
+        # This would be way easier if the pseudocode.grammar
+        # distinguished defining occurrences of {var}s.
+        if d.prod.lhs_s == '{var}':
+            d_thing = things[d.source_text()]
+            p = d.parent
+            pp = str(p.prod)
+            if pp in [
+                '{CLOSURE_PARAMETERS} : parameters ({var})',
+                '{CLOSURE_PARAMETERS} : parameters ({var}, {var})',
+                '{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.',
+                '{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)',
+                '{COMMAND} : Let {var} be {EXPR}.',
+                '{COMMAND} : Let {var} be {MULTILINE_EXPR}',
+                '{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}',
+                '{CONDITION_1} : {SETTABLE} \u2260 {SETTABLE} for some integer {var} in {INTERVAL}',
+                '{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.',
+                '{EXPR} : the largest integral Number {var} (closest to +\u221e) such that {CONDITION_1}',
+                '{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}',
+                '{EXPR} : {EX}, where {var} is {EX}',
+                '{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}',
+                '{SMALL_COMMAND} : let {var} be {EXPR}',
+            ]:
+                d_thing.defs.append(d)
+
+            elif pp in [
+                '{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.',
+                '{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)',
+            ]:
+                if d is p.children[0]:
+                    d_thing.defs.append(d)
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp in [
+                '{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.',
+                '{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.',
+            ]:
+                if d is p.children[3]:
+                    d_thing.defs.append(d)
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp in [
+                '{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.',
+                '{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.',
+            ]:
+                if d is p.children[4]:
+                    d_thing.defs.append(d)
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp in [
+                '{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}',
+            ]:
+                if d is p.children[3]:
+                    # referring to another alg's parameter,
+                    # so neither declaration nor use
+                    pass
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp in [
+                '{COMMAND} : Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.',
+                '{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.',
+            ]:
+                if d is p.children[0] or d is p.children[1]:
+                    d_thing.defs.append(d)
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp in [
+                '{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.',
+                '{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.',
+            ]:
+                if d is p.children[0] or d is p.children[1] or d is p.children[2]:
+                    d_thing.defs.append(d)
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp.startswith('{EACH_THING} :'):
+                # d might declare the loop variable
+                if pp in [
+                    '{EACH_THING} : child node {var} of this Parse Node',
+                    '{EACH_THING} : element {var} of {EX}',
+                    '{EACH_THING} : integer {var} in {INTERVAL}',
+                ]:
+                    assert d is p.children[0]
+                    d_thing.defs.append(d)
+
+                elif pp in [
+                    '{EACH_THING} : element {var} of {var}, in reverse List order',
+                    '{EACH_THING} : index {var} of {var}',
+                    '{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation',
+                    '{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending numeric index order',
+                    '{EACH_THING} : own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order',
+                ]:
+                    if d is p.children[0]:
+                        d_thing.defs.append(d)
+                    else:
+                        d_thing.uses.append(d)
+
+                elif pp in [
+                    '{EACH_THING} : {ITEM_NATURE} {var} of {EX}',
+                    '{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}',
+                    '{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in ascending order',
+                    '{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in descending order',
+                ]:
+                    assert d is p.children[1]
+                    d_thing.defs.append(d)
+
+                elif pp in [
+                    '{EACH_THING} : {nonterminal} {var} that {var} contains',
+                ]:
+                    if d is p.children[1]:
+                        d_thing.defs.append(d)
+                    else:
+                        d_thing.uses.append(d)
+
+                elif pp in [
+                    '{EACH_THING} : field of {var}',
+                ]:
+                    # There's no loop variable.
+                    d_thing.uses.append(d)
+
+                else:
+                    assert 0, pp
+
+            elif pp.startswith('{CONDITION_1} : there '):
+                if pp in [
+                    '{CONDITION_1} : there exists an event {var} such that {CONDITION}',
+                    '{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}',
+                ]:
+                    assert d is p.children[0]
+                    d_thing.defs.append(d)
+
+                elif pp in [
+                    '{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}',
+                    '{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}',
+                    '{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}',
+                ]:
+                    if d is p.children[0]:
+                        d_thing.defs.append(d)
+                    else:
+                        d_thing.uses.append(d)
+
+                else:
+                    assert 0, pp
+
+            elif pp in [
+                '{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}',
+
+            ]:
+                if d is p.children[0]:
+                    d_thing.defs.append(d)
+                else:
+                    d_thing.uses.append(d)
+
+            elif pp in [
+                '{EXPR} : the {var} that was passed to this function by {DSBN} or {DSBN}',
+            ]:
+                # Definitely not a use (of a local var),
+                # but not really a declaration either.
+                pass
+
+            else:
+                # print(pp)
+                d_thing.uses.append(d)
+
+    for (varname, thing) in sorted(things.items()):
+
+        if thing.defs and not thing.uses:
+            # Defined but not used
+            if thing.okay_if_unused:
+                pass
+            else:
+                msg_node = thing.defs[0]
+                if msg_node is None:
+                    msg_node = alg_defn.anode
+                msg_at_node(
+                    msg_node,
+                    f"{varname} is not used in this algorithm"
+                )
+
+        if thing.uses and not thing.defs:
+            # Used but not defined
+            msg_at_node(
+                thing.uses[0],
+                f"{varname} is not defined in this algorithm"
+            )
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
