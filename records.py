@@ -73,8 +73,7 @@ def process_tables():
     # via "Fields" table and/or "Methods" table.
     # However, there are a couple more...
 
-    # The PropertyDescriptor schema is defined in
-    # "The Property Descriptor Specification Type":
+    # 6.2.6 "The Property Descriptor Specification Type":
     #> Values of the Property Descriptor type are Records.
     #> Each field's name is an attribute name
     #> and its value is a corresponding attribute value
@@ -82,6 +81,7 @@ def process_tables():
     # Presumably there's no "Fields" table because
     # such a table would basically just duplicate
     # the "Property Attributes" tables.
+    #
     record_schema = ensure_RecordSchema('PropertyDescriptor')
     record_schema.add_field_decl(FieldDecl('[[Get]]',          'Object | Undefined', ''))
     record_schema.add_field_decl(FieldDecl('[[Set]]',          'Object | Undefined', ''))
@@ -90,10 +90,11 @@ def process_tables():
     record_schema.add_field_decl(FieldDecl('[[Enumerable]]',   'Boolean', ''))
     record_schema.add_field_decl(FieldDecl('[[Configurable]]', 'Boolean', ''))
 
-    # The ResolvedBinding Record schema is declared within one cell
-    # of the "Abstract Methods of Module Records" table.
+    # 16.2.1.4 "Abstract Module Records":
+    # (on the `ResolveExport` row of the "Abstract Methods of Module Records" table)
     #> Bindings are represented by a <dfn>ResolvedBinding Record</dfn>,
     #> of the form { [[Module]]: Module Record, [[BindingName]]: String | ~namespace~ }.
+    #
     record_schema = ensure_RecordSchema('ResolvedBinding Record')
     record_schema.add_field_decl(FieldDecl('[[Module]]', 'Module Record', ''))
     record_schema.add_field_decl(FieldDecl('[[BindingName]]', 'String | ~namespace~', ''))
