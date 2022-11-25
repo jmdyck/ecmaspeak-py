@@ -90,6 +90,14 @@ def process_tables():
     record_schema.add_field_decl(FieldDecl('[[Enumerable]]',   'a Boolean', ''))
     record_schema.add_field_decl(FieldDecl('[[Configurable]]', 'a Boolean', ''))
 
+    # 9.1 "Environment Records":
+    #> Every Environment Record has an [[OuterEnv]] field,
+    #> which is either *null* or a reference to an outer Environment Record.
+    #
+    record_schema = ensure_RecordSchema('Environment Record')
+    assert len(record_schema.addl_field_decls) == 0
+    record_schema.add_field_decl(FieldDecl('[[OuterEnv]]', '*null* or an Environment Record', 'used to model the logical nesting of Environment Record values'))
+
     # 16.2.1.4 "Abstract Module Records":
     # (on the `ResolveExport` row of the "Abstract Methods of Module Records" table)
     #> Bindings are represented by a <dfn>ResolvedBinding Record</dfn>,
