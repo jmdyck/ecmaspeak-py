@@ -83,12 +83,12 @@ def process_tables():
     # the "Property Attributes" tables.
     #
     record_schema = ensure_RecordSchema('Property Descriptor')
-    record_schema.add_field_decl(FieldDecl('[[Get]]',          'Object | Undefined', ''))
-    record_schema.add_field_decl(FieldDecl('[[Set]]',          'Object | Undefined', ''))
-    record_schema.add_field_decl(FieldDecl('[[Value]]',        'Any ECMAScript language type', ''))
-    record_schema.add_field_decl(FieldDecl('[[Writable]]',     'Boolean', ''))
-    record_schema.add_field_decl(FieldDecl('[[Enumerable]]',   'Boolean', ''))
-    record_schema.add_field_decl(FieldDecl('[[Configurable]]', 'Boolean', ''))
+    record_schema.add_field_decl(FieldDecl('[[Get]]',          'an Object or *undefined*', ''))
+    record_schema.add_field_decl(FieldDecl('[[Set]]',          'an Object or *undefined*', ''))
+    record_schema.add_field_decl(FieldDecl('[[Value]]',        'an ECMAScript language value', ''))
+    record_schema.add_field_decl(FieldDecl('[[Writable]]',     'a Boolean', ''))
+    record_schema.add_field_decl(FieldDecl('[[Enumerable]]',   'a Boolean', ''))
+    record_schema.add_field_decl(FieldDecl('[[Configurable]]', 'a Boolean', ''))
 
     # 16.2.1.4 "Abstract Module Records":
     # (on the `ResolveExport` row of the "Abstract Methods of Module Records" table)
@@ -96,8 +96,8 @@ def process_tables():
     #> of the form { [[Module]]: Module Record, [[BindingName]]: String | ~namespace~ }.
     #
     record_schema = ensure_RecordSchema('ResolvedBinding Record')
-    record_schema.add_field_decl(FieldDecl('[[Module]]', 'Module Record', ''))
-    record_schema.add_field_decl(FieldDecl('[[BindingName]]', 'String | ~namespace~', ''))
+    record_schema.add_field_decl(FieldDecl('[[Module]]', 'a Module Record', ''))
+    record_schema.add_field_decl(FieldDecl('[[BindingName]]', 'a String or ~namespace~', ''))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
