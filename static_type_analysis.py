@@ -9858,7 +9858,6 @@ fields_for_record_type_named_ = {
     'ClassFieldDefinition Record' : {
         'Name'                          : T_Private_Name | T_String | T_Symbol,
         'Initializer'                   : T_function_object_ | T_tilde_empty_,
-        'IsAnonymousFunctionDefinition' : T_Boolean,
     },
 
     'ClassStaticBlockDefinition Record' : {
@@ -9893,7 +9892,6 @@ fields_for_record_type_named_ = {
         'ThisValue'        : T_Tangible_,
         'ThisBindingStatus': T_tilde_lexical_ | T_tilde_initialized_ | T_tilde_uninitialized_,
         'FunctionObject'   : T_function_object_,
-        'HomeObject'       : T_Object | T_Undefined,
         'NewTarget'        : T_Object | T_Undefined,
     },
 
@@ -10093,7 +10091,6 @@ fields_for_record_type_named_ = {
         'Multiline'     : T_Boolean,
         'DotAll'        : T_Boolean,
         'Unicode'       : T_Boolean,
-        'WordCharacters': T_CharSet,
         'CapturingGroupsCount': T_MathNonNegativeInteger_,
     },
 
