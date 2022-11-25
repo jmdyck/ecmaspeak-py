@@ -51,11 +51,14 @@ def process_tables():
                 else:
                     [field_name, value_type, meaning] = row.cell_texts
 
-                Pseudocode.parse(row.cell_nodes[-2], 'field_value_type')
+                field_value_type = Pseudocode.parse(row.cell_nodes[-2], 'field_value_type')
+                assert field_value_type.prod.lhs_s == '{FIELD_VALUE_TYPE}'
+                value_description = field_value_type.children[0]
+                assert value_description.prod.lhs_s == '{VALUE_DESCRIPTION}'
 
                 # `meaning` is arbitrary prose
 
-                record_schema.add_field_decl(FieldDecl(field_name, value_type, meaning))
+                record_schema.add_field_decl(FieldDecl(field_name, value_type, meaning, value_description))
 
         elif 'Method' in caption and 'Record' in caption:
             if mo := re.fullmatch(r'(Additional )?(Abstract )?Methods of (.+ Record)s', caption):
@@ -219,13 +222,14 @@ class RecordSchema:
 EMPTY_record_schema = RecordSchema('')
 
 class FieldDecl:
-    def __init__(self, name, nature, meaning):
+    def __init__(self, name, nature, meaning, value_description=None):
         assert re.fullmatch(r'\[\[[A-Z][A-Za-z0-9]+\]\]', name), name
         # `nature` is limited, could be checked, but format is ad hoc (but see PR #2602).
         # `meaning` is arbitrary prose
         self.name = name
         self.nature = nature
         self.meaning = meaning
+        self.value_description = value_description
 
 class MethodDecl:
     def __init__(self, signature, purpose):
