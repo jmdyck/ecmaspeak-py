@@ -9911,10 +9911,10 @@ fields_for_record_type_named_ = {
     # 8.2 Realms: Table 21: Realm Record Fields
     'Realm Record': {
         'Intrinsics'  : T_Intrinsics_Record,
-        'GlobalObject': T_Object,
-        'GlobalEnv'   : T_Environment_Record,
+        'GlobalObject': T_Object | T_Undefined,
+        'GlobalEnv'   : T_Global_Environment_Record,
         'TemplateMap' : ListType(T_templateMap_entry_),
-        'HostDefined' : T_host_defined_ | T_Undefined,
+        'HostDefined' : T_host_defined_,
     },
 
     # 8.2: NO TABLE
@@ -9926,7 +9926,7 @@ fields_for_record_type_named_ = {
     # 8.4.1
     'JobCallback Record': {
         'Callback'    : T_function_object_,
-        'HostDefined' : T_Top_,
+        'HostDefined' : T_host_defined_ | T_tilde_empty_,
     },
 
     # 8.6 Agents: Agent Record Fields
@@ -9971,30 +9971,30 @@ fields_for_record_type_named_ = {
     'Script Record': {
         'Realm'         : T_Realm_Record | T_Undefined,
         'ECMAScriptCode': T_PTN_Script,
-        'HostDefined'   : T_host_defined_ | T_Undefined,
+        'HostDefined'   : T_host_defined_,
     },
 
     # 22437: Table 36: Module Record Fields
     'Module Record': {
-        'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Realm'           : T_Realm_Record,
+        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
         'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_ | T_Undefined,
+        'HostDefined'     : T_host_defined_,
     },
 
     'other Module Record': {
-        'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Realm'           : T_Realm_Record,
+        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
         'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_ | T_Undefined,
+        'HostDefined'     : T_host_defined_,
     },
 
     #
     'Cyclic Module Record': {
-        'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Realm'           : T_Realm_Record,
+        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
         'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_ | T_Undefined,
+        'HostDefined'     : T_host_defined_,
         #
         'Status'           : T_tilde_unlinked_ | T_tilde_linking_ | T_tilde_linked_ | T_tilde_evaluating_ | T_tilde_evaluating_async_ | T_tilde_evaluated_,
         'EvaluationError'  : T_throw_ | T_tilde_empty_,
@@ -10011,10 +10011,10 @@ fields_for_record_type_named_ = {
 
     # 23406: Table 38: Additional Fields of Source Text Module Records
     'Source Text Module Record': {
-        'Realm'           : T_Realm_Record | T_Undefined,
-        'Environment'     : T_Environment_Record | T_tilde_empty_,
+        'Realm'           : T_Realm_Record,
+        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
         'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_ | T_Undefined,
+        'HostDefined'     : T_host_defined_,
         #
         'Status'           : T_tilde_unlinked_ | T_tilde_linking_ | T_tilde_linked_ | T_tilde_evaluating_ | T_tilde_evaluating_async_ | T_tilde_evaluated_,
         'EvaluationError'  : T_throw_ | T_tilde_empty_,
