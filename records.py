@@ -82,7 +82,7 @@ def process_tables():
     # such a table would basically just duplicate
     # the "Property Attributes" tables.
     #
-    record_schema = ensure_RecordSchema('PropertyDescriptor')
+    record_schema = ensure_RecordSchema('Property Descriptor')
     record_schema.add_field_decl(FieldDecl('[[Get]]',          'Object | Undefined', ''))
     record_schema.add_field_decl(FieldDecl('[[Set]]',          'Object | Undefined', ''))
     record_schema.add_field_decl(FieldDecl('[[Value]]',        'Any ECMAScript language type', ''))
