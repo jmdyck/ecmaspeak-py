@@ -7056,11 +7056,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             lhs_t = T_Property_Descriptor
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
-        elif lhs_t in [
-            T_Object | T_Boolean | T_Environment_Record | T_Number | T_String | T_Symbol | T_Undefined,
-            T_Object | T_Null,
-            T_Object | T_Undefined,
-        ]:
+        elif lhs_t == T_Object | T_Null:
             # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
             lhs_t = T_Object
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
@@ -7078,46 +7074,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             lhs_t = T_Cyclic_Module_Record
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
-        elif lhs_t in [
-            T_TBD,
-            T_Top_,
-            T_Tangible_,
-            T_Normal,
-            T_tilde_empty_,
-            T_Tangible_ | T_tilde_empty_,
-            T_Tangible_ | T_tilde_empty_ | T_Abrupt,
-        ]:
-            # Have to peek at the dsbn to infer the type of the lhs_var.
+        elif lhs_t == T_Tangible_:
+            # 3 times
 
-            candidate_type_names = []
+            assert dsbn_name == 'AsyncGeneratorState'
 
-            for (record_type_name, fields) in sorted(fields_for_record_type_named_.items()):
-                if dsbn_name in fields:
-                    candidate_type_names.append(record_type_name)
-
-            if dsbn_name in type_of_internal_thing_:
-                candidate_type_names.append('Object')
-                # But we could sometimes be more specific about the kind of Object:
-                # 'PromiseState'    : Promise Instance object
-                # 'TypedArrayName'  : Integer Indexed object
-                # 'GeneratorState'  : Generator Instance
-                # 'OriginalSource'  : RegExp Instance
-                # 'GeneratorContext': Generator Instance
-
-            if dsbn_name == 'Realm':
-                assert candidate_type_names == ['Cyclic Module Record', 'Job_record_', 'Module Record', 'Script Record', 'Source Text Module Record', 'other Module Record', 'Object']
-                if lhs_text == '_scriptRecord_':
-                    lhs_t = T_Script_Record
-                else:
-                    assert 0
-            elif dsbn_name == 'Done':
-                assert candidate_type_names == ['Iterator Record', 'Object']
-                assert lhs_text == '_iteratorRecord_'
-                lhs_t = T_Iterator_Record
-            else:
-                assert len(candidate_type_names) == 1, (dsbn_name, candidate_type_names)
-                [type_name] = candidate_type_names
-                lhs_t = NamedType(type_name)
+            # After:
+            #   Let _result_ be Completion(AsyncGeneratorValidate(_generator_, ~empty~)).
+            #   IfAbruptRejectPromise(_result_, _promiseCapability_).
+            # it's guaranteed that _generator_ is a AsyncGenerator object,
+            # but STA isn't smart enough to know that.
+            lhs_t = T_AsyncGenerator_object_
 
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
@@ -7158,22 +7125,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                         "type of `%s` is only 'Record', so don't know about a `%s` field"
                         % (lhs_text, dsbn_name)
                     )
-                    for record_type_name in [
-                        'Property Descriptor', # for the almost-Property Descriptor in CompletePropertyDescriptor
-                        'Iterator Record',
-                        'templateMap_entry_',
-                        'methodDef_record_',
-                        'CodePointAt_record_',
-                        'Job_record_',
-                        'FinalizationRegistryCellRecord_',
-                    ]:
-                        pd_fields = fields_for_record_type_named_[record_type_name]
-                        if dsbn_name in pd_fields:
-                            field_type = pd_fields[dsbn_name]
-                            break
-                    else:
-                        assert 0, dsbn_name
-                        # Need to add something to fields_for_record_type_named_?
+                    field_type = T_TBD
                 elif lhs_t.name == 'Intrinsics Record':
                     field_type = {
                         '%Array%'               : T_constructor_object_,
