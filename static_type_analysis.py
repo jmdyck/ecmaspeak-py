@@ -8939,19 +8939,46 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         proc_add_return(env1, abrupt_part_of_type, expr)
 
-        # RequireInternalSlot is a quasi-type-test.
         env2 = env1
         if str(operand.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
             [pp] = operand.children
             assert str(pp.prod).startswith(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
             [opn_before_paren, exlist_opt] = pp.children[0:2]
-            if opn_before_paren.source_text() == 'RequireInternalSlot':
+            prefix = opn_before_paren.source_text()
+
+            if prefix == 'RequireInternalSlot':
                 # This amounts to a type-test.
                 # I.e., in the not-returning-early env resulting from this NAMED_OPERATION_INVOCATION,
                 # we can narrow the type of the first arg to RequireInternalSlot.
                 (obj_arg, slotname_arg) = exes_in_exlist_opt(exlist_opt)
-                env2 = env1.with_expr_type_narrowed(obj_arg, T_Object)
-                # XXX Depending on the slotname_arg, we could narrow it further.
+
+                t = {
+                    '[[ArrayBufferData]]'       : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
+                    '[[AsyncGeneratorContext]]' : T_AsyncGenerator_object_,
+                    '[[AsyncGeneratorQueue]]'   : T_AsyncGenerator_object_,
+                    '[[AsyncGeneratorState]]'   : T_AsyncGenerator_object_,
+                    '[[Cells]]'                 : T_FinalizationRegistry_object_,
+                    '[[DataView]]'              : T_Object,
+                    '[[GeneratorBrand]]'        : T_Object,
+                    '[[GeneratorState]]'        : T_Object,
+                    '[[MapData]]'               : T_Object,
+                    '[[RegExpMatcher]]'         : T_Object,
+                    '[[SetData]]'               : T_Object,
+                    '[[TypedArrayName]]'        : T_TypedArray_object_,
+                    '[[WeakMapData]]'           : T_WeakMap_object_,
+                    '[[WeakRefTarget]]'         : T_WeakRef_object_,
+                    '[[WeakSetData]]'           : T_WeakSet_object_,
+                }[slotname_arg.source_text()]
+
+                env2 = env1.with_expr_type_narrowed(obj_arg, t)
+
+            elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray']:
+                obj_arg = exes_in_exlist_opt(exlist_opt)[0]
+                env2 = env1.with_expr_type_narrowed(obj_arg, T_TypedArray_object_)
+
+            elif prefix == 'GeneratorValidate':
+                gen_arg = exes_in_exlist_opt(exlist_opt)[0]
+                env2 = env1.with_expr_type_narrowed(gen_arg, T_Object)
 
         return (normal_part_of_type, env2)
 
