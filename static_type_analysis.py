@@ -9829,27 +9829,9 @@ def get_fields(fields):
 # ------------------------------------------------------------------------------
 
 fields_for_record_type_named_ = {
-
-    # 6.2.4
-    'Reference Record': {
-        'Base'           : T_Tangible_ | T_Environment_Record | T_tilde_unresolvable_,
-        'ReferencedName' : T_String | T_Symbol | T_Private_Name,
-        'Strict'         : T_Boolean,
-        'ThisValue'      : T_Tangible_ | T_tilde_empty_,
-    },
-
-    # 6.2.5
-    'Property Descriptor': { # XXX not modelling this very well
-        # table 2
-        'Value'       : T_Tangible_,
-        'Writable'    : T_Boolean,
-        # table 3
-        'Get'         : T_Object | T_Undefined,
-        'Set'         : T_Object | T_Undefined,
-        # common
-        'Enumerable'  : T_Boolean,
-        'Configurable': T_Boolean,
-    },
+    # Initialize this dict with info for unnamed record types.
+    # Then add info for named record types
+    # by calling process_declared_record_type_info().
 
     #? # 2651: Table 8: Completion Record Fields
     #? 'Completion Record': {
@@ -9858,105 +9840,10 @@ fields_for_record_type_named_ = {
     #?     'Target' : T_String | T_tilde_empty_,
     #? },
 
-    # 6.2.9 The PrivateElement Specification Type
-    'PrivateElement': {
-        'Key'  : T_Private_Name,
-        'Kind' : T_tilde_field_ | T_tilde_method_ | T_tilde_accessor_,
-        'Value': T_Tangible_,
-        'Get'  : T_Undefined | T_function_object_,
-        'Set'  : T_Undefined | T_function_object_,
-    },
-    # 6.2.10 The ClassFieldDefinition Record Specification Type
-    'ClassFieldDefinition Record' : {
-        'Name'                          : T_Private_Name | T_String | T_Symbol,
-        'Initializer'                   : T_function_object_ | T_tilde_empty_,
-    },
-
-    'ClassStaticBlockDefinition Record' : {
-        'BodyFunction' : T_function_object_,
-    },
-
-    # 7.4.1 Iterator Records
-    'Iterator Record': {
-        'Iterator'  : T_Object, # iterator_object_ ?
-        'NextMethod': T_function_object_,
-        'Done'      : T_Boolean,
-    },
-
-    # 8.1
-    'Environment Record': {
-        'OuterEnv'         : T_Environment_Record,
-    },
-
-    'Declarative Environment Record': {
-        'OuterEnv' : T_Environment_Record,
-    },
-
-    'Object Environment Record': {
-        'OuterEnv'           : T_Environment_Record,
-        'BindingObject'      : T_Object,
-        'IsWithEnvironment'  : T_Boolean,
-    },
-
-    # 8.1.1.3 Table 16: Additional Fields of Function Environment Records
-    'Function Environment Record': {
-        'OuterEnv'         : T_Environment_Record,
-        'ThisValue'        : T_Tangible_,
-        'ThisBindingStatus': T_tilde_lexical_ | T_tilde_initialized_ | T_tilde_uninitialized_,
-        'FunctionObject'   : T_function_object_,
-        'NewTarget'        : T_Object | T_Undefined,
-    },
-
-    # 8.1.1.4 Table 18: Additional Fields of Global Environment Records
-    'Global Environment Record': {
-        'OuterEnv'         : T_Environment_Record,
-        'ObjectRecord'     : T_Object_Environment_Record,
-        'GlobalThisValue'  : T_Object,
-        'DeclarativeRecord': T_Declarative_Environment_Record,
-        'VarNames'         : ListType(T_String),
-    },
-
-    'Module Environment Record': {
-        'OuterEnv'         : T_Environment_Record,
-    },
-
-    # 8.2 Realms: Table 21: Realm Record Fields
-    'Realm Record': {
-        'Intrinsics'  : T_Intrinsics_Record,
-        'GlobalObject': T_Object | T_Undefined,
-        'GlobalEnv'   : T_Global_Environment_Record,
-        'TemplateMap' : ListType(T_templateMap_entry_),
-        'HostDefined' : T_host_defined_,
-    },
-
     # 8.2: NO TABLE
     'templateMap_entry_': {
         'Site'    : T_Parse_Node,
         'Array'   : T_Object,
-    },
-
-    # 8.4.1
-    'JobCallback Record': {
-        'Callback'    : T_function_object_,
-        'HostDefined' : T_host_defined_ | T_tilde_empty_,
-    },
-
-    # 8.6 Agents: Agent Record Fields
-    'Agent Record': {
-        'LittleEndian': T_Boolean,
-        'CanBlock'    : T_Boolean,
-        'Signifier'   : T_agent_signifier_,
-        'IsLockFree1' : T_Boolean,
-        'IsLockFree2' : T_Boolean,
-        'IsLockFree8' : T_Boolean,
-        'CandidateExecution': T_candidate_execution,
-        'KeptAlive'   : ListType(T_Object),
-    },
-
-    # 9.2
-    'PrivateEnvironment Record': {
-        'OuterPrivateEnvironment': T_PrivateEnvironment_Record | T_Null,
-        'Names'                  : ListType(T_Private_Name),
     },
 
     # 11933: NO TABLE, no mention
@@ -9979,21 +9866,6 @@ fields_for_record_type_named_ = {
         'Key'     : T_String | T_Symbol,
     },
 
-    # 21832: Script Record Fields
-    'Script Record': {
-        'Realm'         : T_Realm_Record | T_Undefined,
-        'ECMAScriptCode': T_PTN_Script,
-        'HostDefined'   : T_host_defined_,
-    },
-
-    # 22437: Table 36: Module Record Fields
-    'Module Record': {
-        'Realm'           : T_Realm_Record,
-        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
-        'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_,
-    },
-
     'other Module Record': {
         'Realm'           : T_Realm_Record,
         'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
@@ -10001,86 +9873,10 @@ fields_for_record_type_named_ = {
         'HostDefined'     : T_host_defined_,
     },
 
-    #
-    'Cyclic Module Record': {
-        'Realm'           : T_Realm_Record,
-        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
-        'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_,
-        #
-        'Status'           : T_tilde_unlinked_ | T_tilde_linking_ | T_tilde_linked_ | T_tilde_evaluating_ | T_tilde_evaluating_async_ | T_tilde_evaluated_,
-        'EvaluationError'  : T_throw_ | T_tilde_empty_,
-        'DFSIndex'         : T_MathInteger_ | T_tilde_empty_,
-        'DFSAncestorIndex' : T_MathInteger_ | T_tilde_empty_,
-        'RequestedModules' : ListType(T_String),
-        'CycleRoot'        : T_Cyclic_Module_Record | T_tilde_empty_,
-        'HasTLA'           : T_Boolean,
-        'AsyncEvaluation'  : T_Boolean,
-        'TopLevelCapability': T_PromiseCapability_Record | T_tilde_empty_,
-        'AsyncParentModules': ListType(T_Cyclic_Module_Record),
-        'PendingAsyncDependencies': T_MathInteger_ | T_tilde_empty_,
-    },
-
-    # 23406: Table 38: Additional Fields of Source Text Module Records
-    'Source Text Module Record': {
-        'Realm'           : T_Realm_Record,
-        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
-        'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_,
-        #
-        'Status'           : T_tilde_unlinked_ | T_tilde_linking_ | T_tilde_linked_ | T_tilde_evaluating_ | T_tilde_evaluating_async_ | T_tilde_evaluated_,
-        'EvaluationError'  : T_throw_ | T_tilde_empty_,
-        'DFSIndex'         : T_MathInteger_ | T_tilde_empty_,
-        'DFSAncestorIndex' : T_MathInteger_ | T_tilde_empty_,
-        'RequestedModules' : ListType(T_String),
-        'CycleRoot'        : T_Cyclic_Module_Record | T_tilde_empty_,
-        'HasTLA'           : T_Boolean,
-        'AsyncEvaluation'  : T_Boolean,
-        'TopLevelCapability': T_PromiseCapability_Record | T_tilde_empty_,
-        'AsyncParentModules': ListType(T_Cyclic_Module_Record),
-        'PendingAsyncDependencies': T_MathInteger_ | T_tilde_empty_,
-        #
-        'Context'              : T_execution_context | T_tilde_empty_,
-        'ECMAScriptCode'       : T_Parse_Node,
-        'Context'              : T_execution_context | T_tilde_empty_, # PR 1670
-        'ImportMeta'           : T_Object | T_tilde_empty_, # PR 1892
-        'ImportEntries'        : ListType(T_ImportEntry_Record),
-        'LocalExportEntries'   : ListType(T_ExportEntry_Record),
-        'IndirectExportEntries': ListType(T_ExportEntry_Record),
-        'StarExportEntries'    : ListType(T_ExportEntry_Record),
-    },
-
-    # 23376
-    'ResolvedBinding Record': {
-        'Module'      : T_Module_Record,
-        'BindingName' : T_String | T_tilde_namespace_,
-    },
-
-    # 23490: Table 39: ImportEntry Record Fields
-    'ImportEntry Record': {
-        'ModuleRequest': T_String,
-        'ImportName'   : T_String | T_tilde_namespace_object_,
-        'LocalName'    : T_String,
-    },
-
-    # 23627: Table 41: ExportEntry Record Fields
-    'ExportEntry Record': {
-        'ExportName'    : T_String | T_Null,
-        'ModuleRequest' : T_String | T_Null,
-        'ImportName'    : T_String | T_Null | T_tilde_all_ | T_tilde_all_but_default_,
-        'LocalName'     : T_String | T_Null,
-    },
-
     # 24003
     'ExportResolveSet_Record_': {
         'Module'     : T_Module_Record,
         'ExportName' : T_String,
-    },
-
-    # 28088: table-44: GlobalSymbolRegistry Record Fields
-    'GlobalSymbolRegistry Record': {
-        'Key'   : T_String,
-        'Symbol': T_Symbol,
     },
 
     # 22.2.2.?
@@ -10098,48 +9894,11 @@ fields_for_record_type_named_ = {
         'Invert' : T_Boolean,
     },
 
-    'RegExp Record': {
-        'IgnoreCase'    : T_Boolean,
-        'Multiline'     : T_Boolean,
-        'DotAll'        : T_Boolean,
-        'Unicode'       : T_Boolean,
-        'CapturingGroupsCount': T_MathNonNegativeInteger_,
-    },
-
-    # 22.2.5.2.5 Match Record Fields
-    'Match Record': {
-        'StartIndex': T_MathInteger_,
-        'EndIndex'  : T_MathInteger_,
-    },
-
-    # 38121 24.5.2: JSON.stringify: no table, no mention
-    'JSON Serialization Record': {
-        'ReplacerFunction': T_function_object_ | T_Undefined,
-        'Stack'           : ListType(T_Object),
-        'Indent'          : T_String,
-        'Gap'             : T_String,
-        'PropertyList'    : ListType(T_String) | T_Undefined,
-    },
-
     # 25.2.3.2 FinalizationRegistry.prototype.register
     'FinalizationRegistryCellRecord_': {
         'WeakRefTarget'  : T_Object | T_tilde_empty_,
         'HeldValue'      : T_Tangible_,
         'UnregisterToken': T_Object | T_tilde_empty_,
-    },
-
-    # 26.6.1.1 PromiseCapability Record Fields
-    'PromiseCapability Record': {
-        'Promise' : T_Object | T_Undefined,
-        'Resolve' : T_function_object_ | T_Undefined,
-        'Reject'  : T_function_object_ | T_Undefined,
-    },
-
-    # 26.6.1.2 PromiseReaction Record Fields
-    'PromiseReaction Record': {
-        'Capability' : T_PromiseCapability_Record | T_Undefined,
-        'Type'       : T_tilde_Fulfill_ | T_tilde_Reject_,
-        'Handler'    : T_JobCallback_Record | T_tilde_empty_,
     },
 
     # 39099: no table, no mention
@@ -10149,25 +9908,6 @@ fields_for_record_type_named_ = {
         # but Value is empty only if Key is empty?
         # So if you establish that _e_.[[Key]] isn't ~empty~,
         # you know that _e_.[[Value]] isn't ~empty~ ?
-    },
-
-    # 39328: 28.2 Agent Events Record Fields
-    'Agent Events Record' : {
-        'AgentSignifier'       : T_agent_signifier_,
-        'EventList'            : ListType(T_event_),
-        'AgentSynchronizesWith': ListType(T_event_pair_),
-    },
-
-    # 39380: Candidate Execution Record Fields
-    'candidate execution': {
-        'EventsRecords'       : ListType(T_Agent_Events_Record),
-        'ChosenValues'        : ListType(T_Chosen_Value_Record),
-        'AgentOrder'          : T_Relation,
-        'ReadsBytesFrom'      : ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)),
-        'ReadsFrom'           : T_Relation,
-        'HostSynchronizesWith': T_Relation,
-        'SynchronizesWith'    : T_Relation,
-        'HappensBefore'       : T_Relation,
     },
 
     # 39415: CreateResolvingFunctions NO TABLE, not even mentioned
@@ -10202,50 +9942,12 @@ fields_for_record_type_named_ = {
         'ElementSize' : T_MathInteger_,
     },
 
-    # repetitive, but easier than factoring out...
-    'ReadSharedMemory event': {
-        'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_,
-        'NoTear'      : T_Boolean,
-        'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_MathInteger_,
-        'ElementSize' : T_MathInteger_,
-    },
-
-    'WriteSharedMemory event': {
-        'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_ | T_tilde_Init_,
-        'NoTear'      : T_Boolean,
-        'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_MathInteger_,
-        'ElementSize' : T_MathInteger_,
-        'Payload'     : ListType(T_MathInteger_),
-    },
-
-    'ReadModifyWriteSharedMemory event': {
-        'Order'       : T_tilde_SeqCst_,
-        'NoTear'      : T_Boolean,
-        'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_MathInteger_,
-        'ElementSize' : T_MathInteger_,
-        'Payload'     : ListType(T_MathInteger_),
-        'ModifyOp'    : T_ReadModifyWrite_modification_closure,
-    },
-
-    # 40224: Chosen Value Record Fields
-    'Chosen Value Record': {
-        'Event'       : T_Shared_Data_Block_event,
-        'ChosenValue' : ListType(T_MathInteger_),
-    },
-    # 41899: AsyncGeneratorRequest Record Fields
-    'AsyncGeneratorRequest Record': {
-        'Completion' : T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_,
-        'Capability' : T_PromiseCapability_Record,
-    },
-
 }
 
 def process_declared_record_type_info():
     for record_schema in spec.RecordSchema_for_name_.values():
 
+        d_from_spec = {}
         schemas = reversed([* record_schema.self_and_supers() ])
         for schema in schemas:
             for field_decl in schema.addl_field_decls.values():
@@ -10256,7 +9958,39 @@ def process_declared_record_type_info():
                 else:
                     t = convert_nature_node_to_type(field_decl.value_description)
 
-# ------------------------------------------------------------------------------
+                key = (record_schema.tc_schema_name, debracketed_field_name)
+                tweak = {
+                    # See PR #2963:
+                    ('Function Environment Record', 'FunctionObject'): ( T_Object           , T_function_object_ ),
+                    ('Script Record'              , 'ECMAScriptCode'): ( T_Parse_Node       , T_PTN_Script ), 
+                    ('Source Text Module Record'  , 'Context'       ): ( T_execution_context, T_execution_context | T_tilde_empty_ ),
+                    ('Source Text Module Record'  , 'ImportMeta'    ): ( T_Object           , T_Object | T_tilde_empty_ ),
+                    ('PromiseCapability Record'   , 'Promise'       ): ( T_Object           , T_Object | T_Undefined ),
+                    ('PromiseCapability Record'   , 'Resolve'       ): ( T_function_object_ , T_function_object_ | T_Undefined ),
+                    ('PromiseCapability Record'   , 'Reject'        ): ( T_function_object_ , T_function_object_ | T_Undefined ),
+
+                    # --------------
+                    # Just me?
+                    ('AsyncGeneratorRequest Record', 'Completion' ): ( T_Abrupt | T_Normal, T_Tangible_ | T_return_ | T_throw_ | T_tilde_empty_ ),
+                    ('JobCallback Record'          , 'HostDefined'): ( T_host_defined_    , T_host_defined_ | T_tilde_empty_ ),
+                }.get(key, None)
+                if tweak:
+                    (t_from_spec, t_for_compat) = tweak
+                    assert t == t_from_spec
+                    t = t_for_compat
+
+                d_from_spec[debracketed_field_name] = t
+
+        if record_schema.tc_schema_name == 'Completion Record': continue
+
+        ffrtn_name = record_schema.tc_schema_name
+        # map from the title-case schema name in spec.RecordSchema_for_name_
+        # to the name that the spec uses in practice (e.g., in {VAL_DESC}).
+        ffrtn_name = re.sub(' Event$', ' event', ffrtn_name)
+        ffrtn_name = re.sub('Candidate Execution Record', 'candidate execution', ffrtn_name)
+
+        assert ffrtn_name not in fields_for_record_type_named_
+        fields_for_record_type_named_[ffrtn_name] = d_from_spec
 
 type_of_internal_thing_ = {
 
