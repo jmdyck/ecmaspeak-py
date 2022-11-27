@@ -54,6 +54,8 @@ def prep_for_STA():
     un_f.close()
     print_unused_type_tweaks()
 
+    process_declared_record_type_info()
+
 def retain_for_sta(header):
     if header.section.section_num.startswith('B'):
         # We're in Annex B. Do we want to create this {alg_defn} and add it to {header}?
@@ -6038,6 +6040,14 @@ def _(val_desc, env):
     }[vd_st]
     return t
 
+@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Record { {dsb_word}: Parse Node, {dsb_word}: Object }')
+def _(led, env):
+    led_st = led.source_text()
+    t = {
+        'Record { [[Site]]: Parse Node, [[Array]]: Object }': T_templateMap_entry_,
+    }[led_st]
+    return t
+
 @tbd.put('{VAL_DESC} : a non-empty List of {LIST_ELEMENTS_DESCRIPTION}')
 def _(val_desc, env):
     [led] = val_desc.children
@@ -6202,12 +6212,14 @@ tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteShare
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a Realm Record'] = T_Realm_Record
+tbd['{VAL_DESC} : a Record whose field names are intrinsic keys and whose values are objects'] = T_Intrinsics_Record
 tbd['{VAL_DESC} : a Reference Record'] = T_Reference_Record
 tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
 tbd['{VAL_DESC} : a ResolvedBinding Record'] = T_ResolvedBinding_Record
 tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
 tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a Shared Data Block'] = T_Shared_Data_Block
+tbd['{VAL_DESC} : a Shared Data Block event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : a Source Text Module Record'] = T_Source_Text_Module_Record
 tbd['{VAL_DESC} : a String exotic object'] = T_String_exotic_object_
@@ -6231,6 +6243,7 @@ tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in t
 tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
 tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
+tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
 tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
 tbd['{VAL_DESC} : a code point'] = T_code_point_
@@ -6240,6 +6253,8 @@ tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
 tbd['{VAL_DESC} : a fully populated Property Descriptor'] = a_subset_of(T_Property_Descriptor)
 tbd['{VAL_DESC} : a function object'] = T_function_object_
 tbd['{VAL_DESC} : a grammar symbol'] = T_grammar_symbol_
+tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
+tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
 tbd['{VAL_DESC} : a mathematical value'] = T_MathReal_
 tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
 tbd['{VAL_DESC} : a non-negative integer that is evenly divisible by 4'] = a_subset_of(T_MathNonNegativeInteger_)
@@ -6253,9 +6268,12 @@ tbd['{VAL_DESC} : a possibly empty List, each of whose elements is a String or *
 tbd['{VAL_DESC} : a property key or Private Name'] = T_String | T_Symbol | T_Private_Name
 tbd['{VAL_DESC} : a property key'] = T_String | T_Symbol
 tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
+tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
+tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
 tbd['{VAL_DESC} : a return completion'] = T_return_
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a set of algorithm steps'] = T_alg_steps
+tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
 tbd['{VAL_DESC} : a throw completion'] = T_throw_
 tbd['{VAL_DESC} : a time value'] = T_IntegralNumber_
 tbd['{VAL_DESC} : an Abstract Closure with no parameters'] = ProcType([], T_Top_)
@@ -6266,6 +6284,7 @@ tbd['{VAL_DESC} : an Array'] = T_Array_object_
 tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
 tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
+tbd['{VAL_DESC} : an ECMAScript execution context'] = T_execution_context
 tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : an ECMAScript language value'] = T_Tangible_
@@ -6280,6 +6299,7 @@ tbd['{VAL_DESC} : an Object that has a {dsb_word} internal slot'] = a_subset_of(
 tbd['{VAL_DESC} : an Object'] = T_Object
 tbd['{VAL_DESC} : an abrupt completion'] = T_Abrupt
 tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
+tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
 tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an array index'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : an execution context'] = T_execution_context
@@ -6291,6 +6311,7 @@ tbd['{VAL_DESC} : an instance of a nonterminal'] = a_subset_of(T_Parse_Node)
 tbd['{VAL_DESC} : an instance of a production in {h_emu_xref}'] = a_subset_of(T_Parse_Node)
 tbd['{VAL_DESC} : an integer index'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : an integer'] = T_MathInteger_
+tbd['{VAL_DESC} : an integer ≥ {dsb_word}'] = a_subset_of(T_MathInteger_)
 tbd['{VAL_DESC} : an integral Number'] = T_IntegralNumber_
 tbd['{VAL_DESC} : an internal slot name'] = T_SlotName_
 tbd['{VAL_DESC} : an odd integral Number'] = a_subset_of(T_IntegralNumber_)
@@ -6327,12 +6348,16 @@ def _(led, env):
     [nonterminal] = led.children
     return ptn_type_for(nonterminal)
 
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : BigInts'                            ] = T_BigInt
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records'              ] = T_Cyclic_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values'         ] = T_Tangible_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'                ] = T_ExportEntry_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_ImportEntry_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Objects'                            ] = T_Object
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes'                        ] = T_Parse_Node
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Private Names'                      ] = T_Private_Name
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Strings'                            ] = T_String
@@ -6346,9 +6371,11 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*'           ] = T_Str
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*'      ] = T_String | T_Undefined
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : errors'                             ] = T_SyntaxError | T_ReferenceError
+tbd['{LIST_ELEMENTS_DESCRIPTION} : events'                             ] = T_event_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : internal slot names'                ] = T_SlotName_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types' ] = T_LangTypeName_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : names of internal slots'            ] = T_SlotName_
+tbd['{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events'        ] = T_event_pair_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_String | T_Symbol
 
 # ------------------
@@ -6439,6 +6466,12 @@ def convert_nature_to_type(nature):
             'a Global Environment Record': T_Global_Environment_Record,
             'a Module Environment Record': T_Module_Environment_Record,
             'an Object Environment Record': T_Object_Environment_Record,
+
+            # record field type outside of <td>:
+            '*null* or an Environment Record': T_Null | T_Environment_Record,
+            'an Object or *undefined*': T_Object | T_Undefined,
+            'a String or ~namespace~': T_String | T_tilde_namespace_,
+
         }[nature]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -10210,6 +10243,20 @@ fields_for_record_type_named_ = {
 
 }
 
+def process_declared_record_type_info():
+    for record_schema in spec.RecordSchema_for_name_.values():
+
+        schemas = reversed([* record_schema.self_and_supers() ])
+        for schema in schemas:
+            for field_decl in schema.addl_field_decls.values():
+                mo = re.fullmatch(r'\[\[(\w+)\]\]', field_decl.name)
+                debracketed_field_name = mo.group(1) # backwards compat
+                if field_decl.value_description is None:
+                    t = convert_nature_to_type(field_decl.nature)
+                else:
+                    t = convert_nature_node_to_type(field_decl.value_description)
+
+# ------------------------------------------------------------------------------
 
 type_of_internal_thing_ = {
 

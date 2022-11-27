@@ -211,7 +211,7 @@ class RecordSchema:
         sup = self
         while True:
             sup = sup.super_schema
-            if sup is EMPTY_record_schema: return
+            if sup.tc_schema_name == '': return
             yield sup
 
     def preorder_traverse_subtree(self):
