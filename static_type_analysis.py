@@ -829,12 +829,6 @@ def member_is_a_subtype_or_equal(A, B):
         else:
             assert 0, (A, B)
 
-    elif isinstance(A, TupleType):
-        if B == T_Abrupt:
-            return False
-        else:
-            assert 0, (A, B)
-
     else:
         assert 0, (A, B)
 
@@ -875,15 +869,6 @@ class ListType(Type):
     def __str__(self): return "List of %s" % str(self.element_type)
     def unparse(self, _=False): return "List of %s" % self.element_type.unparse(True)
     element_type = property(itemgetter(1))
-
-class TupleType(Type):
-    __slots__ = ()
-    def __new__(cls, component_types):
-        return tuple.__new__(cls, ('TupleType', component_types))
-    def __repr__(self): return "%s(%r)" % self
-    def __str__(self): return "(%s)" % ', '.join(str(t) for t in self.component_types)
-    def unparse(self, _=False): return "(%s)" % ', '.join(t.unparse(True) for t in self.component_types)
-    component_types = property(itemgetter(1))
 
 class ThrowType(Type):
     __slots__ = ()
@@ -1260,7 +1245,6 @@ named_type_hierarchy = {
                     'tilde_value_': {},
                     'tilde_varBinding_': {},
                 },
-                'tuple_': {},
                 'other_': {},
             },
         },
@@ -1314,8 +1298,6 @@ def ensure_tnode_for(type):
             parent_type = T_List # XXX but this fails to capture subtypes within
         elif isinstance(type, ProcType):
             parent_type = T_proc_
-        elif isinstance(type, TupleType):
-            parent_type = T_tuple_
         else:
             assert 0, type
         return TNode(type, tnode_for_type_[parent_type])
@@ -1324,7 +1306,6 @@ def ensure_tnode_for(type):
 ensure_tnode_for( ListType(T_other_) )
 ensure_tnode_for( ProcType((), T_other_) )
 ensure_tnode_for( ThrowType(T_other_) )
-ensure_tnode_for( TupleType((T_other_,)) )
 
 # ------------------------------------------------------------------------------
 
