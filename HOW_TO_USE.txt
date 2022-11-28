@@ -74,7 +74,7 @@ csplit $D/pseudocode_ambig.new '/^(/' '{*}'
 # --------------------------------------------------------------------
 
 D=_`gcbn` && $EK/static_type_analysis.py $D
-D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D unconverted_natures deps spec_w_errors spec_w_edits sta_misc
+D=_`gcbn` && $EK/static_type_analysis.py $D && car -d $D unused_type_tweaks deps spec_w_errors spec_w_edits sta_misc
 # (~ 23s)
 	# split_types
 

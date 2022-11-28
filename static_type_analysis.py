@@ -35,9 +35,6 @@ def main():
 def prep_for_STA():
     stderr('prep_for_STA ...')
 
-    global un_f
-    un_f = shared.open_for_output('unconverted_natures')
-
     shared.prep_for_line_info()
 
     for bif_or_op in ['bif', 'op']:
@@ -51,7 +48,6 @@ def prep_for_STA():
             for header in alg.headers:
                 header.tah = TypedAlgHeader(header)
 
-    un_f.close()
     print_unused_type_tweaks()
 
     process_declared_record_type_info()
