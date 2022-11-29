@@ -7450,7 +7450,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     elif p in [
         r"{EXPR} : the number of elements in the List {var}",
+        r"{EX} : The number of elements in {var}",
         r"{EX} : the number of elements in {var}",
+        r"{EX} : the number of elements of {var}",
     ]:
         [var] = children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
@@ -9272,14 +9274,6 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             return (T_Unicode_code_points_, env0)
         else:
             assert 0, word
-
-    elif p in [
-        r"{EX} : the number of elements of {var}",
-        r"{EX} : The number of elements in {var}",
-    ]:
-        [var] = children
-        env1 = env0.ensure_expr_is_of_type(var, T_List)
-        return (T_MathNonNegativeInteger_, env1)
 
     elif p == r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}":
         [dsbna, dsbnb, ex] = children
