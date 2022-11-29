@@ -8753,58 +8753,44 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 return (t, env1)
 
         if constructor_prefix == 'Record':
-            record_type_name = None
             field_names = sorted(get_field_names(fields))
-            if field_names == ['Array', 'Site']:
-                record_type_name = 'templateMap_entry_'
-            elif field_names == ['Closure', 'Key']:
-                record_type_name = 'methodDef_record_'
-            elif field_names == ['Configurable', 'Enumerable', 'Get', 'Set', 'Value', 'Writable']:
-                # CompletePropertyDescriptor: the almost-Property Descriptor
-                record_type_name = 'Property Descriptor'
-            elif field_names == ['ExportName', 'Module']:
-                record_type_name = 'ExportResolveSet_Record_'
-            elif field_names == ['Key', 'Symbol']:
-                record_type_name = 'GlobalSymbolRegistry Record'
-            elif field_names == ['Key', 'Value']:
-                record_type_name = 'MapData_record_'
-            elif field_names == ['Reject', 'Resolve']:
-                record_type_name = 'ResolvingFunctions_record_'
-            elif field_names == ['CodePoint', 'CodeUnitCount', 'IsUnpairedSurrogate']:
-                record_type_name = 'CodePointAt_record_'
-            elif field_names == ['HeldValue', 'UnregisterToken', 'WeakRefTarget']:
-                record_type_name = 'FinalizationRegistryCellRecord_'
-            elif field_names == ['Greedy', 'Max', 'Min']:
-                record_type_name = 'QuantifierResultRecord_'
-            elif field_names == ['Max', 'Min']:
-                record_type_name = 'QuantifierPrefixResultRecord_'
-            elif field_names == ['CharSet', 'Invert']:
-                record_type_name = 'CharacterClassResultRecord_'
-            elif field_names == ['Job', 'Realm']:
-                record_type_name = 'Job_record_'
+            record_type_names = find_record_types_with_fields(field_names)
 
-            elif field_names == ['Value']:
-                fst = fields.source_text()
-                if fst == '[[Value]]: *false*':
-                    record_type_name = 'boolean_value_record_'
-                elif fst == '[[Value]]: 1':
-                    record_type_name = 'integer_value_record_'
-                else:
-                    assert 0, fst
-
-            if record_type_name:
-                add_pass_error(
-                    expr,
-                    "Inferred record type `%s`: be explicit!" % record_type_name
-                )
-                field_info = fields_for_record_type_named_[record_type_name]
-            else:
+            if len(record_type_names) == 0:
                 add_pass_error(
                     expr,
                     "Could not infer a record type for fields: " + str(field_names)
                 )
                 record_type_name = 'Record'
                 field_info = None
+
+            else:
+                if len(record_type_names) == 1:
+                    [record_type_name] = record_type_names
+                else:
+                    if field_names == ['Key', 'Value']:
+                        assert record_type_names == ['ImportMeta_record_', 'MapData_record_']
+                        # In {Map,WeakMap}.prototype.set
+                        record_type_name = 'MapData_record_'
+
+                    elif field_names == ['Value']:
+                        assert record_type_names == ['boolean_value_record_', 'integer_value_record_']
+                        fst = fields.source_text()
+                        if fst == '[[Value]]: *false*':
+                            record_type_name = 'boolean_value_record_'
+                        elif fst == '[[Value]]: 1':
+                            record_type_name = 'integer_value_record_'
+                        else:
+                            assert 0, fst
+
+                    else:
+                        assert 0, field_names
+
+                add_pass_error(
+                    expr,
+                    "Inferred record type `%s`: be explicit!" % record_type_name
+                )
+                field_info = fields_for_record_type_named_[record_type_name]
 
         else:
             if constructor_prefix in [
@@ -9991,6 +9977,20 @@ def process_declared_record_type_info():
 
         assert ffrtn_name not in fields_for_record_type_named_
         fields_for_record_type_named_[ffrtn_name] = d_from_spec
+
+    # ----------------
+
+    global record_type_with_fields_
+    record_type_with_fields_ = defaultdict(list)
+    for (record_type_name, fields_info) in fields_for_record_type_named_.items():
+        field_names_str = ', '.join(sorted(fields_info.keys()))
+        record_type_with_fields_[field_names_str].append(record_type_name)
+
+def find_record_types_with_fields(field_names):
+    field_names_str = ', '.join(sorted(field_names))
+    return record_type_with_fields_[field_names_str]
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 type_of_internal_thing_ = {
 
