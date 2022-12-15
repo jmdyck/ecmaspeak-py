@@ -593,6 +593,8 @@ def check_vars_in_alg_defn(alg_defn):
     #
     # (This way of checking is fairly kludgey.)
 
+    if alg_defn.anode is None: return
+
     s = alg_defn.anode.start_posn
     preceding_text = shared.spec_text[s-100:s].replace('\n', r'\n')
 
@@ -877,6 +879,13 @@ def analyze_static_dependencies():
             if alg_defn.anode: recurse(alg_defn.anode)
             alg_info.callees.update(alg_defn.callees)
 
+        if alg_name == 'HostLoadImportedModule':
+            assert len(alg_info.all_definitions()) == 0
+            # There's just a list of requirements
+            # that the implementation must conform to.
+            # But one of those is that it has to invoke FinishLoadingImportedModule.
+            alg_info.callees.add('FinishLoadingImportedModule')
+
         put()
         put(alg_name)
         put(f"[{alg_info.species}, {len(alg_info.all_definitions())} definitions]")
@@ -925,7 +934,6 @@ def analyze_static_dependencies():
         reach_op('RunJobs', 0)
 
     # The spec doesn't invoke, but the host can:
-    reach_op('FinishDynamicImport', 0)
     reach_op('DetachArrayBuffer', 0)
 
     # Memory Model

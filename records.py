@@ -52,6 +52,7 @@ def process_tables():
                     [field_name, value_type, meaning] = row.cell_texts
 
                 field_value_type = Pseudocode.parse(row.cell_nodes[-2], 'field_value_type')
+                if field_value_type is None: continue
                 assert field_value_type.prod.lhs_s == '{FIELD_VALUE_TYPE}'
                 value_description = field_value_type.children[0]
                 assert value_description.prod.lhs_s == '{VALUE_DESCRIPTION}'

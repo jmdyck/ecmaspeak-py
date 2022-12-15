@@ -1085,6 +1085,7 @@ named_type_hierarchy = {
                     'ExportResolveSet_Record_': {},
                     'FinalizationRegistryCellRecord_': {},
                     'GlobalSymbolRegistry Record': {},
+                    'GraphLoadingState Record': {},
                     'ImportEntry Record': {},
                     'ImportMeta_record_': {},
                     'Intrinsics Record': {},
@@ -1092,6 +1093,7 @@ named_type_hierarchy = {
                     'JSON Serialization Record': {},
                     'Job_record_': {},
                     'JobCallback Record': {},
+                    'LoadedModule_Record_': {},
                     'MapData_record_': {},
                     'Match Record': {},
                     'Module Record': {
@@ -1218,6 +1220,7 @@ named_type_hierarchy = {
                     'tilde_method_': {},
                     'tilde_namespace_': {},
                     'tilde_namespace_object_': {},
+                    'tilde_new_': {},
                     'tilde_non_generator_': {},
                     'tilde_non_lexical_this_': {},
                     'tilde_normal_': {},
@@ -2824,7 +2827,8 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
             in_env = init_env
 
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
-            assert tc_nonvalue(body, in_env) is None
+            result = tc_nonvalue(body, in_env)
+            assert result is None
         elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}', '{RHSS}']:
             (out_t, out_env) = tc_expr(body, in_env)
             proc_add_return(out_env, out_t, body)
@@ -3509,6 +3513,12 @@ def tc_nonvalue(anode, env0):
         (ft_env, ff_env) = tc_cond(cond_f, xf_env, asserting=True)
         result = env_or(tt_env, ft_env)
 
+    elif p == r"{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.":
+        [conda, condb] = children
+        (ta_env, fa_env) = tc_cond(conda, env0, asserting=True)
+        (tb_env, fb_env) = tc_cond(condb, env0, asserting=True)
+        result = env_and(ta_env, tb_env)
+
     # ----------------------------------
     # execution context
 
@@ -3620,7 +3630,7 @@ def tc_nonvalue(anode, env0):
         r"{COMMAND} : Append {EX} to {EX}.",
         r"{COMMAND} : Insert {var} as the first element of {var}.",
         r"{COMMAND} : Prepend {var} to {var}.",
-        r"{SMALL_COMMAND} : append {EX} to {var}",
+        r"{SMALL_COMMAND} : append {EX} to {SETTABLE}",
     ]:
         [value_ex, list_ex] = children
         result = env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
@@ -5836,6 +5846,35 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
+    elif p in [
+        r"{CONDITION_1} : {EX} contains a Record whose {dsb_word} is {var}",
+        r"{CONDITION_1} : Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}",
+    ]:
+        [list_ex, dsb_word, var] = children
+        dsbn_name = dsb_word.source_text()[2:-2]
+        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
+        assert isinstance(list_type, ListType)
+        et = list_type.element_type
+        fields = fields_for_record_type_named_[et.name]
+        field_type = fields[dsbn_name]
+        env1.assert_expr_is_of_type(var, field_type)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : That Record's {dsb_word} is {EX}":
+        [dsb_word, ex] = children
+        dsbn_name = dsb_word.source_text()[2:-2]
+        # "That Record" is from prev step's "contains a Record"
+        that_type = T_LoadedModule_Record_
+        fields = fields_for_record_type_named_[that_type.name]
+        field_type = fields[dsbn_name]
+        env0.assert_expr_is_of_type(ex, field_type)
+        return (env0, env0)
+
+    elif p == r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation":
+        [var] = children
+        env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
+        return (env0, env0)
+
     else:
         stderr()
         stderr("tc_cond:")
@@ -5953,6 +5992,7 @@ def _(vd, env):
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 def _(value_description, env):
     result_sub_t = T_0
@@ -6014,6 +6054,7 @@ def _(val_desc, env):
         'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)': T_ResolvingFunctions_record_,
         'Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': T_ImportMeta_record_,
         'Records that have [[Module]] and [[ExportName]] fields': T_ExportResolveSet_Record_,
+        'Records with fields [[Specifier]] (a String) and [[Module]] (a Module Record)' : T_LoadedModule_Record_,
     }[vd_st]
     return t
 
@@ -6162,6 +6203,7 @@ tbd['{VAL_DESC} : a Data Block'] = T_Data_Block
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 tbd['{VAL_DESC} : a For-In Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
+tbd['{VAL_DESC} : a GraphLoadingState Record'] = T_GraphLoadingState_Record
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
 tbd['{VAL_DESC} : a Job Abstract Closure'] = T_Job
 tbd['{VAL_DESC} : a JobCallback Record'] = T_JobCallback_Record
@@ -7005,6 +7047,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                     elif memtype in [T_tilde_unused_, ListType(T_code_unit_), T_Top_]:
                         # hm.
                         result_memtype = memtype
+                    elif memtype == T_Module_Record:
+                        # ContinueDynamicImport
+                        result_memtype = memtype
 
                     elif memtype.is_a_subtype_of_or_equal_to(T_Private_Name):
                         result_memtype = T_function_object_
@@ -7451,7 +7496,7 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     elif p in [
         r"{EXPR} : the number of elements in the List {var}",
         r"{EX} : The number of elements in {var}",
-        r"{EX} : the number of elements in {var}",
+        r"{EX} : the number of elements in {SETTABLE}",
         r"{EX} : the number of elements of {var}",
     ]:
         [var] = children
@@ -9539,6 +9584,22 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
         return (T_IntegralNumber_, env0)
 
+    elif p == r"{EXPR} : the Record in {DOTTING} whose {dsb_word} is {var}":
+        [dotting, dsb_word, var] = children
+        dsbn_name = dsb_word.source_text()[2:-2]
+        (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
+        assert isinstance(list_type, ListType)
+        et = list_type.element_type
+        fields = fields_for_record_type_named_[et.name]
+        whose_type = fields[dsbn_name]
+        env1.assert_expr_is_of_type(var, whose_type)
+        return (et, env0)
+
+    elif p == r"{EXPR} : that Record":
+        # InnerModuleLoading
+        [] = children
+        return (T_LoadedModule_Record_, env0)
+
     else:
         stderr()
         stderr("tc_expr:")
@@ -9788,6 +9849,11 @@ fields_for_record_type_named_ = {
     #?     'Value'  : T_Tangible_ | T_tilde_empty_,
     #?     'Target' : T_String | T_tilde_empty_,
     #? },
+
+    'LoadedModule_Record_': {
+        'Specifier' : T_String,
+        'Module'    : T_Module_Record,
+    },
 
     # 8.2: NO TABLE
     'templateMap_entry_': {

@@ -163,6 +163,7 @@
     Assert: If {CONDITION}, {CONDITION}.
     Assert: {CONDITION_1} if and only if {CONDITION_1}.
     Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
+    Assert: {CONDITION_1}, since {CONDITION_1}.
     Assert: {CONDITION}.
     Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
     Choose any such {var}.
@@ -295,7 +296,7 @@
 {SMALL_COMMAND} :
     ReturnIfAbrupt({var})
     add {var} to {var}
-    append {EX} to {var}
+    append {EX} to {SETTABLE}
     change its bound value to {var}
     let {var} be {EXPR}
     let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
@@ -409,9 +410,11 @@
     A `default` export was not explicitly defined by this module
     All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
     All named exports from {var} are resolvable
-    Evaluate has already been invoked on {var} and successfully completed
+    Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     GlobalSymbolRegistry does not currently contain an entry for {var}
+    LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation
+    That Record's {dsb_word} is {EX}
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The execution context stack has at least two elements
     The execution context stack is not empty
@@ -504,6 +507,7 @@
     {EX} and {EX} are valid byte offsets within the memory of {var}
     {EX} contains a Private Name whose {dsb_word} is {var}
     {EX} contains a PrivateElement whose {dsb_word} is {var}
+    {EX} contains a Record whose {dsb_word} is {var}
     {EX} does not contain {EX}
     {EX} is also {VAL_DESC}
     {EX} is an element of {var}
@@ -790,6 +794,7 @@
     such an object created in a host-defined manner
     that Private Name
     that PrivateElement
+    that Record
     the 32-bit two's complement bit string representing {EX}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
@@ -827,6 +832,7 @@
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
+    the Record in {DOTTING} whose {dsb_word} is {var}
     the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
@@ -1009,7 +1015,7 @@
     the length of {var}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
-    the number of elements in {var}
+    the number of elements in {SETTABLE}
     the number of elements of {var}
     the numeric value of {EX}
     the product of {var} and {var}
@@ -1193,6 +1199,7 @@
     the ClassFieldDefinition Record
     the ClassStaticBlockDefinition Record
     the ExportEntry Record
+    the GraphLoadingState Record
     the ImportEntry Record
     the Iterator Record
     the JSON Serialization Record
@@ -1337,6 +1344,7 @@
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :
@@ -1353,6 +1361,7 @@
     a FinalizationRegistry
     a For-In Iterator
     a Generator
+    a GraphLoadingState Record
     a JSON Serialization Record
     a Job Abstract Closure
     a JobCallback Record
