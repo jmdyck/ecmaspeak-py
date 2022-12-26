@@ -2927,31 +2927,51 @@ def tc_nonvalue(anode, env0):
     # if anode.prod.lhs_s == '{COMMAND}': stderr('>>>', anode.source_text())
 
     p = str(anode.prod)
-    children = anode.children
 
-    if p in [
-        r'{IND_COMMANDS} : {_indent_}{COMMANDS}{_outdent_}',
-        r'{COMMANDS} : {_NL_N} {COMMAND}',
-        r'{COMMAND} : {IF_CLOSED}',
-        r'{COMMAND} : {IF_OTHER}',
-        r'{ELSE_PART} : Else, {SMALL_COMMAND}.',
-        r'{ELSE_PART} : Else,{IND_COMMANDS}',
-        r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.',
-        r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}",
+    if p not in nv:
+        stderr()
+        stderr("tc_nonvalue:")
+        stderr('    @nv.put(%s)' % escape(p))
+        sys.exit(0)
 
-        r"{COMMAND} : Optionally, {SMALL_COMMAND}.",
-        r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}",
-    ]:
-        [child] = children
-        result = tc_nonvalue(child, env0)
+    result = nv[p](anode, env0)
 
-    elif p == r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}":
-        [cond, comm] = children
+    assert result is None or isinstance(result, Env)
+
+    if trace_this_op:
+        print()
+        print("Leaving nv:", trace_line)
+        mytrace(result)
+
+    return result
+
+if 1:
+    nv = DecoratedFuncDict()
+
+    @nv.put(r'{IND_COMMANDS} : {_indent_}{COMMANDS}{_outdent_}')
+    @nv.put(r'{COMMANDS} : {_NL_N} {COMMAND}')
+    @nv.put(r'{COMMAND} : {IF_CLOSED}')
+    @nv.put(r'{COMMAND} : {IF_OTHER}')
+    @nv.put(r'{ELSE_PART} : Else, {SMALL_COMMAND}.')
+    @nv.put(r'{ELSE_PART} : Else,{IND_COMMANDS}')
+    @nv.put(r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.')
+    @nv.put(r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}")
+
+    @nv.put(r"{COMMAND} : Optionally, {SMALL_COMMAND}.")
+    @nv.put(r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}")
+    def _(anode, env0):
+        [child] = anode.children
+        return tc_nonvalue(child, env0)
+
+    @nv.put(r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}")
+    def _(anode, env0):
+        [cond, comm] = anode.children
         (t_env, f_env) = tc_cond(cond, env0, asserting=True)
-        result = tc_nonvalue(comm, t_env)
+        return tc_nonvalue(comm, t_env)
 
-    elif p == r'{EMU_ALG_BODY} : {IND_COMMANDS}{nlai}':
-        [ind_commands] = children
+    @nv.put(r'{EMU_ALG_BODY} : {IND_COMMANDS}{nlai}')
+    def _(anode, env0):
+        [ind_commands] = anode.children
         env1 = tc_nonvalue(ind_commands, env0)
         if env1 is not None:
             # Control falls off the end of the algorithm.
@@ -2961,31 +2981,31 @@ def tc_nonvalue(anode, env0):
             )
             default_return_value = T_not_returned # or T_tilde_unused_, see PR #2397
             proc_add_return(env1, default_return_value, ind_commands)
-            result = None
+            return None
         else:
             # All control paths end with a 'Return'
-            result = None
+            return None
 
-    elif p == r'{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}':
-        [commands, command] = children
+    @nv.put(r'{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}')
+    def _(anode, env0):
+        [commands, command] = anode.children
         env1 = tc_nonvalue(commands, env0)
         env2 = tc_nonvalue(command, env1)
-        result = env2
+        return env2
 
     # ---------------------------------
     # constructs that create a metavariable
 
     # Let {var} be ...
 
-    elif p in [
-        r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)",
-        r"{COMMAND} : Let {var} be {EXPR}.",
-        r"{COMMAND} : Let {var} be {MULTILINE_EXPR}",
-        r"{SMALL_COMMAND} : let {var} be {EXPR}",
-        r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that an ordinary object should be created as the global object",
-        r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object",
-    ]:
-        [var, expr] = children[0:2]
+    @nv.put(r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)")
+    @nv.put(r"{COMMAND} : Let {var} be {EXPR}.")
+    @nv.put(r"{COMMAND} : Let {var} be {MULTILINE_EXPR}")
+    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}")
+    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that an ordinary object should be created as the global object")
+    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object")
+    def _(anode, env0):
+        [var, expr] = anode.children[0:2]
         [var_name] = var.children
 
         (expr_t, env1) = tc_expr(expr, env0)
@@ -2998,9 +3018,9 @@ def tc_nonvalue(anode, env0):
             var_t = env0.vars[var_name]
             if expr_t == var_t:
                 # but at least we're not changing the type
-                result = env1
+                return env1
             elif expr_t == T_TBD:
-                result = env1
+                return env1
                 add_pass_error(
                     anode,
                     "... also, ignoring the attempt to change the type of var to %s" % str(expr_t)
@@ -3014,49 +3034,53 @@ def tc_nonvalue(anode, env0):
                     anode,
                     "... actually, it isn't, but STA isn't smart enough"
                 )
-                result = env1
+                return env1
             elif expr_t.is_a_subtype_of_or_equal_to(var_t):
                 add_pass_error(
                     anode,
                     "... also, this narrows the type of var from %s to %s" % (var_t, expr_t)
                 )
-                result = env1.with_expr_type_narrowed(var, expr_t)
+                return env1.with_expr_type_narrowed(var, expr_t)
             else:
                 add_pass_error(
                     anode,
                     "... also, this changes the type of var from %s to %s" % (var_t, expr_t)
                 )
-                result = env1.with_expr_type_replaced(var, expr_t)
+                return env1.with_expr_type_replaced(var, expr_t)
         else:
             # The normal case.
-            result = env1.plus_new_entry(var, expr_t)
+            return env1.plus_new_entry(var, expr_t)
 
-    elif p == r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)":
-        [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = children
+    @nv.put(r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
+    def _(anode, env0):
+        [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = anode.children
         assert same_source_text(let_var, let_var2)
         assert same_source_text(rvar, rvar2)
         assert same_source_text(rvar, rvar3)
         assert same_source_text(zvar, zvar2)
         (t, env1) = tc_expr(expr, env0)
-        result = env1.plus_new_entry(let_var, t)
+        return env1.plus_new_entry(let_var, t)
 
-    elif p == r"{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.":
-        [let_var, num_expr, var2, var3] = children
+    @nv.put(r"{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.")
+    def _(anode, env0):
+        [let_var, num_expr, var2, var3] = anode.children
         assert same_source_text(var2, let_var)
         assert same_source_text(var3, let_var)
         new_env = env0.plus_new_entry(let_var, T_MathInteger_)
         new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
-        result = new_env
+        return new_env
 
     # Let {var} and {var} ... be ...
 
-    elif p == r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.":
-        [m_var, n2_var, n_var] = children
+    @nv.put(r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.")
+    def _(anode, env0):
+        [m_var, n2_var, n_var] = anode.children
         env0.assert_expr_is_of_type(n_var, T_String)
-        result = env0.plus_new_entry(m_var, T_Module_Record).plus_new_entry(n2_var, T_String)
+        return env0.plus_new_entry(m_var, T_Module_Record).plus_new_entry(n2_var, T_String)
 
-    elif p == r"{COMMAND} : Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.":
-        [e_var, n_var, cond, num_expr, e_var2, n_var2, e_var3, n_var3, product] = children
+    @nv.put(r"{COMMAND} : Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.")
+    def _(anode, env0):
+        [e_var, n_var, cond, num_expr, e_var2, n_var2, e_var3, n_var3, product] = anode.children
         assert same_source_text(e_var2, e_var)
         assert same_source_text(e_var3, e_var)
         assert same_source_text(n_var2, n_var)
@@ -3065,88 +3089,91 @@ def tc_nonvalue(anode, env0):
         (t_env, f_env) = tc_cond(cond, new_env)
         t_env.assert_expr_is_of_type(num_expr, T_MathReal_)
         t_env.assert_expr_is_of_type(product, T_MathReal_)
-        result = t_env
+        return t_env
 
-    elif p in [
-        r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.",
-        r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.",
-        r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.",
-    ]:
-        [vara, varb, varc, cond] = children[0:4]
+    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.")
+    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
+    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
+    def _(anode, env0):
+        [vara, varb, varc, cond] = anode.children[0:4]
         env_for_cond = (
             env0.plus_new_entry(vara, T_MathInteger_)
                 .plus_new_entry(varb, T_MathInteger_)
                 .plus_new_entry(varc, T_MathInteger_)
         )
         (t_env, f_env) = tc_cond(cond, env_for_cond)
-        result = env_for_cond
+        return env_for_cond
 
     # ---
 
-    elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.":
-        [_, ctx_var, _, b_var] = children
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.")
+    def _(anode, env0):
+        [_, ctx_var, _, b_var] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        result = env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
+        return env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
 
-    elif p == r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.":
-        [_, ctx_var, _, resa_ex] = children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
-        result = env1
-
-    elif p in [
-        r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.",
-        r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.",
-    ]:
-        [_, ctx_var, _, resa_ex, resb_var] = children
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
+    def _(anode, env0):
+        [_, ctx_var, _, resa_ex] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
-        result = env1.plus_new_entry(resb_var, T_Tangible_)
+        return env1
 
-    elif p == r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.":
-        [var, cond, literal] = children
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.")
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.")
+    def _(anode, env0):
+        [_, ctx_var, _, resa_ex, resb_var] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
+        return env1.plus_new_entry(resb_var, T_Tangible_)
+
+    @nv.put(r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
+    def _(anode, env0):
+        [var, cond, literal] = anode.children
         # once, in MakeDay
         env0.assert_expr_is_of_type(literal, T_Number)
         env1 = env0.plus_new_entry(var, T_FiniteNumber_)
         (t_env, f_env) = tc_cond(cond, env1)
         proc_add_return(env1, T_Number, literal)
-        result = env1
+        return env1
 
     # ---
     # parse
 
-    elif p == r"{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.":
-        [noi, error_type] = children
+    @nv.put(r"{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.")
+    def _(anode, env0):
+        [noi, error_type] = anode.children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        result = env0
+        return env0
 
     # ----------------------------------
     # IF stuff
 
-    elif p in [
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.',
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.',
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.',
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.',
-        r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.',
-    ]:
-        [cond, t_command, f_command] = children
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.')
+    def _(anode, env0):
+        [cond, t_command, f_command] = anode.children
         (t_env, f_env) = tc_cond(cond, env0)
         t_benv = tc_nonvalue(t_command, t_env)
         f_benv = tc_nonvalue(f_command, f_env)
-        result = env_or(t_benv, f_benv)
+        return env_or(t_benv, f_benv)
 
-    elif p == r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.':
-        [cond_a, command_a, cond_b, command_b, command_c] = children
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
+    def _(anode, env0):
+        [cond_a, command_a, cond_b, command_b, command_c] = anode.children
         (a_t_env, a_f_env) = tc_cond(cond_a, env0)
         a_benv = tc_nonvalue(command_a, a_t_env)
         (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
         b_benv = tc_nonvalue(command_b, b_t_env)
         c_benv = tc_nonvalue(command_c, b_f_env)
-        result = envs_or([a_benv, b_benv, c_benv])
+        return envs_or([a_benv, b_benv, c_benv])
 
-    elif p == r'{IF_OTHER} : {IF_OPEN}{IF_TAIL}':
-        [if_open, if_tail] = children
+    @nv.put(r'{IF_OTHER} : {IF_OPEN}{IF_TAIL}')
+    def _(anode, env0):
+        [if_open, if_tail] = anode.children
 
         benvs = []
 
@@ -3210,59 +3237,58 @@ def tc_nonvalue(anode, env0):
             # it's impossible for control to fall through the last one.
             result = None
 
+        return result
+
     # ----------------------------------
     # Returning (normally or abruptly)
 
-    elif p in [
-        r"{COMMAND} : Return {EXPR}.",
-        r"{COMMAND} : Return {EXPR}. This may be of type Reference.",
-        r"{COMMAND} : Return {MULTILINE_EXPR}",
-        r"{SMALL_COMMAND} : return {EXPR}",
-    ]:
-        [expr] = children
+    @nv.put(r"{COMMAND} : Return {EXPR}.")
+    @nv.put(r"{COMMAND} : Return {EXPR}. This may be of type Reference.")
+    @nv.put(r"{COMMAND} : Return {MULTILINE_EXPR}")
+    @nv.put(r"{SMALL_COMMAND} : return {EXPR}")
+    def _(anode, env0):
+        [expr] = anode.children
         (t1, env1) = tc_expr(expr, env0)
         # assert env1 is env0
         if False and trace_this_op:
             print("Return command's expr has type", t1)
         proc_add_return(env1, t1, anode)
-        result = None
+        return None
 
-    elif p in [
-        r"{COMMAND} : Throw a {ERROR_TYPE} exception.",
-        r"{SMALL_COMMAND} : throw a {ERROR_TYPE} exception because the structure is cyclical",
-        r'{SMALL_COMMAND} : throw a {ERROR_TYPE} exception',
-    ]:
-        [error_type] = children
+    @nv.put(r"{COMMAND} : Throw a {ERROR_TYPE} exception.")
+    @nv.put(r"{SMALL_COMMAND} : throw a {ERROR_TYPE} exception because the structure is cyclical")
+    @nv.put(r'{SMALL_COMMAND} : throw a {ERROR_TYPE} exception')
+    def _(anode, env0):
+        [error_type] = anode.children
         proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), anode)
-        result = None
+        return None
 
     # ----------------------------------
     # Iteration
 
-    elif p in [
-        r'{COMMAND} : Repeat,{IND_COMMANDS}',
-    ]:
-        [commands] = children
+    @nv.put(r'{COMMAND} : Repeat,{IND_COMMANDS}')
+    def _(anode, env0):
+        [commands] = anode.children
 
         env_at_bottom = tc_nonvalue(commands, env0)
 
         # The only way to leave a condition-less Repeat
         # is via a Return command,
         # so there can't be anything (except maybe a NOTE) after the loop.
-        result = None
+        return None
 
         # XXX Should repeat the analysis, feeding the bottom env to the top,
         # XXX until no change.
         # XXX (and likewise with other loops)
 
 
-    elif p in [
-        r'{COMMAND} : Repeat, while {CONDITION},{IND_COMMANDS}',
-        r"{COMMAND} : Repeat, until {CONDITION},{IND_COMMANDS}",
-    ]:
-        [cond, commands] = children
+    @nv.put(r'{COMMAND} : Repeat, while {CONDITION},{IND_COMMANDS}')
+    @nv.put(r"{COMMAND} : Repeat, until {CONDITION},{IND_COMMANDS}")
+    def _(anode, env0):
+        [cond, commands] = anode.children
         (t_env, f_env) = tc_cond(cond, env0)
 
+        p = str(anode.prod)
         if 'while' in p:
             (stay_env, exit_env) = (t_env, f_env)
         elif 'until' in p:
@@ -3283,18 +3309,20 @@ def tc_nonvalue(anode, env0):
             # just from the last iteration to after.)
             result = result.plus_new_entry('_r_', T_MatchState)
 
-    elif p == r"{COMMAND} : While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}":
-        [cond, commands] = children
+        return result
+
+    @nv.put(r"{COMMAND} : While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}")
+    def _(anode, env0):
+        [cond, commands] = anode.children
         (t_env, f_env) = tc_cond(cond, env0)
         bottom_env = tc_nonvalue(commands, t_env)
         reduced_bottom_env = bottom_env.reduce(t_env.vars.keys())
-        result = f_env
+        return f_env
 
-    elif p in [
-        r'{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}',
-        r'{COMMAND} : For each {EACH_THING}, {SMALL_COMMAND}.',
-    ]:
-        [each_thing, commands] = children
+    @nv.put(r'{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}')
+    @nv.put(r'{COMMAND} : For each {EACH_THING}, {SMALL_COMMAND}.')
+    def _(anode, env0):
+        [each_thing, commands] = anode.children
 
         # generic list:
         if each_thing.prod.rhs_s in [
@@ -3475,182 +3503,196 @@ def tc_nonvalue(anode, env0):
 
         # The only variables that 'exit' the loop are those that existed beforehand.
         names = env0.vars.keys()
-        result = env_after_commands.reduce(names)
+        return env_after_commands.reduce(names)
 
     # ----------------------------------
     # Assert
 
-    elif p in [
-        r'{COMMAND} : Assert: {CONDITION}.',
-    ]:
-        [condition] = children
+    @nv.put(r'{COMMAND} : Assert: {CONDITION}.')
+    def _(anode, env0):
+        [condition] = anode.children
         (t_env, f_env) = tc_cond(condition, env0, asserting=True)
         # throw away f_env
-        result = t_env
+        return t_env
 
-    elif p in [
-        r"{COMMAND} : Assert: If {CONDITION}, then {CONDITION}.",
-        r"{COMMAND} : Assert: If {CONDITION}, {CONDITION}.",
-    ]:
-        [cond1, cond2] = children
+    @nv.put(r"{COMMAND} : Assert: If {CONDITION}, then {CONDITION}.")
+    @nv.put(r"{COMMAND} : Assert: If {CONDITION}, {CONDITION}.")
+    def _(anode, env0):
+        [cond1, cond2] = anode.children
         (t1_env, f1_env) = tc_cond(cond1, env0)
         (t2_env, f2_env) = tc_cond(cond2, t1_env, asserting=True)
-        result = env_or(f1_env, t2_env)
+        return env_or(f1_env, t2_env)
 
-    elif p == r"{COMMAND} : Assert: {CONDITION_1} if and only if {CONDITION_1}.":
-        [cond1, cond2] = children
+    @nv.put(r"{COMMAND} : Assert: {CONDITION_1} if and only if {CONDITION_1}.")
+    def _(anode, env0):
+        [cond1, cond2] = anode.children
         (t1_env, f1_env) = tc_cond(cond1, env0)
         (t2_env, f2_env) = tc_cond(cond2, env0)
-        result = env_or(
+        return env_or(
             env_and(t1_env, t2_env),
             env_and(f1_env, f2_env)
         )
 
-    elif p == r"{COMMAND} : Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.":
-        [cond_t, cond_x, cond_f] = children
+    @nv.put(r"{COMMAND} : Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.")
+    def _(anode, env0):
+        [cond_t, cond_x, cond_f] = anode.children
         (xt_env, xf_env) = tc_cond(cond_x, env0)
         (tt_env, tf_env) = tc_cond(cond_t, xt_env, asserting=True)
         (ft_env, ff_env) = tc_cond(cond_f, xf_env, asserting=True)
-        result = env_or(tt_env, ft_env)
+        return env_or(tt_env, ft_env)
 
-    elif p == r"{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.":
-        [conda, condb] = children
+    @nv.put(r"{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.")
+    def _(anode, env0):
+        [conda, condb] = anode.children
         (ta_env, fa_env) = tc_cond(conda, env0, asserting=True)
         (tb_env, fb_env) = tc_cond(condb, env0, asserting=True)
-        result = env_and(ta_env, tb_env)
+        return env_and(ta_env, tb_env)
 
     # ----------------------------------
     # execution context
 
-    elif p == r'{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.':
-        [var1, var2] = children
+    @nv.put(r'{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.')
+    def _(anode, env0):
+        [var1, var2] = anode.children
         assert var1.children == var2.children
         env1 = env0.ensure_expr_is_of_type(var1, T_execution_context)
-        result = env1
+        return env1
 
-    elif p == r'{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.':
-        [var] = children
+    @nv.put(r'{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.')
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Remove {var} from the execution context stack and restore {var} as the running execution context.":
-        [avar, bvar] = children
+    @nv.put(r"{COMMAND} : Remove {var} from the execution context stack and restore {var} as the running execution context.")
+    def _(anode, env0):
+        [avar, bvar] = anode.children
         env0.assert_expr_is_of_type(avar, T_execution_context)
         env0.assert_expr_is_of_type(bvar, T_execution_context)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Remove {var} from the execution context stack.":
-        [avar] = children
+    @nv.put(r"{COMMAND} : Remove {var} from the execution context stack.")
+    def _(anode, env0):
+        [avar] = anode.children
         env0.assert_expr_is_of_type(avar, T_execution_context)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.":
-        [] = children
-        result = env0
+    @nv.put(r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
 
-    elif p == r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.":
-        [vara, exb, varc, vard] = children
+    @nv.put(r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.")
+    def _(anode, env0):
+        [vara, exb, varc, vard] = anode.children
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
         env0.assert_expr_is_of_type(varc, T_execution_context)
-        result = env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_)
+        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_)
 
-    elif p == r"{COMMAND} : Suspend {var} and remove it from the execution context stack.":
-        [var] = children
+    @nv.put(r"{COMMAND} : Suspend {var} and remove it from the execution context stack.")
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        result = env0
+        return env0
 
-    elif p in [
-        r"{COMMAND} : Suspend the running execution context.",
-    ]:
-        [] = children
-        result = env0
+    @nv.put(r"{COMMAND} : Suspend the running execution context.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
 
-    elif p == r'{SMALL_COMMAND} : suspend {var}':
-        [var] = children
+    @nv.put(r'{SMALL_COMMAND} : suspend {var}')
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        result = env0
+        return env0
 
-    elif p == r'{COMMAND} : Suspend {var}.':
-        [var] = children
-        result = env0.ensure_expr_is_of_type(var, T_execution_context)
+    @nv.put(r'{COMMAND} : Suspend {var}.')
+    def _(anode, env0):
+        [var] = anode.children
+        return env0.ensure_expr_is_of_type(var, T_execution_context)
 
-    elif p == r"{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}":
-        [settable, commands] = children
+    @nv.put(r"{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}")
+    def _(anode, env0):
+        [settable, commands] = anode.children
         env0.assert_expr_is_of_type(settable, T_host_defined_)
         defns = [(None, commands)]
         env_at_bottom = tc_proc(None, defns, env0)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Perform any necessary implementation-defined initialization of {var}.":
-        [var] = children
+    @nv.put(r"{COMMAND} : Perform any necessary implementation-defined initialization of {var}.")
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        result = env0
+        return env0
 
-    elif p == r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.':
-        [tw, var] = children
+    @nv.put(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
+    def _(anode, env0):
+        [tw, var] = anode.children
         assert tw.source_text() == '~completed~'
         env0.assert_expr_is_of_type(var, T_Object)
-        result = env0
+        return env0
 
     # ----------------------------------
 
-    elif p in [
-        r'{COMMAND} : Set {SETTABLE} to {EXPR}.',
-        r'{COMMAND} : Set {SETTABLE} to {MULTILINE_EXPR}',
-        r'{SMALL_COMMAND} : set {SETTABLE} to {EXPR}',
-    ]:
-        [settable, expr] = children
-        result = env0.set_A_to_B(settable, expr)
+    @nv.put(r'{COMMAND} : Set {SETTABLE} to {EXPR}.')
+    @nv.put(r'{COMMAND} : Set {SETTABLE} to {MULTILINE_EXPR}')
+    @nv.put(r'{SMALL_COMMAND} : set {SETTABLE} to {EXPR}')
+    def _(anode, env0):
+        [settable, expr] = anode.children
+        return env0.set_A_to_B(settable, expr)
 
-    elif p == r'{COMMAND} : Set all of the bytes of {var} to 0.':
-        [var] = children
+    @nv.put(r'{COMMAND} : Set all of the bytes of {var} to 0.')
+    def _(anode, env0):
+        [var] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, T_Data_Block)
-        result = env1
+        return env1
 
-    elif p == r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).':
-        [var1, var2] = children
+    @nv.put(r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).')
+    def _(anode, env0):
+        [var1, var2] = anode.children
         [var_name1] = var1.children
         [var_name2] = var2.children
         assert var_name1 == var_name2
         env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList)
-        result = env1
+        return env1
 
-    elif p in [
-        r"{COMMAND} : Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.",
-        r"{COMMAND} : Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.",
-    ]:
-        [var, emu_xref] = children
+    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.")
+    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.")
+    def _(anode, env0):
+        [var, emu_xref] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        result = env1
+        return env1
 
-    elif p in [
-        r"{COMMAND} : Append {EX} as an element of {var}.",
-        r"{COMMAND} : Append {EX} to the end of {EX}.",
-        r"{COMMAND} : Append {EX} to {EX}.",
-        r"{COMMAND} : Insert {var} as the first element of {var}.",
-        r"{COMMAND} : Prepend {var} to {var}.",
-        r"{SMALL_COMMAND} : append {EX} to {SETTABLE}",
-    ]:
-        [value_ex, list_ex] = children
-        result = env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
+    @nv.put(r"{COMMAND} : Append {EX} as an element of {var}.")
+    @nv.put(r"{COMMAND} : Append {EX} to the end of {EX}.")
+    @nv.put(r"{COMMAND} : Append {EX} to {EX}.")
+    @nv.put(r"{COMMAND} : Insert {var} as the first element of {var}.")
+    @nv.put(r"{COMMAND} : Prepend {var} to {var}.")
+    @nv.put(r"{SMALL_COMMAND} : append {EX} to {SETTABLE}")
+    def _(anode, env0):
+        [value_ex, list_ex] = anode.children
+        return env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
 
-    elif p == r"{COMMAND} : Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.":
-        [avar, bvar, list_var] = children
+    @nv.put(r"{COMMAND} : Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.")
+    def _(anode, env0):
+        [avar, bvar, list_var] = anode.children
         env0.assert_expr_is_of_type(avar, T_String | T_Symbol)
         env0.assert_expr_is_of_type(bvar, T_Property_Descriptor)
         (list_type, env1) = tc_expr(list_var, env0); assert env1 is env0
         assert list_type == T_List
-        result = env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
+        return env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
 
-    elif p == r"{COMMAND} : Append to {var} the elements of {var}.":
-        [lista, listb] = children
+    @nv.put(r"{COMMAND} : Append to {var} the elements of {var}.")
+    def _(anode, env0):
+        [lista, listb] = anode.children
         env0.assert_expr_is_of_type(lista, ListType(T_SlotName_))
         env0.assert_expr_is_of_type(listb, ListType(T_SlotName_))
-        result = env0
+        return env0
 
-    elif p == r'{COMMAND} : Append to {var} each element of {var} that is not already an element of {var}.':
-        [vara, varb, varc] = children
+    @nv.put(r'{COMMAND} : Append to {var} each element of {var} that is not already an element of {var}.')
+    def _(anode, env0):
+        [vara, varb, varc] = anode.children
         (vara_type, enva) = tc_expr(vara, env0); assert enva is env0
         (varb_type, envb) = tc_expr(varb, env0); assert envb is env0
         (varc_type, envc) = tc_expr(varc, env0); assert envc is env0
@@ -3660,14 +3702,13 @@ def tc_nonvalue(anode, env0):
             assert vara_type.is_a_subtype_of_or_equal_to(T_List)
             assert vara_type == varb_type
             assert varb_type == varc_type
-        result = env0
+        return env0
 
-    elif p in [
-        r'{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.',
-        r'{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.',
-        r'{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.',
-    ]:
-        [dotting, emu_xref] = children
+    @nv.put(r'{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.')
+    @nv.put(r'{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.')
+    @nv.put(r'{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.')
+    def _(anode, env0):
+        [dotting, emu_xref] = anode.children
 
         # (t, env1) = tc_expr(settable, env0); assert env1 is env0
         # XXX: could check that emu_xref is sensible for t, but not really worth it?
@@ -3721,76 +3762,79 @@ def tc_nonvalue(anode, env0):
 
         (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
         if curr_base_t == T_Object:
-            result = env1.with_expr_type_narrowed(base_var, implied_base_t)
+            return env1.with_expr_type_narrowed(base_var, implied_base_t)
         elif curr_base_t == T_bound_function_exotic_object_ | T_Proxy_exotic_object_ | T_other_function_object_ and implied_base_t == T_constructor_object_:
-            result = env1.with_expr_type_replaced(base_var, implied_base_t)
+            return env1.with_expr_type_replaced(base_var, implied_base_t)
         elif curr_base_t == implied_base_t:
-            result = env1
+            return env1
         else:
             assert 0
 
-    elif p == r'{COMMAND} : Leave the critical section for {var}.':
-        [var] = children
+    @nv.put(r'{COMMAND} : Leave the critical section for {var}.')
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_WaiterList)
-        result = env0
+        return env0
 
-    elif p == r'{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.':
-        [var, emu_xref] = children
+    @nv.put(r'{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.')
+    def _(anode, env0):
+        [var, emu_xref] = anode.children
         env0.assert_expr_is_of_type(var, T_Object)
-        result = env0
+        return env0
 
-    elif p == r'{SMALL_COMMAND} : reverse the order of the elements of {var}':
-        [var] = children
-        result = env0.ensure_expr_is_of_type(var, T_List)
+    @nv.put(r'{SMALL_COMMAND} : reverse the order of the elements of {var}')
+    def _(anode, env0):
+        [var] = anode.children
+        return env0.ensure_expr_is_of_type(var, T_List)
 
-    elif p in [
-        r'{COMMAND} : Add {var} to {var}.',
-        r"{SMALL_COMMAND} : add {var} to {var}",
-    ]:
-        [item_var, collection_var] = children
+    @nv.put(r'{COMMAND} : Add {var} to {var}.')
+    @nv.put(r"{SMALL_COMMAND} : add {var} to {var}")
+    def _(anode, env0):
+        [item_var, collection_var] = anode.children
         (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
         (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
         if item_type.is_a_subtype_of_or_equal_to(T_event_) and collection_type == T_Set:
             pass
         else:
             assert 0
-        result = env0
+        return env0
 
-    elif p == r'{COMMAND} : {note}':
-        result = env0
+    @nv.put(r'{COMMAND} : {note}')
+    def _(anode, env0):
+        return env0
 
-    elif p == r'{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.':
-        [er_var, n_var, m_var, n2_var] = children
+    @nv.put(r'{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.')
+    def _(anode, env0):
+        [er_var, n_var, m_var, n2_var] = anode.children
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         env0.assert_expr_is_of_type(n_var, T_String)
         env0.assert_expr_is_of_type(m_var, T_Module_Record)
         env0.assert_expr_is_of_type(n2_var, T_String)
-        result = env0
+        return env0
 
-    elif p in [
-        r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]",
-        r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].",
-    ]:
-        [var1, var2, var3, var4] = children
+    @nv.put(r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]")
+    @nv.put(r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].")
+    def _(anode, env0):
+        [var1, var2, var3, var4] = anode.children
         env0.assert_expr_is_of_type(var1, ListType(T_MathInteger_))
         env1 = env0.ensure_expr_is_of_type(var2, T_Data_Block)
         assert var3.children == var2.children
         env0.assert_expr_is_of_type(var4, T_MathInteger_)
-        result = env1
+        return env1
 
-    elif p == r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.":
-        [noi, w_var, t_var, *blah] = children
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
+    def _(anode, env0):
+        [noi, w_var, t_var, *blah] = anode.children
         env0.assert_expr_is_of_type(noi, T_tilde_unused_)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(t_var, T_MathNonNegativeInteger_)
-        result = env0
+        return env0
 
-    elif p in [
-        r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.",
-        r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}",
-        r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}",
-    ]:
-        noi = children[0]
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.")
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}")
+    @nv.put(r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}")
+    def _(anode, env0):
+        noi = anode.children[0]
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
         if noi_t.is_a_subtype_of_or_equal_to(T_tilde_unused_ | T_Undefined | T_tilde_empty_):
             pass
@@ -3802,40 +3846,42 @@ def tc_nonvalue(anode, env0):
                     "`Perform/Call` discards `%s` value"
                     % str(noi_t)
                 )
-        result = env1
+        return env1
 
-    elif p == r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.":
-        [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = children
+    @nv.put(r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
+    def _(anode, env0):
+        [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = anode.children
         assert desc_var.source_text() == desc_var2.source_text()
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.":
-        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = children
+    @nv.put(r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
+    def _(anode, env0):
+        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = anode.children
         assert desc_var.source_text() == desc_var2.source_text()
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-        result = env0
+        return env0
 
-    elif p == r"{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field":
-        [name_var, obj_var] = children
+    @nv.put(r"{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field")
+    def _(anode, env0):
+        [name_var, obj_var] = anode.children
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
-        result = env0
+        return env0
 
-    elif p in [
-        r"{COMMAND} : ReturnIfAbrupt({EX}).",
-        r"{SMALL_COMMAND} : ReturnIfAbrupt({var})",
-    ]:
-        [ex] = children
+    @nv.put(r"{COMMAND} : ReturnIfAbrupt({EX}).")
+    @nv.put(r"{SMALL_COMMAND} : ReturnIfAbrupt({var})")
+    def _(anode, env0):
+        [ex] = anode.children
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
         if ex_t == T_TBD:
             # Doesn't make sense to compare_types
             # And a proc_add_return(..., T_TBD) wouldn't help
-            result = env1
+            return env1
         else:
             (normal_part_of_ex_t, abnormal_part_of_ex_t) = ex_t.split_by(T_Normal)
             if normal_part_of_ex_t == T_0:
@@ -3852,10 +3898,11 @@ def tc_nonvalue(anode, env0):
                 )
 
             proc_add_return(env1, abnormal_part_of_ex_t, anode)
-            result = env1.with_expr_type_narrowed(ex, normal_part_of_ex_t)
+            return env1.with_expr_type_narrowed(ex, normal_part_of_ex_t)
 
-    elif p == r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).":
-        [vara, varb] = children
+    @nv.put(r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
+    def _(anode, env0):
+        [vara, varb] = anode.children
         env0.assert_expr_is_of_type(varb, T_PromiseCapability_Record)
         (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
 
@@ -3863,10 +3910,11 @@ def tc_nonvalue(anode, env0):
         (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
 
         proc_add_return(env0, T_Promise_object_, anode)
-        result = env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
-    elif p == r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).":
-        [vara, varb] = children
+    @nv.put(r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
+    def _(anode, env0):
+        [vara, varb] = anode.children
         env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
         env0.assert_expr_is_of_type(varb, T_Iterator_Record)
 
@@ -3874,223 +3922,234 @@ def tc_nonvalue(anode, env0):
 
         (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
         (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
-        result = env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
-    elif p == r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.":
-        [_, key_var, oer_var] = children
+    @nv.put(r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.")
+    def _(anode, env0):
+        [_, key_var, oer_var] = anode.children
         env0.assert_expr_is_of_type(key_var, T_String)
         env0.assert_expr_is_of_type(oer_var, T_Environment_Record)
-        result = env0
+        return env0
 
-    elif p in [
-        r"{COMMAND} : Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.",
-        r"{COMMAND} : Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.",
-    ]:
-        [er_var, n_var, s_var] = children
+    @nv.put(r"{COMMAND} : Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.")
+    @nv.put(r"{COMMAND} : Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.")
+    def _(anode, env0):
+        [er_var, n_var, s_var] = anode.children
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         env0.assert_expr_is_of_type(n_var, T_String)
         env0.assert_expr_is_of_type(s_var, T_Boolean)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Remove the binding for {var} from {var}.":
-        [n_var, er_var] = children
+    @nv.put(r"{COMMAND} : Remove the binding for {var} from {var}.")
+    def _(anode, env0):
+        [n_var, er_var] = anode.children
         env0.assert_expr_is_of_type(n_var, T_String)
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        result = env0
+        return env0
 
-    elif p == r"{SMALL_COMMAND} : remove that element from the {var}":
-        [var] = children
+    @nv.put(r"{SMALL_COMMAND} : remove that element from the {var}")
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_List)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Remove the own property with name {var} from {var}.":
-        [name_var, obj_var] = children
+    @nv.put(r"{COMMAND} : Remove the own property with name {var} from {var}.")
+    def _(anode, env0):
+        [name_var, obj_var] = anode.children
         env0.assert_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
-        result = env0
+        return env0
 
-    elif p == r"{SMALL_COMMAND} : change its bound value to {var}":
+    @nv.put(r"{SMALL_COMMAND} : change its bound value to {var}")
+    def _(anode, env0):
         # once, in SetMutableBinding
         # elliptical
-        [var] = children
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_Tangible_)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Perform an implementation-defined debugging action.":
-        [] = children
-        result = env0
+    @nv.put(r"{COMMAND} : Perform an implementation-defined debugging action.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
 
-    elif p in [
-        r"{COMMAND} : Remove {var} from {var}.",
-        r"{COMMAND} : Remove {var} from {DOTTING}.",
-    ]:
-        [item_var, list_ex] = children
+    @nv.put(r"{COMMAND} : Remove {var} from {var}.")
+    @nv.put(r"{COMMAND} : Remove {var} from {DOTTING}.")
+    def _(anode, env0):
+        [item_var, list_ex] = anode.children
         list_type = env0.assert_expr_is_of_type(list_ex, T_List)
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}":
-        [var, emu_xref, _] = children
+    @nv.put(r"{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}")
+    def _(anode, env0):
+        [var, emu_xref, _] = anode.children
         env0.assert_expr_is_of_type(var, T_Intrinsics_Record)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Remove the last element of {SETTABLE}.":
-        [settable] = children
+    @nv.put(r"{COMMAND} : Remove the last element of {SETTABLE}.")
+    def _(anode, env0):
+        [settable] = anode.children
         env0.assert_expr_is_of_type(settable, T_List)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Create any host-defined global object properties on {var}.":
-        [var] = children
+    @nv.put(r"{COMMAND} : Create any host-defined global object properties on {var}.")
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_Object)
-        result = env0
+        return env0
 
     # -----
 
-    elif p == r"{COMMAND} : Remove {var} from the list of waiters in {var}.":
-        [sig, wl] = children
+    @nv.put(r"{COMMAND} : Remove {var} from the list of waiters in {var}.")
+    def _(anode, env0):
+        [sig, wl] = anode.children
         env0.assert_expr_is_of_type(sig, T_agent_signifier_)
         env0.assert_expr_is_of_type(wl, T_WaiterList)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Notify the agent {var}.":
-        [var] = children
+    @nv.put(r"{COMMAND} : Notify the agent {var}.")
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_agent_signifier_)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.":
-        [list_var, elem_ex, lit] = children
+    @nv.put(r"{COMMAND} : Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.")
+    def _(anode, env0):
+        [list_var, elem_ex, lit] = anode.children
         env1 = env0.ensure_A_can_be_element_of_list_B(elem_ex, list_var)
         env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
-        result = env2
+        return env2
 
-    elif p == r"{COMMAND} : Remove the first element from {var}.":
-        [var] = children
+    @nv.put(r"{COMMAND} : Remove the first element from {var}.")
+    def _(anode, env0):
+        [var] = anode.children
         env0.assert_expr_is_of_type(var, T_List)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Remove the first {var} elements of {var}.":
-        [nvar, listvar] = children
+    @nv.put(r"{COMMAND} : Remove the first {var} elements of {var}.")
+    def _(anode, env0):
+        [nvar, listvar] = anode.children
         env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
         env0.assert_expr_is_of_type(listvar, T_List)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.":
+    @nv.put(r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.")
+    def _(anode, env0):
         # XXX
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.":
-        var = children[0]
+    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
+    def _(anode, env0):
+        var = anode.children[0]
         env0.assert_expr_is_of_type(var, T_Object)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Choose any such {var}.":
-        [var] = children
-        result = env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
+    @nv.put(r"{COMMAND} : Choose any such {var}.")
+    def _(anode, env0):
+        [var] = anode.children
+        return env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
 
-    elif p == r"{COMMAND} : Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.":
-        [var, nont] = children
+    @nv.put(r"{COMMAND} : Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.")
+    def _(anode, env0):
+        [var, nont] = anode.children
         env0.assert_expr_is_of_type(var, T_CharSet)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.":
-        [text_var, goal_var] = children
+    @nv.put(r"{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.")
+    def _(anode, env0):
+        [text_var, goal_var] = anode.children
         env0.assert_expr_is_of_type(text_var, T_Unicode_code_points_)
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
-        result = env0
+        return env0
 
-    elif p == r"{COMMAND} : Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.":
-        [var, _, comparator, _, comparator] = children
+    @nv.put(r"{COMMAND} : Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.")
+    def _(anode, env0):
+        [var, _, comparator, _, comparator] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
-        result = env1
+        return env1
 
-    elif p in [
-        r"{EE_RULE} : It is a Syntax Error if {CONDITION}.",
-        r"{EE_RULE} : It is an early Syntax Error if {CONDITION}.",
-    ]:
-        [cond] = children
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}.")
+    @nv.put(r"{EE_RULE} : It is an early Syntax Error if {CONDITION}.")
+    def _(anode, env0):
+        [cond] = anode.children
         tc_cond(cond, env0, False)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>":
-        [local_ref1, h_emu_grammar, local_ref2, local_ref3] = children
+    @nv.put(r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>")
+    def _(anode, env0):
+        [local_ref1, h_emu_grammar, local_ref2, local_ref3] = anode.children
         env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
         env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
         env0.assert_expr_is_of_type(local_ref3, T_Parse_Node)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.":
-        [cond, h_emu_grammar] = children
+    @nv.put(r"{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.")
+    def _(anode, env0):
+        [cond, h_emu_grammar] = anode.children
         tc_cond(cond, env0, False)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.":
-        [conda, condb] = children
+    @nv.put(r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.")
+    def _(anode, env0):
+        [conda, condb] = anode.children
         (tenv, fenv) = tc_cond(conda, env0, False)
         tc_cond(condb, tenv, False)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}":
-        [cond, bool_lit, h_emu_alg] = children
+    @nv.put(r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}")
+    def _(anode, env0):
+        [cond, bool_lit, h_emu_alg] = anode.children
         tc_cond(cond, env0)
         # XXX should check h_emu_alg
-        result = None
+        return None
 
-    elif p in [
-        r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.",
-        r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.",
-    ]:
-        [cond, g_sym, h_emu_xref] = children
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.")
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.")
+    def _(anode, env0):
+        [cond, g_sym, h_emu_xref] = anode.children
         tc_cond(cond, env0)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.":
-        [conda, condb] = children
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.")
+    def _(anode, env0):
+        [conda, condb] = anode.children
         (t_env, f_env) = tc_cond(condb, env0)
         tc_cond(conda, f_env)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.":
-        [nont, var, noi, cond] = children
+    @nv.put(r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
+    def _(anode, env0):
+        [nont, var, noi, cond] = anode.children
         t = ptn_type_for(nont)
         env1 = env0.ensure_expr_is_of_type(noi, ListType(t))
         env2 = env1.plus_new_entry(var, t)
         tc_cond(cond, env2)
-        result = None
+        return None
 
-    elif p == r"{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.":
-        [local_ref, nont] = children
+    @nv.put(r"{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.")
+    def _(anode, env0):
+        [local_ref, nont] = anode.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        result = None
+        return None
 
-    elif p == r"{COMMAND} : Replace {var} in {var} with {var}.":
-        [ex_var, list_var, rep_var] = children
+    @nv.put(r"{COMMAND} : Replace {var} in {var} with {var}.")
+    def _(anode, env0):
+        [ex_var, list_var, rep_var] = anode.children
         env0.assert_expr_is_of_type(list_var, ListType(T_PrivateElement))
         env0.assert_expr_is_of_type(ex_var, T_PrivateElement)
         env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
-        result = env0
+        return env0
 
-    elif p == r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error":
-        [] = children
-        result = env0
+    @nv.put(r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
 
-    elif p == r"{COMMAND} : Discard all resources associated with the current execution context.":
-        [] = children
-        result = env0
-
-    else:
-        stderr()
-        stderr("tc_nonvalue:")
-        stderr('    elif p == %s:' % escape(p))
-        sys.exit(0)
-
-    assert result is None or isinstance(result, Env)
-
-    if trace_this_op:
-        print()
-        print("Leaving nv:", trace_line)
-        mytrace(result)
-
-    return result
+    @nv.put(r"{COMMAND} : Discard all resources associated with the current execution context.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
 
 # ------------------------------------------------------------------------------
 
