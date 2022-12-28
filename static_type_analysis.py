@@ -6757,102 +6757,116 @@ def tc_expr(expr, env0, expr_value_will_be_discarded=False):
 
 def tc_expr_(expr, env0, expr_value_will_be_discarded):
     p = str(expr.prod)
-    children = expr.children
 
     # stderr('>>>', expr.source_text())
 
-    if p in [
-        r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : {EX}",
-        r"{EX} : ({EX})",
-        r"{EX} : The value of {SETTABLE}",
-        r"{EX} : the value of {SETTABLE}",
-        r"{EX} : the {var} flag",
-        r"{EX} : {code_point_lit}",
-        r"{EX} : {LITERAL}",
-        r"{EX} : {LOCAL_REF}",
-        r"{EX} : {NUM_EXPR}",
-        r"{EX} : {PAIR}",
-        r"{EX} : {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EX} : {RECORD_CONSTRUCTOR}",
-        r"{FACTOR} : ({NUM_EXPR})",
-        r"{FACTOR} : {BIGINT_LITERAL}",
-        r"{FACTOR} : {MATH_LITERAL}",
-        r"{FACTOR} : {NUMBER_LITERAL}",
-        r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}",
-        r"{FACTOR} : {SETTABLE}",
-        r"{LITERAL} : {BIGINT_LITERAL}",
-        r"{LITERAL} : {MATH_LITERAL}",
-        r"{LITERAL} : {NUMBER_LITERAL}",
-        r"{LITERAL} : {code_unit_lit}",
-        r"{LOCAL_REF} : {PROD_REF}",
-        r"{LOCAL_REF} : {SETTABLE}",
-        r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}",
-        r"{NUM_COMPARAND} : {FACTOR}",
-        r"{NUM_COMPARAND} : {SUM}",
-        r"{NUM_COMPARAND} : {PRODUCT}",
-        r"{NUM_EXPR} : {PRODUCT}",
-        r"{NUM_EXPR} : {SUM}",
-        r"{RHSS} : {RHS}",
-        r"{SETTABLE} : {DOTTING}",
-        r"{TERM} : {FACTOR}",
-        r"{TERM} : {PRODUCT}",
-        r"{TYPE_ARG} : {DOTTING}",
-        r"{TYPE_ARG} : {var}",
-    ]:
-        [child] = children
+    if p not in exprd:
+        stderr()
+        stderr("tc_expr:")
+        stderr('    @exprd.put(%s)' % escape(p))
+        # pdb.set_trace()
+        sys.exit(0)
+
+    return exprd[p](expr, env0, expr_value_will_be_discarded)
+
+if 1:
+    exprd = DecoratedFuncDict()
+
+    @exprd.put(r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EXPR} : {EX}")
+    @exprd.put(r"{EX} : ({EX})")
+    @exprd.put(r"{EX} : The value of {SETTABLE}")
+    @exprd.put(r"{EX} : the value of {SETTABLE}")
+    @exprd.put(r"{EX} : the {var} flag")
+    @exprd.put(r"{EX} : {code_point_lit}")
+    @exprd.put(r"{EX} : {LITERAL}")
+    @exprd.put(r"{EX} : {LOCAL_REF}")
+    @exprd.put(r"{EX} : {NUM_EXPR}")
+    @exprd.put(r"{EX} : {PAIR}")
+    @exprd.put(r"{EX} : {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EX} : {RECORD_CONSTRUCTOR}")
+    @exprd.put(r"{FACTOR} : ({NUM_EXPR})")
+    @exprd.put(r"{FACTOR} : {BIGINT_LITERAL}")
+    @exprd.put(r"{FACTOR} : {MATH_LITERAL}")
+    @exprd.put(r"{FACTOR} : {NUMBER_LITERAL}")
+    @exprd.put(r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{FACTOR} : {SETTABLE}")
+    @exprd.put(r"{LITERAL} : {BIGINT_LITERAL}")
+    @exprd.put(r"{LITERAL} : {MATH_LITERAL}")
+    @exprd.put(r"{LITERAL} : {NUMBER_LITERAL}")
+    @exprd.put(r"{LITERAL} : {code_unit_lit}")
+    @exprd.put(r"{LOCAL_REF} : {PROD_REF}")
+    @exprd.put(r"{LOCAL_REF} : {SETTABLE}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}")
+    @exprd.put(r"{NUM_COMPARAND} : {FACTOR}")
+    @exprd.put(r"{NUM_COMPARAND} : {SUM}")
+    @exprd.put(r"{NUM_COMPARAND} : {PRODUCT}")
+    @exprd.put(r"{NUM_EXPR} : {PRODUCT}")
+    @exprd.put(r"{NUM_EXPR} : {SUM}")
+    @exprd.put(r"{RHSS} : {RHS}")
+    @exprd.put(r"{SETTABLE} : {DOTTING}")
+    @exprd.put(r"{TERM} : {FACTOR}")
+    @exprd.put(r"{TERM} : {PRODUCT}")
+    @exprd.put(r"{TYPE_ARG} : {DOTTING}")
+    @exprd.put(r"{TYPE_ARG} : {var}")
+    def _(expr, env0, expr_value_will_be_discarded):
+        [child] = expr.children
         return tc_expr(child, env0, expr_value_will_be_discarded)
 
     # ------------------------------------------------------
     # literals
 
-    elif p == r"{LITERAL} : {BOOL_LITERAL}":
+    @exprd.put(r"{LITERAL} : {BOOL_LITERAL}")
+    def _(expr, env0, _):
         return (T_Boolean, env0)
 
-    elif p == r'{LITERAL} : *undefined*':
+    @exprd.put(r'{LITERAL} : *undefined*')
+    def _(expr, env0, _):
         return (T_Undefined, env0)
 
-    elif p == r'{LITERAL} : *null*':
+    @exprd.put(r'{LITERAL} : *null*')
+    def _(expr, env0, _):
         return (T_Null, env0)
 
-    elif p == r"{LITERAL} : {atat_word}":
+    @exprd.put(r"{LITERAL} : {atat_word}")
+    def _(expr, env0, _):
         return (T_Symbol, env0)
 
-    elif p in [
-        r"{MATH_LITERAL} : +&infin;",
-        r"{MATH_LITERAL} : +∞",
-    ]:
+    @exprd.put(r"{MATH_LITERAL} : +&infin;")
+    @exprd.put(r"{MATH_LITERAL} : +∞")
+    def _(expr, env0, _):
         return (T_MathPosInfinity_, env0)
 
-    elif p in [
-        r"{MATH_LITERAL} : -&infin;",
-        r"{MATH_LITERAL} : -∞",
-    ]:
+    @exprd.put(r"{MATH_LITERAL} : -&infin;")
+    @exprd.put(r"{MATH_LITERAL} : -∞")
+    def _(expr, env0, _):
         return (T_MathNegInfinity_, env0)
 
-    elif p == r"{LITERAL} : {TYPE_NAME}":
-        [type_name] = children
+    @exprd.put(r"{LITERAL} : {TYPE_NAME}")
+    def _(expr, env0, _):
+        [type_name] = expr.children
         return (T_LangTypeName_, env0)
 
-    elif p == r"{LITERAL} : {tilded_word}":
-        [tilded_word] = children
+    @exprd.put(r"{LITERAL} : {tilded_word}")
+    def _(expr, env0, _):
+        [tilded_word] = expr.children
         return (type_for_tilded_word(tilded_word), env0)
 
     # --------------------------------------------------------
     # introduce metavariables:
 
-    elif p == r'{EXPR} : {EX}, where {var} is {EX}':
-        [exa, var, exb] = children
+    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX}')
+    def _(expr, env0, _):
+        [exa, var, exb] = expr.children
         (exb_type, env1) = tc_expr(exb, env0); assert env1 is env0
         env2 = env1.plus_new_entry(var, exb_type)
         (exa_type, env3) = tc_expr(exa, env2)
         return (exa_type, env3)
 
-    elif p in [
-        r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}',
-        r'{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}',
-    ]:
-        [ex3, var2, ex2, var1, ex1] = children
+    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}')
+    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}')
+    def _(expr, env0, _):
+        [ex3, var2, ex2, var1, ex1] = expr.children
 
         (ex1_type, ex1_env) = tc_expr(ex1, env0); assert ex1_env is env0
         env1 = ex1_env.plus_new_entry(var1, ex1_type)
@@ -6866,22 +6880,23 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------------------------------------------
     # invocation of named operation:
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}":
-        [_, noi, _] = children
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}")
+    def _(expr, env0, _):
+        [_, noi, _] = expr.children
         return tc_expr(noi, env0)
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})":
-        [pp, _] = children
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})")
+    def _(expr, env0, _):
+        [pp, _] = expr.children
         return tc_expr(pp, env0)
 
-    elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}",
-        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})",
-        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}",
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}",
-        r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}",
-    ]:
-        [callee, local_ref] = children[0:2]
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}")
+    def _(expr, env0, _):
+        [callee, local_ref] = expr.children[0:2]
         callee_op_name = callee.source_text()
         if callee_op_name in ['UTF16EncodeCodePoint', 'UTF16SurrogatePairToCodePoint']:
             # An abstract operation that uses SDO-style invocation.
@@ -6889,11 +6904,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
-    elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}",
-        r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}",
-    ]:
-        [callee, local_ref, with_args] = children
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}")
+    def _(expr, env0, _):
+        [callee, local_ref, with_args] = expr.children
         callee_op_name = callee.source_text()
         if with_args.prod.rhs_s in [
             'with argument {EX}',
@@ -6905,20 +6919,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, with_args.prod.rhs_s
         return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
 
-    elif p in [
-        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}",
-        r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}",
-    ]:
-        [lhs, rhs] = children
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}")
+    def _(expr, env0, _):
+        [lhs, rhs] = expr.children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
 
 
     # ------
 
-    elif p in [
-        r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})',
-    ]:
-        [opn_before_paren, arglist] = children[0:2]
+    @exprd.put(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
+    def _(expr, env0, _):
+        [opn_before_paren, arglist] = expr.children[0:2]
         args = exes_in_exlist_opt(arglist)
 
         if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
@@ -7164,8 +7176,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # --------------------------------------------------------
 
-    elif p == r"{SETTABLE} : the {DSBN} field of {EXPR}":
-        [dsbn, ex] = children
+    @exprd.put(r"{SETTABLE} : the {DSBN} field of {EXPR}")
+    def _(expr, env0, _):
+        [dsbn, ex] = expr.children
         dsbn_name = dsbn.source_text()[2:-2]
         if dsbn_name == 'EventList':
             env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
@@ -7179,11 +7192,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         else:
             assert 0, expr
 
-    elif p in [
-        r'{DOTTING} : {var}.{DSBN}',
-        r"{DOTTING} : {DOTTING}.{DSBN}",
-    ]:
-        [lhs_var, dsbn] = children
+    @exprd.put(r'{DOTTING} : {var}.{DSBN}')
+    @exprd.put(r"{DOTTING} : {DOTTING}.{DSBN}")
+    def _(expr, env0, _):
+        [lhs_var, dsbn] = expr.children
         lhs_text = lhs_var.source_text()
         dsbn_name = dsbn.source_text()[2:-2]
         (lhs_t, env1) = tc_expr(lhs_var, env0)
@@ -7441,8 +7453,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
     # -------------------------------------------------
 
-    elif p == r"{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}":
-        [exa, cond, exb] = children
+    @exprd.put(r"{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}")
+    def _(expr, env0, _):
+        [exa, cond, exb] = expr.children
         (t_env, f_env) = tc_cond(cond, env0)
         (ta, enva) = tc_expr(exa, t_env)
         (tb, envb) = tc_expr(exb, f_env)
@@ -7451,37 +7464,41 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_BigInt
 
-    elif p == r"{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}":
-        [_, _] = children
+    @exprd.put(r"{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}")
+    def _(expr, env0, _):
+        [_, _] = expr.children
         return (T_BigInt, env0)
 
-    elif p == r"{EXPR} : the BigInt value that represents {EX}":
-        [ex] = children
+    @exprd.put(r"{EXPR} : the BigInt value that represents {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathReal_|T_BigInt)
         return (T_BigInt, env0)
 
-    elif p == r"{EXPR} : the BigInt value that corresponds to {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the BigInt value that corresponds to {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_BigInt, env0)
 
-    elif p == r"{EX} : the BigInt value for {EX}":
-        [ex] = children
+    @exprd.put(r"{EX} : the BigInt value for {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_BigInt, env0)
 
-    elif p == r"{EXPR} : the BigInt whose sign is the sign of {var} and whose magnitude is {EX}":
-        [sign_var, mag_ex] = children
+    @exprd.put(r"{EXPR} : the BigInt whose sign is the sign of {var} and whose magnitude is {EX}")
+    def _(expr, env0, _):
+        [sign_var, mag_ex] = expr.children
         env0.assert_expr_is_of_type(sign_var, T_MathReal_)
         env0.assert_expr_is_of_type(mag_ex, T_MathInteger_)
         return (T_BigInt, env0)
 
-    elif p in [
-        r"{EX} : the sum of {var} and {var}",
-        r"{EX} : the product of {var} and {var}",
-        r"{EX} : the difference {var} minus {var}",
-    ]:
-        [x, y] = children
+    @exprd.put(r"{EX} : the sum of {var} and {var}")
+    @exprd.put(r"{EX} : the product of {var} and {var}")
+    @exprd.put(r"{EX} : the difference {var} minus {var}")
+    def _(expr, env0, _):
+        [x, y] = expr.children
         env0.assert_expr_is_of_type(x, T_BigInt)
         env0.assert_expr_is_of_type(y, T_BigInt)
         return (T_BigInt, env0)
@@ -7489,35 +7506,38 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_Number
 
-    elif p == r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}":
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}")
+    def _(expr, env0, _):
         return (T_NegInfinityNumber_, env0)
 
-    elif p == r"{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}":
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}")
+    def _(expr, env0, _):
         return (T_PosInfinityNumber_, env0)
 
-    elif p in [
-        r"{NUMBER_LITERAL} : {starred_nan_lit}",
-        r'{NUMBER_LITERAL} : the *NaN* Number value',
-    ]:
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_nan_lit}")
+    @exprd.put(r'{NUMBER_LITERAL} : the *NaN* Number value')
+    def _(expr, env0, _):
         return (T_NaN_Number_, env0)
 
-    elif p in [
-        r"{NUMBER_LITERAL} : *0.5*{h_sub_fancy_f}",
-        r"{NUMBER_LITERAL} : *-0.5*{h_sub_fancy_f}",
-    ]:
+    @exprd.put(r"{NUMBER_LITERAL} : *0.5*{h_sub_fancy_f}")
+    @exprd.put(r"{NUMBER_LITERAL} : *-0.5*{h_sub_fancy_f}")
+    def _(expr, env0, _):
         return (T_NonIntegralFiniteNumber_, env0)
 
-    elif p == r"{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}":
-        [_, _] = children
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        [_, _] = expr.children
         return (T_IntegralNumber_, env0)
 
-    elif p == r'{EXPR} : the Number value that corresponds to {var}':
-        [var] = children
+    @exprd.put(r'{EXPR} : the Number value that corresponds to {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_MathInteger_)
         return (T_Number, env1)
 
-    elif p == r"{EX} : the Number value for {EX}":
-        [ex] = children
+    @exprd.put(r"{EX} : the Number value for {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         (ex_type, env1) = tc_expr(ex, env0)
         # env1 = env0.ensure_expr_is_of_type(ex, T_MathReal_)
         if ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
@@ -7533,202 +7553,204 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             )
             return (T_Number, env1)
 
-    elif p in [
-        r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}",
-    ]:
-        [emu_xref, var] = children
+    @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}")
+    def _(expr, env0, _):
+        [emu_xref, var] = expr.children
         assert var.source_text() in ['_type_', '_srcType_', '_elementType_']
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
         return (T_MathInteger_, env1)
 
-    elif p in [
-        r"{EXPR} : the Element Size value specified in {h_emu_xref} for {EX}",
-    ]:
-        [emu_xref, ex] = children
+    @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for {EX}")
+    def _(expr, env0, _):
+        [emu_xref, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_MathInteger_, env1)
 
-    elif p == r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)":
-        for var in children:
+    @exprd.put(r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)")
+    def _(expr, env0, _):
+        for var in expr.children:
             env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
-    elif p in [
-        r"{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
-    elif p == r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string":
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_IntegralNumber_)
         return (T_IntegralNumber_, env0)
 
-    elif p in [
-        r"{EX} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
-        r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string",
-        r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string",
-    ]:
-        [avar, bvar] = children
+    @exprd.put(r"{EX} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+    @exprd.put(r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+    @exprd.put(r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string")
+    def _(expr, env0, _):
+        [avar, bvar] = expr.children
         env1 = env0.ensure_expr_is_of_type(avar, T_IntegralNumber_)
         env1.assert_expr_is_of_type(bvar, T_MathInteger_)
         return (T_IntegralNumber_, env1)
 
-    elif p in [
-        r"{EXPR} : the smallest (closest to -∞) integral Number value that is not less than {var}",
-        r"{EXPR} : the greatest (closest to +∞) integral Number value that is not greater than {var}",
-        r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the smallest (closest to -∞) integral Number value that is not less than {var}")
+    @exprd.put(r"{EXPR} : the greatest (closest to +∞) integral Number value that is not greater than {var}")
+    @exprd.put(r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
-    elif p == r"{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}":
-        [var, _] = children
+    @exprd.put(r"{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        [var, _] = expr.children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
     # --------------------------------------------------------
     # return T_MathInteger_
 
-    elif p in [
-        r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
-        r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}",
-    ]:
-        [prod_ref, nont] = children
+    @exprd.put(r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}")
+    def _(expr, env0, _):
+        [prod_ref, nont] = expr.children
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EX} : {var} rounded towards 0 to the next integer value":
-        [var] = children
+    @exprd.put(r"{EX} : {var} rounded towards 0 to the next integer value")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{NUM_EXPR} : {EX} raised to the power {EX}":
-        [a, b] = children
+    @exprd.put(r"{NUM_EXPR} : {EX} raised to the power {EX}")
+    def _(expr, env0, _):
+        [a, b] = expr.children
         env0.assert_expr_is_of_type(a, T_MathInteger_)
         env0.assert_expr_is_of_type(b, T_MathInteger_)
         return (T_MathInteger_, env0) # unless exponent is negative
 
-    elif p == r"{EX} : the integer represented by the 32-bit two's complement bit string {var}":
-        [var] = children
+    @exprd.put(r"{EX} : the integer represented by the 32-bit two's complement bit string {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_) # bit string
         return (T_MathInteger_, env0)
 
-    elif p == r"{EX} : {EX}, rounding down to the nearest integer, including for negative numbers":
-        [ex] = children
+    @exprd.put(r"{EX} : {EX}, rounding down to the nearest integer, including for negative numbers")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_MathInteger_, env0)
 
     # --------------------------------------------------------
     # return T_MathReal_
 
-    elif p in [
-        r"{MATH_LITERAL} : 8.64",
-        r"{MATH_LITERAL} : 0.5",
-    ]:
+    @exprd.put(r"{MATH_LITERAL} : 8.64")
+    @exprd.put(r"{MATH_LITERAL} : 0.5")
+    def _(expr, env0, _):
         return (T_MathReal_, env0)
 
-    elif p in [
-        r'{EXPR} : the negative of {EX}',
-    ]:
-        [ex] = children
+    @exprd.put(r'{EXPR} : the negative of {EX}')
+    def _(expr, env0, _):
+        [ex] = expr.children
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert ex_t == T_TBD or ex_t == T_MathInteger_
         return (ex_t, env0)
 
-    elif p == r"{PRODUCT} : the negation of {EX}":
-        [ex] = children
+    @exprd.put(r"{PRODUCT} : the negation of {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_MathReal_, env0)
 
-    elif p == r"{PRODUCT} : the quotient {FACTOR} / {FACTOR}":
-        [vara, varb] = children
+    @exprd.put(r"{PRODUCT} : the quotient {FACTOR} / {FACTOR}")
+    def _(expr, env0, _):
+        [vara, varb] = expr.children
         env1 = env0.ensure_expr_is_of_type(vara, T_MathReal_)
         env2 = env1.ensure_expr_is_of_type(varb, T_MathReal_)
         return (T_MathReal_, env2)
 
-    elif p in [
-        "{NUM_EXPR} : π / 2",
-        "{NUM_EXPR} : π / 4",
-        "{NUM_EXPR} : π",
-        "{NUM_EXPR} : 3π / 4",
-        "{NUM_EXPR} : -π / 2",
-        "{NUM_EXPR} : -π / 4",
-        "{NUM_EXPR} : -π",
-        "{NUM_EXPR} : -3π / 4",
-    ]:
-        [] = children
+    @exprd.put(r'{NUM_EXPR} : π / 2')
+    @exprd.put(r'{NUM_EXPR} : π / 4')
+    @exprd.put(r'{NUM_EXPR} : π')
+    @exprd.put(r'{NUM_EXPR} : 3π / 4')
+    @exprd.put(r'{NUM_EXPR} : -π / 2')
+    @exprd.put(r'{NUM_EXPR} : -π / 4')
+    @exprd.put(r'{NUM_EXPR} : -π')
+    @exprd.put(r'{NUM_EXPR} : -3π / 4')
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_MathReal_, env0)
 
-    elif p == r"{EXPR} : the result of the {MATH_FUNC} of {EX}":
-        [math_func, ex] = children
+    @exprd.put(r"{EXPR} : the result of the {MATH_FUNC} of {EX}")
+    def _(expr, env0, _):
+        [math_func, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
         return (T_MathReal_, env1)
 
-    elif p == r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
         return (T_MathReal_, env1)
 
-    elif p == r"{EXPR} : the result of raising {EX} to the {EX} power":
-        [avar, bvar] = children
+    @exprd.put(r"{EXPR} : the result of raising {EX} to the {EX} power")
+    def _(expr, env0, _):
+        [avar, bvar] = expr.children
         env1 = env0.ensure_expr_is_of_type(avar, T_MathReal_)
         env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
         return (T_MathReal_, env2)
 
-    elif p == r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_List)
         return (T_MathReal_, env0)
 
     # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:
 
-    elif p in [
-        r"{NUM_COMPARAND} : the length of {var}",
-        r"{EX} : the length of {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{NUM_COMPARAND} : the length of {var}")
+    @exprd.put(r"{EX} : the length of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_MathNonNegativeInteger_, env1)
 
-    elif p in [
-        r"{EXPR} : the number of elements in the List {var}",
-        r"{EX} : The number of elements in {var}",
-        r"{EX} : the number of elements in {SETTABLE}",
-        r"{EX} : the number of elements of {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the number of elements in the List {var}")
+    @exprd.put(r"{EX} : The number of elements in {var}")
+    @exprd.put(r"{EX} : the number of elements in {SETTABLE}")
+    @exprd.put(r"{EX} : the number of elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_List)
         return (T_MathNonNegativeInteger_, env1)
 
-    elif p == r"{EXPR} : the number of elements in {var}'s _captures_ List":
-        [var] = children
+    @exprd.put(r"{EXPR} : the number of elements in {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p in [
-        r'{EX} : the number of code points in {PROD_REF}',
-    ]:
-        [prod_ref] = children
+    @exprd.put(r'{EX} : the number of code points in {PROD_REF}')
+    def _(expr, env0, _):
+        [prod_ref] = expr.children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : the number of bytes in {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the number of bytes in {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_Data_Block | T_Shared_Data_Block)
         return (T_MathNonNegativeInteger_, env1)
 
-    elif p == r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}":
-        [xref] = children
+    @exprd.put(r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
+    def _(expr, env0, _):
+        [xref] = expr.children
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p in [
-        r"{FACTOR} : {CONSTANT_NAME}",
-        r"{EX} : {CONSTANT_NAME}",
-    ]:
-        [constant_name] = children
+    @exprd.put(r"{FACTOR} : {CONSTANT_NAME}")
+    @exprd.put(r"{EX} : {CONSTANT_NAME}")
+    def _(expr, env0, _):
+        [constant_name] = expr.children
         constant_name_str = constant_name.source_text()
         # hack:
         result_type = {
@@ -7745,20 +7767,18 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----
     # return T_MathInteger_: arithmetic:
 
-    elif p in [
-        r"{MATH_LITERAL} : {hex_int_lit}",
-        r"{MATH_LITERAL} : {dec_int_lit}",
-        r"{MATH_LITERAL} : -5",
-        r"{BASE} : 10",
-        r"{BASE} : 2",
-    ]:
-        # [] = children
+    @exprd.put(r"{MATH_LITERAL} : {hex_int_lit}")
+    @exprd.put(r"{MATH_LITERAL} : {dec_int_lit}")
+    @exprd.put(r"{MATH_LITERAL} : -5")
+    @exprd.put(r"{BASE} : 10")
+    @exprd.put(r"{BASE} : 2")
+    def _(expr, env0, _):
+        # [] = expr.children
         return (T_MathInteger_, env0)
 
-    elif p in [
-        r"{FACTOR} : {BASE}<sup>{EX}</sup>",
-    ]:
-        [base, exponent] = children
+    @exprd.put(r"{FACTOR} : {BASE}<sup>{EX}</sup>")
+    def _(expr, env0, _):
+        [base, exponent] = expr.children
         (base_t, env1) = tc_expr(base, env0); assert env1 is env0
         if base_t == T_MathInteger_:
             env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_ | T_BigInt)
@@ -7766,133 +7786,143 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, base_t
         return (base_t, env1) # XXX unless exponent is negative
 
-    elif p == r"{EX} : the remainder of dividing {EX} by {EX}":
-        [aex, bex] = children
+    @exprd.put(r"{EX} : the remainder of dividing {EX} by {EX}")
+    def _(expr, env0, _):
+        [aex, bex] = expr.children
         env0.assert_expr_is_of_type(aex, T_MathInteger_)
         env0.assert_expr_is_of_type(bex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}":
-        [var, ex] = children
+    @exprd.put(r"{EXPR} : the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}")
+    def _(expr, env0, _):
+        [var, ex] = expr.children
         env0.assert_expr_is_of_type(var, T_MathReal_ | T_Number)
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)":
-        [] = children
+    @exprd.put(r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_MathInteger_, env0)
 
     # ----
 
-    elif p in [
-        r"{NUM_COMPARAND} : the numeric value of {var}",
-        r"{EX} : the numeric value of {EX}",
-    ]:
-        [var] = children
+    @exprd.put(r"{NUM_COMPARAND} : the numeric value of {var}")
+    @exprd.put(r"{EX} : the numeric value of {EX}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
         return (T_MathInteger_, env1)
 
-    elif p == r"{EXPR} : the integer that is {EXPR}":
-        [ex] = children
+    @exprd.put(r"{EXPR} : the integer that is {EXPR}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
     # ----
 
-    elif p in [
-        r'{EXPR} : the character value of character {var}',
-    ]:
-        [var] = children
+    @exprd.put(r'{EXPR} : the character value of character {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the numeric value according to {h_emu_xref}":
+    @exprd.put(r"{EXPR} : the numeric value according to {h_emu_xref}")
+    def _(expr, env0, _):
         return (T_MathInteger_, env0)
 
-    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number':
-        [var] = children
+    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_MathInteger_, env1)
 
-    elif p == r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}":
-        [var, product] = children
+    @exprd.put(r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}")
+    def _(expr, env0, _):
+        [var, product] = expr.children
         env1 = env0.ensure_expr_is_of_type(product, T_MathInteger_ | T_Number); assert env1 is env0
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_MathInteger_, env1)
 
-    elif p in [
-        r"{EX} : {var}'s _endIndex_",
-        r"{EX} : {var}'s _endIndex_ value",
-        r"{NUM_COMPARAND} : {var}'s _endIndex_",
-    ]:
-        [var] = children
+    @exprd.put(r"{EX} : {var}'s _endIndex_")
+    @exprd.put(r"{EX} : {var}'s _endIndex_ value")
+    @exprd.put(r"{NUM_COMPARAND} : {var}'s _endIndex_")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState | T_CaptureRange)
         return (T_MathInteger_, env1)
 
-    elif p == r"{EX} : {var}'s _startIndex_":
-        [var] = children
+    @exprd.put(r"{EX} : {var}'s _startIndex_")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_CaptureRange)
         return (T_MathInteger_, env1)
 
-    elif p == r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}":
-        [list_var, index_var, str_var] = children
+    @exprd.put(r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}")
+    def _(expr, env0, _):
+        [list_var, index_var, str_var] = expr.children
         env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(index_var, T_MathInteger_)
         env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
         return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}":
-        [emu_grammar, root_var] = children
+    @exprd.put(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}")
+    def _(expr, env0, _):
+        [emu_grammar, root_var] = expr.children
         env0.assert_expr_is_of_type(root_var, T_Parse_Node)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}":
-        [emu_grammar, root_var, x_var, x_var2] = children
+    @exprd.put(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}")
+    def _(expr, env0, _):
+        [emu_grammar, root_var, x_var, x_var2] = expr.children
         env0.assert_expr_is_of_type(root_var, T_Parse_Node)
         env0.assert_expr_is_of_type(x_var, T_Parse_Node)
         assert x_var.source_text() == x_var2.source_text()
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])":
+    @exprd.put(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
+    def _(expr, env0, _):
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}":
-        [posa, posb] = children
+    @exprd.put(r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}")
+    def _(expr, env0, _):
+        [posa, posb] = expr.children
         env0.assert_expr_is_of_type(posa, T_MathInteger_)
         env0.assert_expr_is_of_type(posb, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value":
-        [var] = children
+    @exprd.put(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_code_point_, env0)
 
     # ----
 
-    elif p in [
-        r"{EXPR} : the result of applying the bitwise AND operation to {var} and {var}",
-        r"{EXPR} : the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}",
-        r"{EXPR} : the result of applying the bitwise inclusive OR operation to {var} and {var}",
-    ]:
-        [x, y] = children
+    @exprd.put(r"{EXPR} : the result of applying the bitwise AND operation to {var} and {var}")
+    @exprd.put(r"{EXPR} : the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}")
+    @exprd.put(r"{EXPR} : the result of applying the bitwise inclusive OR operation to {var} and {var}")
+    def _(expr, env0, _):
+        [x, y] = expr.children
         env0.assert_expr_is_of_type(x, T_MathInteger_) # "bit string"
         env0.assert_expr_is_of_type(y, T_MathInteger_) # "bit string"
         return (T_MathInteger_, env0) # "bit string"
 
-    elif p == r"{EXPR} : the 32-bit two's complement bit string representing {EX}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the 32-bit two's complement bit string representing {EX}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_MathInteger_, env0) # bit string
 
     # -------------------------------------------------
     # return MathReal_ or MathInteger_ or Number or BigInt or Integer_ (arithmetic)
 
-    elif p in [
-        r'{SUM} : {TERM} {SUM_OPERATOR} {TERM}',
-        r"{SUM} : {SUM} {SUM_OPERATOR} {TERM}",
-        r'{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}',
-    ]:
-        [a, op, b] = children
+    @exprd.put(r'{SUM} : {TERM} {SUM_OPERATOR} {TERM}')
+    @exprd.put(r"{SUM} : {SUM} {SUM_OPERATOR} {TERM}")
+    @exprd.put(r'{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}')
+    def _(expr, env0, _):
+        [a, op, b] = expr.children
         (a_t, env1) = tc_expr(a, env0)
         (b_t, env2) = tc_expr(b, env1)
         op_st = op.source_text()
@@ -8015,10 +8045,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
                 result_t = result_t | type_arithmetic(a_mt, op_st, b_mt, a, b)
         return (result_t, env2)
 
-    elif p in [
-        r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}",
-    ]:
-        ex = children[-1]
+    @exprd.put(r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}")
+    def _(expr, env0, _):
+        ex = expr.children[-1]
         (t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert (
             t == T_TBD
@@ -8034,146 +8063,158 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------
     # return T_String
 
-    elif p in [
-        r'{LITERAL} : {STR_LITERAL}',
-    ]:
+    @exprd.put(r'{LITERAL} : {STR_LITERAL}')
+    def _(expr, env0, _):
         return (T_String, env0)
 
-    elif expr.prod.lhs_s == '{STR_LITERAL}':
+    @exprd.put(r'{STR_LITERAL} : *","* (a comma)')
+    @exprd.put(r'{STR_LITERAL} : the ASCII word characters')
+    @exprd.put(r'{STR_LITERAL} : the empty String')
+    @exprd.put(r'{STR_LITERAL} : {starred_str}')
+    @exprd.put(r'{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})')
+    def _(expr, env0, _):
         return (T_String, env0)
 
-    elif p in [
-        r"{EX} : the String {var}",
-        r"{EXPR} : the String value {SETTABLE}",
-    ]:
-        [ex] = children
+    @exprd.put(r"{EX} : the String {var}")
+    @exprd.put(r"{EXPR} : the String value {SETTABLE}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.ensure_expr_is_of_type(ex, T_String)
         return (T_String, env0)
 
-    elif p in [
-        r"{EXPR} : the String value consisting solely of {code_unit_lit}",
-        r"{EXPR} : the String value containing only the code unit {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the String value consisting solely of {code_unit_lit}")
+    @exprd.put(r"{EXPR} : the String value containing only the code unit {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}":
-        [var, lita, var2, litb] = children
+    @exprd.put(r"{EXPR} : the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}")
+    def _(expr, env0, _):
+        [var, lita, var2, litb] = expr.children
         assert var.children == var2.children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_String, env1)
 
-    elif p == r"{MULTILINE_EXPR} : the string-concatenation of:{I_BULLETS}":
-        [bullets] = children
+    @exprd.put(r"{MULTILINE_EXPR} : the string-concatenation of:{I_BULLETS}")
+    def _(expr, env0, _):
+        [bullets] = expr.children
         # Should check the bullets
         return (T_String, env0)
 
-    elif p in [
-        r"{EXPR} : the string-concatenation of {EX} and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
-        r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}",
-    ]:
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX} and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    def _(expr, env0, _):
         env1 = env0
-        for ex in children:
+        for ex in expr.children:
             env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value consisting of the representation of {var} using radix {var}":
-        [x_var, radix_var] = children
+    @exprd.put(r"{EXPR} : the String value consisting of the representation of {var} using radix {var}")
+    def _(expr, env0, _):
+        [x_var, radix_var] = expr.children
         env0.assert_expr_is_of_type(x_var, T_BigInt)
         env0.assert_expr_is_of_type(radix_var, T_MathInteger_)
         return (T_String, env0)
 
-    elif p == r"{EX} : {EX} occurrences of {code_unit_lit}":
-        [ex, cu_lit] = children
+    @exprd.put(r"{EX} : {EX} occurrences of {code_unit_lit}")
+    def _(expr, env0, _):
+        [ex, cu_lit] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
         env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
         return (ListType(T_code_unit_), env1)
 
-    elif p == r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}":
-        [emu_xref, ex] = children
+    @exprd.put(r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}")
+    def _(expr, env0, _):
+        [emu_xref, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_TypedArray_element_type, env0)
 
-    elif p == r"{EXPR} : {var}'s {DSBN} value":
-        [var, dsbn] = children
+    @exprd.put(r"{EXPR} : {var}'s {DSBN} value")
+    def _(expr, env0, _):
+        [var, dsbn] = expr.children
         env0.assert_expr_is_of_type(var, T_Symbol)
         assert dsbn.source_text() == '[[Description]]'
         return (T_String | T_Undefined, env0)
 
-    elif p in [
-        r"{EXPR} : the String value consisting of {EX}",
-    ]:
-        [ex] = children
+    @exprd.put(r"{EXPR} : the String value consisting of {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value of the property name":
+    @exprd.put(r"{EXPR} : the String value of the property name")
+    def _(expr, env0, _):
         # property of the Global Object
         # todo: make that explicit
-        [] = children
+        [] = expr.children
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String":
-        [var, str_literal] = children
+    @exprd.put(r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String")
+    def _(expr, env0, _):
+        [var, str_literal] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String":
-        [var, sep_var, sep_var2] = children
+    @exprd.put(r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String")
+    def _(expr, env0, _):
+        [var, sep_var, sep_var2] = expr.children
         assert sep_var.children == sep_var2.children
         env0.assert_expr_is_of_type(sep_var, T_String)
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}":
-        [emu_xref, noi] = children
+    @exprd.put(r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [emu_xref, noi] = expr.children
         env1 = env0.ensure_expr_is_of_type(noi, T_IntegralNumber_)
         return (T_String, env1)
 
-    elif p in [
-        r"{EXPR} : the String representation of {EX}, formatted as a decimal number",
-        r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number",
-        r"{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number",
-    ]:
-        [ex] = children
+    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as a decimal number")
+    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
+    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}":
-        [exa, exb] = children
+    @exprd.put(r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}")
+    def _(expr, env0, _):
+        [exa, exb] = expr.children
         env0.assert_expr_is_of_type(exa, T_String)
         env0.assert_expr_is_of_type(exb, T_String)
         return (T_String, env0)
 
-    elif p == r"{EX} : an implementation-defined timezone name":
-        [] = children
+    @exprd.put(r"{EX} : an implementation-defined timezone name")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_String, env0)
 
-    elif p == r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row":
-        [var] = children
+    @exprd.put(r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row")
+    def _(expr, env0, _):
+        [var] = expr.children
         return (T_String, env0)
 
-    elif p == r"{EX} : the substring of {var} from {EX} to {EX}":
-        [s_var, start_var, end_var] = children
+    @exprd.put(r"{EX} : the substring of {var} from {EX} to {EX}")
+    def _(expr, env0, _):
+        [s_var, start_var, end_var] = expr.children
         env0.assert_expr_is_of_type(s_var, T_String)
         env1 = env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
         env2 = env1.ensure_expr_is_of_type(end_var, T_MathNonNegativeInteger_)
         return (T_String, env2)
 
-    elif p in [
-        r"{EX} : the substring of {var} from index {dec_int_lit}",
-        r"{EX} : the substring of {var} from {EX}",
-    ]:
-        [s_var, start_var] = children
+    @exprd.put(r"{EX} : the substring of {var} from index {dec_int_lit}")
+    @exprd.put(r"{EX} : the substring of {var} from {EX}")
+    def _(expr, env0, _):
+        [s_var, start_var] = expr.children
         env0.assert_expr_is_of_type(s_var, T_String)
         env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
         return (T_String, env0)
@@ -8181,71 +8222,83 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----------------------------------------------------------
     # return T_character_
 
-    elif p == r"{EXPR} : the character matched by {PROD_REF}":
-        [prod_ref] = children
+    @exprd.put(r"{EXPR} : the character matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [prod_ref] = expr.children
         return (T_character_, env0)
 
-    elif p == r"{EXPR} : the character whose character value is {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the character whose character value is {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         return (T_character_, env1)
 
-    elif p == r'{EXPR} : the result of applying that mapping to {var}':
-        [var] = children
+    @exprd.put(r'{EXPR} : the result of applying that mapping to {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_character_)
         return (T_character_, env1)
 
-    elif p == r'{EXPR} : the one character in CharSet {var}':
-        [var] = children
+    @exprd.put(r'{EXPR} : the one character in CharSet {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (T_character_, env1)
 
-    elif p == r"{EXPR} : the character {SETTABLE}":
-        [settable] = children
+    @exprd.put(r"{EXPR} : the character {SETTABLE}")
+    def _(expr, env0, _):
+        [settable] = expr.children
         env1 = env0.ensure_expr_is_of_type(settable, T_character_)
         return (T_character_, env1)
 
     # ----------------------------------------------------------
     # return T_code_unit_
 
-    elif expr.prod.lhs_s == '{code_unit_lit}':
+    @exprd.put(r'{code_unit_lit} : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    @exprd.put(r'{code_unit_lit} : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    def _(expr, env0, _):
         return (T_code_unit_, env0)
 
-    elif p == r"{EXPR} : {var}'s single code unit element": # todo: element of String
-        [var] = children
+    @exprd.put(r"{EXPR} : {var}'s single code unit element") # todo: element of String
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_code_unit_, env1)
 
-    elif p == r'{EX} : the first code unit of {var}':
-        [var] = children
+    @exprd.put(r'{EX} : the first code unit of {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_code_unit_, env1)
 
-    elif p == r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}":
-        [nonterminal, emu_xref] = children
+    @exprd.put(r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}")
+    def _(expr, env0, _):
+        [nonterminal, emu_xref] = expr.children
         return (T_code_unit_, env0)
 
-    elif p in [
-        r"{EX} : the code unit whose value is {EX}",
-    ]:
-        [ex] = children
+    @exprd.put(r"{EX} : the code unit whose value is {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
         return (T_code_unit_, env0)
 
-    elif p == r"{EXPR} : the code unit whose numeric value is that of {EXPR}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the code unit whose numeric value is that of {EXPR}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_code_unit_, env0)
 
-    elif p == r"{EXPR} : the code unit whose numeric value is {EX}":
-        [ex] = children
+    @exprd.put(r"{EXPR} : the code unit whose numeric value is {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (T_code_unit_, env0)
 
     # ----
 
-    elif p == r"{EX} : the code unit at index {EX} within {EX}":
-        [index_ex, str_ex] = children
+    @exprd.put(r"{EX} : the code unit at index {EX} within {EX}")
+    def _(expr, env0, _):
+        [index_ex, str_ex] = expr.children
         env0.assert_expr_is_of_type(str_ex, T_String)
         env1 = env0.ensure_expr_is_of_type(index_ex, T_MathInteger_)
         return (T_code_unit_, env1)
@@ -8253,58 +8306,65 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ----------------------------------------------------------
     # return T_code_point_
 
-    elif p in [
-        r"{EXPR} : the code point {var}",
+    @exprd.put(r"{EXPR} : the code point {var}")
         # This means "the code point whose numeric value is {var}"
-        r"{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_code_point_, env0)
 
-    elif p == r"{EXPR} : the code point whose numeric value is that of {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the code point whose numeric value is that of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_code_unit_)
         return (T_code_point_, env0)
 
-    elif expr.prod.lhs_s == '{code_point_lit}':
+    @exprd.put(r'{code_point_lit} : ` [^`]+ ` \x20 U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    @exprd.put(r'{code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    def _(expr, env0, _):
         return (T_code_point_, env0)
 
-    elif p in [
-        r"{EX} : the code point matched by {PROD_REF}",
-    ]:
-        [nont] = children
+    @exprd.put(r"{EX} : the code point matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [nont] = expr.children
         return (T_code_point_, env0)
 
-    elif p == r"{EX} : the single code point matched by this production":
-        [] = children
+    @exprd.put(r"{EX} : the single code point matched by this production")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_code_point_, env0)
 
     # ----------------------------------------------------------
     # return T_Unicode_code_points_
 
-    elif p == r'{EXPR} : the source text that was recognized as {PROD_REF}':
-        [nonterminal] = children
+    @exprd.put(r'{EXPR} : the source text that was recognized as {PROD_REF}')
+    def _(expr, env0, _):
+        [nonterminal] = expr.children
         # XXX Should check whether nonterminal makes sense
         # with respect to the emu-grammar accompanying this alg/expr.
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : the source text matched by {PROD_REF}":
-        [nont] = children
+    @exprd.put(r"{EXPR} : the source text matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [nont] = expr.children
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
-    elif p == r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm":
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm":
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements":
-        [var] = children
+    @exprd.put(r"{EXPR} : the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
 
@@ -8314,50 +8374,49 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # --------------------
     # ListType(T_MathInteger_)
 
-    elif (
-        p.startswith(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format')
-        or
-        p.startswith(r'{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}.')
-    ):
-        var = children[0]
+    @exprd.put(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
+    @exprd.put(r'{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
+    def _(expr, env0, _):
+        var = expr.children[0]
         env1 = env0.ensure_expr_is_of_type(var, T_Number)
         return (ListType(T_MathInteger_), env1)
 
-    elif p in [
-        r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order',
-        r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order",
-    ]:
-        [n_var, v_var] = children
+    @exprd.put(r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order')
+    @exprd.put(r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order")
+    def _(expr, env0, _):
+        [n_var, v_var] = expr.children
         env0.assert_expr_is_of_type(n_var, T_MathNonNegativeInteger_)
         env0.assert_expr_is_of_type(v_var, T_MathNonNegativeInteger_)
         return (ListType(T_MathInteger_), env0)
 
-    elif p == r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values":
-        [var] = children
+    @exprd.put(r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (ListType(T_MathInteger_), env0)
 
-    elif p == r"{EXPR} : a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]":
-        [var1, var2, var3, var4] = children
+    @exprd.put(r"{EXPR} : a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]")
+    def _(expr, env0, _):
+        [var1, var2, var3, var4] = expr.children
         assert var1.children == var2.children
         env0.assert_expr_is_of_type(var1, T_MathInteger_)
         env1 = env0.ensure_expr_is_of_type(var3, T_Data_Block | T_Shared_Data_Block)
         env0.assert_expr_is_of_type(var4, T_MathInteger_)
         return (ListType(T_MathInteger_), env1)
 
-    elif p == r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}":
-        [dotting] = children
+    @exprd.put(r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}")
+    def _(expr, env0, _):
+        [dotting] = expr.children
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
         return (ListType(T_MathInteger_), env1)
 
     # ----------------------
     # ListType(T_code_unit_)
 
-    elif p in [
-        r"{EXPR} : a List whose elements are the code units that are the elements of {var}",
-        r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : a List whose elements are the code units that are the elements of {var}")
+    @exprd.put(r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (ListType(T_code_unit_), env0)
 
@@ -8367,21 +8426,20 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ---------------
     # ListType(other)
 
-    elif p == r'{EXPR} : a new empty List':
-        [] = children
+    @exprd.put(r'{EXPR} : a new empty List')
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_List, env0) # (ListType(T_0), env0)
 
-    elif p in [
-        r"{EXPR} : a List whose sole element is {EX}",
-    ]:
-        [element_expr] = children
+    @exprd.put(r"{EXPR} : a List whose sole element is {EX}")
+    def _(expr, env0, _):
+        [element_expr] = expr.children
         (element_type, env1) = tc_expr(element_expr, env0); assert env1.equals(env0)
         return (ListType(element_type), env0)
 
-    elif p in [
-        r"{EXPR} : the list-concatenation of {EX} and {EX}",
-    ]:
-        [var, noi] = children
+    @exprd.put(r"{EXPR} : the list-concatenation of {EX} and {EX}")
+    def _(expr, env0, _):
+        [var, noi] = expr.children
         (t1, env1) = tc_expr(var, env0); assert env1 is env0
         (t2, env2) = tc_expr(noi, env0); assert env2 is env0
         if t1 == T_TBD and t2 == T_TBD:
@@ -8406,8 +8464,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             # assert t1.element_type == t2.element_type
         return (list_type, env0)
 
-    elif p == r"{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}":
-        [exa, exb, exc] = children
+    @exprd.put(r"{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}")
+    def _(expr, env0, _):
+        [exa, exb, exc] = expr.children
         # kludge
         if exa.source_text() == '_names1_':
             et = T_String
@@ -8423,149 +8482,164 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env3 = env2.ensure_expr_is_of_type(exc, lt)
         return (lt, env3)
 
-    elif p == r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}':
-        [var, _, _, _] = children
+    @exprd.put(r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}')
+    def _(expr, env0, _):
+        [var, _, _, _] = expr.children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
 
-    elif p == r'{EXPR} : a List whose elements are the first {var} elements of {var}':
-        [nvar, listvar] = children
+    @exprd.put(r'{EXPR} : a List whose elements are the first {var} elements of {var}')
+    def _(expr, env0, _):
+        [nvar, listvar] = expr.children
         env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
         (t, env1) = tc_expr(listvar, env0); assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
 
-    elif p == r"{EXPR} : the List of {nonterminal} items in {PROD_REF}, in source text order":
-        [nont, prod_ref] = children
+    @exprd.put(r"{EXPR} : the List of {nonterminal} items in {PROD_REF}, in source text order")
+    def _(expr, env0, _):
+        [nont, prod_ref] = expr.children
         return (ListType(T_Parse_Node), env0)
 
-    elif p == r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}":
-        [dsbwa, dsbwb] = children
+    @exprd.put(r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}")
+    def _(expr, env0, _):
+        [dsbwa, dsbwb] = expr.children
         assert dsbwa.source_text() == '[[Call]]'
         assert dsbwb.source_text() == '[[Construct]]'
         return (ListType(T_Tangible_), env0)
 
-    elif p == r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List":
-        [n_var, state_var] = children
+    @exprd.put(r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [n_var, state_var] = expr.children
         env0.assert_expr_is_of_type(n_var, T_MathInteger_)
         env0.assert_expr_is_of_type(state_var, T_MatchState)
         return (T_captures_entry_, env0)
 
-    elif p == r"{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}":
-        [var, literal, var2] = children
+    @exprd.put(r"{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}")
+    def _(expr, env0, _):
+        [var, literal, var2] = expr.children
         assert var.source_text() == var2.source_text()
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
 
-    elif p == r"{EX} : {var}'s _input_":
-        [var] = children
+    @exprd.put(r"{EX} : {var}'s _input_")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (ListType(T_character_), env1)
 
-    elif p == r"{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}":
-        [data_var, interval] = children
+    @exprd.put(r"{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}")
+    def _(expr, env0, _):
+        [data_var, interval] = expr.children
         env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
         env1.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
         return (ListType(T_MathNonNegativeInteger_), env1)
 
-    elif p == r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created":
-        [xref] = children
+    @exprd.put(r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
+    def _(expr, env0, _):
+        [xref] = expr.children
         return (ListType(T_SlotName_), env0)
 
     # --------------------------------------------------------
     # return T_Parse_Node
 
-    elif p == r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}":
-        [nonterminal, local_ref] = children
+    @exprd.put(r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}")
+    def _(expr, env0, _):
+        [nonterminal, local_ref] = expr.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (ptn_type_for(nonterminal), env0)
 
     # ----
 
-    elif p in [
-        r"{PROD_REF} : the {nonterminal} of {LOCAL_REF}",
-    ]:
-        [nonterminal, var] = children
+    @exprd.put(r"{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
+    def _(expr, env0, _):
+        [nonterminal, var] = expr.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         # XXX could check that t is a nonterminal that actually has a child of that type
         # but that requires having the whole grammar handy
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r'{PROD_REF} : this {nonterminal}':
-        [nonterminal] = children
+    @exprd.put(r'{PROD_REF} : this {nonterminal}')
+    def _(expr, env0, _):
+        [nonterminal] = expr.children
         # XXX check
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r'{PROD_REF} : {nonterminal}':
-        [nonterminal] = children
+    @exprd.put(r'{PROD_REF} : {nonterminal}')
+    def _(expr, env0, _):
+        [nonterminal] = expr.children
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r"{PROD_REF} : {nonterminal} {var}":
-        [nonterminal, var] = children
+    @exprd.put(r"{PROD_REF} : {nonterminal} {var}")
+    def _(expr, env0, _):
+        [nonterminal, var] = expr.children
         t = ptn_type_for(nonterminal)
         env0.assert_expr_is_of_type(var, t)
         return (t, env0)
 
-    elif p == r'{PROD_REF} : the {ORDINAL} {nonterminal}':
-        [ordinal, nonterminal] = children
+    @exprd.put(r'{PROD_REF} : the {ORDINAL} {nonterminal}')
+    def _(expr, env0, _):
+        [ordinal, nonterminal] = expr.children
         # XXX should check that the 'current' production has such.
         return (ptn_type_for(nonterminal), env0)
 
-    elif p in [
-        r'{PROD_REF} : the {nonterminal}',
-    ]:
-        nonterminal = children[-1]
+    @exprd.put(r'{PROD_REF} : the {nonterminal}')
+    def _(expr, env0, _):
+        nonterminal = expr.children[-1]
         return (ptn_type_for(nonterminal), env0)
 
-    elif p == r"{PROD_REF} : that {nonterminal}":
-        [nont] = children
+    @exprd.put(r"{PROD_REF} : that {nonterminal}")
+    def _(expr, env0, _):
+        [nont] = expr.children
         return (ptn_type_for(nont), env0)
 
-    elif p == r"{EXPR} : an instance of the production {h_emu_grammar}":
-        [emu_grammar] = children
+    @exprd.put(r"{EXPR} : an instance of the production {h_emu_grammar}")
+    def _(expr, env0, _):
+        [emu_grammar] = expr.children
         assert emu_grammar.source_text() == '<emu-grammar>FormalParameters : [empty]</emu-grammar>'
         return (ptn_type_for('FormalParameters'), env0)
 
-    elif p == r"{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}":
-        [*nont_, var] = children
+    @exprd.put(r"{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}")
+    def _(expr, env0, _):
+        [*nont_, var] = expr.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Parse_Node, env0)
 
-    elif p == r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse":
-        [var] = children
+    @exprd.put(r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
         return (T_Parse_Node, env0)
 
-    elif p in [
-        r"{PROD_REF} : this phrase",
-        r"{PROD_REF} : this production",
-    ]:
+    @exprd.put(r"{PROD_REF} : this phrase")
+    @exprd.put(r"{PROD_REF} : this production")
+    def _(expr, env0, _):
         return (T_Parse_Node, env0)
 
-    elif p in [
-        r"{PROD_REF} : the derived {nonterminal}",
-    ]:
-        [nont] = children
+    @exprd.put(r"{PROD_REF} : the derived {nonterminal}")
+    def _(expr, env0, _):
+        [nont] = expr.children
         return (T_Parse_Node, env0)
 
-    elif p == r"{PROD_REF} : the {nonterminal} containing {LOCAL_REF}":
-        [nonta, local_ref] = children
+    @exprd.put(r"{PROD_REF} : the {nonterminal} containing {LOCAL_REF}")
+    def _(expr, env0, _):
+        [nonta, local_ref] = expr.children
         return (T_Parse_Node, env0)
 
     # --------------------------------------------------------
     # return T_Object
 
-    elif p == r'{EXPR} : a newly created object with an internal slot for each name in {var}':
-        [var] = children
+    @exprd.put(r'{EXPR} : a newly created object with an internal slot for each name in {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
         return (T_Object, env1)
 
-    elif p in [
-        r"{LITERAL} : {percent_word}",
-    ]:
-        [percent_word] = children
+    @exprd.put(r"{LITERAL} : {percent_word}")
+    def _(expr, env0, _):
+        [percent_word] = expr.children
         pws = percent_word.source_text()
         if pws in [
             '%Promise%',
@@ -8579,8 +8653,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (rt, env0)
         # We could be more specific in many cases, but I'm not sure it would make any difference.
 
-    elif p == r"{EXPR} : {var}'s intrinsic object named {var}":
-        [r_var, n_var] = children
+    @exprd.put(r"{EXPR} : {var}'s intrinsic object named {var}")
+    def _(expr, env0, _):
+        [r_var, n_var] = expr.children
         env0.assert_expr_is_of_type(r_var, T_Realm_Record)
         env0.assert_expr_is_of_type(n_var, T_String)
         return (T_Object, env0)
@@ -8588,98 +8663,109 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return T_CharSet
 
-    elif p == r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}':
-        [var1, var2] = children
+    @exprd.put(r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}')
+    def _(expr, env0, _):
+        [var1, var2] = expr.children
         env1 = env0.ensure_expr_is_of_type(var1, T_MathInteger_)
         env2 = env0.ensure_expr_is_of_type(var2, T_MathInteger_)
         assert env1 is env0
         assert env2 is env0
         return (T_CharSet, env0)
 
-    elif p in [
-        r"{EXPR} : the CharSet containing the single character {code_point_lit}",
-        r"{EXPR} : the CharSet containing the single character {var}",
-    ]:
-        [ex] = children
+    @exprd.put(r"{EXPR} : the CharSet containing the single character {code_point_lit}")
+    @exprd.put(r"{EXPR} : the CharSet containing the single character {var}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.ensure_expr_is_of_type(ex, T_character_)
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing the character matched by {PROD_REF}":
-        [prod_ref] = children
+    @exprd.put(r"{EXPR} : the CharSet containing the character matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [prod_ref] = expr.children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : a one-element CharSet containing the character {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : a one-element CharSet containing the character {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the union of CharSets {var}, {var} and {var}":
-        [va, vb, vc] = children
+    @exprd.put(r"{EXPR} : the union of CharSets {var}, {var} and {var}")
+    def _(expr, env0, _):
+        [va, vb, vc] = expr.children
         enva = env0.ensure_expr_is_of_type(va, T_CharSet)
         envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
         envc = env0.ensure_expr_is_of_type(vc, T_CharSet)
         return (T_CharSet, envs_or([enva, envb, envc]))
 
-    elif p in [
-        r"{EXPR} : the union of {var} and {var}",
-        r"{EXPR} : the union of CharSets {var} and {var}",
-    ]:
-        [va, vb] = children
+    @exprd.put(r"{EXPR} : the union of {var} and {var}")
+    @exprd.put(r"{EXPR} : the union of CharSets {var} and {var}")
+    def _(expr, env0, _):
+        [va, vb] = expr.children
         enva = env0.ensure_expr_is_of_type(va, T_CharSet)
         envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
         return (T_CharSet, env_or(enva, envb))
 
-    elif p == r"{EXPR} : the CharSet of all characters":
-        [] = children
+    @exprd.put(r"{EXPR} : the CharSet of all characters")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`":
-        [] = children
+    @exprd.put(r"{EXPR} : the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing every character in {STR_LITERAL}":
-        [strlit] = children
+    @exprd.put(r"{EXPR} : the CharSet containing every character in {STR_LITERAL}")
+    def _(expr, env0, _):
+        [strlit] = expr.children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}":
-        [noi] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [noi] = expr.children
         env0.assert_expr_is_of_type(noi, T_CharSet)
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions":
-        [nont1, nont2] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions")
+    def _(expr, env0, _):
+        [nont1, nont2] = expr.children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the empty CharSet":
-        [] = children
+    @exprd.put(r"{EXPR} : the empty CharSet")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}":
-        [va, vb] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}")
+    def _(expr, env0, _):
+        [va, vb] = expr.children
         env0.assert_expr_is_of_type(va, ListType(T_code_point_))
         env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}":
-        [v] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}")
+    def _(expr, env0, _):
+        [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”":
-        [v] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”")
+    def _(expr, env0, _):
+        [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
 
-    elif p in [
-        r"{EXPR} : the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}",
-    ]:
-        [noi] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [noi] = expr.children
         env0.assert_expr_is_of_type(noi, T_CharSet)
         return (T_CharSet, env0)
 
-    elif p == r"{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}":
-        [loop_var, loop_var2, cs_var, noi, cs_var2] = children
+    @exprd.put(r"{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}")
+    def _(expr, env0, _):
+        [loop_var, loop_var2, cs_var, noi, cs_var2] = expr.children
         assert loop_var.source_text() == loop_var2.source_text()
         assert cs_var.source_text() == cs_var2.source_text()
         env0.assert_expr_is_of_type(cs_var, T_CharSet)
@@ -8687,15 +8773,17 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1.assert_expr_is_of_type(noi, T_character_)
         return (T_CharSet, env0)
 
-    elif p == r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar}":
-        [emu_grammar] = children
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar}")
+    def _(expr, env0, _):
+        [emu_grammar] = expr.children
         return (T_CharSet, env0)
 
     # -------------------------------------------------
     # return T_function_object_
 
-    elif p == r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot':
-        [var1, var2, var3, dsbn] = children
+    @exprd.put(r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot')
+    def _(expr, env0, _):
+        [var1, var2, var3, dsbn] = expr.children
         env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
         # env1 = env0.ensure_expr_is_of_type(var2, )
         return (T_function_object_, env1)
@@ -8703,54 +8791,61 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # ------------------------------------------------
     # return T_alg_steps
 
-    elif p == r"{EXPR} : the algorithm steps defined in {h_emu_xref}":
-        [emu_xref] = children
+    @exprd.put(r"{EXPR} : the algorithm steps defined in {h_emu_xref}")
+    def _(expr, env0, _):
+        [emu_xref] = expr.children
         return (T_alg_steps, env0)
 
     # ------------------------------------------------
     # return T_execution_context
 
-    elif p == r"{EXPR} : a new execution context":
-        [] = children
+    @exprd.put(r"{EXPR} : a new execution context")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_execution_context, env0)
 
-    elif p == r"{EXPR} : a new ECMAScript code execution context":
-        [] = children
+    @exprd.put(r"{EXPR} : a new ECMAScript code execution context")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_execution_context, env0)
 
-    elif p == r'{EXPR} : the running execution context':
-        [] = children
+    @exprd.put(r'{EXPR} : the running execution context')
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_execution_context, env0)
 
-    elif p == r'{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}':
-        [literal] = children
+    @exprd.put(r'{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}')
+    def _(expr, env0, _):
+        [literal] = expr.children
         return (T_execution_context, env0)
 
-    elif p == r"{EXPR} : the second to top element of the execution context stack":
-        [] = children
+    @exprd.put(r"{EXPR} : the second to top element of the execution context stack")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_execution_context, env0)
 
     # -------------------------------------------------
 
-    elif p in [
-        r"{EXPR} : the value currently bound to {var} in {var}",
-        r"{SETTABLE} : the bound value for {var} in {var}",
-    ]:
-        [n_var, er_var] = children
+    @exprd.put(r"{EXPR} : the value currently bound to {var} in {var}")
+    @exprd.put(r"{SETTABLE} : the bound value for {var} in {var}")
+    def _(expr, env0, _):
+        [n_var, er_var] = expr.children
         env0.assert_expr_is_of_type(n_var, T_String)
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return (T_Tangible_, env0)
 
-    elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*":
-        [avar, bvar, cvar, dvar] = children
+    @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
+    def _(expr, env0, _):
+        [avar, bvar, cvar, dvar] = expr.children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, T_Tangible_)
         env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
         return (T_Tangible_ | T_throw_, env0)
 
-    elif p == r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value":
-        [avar, bvar, cvar, dvar] = children
+    @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
+    def _(expr, env0, _):
+        [avar, bvar, cvar, dvar] = expr.children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
@@ -8760,16 +8855,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return component of T_execution_context
 
-    elif p in [
-        r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} component of {var}",
-        r"{SETTABLE} : The {EXECUTION_CONTEXT_COMPONENT} of {var}",
-        r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}",
-        r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}",
-    ]:
-        if p.endswith('{var}'):
-            [component_name, var] = children
+    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} component of {var}")
+    @exprd.put(r"{SETTABLE} : The {EXECUTION_CONTEXT_COMPONENT} of {var}")
+    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}")
+    @exprd.put(r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}")
+    def _(expr, env0, _):
+        if expr.prod.rhs_s.endswith('{var}'):
+            [component_name, var] = expr.children
         else:
-            [var, component_name] = children
+            [var, component_name] = expr.children
 
         component_name = component_name.source_text()
 
@@ -8804,13 +8898,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return proc type
 
-    elif p == r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}':
-        [emu_xref, var] = children
+    @exprd.put(r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}')
+    def _(expr, env0, _):
+        [emu_xref, var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
         return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
 
-    elif p == r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}":
-        [clo_kind, clo_parameters, clo_captures, _, commands] = children
+    @exprd.put(r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}")
+    def _(expr, env0, _):
+        [clo_kind, clo_parameters, clo_captures, _, commands] = expr.children
         clo_kind = clo_kind.source_text()
 
         #XXX Should assert no intersection between clo_parameters and clo_captures
@@ -8856,53 +8952,55 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
     # -------------------------------------------------
     # return Environment_Record
 
-    elif p in [
-        r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings',
-        r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record',
-    ]:
-        [kind] = children
+    @exprd.put(r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings')
+    @exprd.put(r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record')
+    def _(expr, env0, _):
+        [kind] = expr.children
         t = type_for_environment_record_kind(kind)
         return (t, env0)
 
     # -------------------------------------------------
     # return T_Realm_Record
 
-    elif p == r'{EX} : the current Realm Record':
-        [] = children
+    @exprd.put(r'{EX} : the current Realm Record')
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Realm_Record, env0)
 
-    elif p == r"{EXPR} : a new Realm Record":
-        [] = children
+    @exprd.put(r"{EXPR} : a new Realm Record")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Realm_Record, env0)
 
     # -------------------------------------------------
     # whatever
 
-    elif expr.prod.lhs_s == "{nonterminal}":
+    @exprd.put(r'{nonterminal} : \| [A-Za-z][A-Za-z0-9]* \?? (\[ .+? \])? \|')
+    def _(expr, env0, _):
         nont_name = expr.source_text()[1:-1]
         # Note that |Foo| often denotes a Parse Node,
         # rather than a grammar symbol,
         # but we capture those cases before they can get to here.
         return (T_grammar_symbol_, env0)
 
-    elif p == r"{EXPR} : the grammar symbol {nonterminal}":
-        [nont] = children
+    @exprd.put(r"{EXPR} : the grammar symbol {nonterminal}")
+    def _(expr, env0, _):
+        [nont] = expr.children
         return (T_grammar_symbol_, env0)
 
-    elif p in [
-        r"{G_SYM} : {nonterminal}",
-        r"{G_SYM} : {TERMINAL}",
-    ]:
+    @exprd.put(r"{G_SYM} : {nonterminal}")
+    @exprd.put(r"{G_SYM} : {TERMINAL}")
+    def _(expr, env0, _):
         return (T_grammar_symbol_, env0)
 
-    elif expr.prod.lhs_s == '{var}':
-        [var_name] = children
+    @exprd.put(r'{var} : \b _ [A-Za-z][A-Za-z0-9]* _ \b')
+    def _(expr, env0, _):
+        [var_name] = expr.children
         return (env0.vars[var_name], env0)
 
-    elif p in [
-        r'{SETTABLE} : {var}',
-    ]:
-        [var] = children
+    @exprd.put(r'{SETTABLE} : {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
         [var_name] = var.children
         if var_name not in env0.vars:
             add_pass_error(
@@ -8915,31 +9013,33 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             # print("the type of %s is %s" % (var_name, t))
         return (t, env0)
 
-    elif p in [
-        r'{EXPR} : the Agent Record of the surrounding agent',
-        r"{EXPR} : the surrounding agent's Agent Record",
-    ]:
-        [] = children
+    @exprd.put(r'{EXPR} : the Agent Record of the surrounding agent')
+    @exprd.put(r"{EXPR} : the surrounding agent's Agent Record")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Agent_Record, env0)
 
-    elif p == r'{EXPR} : a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception':
-        [var, error_type] = children
+    @exprd.put(r'{EXPR} : a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception')
+    def _(expr, env0, _):
+        [var, error_type] = expr.children
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
         proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Data_Block, env1)
 
-    elif p == r'{EXPR} : a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception':
-        [var, error_type] = children
+    @exprd.put(r'{EXPR} : a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception')
+    def _(expr, env0, _):
+        [var, error_type] = expr.children
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
         proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Shared_Data_Block, env1)
 
-    elif p == '{RECORD_CONSTRUCTOR} : {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }':
-        [record_constructor_prefix, fields] = children
+    @exprd.put('{RECORD_CONSTRUCTOR} : {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }')
+    def _(expr, env0, _):
+        [record_constructor_prefix, fields] = expr.children
         constructor_prefix = record_constructor_prefix.source_text().replace('the ', '')
 
         if constructor_prefix == 'Completion Record':
@@ -9052,13 +9152,15 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return ( NamedType(record_type_name), env2 )
 
-    elif p == r'{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below':
-        [emu_xref, var] = children
+    @exprd.put(r'{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below')
+    def _(expr, env0, _):
+        [emu_xref, var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         return (T_Iterator_object_, env1)
 
-    elif p == r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}":
-        [noi] = children
+    @exprd.put(r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, expr_value_will_be_discarded):
+        [noi] = expr.children
         (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded)
         if noi_t == T_TBD:
             # Don't do the comparison to Normal,
@@ -9080,8 +9182,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             #     # and just rely on Abrupt values being flagged if necessary down the line.
             return (noi_t, env1)
 
-    elif p == r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}':
-        [noi] = children
+    @exprd.put(r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
+    def _(expr, env0, _):
+        [noi] = expr.children
         (noi_t, env1) = tc_expr(noi, env0)
 
         if noi_t == T_TBD:
@@ -9107,12 +9210,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return (normal_part_of_type, env1)
 
-    elif p in [
-        r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}',
-        r"{EX} : ? {DOTTING}",
-        r"{EX} : ? {var}",
-    ]:
-        [operand] = children
+    @exprd.put(r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}')
+    @exprd.put(r"{EX} : ? {DOTTING}")
+    @exprd.put(r"{EX} : ? {var}")
+    def _(expr, env0, _):
+        [operand] = expr.children
         (operand_t, env1) = tc_expr(operand, env0)
 
         if operand_t == T_TBD:
@@ -9177,11 +9279,10 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
 
         return (normal_part_of_type, env2)
 
-    elif p in [
-        r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}",
-        r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context",
-    ]:
-        [component_name] = children
+    @exprd.put(r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}")
+    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context")
+    def _(expr, env0, _):
+        [component_name] = expr.children
         t = {
             'LexicalEnvironment' : T_Environment_Record,
             'VariableEnvironment': T_Environment_Record,
@@ -9190,26 +9291,28 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         }[component_name.source_text()]
         return (t, env0)
 
-    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value':
-        [var] = children
+    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_IEEE_binary32_, env1)
 
-    elif p == r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value':
-        [var] = children
+    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value')
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_IEEE_binary64_, env1)
 
-    elif p == r"{EXPR} : a copy of {var}'s _captures_ List":
-        [var] = children
+    @exprd.put(r"{EXPR} : a copy of {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
 
-    elif p in [
-        r"{SETTABLE} : {var}[{EX}]",
-        r"{SETTABLE} : {DOTTING}[{EX}]",
-    ]:
-        [seq_ex, subscript_var] = children
+    @exprd.put(r"{SETTABLE} : {var}[{EX}]")
+    @exprd.put(r"{SETTABLE} : {DOTTING}[{EX}]")
+    def _(expr, env0, _):
+        [seq_ex, subscript_var] = expr.children
         (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
         env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
         if isinstance(seq_type, ListType):
@@ -9229,33 +9332,34 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, seq_type
         return (item_type, env0)
 
-    elif p == r"{EXPR} : the MatchState ({var}, {EX}, {var})":
-        [input_var, ex, var] = children
+    @exprd.put(r"{EXPR} : the MatchState ({var}, {EX}, {var})")
+    def _(expr, env0, _):
+        [input_var, ex, var] = expr.children
         env0.assert_expr_is_of_type(input_var, ListType(T_character_))
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
         env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
         return (T_MatchState, env0)
 
-    elif p == r"{EXPR} : {var}'s MatchState":
+    @exprd.put(r"{EXPR} : {var}'s MatchState")
+    def _(expr, env0, _):
         # todo?: change to Assert: _r_ is a MatchState
-        [var] = children
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MatchState, env0)
 
-    elif p == r"{EXPR} : an empty Set":
-        [] = children
+    @exprd.put(r"{EXPR} : an empty Set")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Set, env0)
 
-    elif p in [
-        r"{EX} : « »",
-    ]:
-        [] = children
+    @exprd.put(r"{EX} : « »")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_List, env0)
 
-    elif p in [
-        r"{EX} : « {EXLIST} »",
-    ]:
-        [exlist] = children
+    @exprd.put(r"{EX} : « {EXLIST} »")
+    def _(expr, env0, _):
+        [exlist] = expr.children
         ex_types = set()
         for ex in exes_in_exlist(exlist):
             (ex_type, env1) = tc_expr(ex, env0); assert env1 is env0
@@ -9264,35 +9368,39 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         list_type = ListType(element_type)
         return (list_type, env0)
 
-    elif p == r"{EXPR} : {var}'s _captures_ List":
-        [var] = children
+    @exprd.put(r"{EXPR} : {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
 
-    elif p == r"{EX} : {DSBN}":
-        [dsbn] = children
+    @exprd.put(r"{EX} : {DSBN}")
+    def _(expr, env0, _):
+        [dsbn] = expr.children
         return (T_SlotName_, env0)
 
-    elif p in [
-        r"{EXPR} : a newly created Property Descriptor with no fields",
-        r"{EXPR} : a new Property Descriptor that initially has no fields",
-    ]:
-        [] = children
+    @exprd.put(r"{EXPR} : a newly created Property Descriptor with no fields")
+    @exprd.put(r"{EXPR} : a new Property Descriptor that initially has no fields")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Property_Descriptor, env0)
 
-    elif p == r"{EXPR} : the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}":
-        [emu_xref1, emu_xref2, emu_xref3, dsbn, var] = children
+    @exprd.put(r"{EXPR} : the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}")
+    def _(expr, env0, _):
+        [emu_xref1, emu_xref2, emu_xref3, dsbn, var] = expr.children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (T_Property_Descriptor, env0)
 
-    elif p == r"{EXPR} : {var}'s own property whose key is {var}":
-        [obj_var, key_var] = children
+    @exprd.put(r"{EXPR} : {var}'s own property whose key is {var}")
+    def _(expr, env0, _):
+        [obj_var, key_var] = expr.children
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
         return (T_property_, env0)
 
-    elif p == r"{SETTABLE} : {var}'s {DSBN} attribute":
-        [prop_var, dsbn] = children
+    @exprd.put(r"{SETTABLE} : {var}'s {DSBN} attribute")
+    def _(expr, env0, _):
+        [prop_var, dsbn] = expr.children
         dsbn_name = dsbn.source_text()[2:-2]
         if dsbn_name in ['Enumerable', 'Configurable']:
             env0.assert_expr_is_of_type(prop_var, T_property_)
@@ -9307,56 +9415,53 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0
         return (result_type, env0)
 
-    elif p == r"{SETTABLE} : the {DSBN} internal slot of this Date object":
-        [dsbn] = children
+    @exprd.put(r"{SETTABLE} : the {DSBN} internal slot of this Date object")
+    def _(expr, env0, _):
+        [dsbn] = expr.children
         dsbn_name = dsbn.source_text()[2:-2]
         assert dsbn_name == 'DateValue'
         return (T_Number, env0)
 
-    elif p == r"{EX} : a newly created {ERROR_TYPE} object":
-        [error_type] = children
+    @exprd.put(r"{EX} : a newly created {ERROR_TYPE} object")
+    def _(expr, env0, _):
+        [error_type] = expr.children
         return (type_for_ERROR_TYPE(error_type), env0)
 
-    elif p in [
-        r"{EXPR} : a copy of {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : a copy of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         return (t, env1)
 
-    elif p in [
-        r"{EXPR} : a copy of the List {var}",
-        r"{EXPR} : a List whose elements are the elements of {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : a copy of the List {var}")
+    @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         t = env0.assert_expr_is_of_type(var, T_List)
         return (t, env0)
 
-    elif p in [
-        r"{EXPR} : the first element of {var}",
-        r"{EXPR} : the second element of {var}",
-        r"{EXPR} : the last element in {var}",
-        r"{EXPR} : the last element of {var}",
-    ]:
+    @exprd.put(r"{EXPR} : the first element of {var}")
+    @exprd.put(r"{EXPR} : the second element of {var}")
+    @exprd.put(r"{EXPR} : the last element in {var}")
+    @exprd.put(r"{EXPR} : the last element of {var}")
+    def _(expr, env0, _):
         # todo: replace with ad hoc record
-        [var] = children
+        [var] = expr.children
         list_type = env0.assert_expr_is_of_type(var, T_List)
         return (list_type.element_type, env0)
 
-    elif p in [
-        r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}",
-        r"{EXPR} : the sole element of {var}",
-    ]:
-        [noi] = children
+    @exprd.put(r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EXPR} : the sole element of {var}")
+    def _(expr, env0, _):
+        [noi] = expr.children
         list_type = env0.assert_expr_is_of_type(noi, T_List)
         return (list_type.element_type, env0)
 
-    elif p in [
-        r"{EXPR} : the element in {EX} whose {DSBN} is {EX}",
-        r"{EXPR} : the element of {EX} whose {DSBN} field is {var}",
-        r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}",
-    ]:
-        [list_ex, dsbn, val_ex] = children
+    @exprd.put(r"{EXPR} : the element in {EX} whose {DSBN} is {EX}")
+    @exprd.put(r"{EXPR} : the element of {EX} whose {DSBN} field is {var}")
+    @exprd.put(r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}")
+    def _(expr, env0, _):
+        [list_ex, dsbn, val_ex] = expr.children
         dsbn_name = dsbn.source_text()[2:-2]
         (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
@@ -9367,297 +9472,338 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1.assert_expr_is_of_type(val_ex, whose_type)
         return (et, env1)
 
-    elif p == r"{EXPR} : a new Record":
+    @exprd.put(r"{EXPR} : a new Record")
+    def _(expr, env0, _):
         # Once, in CreateIntrinsics
-        [] = children
+        [] = expr.children
         return (T_Intrinsics_Record, env0)
 
-    elif p == r"{EXPR} : such an object created in a host-defined manner":
-        [] = children
+    @exprd.put(r"{EXPR} : such an object created in a host-defined manner")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Object, env0)
 
-    elif p == r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row":
-        [_, v, _] = children
+    @exprd.put(r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
+    def _(expr, env0, _):
+        [_, v, _] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-    elif p == r"{EXPR} : the List of Unicode code points {var}":
-        [v] = children
+    @exprd.put(r"{EXPR} : the List of Unicode code points {var}")
+    def _(expr, env0, _):
+        [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-    elif p == r"{EXPR} : the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row":
-        [v] = children
+    @exprd.put(r"{EXPR} : the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row")
+    def _(expr, env0, _):
+        [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
     # ----
 
-    elif p == r"{EXPR} : the WaiterList that is referenced by the pair ({var}, {var})":
-        [sdb, i] = children
+    @exprd.put(r"{EXPR} : the WaiterList that is referenced by the pair ({var}, {var})")
+    def _(expr, env0, _):
+        [sdb, i] = expr.children
         env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         env0.assert_expr_is_of_type(i, T_MathInteger_)
         return (T_WaiterList, env0)
 
-    elif p == r"{EXPR} : a reference to the list of waiters in {var}":
-        [wl] = children
+    @exprd.put(r"{EXPR} : a reference to the list of waiters in {var}")
+    def _(expr, env0, _):
+        [wl] = expr.children
         env0.assert_expr_is_of_type(wl, T_WaiterList)
         return (ListType(T_agent_signifier_), env0)
 
-    elif p in [
-        r"{EX} : *this* value",
-        r"{EX} : the *this* value",
-    ]:
+    @exprd.put(r"{EX} : *this* value")
+    @exprd.put(r"{EX} : the *this* value")
+    def _(expr, env0, _):
         return (T_Tangible_, env0)
 
-    elif p == r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}":
-        [s_var, nf_var, h_a] = children
+    @exprd.put(r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}")
+    def _(expr, env0, _):
+        [s_var, nf_var, h_a] = expr.children
         env0.assert_expr_is_of_type(s_var, T_String)
         env0.assert_expr_is_of_type(nf_var, T_String)
         return (T_String, env0)
 
-    elif p in [
-        r"{EXPR} : the String value that is a copy of {var} with both leading and trailing white space removed",
-        r"{EXPR} : the String value that is a copy of {var} with leading white space removed",
-        r"{EXPR} : the String value that is a copy of {var} with trailing white space removed",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with both leading and trailing white space removed")
+    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with leading white space removed")
+    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with trailing white space removed")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value containing the single code unit {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the String value containing the single code unit {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_code_unit_)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}":
-        [var1, var2, nont] = children
+    @exprd.put(r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}")
+    def _(expr, env0, _):
+        [var1, var2, nont] = expr.children
         assert same_source_text(var1, var2)
         env0.assert_expr_is_of_type(var1, T_String)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : this Date object":
-        [] = children
+    @exprd.put(r"{EXPR} : this Date object")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Object | ThrowType(T_TypeError), env0)
 
-    elif p == r"{EXPR} : the List that is {DOTTING}":
-        [dotting] = children
+    @exprd.put(r"{EXPR} : the List that is {DOTTING}")
+    def _(expr, env0, _):
+        [dotting] = expr.children
         (dotting_type, env1) = tc_expr(dotting, env0); assert env1 is env0
         dotting_type.is_a_subtype_of_or_equal_to(T_List)
         return (dotting_type, env0)
 
-    elif p == r"{EXPR} : the number of leading 1 bits in {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the number of leading 1 bits in {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : the number of leading zero bits in the unsigned 32-bit binary representation of {var}":
-        [var] = children
+    @exprd.put(r"{EXPR} : the number of leading zero bits in the unsigned 32-bit binary representation of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_IntegralNumber_)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)":
-        [var] = children
+    @exprd.put(r"{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (ListType(T_code_unit_), env0)
 
-    elif p in [
-        r"{EX} : the remaining {EX} code units of {var}",
-        r"{EXPR} : the other {EX} code units of {var}",
-    ]:
-        [ex, var] = children
+    @exprd.put(r"{EX} : the remaining {EX} code units of {var}")
+    @exprd.put(r"{EXPR} : the other {EX} code units of {var}")
+    def _(expr, env0, _):
+        [ex, var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
         return (T_String, env1)
 
-    elif p == r"{EX} : the first {SUM} code units of {var}":
-        [summ, var] = children
+    @exprd.put(r"{EX} : the first {SUM} code units of {var}")
+    def _(expr, env0, _):
+        [summ, var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         env1 = env0.ensure_expr_is_of_type(summ, T_MathInteger_)
         return (T_String, env1)
 
-    elif p == r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned":
-        [list_var, list_var2] = children
+    @exprd.put(r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned")
+    def _(expr, env0, _):
+        [list_var, list_var2] = expr.children
         assert same_source_text(list_var, list_var2)
         env0.assert_expr_is_of_type(list_var, ListType(T_code_unit_))
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the String value that is made from {var} copies of {var} appended together":
-        [n_var, s_var] = children
+    @exprd.put(r"{EXPR} : the String value that is made from {var} copies of {var} appended together")
+    def _(expr, env0, _):
+        [n_var, s_var] = expr.children
         env0.assert_expr_is_of_type(s_var, T_String)
         env1 = env0.ensure_expr_is_of_type(n_var, T_MathInteger_)
         return (T_String, env1)
 
-    elif p in [
-        r"{EX} : the GlobalSymbolRegistry List",
-        r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})",
-    ]:
+    @exprd.put(r"{EX} : the GlobalSymbolRegistry List")
+    @exprd.put(r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})")
+    def _(expr, env0, _):
         return (ListType(T_GlobalSymbolRegistry_Record), env0)
 
-    elif p == r"{EXPR} : a new unique Symbol value whose {DSBN} value is {var}":
-        [dsbn, var] = children
+    @exprd.put(r"{EXPR} : a new unique Symbol value whose {DSBN} value is {var}")
+    def _(expr, env0, _):
+        [dsbn, var] = expr.children
         assert dsbn.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String | T_Undefined)
         return (T_Symbol, env0)
 
-    elif p == r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35":
-        [zvar, rvar] = children
+    @exprd.put(r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35")
+    def _(expr, env0, _):
+        [zvar, rvar] = expr.children
         env0.assert_expr_is_of_type(zvar, T_String)
         env0.assert_expr_is_of_type(rvar, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{EXPR} : the String value consisting of repeated concatenations of {EX} truncated to length {var}":
-        [ex, var] = children
+    @exprd.put(r"{EXPR} : the String value consisting of repeated concatenations of {EX} truncated to length {var}")
+    def _(expr, env0, _):
+        [ex, var] = expr.children
         env0.assert_expr_is_of_type(ex, T_String)
         env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         return (T_String, env1)
 
-    elif p == r"{EX} : {backticked_word}":
-        [backticked_word] = children
+    @exprd.put(r"{EX} : {backticked_word}")
+    def _(expr, env0, _):
+        [backticked_word] = expr.children
         word = backticked_word.source_text()[1:-1]
         if word == 'General_Category':
             return (T_Unicode_code_points_, env0)
         else:
             assert 0, word
 
-    elif p == r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}":
-        [dsbna, dsbnb, ex] = children
+    @exprd.put(r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}")
+    def _(expr, env0, _):
+        [dsbna, dsbnb, ex] = expr.children
         assert dsbna.source_text() == '[[Key]]'
         assert dsbnb.source_text() == '[[Value]]'
         env0.assert_expr_is_of_type(ex, T_MapData_record_)
         return (T_MapData_record_, env0)
 
-    elif p == r"{EXPR} : the intrinsic function {percent_word}":
-        [percent_word] = children
+    @exprd.put(r"{EXPR} : the intrinsic function {percent_word}")
+    def _(expr, env0, _):
+        [percent_word] = expr.children
         return (T_function_object_, env0)
 
-    elif p == r"{EXPR} : the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})":
-        [str_lit] = children
+    @exprd.put(r"{EXPR} : the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})")
+    def _(expr, env0, _):
+        [str_lit] = expr.children
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the index within {var} of the first such code unit":
-        [var] = children
+    @exprd.put(r"{EXPR} : the index within {var} of the first such code unit")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}":
-        [emu_xref, dotting] = children
+    @exprd.put(r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}")
+    def _(expr, env0, _):
+        [emu_xref, dotting] = expr.children
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_function_object_, env0)
 
-    elif p == r"{EXPR} : the String value containing {var} occurrences of {code_unit_lit}":
-        [n, lit] = children
+    @exprd.put(r"{EXPR} : the String value containing {var} occurrences of {code_unit_lit}")
+    def _(expr, env0, _):
+        [n, lit] = expr.children
         env0.assert_expr_is_of_type(lit, T_code_unit_)
         return (T_String, env0)
 
-    elif p == '''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''':
+    @exprd.put('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
+    def _(expr, env0, _):
         # XXX
         return (T_String, env0)
 
-    elif p == r"{EX} : NewTarget":
-        [] = children
+    @exprd.put(r"{EX} : NewTarget")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_constructor_object_ | T_Undefined, env0)
 
-    elif p == r"{EXPR} : the active function object":
-        [] = children
+    @exprd.put(r"{EXPR} : the active function object")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_function_object_, env0)
 
-    elif p == "{EX} : {h_code_quote}":
-        [h_code_quote] = children
+    @exprd.put("{EX} : {h_code_quote}")
+    def _(expr, env0, _):
+        [h_code_quote] = expr.children
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the time value (UTC) identifying the current time":
-        [] = children
+    @exprd.put(r"{EXPR} : the time value (UTC) identifying the current time")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_IntegralNumber_, env0)
 
-    elif p == r"{EXPR} : the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})":
-        [var, emu_xref] = children
+    @exprd.put(r"{EXPR} : the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})")
+    def _(expr, env0, _):
+        [var, emu_xref] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Number, env0)
 
-    elif p == r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor":
-        [emu_xref] = children
+    @exprd.put(r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor")
+    def _(expr, env0, _):
+        [emu_xref] = expr.children
         return (T_String, env0)
 
-    elif p == r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}":
-        [dotting, dsbn, e] = children
+    @exprd.put(r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [dotting, dsbn, e] = expr.children
         env0.assert_expr_is_of_type(dotting, ListType(T_Agent_Events_Record))
         assert dsbn.source_text() == '[[AgentSignifier]]'
         env0.assert_expr_is_of_type(e, T_agent_signifier_)
         return (T_Agent_Events_Record, env0)
 
-    elif p in [
-        r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode",
-        r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary64 format",
-        r"{EXPR} : the ECMAScript Number value corresponding to {var}",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode")
+    @exprd.put(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary64 format")
+    @exprd.put(r"{EXPR} : the ECMAScript Number value corresponding to {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_Number)
         # XXX The intermediates are not really T_Number
         return (T_Number, env0)
 
-    elif p == r"{EX} : The remainder of dividing {EX} by {EX}":
-        [a, b] = children
+    @exprd.put(r"{EX} : The remainder of dividing {EX} by {EX}")
+    def _(expr, env0, _):
+        [a, b] = expr.children
         env0.assert_expr_is_of_type(a, T_MathInteger_)
         env0.assert_expr_is_of_type(b, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-    elif p == r"{PAIR} : ({EX}, {EX})":
-        [a, b] = children
+    @exprd.put(r"{PAIR} : ({EX}, {EX})")
+    def _(expr, env0, _):
+        [a, b] = expr.children
         # over-specific:
         env0.assert_expr_is_of_type(a, T_event_)
         env0.assert_expr_is_of_type(b, T_event_)
         return (T_event_pair_, env0)
 
-    elif p == "{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}":
-        var = children[0]
+    @exprd.put("{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}")
+    def _(expr, env0, _):
+        var = expr.children[0]
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
 
-    elif p == r"{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}":
-        [var, nont] = children
+    @exprd.put(r"{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}")
+    def _(expr, env0, _):
+        [var, nont] = expr.children
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
 
     # explicit-exotics:
-    elif p in [
-        r"{EX} : the internal slots listed in {h_emu_xref}",
-    ]:
+    @exprd.put(r"{EX} : the internal slots listed in {h_emu_xref}")
+    def _(expr, env0, _):
         # XXX really, the *names* of the internal slots...
         return (ListType(T_SlotName_), env0)
 
-    elif p == r"{EX} : {backticked_oth}":
-        [_] = children
+    @exprd.put(r"{EX} : {backticked_oth}")
+    def _(expr, env0, _):
+        [_] = expr.children
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}":
-        [var, xref] = children
+    @exprd.put(r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}")
+    def _(expr, env0, _):
+        [var, xref] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_Primitive)
         assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
         return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
 
-    elif p == r"{EX} : the CaptureRange {PAIR}":
-        [pair] = children
+    @exprd.put(r"{EX} : the CaptureRange {PAIR}")
+    def _(expr, env0, _):
+        [pair] = expr.children
         # XXX
         return (T_CaptureRange, env0)
 
-    elif p == r"{EXPR} : a new Synchronize event":
-        [] = children
+    @exprd.put(r"{EXPR} : a new Synchronize event")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Synchronize_event, env0)
 
-    elif p == r"{SETTABLE} : the Synchronize event in {var}":
-        [var] = children
+    @exprd.put(r"{SETTABLE} : the Synchronize event in {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
-    elif p == r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements":
-        [var] = children
+    @exprd.put(r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
 
     # for PR #1961 compound_assignment
-    elif p == r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}":
-        [table_result_type, var, h_figure] = children
+    @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
+    def _(expr, env0, _):
+        [table_result_type, var, h_figure] = expr.children
         table_result_type_str = table_result_type.source_text()
         if table_result_type_str == 'sequence of Unicode code points':
             result_type = T_Unicode_code_points_
@@ -9665,8 +9811,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, table_result_type_str
         return (result_type, env0)
 
-    elif p == r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}":
-        [table_result_type, vara, varb, h_figure] = children
+    @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
+    def _(expr, env0, _):
+        [table_result_type, vara, varb, h_figure] = expr.children
         table_result_type_str = table_result_type.source_text()
         if table_result_type_str == 'abstract operation':
             # result_type = (
@@ -9679,52 +9826,62 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
             assert 0, table_result_type_str
         return (result_type, env0)
 
-    elif p == r"{EXPR} : an implementation-approximated Number value representing {EXPR}":
-        [ex] = children
+    @exprd.put(r"{EXPR} : an implementation-approximated Number value representing {EXPR}")
+    def _(expr, env0, _):
+        [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
 
-    elif p == r"{EX} : a nondeterministically chosen byte value":
-        [] = children
+    @exprd.put(r"{EX} : a nondeterministically chosen byte value")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : the result of clamping {var} between 0 and {EX}":
-        [var, upper_ex] = children
+    @exprd.put(r"{EXPR} : the result of clamping {var} between 0 and {EX}")
+    def _(expr, env0, _):
+        [var, upper_ex] = expr.children
         env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
         env0.assert_expr_is_of_type(var, T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
         return (T_MathNonNegativeInteger_, env0)
 
-    elif p == r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present":
-        [error_type] = children
+    @exprd.put(r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present")
+    def _(expr, env0, _):
+        [error_type] = expr.children
         return (ListType(type_for_ERROR_TYPE(error_type)), env0)
 
-    elif p == r"{EXPR} : that PrivateElement":
-        [] = children
+    @exprd.put(r"{EXPR} : that PrivateElement")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_PrivateElement, env0)
 
-    elif p == r"{EXPR} : that Private Name":
-        [] = children
+    @exprd.put(r"{EXPR} : that Private Name")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Private_Name, env0)
 
-    elif p == r"{EXPR} : a new Private Name whose {dsb_word} value is {var}":
-        [dsb_word, var] = children
+    @exprd.put(r"{EXPR} : a new Private Name whose {dsb_word} value is {var}")
+    def _(expr, env0, _):
+        [dsb_word, var] = expr.children
         assert dsb_word.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Private_Name, env0)
 
-    elif p == r"{EXPR} : the Private Name in {var} whose {dsb_word} is {var}":
-        [list_var, dsb_word, var] = children
+    @exprd.put(r"{EXPR} : the Private Name in {var} whose {dsb_word} is {var}")
+    def _(expr, env0, _):
+        [list_var, dsb_word, var] = expr.children
         env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
         assert dsb_word.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Private_Name, env0)
 
-    elif p == r"{EXPR} : the empty sequence of Unicode code points":
-        [] = children
+    @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Unicode_code_points_, env0)
 
-    elif p == r"{EXPR} : a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects":
-        [cap_word, dsb_word, var, emu_xref, cap_word2] = children
+    @exprd.put(r"{EXPR} : a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects")
+    def _(expr, env0, _):
+        [cap_word, dsb_word, var, emu_xref, cap_word2] = expr.children
         T = cap_word.source_text()
         assert T in ['Boolean', 'Number', 'String', 'Symbol', 'BigInt']
         assert dsb_word.source_text() == f"[[{T}Data]]"
@@ -9732,60 +9889,65 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         assert cap_word2.source_text() == T
         return (T_Object, env0)
 
-    elif p in [
-        r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit",
-        r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)",
-    ]:
-        [var] = children
+    @exprd.put(r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit")
+    @exprd.put(r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)")
+    def _(expr, env0, _):
+        [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathReal_, env0)
 
-    elif p == r"{EXPR} : an implementation-defined choice of either {var} or {var}":
-        [vara, varb] = children
+    @exprd.put(r"{EXPR} : an implementation-defined choice of either {var} or {var}")
+    def _(expr, env0, _):
+        [vara, varb] = expr.children
         env0.assert_expr_is_of_type(vara, T_MathReal_)
         env0.assert_expr_is_of_type(varb, T_MathReal_)
         return (T_MathReal_, env0)
 
-    elif p == r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}":
-        [var, dsb_word, literal, cap_word] = children
+    @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
+    def _(expr, env0, _):
+        [var, dsb_word, literal, cap_word] = expr.children
         assert dsb_word.source_text() == '[[AsyncEvaluation]]'
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (ListType(T_Cyclic_Module_Record), env1)
 
-    elif p == r"{RHSS} : {RHSS}{RHS}":
-        [rhss, rhs] = children
+    @exprd.put(r"{RHSS} : {RHSS}{RHS}")
+    def _(expr, env0, _):
+        [rhss, rhs] = expr.children
         (t1, env1) = tc_expr(rhss, env0)
         (t2, env2) = tc_expr(rhs, env1)
         return (t1 | t2, env2)
 
-    elif p == r"{RHS} : {nlai}= {EXPR} if {CONDITION}":
-        [subexpr, cond] = children
+    @exprd.put(r"{RHS} : {nlai}= {EXPR} if {CONDITION}")
+    def _(expr, env0, _):
+        [subexpr, cond] = expr.children
         (t_env, f_env) = tc_cond(cond, env0)
         (t, env1) = tc_expr(subexpr, t_env)
         return (t, env1)
 
-    elif p == r"{EXPR} : a new implementation-defined Completion Record":
-        [] = children
+    @exprd.put(r"{EXPR} : a new implementation-defined Completion Record")
+    def _(expr, env0, _):
+        [] = expr.children
         return (T_Abrupt | T_Normal, env0)
 
-    elif p in [
-        r"{INTERVAL} : the inclusive interval from {EX} to {EX}",
-        r"{INTERVAL} : the interval from {EX} (inclusive) to {EX} (exclusive)",
-    ]:
-        [lo, hi] = children
+    @exprd.put(r"{INTERVAL} : the inclusive interval from {EX} to {EX}")
+    @exprd.put(r"{INTERVAL} : the interval from {EX} (inclusive) to {EX} (exclusive)")
+    def _(expr, env0, _):
+        [lo, hi] = expr.children
         env0.assert_expr_is_of_type(lo, T_MathInteger_)
         env0.assert_expr_is_of_type(hi, T_MathInteger_)
         return (T_MathInteger_, env0)
         # Should maybe be ListType(T_MathInteger_) or something similar
 
-    elif p == r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)":
-        [vara, cond, varb] = children
+    @exprd.put(r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
+    def _(expr, env0, _):
+        [vara, cond, varb] = expr.children
         # (t_env, f_env) = tc_cond(cond, env0)
         # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
         return (T_IntegralNumber_, env0)
 
-    elif p == r"{EXPR} : the Record in {DOTTING} whose {dsb_word} is {var}":
-        [dotting, dsb_word, var] = children
+    @exprd.put(r"{EXPR} : the Record in {DOTTING} whose {dsb_word} is {var}")
+    def _(expr, env0, _):
+        [dotting, dsb_word, var] = expr.children
         dsbn_name = dsb_word.source_text()[2:-2]
         (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
@@ -9795,17 +9957,11 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         env1.assert_expr_is_of_type(var, whose_type)
         return (et, env0)
 
-    elif p == r"{EXPR} : that Record":
+    @exprd.put(r"{EXPR} : that Record")
+    def _(expr, env0, _):
         # InnerModuleLoading
-        [] = children
+        [] = expr.children
         return (T_LoadedModule_Record_, env0)
-
-    else:
-        stderr()
-        stderr("tc_expr:")
-        stderr('    elif p == %s:' % escape(p))
-        # pdb.set_trace()
-        sys.exit(0)
 
 # ------------------------------------------------------------------------------
 
