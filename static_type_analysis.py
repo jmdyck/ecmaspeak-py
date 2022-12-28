@@ -4164,19 +4164,6 @@ def tc_cond(cond, env0, asserting=False):
         print("           ", cond.source_text())
         mytrace(env0)
 
-    result = tc_cond_(cond, env0, asserting)
-
-    if trace_this_op:
-        print()
-        print("Leaving c:", p)
-        print("          ", cond.source_text())
-        mytrace(result[0])
-
-    return result
-
-def tc_cond_(cond, env0, asserting):
-    p = str(cond.prod)
-
     if p not in condd:
         stderr()
         stderr("tc_cond:")
@@ -4189,6 +4176,12 @@ def tc_cond_(cond, env0, asserting):
     assert len(result) == 2
     assert isinstance(result[0], Env)
     assert isinstance(result[1], Env) or result[1] is None
+
+    if trace_this_op:
+        print()
+        print("Leaving c:", p)
+        print("          ", cond.source_text())
+        mytrace(result[0])
 
     return result
 
