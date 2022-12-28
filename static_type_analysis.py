@@ -6715,7 +6715,14 @@ def tc_expr(expr, env0, expr_value_will_be_discarded=False):
         env1 = env0
 
     else:
-        (expr_type, env1) = tc_expr_(expr, env0, expr_value_will_be_discarded)
+        if p not in exprd:
+            stderr()
+            stderr("tc_expr:")
+            stderr('    @exprd.put(%s)' % escape(p))
+            # pdb.set_trace()
+            sys.exit(0)
+
+        (expr_type, env1) = exprd[p](expr, env0, expr_value_will_be_discarded)
 
         assert isinstance(expr_type, Type)
         assert isinstance(env1, Env)
@@ -6754,20 +6761,6 @@ def tc_expr(expr, env0, expr_value_will_be_discarded=False):
     return (expr_type, env1)
 
 # --------------------
-
-def tc_expr_(expr, env0, expr_value_will_be_discarded):
-    p = str(expr.prod)
-
-    # stderr('>>>', expr.source_text())
-
-    if p not in exprd:
-        stderr()
-        stderr("tc_expr:")
-        stderr('    @exprd.put(%s)' % escape(p))
-        # pdb.set_trace()
-        sys.exit(0)
-
-    return exprd[p](expr, env0, expr_value_will_be_discarded)
 
 if 1:
     exprd = DecoratedFuncDict()
