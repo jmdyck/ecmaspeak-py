@@ -9759,9 +9759,9 @@ def tc_expr_(expr, env0, expr_value_will_be_discarded):
         return (t1 | t2, env2)
 
     elif p == r"{RHS} : {nlai}= {EXPR} if {CONDITION}":
-        [expr, cond] = children
+        [subexpr, cond] = children
         (t_env, f_env) = tc_cond(cond, env0)
-        (t, env1) = tc_expr(expr, t_env)
+        (t, env1) = tc_expr(subexpr, t_env)
         return (t, env1)
 
     elif p == r"{EXPR} : a new implementation-defined Completion Record":
