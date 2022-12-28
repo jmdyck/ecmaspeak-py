@@ -4585,48 +4585,48 @@ def tc_cond_(cond, env0, asserting):
     # introduce metavariable:
 
     elif p == r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}":
-        [ex, var, cond] = children
+        [ex, var, stcond] = children
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert ex_t.is_a_subtype_of_or_equal_to(T_List)
         assert ex_t.element_type.is_a_subtype_of_or_equal_to(T_Record)
         env_for_cond = env0.plus_new_entry(var, ex_t.element_type)
-        (cond_t_env, cond_f_env) = tc_cond(cond, env_for_cond)
+        (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
         return (cond_t_env, env0)
 
     elif p == r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}":
-        [member_var, list_var, cond] = children
+        [member_var, list_var, stcond] = children
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String)) # over-specific
         env2 = env1.plus_new_entry(member_var, T_String)
-        (t_env, f_env) = tc_cond(cond, env2)
+        (t_env, f_env) = tc_cond(stcond, env2)
         return (env1, env1)
 
     elif p in [
         r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}',
         r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}',
     ]:
-        [member_var, set_var, cond] = children
+        [member_var, set_var, stcond] = children
         env1 = env0.ensure_expr_is_of_type(set_var, T_CharSet)
         env2 = env1.plus_new_entry(member_var, T_character_)
-        (t_env, f_env) = tc_cond(cond, env2)
+        (t_env, f_env) = tc_cond(stcond, env2)
         assert t_env is f_env
         return (env1, env1)
 
     elif p == r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}":
-        [i_var, interval, cond] = children
+        [i_var, interval, stcond] = children
         env0.assert_expr_is_of_type(interval, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
-        return tc_cond(cond, env_for_cond)
+        return tc_cond(stcond, env_for_cond)
 
     elif p == r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}":
-        [let_var, i, cond] = children
+        [let_var, i, stcond] = children
         env0.assert_expr_is_of_type(i, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
-        return tc_cond(cond, env_for_cond)
+        return tc_cond(stcond, env_for_cond)
 
     elif p == r"{CONDITION_1} : there exists an event {var} such that {CONDITION}":
-        [let_var, cond] = children
+        [let_var, stcond] = children
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
-        return tc_cond(cond, env_for_cond)
+        return tc_cond(stcond, env_for_cond)
 
     elif p == r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}":
         [seta, setb, let_var, interval] = children
