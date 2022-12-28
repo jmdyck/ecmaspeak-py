@@ -4176,50 +4176,63 @@ def tc_cond(cond, env0, asserting=False):
 
 def tc_cond_(cond, env0, asserting):
     p = str(cond.prod)
-    children = cond.children
+
+    if p not in condd:
+        stderr()
+        stderr("tc_cond:")
+        stderr('    @condd.put(%s)' % escape(p))
+        sys.exit(0)
+
+    result = condd[p](cond, env0, asserting)
+
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert isinstance(result[0], Env)
+    assert isinstance(result[1], Env) or result[1] is None
+
+    return result
+
+if 1:
+    condd = DecoratedFuncDict()
 
     #----------------
     # simple unit production
 
-    if p in [
-        r'{CONDITION} : {CONDITION_1}',
-        r'{CONDITION_1} : {TYPE_TEST}',
-        r'{CONDITION_1} : {NUM_COMPARISON}',
-    ]:
-        [child] = children
+    @condd.put(r'{CONDITION} : {CONDITION_1}')
+    @condd.put(r'{CONDITION_1} : {TYPE_TEST}')
+    @condd.put(r'{CONDITION_1} : {NUM_COMPARISON}')
+    def _(cond, env0, asserting):
+        [child] = cond.children
         return tc_cond(child, env0, asserting)
 
     # -------------
     # combining conditions
 
-    elif p in [
-        r"{CONDITION} : either {CONDITION_1} or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} or if {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}",
-    ]:
-        logical = ('or', children)
+    @condd.put(r"{CONDITION} : either {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or if {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
+    def _(cond, env0, asserting):
+        logical = ('or', cond.children)
         return tc_logical(logical, env0, asserting)
 
-    elif p in [
-        r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}",
-        r'{CONDITION} : {CONDITION_1} and {CONDITION_1}',
-        r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}",
-        r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}',
-    ]:
-        logical = ('and', children)
+    @condd.put(r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}")
+    @condd.put(r'{CONDITION} : {CONDITION_1} and {CONDITION_1}')
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}")
+    @condd.put(r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}')
+    def _(cond, env0, asserting):
+        logical = ('and', cond.children)
         return tc_logical(logical, env0, asserting)
 
-    elif p in [
-        r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
-    ]:
-        [conda, condb, condc] = children
+    @condd.put(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [conda, condb, condc] = cond.children
         logical = (
             'or',
             [
@@ -4229,8 +4242,9 @@ def tc_cond_(cond, env0, asserting):
         )
         return tc_logical(logical, env0, asserting)
 
-    elif p == r"{CONDITION} : {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>":
-        [a, b, c] = children
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>")
+    def _(cond, env0, asserting):
+        [a, b, c] = cond.children
         logical = (
             'and',
             [
@@ -4240,12 +4254,11 @@ def tc_cond_(cond, env0, asserting):
         )
         return tc_logical(logical, env0, asserting)
 
-    elif p in [
-        r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}",
-    ]:
-        [a, b, c, d] = children
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [a, b, c, d] = cond.children
         logical = (
             'or',
             [
@@ -4255,8 +4268,9 @@ def tc_cond_(cond, env0, asserting):
         )
         return tc_logical(logical, env0, asserting)
 
-    elif p == r"{CONDITION} : ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})":
-        [a, b, c, d] = children
+    @condd.put(r"{CONDITION} : ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})")
+    def _(cond, env0, asserting):
+        [a, b, c, d] = cond.children
         logical = (
             'and',
             [
@@ -4269,30 +4283,30 @@ def tc_cond_(cond, env0, asserting):
     # ---------------
     # Type-conditions
 
-    elif p == r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot":
-        [var, dsbna, dsbnb] = children
+    @condd.put(r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot")
+    def _(cond, env0, asserting):
+        [var, dsbna, dsbnb] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
         assert dsbna.source_text() == '[[StringData]]'
         assert dsbnb.source_text() == '[[NumberData]]'
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots",
-    ]:
+    @condd.put(r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots")
+    def _(cond, env0, asserting):
         # XXX could be a type-test
-        [var, *dsbn_] = children
+        [var, *dsbn_] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not have either a {DSBN} or an {DSBN} internal slot":
-        [var, dsbna, dsbnb] = children
+    @condd.put(r"{CONDITION_1} : {var} does not have either a {DSBN} or an {DSBN} internal slot")
+    def _(cond, env0, asserting):
+        [var, dsbna, dsbnb] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p in [
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is the same as Type({TYPE_ARG})',
-        r'{TYPE_TEST} : Type({TYPE_ARG}) is different from Type({TYPE_ARG})',
-    ]:
+    @condd.put(r'{TYPE_TEST} : Type({TYPE_ARG}) is the same as Type({TYPE_ARG})')
+    @condd.put(r'{TYPE_TEST} : Type({TYPE_ARG}) is different from Type({TYPE_ARG})')
+    def _(cond, env0, asserting):
         # Env can't represent the effect of these.
         # If the incoming static types were different,
         # the 'true' env could at least narrow those to their intersection,
@@ -4301,18 +4315,16 @@ def tc_cond_(cond, env0, asserting):
 
     # ---
 
-    elif p in [
-        r"{CONDITION_1} : {var} is now an empty List",
-    ]:
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} is now an empty List")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p in [
-        r'{CONDITION_1} : {LOCAL_REF} is present',
-        r'{CONDITION_1} : {LOCAL_REF} is not present',
-    ]:
-        [ex] = children
+    @condd.put(r'{CONDITION_1} : {LOCAL_REF} is present')
+    @condd.put(r'{CONDITION_1} : {LOCAL_REF} is not present')
+    def _(cond, env0, asserting):
+        [ex] = cond.children
         if ex.is_a('{PROD_REF}'):
             t = T_not_in_node
         elif ex.is_a('{var}'):
@@ -4320,32 +4332,31 @@ def tc_cond_(cond, env0, asserting):
             t = T_not_passed # assuming it's a parameter
         else:
             assert 0, ex.source_text()
-        copula = 'is a' if 'not present' in p else 'isnt a'
+        copula = 'is a' if 'not present' in cond.prod.rhs_s else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
 
-    elif p in [
-        r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above",
-    ]:
-        [var, literal, _] = children
+    @condd.put(r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
+    def _(cond, env0, asserting):
+        [var, literal, _] = cond.children
         env0.assert_expr_is_of_type(literal, T_tilde_unused_)
         return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
 
-    elif p == r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}":
-        [var, nonta, nontb] = children
+    @condd.put(r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, nonta, nontb] = cond.children
         return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
 
-    elif p in [
-        r"{CONDITION_1} : {EX} is also {VAL_DESC}",
-        r"{CONDITION_1} : {EX} is never {VAL_DESC}",
-        r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}",
-        r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}",
-    ]:
-        [ex, vd] = children
+    @condd.put(r"{CONDITION_1} : {EX} is also {VAL_DESC}")
+    @condd.put(r"{CONDITION_1} : {EX} is never {VAL_DESC}")
+    @condd.put(r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}")
+    @condd.put(r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}")
+    def _(cond, env0, asserting):
+        [ex, vd] = cond.children
 
         # kludgey?
         r = is_simple_call(ex)
         if r:
-            assert p == r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}"
+            assert cond.prod.rhs_s == r"{EX} is {VALUE_DESCRIPTION}"
 
             (callee_op_name, var) = r
             #
@@ -4374,7 +4385,7 @@ def tc_cond_(cond, env0, asserting):
                 #
                 return env0.with_type_test(var, copula, t, asserting)
 
-        if 'not' in p or 'never' in p:
+        if 'not' in cond.prod.rhs_s or 'never' in cond.prod.rhs_s:
             copula = 'isnt a'
         else:
             copula = 'is a'
@@ -4392,11 +4403,10 @@ def tc_cond_(cond, env0, asserting):
         (sub_t, sup_t) = type_bracket_for(vd, env0)
         return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
 
-    elif p in [
-        r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}",
-        r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC}",
-    ]:
-        [ex, *vds] = children
+    @condd.put(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}")
+    @condd.put(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC}")
+    def _(cond, env0, asserting):
+        [ex, *vds] = cond.children
 
         sub_t = T_0
         sup_t = T_0
@@ -4409,8 +4419,9 @@ def tc_cond_(cond, env0, asserting):
 
     # -------
 
-    elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}':
-        [exa, exb, lit] = children
+    @condd.put(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}')
+    def _(cond, env0, asserting):
+        [exa, exb, lit] = cond.children
         (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
         if lit_type in [T_Undefined, T_NaN_Number_, T_tilde_accessor_]:
             (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', lit_type, asserting)
@@ -4424,8 +4435,9 @@ def tc_cond_(cond, env0, asserting):
             env0.assert_expr_is_of_type(exb, lit_type)
             return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is finite":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} is finite")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         if t.is_a_subtype_of_or_equal_to(T_Number):
             return env1.with_type_test(var, 'is a', T_FiniteNumber_, asserting)
@@ -4434,8 +4446,9 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0
 
-    elif p == r"{CONDITION_1} : {var} and {var} are both finite":
-        [a, b] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} are both finite")
+    def _(cond, env0, asserting):
+        [a, b] = cond.children
         (a_t_env, a_f_env) = env0.with_type_test(a, 'is a', T_FiniteNumber_, asserting)
         (b_t_env, b_f_env) = env0.with_type_test(b, 'is a', T_FiniteNumber_, asserting)
         return (
@@ -4443,8 +4456,9 @@ def tc_cond_(cond, env0, asserting):
             env_or(a_f_env, b_f_env)
         )
 
-    elif p == r"{CONDITION_1} : {var} is not finite":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} is not finite")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
             return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
@@ -4453,9 +4467,10 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0
 
-    elif p == r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events":
+    @condd.put(r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
+    def _(cond, env0, asserting):
         # XXX spec is ambiguous: "each is A or B" vs "either both A or both B"
-        [ea, eb] = children
+        [ea, eb] = cond.children
         (a_t_env, a_f_env) = env0.with_type_test(ea, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
         (b_t_env, b_f_env) = env0.with_type_test(eb, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
         return (
@@ -4463,8 +4478,9 @@ def tc_cond_(cond, env0, asserting):
             env_or(a_f_env, b_f_env)
         )
 
-    elif p == r'{CONDITION_1} : {var} has an? {DSBN} internal method':
-        [var, dsbn] = children
+    @condd.put(r'{CONDITION_1} : {var} has an? {DSBN} internal method')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         dsbn_name = dsbn.source_text()[2:-2]
         if dsbn_name == 'Call':
@@ -4475,8 +4491,9 @@ def tc_cond_(cond, env0, asserting):
         else:
             assert 0, dsbn_name
 
-    elif p == r"{CONDITION_1} : {SETTABLE} has an? {DSBN} field":
-        [settable, dsbn] = children
+    @condd.put(r"{CONDITION_1} : {SETTABLE} has an? {DSBN} field")
+    def _(cond, env0, asserting):
+        [settable, dsbn] = cond.children
         dsbn_name = dsbn.source_text()[2:-2]
         t = env0.assert_expr_is_of_type(settable, T_Record)
         if t.name == 'Environment Record' and dsbn_name == 'NewTarget':
@@ -4491,31 +4508,33 @@ def tc_cond_(cond, env0, asserting):
             assert dsbn_name in fields_for_record_type_named_[t.name], (t.name, dsbn_name)
             return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} does not have an? {DSBN} field':
-        [var, dsbn] = children
+    @condd.put(r'{CONDITION_1} : {var} does not have an? {DSBN} field')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Record)
         # XXX We should check whether its type says it *could* have such a field.
         # XXX The particular DSBN could have a (sub-)type-constraining effect
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} does not have an? {DSBN} internal slot':
-        [var, dsbn] = children
+    @condd.put(r'{CONDITION_1} : {var} does not have an? {DSBN} internal slot')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         # Whether or not it has that particular slot, it's still an Object.
         # XXX The particular DSBN could have a (sub-)type-constraining effect
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {var} does not have an? {var} internal slot":
-        [obj_var, slotname_var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not have an? {var} internal slot")
+    def _(cond, env0, asserting):
+        [obj_var, slotname_var] = cond.children
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(slotname_var, T_SlotName_)
         return (env0, env0)
 
-    elif p in [
-        r'{CONDITION_1} : {var} also has a {DSBN} internal slot',
-        r'{CONDITION_1} : {var} has an? {DSBN} internal slot',
-    ]:
-        [var, dsbn] = children
+    @condd.put(r'{CONDITION_1} : {var} also has a {DSBN} internal slot')
+    @condd.put(r'{CONDITION_1} : {var} has an? {DSBN} internal slot')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         # Whether or not it has that particular slot, it's still an Object.
         # XXX we could be more specific about the sub-kind of Object
@@ -4524,43 +4543,44 @@ def tc_cond_(cond, env0, asserting):
     # ------------------------
     # relating to Environment Record bindings:
 
-    elif p in [
-        r"{CONDITION_1} : {var} does not already have a binding for {var}",
-        r"{CONDITION_1} : {var} does not have a binding for {var}",
-        r"{CONDITION_1} : {var} has a binding for the name that is the value of {var}",
-        r"{CONDITION_1} : {var} has a binding for {var}",
-        r"{CONDITION_1} : {var} must have an uninitialized binding for {var}",
-    ]:
-        [er_var, n_var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not already have a binding for {var}")
+    @condd.put(r"{CONDITION_1} : {var} does not have a binding for {var}")
+    @condd.put(r"{CONDITION_1} : {var} has a binding for the name that is the value of {var}")
+    @condd.put(r"{CONDITION_1} : {var} has a binding for {var}")
+    @condd.put(r"{CONDITION_1} : {var} must have an uninitialized binding for {var}")
+    def _(cond, env0, asserting):
+        [er_var, n_var] = cond.children
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         env0.assert_expr_is_of_type(n_var, T_String)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : the binding for {var} in {var} cannot be deleted",
-        r"{CONDITION_1} : the binding for {var} in {var} has not yet been initialized",
-        r"{CONDITION_1} : the binding for {var} in {var} is a mutable binding",
-        r"{CONDITION_1} : the binding for {var} in {var} is a strict binding",
-        r"{CONDITION_1} : the binding for {var} in {var} is an uninitialized binding",
-    ]:
-        [n_var, er_var] = children
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} cannot be deleted")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} has not yet been initialized")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is a mutable binding")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is a strict binding")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is an uninitialized binding")
+    def _(cond, env0, asserting):
+        [n_var, er_var] = cond.children
         env0.assert_expr_is_of_type(n_var, T_String)
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the binding for {var} is an indirect binding":
+    @condd.put(r"{CONDITION_1} : the binding for {var} is an indirect binding")
+    def _(cond, env0, asserting):
         # todo: make ER explicit in spec?
-        [n_var] = children
+        [n_var] = cond.children
         env0.assert_expr_is_of_type(n_var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the binding exists":
+    @condd.put(r"{CONDITION_1} : the binding exists")
+    def _(cond, env0, asserting):
         # elliptical
-        [] = children
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}':
-        [settable, var] = children
+    @condd.put(r'{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}')
+    def _(cond, env0, asserting):
+        [settable, var] = cond.children
         env0.assert_expr_is_of_type(settable, T_Environment_Record | T_tilde_empty_)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
@@ -4568,24 +4588,25 @@ def tc_cond_(cond, env0, asserting):
     # --------------------------------------------------
     # relating to strict code:
 
-    elif p in [
-        r"{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code",
-        r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code",
-        r"{CONDITION_1} : the source text matched by {var} is non-strict code",
-    ]:
-        [prod_ref] = children
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code")
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code")
+    @condd.put(r"{CONDITION_1} : the source text matched by {var} is non-strict code")
+    def _(cond, env0, asserting):
+        [prod_ref] = cond.children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
     # -------------------------------------------------
     # introduce metavariable:
 
-    elif p == r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}":
-        [ex, var, stcond] = children
+    @condd.put(r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [ex, var, stcond] = cond.children
         (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
         assert ex_t.is_a_subtype_of_or_equal_to(T_List)
         assert ex_t.element_type.is_a_subtype_of_or_equal_to(T_Record)
@@ -4593,43 +4614,47 @@ def tc_cond_(cond, env0, asserting):
         (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
         return (cond_t_env, env0)
 
-    elif p == r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}":
-        [member_var, list_var, stcond] = children
+    @condd.put(r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [member_var, list_var, stcond] = cond.children
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String)) # over-specific
         env2 = env1.plus_new_entry(member_var, T_String)
         (t_env, f_env) = tc_cond(stcond, env2)
         return (env1, env1)
 
-    elif p in [
-        r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}',
-        r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}',
-    ]:
-        [member_var, set_var, stcond] = children
+    @condd.put(r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}')
+    @condd.put(r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}')
+    def _(cond, env0, asserting):
+        [member_var, set_var, stcond] = cond.children
         env1 = env0.ensure_expr_is_of_type(set_var, T_CharSet)
         env2 = env1.plus_new_entry(member_var, T_character_)
         (t_env, f_env) = tc_cond(stcond, env2)
         assert t_env is f_env
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}":
-        [i_var, interval, stcond] = children
+    @condd.put(r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [i_var, interval, stcond] = cond.children
         env0.assert_expr_is_of_type(interval, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(stcond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}":
-        [let_var, i, stcond] = children
+    @condd.put(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [let_var, i, stcond] = cond.children
         env0.assert_expr_is_of_type(i, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
         return tc_cond(stcond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : there exists an event {var} such that {CONDITION}":
-        [let_var, stcond] = children
+    @condd.put(r"{CONDITION_1} : there exists an event {var} such that {CONDITION}")
+    def _(cond, env0, asserting):
+        [let_var, stcond] = cond.children
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(stcond, env_for_cond)
 
-    elif p == r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}":
-        [seta, setb, let_var, interval] = children
+    @condd.put(r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}")
+    def _(cond, env0, asserting):
+        [seta, setb, let_var, interval] = cond.children
         env0.assert_expr_is_of_type(interval, T_MathInteger_)
         env_for_settables = env0.plus_new_entry(let_var, T_MathInteger_)
         env_for_settables.assert_expr_is_of_type(seta, T_MathInteger_)
@@ -4639,30 +4664,32 @@ def tc_cond_(cond, env0, asserting):
     # --------------------------------------------------
     # whatever
 
-    elif p == r'{CONDITION_1} : {var} is the same Number value as {var}':
-        [var1, var2] = children
+    @condd.put(r'{CONDITION_1} : {var} is the same Number value as {var}')
+    def _(cond, env0, asserting):
+        [var1, var2] = cond.children
         env0.assert_expr_is_of_type(var1, T_Number)
         env1 = env0.ensure_expr_is_of_type(var2, T_Number)
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} is the same sequence of code units as {var}':
-        [var1, var2] = children
+    @condd.put(r'{CONDITION_1} : {var} is the same sequence of code units as {var}')
+    def _(cond, env0, asserting):
+        [var1, var2] = cond.children
         env0.assert_expr_is_of_type(var1, T_String)
         env0.ensure_expr_is_of_type(var2, T_String)
         return (env0, env0)
 
-    elif p == r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}':
-        [a, _, b, _, c] = children
+    @condd.put(r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}')
+    def _(cond, env0, asserting):
+        [a, _, b, _, c] = cond.children
         env0.assert_expr_is_of_type(a, T_MathInteger_)
         env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
         env0.assert_expr_is_of_type(c, T_MathInteger_)
         env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
         return (env2, env2)
 
-    elif p in [
-        r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}",
-    ]:
-        [a, op, b] = children
+    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
+    def _(cond, env0, asserting):
+        [a, op, b] = cond.children
         (a_t, env1) = tc_expr(a, env0);
         (b_t, env2) = tc_expr(b, env1);
         op_st = op.source_text()
@@ -4842,67 +4869,72 @@ def tc_cond_(cond, env0, asserting):
 
         return (envs_or(t_envs), envs_or(f_envs))
 
-    elif p == r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}':
-        [h_a, var] = children
+    @condd.put(r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}')
+    def _(cond, env0, asserting):
+        [h_a, var] = cond.children
         assert h_a.source_text() == '<a href="https://unicode.org/Public/UCD/latest/ucd/CaseFolding.txt"><code>CaseFolding.txt</code></a>'
         env1 = env0.ensure_expr_is_of_type(var, T_character_)
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} does not consist of a single code unit':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {var} does not consist of a single code unit')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} does not contain exactly one character':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {var} does not contain exactly one character')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : the Directive Prologue of {PROD_REF} contains a Use Strict Directive':
-        [prod_ref] = children
+    @condd.put(r'{CONDITION_1} : the Directive Prologue of {PROD_REF} contains a Use Strict Directive')
+    def _(cond, env0, asserting):
+        [prod_ref] = cond.children
         # XXX check that prod_ref makes sense
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList':
+    @condd.put(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList')
+    def _(cond, env0, asserting):
         # nothing to check
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : The execution context stack has at least two elements",
-        r"{CONDITION_1} : The execution context stack is not empty",
-        r"{CONDITION_1} : the execution context stack is empty",
-    ]:
-        [] = children
+    @condd.put(r"{CONDITION_1} : The execution context stack has at least two elements")
+    @condd.put(r"{CONDITION_1} : The execution context stack is not empty")
+    @condd.put(r"{CONDITION_1} : the execution context stack is empty")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context":
-        [a_var, b_var] = children
+    @condd.put(r"{CONDITION_1} : When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
+    def _(cond, env0, asserting):
+        [a_var, b_var] = cond.children
         env0.assert_expr_is_of_type(a_var, T_execution_context)
         env0.assert_expr_is_of_type(b_var, T_execution_context)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : no such execution context exists':
-        [] = children
+    @condd.put(r'{CONDITION_1} : no such execution context exists')
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : The surrounding agent is in the critical section for {var}':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : The surrounding agent is in the critical section for {var}')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
 
-    elif p in [
-        r'{CONDITION_1} : {EX} is an element of {var}',
-        r"{CONDITION_1} : {EX} is not an element of {var}",
-    ]:
-        [value_ex, list_var] = children
+    @condd.put(r'{CONDITION_1} : {EX} is an element of {var}')
+    @condd.put(r"{CONDITION_1} : {EX} is not an element of {var}")
+    def _(cond, env0, asserting):
+        [value_ex, list_var] = cond.children
         env1 = env0.ensure_A_can_be_element_of_list_B(value_ex, list_var)
         return (env1, env1)
 
-    elif p in [
-        r"{CONDITION_1} : {SETTABLE} contains {EX}",
-        r"{CONDITION_1} : {EX} does not contain {EX}",
-    ]:
-        [container_ex, value_var] = children
+    @condd.put(r"{CONDITION_1} : {SETTABLE} contains {EX}")
+    @condd.put(r"{CONDITION_1} : {EX} does not contain {EX}")
+    def _(cond, env0, asserting):
+        [container_ex, value_var] = cond.children
         (container_type, container_env) = tc_expr(container_ex, env0)
         if container_type.is_a_subtype_of_or_equal_to(T_String):
             env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
@@ -4910,25 +4942,26 @@ def tc_cond_(cond, env0, asserting):
             env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {var} is not in {PREFIX_PAREN}":
-        [item_var, set_pp] = children
+    @condd.put(r"{CONDITION_1} : {var} is not in {PREFIX_PAREN}")
+    def _(cond, env0, asserting):
+        [item_var, set_pp] = cond.children
         env0.assert_expr_is_of_type(set_pp, T_Set)
         env0.assert_expr_is_of_type(item_var, T_event_)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}':
-        [var, code_unit_lit] = children
+    @condd.put(r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}')
+    def _(cond, env0, asserting):
+        [var, code_unit_lit] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
         return (env1, env1)
 
-    elif p in [
-        r"{CONDITION_1} : {EX} is different from {EX}",
-        r"{CONDITION_1} : {EX} is the same as {EX}",
-        r"{CONDITION_1} : {var} is not the same as {var}",
-        r"{CONDITION_1} : {EX} is not the same value as {var}",
-        r"{CONDITION_1} : {EX} is {PREFIX_PAREN}",
-    ]:
-        [exa, exb] = children
+    @condd.put(r"{CONDITION_1} : {EX} is different from {EX}")
+    @condd.put(r"{CONDITION_1} : {EX} is the same as {EX}")
+    @condd.put(r"{CONDITION_1} : {var} is not the same as {var}")
+    @condd.put(r"{CONDITION_1} : {EX} is not the same value as {var}")
+    @condd.put(r"{CONDITION_1} : {EX} is {PREFIX_PAREN}")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
         (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
         (exb_type, exb_env) = tc_expr(exb, env0); assert exb_env is env0
         if exa_type == exb_type:
@@ -4946,77 +4979,83 @@ def tc_cond_(cond, env0, asserting):
             assert 0, (exa_type, exb_type)
         return (env1, env1)
 
-    elif p == r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)':
+    @condd.put(r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)')
+    def _(cond, env0, asserting):
         # occurs once, in SameValueNonNumber
-        [vara, varb] = children
+        [vara, varb] = cond.children
         enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
         envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
         return (envb, envb)
 
-    elif p == r'{CONDITION_1} : {EX} and {EX} are both {LITERAL} or both {LITERAL}':
+    @condd.put(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL} or both {LITERAL}')
+    def _(cond, env0, asserting):
         # occurs once, in SameValueNonNumber
-        [exa, exb, litc, litd] = children
+        [exa, exb, litc, litd] = cond.children
         assert litc.source_text() == '*true*'
         assert litd.source_text() == '*false*'
         enva = env0.ensure_expr_is_of_type(exa, T_Boolean); assert enva is env0
         envb = env0.ensure_expr_is_of_type(exb, T_Boolean); # assert envb is env0
         return (envb, envb)
 
-    elif p == r'{CONDITION_1} : {var} and {var} are both the same Symbol value':
+    @condd.put(r'{CONDITION_1} : {var} and {var} are both the same Symbol value')
+    def _(cond, env0, asserting):
         # occurs once, in SameValueNonNumber
-        [vara, varb] = children
+        [vara, varb] = cond.children
         enva = env0.ensure_expr_is_of_type(vara, T_Symbol); assert enva is env0
         envb = env0.ensure_expr_is_of_type(varb, T_Symbol); # assert envb is env0
         return (envb, envb)
 
-    elif p == r'{CONDITION_1} : {var} and {var} are the same Number value':
+    @condd.put(r'{CONDITION_1} : {var} and {var} are the same Number value')
+    def _(cond, env0, asserting):
         # in Abstract Relational Comparison
-        [vara, varb] = children
+        [vara, varb] = cond.children
         enva = env0.ensure_expr_is_of_type(vara, T_Number); # assert enva is env0
         envb = enva.ensure_expr_is_of_type(varb, T_Number); # assert envb is env0
         return (envb, envb)
 
-    elif p == r'{CONDITION_1} : {var} and {var} are the same Object value':
+    @condd.put(r'{CONDITION_1} : {var} and {var} are the same Object value')
+    def _(cond, env0, asserting):
         # in SameValueNonNumber
-        [vara, varb] = children
+        [vara, varb] = cond.children
         enva = env0.ensure_expr_is_of_type(vara, T_Object); # assert enva is env0
         envb = enva.ensure_expr_is_of_type(varb, T_Object); # assert envb is env0
         return (envb, envb)
 
-    elif p == r"{CONDITION_1} : {EX} and {EX} are the same Shared Data Block values":
-        [exa, exb] = children
+    @condd.put(r"{CONDITION_1} : {EX} and {EX} are the same Shared Data Block values")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
         env1 = env0.ensure_expr_is_of_type(exa, T_Shared_Data_Block)
         env2 = env1.ensure_expr_is_of_type(exb, T_Shared_Data_Block)
         return (env2, env2)
 
-    elif p in [
-        r"{CONDITION_1} : {var} and {var} are the same Module Record",
-        r"{CONDITION_1} : {var} and {DOTTING} are the same Module Record",
-        r"{CONDITION_1} : {DOTTING} and {DOTTING} are not the same Module Record",
-    ]:
-        [ex1, ex2] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} are the same Module Record")
+    @condd.put(r"{CONDITION_1} : {var} and {DOTTING} are the same Module Record")
+    @condd.put(r"{CONDITION_1} : {DOTTING} and {DOTTING} are not the same Module Record")
+    def _(cond, env0, asserting):
+        [ex1, ex2] = cond.children
         env0.assert_expr_is_of_type(ex1, T_Module_Record)
         env0.assert_expr_is_of_type(ex2, T_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is the same Parse Node as {EX}":
-        [exa, exb] = children
+    @condd.put(r"{CONDITION_1} : {EX} is the same Parse Node as {EX}")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
         env0.assert_expr_is_of_type(exa, T_Parse_Node)
         env0.assert_expr_is_of_type(exb, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }':
-        [var, dsbn1, dsbn2] = children
+    @condd.put(r'{CONDITION_1} : {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }')
+    def _(cond, env0, asserting):
+        [var, dsbn1, dsbn2] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Property_Descriptor)
         assert dsbn1.source_text() == '[[Writable]]'
         assert dsbn2.source_text() == '[[Enumerable]]'
         return (env1, env1)
 
-    elif p in [
-        r'{CONDITION_1} : {EX} is {var}',
-        r"{CONDITION_1} : {EX} is the same value as {EX}",
-    ]:
-        [a_ex, b_ex] = children
+    @condd.put(r'{CONDITION_1} : {EX} is {var}')
+    @condd.put(r"{CONDITION_1} : {EX} is the same value as {EX}")
+    def _(cond, env0, asserting):
+        [a_ex, b_ex] = cond.children
         (a_t, a_env) = tc_expr(a_ex, env0)
         (b_t, b_env) = tc_expr(b_ex, env0); assert b_env is env0
         assert a_t != T_TBD
@@ -5030,18 +5069,18 @@ def tc_cond_(cond, env0, asserting):
         e = env_or(a_env, env0)
         return (e, e)
 
-    elif p == r'{CONDITION_1} : {var} has {var} in its range':
-        [sdbe_var, loc_var] = children
+    @condd.put(r'{CONDITION_1} : {var} has {var} in its range')
+    def _(cond, env0, asserting):
+        [sdbe_var, loc_var] = cond.children
         env1 = env0.ensure_expr_is_of_type(sdbe_var, T_Shared_Data_Block_event)
         env2 = env1.ensure_expr_is_of_type(loc_var, T_MathInteger_)
         return (env2, env2)
 
-    elif p in [
-        r'{CONDITION_1} : {EX} is in {EX}',
-        r'{CONDITION_1} : {var} is not in {var}',
-        r'{CONDITION_1} : {var} occurs exactly once in {var}',
-    ]:
-        [item_var, container_var] = children
+    @condd.put(r'{CONDITION_1} : {EX} is in {EX}')
+    @condd.put(r'{CONDITION_1} : {var} is not in {var}')
+    @condd.put(r'{CONDITION_1} : {var} occurs exactly once in {var}')
+    def _(cond, env0, asserting):
+        [item_var, container_var] = cond.children
         (container_t, env1) = tc_expr(container_var, env0); assert env1 is env0
         if container_t == T_String:
             env0.assert_expr_is_of_type(item_var, T_code_unit_)
@@ -5062,246 +5101,287 @@ def tc_cond_(cond, env0, asserting):
             assert 0, container_t
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}':
-        [ab_var, st_var, t_var] = children
+    @condd.put(r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}')
+    def _(cond, env0, asserting):
+        [ab_var, st_var, t_var] = cond.children
         env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
         env0.assert_expr_is_of_type(st_var, T_MathInteger_)
         env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}":
-        [subcond] = children
+    @condd.put(r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [subcond] = cond.children
         return tc_cond(subcond, env0, asserting)
 
-    elif p == r'{CONDITION_1} : {var} does not have an own property with key {var}':
-        [obj_var, key_var] = children
+    @condd.put(r'{CONDITION_1} : {var} does not have an own property with key {var}')
+    def _(cond, env0, asserting):
+        [obj_var, key_var] = cond.children
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} is not already suspended':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {var} is not already suspended')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} is on the list of waiters in {var}':
-        [w_var, wl_var] = children
+    @condd.put(r'{CONDITION_1} : {var} is on the list of waiters in {var}')
+    def _(cond, env0, asserting):
+        [w_var, wl_var] = cond.children
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(wl_var, T_WaiterList)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}':
-        [w_var, *blah] = children
+    @condd.put(r'{CONDITION_1} : {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}')
+    def _(cond, env0, asserting):
+        [w_var, *blah] = cond.children
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} is as small as possible':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {var} is as small as possible')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} is odd':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {var} is odd')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {PROD_REF} is `export` {nonterminal}':
-        [prod_ref, nont] = children
+    @condd.put(r'{CONDITION_1} : {PROD_REF} is `export` {nonterminal}')
+    def _(cond, env0, asserting):
+        [prod_ref, nont] = cond.children
         return (env0, env0)
 
-    elif p in [
-        r'{CONDITION_1} : {EX} is empty',
-        r"{CONDITION_1} : {var} is not empty",
-    ]:
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {EX} is empty')
+    @condd.put(r"{CONDITION_1} : {var} is not empty")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
         # XXX For String, change spec to "is [not] the empty String" ?
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not empty":
-        [noi] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not empty")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
         env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : We've reached the starting point of an `export *` circularity":
-        [] = children
+    @condd.put(r"{CONDITION_1} : We've reached the starting point of an `export *` circularity")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} provides the direct binding for this export":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} provides the direct binding for this export")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} imports a specific binding for this export":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} imports a specific binding for this export")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}":
-        [var, *nont_] = children
+    @condd.put(r"{CONDITION_1} : {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, *nont_] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}":
-        [dotting, emu_xref] = children
+    @condd.put(r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [dotting, emu_xref] = cond.children
         env0.assert_expr_is_of_type(dotting, T_proc_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : This is a circular import request":
-        [] = children
+    @condd.put(r"{CONDITION_1} : This is a circular import request")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : A `default` export was not explicitly defined by this module":
-        [] = children
+    @condd.put(r"{CONDITION_1} : A `default` export was not explicitly defined by this module")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : There is more than one `*` import that includes the requested name":
-        [] = children
+    @condd.put(r"{CONDITION_1} : There is more than one `*` import that includes the requested name")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not have any fields":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not have any fields")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Property_Descriptor)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not include the element {LITERAL}":
-        [list_var, item_lit] = children
+    @condd.put(r"{CONDITION_1} : {var} does not include the element {LITERAL}")
+    def _(cond, env0, asserting):
+        [list_var, item_lit] = cond.children
         env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String))
         env0.assert_expr_is_of_type(item_lit, T_String)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : we return here":
-        [] = children
+    @condd.put(r"{CONDITION_1} : we return here")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the async function either threw an exception or performed an implicit or explicit return; all awaiting is done":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the async function either threw an exception or performed an implicit or explicit return; all awaiting is done")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the async generator either threw an exception or performed either an implicit or explicit return":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the async generator either threw an exception or performed either an implicit or explicit return")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}":
+    @condd.put(r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}")
+    def _(cond, env0, asserting):
         # once, in CreateListFromArrayLike
-        [type_arg, var] = children
+        [type_arg, var] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has any elements":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} has any elements")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : it must be in the Object Environment Record":
+    @condd.put(r"{CONDITION_1} : it must be in the Object Environment Record")
+    def _(cond, env0, asserting):
         # elliptical
-        [] = children
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : The following loop will terminate":
-        [] = children
+    @condd.put(r"{CONDITION_1} : The following loop will terminate")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} binds a single name":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} binds a single name")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {var} contains any duplicate entries",
-        r"{CONDITION_1} : {var} contains no duplicate entries",
-        r"{CONDITION_1} : {var} has any duplicate entries",
-        r"{CONDITION_1} : {var} has no duplicate entries",
-    ]:
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} contains any duplicate entries")
+    @condd.put(r"{CONDITION_1} : {var} contains no duplicate entries")
+    @condd.put(r"{CONDITION_1} : {var} has any duplicate entries")
+    @condd.put(r"{CONDITION_1} : {var} has no duplicate entries")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object":
-        [var, dsbn] = children
+    @condd.put(r"{CONDITION_1} : {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object")
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not currently have a property {var}":
-        [obj_var, pn_var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not currently have a property {var}")
+    def _(cond, env0, asserting):
+        [obj_var, pn_var] = cond.children
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(pn_var, T_String | T_Symbol)
         return (env0, env0)
 
-    elif p == r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once':
-        [var] = children
+    @condd.put(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once')
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : This is an attempt to change the value of an immutable binding":
-        [] = children
+    @condd.put(r"{CONDITION_1} : This is an attempt to change the value of an immutable binding")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is now the running execution context":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} is now the running execution context")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {PROD_REF} is the token `false`",
-        r"{CONDITION_1} : {PROD_REF} is the token `true`",
-    ]:
-        [prod_ref] = children
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is the token `false`")
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is the token `true`")
+    def _(cond, env0, asserting):
+        [prod_ref] = cond.children
         assert prod_ref.source_text() == '|BooleanLiteral|'
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has no elements":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} has no elements")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : an implementation-defined debugging facility is available and enabled":
-        [] = children
+    @condd.put(r"{CONDITION_1} : an implementation-defined debugging facility is available and enabled")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains a formal parameter mapping for {var}":
-        [avar, bvar] = children
+    @condd.put(r"{CONDITION_1} : {var} contains a formal parameter mapping for {var}")
+    def _(cond, env0, asserting):
+        [avar, bvar] = cond.children
         env0.assert_expr_is_of_type(avar, T_Object)
         env0.assert_expr_is_of_type(bvar, T_String | T_Symbol)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {DOTTING} exists and has been initialized":
-        [dotting] = children
+    @condd.put(r"{CONDITION_1} : {DOTTING} exists and has been initialized")
+    def _(cond, env0, asserting):
+        [dotting] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} and {var} are not the same Realm Record":
-        [avar, bvar] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} are not the same Realm Record")
+    def _(cond, env0, asserting):
+        [avar, bvar] = cond.children
         env0.assert_expr_is_of_type(avar, T_Realm_Record)
         env0.assert_expr_is_of_type(bvar, T_Realm_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : All named exports from {var} are resolvable":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : All named exports from {var} are resolvable")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    elif p == r'''{CONDITION_1} : The mathematical value of {var}'s {starred_str} property is {EX}''':
-        [var, prop_name, ex] = children
+    @condd.put(r'''{CONDITION_1} : The mathematical value of {var}'s {starred_str} property is {EX}''')
+    def _(cond, env0, asserting):
+        [var, prop_name, ex] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} and {var} are finite and non-zero":
-        [avar, bvar] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} are finite and non-zero")
+    def _(cond, env0, asserting):
+        [avar, bvar] = cond.children
         env0.assert_expr_is_of_type(avar, T_Number)
         env0.assert_expr_is_of_type(bvar, T_Number)
         return (
@@ -5311,552 +5391,617 @@ def tc_cond_(cond, env0, asserting):
             env0
         )
 
-    elif p == r"{CONDITION_1} : the character {EX} is one of {nonterminal}":
-        [ex, nonterminal] = children
+    @condd.put(r"{CONDITION_1} : the character {EX} is one of {nonterminal}")
+    def _(cond, env0, asserting):
+        [ex, nonterminal] = cond.children
         env0.assert_expr_is_of_type(ex, T_character_)
         assert nonterminal.source_text() == '|LineTerminator|'
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}":
-        [anoi, bnoi] = children
+    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [anoi, bnoi] = cond.children
         env0.assert_expr_is_of_type(anoi, T_character_)
         env0.assert_expr_is_of_type(bnoi, T_character_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}":
-        [var, lita, litb] = children
+    @condd.put(r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
+    def _(cond, env0, asserting):
+        [var, lita, litb] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
         env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
         return (env1, env1)
 
-    elif p in [
-        r"{CONDITION_1} : {var} is in {INTERVAL}",
-        r"{CONDITION_1} : {var} is not in {INTERVAL}",
-    ]:
-        [var, interval] = children
+    @condd.put(r"{CONDITION_1} : {var} is in {INTERVAL}")
+    @condd.put(r"{CONDITION_1} : {var} is not in {INTERVAL}")
+    def _(cond, env0, asserting):
+        [var, interval] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
         env1.assert_expr_is_of_type(interval, T_MathInteger_)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : the host is a web browser":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the host is a web browser")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the host requires that the `this` binding in {var}'s global scope return an object other than the global object":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : the host requires that the `this` binding in {var}'s global scope return an object other than the global object")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits":
-        [posa, posb, var] = children
+    @condd.put(r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits")
+    def _(cond, env0, asserting):
+        [posa, posb, var] = cond.children
         env0.assert_expr_is_of_type(posa, T_MathInteger_)
         env0.assert_expr_is_of_type(posb, T_MathInteger_)
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} and {var} each contain exactly one character":
-        [a,b] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} each contain exactly one character")
+    def _(cond, env0, asserting):
+        [a,b] = cond.children
         env0.assert_expr_is_of_type(a, T_CharSet)
         env0.assert_expr_is_of_type(b, T_CharSet)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains any {nonterminal}":
-        [rvar, nonterminal] = children
+    @condd.put(r"{CONDITION_1} : {var} contains any {nonterminal}")
+    def _(cond, env0, asserting):
+        [rvar, nonterminal] = cond.children
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains a single {nonterminal}":
-        [var, nonterminal] = children    
+    @condd.put(r"{CONDITION_1} : {var} contains a single {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, nonterminal] = cond.children    
         env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}":
-        [ivar, rvar, nonterminal] = children
+    @condd.put(r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}")
+    def _(cond, env0, asserting):
+        [ivar, rvar, nonterminal] = cond.children
         env0.assert_expr_is_of_type(ivar, T_MathInteger_)
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not have a Generator component":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not have a Generator component")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
     # ----
 
-    elif p == r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList":
-        [sig_var] = children
+    @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList")
+    def _(cond, env0, asserting):
+        [sig_var] = cond.children
         env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is not on the list of waiters in {var}":
-        [sig_var, wl_var] = children
+    @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in {var}")
+    def _(cond, env0, asserting):
+        [sig_var, wl_var] = cond.children
         env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(wl_var, T_WaiterList)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} and {EX} are valid byte offsets within the memory of {var}":
-        [offset1, offset2, sdb] = children
+    @condd.put(r"{CONDITION_1} : {EX} and {EX} are valid byte offsets within the memory of {var}")
+    def _(cond, env0, asserting):
+        [offset1, offset2, sdb] = cond.children
         env1 = env0.ensure_expr_is_of_type(offset1, T_MathInteger_)
         env1.assert_expr_is_of_type(offset2, T_MathInteger_)
         env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}":
-        [var, nont] = children
+    @condd.put(r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, nont] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})":
-        [var1, var2, nont, emu_xref] = children
+    @condd.put(r"{CONDITION_1} : neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})")
+    def _(cond, env0, asserting):
+        [var1, var2, nont, emu_xref] = cond.children
         assert same_source_text(var1, var2)
         env0.assert_expr_is_of_type(var1, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_String | T_Symbol)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}":
-        [var, lita, litb] = children
+    @condd.put(r"{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}")
+    def _(cond, env0, asserting):
+        [var, lita, litb] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         env0.assert_expr_is_of_type(lita, T_String)
         env0.assert_expr_is_of_type(litb, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit":
-        [svar, rvar] = children
+    @condd.put(r"{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit")
+    def _(cond, env0, asserting):
+        [svar, rvar] = cond.children
         env0.assert_expr_is_of_type(svar, T_String)
         env0.assert_expr_is_of_type(rvar, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} starts with {STR_LITERAL}":
-        [var, str_literal] = children
+    @condd.put(r"{CONDITION_1} : {var} starts with {STR_LITERAL}")
+    def _(cond, env0, asserting):
+        [var, str_literal] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits":
-        [var, str_literal, ex] = children
+    @condd.put(r"{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits")
+    def _(cond, env0, asserting):
+        [var, str_literal, ex] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : only one argument was passed",
-    ]:
-        [] = children
+    @condd.put(r"{CONDITION_1} : only one argument was passed")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}":
-        [exa, exb, lit] = children
+    @condd.put(r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}")
+    def _(cond, env0, asserting):
+        [exa, exb, lit] = cond.children
         (t, env1) = tc_expr(lit, env0); assert env1 is env0
         env1.assert_expr_is_of_type(exa, t)
         env1.assert_expr_is_of_type(exb, t)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {var} is not currently an element of {var}":
-        [item_var, list_var] = children
+    @condd.put(r"{CONDITION_1} : {var} is not currently an element of {var}")
+    def _(cond, env0, asserting):
+        [item_var, list_var] = cond.children
         env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
         return (env1, env1)
 
-    elif p == r"{NUM_COMPARISON} : {NUM_COMPARAND} is 10 or less":
-        [x] = children
+    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is 10 or less")
+    def _(cond, env0, asserting):
+        [x] = cond.children
         env0.assert_expr_is_of_type(x, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context":
-        [vara, varb] = children
+    @condd.put(r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
+    def _(cond, env0, asserting):
+        [vara, varb] = cond.children
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env0.assert_expr_is_of_type(varb, T_execution_context)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object",
-    ]:
-        [var, dsbn] = children
+    @condd.put(r"{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object")
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
         env0.assert_expr_is_of_type(var, T_Object) # more specific?
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are in {EX}",
-        r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are not in {EX}",
-        r"{CONDITION_1} : either {PAIR} or {PAIR} is in {EX}",
-    ]:
-        [paira, pairb, ex] = children
+    @condd.put(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are in {EX}")
+    @condd.put(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are not in {EX}")
+    @condd.put(r"{CONDITION_1} : either {PAIR} or {PAIR} is in {EX}")
+    def _(cond, env0, asserting):
+        [paira, pairb, ex] = cond.children
         env0.assert_expr_is_of_type(paira, T_event_pair_)
         env0.assert_expr_is_of_type(pairb, T_event_pair_)
         env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} and {var} are in a race in {var}":
-        [ea, eb, exe] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
+    def _(cond, env0, asserting):
+        [ea, eb, exe] = cond.children
         env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
         env0.assert_expr_is_of_type(exe, T_candidate_execution)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {var} and {var} do not have disjoint ranges",
-        r"{CONDITION_1} : {var} and {var} have equal ranges",
-        r"{CONDITION_1} : {var} and {var} have overlapping ranges",
-    ]:
-        [ea, eb] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} do not have disjoint ranges")
+    @condd.put(r"{CONDITION_1} : {var} and {var} have equal ranges")
+    @condd.put(r"{CONDITION_1} : {var} and {var} have overlapping ranges")
+    def _(cond, env0, asserting):
+        [ea, eb] = cond.children
         env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is not {var}":
-        [ea, eb] = children
+    @condd.put(r"{CONDITION_1} : {EX} is not {var}")
+    def _(cond, env0, asserting):
+        [ea, eb] = cond.children
         # over-specific:
         env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} is listed in the “Code Point” column of {h_emu_xref}":
-        [ex, emu_xref] = children
+    @condd.put(r"{CONDITION_1} : {EX} is listed in the “Code Point” column of {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [ex, emu_xref] = cond.children
         env0.assert_expr_is_of_type(ex, T_code_point_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}":
-        [var, emu_xref1, emu_xref2] = children
+    @condd.put(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [var, emu_xref1, emu_xref2] = cond.children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (env0, env0)
 
     # explicit-exotics:
-    elif p in [
-        r"{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods",
-        r"{CONDITION_1} : the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods",
-    ]:
-        var = children[0]
+    @condd.put(r"{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods")
+    @condd.put(r"{CONDITION_1} : the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods")
+    def _(cond, env0, asserting):
+        var = cond.children[0]
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {var} contains a {nonterminal}",
-        r"{CONDITION_1} : {var} contains an? {nonterminal} Parse Node",
-        r"{CONDITION_1} : {var} does not contain an? {nonterminal} Parse Node",
-        r"{CONDITION_1} : {var} does not contain two {nonterminal} Parse Nodes",
-    ]:
-        [var, nont] = children
+    @condd.put(r"{CONDITION_1} : {var} contains a {nonterminal}")
+    @condd.put(r"{CONDITION_1} : {var} contains an? {nonterminal} Parse Node")
+    @condd.put(r"{CONDITION_1} : {var} does not contain an? {nonterminal} Parse Node")
+    @condd.put(r"{CONDITION_1} : {var} does not contain two {nonterminal} Parse Nodes")
+    def _(cond, env0, asserting):
+        [var, nont] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         env0.assert_expr_is_of_type(nont, T_grammar_symbol_)
         return (env0, env0)
 
     # PR ? function-strictness
-    elif p == r"{CONDITION_1} : the source text matched by {var} is strict mode code":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : the source text matched by {var} is strict mode code")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}":
-        [var, xrefa, xrefb] = children
+    @condd.put(r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [var, xrefa, xrefb] = cond.children
         assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
         assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
         env0.assert_expr_is_of_type(var, T_code_unit_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} or {var} is {LITERAL}":
-        [v1, v2, lit] = children
+    @condd.put(r"{CONDITION_1} : {var} or {var} is {LITERAL}")
+    def _(cond, env0, asserting):
+        [v1, v2, lit] = cond.children
         env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
         env0.assert_expr_is_of_type(v2, T_Number|T_BigInt)
         env0.assert_expr_is_of_type(lit, T_Number)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has a Synchronize event":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} has a Synchronize event")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} does not provide the direct binding for this export":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} does not provide the direct binding for this export")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once":
-        [noi, *bw_] = children
+    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once")
+    def _(cond, env0, asserting):
+        [noi, *bw_] = cond.children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         for bw in bw_:
             assert len(bw.source_text()) == 3 # single-character 'words'
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}":
-        [noi, bw] = children
+    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}")
+    def _(cond, env0, asserting):
+        [noi, bw] = cond.children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})":
-        [var, emu_xref] = children
+    @condd.put(r"{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})")
+    def _(cond, env0, asserting):
+        [var, emu_xref] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent":
-        [] = children
+    @condd.put(r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} and {var} have the same number of elements":
-        [vara, varb] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} have the same number of elements")
+    def _(cond, env0, asserting):
+        [vara, varb] = cond.children
         env0.assert_expr_is_of_type(vara, T_List)
         env0.assert_expr_is_of_type(varb, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} and {var} do not have the same number of elements":
-        [vara, varb] = children
+    @condd.put(r"{CONDITION_1} : {var} and {var} do not have the same number of elements")
+    def _(cond, env0, asserting):
+        [vara, varb] = cond.children
         env0.assert_expr_is_of_type(vara, T_List)
         env0.assert_expr_is_of_type(varb, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var}, {var}, and {var} have the same number of elements":
-        [vara, varb, varc] = children
+    @condd.put(r"{CONDITION_1} : {var}, {var}, and {var} have the same number of elements")
+    def _(cond, env0, asserting):
+        [vara, varb, varc] = cond.children
         env0.assert_expr_is_of_type(vara, T_List)
         env0.assert_expr_is_of_type(varb, T_List)
         env0.assert_expr_is_of_type(varc, T_List)
         return (env0, env0)
 
-    elif p == r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}":
-        [a, b] = children
+    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}")
+    def _(cond, env0, asserting):
+        [a, b] = cond.children
         env0.assert_expr_is_of_type(a, T_agent_signifier_)
         env0.assert_expr_is_of_type(b, T_agent_signifier_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : The length of {var} is {var}":
-        [list_var, len_var] = children
+    @condd.put(r"{CONDITION_1} : The length of {var} is {var}")
+    def _(cond, env0, asserting):
+        [list_var, len_var] = cond.children
         env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the parse succeeded and no early errors were found":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the parse succeeded and no early errors were found")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production":
-        [noi, nont] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}":
-        [nont] = children
+    @condd.put(r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}")
+    def _(cond, env0, asserting):
+        [nont] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}":
-        [nont] = children
+    @condd.put(r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}")
+    def _(cond, env0, asserting):
+        [nont] = cond.children
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter",
-    ]:
-        [prod_ref, cap_word] = children
+    @condd.put(r"{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter")
+    def _(cond, env0, asserting):
+        [prod_ref, cap_word] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}",
-    ]:
-        [noi, *ss_] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}")
+    def _(cond, env0, asserting):
+        [noi, *ss_] = cond.children
         env0.assert_expr_is_of_type(noi, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`":
-        [noi] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
         env0.assert_expr_is_of_type(noi, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1":
-        [noi] = children
+    @condd.put(r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
         env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code":
-        [local_ref] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
+    def _(cond, env0, asserting):
+        [local_ref] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : any source text is matched by this production",
-    ]:
-        [] = children
+    @condd.put(r"{CONDITION_1} : any source text is matched by this production")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}":
-        [local_ref, g_sym] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}")
+    def _(cond, env0, asserting):
+        [local_ref, g_sym] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}":
-        [local_ref, h_emu_grammar] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}")
+    def _(cond, env0, asserting):
+        [local_ref, h_emu_grammar] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}":
-        [local_ref, *h_emu_grammar_] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}")
+    def _(cond, env0, asserting):
+        [local_ref, *h_emu_grammar_] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries",
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements",
-    ]:
-        [noi] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries")
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
         env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}":
-        [noi1, noi2] = children
+    @condd.put(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [noi1, noi2] = cond.children
         env0.assert_expr_is_of_type(noi1, T_List)
         env0.assert_expr_is_of_type(noi2, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains {starred_str}":
-        [noi, ss] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains {starred_str}")
+    def _(cond, env0, asserting):
+        [noi, ss] = cond.children
         env0.assert_expr_is_of_type(noi, ListType(T_String))
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}",
-    ]:
-        [noi, ss] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}")
+    def _(cond, env0, asserting):
+        [noi, ss] = cond.children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}":
-        [noi, ss, emu_grammar] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
+    def _(cond, env0, asserting):
+        [noi, ss, emu_grammar] = cond.children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s":
-        [noi, nont] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
         env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}":
-        [local_ref, nont] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
+    def _(cond, env0, asserting):
+        [local_ref, nont] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}":
-        [local_ref, nonta, nontb] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}")
+    def _(cond, env0, asserting):
+        [local_ref, nonta, nontb] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}",
-        r"{CONDITION} : {CONDITION_1}, unless {CONDITION_1}",
-    ]:
-        [conda, condb] = children
+    @condd.put(r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, unless {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [conda, condb] = cond.children
         tc_cond(conda, env0)
         tc_cond(condb, env0)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval":
-        [g_sym] = children
+    @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
+    def _(cond, env0, asserting):
+        [g_sym] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}":
-        [noia, noib, noic] = children
+    @condd.put(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [noia, noib, noic] = cond.children
         env0.assert_expr_is_of_type(noia, T_List)
         env0.assert_expr_is_of_type(noib, T_List)
         env0.assert_expr_is_of_type(noic, T_List)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same":
-        [local_ref, nonta, noi] = children
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same")
+    def _(cond, env0, asserting):
+        [local_ref, nonta, noi] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         # XXX noi
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}":
-        [noia, noib] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [noia, noib] = cond.children
         env0.assert_expr_is_of_type(noia, T_MathInteger_)
         env0.assert_expr_is_of_type(noib, T_MathInteger_)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})",
-        r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})",
-    ]:
-        [prod_ref, nont, step_xref, alg_xref] = children
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+    def _(cond, env0, asserting):
+        [prod_ref, nont, step_xref, alg_xref] = cond.children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production":
-        [noi, nont] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production":
-        [noi, nont] = children
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}":
-        [prod_ref, h_emu_xref] = children
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [prod_ref, h_emu_xref] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}":
-        [prod_ref, h_a, h_emu_xref] = children
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [prod_ref, h_a, h_emu_xref] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}":
-        [prod_refa, prod_refb, h_a] = children
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}")
+    def _(cond, env0, asserting):
+        [prod_refa, prod_refb, h_a] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static":
-        [] = children
+    @condd.put(r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} contains a PrivateElement whose {dsb_word} is {var}":
-        [ex, dsb_word, var] = children
+    @condd.put(r"{CONDITION_1} : {EX} contains a PrivateElement whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [ex, dsb_word, var] = cond.children
         env0.assert_expr_is_of_type(ex, ListType(T_PrivateElement))
         assert dsb_word.source_text() == '[[Key]]'
         env0.assert_expr_is_of_type(var, T_Private_Name)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} contains a PrivateElement whose {dsb_word} is {DOTTING}":
-        [var, dsb_word, dotting] = children
+    @condd.put(r"{CONDITION_1} : {var} contains a PrivateElement whose {dsb_word} is {DOTTING}")
+    def _(cond, env0, asserting):
+        [var, dsb_word, dotting] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_PrivateElement))
         assert dsb_word.source_text() == '[[Key]]'
         env1.assert_expr_is_of_type(dotting, T_Private_Name)
         return (env1, env1)
 
-    elif p == r"{CONDITION_1} : {EX} contains a Private Name whose {dsb_word} is {var}":
-        [ex, dsb_word, var] = children
+    @condd.put(r"{CONDITION_1} : {EX} contains a Private Name whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [ex, dsb_word, var] = cond.children
         env0.assert_expr_is_of_type(ex, ListType(T_Private_Name))
         assert dsb_word.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : Exactly one element of {var} is a Private Name whose {dsb_word} is {var}":
-        [list_var, dsb_word, var] = children
+    @condd.put(r"{CONDITION_1} : Exactly one element of {var} is a Private Name whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [list_var, dsb_word, var] = cond.children
         env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
         assert dsb_word.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : This is only possible for getter/setter pairs":
-        [] = children
+    @condd.put(r"{CONDITION_1} : This is only possible for getter/setter pairs")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}":
-        [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = children
+    @condd.put(r"{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}")
+    def _(cond, env0, asserting):
+        [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = cond.children
         assert dsb1.source_text() == '[[AsyncEvaluation]]'
         assert dsb2.source_text() == '[[PendingAsyncDependencies]]'
         assert dsb3.source_text() == '[[EvaluationError]]'
@@ -5864,52 +6009,59 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}":
-        [dotting, lita, litb] = children
+    @condd.put(r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
+    def _(cond, env0, asserting):
+        [dotting, lita, litb] = cond.children
         assert lita.source_text() == '*false*'
         assert litb.source_text() == '*true*'
         env0.assert_expr_is_of_type(dotting, T_Boolean)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {EX} and {EX} are distinct values":
-        [exa, exb] = children
+    @condd.put(r"{CONDITION_1} : {EX} and {EX} are distinct values")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
         (exa_type, env1) = tc_expr(exa, env0)
         (exb_type, env2) = tc_expr(exb, env1)
         return (env2, env2)
 
-    elif p == r"{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation":
-        [] = children
+    @condd.put(r"{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable":
-        [] = children
+    @condd.put(r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} has {EX} elements":
-        [var, ex] = children
+    @condd.put(r"{CONDITION_1} : {var} has {EX} elements")
+    def _(cond, env0, asserting):
+        [var, ex] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : control reaches here":
-        [] = children
+    @condd.put(r"{CONDITION_1} : control reaches here")
+    def _(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : {var} is the running execution context again":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : {var} is the running execution context again")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
-    elif p in [
-        r"{CONDITION_1} : {EX} contains a Record whose {dsb_word} is {var}",
-        r"{CONDITION_1} : Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}",
-    ]:
-        [list_ex, dsb_word, var] = children
+    @condd.put(r"{CONDITION_1} : {EX} contains a Record whose {dsb_word} is {var}")
+    @condd.put(r"{CONDITION_1} : Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [list_ex, dsb_word, var] = cond.children
         dsbn_name = dsb_word.source_text()[2:-2]
         (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
@@ -5919,8 +6071,9 @@ def tc_cond_(cond, env0, asserting):
         env1.assert_expr_is_of_type(var, field_type)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : That Record's {dsb_word} is {EX}":
-        [dsb_word, ex] = children
+    @condd.put(r"{CONDITION_1} : That Record's {dsb_word} is {EX}")
+    def _(cond, env0, asserting):
+        [dsb_word, ex] = cond.children
         dsbn_name = dsb_word.source_text()[2:-2]
         # "That Record" is from prev step's "contains a Record"
         that_type = T_LoadedModule_Record_
@@ -5929,16 +6082,11 @@ def tc_cond_(cond, env0, asserting):
         env0.assert_expr_is_of_type(ex, field_type)
         return (env0, env0)
 
-    elif p == r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation":
-        [var] = children
+    @condd.put(r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
+    def _(cond, env0, asserting):
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
         return (env0, env0)
-
-    else:
-        stderr()
-        stderr("tc_cond:")
-        stderr('    elif p == r"%s":' % p)
-        sys.exit(0)
 
 # ------------------------------------------------------------------------------
 
