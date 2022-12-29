@@ -1889,253 +1889,110 @@ class Env:
             old_t = self.vars[expr_text]
             assert new_t != old_t
 
-            if (
-                old_t == T_TBD and new_t != T_TBD
-                or
+            if new_t.is_a_subtype_of_or_equal_to(old_t):
+                # Narrowing expr's static type.
+                # I.e., new_t is consistent with old_t,
+                # it's just more precise (due to special info).
+                pass
+            elif old_t == T_TBD and new_t != T_TBD:
+                # This is also a narrowing (sort of),
+                # but it doesn't pass the previous test.
+                pass
+            elif (
+                # These are cases where new_t is not a narrowing of old_t.
+                # Some of these are perfectly normal,
+                # some occur because STA isn't smart enough.
+
                 old_t == T_not_passed and new_t != T_not_passed
+                # This happens (in ToPrimitive and LoadRequestedModules)
+                # when you have a step of the form:
+                #     If _optional_ is not present, let _optional_ be <something>.
+                # This already leads to other errors:
+                #     re-Let on existing var `_optional_`. Use Set?
+                #     ... also, this changes the type of var from not_passed to <something>
+
                 or
-                old_t == T_Top_ and new_t == T_Null | T_String
-                # ExportEntriesForModule
+                old_t == ListType(T_String) and new_t == ListType(T_String | T_Symbol)
+                # This happens (in OrdinaryOwnPropertyKeys,
+                # [[OwnPropertyKeys]] for a String exotic object, and
+                # [[OwnPropertyKeys]] for an Integer-Indexed exotic object)
+                # where (basically) we have:
+                #     Let _keys_ be a new empty List.
+                #     Append <string> to _keys_.
+                #     Append <symbol> to _keys_.
+                # After the first "Append", we infer that _keys_ is a List of Strings,
+                # but after the second, we have to revise that.
+
                 or
-                old_t == T_Top_ and new_t == T_Object
-                # AtomicLoad
-                or
-                old_t == T_Top_ and new_t == T_Tangible_
-                # GeneratorResumeAbrupt
-                or
-                old_t == T_List and isinstance(new_t, ListType)
-                or
-                old_t == T_Tangible_ and new_t in [T_String, T_Boolean, T_Symbol, T_Object] # SameValueNonNumber
-                or
-                old_t == T_Tangible_ and new_t == T_Number # SameValue, co-ordinated types
-                or
-                old_t == ListType(T_String) and new_t == ListType(T_String | T_Symbol) # OrdinaryOwnPropertyKeys, maybe others
-                #or
-                #old_t == T_0 and new_t == T_ResolvedBinding_Record
-                ## ResolveExport
-                or
-                old_t == T_Data_Block | T_Shared_Data_Block and new_t == T_Shared_Data_Block and expr_text == '_toBlock_' # CopyDataBlockBytes, because I can't handle co-ordinated types
-                or
-                old_t == T_Data_Block | T_Shared_Data_Block | T_Null and (
-                    new_t == T_Shared_Data_Block
-                        # GetModifySetValueInBuffer, because I can't represent the effect of IsSharedArrayBuffer
-                    or
-                    new_t == T_Data_Block
-                        # SetValueInBuffer, ditto
-                )
-                or
-                old_t == T_Number and new_t == T_MathInteger_
-                    # e.g. ReadModifyWriteSharedMemory{ ... [[ElementSize]]: _elementSize_. ...}
-                    # in GetModifySetValueInBuffer
-                or
-                old_t == ListType(T_PTN_ForBinding) and old_t.is_a_subtype_of_or_equal_to(new_t) # VarScopedDeclarations
-                or
-                old_t == T_Boolean | T_not_set and new_t == T_Boolean
-                # ContainsDuplicateLabels, because of re-use of _hasDuplicates_
-                or
-                old_t == ListType(ListType(T_code_unit_) | T_String) and new_t == ListType(T_String)
-                # TemplateStrings
-                or
-                old_t == T_Tangible_ | T_not_set and new_t == T_Tangible_
-                # CaseBlockEvaluation, will go away with refactoring
-                or
-                old_t == T_tilde_empty_ and new_t == ptn_type_for('MethodDefinition')
-                # ClassDefinitionEvaluation
-                or
-                old_t == T_Normal and new_t == T_methodDef_record_
-                # ClassDefinitionEvaluation
-                or
-                old_t == T_Property_Descriptor | T_Undefined and new_t == T_Property_Descriptor
-                # CreateGlobalFunctionBinding
+                old_t == ListType(T_Match_Record) and new_t == ListType(T_Match_Record | T_Undefined)
+                # RegExpBuiltinExec
+                # Similar to the preceding
+
                 or
                 old_t == ptn_type_for('AssignmentPattern') | T_not_set and new_t == T_Parse_Node
-                # ForIn/OfBodyEvaluation
+                # ForIn/OfBodyEvaluation.
+                # STA isn't smart enough to know that _assignmentPattern_ *is* set.
                 or
-                old_t == T_Boolean | T_Environment_Record | T_Number | T_Object | T_String | T_Symbol | T_Undefined and new_t == T_Object
-                # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
-                or
-                old_t == T_Abrupt | T_Boolean | T_Intangible_ | T_Null | T_Number | T_Object | T_String | T_Symbol and new_t == T_Environment_Record
-                # InitializeBoundName
-                or
-                old_t == T_Normal and new_t == T_Tangible_
-                # PropertyDefinitionEvaluation
-                or
-                old_t == ListType(T_TBD) and new_t == ListType(T_Tangible_)
-                # ArgumentListEvaluation
-                or
-                old_t | T_Abrupt == new_t
-                or
-                old_t | T_throw_ == new_t
-                or
-                old_t == T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String
-                # Evaluation for TemplateLiteral
-                or
-                expr_text in ['_test_', '_increment_'] and new_t == T_Parse_Node
-                or
-                old_t == T_Environment_Record | T_Undefined and new_t == T_Environment_Record
-                # IteratorBindingInitialization
-                or
-                old_t == T_String | T_Symbol | T_Undefined and new_t == T_String | T_Symbol
-                # ValidateAndApplyPropertyDescriptor
-                or
-                old_t == ListType(T_code_unit_) and new_t == T_String
-                # TemplateStrings
-                or
-                old_t == T_Tangible_ and new_t == T_function_object_
-                # [[Construct]]
-                or
-                old_t == T_Null | T_Object and new_t == T_Object
-                # [[Construct]]
-                or
-                old_t == T_Tangible_ | T_tilde_empty_ and new_t == T_Tangible_
-                # ??
-                or
-                old_t == T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
-                or old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
-                # Evaluation of TemplateLiteral : TemplateHead Expression TemplateSpans
-                or
-                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ and new_t == ListType(T_code_unit_) | T_String
-                # Evaluation of TemplateMiddleList : TemplateMiddleList TemplateMiddle Expression
-                or
-                old_t == T_Tangible_ | T_tilde_empty_ and new_t == T_String | T_Symbol
-                # DefineMethod
-                or
-                old_t == ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ and new_t == T_String | T_Symbol
-                # DefineMethod
-                or
-                old_t == T_MathInteger_ | T_Tangible_ | T_code_unit_ and new_t == T_MathInteger_ | T_Number | T_code_unit_
-                # [[DefineOwnProperty]]
-                or
-                old_t == T_Tangible_ | T_code_unit_ and new_t == T_Number | T_code_unit_
-                or
-                old_t == T_String | T_Undefined and new_t == T_String
-                # GeneratorResume
-                or
-                old_t == T_CharSet | ThrowType(T_SyntaxError) and new_t == T_CharSet
-                or
-                old_t == ListType(T_Tangible_) and new_t == ListType(T_String)
-                # InternalizeJSONProperty
-                or
-                old_t == T_Abrupt | T_Boolean | T_Intangible_ | T_Null | T_Number | T_Object | T_String | T_Symbol and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
-                # SerializeJSONObject
-                or
-                old_t == ListType(T_code_unit_) | T_Undefined | T_code_unit_ and new_t == ListType(T_code_unit_)
-                # TemplateStrings
-                or
-                old_t == ListType(T_code_unit_) | T_Undefined | T_code_unit_ and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
-                # Evaluation of SubstitutionTemplate
-                or
-                old_t == ListType(T_code_unit_) | T_Undefined | T_code_unit_ and new_t == ListType(T_code_unit_) | T_String
-                # Evaluation of TemplateMiddleList
-                or
-                old_t == T_Abrupt | T_Tangible_ | T_tilde_empty_ and new_t == T_Abrupt | T_Tangible_
-                # AsyncGeneratorResumeNext
-                or
-                old_t == T_Undefined and new_t == T_Object #???
-                # Evaluation (YieldExpression)
+                old_t == T_Reference_Record | T_Tangible_ | T_tilde_empty_ and
+                (
+                    # STA for Evaluation is rough
 
+                    new_t == T_Abrupt | old_t
+                    # CaseBlockEvaluation
+                    or
+                    new_t == T_Private_Name | T_String | T_Symbol
+                    # ClassFieldDefinitionEvaluation
+                    or
+                    new_t == ListType(T_code_unit_) | T_String | T_code_unit_
+                    # Evaluation of SubstitutionTemplate
+                )
+                or
+                old_t == T_String | T_Undefined and new_t == ListType(T_code_unit_) | T_String | T_code_unit_
+                # Evaluation of SubstitutionTemplate, TemplateSpans, TemplateMiddleList
+                # should maybe have an Assert that _head_/_tail_/_middle_ is a String (not *undefined*).
+                or
+                old_t == T_Proxy_exotic_object_ | T_bound_function_exotic_object_ | T_other_function_object_ and new_t == T_constructor_object_
+                # MakeConstructor changes _F_ from a non-constructor to a constructor.
             ):
-                pass
+                # It's unclear whether it's worth posting an error for these.
+                if 0:
+                    add_pass_error(
+                        expr,
+                        f"Replacing type {old_t} with {new_t} is not a narrowing"
+                    )
             else:
                 stderr()
                 stderr("with_expr_type_replaced")
                 stderr("expr :", expr_text)
                 stderr("old_t:", old_t)
                 stderr("new_t:", new_t)
-                # assert 0
+                assert 0
                 # sys.exit(0)
         else:
             # expr_text not in self.vars
             assert expr_text in [
-                '! UTF16EncodeCodePoint(_cp_)',
-                '? CaseClauseIsSelected(_C_, _input_)', # Evaluation (CaseBlock)
-                '? Get(_obj_, `"length"`)',
-                '? GetValue(_defaultValue_)', # DestructuringAssignmentEvaluation, bleah
-                '? InnerModuleEvaluation(_requiredModule_, _stack_, _index_)', # InnerModuleEvaluation
-                '? InnerModuleLinking(_requiredModule_, _stack_, _index_)', # InnerModuleLinking
-                '? IteratorValue(_innerResult_)', # Evaluation of YieldExpression
-                '? IteratorValue(_innerReturnResult_)', # Evaluation of YieldExpression
-                '? ToPrimitive(_x_)', # Abstract Equality Comparison
-                '? ToPrimitive(_y_)', # Abstract Equality Comparison
-                '? ToPropertyKey(_lval_)',
-                'Call(_return_, _iterator_)', # AsyncIteratorClose
-                'UTF16EncodeCodePoint(_V_)',
-                'StringValue of |Identifier|',
-                'ToInteger(_P_)', # [[OwnPropertyKeys]]
-                'ToNumber(_x_)', # Abstract Equality Comparison
-                'ToNumber(_y_)', # Abstract Equality Comparison
-                'ToPrimitive(_x_)',
-                'ToPrimitive(_y_)',
-                'ToPropertyKey(_lval_)',
-                '_cookedStrings_[_index_]', # because of TemplateStrings return type
                 '_e_.[[LocalName]]', # ResolveExport
                 '_ee_.[[LocalName]]',
-                '_module_.[[DFSAncestorIndex]]', # InnerModuleEvaluation
-                '_module_.[[DFSIndex]]', # InnerModuleEvaluation
-                '_rawStrings_[_index_]', # ResolveExport
-                '_requiredModule_.[[DFSAncestorIndex]]', # InnerModuleEvaluation
                 '_scriptRecord_.[[Realm]]',
-                '_throwawayCapability_.[[Promise]]', # AsyncFunctionAwait
-                'the MV of |DecimalDigits|',
-                'the MV of the first |DecimalDigits|',
-                'the MV of |StrUnsignedDecimalLiteral|',
-                'the TV of |TemplateCharacter|',
-                'the TV of |TemplateCharacters|',
-                'the TV of |NoSubstitutionTemplate|',
-                'the VarDeclaredNames of |Statement|',
-                'the VarScopedDeclarations of |Statement|',
-                'the result of performing ArrayAccumulation of |ElementList| with arguments _array_ and _nextIndex_',
-                'the result of performing ArrayAccumulation of |Elision| with arguments _array_ and _nextIndex_',
-                'the result of performing IteratorDestructuringAssignmentEvaluation of |AssignmentRestElement| with _iteratorRecord_ as the argument',
-                'the result of performing IteratorDestructuringAssignmentEvaluation of |Elision| with _iteratorRecord_ as the argument', # hm
-                '(16 times the MV of the first |HexDigit|) plus the MV of the second |HexDigit|',
-                '(0x1000 times the MV of the first |HexDigit|) plus (0x100 times the MV of the second |HexDigit|) plus (0x10 times the MV of the third |HexDigit|) plus the MV of the fourth |HexDigit|',
-                '_f_ + 1', # Number.prototype.toExponential
-                '_f_ + 1 - _k_', # Number.prototype.toFixed
-                '_k_ - _f_', # toFixed
-                '_p_ - 1', # toPrecision
-                '_p_ - (_e_ + 1)', # toPrecision
                 '_srcBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 '_targetBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
-                'the result of performing NamedEvaluation of |Initializer| with argument _bindingId_',
-                '_handler_', # NewPromiseReactionJob
-                '_r_.[[Value]]',
-                '%Generator.prototype.next%', # CreateListIteratorRecord
                 '%GeneratorFunction.prototype.prototype.next%',
-                '? Yield(IteratorValue(_innerResult_))', # Evaluation
-                '? Yield(IteratorValue(_innerReturnResult_))', # Evaluation
-                '_list_[_index_]', # CreateListIteratorRecord
-                '\u211d(_tv_)', # TimeString
-                'abs(_offset_)', # TimeZoneString
-                '1<sub>\U0001d53d</sub>', # MakeDay
                 '\u211d(_m_)', # MakeDay
                 'WeekDay(_tv_)', # Date.prototype.toUTCString
                 'MonthFromTime(_tv_)',
-                'abs(\u211d(_yv_))',
                 '\u211d(_n_)', # unescape
-                '\u211d(_lastIndex_)', # RegExpBuiltinExec
-                '\u211d(_ny_)', # Math.atan2
-                '\u211d(_nx_)', # Math.atan2
-                '\u211d(_exponent_)', # Number::exponentiate
-                '\u211d(_d_)', # Number::remainder
-                'the StringValue of |IdentifierName|', # StringValue
-                'PropName of |FieldDefinition|', # Early Errors
-                '_generator_.[[AsyncGeneratorState]]', # AsyncGeneratorResume
                 '_m_.[[CycleRoot]]', # GatherAsyncParentCompletions
-                '_promiseCapability_.[[Reject]]', # CallDynamicImportFulfilled
-                '_promiseCapability_.[[Resolve]]', # CallDynamicImportFulfilled
-                '\u211d(_t_ / msPerDay)', # Day
-                '\u211d(_t_ / msPerHour)', # HourFromTime
-                '\u211d(_t_ / msPerMinute)', # MinFromTime
-                '\u211d(_t_ / msPerSecond)', # SecFromTime
                 'ReferencedBindings of |NamedExports|',
                 'PrototypePropertyNameList of |ClassElementList|',
-                '_lref_.[[ReferencedName]]',
-                '1 + \u211d(_n_)', # Math.log1p
                 '\u211d(_m_) / 12', # MakeDay
                 '\u211d(_number_)', # ToUint8Clamp
                 'NormalCompletion(_value_)', # Await
             ], expr_text.encode('unicode_escape')
+            if 0:
+                add_pass_error(
+                    expr,
+                    f"`{expr_text}` not in self.vars, setting its type to {new_t}"
+                )
         #
         e = self.copy()
         e.vars[expr_text] = new_t
