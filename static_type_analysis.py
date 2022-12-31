@@ -10209,7 +10209,7 @@ type_of_internal_thing_ = {
     'ECMAScriptCode'   : T_Parse_Node,
     'ConstructorKind'  : T_tilde_base_ | T_tilde_derived_,
     'Realm'            : T_Realm_Record,
-    'ScriptOrModule'   : T_Script_Record | T_Module_Record | T_Null, # XXX must add Null to spec
+    'ScriptOrModule'   : T_Script_Record | T_Module_Record,
     'ThisMode'         : T_tilde_lexical_ | T_tilde_strict_ | T_tilde_global_,
     'Strict'           : T_Boolean,
     'HomeObject'       : T_Object,
