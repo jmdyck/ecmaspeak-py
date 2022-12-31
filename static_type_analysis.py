@@ -10198,10 +10198,6 @@ type_of_internal_thing_ = {
     # 5994
     'BigIntData' : T_BigInt,
 
-    # 5253: NO TABLE, no mention
-    'IteratedList'          : ListType(T_Tangible_),
-    'ListNextIndex'         : T_MathInteger_,
-
     # 8329: Table 30: Internal Slots of ECMAScript Function Objects
     'Environment'      : T_Environment_Record,
     'PrivateEnvironment' : T_PrivateEnvironment_Record | T_Null,
@@ -10233,10 +10229,6 @@ type_of_internal_thing_ = {
     # 9506: Arguments Exotic Objects NO TABLE
     'ParameterMap' : T_Object,
 
-    # 9735: MakeArgGetter NO TABLE
-    'Name' : T_String,
-    'Env'  : T_Environment_Record,
-
     # 9806: Integer Indexed Exotic Objects NO TABLE
     'ViewedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_, #?
     'ArrayLength'       : T_MathInteger_,
@@ -10258,20 +10250,11 @@ type_of_internal_thing_ = {
     'VisitedKeys'     : ListType(T_String),
     'RemainingKeys'   : ListType(T_String),
 
-    # 24411
-    'ReferencingScriptOrModule': T_Script_Record | T_Module_Record | T_Null,
-    'Specifier'                : T_String,
-    'PromiseCapability'        : T_PromiseCapability_Record,
-
     # 27137: Properties of Boolean Instances NO TABLE
     'BooleanData' : T_Boolean,
 
     # 30688
     'DateValue': T_IntegralNumber_ | T_NaN_Number_,
-
-    # 30738: Table 46: Internal Slots of String Iterator Instances
-    'IteratedString' : T_String,
-    'StringNextIndex': T_MathInteger_,
 
     # 32711: Properties of RegExp Instances NO TABLE
     'RegExpMatcher'  : T_RegExpMatcher_,
@@ -10279,30 +10262,8 @@ type_of_internal_thing_ = {
     'OriginalFlags'  : T_String,
     'RegExpRecord'   : T_RegExp_Record,
 
-    # 34123: Table 48: Internal Slots of Array Iterator Instances
-    'IteratedArrayLike'      : T_Object,
-    'ArrayLikeNextIndex'     : T_MathInteger_,
-    'ArrayLikeIterationKind' : T_tilde_key_ | T_tilde_value_ | T_tilde_key_value_,
-
     # 35373 + 37350 NO TABLE
     'ByteLength' : T_MathInteger_,
-
-    # 35719: Table 50: Internal Slots of Map Iterator Instances
-    'IteratedMap'      : T_Object,
-    'MapNextIndex'     : T_MathInteger_,
-    'MapIterationKind' : T_tilde_key_ | T_tilde_value_ | T_tilde_key_value_,
-
-    # 36073: Table 51: Internal Slots of Set Iterator Instances
-    'IteratedSet'      : T_Object,
-    'SetNextIndex'     : T_MathInteger_,
-    'SetIterationKind' : T_tilde_key_ | T_tilde_value_ | T_tilde_key_value_,
-
-    # 36630: Table 58: Internal Slots of RegExp String Iterator Instances
-    'IteratingRegExp'  : T_Object,
-    'IteratedString'   : T_String,
-    'Global'           : T_Boolean,
-    'Unicode'          : T_Boolean,
-    'Done'             : T_Boolean,
 
     # 36817: Properties of the ArrayBuffer Instances
     # 36973: Properties of the SharedArrayBuffer Instances
@@ -10344,9 +10305,6 @@ type_of_internal_thing_ = {
     # 39763
     'SetData'    : ListType(T_Tangible_ | T_tilde_empty_),
 
-    # 39781 AsyncFunction Awaited Fulfilled/Rejected NO TABLE
-    'AsyncContext' : T_execution_context,
-
     # 39817 `Promise.all` Resolve Element Functions
     'Index'             : T_MathInteger_,
     'Values'            : ListType(T_Tangible_),
@@ -10356,9 +10314,6 @@ type_of_internal_thing_ = {
 
     # 40093:
     'WeakMapData' : ListType(T_MapData_record_),
-
-    # 40188: NO TABLE
-    'Done'              : T_Boolean,
 
     # 40254:
     'WeakSetData' : ListType(T_Tangible_ | T_tilde_empty_),
@@ -10373,13 +10328,6 @@ type_of_internal_thing_ = {
     'AsyncGeneratorState'   : T_Undefined | T_tilde_suspendedStart_ | T_tilde_suspendedYield_ | T_tilde_executing_ | T_tilde_awaiting_return_ | T_tilde_completed_,
     'AsyncGeneratorContext' : T_execution_context,
     'AsyncGeneratorQueue'   : ListType(T_AsyncGeneratorRequest_Record),
-
-    # 42071 mention, NO TABLE
-    'Generator' : T_AsyncGenerator_object_,
-
-    # 44654 mention
-    'Constructor' : T_constructor_object_,
-    'OnFinally'   : T_function_object_,
 
     # 45286 mention
     'RevocableProxy' : T_Proxy_exotic_object_ | T_Null,
