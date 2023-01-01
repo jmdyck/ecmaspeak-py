@@ -52,6 +52,8 @@ def prep_for_STA():
 
     process_declared_record_type_info()
 
+    set_up_declared_internal_methods_and_slots()
+
 def retain_for_sta(header):
     if header.section.section_num.startswith('B'):
         # We're in Annex B. Do we want to create this {alg_defn} and add it to {header}?
@@ -6256,6 +6258,7 @@ tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
 tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
 tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
+tbd['{VAL_DESC} : a callable Object'] = T_function_object_
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
 tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
 tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
@@ -6363,8 +6366,10 @@ def _(led, env):
     return ptn_type_for(nonterminal)
 
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_AsyncGeneratorRequest_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : BigInts'                            ] = T_BigInt
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : ClassFieldDefinition Records'       ] = T_ClassFieldDefinition_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records'              ] = T_Cyclic_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values'         ] = T_Tangible_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'                ] = T_ExportEntry_Record
@@ -6372,6 +6377,7 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_Imp
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Objects'                            ] = T_Object
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes'                        ] = T_Parse_Node
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Private Names'                      ] = T_Private_Name
+tbd['{LIST_ELEMENTS_DESCRIPTION} : PrivateElements'                    ] = T_PrivateElement
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Strings'                            ] = T_String
@@ -10165,6 +10171,18 @@ def find_record_types_with_fields(field_names):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def set_up_internal_thing(method_or_slot, debracketed_name, stype):
+    # Ignore `method_or_slot`
+    if debracketed_name in type_of_internal_thing_:
+        # [[GeneratorBrand]] is declared for both
+        # Generator Instances and AsyncGenerator Instances.
+        assert debracketed_name == 'GeneratorBrand', debracketed_name
+
+        t = type_of_internal_thing_[debracketed_name]
+        assert t == stype
+    else:
+        type_of_internal_thing_[debracketed_name] = stype
+
 type_of_internal_thing_ = {
 
     # Ordinary Object Internal Methods and Internal Slots
@@ -10173,24 +10191,6 @@ type_of_internal_thing_ = {
 
     'PrivateElements'   : ListType(T_PrivateElement),
 
-    # 1188: Table 5: Essential Internal Methods
-    # (Properly, this info *should* be taken from the results of STA.)
-    'GetPrototypeOf'    : ProcType([                                             ], T_Object | T_Null                   | T_throw_),
-    'SetPrototypeOf'    : ProcType([T_Object | T_Null                            ], T_Boolean                           | T_throw_),
-    'IsExtensible'      : ProcType([                                             ], T_Boolean                           | T_throw_),
-    'PreventExtensions' : ProcType([                                             ], T_Boolean                           | T_throw_),
-    'GetOwnProperty'    : ProcType([T_String | T_Symbol                          ], T_Property_Descriptor | T_Undefined | T_throw_),
-    'DefineOwnProperty' : ProcType([T_String | T_Symbol, T_Property_Descriptor   ], T_Boolean                           | T_throw_),
-    'HasProperty'       : ProcType([T_String | T_Symbol                          ], T_Boolean                           | T_throw_),
-    'Get'               : ProcType([T_String | T_Symbol, T_Tangible_             ], T_Tangible_                         | T_throw_),
-    'Set'               : ProcType([T_String | T_Symbol, T_Tangible_, T_Tangible_], T_Boolean                           | T_throw_),
-    'Delete'            : ProcType([T_String | T_Symbol                          ], T_Boolean                           | T_throw_),
-    'OwnPropertyKeys'   : ProcType([                                             ], ListType(T_String | T_Symbol)       | T_throw_),
-
-    # 1328: Table 6: Additional Essential Internal Methods of Function Objects
-    'Call'              : ProcType([T_Tangible_, ListType(T_Tangible_)           ], T_Tangible_                         | T_throw_),
-    'Construct'         : ProcType([ListType(T_Tangible_), T_Object              ], T_Object                            | T_throw_),
-
     # 4407
     'NumberData' : T_Number,
     # 4423
@@ -10198,30 +10198,8 @@ type_of_internal_thing_ = {
     # 5994
     'BigIntData' : T_BigInt,
 
-    # 8329: Table 30: Internal Slots of ECMAScript Function Objects
-    'Environment'      : T_Environment_Record,
-    'PrivateEnvironment' : T_PrivateEnvironment_Record | T_Null,
-    'FormalParameters' : T_Parse_Node,
-    'ECMAScriptCode'   : T_Parse_Node,
-    'ConstructorKind'  : T_tilde_base_ | T_tilde_derived_,
-    'Realm'            : T_Realm_Record,
-    'ScriptOrModule'   : T_Script_Record | T_Module_Record,
-    'ThisMode'         : T_tilde_lexical_ | T_tilde_strict_ | T_tilde_global_,
-    'Strict'           : T_Boolean,
-    'HomeObject'       : T_Object,
-    'SourceText'       : T_Unicode_code_points_,
-    'Fields'           : ListType(T_ClassFieldDefinition_Record),
-    'PrivateMethods'   : ListType(T_PrivateElement),
-    'ClassFieldInitializerName': T_String | T_Symbol | T_Private_Name | T_tilde_empty_,
-    'IsClassConstructor': T_Boolean,
-
     # 8860:
     'InitialName' : T_Null | T_String,
-
-    # 9078: Table 28: Internal Slots of Exotic Bound Function Objects
-    'BoundTargetFunction': T_function_object_,
-    'BoundThis'          : T_Tangible_,
-    'BoundArguments'     : ListType(T_Tangible_),
 
     # 9373 NO TABLE
     'StringData' : T_String,
@@ -10236,19 +10214,9 @@ type_of_internal_thing_ = {
     'ContentType'       : T_tilde_BigInt_ | T_tilde_Number_,
     'TypedArrayName'    : T_String,
 
-    # 10066: Table 29: Internal Slots of Module Namespace Exotic Objects
-    'Module'     : T_Module_Record, # T_Cyclic_Module_Record ?
-    'Exports'    : ListType(T_String),
-
     # 9.5 Proxy Object Internal Methods and Internal Slots
     'ProxyHandler' : T_Object | T_Null,
     'ProxyTarget'  : T_Object | T_Null,
-
-    # 18100: Properties of For-In Iterator Instances
-    'Object'          : T_Object,
-    'ObjectWasVisited': T_Boolean,
-    'VisitedKeys'     : ListType(T_String),
-    'RemainingKeys'   : ListType(T_String),
 
     # 27137: Properties of Boolean Instances NO TABLE
     'BooleanData' : T_Boolean,
@@ -10273,11 +10241,6 @@ type_of_internal_thing_ = {
     'ArrayBufferByteLength' : T_MathInteger_,
     'ArrayBufferDetachKey'  : T_host_defined_,
 
-    # 38581: Table 56: Internal Slots of Generator Instances
-    'GeneratorState'  : T_Undefined | T_tilde_suspendedStart_ | T_tilde_suspendedYield_ | T_tilde_executing_ | T_tilde_completed_,
-    'GeneratorContext': T_execution_context,
-    'GeneratorBrand'  : T_String | T_tilde_empty_,
-
     # 25.1.1.1 WeakRef ( _target_ ) NO TABLE
     'WeakRefTarget' : T_Object,
 
@@ -10294,13 +10257,6 @@ type_of_internal_thing_ = {
 
     # 39034: NO TABLE
     'Capability' : T_PromiseCapability_Record,
-
-    # 39537: Table 59: Internal Slots of Promise Instances
-    'PromiseState'           : T_tilde_pending_ | T_tilde_fulfilled_ | T_tilde_rejected_,
-    'PromiseResult'          : T_Tangible_,
-    'PromiseFulfillReactions': ListType(T_PromiseReaction_Record) | T_Undefined,
-    'PromiseRejectReactions' : ListType(T_PromiseReaction_Record) | T_Undefined,
-    'PromiseIsHandled'       : T_Boolean,
 
     # 39763
     'SetData'    : ListType(T_Tangible_ | T_tilde_empty_),
@@ -10321,17 +10277,97 @@ type_of_internal_thing_ = {
     # 40578: NO TABLE
     'Errors' : ListType(T_Tangible_),
 
-    # 41310: Table N: Internal Slots of Async-from-Sync Iterator Instances
-    'SyncIteratorRecord' : T_Iterator_Record,
-
-    # 41869: Table N: Internal Slots of AsyncGenerator Instances
-    'AsyncGeneratorState'   : T_Undefined | T_tilde_suspendedStart_ | T_tilde_suspendedYield_ | T_tilde_executing_ | T_tilde_awaiting_return_ | T_tilde_completed_,
-    'AsyncGeneratorContext' : T_execution_context,
-    'AsyncGeneratorQueue'   : ListType(T_AsyncGeneratorRequest_Record),
-
     # 45286 mention
     'RevocableProxy' : T_Proxy_exotic_object_ | T_Null,
 }
+# ------------------------------------------------------------------------------
+
+def set_up_declared_internal_methods_and_slots():
+    # Set up the internal methods and slots
+    # that are declared in tables in the spec.
+    for emu_table in spec.doc_node.each_descendant_named('emu-table'):
+        if 'Internal' in emu_table._caption:
+            if 'Internal Method' in emu_table._caption:
+                method_or_slot = 'method'
+            elif 'Internal Slot' in emu_table._caption:
+                method_or_slot = 'slot'
+            else:
+                assert 0, emu_table._caption
+
+            assert (method_or_slot, emu_table._header_row.cell_texts) in [
+                ('method', ['Internal Method', 'Signature', 'Description']),
+                ('slot',   ['Internal Slot',   'Type',      'Description']),
+            ]
+
+            for row in emu_table._data_rows:
+                handle_internal_thing_declaration(method_or_slot, row)
+
+def handle_internal_thing_declaration(method_or_slot, row):
+    (thing_name, thing_nature, thing_desc) = row.cell_texts
+    debracketed_thing_name = re.fullmatch('\[\[(\w+)\]\]', thing_name).group(1) # backwards compat
+
+    if method_or_slot == 'method':
+
+        # The 'declarations' for the essential internal methods
+        # don't use the same "type" phrasing used everywhere else,
+        # so we need an ad hoc conversion function:
+        def internal_method_nature_to_type(nature):
+            return {
+                'Boolean'                        : T_Boolean,
+                'Object'                         : T_Object,
+                'Object | Null'                  : T_Object | T_Null,
+                'Undefined | Property Descriptor': T_Undefined | T_Property_Descriptor,
+                '_PropertyDescriptor_'           : T_Property_Descriptor,
+                '_Receiver_'                     : T_Tangible_,
+                '_propertyKey_'                  : T_String | T_Symbol,
+                '_value_'                        : T_Tangible_,
+                '<em>any</em>'                   : T_Tangible_,
+                'a List of <em>any</em>'         : ListType(T_Tangible_),
+                'List of property keys'          : ListType(T_String | T_Symbol),
+            }[nature]
+
+        (param_natures, return_nature) = re.fullmatch(r'\((.+)\) <b>\u2192</b> (.+)', thing_nature).groups()
+
+        if param_natures == ' ':
+            param_types = []
+        else:
+            param_types = [
+                internal_method_nature_to_type(param_nature)
+                for param_nature in param_natures.split(', ')
+            ]
+
+        return_type = internal_method_nature_to_type(return_nature)
+        #> An internal method implicitly returns a Completion Record,
+        #> either a normal completion that wraps
+        #> a value of the return type shown in its invocation pattern,
+        #> or a throw completion.
+        return_type |= T_throw_
+
+        t = ProcType(param_types, return_type)
+        
+    elif method_or_slot == 'slot':
+        field_value_type = row.cell_nodes[1]._syntax_tree
+        value_description = field_value_type.children[0]
+        t = convert_nature_node_to_type(value_description)
+
+        if debracketed_thing_name in ['PromiseFulfillReactions', 'PromiseRejectReactions']:
+            assert row.cell_texts[1] == 'a List of PromiseReaction Records'
+            assert t == ListType(T_PromiseReaction_Record)
+            # But there are steps (in FulfillPromise and RejectPromise)
+            # that explicitly set these slots to *undefined*.
+            t |= T_Undefined
+            # (Might be worth a PR.)
+
+        # Module Namespace Exotic Object's [[Module]] slot:
+        # it's declared as "a Module Record",
+        # but should it be "a Cyclic Module Record"?
+
+    else:
+        assert 0, method_or_slot
+
+    set_up_internal_thing(method_or_slot, debracketed_thing_name, t)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 main()
 
