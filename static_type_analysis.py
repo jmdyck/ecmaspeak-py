@@ -10171,6 +10171,8 @@ def find_record_types_with_fields(field_names):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+type_of_internal_thing_ = {}
+
 def set_up_internal_thing(method_or_slot, debracketed_name, stype):
     # Ignore `method_or_slot`
     if debracketed_name in type_of_internal_thing_:
@@ -10183,103 +10185,96 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
     else:
         type_of_internal_thing_[debracketed_name] = stype
 
-type_of_internal_thing_ = {
+# 6.1.7.2 Object Internal Methods and Internal Slots
+set_up_internal_thing('slot', 'PrivateElements', ListType(T_PrivateElement))
 
-    # Ordinary Object Internal Methods and Internal Slots
-    'Prototype'  : T_Object | T_Null,
-    'Extensible' : T_Boolean,
+# 10.1 Ordinary Object Internal Methods and Internal Slots
+set_up_internal_thing('slot', 'Prototype',  T_Object | T_Null)
+set_up_internal_thing('slot', 'Extensible', T_Boolean)
 
-    'PrivateElements'   : ListType(T_PrivateElement),
+# 10.3 Built-in Function Objects
+set_up_internal_thing('slot', 'InitialName', T_Null | T_String)
 
-    # 4407
-    'NumberData' : T_Number,
-    # 4423
-    'SymbolData' : T_Symbol,
-    # 5994
-    'BigIntData' : T_BigInt,
+# 10.4.4 Arguments Exotic Objects
+set_up_internal_thing('slot', 'ParameterMap', T_Object)
 
-    # 8860:
-    'InitialName' : T_Null | T_String,
+# 10.4.5 Integer-Indexed Exotic Objects
+set_up_internal_thing('slot', 'ViewedArrayBuffer', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+set_up_internal_thing('slot', 'ArrayLength',       T_MathInteger_)
+set_up_internal_thing('slot', 'ByteOffset',        T_MathInteger_)
+set_up_internal_thing('slot', 'ContentType',       T_tilde_BigInt_ | T_tilde_Number_)
+set_up_internal_thing('slot', 'TypedArrayName',    T_String)
+set_up_internal_thing('slot', 'ByteLength',        T_MathInteger_)
 
-    # 9373 NO TABLE
-    'StringData' : T_String,
+# 10.5 Proxy Object Internal Methods and Internal Slots
+set_up_internal_thing('slot', 'ProxyHandler', T_Object | T_Null)
+set_up_internal_thing('slot', 'ProxyTarget',  T_Object | T_Null)
 
-    # 9506: Arguments Exotic Objects NO TABLE
-    'ParameterMap' : T_Object,
+# 20.3 Boolean Objects
+set_up_internal_thing('slot', 'BooleanData', T_Boolean)
 
-    # 9806: Integer Indexed Exotic Objects NO TABLE
-    'ViewedArrayBuffer' : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_, #?
-    'ArrayLength'       : T_MathInteger_,
-    'ByteOffset'        : T_MathInteger_,
-    'ContentType'       : T_tilde_BigInt_ | T_tilde_Number_,
-    'TypedArrayName'    : T_String,
+# 20.4 Symbol Objects
+set_up_internal_thing('slot', 'SymbolData', T_Symbol)
 
-    # 9.5 Proxy Object Internal Methods and Internal Slots
-    'ProxyHandler' : T_Object | T_Null,
-    'ProxyTarget'  : T_Object | T_Null,
+# 21.1 Number Objects
+set_up_internal_thing('slot', 'NumberData', T_Number)
 
-    # 27137: Properties of Boolean Instances NO TABLE
-    'BooleanData' : T_Boolean,
+# 21.2 BigInt Objects
+set_up_internal_thing('slot', 'BigIntData', T_BigInt)
 
-    # 30688
-    'DateValue': T_IntegralNumber_ | T_NaN_Number_,
+# 21.4 Date Objects
+set_up_internal_thing('slot', 'DateValue', T_IntegralNumber_ | T_NaN_Number_)
 
-    # 32711: Properties of RegExp Instances NO TABLE
-    'RegExpMatcher'  : T_RegExpMatcher_,
-    'OriginalSource' : T_String,
-    'OriginalFlags'  : T_String,
-    'RegExpRecord'   : T_RegExp_Record,
+# 22.1 String Objects
+set_up_internal_thing('slot', 'StringData', T_String)
 
-    # 35373 + 37350 NO TABLE
-    'ByteLength' : T_MathInteger_,
+# 22.2 RegExp (Regular Expression) Objects
+set_up_internal_thing('slot', 'RegExpMatcher',  T_RegExpMatcher_)
+set_up_internal_thing('slot', 'OriginalSource', T_String)
+set_up_internal_thing('slot', 'OriginalFlags',  T_String)
+set_up_internal_thing('slot', 'RegExpRecord',   T_RegExp_Record)
 
-    # 36817: Properties of the ArrayBuffer Instances
-    # 36973: Properties of the SharedArrayBuffer Instances
-    # NO TABLE
-    'ArrayBufferData': T_Data_Block | T_Shared_Data_Block | T_Null,
-        # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
-    'ArrayBufferByteLength' : T_MathInteger_,
-    'ArrayBufferDetachKey'  : T_host_defined_,
+# 24.1 Map Objects
+set_up_internal_thing('slot', 'MapData', ListType(T_MapData_record_))
 
-    # 25.1.1.1 WeakRef ( _target_ ) NO TABLE
-    'WeakRefTarget' : T_Object,
+# 24.2 Set Objects
+set_up_internal_thing('slot', 'SetData', ListType(T_Tangible_ | T_tilde_empty_))
 
-    # 25.2.1.1 FinalizationRegistry ( cleanupCallback ) NO TABLE
-    'CleanupCallback' : T_JobCallback_Record,
-    'Cells'           : ListType(T_FinalizationRegistryCellRecord_),
+# 24.3 WeakMap Objects
+set_up_internal_thing('slot', 'WeakMapData', ListType(T_MapData_record_))
 
-    # 38914: 25.4.1.3.1 ish, NO TABLE
-    'Promise'        : T_Object,
-    'AlreadyResolved': T_boolean_value_record_,
+# 24.4 WeakSet Objects
+set_up_internal_thing('slot', 'WeakSetData', ListType(T_Tangible_ | T_tilde_empty_))
 
-    # 39021
-    'MapData' : ListType(T_MapData_record_),
+# 25.1 ArrayBuffer Objects
+# 25.2 SharedArrayBuffer Objects
+set_up_internal_thing('slot', 'ArrayBufferData',       T_Data_Block | T_Shared_Data_Block | T_Null)
+    # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
+set_up_internal_thing('slot', 'ArrayBufferByteLength', T_MathInteger_)
+set_up_internal_thing('slot', 'ArrayBufferDetachKey',  T_host_defined_)
 
-    # 39034: NO TABLE
-    'Capability' : T_PromiseCapability_Record,
+# 26.1 WeakRef Objects
+set_up_internal_thing('slot', 'WeakRefTarget', T_Object)
 
-    # 39763
-    'SetData'    : ListType(T_Tangible_ | T_tilde_empty_),
+# 26.2 FinalizationRegistry Objects
+set_up_internal_thing('slot', 'CleanupCallback', T_JobCallback_Record)
+set_up_internal_thing('slot', 'Cells',           ListType(T_FinalizationRegistryCellRecord_))
 
-    # 39817 `Promise.all` Resolve Element Functions
-    'Index'             : T_MathInteger_,
-    'Values'            : ListType(T_Tangible_),
-    'Capability'        : T_PromiseCapability_Record,
-    'RemainingElements' : T_integer_value_record_,
-    'AlreadyCalled'     : T_boolean_value_record_ | T_Boolean,
+# 27.2.1.3 CreatResolvingFunctions
+set_up_internal_thing('slot', 'Promise',         T_Object)
+set_up_internal_thing('slot', 'AlreadyResolved', T_boolean_value_record_)
 
-    # 40093:
-    'WeakMapData' : ListType(T_MapData_record_),
+# 27.2.4 Properties of the Promise Constructor
+set_up_internal_thing('slot', 'AlreadyCalled',     T_boolean_value_record_ | T_Boolean)
+set_up_internal_thing('slot', 'Index',             T_MathInteger_)
+set_up_internal_thing('slot', 'Capability',        T_PromiseCapability_Record)
+set_up_internal_thing('slot', 'RemainingElements', T_integer_value_record_)
+set_up_internal_thing('slot', 'Values',            ListType(T_Tangible_))
+set_up_internal_thing('slot', 'Errors',            ListType(T_Tangible_))
 
-    # 40254:
-    'WeakSetData' : ListType(T_Tangible_ | T_tilde_empty_),
+# 28.2.2.1 Proxy.revocable
+set_up_internal_thing('slot', 'RevocableProxy', T_Proxy_exotic_object_ | T_Null)
 
-    # 40578: NO TABLE
-    'Errors' : ListType(T_Tangible_),
-
-    # 45286 mention
-    'RevocableProxy' : T_Proxy_exotic_object_ | T_Null,
-}
 # ------------------------------------------------------------------------------
 
 def set_up_declared_internal_methods_and_slots():
