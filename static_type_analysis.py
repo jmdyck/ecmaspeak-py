@@ -3121,11 +3121,26 @@ if 1:
     def _(anode, env0):
         [each_thing, commands] = anode.children
 
+        env_for_commands  = tc_nonvalue(each_thing, env0)
+
+        env_after_commands = tc_nonvalue(commands, env_for_commands)
+        # XXX do I need to feed this back somehow?
+
+        # Assume the loop-var doesn't survive the loop
+        # if loop_var:
+        #     result = env_after_commands.with_var_removed(loop_var)
+        # else:
+        #     result = env_after_commands
+
+        # The only variables that 'exit' the loop are those that existed beforehand.
+        names = env0.vars.keys()
+        return env_after_commands.reduce(names)
+
+    if 1:
         # generic list:
-        if each_thing.prod.rhs_s in [
-            r"element {var} of {EX}",
-            r"element {var} of {var}, in reverse List order",
-        ]:
+        @nv.put(r"{EACH_THING} : element {var} of {EX}")
+        @nv.put(r"{EACH_THING} : element {var} of {var}, in reverse List order")
+        def _(each_thing, env0):
             [loop_var, collection_expr] = each_thing.children
             (list_type, env1) = tc_expr(collection_expr, env0); assert env1 is env0
             if list_type == T_List:
@@ -3137,14 +3152,13 @@ if 1:
             else:
                 assert isinstance(list_type, ListType), list_type
                 element_type = list_type.element_type
-            env_for_commands = env1.plus_new_entry(loop_var, element_type)
+            return env1.plus_new_entry(loop_var, element_type)
 
         # ---------------------
 
-        elif each_thing.prod.rhs_s in [
-            "{ITEM_NATURE} {var} of {EX}",
-            "{ITEM_NATURE} {var} that is an element of {EX}",
-        ]:
+        @nv.put("{EACH_THING} : {ITEM_NATURE} {var} of {EX}")
+        @nv.put("{EACH_THING} : {ITEM_NATURE} {var} that is an element of {EX}")
+        def _(each_thing, env0):
             [item_nature, loop_var, collection_expr] = each_thing.children
 
             if item_nature.prod.rhs_s == "code point":
@@ -3205,64 +3219,68 @@ if 1:
                 collection_type = ListType(item_type)
 
             env1 = env0.ensure_expr_is_of_type(collection_expr, collection_type)
-            env_for_commands = env1.plus_new_entry(loop_var, item_type)
+            return env1.plus_new_entry(loop_var, item_type)
 
         # ------------------------
         # property keys of an object:
 
-        elif each_thing.prod.rhs_s == r"own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order":
+        @nv.put(r"{EACH_THING} : own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order")
+        def _(each_thing, env0):
             [loop_var, obj_var, lo_var] = each_thing.children
             env0.assert_expr_is_of_type(obj_var, T_Object)
             env0.assert_expr_is_of_type(lo_var, T_Number)
-            env_for_commands = env0.plus_new_entry(loop_var, T_String)
+            return env0.plus_new_entry(loop_var, T_String)
 
-        elif each_thing.prod.rhs_s in [
-            r"own property key {var} of {var} such that {CONDITION}, in ascending numeric index order",
-            r"own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation",
-        ]:
+        @nv.put(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending numeric index order")
+        @nv.put(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation")
+        def _(each_thing, env0):
             [loop_var, obj_var, condition] = each_thing.children
             env0.assert_expr_is_of_type(obj_var, T_Object)
             env1 = env0.plus_new_entry(loop_var, T_String | T_Symbol)
             (tenv, fenv) = tc_cond(condition, env1)
-            env_for_commands = tenv
+            return tenv
 
-        elif each_thing.prod.rhs_s == r"property of the Global Object specified in clause {h_emu_xref}":
+        @nv.put(r"{EACH_THING} : property of the Global Object specified in clause {h_emu_xref}")
+        def _(each_thing, env0):
             [emu_xref] = each_thing.children
             # no loop_var!
-            env_for_commands = env0
+            return env0
 
         # -----------------------
         # other collections:
 
-        elif each_thing.prod.rhs_s == r"index {var} of {var}":
+        @nv.put(r"{EACH_THING} : index {var} of {var}")
+        def _(each_thing, env0):
             [loop_var, collection_var] = each_thing.children
             env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
-            env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
+            return env0.plus_new_entry(loop_var, T_MathInteger_)
 
-        elif each_thing.prod.rhs_s == r"{nonterminal} {var} that {var} contains":
+        @nv.put(r"{EACH_THING} : {nonterminal} {var} that {var} contains")
+        def _(each_thing, env0):
             [nont, loop_var, root_var] = each_thing.children
             env0.assert_expr_is_of_type(root_var, T_Parse_Node)
-            env_for_commands = env0.plus_new_entry(loop_var, ptn_type_for(nont))
+            return env0.plus_new_entry(loop_var, ptn_type_for(nont))
 
-        elif each_thing.prod.rhs_s == r"integer {var} in {INTERVAL}":
+        @nv.put(r"{EACH_THING} : integer {var} in {INTERVAL}")
+        def _(each_thing, env0):
             [loop_var, interval] = each_thing.children
             env0.assert_expr_is_of_type(interval, T_MathInteger_)
-            env_for_commands = env0.plus_new_entry(loop_var, T_MathInteger_)
+            return env0.plus_new_entry(loop_var, T_MathInteger_)
 
-        elif each_thing.prod.rhs_s == r"field of {var}":
+        @nv.put(r"{EACH_THING} : field of {var}")
+        def _(each_thing, env0):
             [desc_var] = each_thing.children
             loop_var = None # todo: no loop variable!
             env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-            env_for_commands = env0
+            return env0
 
         # --------------------------------------------------
         # things from a large (possibly infinite) set, those that satisfy a condition:
 
-        elif each_thing.prod.rhs_s in [
-            r"{ITEM_NATURE} {var} such that {CONDITION}",
-            r"{ITEM_NATURE} {var} such that {CONDITION}, in ascending order",
-            r"{ITEM_NATURE} {var} such that {CONDITION}, in descending order",
-        ]:
+        @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}")
+        @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in ascending order")
+        @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in descending order")
+        def _(each_thing, env0):
             [item_nature, loop_var, condition] = each_thing.children
             item_type = {
                 "FinalizationRegistry": T_FinalizationRegistry_object_,
@@ -3274,33 +3292,13 @@ if 1:
             }[item_nature.prod.rhs_s]
             env1 = env0.plus_new_entry(loop_var, item_type)
             (tenv, fenv) = tc_cond(condition, env1)
-            env_for_commands = tenv
+            return tenv
 
-        elif each_thing.prod.rhs_s == r"child node {var} of this Parse Node":
+        @nv.put(r"{EACH_THING} : child node {var} of this Parse Node")
+        def _(each_thing, env0):
             [loop_var] = each_thing.children
             env1 = env0.plus_new_entry(loop_var, T_Parse_Node)
-            env_for_commands = env1
-
-        else:
-            stderr()
-            stderr("each_thing:")
-            stderr('        elif each_thing.prod.rhs_s == r"%s":' % each_thing.prod.rhs_s)
-            sys.exit(0)
-
-        # --------------------------------------------------
-
-        env_after_commands = tc_nonvalue(commands, env_for_commands)
-        # XXX do I need to feed this back somehow?
-
-        # Assume the loop-var doesn't survive the loop
-        # if loop_var:
-        #     result = env_after_commands.with_var_removed(loop_var)
-        # else:
-        #     result = env_after_commands
-
-        # The only variables that 'exit' the loop are those that existed beforehand.
-        names = env0.vars.keys()
-        return env_after_commands.reduce(names)
+            return env1
 
     # ----------------------------------
     # Assert
