@@ -5927,6 +5927,8 @@ def type_bracket_for(vd, env):
         '{VALUE_DESCRIPTION}',
         '{VAL_DESC}',
         '{LITERAL}',
+        '{NUMBER_LITERAL}',
+        '{MATH_LITERAL}',
         '{LIST_ELEMENTS_DESCRIPTION}',
     ], str(vd.prod)
 
@@ -5969,6 +5971,8 @@ def a_subset_of(t): return (T_0, t)
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}')
 @tbd.put('{VAL_DESC} : {LITERAL}')
 @tbd.put('{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}')
+@tbd.put('{LITERAL} : {NUMBER_LITERAL}')
+@tbd.put('{LITERAL} : {MATH_LITERAL}')
 def _(vd, env):
     [child] = vd.children
     return type_bracket_for(child, env)
@@ -6398,33 +6402,16 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_Str
 
 # ------------------
 
-@tbd.put('{LITERAL} : {MATH_LITERAL}')
-def _(literal, env):
-    [math_literal] = literal.children
-    r = math_literal.prod.rhs_s
-    if r in ['+&infin;', '+∞']:
-        return T_MathPosInfinity_
-    elif r in ['-&infin;', '-∞']:
-        return T_MathNegInfinity_
-    elif r == '{dec_int_lit}':
-        return a_subset_of(T_MathInteger_)
-    else:
-        assert 0, r
+tbd['{MATH_LITERAL} : {dec_int_lit}'] = a_subset_of(T_MathInteger_)
+tbd['{MATH_LITERAL} : +&infin;'] = T_MathPosInfinity_
+tbd['{MATH_LITERAL} : -&infin;'] = T_MathNegInfinity_
+tbd['{MATH_LITERAL} : +∞'] = T_MathPosInfinity_
+tbd['{MATH_LITERAL} : -∞'] = T_MathNegInfinity_
 
-@tbd.put('{LITERAL} : {NUMBER_LITERAL}')
-def _(literal, env):
-    [number_literal] = literal.children
-    r = number_literal.prod.rhs_s
-    if r == '{starred_nan_lit}':
-        return T_NaN_Number_
-    elif r == '{starred_neg_infinity_lit}{h_sub_fancy_f}':
-        return T_NegInfinityNumber_
-    elif r == '{starred_pos_infinity_lit}{h_sub_fancy_f}':
-        return T_PosInfinityNumber_
-    elif r == '{starred_int_lit}{h_sub_fancy_f}':
-        return a_subset_of(T_IntegralNumber_)
-    else:
-        assert 0, r
+tbd['{NUMBER_LITERAL} : {starred_nan_lit}'] = T_NaN_Number_
+tbd['{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}'] = T_NegInfinityNumber_
+tbd['{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}'] = T_PosInfinityNumber_
+tbd['{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}'] = a_subset_of(T_IntegralNumber_)
 
 @tbd.put('{LITERAL} : {tilded_word}')
 def _(literal, env):
