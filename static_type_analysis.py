@@ -2801,41 +2801,9 @@ if 1:
         return env0
 
     if 1:
-        # generic list:
-        @nv.put(r"{EACH_THING} : element {var} of {EX}")
-        @nv.put(r"{EACH_THING} : element {var} of {var}, in reverse List order")
-        def _(each_thing, env0):
-            [loop_var, collection_expr] = each_thing.children
-            (list_type, env1) = tc_expr(collection_expr, env0); assert env1 is env0
-            if list_type == T_List:
-                # want to assert that this doesn't happen,
-                # but _kept_ in %TypedArray%.prototype.filter
-                element_type = T_TBD
-            elif list_type == T_TBD:
-                element_type = T_TBD
-            else:
-                assert isinstance(list_type, ListType), list_type
-                element_type = list_type.element_type
-            return env1.plus_new_entry(loop_var, element_type)
 
         # ------------------------
         # property keys of an object:
-
-        @nv.put(r"{EACH_THING} : own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order")
-        def _(each_thing, env0):
-            [loop_var, obj_var, lo_var] = each_thing.children
-            env0.assert_expr_is_of_type(obj_var, T_Object)
-            env0.assert_expr_is_of_type(lo_var, T_Number)
-            return env0.plus_new_entry(loop_var, T_String)
-
-        @nv.put(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending numeric index order")
-        @nv.put(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation")
-        def _(each_thing, env0):
-            [loop_var, obj_var, condition] = each_thing.children
-            env0.assert_expr_is_of_type(obj_var, T_Object)
-            env1 = env0.plus_new_entry(loop_var, T_String | T_Symbol)
-            (tenv, fenv) = tc_cond(condition, env1)
-            return tenv
 
         @nv.put(r"{EACH_THING} : property of the Global Object specified in clause {h_emu_xref}")
         def _(each_thing, env0):
@@ -2845,19 +2813,6 @@ if 1:
 
         # -----------------------
         # other collections:
-
-        @nv.put(r"{EACH_THING} : index {var} of {var}")
-        def _(each_thing, env0):
-            [loop_var, collection_var] = each_thing.children
-            env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
-            return env0.plus_new_entry(loop_var, T_MathInteger_)
-
-        @nv.put(r"{EACH_THING} : field of {var}")
-        def _(each_thing, env0):
-            [desc_var] = each_thing.children
-            loop_var = None # todo: no loop variable!
-            env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-            return env0
 
     # ----------------------------------
     # execution context
@@ -2946,21 +2901,29 @@ if 1:
 
     # ----------------------------------
 
-    @nv.put(r'{COMMAND} : Set all of the bytes of {var} to 0.')
+    @nv.put(r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).')
     def _(anode, env0):
-        [var] = anode.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Data_Block)
+        [var1, var2] = anode.children
+        [var_name1] = var1.children
+        [var_name2] = var2.children
+        assert var_name1 == var_name2
+        env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList)
         return env1
 
-    @nv.put(r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]")
-    @nv.put(r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].")
+    @nv.put(r'{COMMAND} : Leave the critical section for {var}.')
     def _(anode, env0):
-        [var1, var2, var3, var4] = anode.children
-        env0.assert_expr_is_of_type(var1, ListType(T_MathInteger_))
-        env1 = env0.ensure_expr_is_of_type(var2, T_Data_Block)
-        assert var3.children == var2.children
-        env0.assert_expr_is_of_type(var4, T_MathInteger_)
-        return env1
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
+        return env0
+
+    @nv.put(r'{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.')
+    def _(anode, env0):
+        [er_var, n_var, m_var, n2_var] = anode.children
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(m_var, T_Module_Record)
+        env0.assert_expr_is_of_type(n2_var, T_String)
+        return env0
 
     @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
     def _(anode, env0):
@@ -2968,31 +2931,6 @@ if 1:
         env0.assert_expr_is_of_type(noi, T_tilde_unused_)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(t_var, T_MathReal_ | T_MathPosInfinity_)
-        return env0
-
-    @nv.put(r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
-    def _(anode, env0):
-        [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = anode.children
-        assert desc_var.source_text() == desc_var2.source_text()
-        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-        return env0
-
-    @nv.put(r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
-    def _(anode, env0):
-        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = anode.children
-        assert desc_var.source_text() == desc_var2.source_text()
-        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-        return env0
-
-    @nv.put(r"{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field")
-    def _(anode, env0):
-        [name_var, obj_var] = anode.children
-        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
         return env0
 
     @nv.put(r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
@@ -3042,19 +2980,6 @@ if 1:
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return env0
 
-    @nv.put(r"{SMALL_COMMAND} : remove that element from the {var}")
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove the own property with name {var} from {var}.")
-    def _(anode, env0):
-        [name_var, obj_var] = anode.children
-        env0.assert_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        return env0
-
     @nv.put(r"{SMALL_COMMAND} : change its bound value to {var}")
     def _(anode, env0):
         # once, in SetMutableBinding
@@ -3068,24 +2993,10 @@ if 1:
         [] = anode.children
         return env0
 
-    @nv.put(r"{COMMAND} : Remove {var} from {var}.")
-    @nv.put(r"{COMMAND} : Remove {var} from {DOTTING}.")
-    def _(anode, env0):
-        [item_var, list_ex] = anode.children
-        list_type = env0.assert_expr_is_of_type(list_ex, T_List)
-        env0.assert_expr_is_of_type(item_var, list_type.element_type)
-        return env0
-
     @nv.put(r"{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}")
     def _(anode, env0):
         [var, emu_xref, _] = anode.children
         env0.assert_expr_is_of_type(var, T_Intrinsics_Record)
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove the last element of {SETTABLE}.")
-    def _(anode, env0):
-        [settable] = anode.children
-        env0.assert_expr_is_of_type(settable, T_List)
         return env0
 
     @nv.put(r"{COMMAND} : Create any host-defined global object properties on {var}.")
@@ -3109,35 +3020,9 @@ if 1:
         env0.assert_expr_is_of_type(var, T_agent_signifier_)
         return env0
 
-    @nv.put(r"{COMMAND} : Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.")
-    def _(anode, env0):
-        [list_var, elem_ex, lit] = anode.children
-        env1 = env0.ensure_A_can_be_element_of_list_B(elem_ex, list_var)
-        env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
-        return env2
-
-    @nv.put(r"{COMMAND} : Remove the first element from {var}.")
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove the first {var} elements of {var}.")
-    def _(anode, env0):
-        [nvar, listvar] = anode.children
-        env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
-        env0.assert_expr_is_of_type(listvar, T_List)
-        return env0
-
     @nv.put(r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.")
     def _(anode, env0):
         # XXX
-        return env0
-
-    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
-    def _(anode, env0):
-        var = anode.children[0]
-        env0.assert_expr_is_of_type(var, T_Object)
         return env0
 
     @nv.put(r"{COMMAND} : Choose any such {var}.")
@@ -3163,14 +3048,6 @@ if 1:
         [var, _, comparator, _, comparator] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         return env1
-
-    @nv.put(r"{COMMAND} : Replace {var} in {var} with {var}.")
-    def _(anode, env0):
-        [ex_var, list_var, rep_var] = anode.children
-        env0.assert_expr_is_of_type(list_var, ListType(T_PrivateElement))
-        env0.assert_expr_is_of_type(ex_var, T_PrivateElement)
-        env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
-        return env0
 
     @nv.put(r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error")
     def _(anode, env0):
@@ -3219,84 +3096,7 @@ def tc_cond(cond, env0, asserting=False):
 if 1:
     condd = DecoratedFuncDict()
 
-    # ---------------
-    # Type-conditions
-
-    @condd.put(r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot")
-    def _(cond, env0, asserting):
-        [var, dsbna, dsbnb] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        assert dsbna.source_text() == '[[StringData]]'
-        assert dsbnb.source_text() == '[[NumberData]]'
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots")
-    def _(cond, env0, asserting):
-        # XXX could be a type-test
-        [var, *dsbn_] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} does not have either a {DSBN} or an {DSBN} internal slot")
-    def _(cond, env0, asserting):
-        [var, dsbna, dsbnb] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        return (env0, env0)
-
-    @condd.put(r'{TYPE_TEST} : Type({TYPE_ARG}) is the same as Type({TYPE_ARG})')
-    @condd.put(r'{TYPE_TEST} : Type({TYPE_ARG}) is different from Type({TYPE_ARG})')
-    def _(cond, env0, asserting):
-        # Env can't represent the effect of these.
-        # If the incoming static types were different,
-        # the 'true' env could at least narrow those to their intersection,
-        # but the form only appears twice, and in both cases the static types are the same.
-        return (env0, env0)
-
     # ---
-
-    @condd.put(r"{CONDITION_1} : {var} is now an empty List")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
-    def _(cond, env0, asserting):
-        [var, literal, _] = cond.children
-        env0.assert_expr_is_of_type(literal, T_tilde_unused_)
-        return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
-
-    @condd.put(r"{CONDITION_1} : {var} is finite")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t.is_a_subtype_of_or_equal_to(T_Number):
-            return env1.with_type_test(var, 'is a', T_FiniteNumber_, asserting)
-        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            return env1.with_type_test(var, 'is a', T_MathReal_, asserting)
-        else:
-            assert 0
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} are both finite")
-    def _(cond, env0, asserting):
-        [a, b] = cond.children
-        (a_t_env, a_f_env) = env0.with_type_test(a, 'is a', T_FiniteNumber_, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(b, 'is a', T_FiniteNumber_, asserting)
-        return (
-            env_and(a_t_env, b_t_env),
-            env_or(a_f_env, b_f_env)
-        )
-
-    @condd.put(r"{CONDITION_1} : {var} is not finite")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
-            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
-        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
-        else:
-            assert 0
 
     @condd.put(r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
     def _(cond, env0, asserting):
@@ -3308,68 +3108,6 @@ if 1:
             env_and(a_t_env, b_t_env),
             env_or(a_f_env, b_f_env)
         )
-
-    @condd.put(r'{CONDITION_1} : {var} has an? {DSBN} internal method')
-    def _(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        dsbn_name = dsbn.source_text()[2:-2]
-        if dsbn_name == 'Call':
-            # one of the few where the presence/absence of an internal method is a type-test?
-            return env1.with_type_test(var, 'is a', T_function_object_, asserting)
-        elif dsbn_name == 'Construct':
-            return env1.with_type_test(var, 'is a', T_constructor_object_, asserting)
-        else:
-            assert 0, dsbn_name
-
-    @condd.put(r"{CONDITION_1} : {SETTABLE} has an? {DSBN} field")
-    def _(cond, env0, asserting):
-        [settable, dsbn] = cond.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        t = env0.assert_expr_is_of_type(settable, T_Record)
-        if t.name == 'Environment Record' and dsbn_name == 'NewTarget':
-            add_pass_error(
-                cond,
-                "STA can't confirm that `%s` could have a `%s` field"
-                % ( settable.source_text(), dsbn_name )
-            )
-            # We could confirm if we looked at the subtypes and what fields they have.
-            return env0.with_type_test(settable, 'is a', [T_0, T_Function_Environment_Record], asserting)
-        else:
-            assert dsbn_name in fields_for_record_type_named_[t.name], (t.name, dsbn_name)
-            return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} does not have an? {DSBN} field')
-    def _(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Record)
-        # XXX We should check whether its type says it *could* have such a field.
-        # XXX The particular DSBN could have a (sub-)type-constraining effect
-        return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {var} does not have an? {DSBN} internal slot')
-    def _(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        # Whether or not it has that particular slot, it's still an Object.
-        # XXX The particular DSBN could have a (sub-)type-constraining effect
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {var} does not have an? {var} internal slot")
-    def _(cond, env0, asserting):
-        [obj_var, slotname_var] = cond.children
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(slotname_var, T_SlotName_)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} also has a {DSBN} internal slot')
-    @condd.put(r'{CONDITION_1} : {var} has an? {DSBN} internal slot')
-    def _(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        # Whether or not it has that particular slot, it's still an Object.
-        # XXX we could be more specific about the sub-kind of Object
-        return (env1, env1)
 
     # ------------------------
     # relating to Environment Record bindings:
@@ -3435,24 +3173,6 @@ if 1:
     # -------------------------------------------------
     # introduce metavariable:
 
-    @condd.put(r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [ex, var, stcond] = cond.children
-        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
-        assert ex_t.is_a_subtype_of_or_equal_to(T_List)
-        assert ex_t.element_type.is_a_subtype_of_or_equal_to(T_Record)
-        env_for_cond = env0.plus_new_entry(var, ex_t.element_type)
-        (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
-        return (cond_t_env, env0)
-
-    @condd.put(r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [member_var, list_var, stcond] = cond.children
-        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String)) # over-specific
-        env2 = env1.plus_new_entry(member_var, T_String)
-        (t_env, f_env) = tc_cond(stcond, env2)
-        return (env1, env1)
-
     @condd.put(r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}')
     @condd.put(r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}')
     def _(cond, env0, asserting):
@@ -3479,31 +3199,11 @@ if 1:
     # --------------------------------------------------
     # whatever
 
-    @condd.put(r'{CONDITION_1} : {var} is the same Number value as {var}')
-    def _(cond, env0, asserting):
-        [var1, var2] = cond.children
-        env0.assert_expr_is_of_type(var1, T_Number)
-        env1 = env0.ensure_expr_is_of_type(var2, T_Number)
-        return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {var} is the same sequence of code units as {var}')
-    def _(cond, env0, asserting):
-        [var1, var2] = cond.children
-        env0.assert_expr_is_of_type(var1, T_String)
-        env0.ensure_expr_is_of_type(var2, T_String)
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}')
     def _(cond, env0, asserting):
         [h_a, var] = cond.children
         assert h_a.source_text() == '<a href="https://unicode.org/Public/UCD/latest/ucd/CaseFolding.txt"><code>CaseFolding.txt</code></a>'
         env1 = env0.ensure_expr_is_of_type(var, T_character_)
-        return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {var} does not consist of a single code unit')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (env1, env1)
 
     @condd.put(r'{CONDITION_1} : {var} does not contain exactly one character')
@@ -3548,75 +3248,11 @@ if 1:
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
 
-    @condd.put(r'{CONDITION_1} : {EX} is an element of {var}')
-    @condd.put(r"{CONDITION_1} : {EX} is not an element of {var}")
-    def _(cond, env0, asserting):
-        [value_ex, list_var] = cond.children
-        env1 = env0.ensure_A_can_be_element_of_list_B(value_ex, list_var)
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {SETTABLE} contains {EX}")
-    @condd.put(r"{CONDITION_1} : {EX} does not contain {EX}")
-    def _(cond, env0, asserting):
-        [container_ex, value_var] = cond.children
-        (container_type, container_env) = tc_expr(container_ex, env0)
-        if container_type.is_a_subtype_of_or_equal_to(T_String):
-            env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
-        else:
-            env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {var} is not in {PREFIX_PAREN}")
-    def _(cond, env0, asserting):
-        [item_var, set_pp] = cond.children
-        env0.assert_expr_is_of_type(set_pp, T_Set)
-        env0.assert_expr_is_of_type(item_var, T_event_)
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}')
     def _(cond, env0, asserting):
         [var, code_unit_lit] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
         return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)')
-    def _(cond, env0, asserting):
-        # occurs once, in SameValueNonNumber
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
-        envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
-        return (envb, envb)
-
-    @condd.put(r'{CONDITION_1} : {var} and {var} are both the same Symbol value')
-    def _(cond, env0, asserting):
-        # occurs once, in SameValueNonNumber
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_Symbol); assert enva is env0
-        envb = env0.ensure_expr_is_of_type(varb, T_Symbol); # assert envb is env0
-        return (envb, envb)
-
-    @condd.put(r'{CONDITION_1} : {var} and {var} are the same Number value')
-    def _(cond, env0, asserting):
-        # in Abstract Relational Comparison
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_Number); # assert enva is env0
-        envb = enva.ensure_expr_is_of_type(varb, T_Number); # assert envb is env0
-        return (envb, envb)
-
-    @condd.put(r'{CONDITION_1} : {var} and {var} are the same Object value')
-    def _(cond, env0, asserting):
-        # in SameValueNonNumber
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_Object); # assert enva is env0
-        envb = enva.ensure_expr_is_of_type(varb, T_Object); # assert envb is env0
-        return (envb, envb)
-
-    @condd.put(r"{CONDITION_1} : {EX} and {EX} are the same Shared Data Block values")
-    def _(cond, env0, asserting):
-        [exa, exb] = cond.children
-        env1 = env0.ensure_expr_is_of_type(exa, T_Shared_Data_Block)
-        env2 = env1.ensure_expr_is_of_type(exb, T_Shared_Data_Block)
-        return (env2, env2)
 
     @condd.put(r"{CONDITION_1} : {var} and {var} are the same Module Record")
     @condd.put(r"{CONDITION_1} : {var} and {DOTTING} are the same Module Record")
@@ -3626,14 +3262,6 @@ if 1:
         env0.assert_expr_is_of_type(ex1, T_Module_Record)
         env0.assert_expr_is_of_type(ex2, T_Module_Record)
         return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }')
-    def _(cond, env0, asserting):
-        [var, dsbn1, dsbn2] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Property_Descriptor)
-        assert dsbn1.source_text() == '[[Writable]]'
-        assert dsbn2.source_text() == '[[Enumerable]]'
-        return (env1, env1)
 
     @condd.put(r'{CONDITION_1} : {var} has {var} in its range')
     def _(cond, env0, asserting):
@@ -3675,18 +3303,6 @@ if 1:
         env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [subcond] = cond.children
-        return tc_cond(subcond, env0, asserting)
-
-    @condd.put(r'{CONDITION_1} : {var} does not have an own property with key {var}')
-    def _(cond, env0, asserting):
-        [obj_var, key_var] = cond.children
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : {var} is not already suspended')
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3706,20 +3322,6 @@ if 1:
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         return (env0, env0)
 
-    @condd.put(r'{CONDITION_1} : {EX} is empty')
-    @condd.put(r"{CONDITION_1} : {var} is not empty")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
-        # XXX For String, change spec to "is [not] the empty String" ?
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not empty")
-    def _(cond, env0, asserting):
-        [noi] = cond.children
-        env0.assert_expr_is_of_type(noi, T_List)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : We've reached the starting point of an `export *` circularity")
     def _(cond, env0, asserting):
         [] = cond.children
@@ -3737,12 +3339,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}")
-    def _(cond, env0, asserting):
-        [dotting, emu_xref] = cond.children
-        env0.assert_expr_is_of_type(dotting, T_proc_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : This is a circular import request")
     def _(cond, env0, asserting):
         [] = cond.children
@@ -3757,19 +3353,6 @@ if 1:
     def _(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} does not have any fields")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Property_Descriptor)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} does not include the element {LITERAL}")
-    def _(cond, env0, asserting):
-        [list_var, item_lit] = cond.children
-        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String))
-        env0.assert_expr_is_of_type(item_lit, T_String)
-        return (env1, env1)
 
     @condd.put(r"{CONDITION_1} : we return here")
     def _(cond, env0, asserting):
@@ -3786,19 +3369,6 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}")
-    def _(cond, env0, asserting):
-        # once, in CreateListFromArrayLike
-        [type_arg, var] = cond.children
-        env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} has any elements")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : it must be in the Object Environment Record")
     def _(cond, env0, asserting):
         # elliptical
@@ -3811,37 +3381,9 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} contains any duplicate entries")
-    @condd.put(r"{CONDITION_1} : {var} contains no duplicate entries")
-    @condd.put(r"{CONDITION_1} : {var} has any duplicate entries")
-    @condd.put(r"{CONDITION_1} : {var} has no duplicate entries")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object")
-    def _(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} does not currently have a property {var}")
-    def _(cond, env0, asserting):
-        [obj_var, pn_var] = cond.children
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(pn_var, T_String | T_Symbol)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : This is an attempt to change the value of an immutable binding")
@@ -3853,12 +3395,6 @@ if 1:
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} has no elements")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : an implementation-defined debugging facility is available and enabled")
@@ -3897,25 +3433,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    @condd.put(r'''{CONDITION_1} : The mathematical value of {var}'s {starred_str} property is {EX}''')
-    def _(cond, env0, asserting):
-        [var, prop_name, ex] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} are finite and non-zero")
-    def _(cond, env0, asserting):
-        [avar, bvar] = cond.children
-        env0.assert_expr_is_of_type(avar, T_Number)
-        env0.assert_expr_is_of_type(bvar, T_Number)
-        return (
-            env0
-                .with_expr_type_narrowed(avar, T_FiniteNumber_)
-                .with_expr_type_narrowed(bvar, T_FiniteNumber_),
-            env0
-        )
-
     @condd.put(r"{CONDITION_1} : the character {EX} is one of {nonterminal}")
     def _(cond, env0, asserting):
         [ex, nonterminal] = cond.children
@@ -3930,14 +3447,6 @@ if 1:
         env0.assert_expr_is_of_type(bnoi, T_character_)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
-    def _(cond, env0, asserting):
-        [var, lita, litb] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
-        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
-        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
-        return (env1, env1)
-
     @condd.put(r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3948,14 +3457,6 @@ if 1:
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits")
-    def _(cond, env0, asserting):
-        [posa, posb, var] = cond.children
-        env0.assert_expr_is_of_type(posa, T_MathInteger_)
-        env0.assert_expr_is_of_type(posb, T_MathInteger_)
-        env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point")
@@ -3975,12 +3476,6 @@ if 1:
     def _(cond, env0, asserting):
         [rvar, nonterminal] = cond.children
         env0.assert_expr_is_of_type(rvar, T_Object)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} contains a single {nonterminal}")
-    def _(cond, env0, asserting):
-        [var, nonterminal] = cond.children    
-        env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}")
@@ -4011,59 +3506,10 @@ if 1:
         env0.assert_expr_is_of_type(wl_var, T_WaiterList)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {EX} and {EX} are valid byte offsets within the memory of {var}")
-    def _(cond, env0, asserting):
-        [offset1, offset2, sdb] = cond.children
-        env1 = env0.ensure_expr_is_of_type(offset1, T_MathInteger_)
-        env1.assert_expr_is_of_type(offset2, T_MathInteger_)
-        env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}")
-    def _(cond, env0, asserting):
-        [var, nont] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})")
-    def _(cond, env0, asserting):
-        [var1, var2, nont, emu_xref] = cond.children
-        assert same_source_text(var1, var2)
-        env0.assert_expr_is_of_type(var1, T_String)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}")
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_String | T_Symbol)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}")
-    def _(cond, env0, asserting):
-        [var, lita, litb] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(lita, T_String)
-        env0.assert_expr_is_of_type(litb, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit")
-    def _(cond, env0, asserting):
-        [svar, rvar] = cond.children
-        env0.assert_expr_is_of_type(svar, T_String)
-        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} starts with {STR_LITERAL}")
-    def _(cond, env0, asserting):
-        [var, str_literal] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits")
-    def _(cond, env0, asserting):
-        [var, str_literal, ex] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : only one argument was passed")
@@ -4071,33 +3517,11 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} is not currently an element of {var}")
-    def _(cond, env0, asserting):
-        [item_var, list_var] = cond.children
-        env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
-        return (env1, env1)
-
     @condd.put(r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
     def _(cond, env0, asserting):
         [vara, varb] = cond.children
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env0.assert_expr_is_of_type(varb, T_execution_context)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object")
-    def _(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object) # more specific?
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are in {EX}")
-    @condd.put(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are not in {EX}")
-    @condd.put(r"{CONDITION_1} : either {PAIR} or {PAIR} is in {EX}")
-    def _(cond, env0, asserting):
-        [paira, pairb, ex] = cond.children
-        env0.assert_expr_is_of_type(paira, T_event_pair_)
-        env0.assert_expr_is_of_type(pairb, T_event_pair_)
-        env0.assert_expr_is_of_type(ex, T_Relation)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
@@ -4135,14 +3559,6 @@ if 1:
     def _(cond, env0, asserting):
         [var, emu_xref1, emu_xref2] = cond.children
         env0.assert_expr_is_of_type(var, T_code_point_)
-        return (env0, env0)
-
-    # explicit-exotics:
-    @condd.put(r"{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods")
-    @condd.put(r"{CONDITION_1} : the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods")
-    def _(cond, env0, asserting):
-        var = cond.children[0]
-        env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
     # PR ? function-strictness
@@ -4187,37 +3603,9 @@ if 1:
         assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})")
-    def _(cond, env0, asserting):
-        [var, emu_xref] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} have the same number of elements")
-    def _(cond, env0, asserting):
-        [vara, varb] = cond.children
-        env0.assert_expr_is_of_type(vara, T_List)
-        env0.assert_expr_is_of_type(varb, T_List)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} do not have the same number of elements")
-    def _(cond, env0, asserting):
-        [vara, varb] = cond.children
-        env0.assert_expr_is_of_type(vara, T_List)
-        env0.assert_expr_is_of_type(varb, T_List)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var}, {var}, and {var} have the same number of elements")
-    def _(cond, env0, asserting):
-        [vara, varb, varc] = cond.children
-        env0.assert_expr_is_of_type(vara, T_List)
-        env0.assert_expr_is_of_type(varb, T_List)
-        env0.assert_expr_is_of_type(varc, T_List)
         return (env0, env0)
 
     @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}")
@@ -4227,34 +3615,15 @@ if 1:
         env0.assert_expr_is_of_type(b, T_agent_signifier_)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : The length of {var} is {var}")
-    def _(cond, env0, asserting):
-        [list_var, len_var] = cond.children
-        env0.assert_expr_is_of_type(list_var, T_List)
-        env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the parse succeeded and no early errors were found")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}")
-    def _(cond, env0, asserting):
-        [noi, *ss_] = cond.children
-        env0.assert_expr_is_of_type(noi, T_String)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`")
     def _(cond, env0, asserting):
         [noi] = cond.children
         env0.assert_expr_is_of_type(noi, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1")
-    def _(cond, env0, asserting):
-        [noi] = cond.children
-        env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
@@ -4269,55 +3638,9 @@ if 1:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries")
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements")
-    def _(cond, env0, asserting):
-        [noi] = cond.children
-        env0.assert_expr_is_of_type(noi, T_List)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}")
-    def _(cond, env0, asserting):
-        [noi1, noi2] = cond.children
-        env0.assert_expr_is_of_type(noi1, T_List)
-        env0.assert_expr_is_of_type(noi2, T_List)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains {starred_str}")
-    def _(cond, env0, asserting):
-        [noi, ss] = cond.children
-        env0.assert_expr_is_of_type(noi, ListType(T_String))
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}")
-    def _(cond, env0, asserting):
-        [noi, ss] = cond.children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
-    def _(cond, env0, asserting):
-        [noi, ss, emu_grammar] = cond.children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
-    def _(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
     def _(cond, env0, asserting):
         [g_sym] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}")
-    def _(cond, env0, asserting):
-        [noia, noib, noic] = cond.children
-        env0.assert_expr_is_of_type(noia, T_List)
-        env0.assert_expr_is_of_type(noib, T_List)
-        env0.assert_expr_is_of_type(noic, T_List)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
@@ -4340,51 +3663,9 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {EX} contains a PrivateElement whose {dsb_word} is {var}")
-    def _(cond, env0, asserting):
-        [ex, dsb_word, var] = cond.children
-        env0.assert_expr_is_of_type(ex, ListType(T_PrivateElement))
-        assert dsb_word.source_text() == '[[Key]]'
-        env0.assert_expr_is_of_type(var, T_Private_Name)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} contains a PrivateElement whose {dsb_word} is {DOTTING}")
-    def _(cond, env0, asserting):
-        [var, dsb_word, dotting] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_PrivateElement))
-        assert dsb_word.source_text() == '[[Key]]'
-        env1.assert_expr_is_of_type(dotting, T_Private_Name)
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {EX} contains a Private Name whose {dsb_word} is {var}")
-    def _(cond, env0, asserting):
-        [ex, dsb_word, var] = cond.children
-        env0.assert_expr_is_of_type(ex, ListType(T_Private_Name))
-        assert dsb_word.source_text() == '[[Description]]'
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : Exactly one element of {var} is a Private Name whose {dsb_word} is {var}")
-    def _(cond, env0, asserting):
-        [list_var, dsb_word, var] = cond.children
-        env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
-        assert dsb_word.source_text() == '[[Description]]'
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : This is only possible for getter/setter pairs")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}")
-    def _(cond, env0, asserting):
-        [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = cond.children
-        assert dsb1.source_text() == '[[AsyncEvaluation]]'
-        assert dsb2.source_text() == '[[PendingAsyncDependencies]]'
-        assert dsb3.source_text() == '[[EvaluationError]]'
-        # could check that the lits have the right type.
-        env0.assert_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
@@ -4411,41 +3692,10 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} has {EX} elements")
-    def _(cond, env0, asserting):
-        [var, ex] = cond.children
-        env0.assert_expr_is_of_type(var, T_List)
-        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} is the running execution context again")
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {EX} contains a Record whose {dsb_word} is {var}")
-    @condd.put(r"{CONDITION_1} : Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}")
-    def _(cond, env0, asserting):
-        [list_ex, dsb_word, var] = cond.children
-        dsbn_name = dsb_word.source_text()[2:-2]
-        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
-        assert isinstance(list_type, ListType)
-        et = list_type.element_type
-        fields = fields_for_record_type_named_[et.name]
-        field_type = fields[dsbn_name]
-        env1.assert_expr_is_of_type(var, field_type)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : That Record's {dsb_word} is {EX}")
-    def _(cond, env0, asserting):
-        [dsb_word, ex] = cond.children
-        dsbn_name = dsb_word.source_text()[2:-2]
-        # "That Record" is from prev step's "contains a Record"
-        that_type = T_LoadedModule_Record_
-        fields = fields_for_record_type_named_[that_type.name]
-        field_type = fields[dsbn_name]
-        env0.assert_expr_is_of_type(ex, field_type)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
@@ -4548,7 +3798,6 @@ def a_subset_of(t): return (T_0, t)
 
 @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}')
 @tbd.put('{VAL_DESC} : {LITERAL}')
-@tbd.put('{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}')
 @tbd.put('{LITERAL} : {NUMBER_LITERAL}')
 @tbd.put('{LITERAL} : {MATH_LITERAL}')
 def _(vd, env):
@@ -4556,56 +3805,6 @@ def _(vd, env):
     return type_bracket_for(child, env)
 
 # ------------------
-
-@tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION}')
-def _(val_desc, env):
-    [led] = val_desc.children
-    (sub_t, sup_t) = type_bracket_for(led, env)
-    return (ListType(sub_t), ListType(sup_t))
-
-@tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}')
-def _(val_desc, env):
-    [led, ex] = val_desc.children
-    env.assert_expr_is_of_type(ex, T_MathInteger_)
-    (led_sub_t, led_sup_t) = type_bracket_for(led, env)
-    return a_subset_of(ListType(led_sup_t))
-    # inexact because of length restriction 
-
-@tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})')
-@tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})')
-@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})')
-@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records that have {dsb_word} and {dsb_word} fields')
-def _(val_desc, env):
-    vd_st = val_desc.source_text()
-    t = {
-        'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)': T_CharacterClassResultRecord_,
-        'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
-        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
-        'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
-        'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
-        'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
-        'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
-        'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)': T_ResolvingFunctions_record_,
-        'Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': T_ImportMeta_record_,
-        'Records that have [[Module]] and [[ExportName]] fields': T_ExportResolveSet_Record_,
-        'Records with fields [[Specifier]] (a String) and [[Module]] (a Module Record)' : T_LoadedModule_Record_,
-    }[vd_st]
-    return t
-
-@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Record { {dsb_word}: Parse Node, {dsb_word}: Object }')
-def _(led, env):
-    led_st = led.source_text()
-    t = {
-        'Record { [[Site]]: Parse Node, [[Array]]: Object }': T_templateMap_entry_,
-    }[led_st]
-    return t
-
-@tbd.put('{VAL_DESC} : a non-empty List of {LIST_ELEMENTS_DESCRIPTION}')
-def _(val_desc, env):
-    [led] = val_desc.children
-    (led_sub_t, led_sup_t) = type_bracket_for(led, env)
-    return a_subset_of(ListType(led_sup_t))
-    # inexact because of 'non-empty'
 
 @tbd.put('{VAL_DESC} : a property value or property value alias for the Unicode property {var} listed in {h_a}')
 def _(val_desc, env):
@@ -4623,24 +3822,9 @@ def _(val_desc, env):
     [kind] = val_desc.children
     return type_for_environment_record_kind(kind)
 
-@tbd.put('{VAL_DESC} : an? {PROPERTY_KIND} property')
-def _(val_desc, env):
-    [kind] = val_desc.children
-    t = {
-        'accessor': T_accessor_property_,
-        'data'    : T_data_property_,
-    }[kind.source_text()]
-    return t
-
 tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
-tbd['{VAL_DESC} : a BigInt'] = T_BigInt
-tbd['{VAL_DESC} : a Boolean'] = T_Boolean
 tbd['{VAL_DESC} : a CharSet'] = T_CharSet
-tbd['{VAL_DESC} : a ClassFieldDefinition Record'] = T_ClassFieldDefinition_Record
-tbd['{VAL_DESC} : a ClassStaticBlockDefinition Record'] = T_ClassStaticBlockDefinition_Record
-tbd['{VAL_DESC} : a Completion Record'] = T_Abrupt | T_Normal
 tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
-tbd['{VAL_DESC} : a Data Block'] = T_Data_Block
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 tbd['{VAL_DESC} : a For-In Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
@@ -4648,7 +3832,6 @@ tbd['{VAL_DESC} : a GraphLoadingState Record'] = T_GraphLoadingState_Record
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
 tbd['{VAL_DESC} : a Job Abstract Closure'] = T_Job
 tbd['{VAL_DESC} : a JobCallback Record'] = T_JobCallback_Record
-tbd['{VAL_DESC} : a List of a single Number'] = a_subset_of(ListType(T_Number))
 tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
 tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
 tbd['{VAL_DESC} : a MatchState'] = T_MatchState
@@ -4656,15 +3839,11 @@ tbd['{VAL_DESC} : a Matcher'] = T_Matcher
 tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a Module Record'] = T_Module_Record
-tbd['{VAL_DESC} : a Number'] = T_Number
-tbd['{VAL_DESC} : a Private Name'] = T_Private_Name
-tbd['{VAL_DESC} : a PrivateElement'] = T_PrivateElement
 tbd['{VAL_DESC} : a PrivateEnvironment Record'] = T_PrivateEnvironment_Record
 tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
 tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
-tbd['{VAL_DESC} : a Property Descriptor'] = T_Property_Descriptor
 tbd['{VAL_DESC} : a Proxy exotic object'] = T_Proxy_exotic_object_
 tbd['{VAL_DESC} : a Proxy object'] = T_Proxy_exotic_object_
 tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
@@ -4672,20 +3851,14 @@ tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a Realm Record'] = T_Realm_Record
 tbd['{VAL_DESC} : a Record whose field names are intrinsic keys and whose values are objects'] = T_Intrinsics_Record
-tbd['{VAL_DESC} : a Reference Record'] = T_Reference_Record
 tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
 tbd['{VAL_DESC} : a ResolvedBinding Record'] = T_ResolvedBinding_Record
 tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
 tbd['{VAL_DESC} : a Set of events'] = T_Set
-tbd['{VAL_DESC} : a Shared Data Block'] = T_Shared_Data_Block
-tbd['{VAL_DESC} : a Shared Data Block event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : a Source Text Module Record'] = T_Source_Text_Module_Record
 tbd['{VAL_DESC} : a String exotic object'] = T_String_exotic_object_
 tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
-tbd['{VAL_DESC} : a String'] = T_String
-tbd['{VAL_DESC} : a Super Reference Record'] = a_subset_of(T_Reference_Record)
-tbd['{VAL_DESC} : a Symbol'] = T_Symbol
 tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
 tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
@@ -4701,37 +3874,23 @@ tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
 tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
 tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
-tbd['{VAL_DESC} : a callable Object'] = T_function_object_
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
 tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
 tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
 tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
-tbd['{VAL_DESC} : a constructor'] = T_constructor_object_
 tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
-tbd['{VAL_DESC} : a fully populated Property Descriptor'] = a_subset_of(T_Property_Descriptor)
-tbd['{VAL_DESC} : a function object'] = T_function_object_
 tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
 tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
 tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
-tbd['{VAL_DESC} : a normal completion'] = T_Normal
-tbd['{VAL_DESC} : a possibly empty List'] = T_List
-tbd['{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*'] = ListType(T_String | T_Undefined)
-tbd['{VAL_DESC} : a property key or Private Name'] = T_String | T_Symbol | T_Private_Name
-tbd['{VAL_DESC} : a property key'] = T_String | T_Symbol
 tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
 tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
 tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
-tbd['{VAL_DESC} : a return completion'] = T_return_
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a set of algorithm steps'] = T_alg_steps
 tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : a throw completion'] = T_throw_
 tbd['{VAL_DESC} : a time value'] = T_IntegralNumber_
-tbd['{VAL_DESC} : an Abstract Closure with no parameters'] = ProcType([], T_Top_)
-tbd['{VAL_DESC} : an Abstract Closure with two parameters'] = ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_)
-tbd['{VAL_DESC} : an Abstract Closure'] = T_proc_
 tbd['{VAL_DESC} : an Array exotic object'] = T_Array_object_
 tbd['{VAL_DESC} : an Array'] = T_Array_object_
 tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
@@ -4740,35 +3899,19 @@ tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
 tbd['{VAL_DESC} : an ECMAScript execution context'] = T_execution_context
 tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
-tbd['{VAL_DESC} : an ECMAScript language value'] = T_Tangible_
 tbd['{VAL_DESC} : an Environment Record'] = T_Environment_Record
-tbd['{VAL_DESC} : an IEEE 754-2019 binary32 NaN value'] = a_subset_of(T_IEEE_binary32_)
-tbd['{VAL_DESC} : an IEEE 754-2019 binary64 NaN value'] = a_subset_of(T_IEEE_binary64_)
 tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
 tbd['{VAL_DESC} : an Iterator Record'] = T_Iterator_Record
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an Object that has a {dsb_word} internal slot'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an Object'] = T_Object
-tbd['{VAL_DESC} : an abrupt completion'] = T_Abrupt
 tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
 tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an array index'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : an execution context'] = T_execution_context
-tbd['{VAL_DESC} : an extensible object that does not have a {starred_str} own property'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an extensible ordinary object with no own properties'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
-tbd['{VAL_DESC} : an integer index'] = a_subset_of(T_String)
-tbd['{VAL_DESC} : an internal slot name'] = T_SlotName_
-tbd['{VAL_DESC} : an ordinary object'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an ordinary, extensible object with no non-configurable properties'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : any value except a Completion Record'] = T_Tangible_ | T_Intangible_
-tbd['{VAL_DESC} : anything'] = T_host_defined_
 tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
 tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
-tbd['{VAL_DESC} : the String value {STR_LITERAL}'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : the active function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
@@ -4791,49 +3934,25 @@ def _(led, env):
 
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_AsyncGeneratorRequest_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : BigInts'                            ] = T_BigInt
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : ClassFieldDefinition Records'       ] = T_ClassFieldDefinition_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records'              ] = T_Cyclic_Module_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values'         ] = T_Tangible_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'                ] = T_ExportEntry_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_ImportEntry_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Objects'                            ] = T_Object
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Private Names'                      ] = T_Private_Name
-tbd['{LIST_ELEMENTS_DESCRIPTION} : PrivateElements'                    ] = T_PrivateElement
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Strings'                            ] = T_String
 tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : agent signifiers'                   ] = T_agent_signifier_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
 tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_character_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Match_Record | T_Undefined
-tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*'           ] = T_String | T_Null
-tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*'      ] = T_String | T_Undefined
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : errors'                             ] = T_SyntaxError | T_ReferenceError
 tbd['{LIST_ELEMENTS_DESCRIPTION} : events'                             ] = T_event_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : internal slot names'                ] = T_SlotName_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types' ] = T_LangTypeName_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : names of internal slots'            ] = T_SlotName_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events'        ] = T_event_pair_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_String | T_Symbol
 
 # ------------------
 
-tbd['{NUMBER_LITERAL} : {starred_nan_lit}'] = T_NaN_Number_
-tbd['{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}'] = T_NegInfinityNumber_
-tbd['{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}'] = T_PosInfinityNumber_
-tbd['{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}'] = a_subset_of(T_IntegralNumber_)
-
-tbd['{LITERAL} : *null*'] = T_Null
-tbd['{LITERAL} : *undefined*'] = T_Undefined
-tbd['{LITERAL} : the value *null*'] = T_Null
-tbd['{LITERAL} : {BIGINT_LITERAL}'] = a_subset_of(T_BigInt)
-tbd['{LITERAL} : {BOOL_LITERAL}'] = a_subset_of(T_Boolean)
-tbd['{LITERAL} : {STR_LITERAL}'] = a_subset_of(T_String)
 tbd['{LITERAL} : {code_unit_lit}'] = a_subset_of(T_code_unit_)
 
 # ------------------------------------------------------------------------------
@@ -4994,30 +4113,6 @@ if 1:
         [child] = expr.children
         return tc_expr(child, env0, expr_value_will_be_discarded)
 
-    # ------------------------------------------------------
-    # literals
-
-    @exprd.put(r"{LITERAL} : {BOOL_LITERAL}")
-    def _(expr, env0, _):
-        return (T_Boolean, env0)
-
-    @exprd.put(r'{LITERAL} : *undefined*')
-    def _(expr, env0, _):
-        return (T_Undefined, env0)
-
-    @exprd.put(r'{LITERAL} : *null*')
-    def _(expr, env0, _):
-        return (T_Null, env0)
-
-    @exprd.put(r"{LITERAL} : {atat_word}")
-    def _(expr, env0, _):
-        return (T_Symbol, env0)
-
-    @exprd.put(r"{LITERAL} : {TYPE_NAME}")
-    def _(expr, env0, _):
-        [type_name] = expr.children
-        return (T_LangTypeName_, env0)
-
     # --------------------------------------------------------
     # invocation of named operation:
 
@@ -5027,332 +4122,8 @@ if 1:
         [lhs, rhs] = expr.children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
 
-    # --------------------------------------------------------
-
-    @exprd.put(r"{SETTABLE} : the {DSBN} field of {EXPR}")
-    def _(expr, env0, _):
-        [dsbn, ex] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        if dsbn_name == 'EventList':
-            env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
-            return (ListType(T_event_), env0)
-        elif dsbn_name == 'CandidateExecution':
-            env0.assert_expr_is_of_type(ex, T_Agent_Record)
-            return (T_candidate_execution, env0)
-        elif dsbn_name == 'LittleEndian':
-            env0.assert_expr_is_of_type(ex, T_Agent_Record)
-            return (T_Boolean, env0)
-        else:
-            assert 0, expr
-
-    @exprd.put(r'{DOTTING} : {var}.{DSBN}')
-    @exprd.put(r"{DOTTING} : {DOTTING}.{DSBN}")
-    def _(expr, env0, _):
-        [lhs_var, dsbn] = expr.children
-        lhs_text = lhs_var.source_text()
-        dsbn_name = dsbn.source_text()[2:-2]
-        (lhs_t, env1) = tc_expr(lhs_var, env0)
-
-        # assert dsbn_name != 'Type'
-        # because anything involving [[Type]] has been intercepted at a higher level
-        # Nope, _reaction_.[[Type]]
-
-        # ----------------------------------
-
-        # Handle "Completion Records" specially.
-        while True: # ONCE
-            if dsbn_name not in ['Type', 'Target', 'Value']:
-                # We can't be dealing with a Completion Record
-                break
-            if lhs_t in [
-                T_ImportMeta_record_,
-                T_MapData_record_,
-                T_PromiseReaction_Record,
-                T_Property_Descriptor,
-                T_boolean_value_record_,
-                T_boolean_value_record_ | T_Boolean,
-                T_integer_value_record_,
-            ]:
-                # We know we're not dealing with a Completion Record
-                break
-
-            assert lhs_text not in [
-                '_D_',
-                '_Desc_',
-                '_alreadyResolved_',
-                '_current_',
-                '_desc_',
-                '_like_',
-                '_newLenDesc_',
-                '_oldLenDesc_',
-                '_reaction_',
-                '_remainingElementsCount_',
-            ]
-
-            result_memtypes = set()
-            for memtype in lhs_t.set_of_types():
-                if dsbn_name == 'Value':
-                    # Lots of things have a '[[Value]]' field.
-                    if memtype.is_a_subtype_of_or_equal_to(T_Abrupt):
-                        result_memtype = T_Tangible_ | T_tilde_empty_
-                    elif memtype == T_Normal:
-                        result_memtype = T_Tangible_ | T_tilde_empty_
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Tangible_ | T_tilde_empty_):
-                        result_memtype = memtype
-
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Reference_Record):
-                        # Completion Record's [[Value]] can be a Reference Record, despite the definition of CR?
-                        result_memtype = memtype
-                    elif memtype == T_Realm_Record:
-                        # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
-                        result_memtype = memtype
-                    elif memtype in [T_ClassFieldDefinition_Record, T_ClassStaticBlockDefinition_Record]:
-                        # ClassDefinitionEvaluation: `Set _element_ to _element_.[[Value]].`
-                        result_memtype = memtype
-                    elif memtype in [T_tilde_unused_, ListType(T_code_unit_), T_Top_]:
-                        # hm.
-                        result_memtype = memtype
-                    elif memtype == T_Module_Record:
-                        # ContinueDynamicImport
-                        result_memtype = memtype
-
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Private_Name):
-                        result_memtype = T_function_object_
-                    elif memtype == T_Record:
-                        # All we know is that it's a Record with a [[Value]] field.
-                        result_memtype = T_TBD
-                    elif memtype == T_PrivateElement:
-                        result_memtype = T_Tangible_
-                    else:
-                        assert 0, memtype
-
-                elif dsbn_name == 'Target':
-                    if memtype in [T_continue_, T_break_, T_Abrupt]:
-                        result_memtype = T_String | T_tilde_empty_
-                    else:
-                        assert 0, memtype
-
-                elif dsbn_name == 'Type':
-                    assert 0
-
-                else:
-                    assert 0
-
-                result_memtypes.add(result_memtype)
-
-            result_type = union_of_types(result_memtypes)
-            return (result_type, env1)
-
-        # Finished with "Completion Records"
-        # ----------------------------------
-
-        # In some cases, we first need to change the type of lhs_var...
-
-        if lhs_t == T_0:
-            if lhs_text == '_starResolution_':
-                # ResolveExport _starResolution_
-                # The first time through the For loop,
-                # _starResolution has type Null,
-                # so after "If _starResolution_ is *null*,",
-                # in the Else branch it has type T_0.
-                # Properly, that should make us not do STA on the Else branch,
-                # then we would re-STA the loop-body
-                # with a wider type for _starResolution_.
-                # But I'm hoping to avoid the need to re-STA loop-bodies.
-                lhs_t = T_ResolvedBinding_Record
-            elif lhs_text == '_element_':
-                lhs_t = T_PrivateElement
-            else:
-                assert 0, expr.source_text()
-            add_pass_error(
-                expr,
-                "`%s` has type T_0, changing to %s" % (lhs_text, lhs_t)
-            )
-            env2 = env1
-
-        elif lhs_t == T_Property_Descriptor | T_Undefined:
-            # CreateGlobalFunctionBinding:
-            # If _existingProp_ is *undefined* or _existingProp_.[[Configurable]] is *true*
-            lhs_t = T_Property_Descriptor
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Object | T_Null:
-            # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
-            lhs_t = T_Object
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_boolean_value_record_ | T_Boolean:
-            lhs_t = T_boolean_value_record_
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Realm_Record | T_Undefined:
-            lhs_t = T_Realm_Record
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Cyclic_Module_Record | T_tilde_empty_:
-            assert lhs_text in ['_m_.[[CycleRoot]]', '_module_', '_requiredModule_']
-            lhs_t = T_Cyclic_Module_Record
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Tangible_:
-            # 3 times
-
-            assert dsbn_name == 'AsyncGeneratorState'
-
-            # After:
-            #   Let _result_ be Completion(AsyncGeneratorValidate(_generator_, ~empty~)).
-            #   IfAbruptRejectPromise(_result_, _promiseCapability_).
-            # it's guaranteed that _generator_ is a AsyncGenerator object,
-            # but STA isn't smart enough to know that.
-            lhs_t = T_AsyncGenerator_object_
-
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        else:
-            env2 = env1
-
-        # --------------------------------------------
-
-        if lhs_t.is_a_subtype_of_or_equal_to(T_Object):
-            # _foo_.[[Bar]] references an object's internal method or internal slot.
-
-            it_type = type_of_internal_thing_[dsbn_name]
-
-            # XXX We should require that lhs_t is allowed to have this internal thing.
-
-            # But for some subtypes of Object, we can give a narrower type for the slot
-            if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == 'ArrayBufferData':
-                narrower_type = T_Shared_Data_Block
-                assert narrower_type.is_a_subtype_of_or_equal_to(it_type)
-                assert narrower_type != it_type
-                it_type = narrower_type
-            return (it_type, env2)
-
-        elif lhs_t == T_Symbol:
-            assert dsbn_name == 'Description'
-            return (T_String | T_Undefined, env2)
-
-        elif lhs_t == T_Private_Name:
-            assert dsbn_name == 'Description'
-            return (T_String, env2)
-
-        elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
-            # _foo_.[[Bar]] references a record's field
-            if isinstance(lhs_t, NamedType):
-                if lhs_t.name == 'Record':
-                    add_pass_error(
-                        expr,
-                        "type of `%s` is only 'Record', so don't know about a `%s` field"
-                        % (lhs_text, dsbn_name)
-                    )
-                    field_type = T_TBD
-                elif lhs_t.name == 'Intrinsics Record':
-                    field_type = {
-                        '%Array%'               : T_constructor_object_,
-                        '%Function.prototype%'  : T_Object,
-                        '%Object.prototype%'    : T_Object,
-                        '%ThrowTypeError%'      : T_function_object_,
-                    }[dsbn_name]
-                else:
-                    assert lhs_t.name in fields_for_record_type_named_, lhs_t.name
-                    fields_info = fields_for_record_type_named_[lhs_t.name]
-                    if dsbn_name in fields_info:
-                        field_type = fields_info[dsbn_name]
-                    else:
-                        add_pass_error(
-                            expr,
-                            f"`{lhs_text}` has type {lhs_t}, which doesn't have a `{dsbn_name}` field"
-                        )
-                        # Probably you need to add something to
-                        # fields_for_record_type_named_
-
-                        field_type = T_TBD
-
-                return (field_type, env2)
-
-            elif isinstance(lhs_t, UnionType):
-                types_for_field = set()
-                for mt in lhs_t.member_types:
-                    fields_info = fields_for_record_type_named_[mt.name]
-                    assert dsbn_name in fields_info
-                    field_type = fields_info[dsbn_name]
-                    types_for_field.add(field_type)
-                assert len(types_for_field) == 1
-                field_type = types_for_field.pop()
-                return (field_type, env2)
-
-            else:
-                assert 0, (expr.source_text(), lhs_t)
-
-        else:
-            # lhs_t is presumably a union of types, only one/some of which supports dot-operator
-            # In practice, this is a Record type.
-            # (In fact, in practice, it's a T_Reference_Record, but I don't need to be that specific.)
-
-            (record_part_of_type, nonrecord_part_of_type) = lhs_t.split_by(T_Record)
-            assert record_part_of_type != T_0
-            assert nonrecord_part_of_type != T_0
-
-            add_pass_error(
-                lhs_var,
-                f"Narrowing type {lhs_t} to {record_part_of_type} to support a dot-operator"
-            )
-
-            # Okay, but then what's the type of the dotting?
-            # Properly, this should be re-submitted.
-            assert isinstance(record_part_of_type, NamedType)
-            t = fields_for_record_type_named_[record_part_of_type.name][dsbn_name]
-            return (t, env2)
-
     # -------------------------------------------------
     # return T_Number
-
-    @exprd.put(r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}")
-    def _(expr, env0, _):
-        return (T_NegInfinityNumber_, env0)
-
-    @exprd.put(r"{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}")
-    def _(expr, env0, _):
-        return (T_PosInfinityNumber_, env0)
-
-    @exprd.put(r"{NUMBER_LITERAL} : {starred_nan_lit}")
-    @exprd.put(r'{NUMBER_LITERAL} : the *NaN* Number value')
-    def _(expr, env0, _):
-        return (T_NaN_Number_, env0)
-
-    @exprd.put(r"{NUMBER_LITERAL} : *0.5*{h_sub_fancy_f}")
-    @exprd.put(r"{NUMBER_LITERAL} : *-0.5*{h_sub_fancy_f}")
-    def _(expr, env0, _):
-        return (T_NonIntegralFiniteNumber_, env0)
-
-    @exprd.put(r"{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}")
-    def _(expr, env0, _):
-        [_, _] = expr.children
-        return (T_IntegralNumber_, env0)
-
-    @exprd.put(r'{EXPR} : the Number value that corresponds to {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_MathInteger_)
-        return (T_Number, env1)
-
-    @exprd.put(r"{EX} : the Number value for {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        (ex_type, env1) = tc_expr(ex, env0)
-        # env1 = env0.ensure_expr_is_of_type(ex, T_MathReal_)
-        if ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
-            return (T_IntegralNumber_, env1)
-        elif ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
-            return (T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_, env1)
-        elif ex_type.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            return (T_Number, env1)
-        else:
-            add_pass_error(
-                ex,
-                f"expected MathReal, got {ex_type}"
-            )
-            return (T_Number, env1)
 
     @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}")
     def _(expr, env0, _):
@@ -5373,71 +4144,14 @@ if 1:
             env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
-    @exprd.put(r"{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Number, env0)
-
-    @exprd.put(r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_IntegralNumber_)
-        return (T_IntegralNumber_, env0)
-
-    @exprd.put(r"{EX} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
-    @exprd.put(r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
-    @exprd.put(r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string")
-    def _(expr, env0, _):
-        [avar, bvar] = expr.children
-        env1 = env0.ensure_expr_is_of_type(avar, T_IntegralNumber_)
-        env1.assert_expr_is_of_type(bvar, T_MathInteger_)
-        return (T_IntegralNumber_, env1)
-
-    @exprd.put(r"{EXPR} : the smallest (closest to -∞) integral Number value that is not less than {var}")
-    @exprd.put(r"{EXPR} : the greatest (closest to +∞) integral Number value that is not greater than {var}")
-    @exprd.put(r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Number, env0)
-
-    @exprd.put(r"{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}")
-    def _(expr, env0, _):
-        [var, _] = expr.children
-        env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Number, env0)
-
     # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:
-
-    @exprd.put(r"{NUM_COMPARAND} : the length of {var}")
-    @exprd.put(r"{EX} : the length of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_MathNonNegativeInteger_, env1)
-
-    @exprd.put(r"{EXPR} : the number of elements in the List {var}")
-    @exprd.put(r"{EX} : The number of elements in {var}")
-    @exprd.put(r"{EX} : the number of elements in {SETTABLE}")
-    @exprd.put(r"{EX} : the number of elements of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_List)
-        return (T_MathNonNegativeInteger_, env1)
 
     @exprd.put(r"{EXPR} : the number of elements in {var}'s _captures_ List")
     def _(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{EXPR} : the number of bytes in {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Data_Block | T_Shared_Data_Block)
-        return (T_MathNonNegativeInteger_, env1)
 
     @exprd.put(r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
     def _(expr, env0, _):
@@ -5505,13 +4219,6 @@ if 1:
         env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
         return (T_MathInteger_, env0)
 
-    @exprd.put(r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}")
-    def _(expr, env0, _):
-        [posa, posb] = expr.children
-        env0.assert_expr_is_of_type(posa, T_MathInteger_)
-        env0.assert_expr_is_of_type(posb, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
     @exprd.put(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
     def _(expr, env0, _):
         [var] = expr.children
@@ -5521,114 +4228,11 @@ if 1:
     # -------------------------
     # return T_String
 
-    @exprd.put(r'{LITERAL} : {STR_LITERAL}')
-    def _(expr, env0, _):
-        return (T_String, env0)
-
-    @exprd.put(r'{STR_LITERAL} : *","* (a comma)')
-    @exprd.put(r'{STR_LITERAL} : the ASCII word characters')
-    @exprd.put(r'{STR_LITERAL} : the empty String')
-    @exprd.put(r'{STR_LITERAL} : {starred_str}')
-    @exprd.put(r'{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})')
-    def _(expr, env0, _):
-        return (T_String, env0)
-
-    @exprd.put(r"{EX} : the String {var}")
-    @exprd.put(r"{EXPR} : the String value {SETTABLE}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.ensure_expr_is_of_type(ex, T_String)
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the String value consisting solely of {code_unit_lit}")
-    @exprd.put(r"{EXPR} : the String value containing only the code unit {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}")
-    def _(expr, env0, _):
-        [var, lita, var2, litb] = expr.children
-        assert var.children == var2.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_String, env1)
-
-    @exprd.put(r"{MULTILINE_EXPR} : the string-concatenation of:{I_BULLETS}")
-    def _(expr, env0, _):
-        [bullets] = expr.children
-        # Should check the bullets
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX} and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
-    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
-    def _(expr, env0, _):
-        env1 = env0
-        for ex in expr.children:
-            env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : the String value consisting of the representation of {var} using radix {var}")
-    def _(expr, env0, _):
-        [x_var, radix_var] = expr.children
-        env0.assert_expr_is_of_type(x_var, T_BigInt)
-        env0.assert_expr_is_of_type(radix_var, T_MathInteger_)
-        return (T_String, env0)
-
-    @exprd.put(r"{EX} : {EX} occurrences of {code_unit_lit}")
-    def _(expr, env0, _):
-        [ex, cu_lit] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
-        env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
-        return (ListType(T_code_unit_), env1)
-
     @exprd.put(r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}")
     def _(expr, env0, _):
         [emu_xref, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_TypedArray_element_type, env0)
-
-    @exprd.put(r"{EXPR} : {var}'s {DSBN} value")
-    def _(expr, env0, _):
-        [var, dsbn] = expr.children
-        env0.assert_expr_is_of_type(var, T_Symbol)
-        assert dsbn.source_text() == '[[Description]]'
-        return (T_String | T_Undefined, env0)
-
-    @exprd.put(r"{EXPR} : the String value consisting of {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : the String value of the property name")
-    def _(expr, env0, _):
-        # property of the Global Object
-        # todo: make that explicit
-        [] = expr.children
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String")
-    def _(expr, env0, _):
-        [var, str_literal] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String")
-    def _(expr, env0, _):
-        [var, sep_var, sep_var2] = expr.children
-        assert sep_var.children == sep_var2.children
-        env0.assert_expr_is_of_type(sep_var, T_String)
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
-        return (T_String, env1)
 
     @exprd.put(r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}")
     def _(expr, env0, _):
@@ -5651,22 +4255,6 @@ if 1:
     @exprd.put(r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row")
     def _(expr, env0, _):
         [var] = expr.children
-        return (T_String, env0)
-
-    @exprd.put(r"{EX} : the substring of {var} from {EX} to {EX}")
-    def _(expr, env0, _):
-        [s_var, start_var, end_var] = expr.children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env1 = env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
-        env2 = env1.ensure_expr_is_of_type(end_var, T_MathNonNegativeInteger_)
-        return (T_String, env2)
-
-    @exprd.put(r"{EX} : the substring of {var} from index {dec_int_lit}")
-    @exprd.put(r"{EX} : the substring of {var} from {EX}")
-    def _(expr, env0, _):
-        [s_var, start_var] = expr.children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
         return (T_String, env0)
 
     # ----------------------------------------------------------
@@ -5709,18 +4297,6 @@ if 1:
     def _(expr, env0, _):
         return (T_code_unit_, env0)
 
-    @exprd.put(r"{EXPR} : {var}'s single code unit element") # todo: element of String
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_code_unit_, env1)
-
-    @exprd.put(r'{EX} : the first code unit of {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_code_unit_, env1)
-
     @exprd.put(r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}")
     def _(expr, env0, _):
         [nonterminal, emu_xref] = expr.children
@@ -5743,17 +4319,6 @@ if 1:
         [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (T_code_unit_, env0)
-
-    # ----
-
-    @exprd.put(r"{EX} : the code unit at index {EX} within {EX}")
-    def _(expr, env0, _):
-        [index_ex, str_ex] = expr.children
-        env0.assert_expr_is_of_type(str_ex, T_String)
-        env1 = env0.ensure_expr_is_of_type(index_ex, T_MathInteger_)
-        return (T_code_unit_, env1)
-
-    # ----------------------------------------------------------
     # return T_code_point_
 
     @exprd.put(r"{EXPR} : the code point {var}")
@@ -5790,24 +4355,11 @@ if 1:
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (T_Unicode_code_points_, env0)
 
-    @exprd.put(r"{EXPR} : the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Unicode_code_points_, env0)
-
     # ----------------------------------------------------------
     # return ListType
 
     # --------------------
     # ListType(T_MathInteger_)
-
-    @exprd.put(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
-    @exprd.put(r'{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
-    def _(expr, env0, _):
-        var = expr.children[0]
-        env1 = env0.ensure_expr_is_of_type(var, T_Number)
-        return (ListType(T_MathInteger_), env1)
 
     @exprd.put(r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values")
     def _(expr, env0, _):
@@ -5815,112 +4367,14 @@ if 1:
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (ListType(T_MathInteger_), env0)
 
-    @exprd.put(r"{EXPR} : a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]")
-    def _(expr, env0, _):
-        [var1, var2, var3, var4] = expr.children
-        assert var1.children == var2.children
-        env0.assert_expr_is_of_type(var1, T_MathInteger_)
-        env1 = env0.ensure_expr_is_of_type(var3, T_Data_Block | T_Shared_Data_Block)
-        env0.assert_expr_is_of_type(var4, T_MathInteger_)
-        return (ListType(T_MathInteger_), env1)
-
     @exprd.put(r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}")
     def _(expr, env0, _):
         [dotting] = expr.children
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
         return (ListType(T_MathInteger_), env1)
 
-    # ----------------------
-    # ListType(T_code_unit_)
-
-    @exprd.put(r"{EXPR} : a List whose elements are the code units that are the elements of {var}")
-    @exprd.put(r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (ListType(T_code_unit_), env0)
-
-    # ---------------
-    # ListType(T_String)
-
     # ---------------
     # ListType(other)
-
-    @exprd.put(r'{EXPR} : a new empty List')
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_List, env0) # (ListType(T_0), env0)
-
-    @exprd.put(r"{EXPR} : a List whose sole element is {EX}")
-    def _(expr, env0, _):
-        [element_expr] = expr.children
-        (element_type, env1) = tc_expr(element_expr, env0); assert env1.equals(env0)
-        return (ListType(element_type), env0)
-
-    @exprd.put(r"{EXPR} : the list-concatenation of {EX} and {EX}")
-    def _(expr, env0, _):
-        [var, noi] = expr.children
-        (t1, env1) = tc_expr(var, env0); assert env1 is env0
-        (t2, env2) = tc_expr(noi, env0); assert env2 is env0
-        if t1 == T_TBD and t2 == T_TBD:
-            list_type = T_List
-        elif t1 == T_TBD and (t2 == T_List or isinstance(t2, ListType)):
-            list_type = t2
-        elif t2 == T_TBD and (t1 == T_List or isinstance(t1, ListType)):
-            list_type = t1
-
-        elif isinstance(t1, ListType) and t2 == T_List:
-            list_type = t1
-
-        elif isinstance(t1, ListType) and isinstance(t2, ListType):
-            if t1.is_a_subtype_of_or_equal_to(t2):
-                list_type = t2
-            elif t2.is_a_subtype_of_or_equal_to(t1):
-                list_type = t1
-            else:
-                assert 0
-        else:
-            assert 0
-            # assert t1.element_type == t2.element_type
-        return (list_type, env0)
-
-    @exprd.put(r"{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}")
-    def _(expr, env0, _):
-        [exa, exb, exc] = expr.children
-        # kludge
-        if exa.source_text() == '_names1_':
-            et = T_String
-        elif exa.source_text() == '_declarations1_':
-            et = T_Parse_Node
-        elif exa.source_text() == '« _matched_ »':
-            et = T_String | T_IntegralNumber_
-        else:
-            assert 0, exa
-        lt = ListType(et)
-        env1 = env0.ensure_expr_is_of_type(exa, lt)
-        env2 = env1.ensure_expr_is_of_type(exb, lt)
-        env3 = env2.ensure_expr_is_of_type(exc, lt)
-        return (lt, env3)
-
-    @exprd.put(r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}')
-    def _(expr, env0, _):
-        [var, _, _, _] = expr.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_List)
-        return (t, env0)
-
-    @exprd.put(r'{EXPR} : a List whose elements are the first {var} elements of {var}')
-    def _(expr, env0, _):
-        [nvar, listvar] = expr.children
-        env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
-        (t, env1) = tc_expr(listvar, env0); assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_List)
-        return (t, env0)
-
-    @exprd.put(r"{EXPR} : the List of {nonterminal} items in {PROD_REF}, in source text order")
-    def _(expr, env0, _):
-        [nont, prod_ref] = expr.children
-        return (ListType(T_Parse_Node), env0)
 
     @exprd.put(r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}")
     def _(expr, env0, _):
@@ -5936,26 +4390,11 @@ if 1:
         env0.assert_expr_is_of_type(state_var, T_MatchState)
         return (T_captures_entry_, env0)
 
-    @exprd.put(r"{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}")
-    def _(expr, env0, _):
-        [var, literal, var2] = expr.children
-        assert var.source_text() == var2.source_text()
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
-        return (ListType(lit_t), env1)
-
     @exprd.put(r"{EX} : {var}'s _input_")
     def _(expr, env0, _):
         [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (ListType(T_character_), env1)
-
-    @exprd.put(r"{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}")
-    def _(expr, env0, _):
-        [data_var, interval] = expr.children
-        env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
-        env1.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
-        return (ListType(T_MathNonNegativeInteger_), env1)
 
     @exprd.put(r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
     def _(expr, env0, _):
@@ -5970,38 +4409,6 @@ if 1:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
         return (T_Parse_Node, env0)
-
-    # --------------------------------------------------------
-    # return T_Object
-
-    @exprd.put(r'{EXPR} : a newly created object with an internal slot for each name in {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
-        return (T_Object, env1)
-
-    @exprd.put(r"{LITERAL} : {percent_word}")
-    def _(expr, env0, _):
-        [percent_word] = expr.children
-        pws = percent_word.source_text()
-        if pws in [
-            '%Promise%',
-            '%RegExp%',
-            '%ArrayBuffer%',
-            '%SharedArrayBuffer%',
-        ]:
-            rt = T_constructor_object_
-        else:
-            rt = T_Object
-        return (rt, env0)
-        # We could be more specific in many cases, but I'm not sure it would make any difference.
-
-    @exprd.put(r"{EXPR} : {var}'s intrinsic object named {var}")
-    def _(expr, env0, _):
-        [r_var, n_var] = expr.children
-        env0.assert_expr_is_of_type(r_var, T_Realm_Record)
-        env0.assert_expr_is_of_type(n_var, T_String)
-        return (T_Object, env0)
 
     # -------------------------------------------------
     # return T_CharSet
@@ -6121,16 +4528,6 @@ if 1:
         [emu_grammar] = expr.children
         return (T_CharSet, env0)
 
-    # -------------------------------------------------
-    # return T_function_object_
-
-    @exprd.put(r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot')
-    def _(expr, env0, _):
-        [var1, var2, var3, dsbn] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
-        # env1 = env0.ensure_expr_is_of_type(var2, )
-        return (T_function_object_, env1)
-
     # ------------------------------------------------
     # return T_alg_steps
 
@@ -6247,51 +4644,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
         return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
 
-    @exprd.put(r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}")
-    def _(expr, env0, _):
-        [clo_kind, clo_parameters, clo_captures, _, commands] = expr.children
-        clo_kind = clo_kind.source_text()
-
-        #XXX Should assert no intersection between clo_parameters and clo_captures
-
-        # -----
-
-        env_for_commands = Env()
-
-        n_parameters = len(clo_parameters.children)
-        if clo_kind == 'Abstract Closure':
-            clo_param_types = [T_TBD] * n_parameters
-        elif clo_kind == 'MatcherContinuation':
-            assert n_parameters == 1
-            clo_param_types = [T_MatchState]
-        elif clo_kind == 'Matcher':
-            assert n_parameters == 2
-            clo_param_types = [T_MatchState, T_MatcherContinuation]
-        elif clo_kind == 'Job Abstract Closure':
-            assert n_parameters == 0
-            clo_param_types = []
-        elif clo_kind == 'read-modify-write modification function':
-            assert n_parameters == 2
-            clo_param_types = [ListType(T_MathInteger_), ListType(T_MathInteger_)]
-        else:
-            assert 0, clo_kind
-
-        for (clo_param_var, clo_param_type) in zip(clo_parameters.children, clo_param_types):
-            env_for_commands = env_for_commands.plus_new_entry(clo_param_var, clo_param_type)
-
-        for clo_capture_var in clo_captures.children:
-            clo_capture_type = env0.lookup(clo_capture_var)
-            env_for_commands = env_for_commands.plus_new_entry(clo_capture_var, clo_capture_type)
-
-        env_for_commands.vars['*return*'] = T_0
-
-        # -----
-
-        defns = [(None, commands)]
-        env_after_commands = tc_proc(None, defns, env_for_commands)
-        t = ProcType(clo_param_types, env_after_commands.vars['*return*'])
-        return (t, env0)
-
     # -------------------------------------------------
     # return Environment_Record
 
@@ -6324,145 +4676,6 @@ if 1:
         [] = expr.children
         return (T_Agent_Record, env0)
 
-    @exprd.put(r'{EXPR} : a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception')
-    def _(expr, env0, _):
-        [var, error_type] = expr.children
-        (t, env1) = tc_expr(var, env0)
-        assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
-        return (T_Data_Block, env1)
-
-    @exprd.put(r'{EXPR} : a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception')
-    def _(expr, env0, _):
-        [var, error_type] = expr.children
-        (t, env1) = tc_expr(var, env0)
-        assert env1 is env0
-        assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
-        return (T_Shared_Data_Block, env1)
-
-    @exprd.put('{RECORD_CONSTRUCTOR} : {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }')
-    def _(expr, env0, _):
-        [record_constructor_prefix, fields] = expr.children
-        constructor_prefix = record_constructor_prefix.source_text().replace('the ', '')
-
-        if constructor_prefix == 'Completion Record':
-            f_ = dict( get_field_items(fields) )
-            assert sorted(f_.keys()) == ['Target', 'Type', 'Value']
-            type_ex = f_['Type']
-            value_ex = f_['Value']
-            target_ex = f_['Target']
-
-            if fields.source_text() == '[[Type]]: _completionRecord_.[[Type]], [[Value]]: _value_, [[Target]]: _completionRecord_.[[Target]]':
-                # The specialest of special cases!
-                # Occurs once, in UpdateEmpty.
-                # In the context there,
-                # the static type of _completionRecord_ is
-                # (or would be, if STA were smart enough)
-                # T_tilde_empty_ | T_continue_ | T_break_,
-                # and the static type of _value_ is T_Tangible_ | T_tilde_empty_
-
-                return (T_Tangible_ | T_tilde_empty_ | T_continue_ | T_break_, env0)
-
-            else:
-                env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_tilde_empty_)
-                (value_type, _) = tc_expr(value_ex, env1) # bleah
-
-                env0.assert_expr_is_of_type(target_ex, T_String | T_tilde_empty_)
-
-                ct = type_corresponding_to_comptype_literal(type_ex)
-                if ct == T_Normal:
-                    t = value_type
-                elif ct == T_throw_:
-                    t = ThrowType(value_type)
-                else:
-                    t = ct
-
-                return (t, env1)
-
-        if constructor_prefix == 'Record':
-            field_names = sorted(get_field_names(fields))
-            record_type_names = find_record_types_with_fields(field_names)
-
-            if len(record_type_names) == 0:
-                add_pass_error(
-                    expr,
-                    "Could not infer a record type for fields: " + str(field_names)
-                )
-                record_type_name = 'Record'
-                field_info = None
-
-            else:
-                if len(record_type_names) == 1:
-                    [record_type_name] = record_type_names
-                else:
-                    if field_names == ['Key', 'Value']:
-                        assert record_type_names == ['ImportMeta_record_', 'MapData_record_']
-                        # In {Map,WeakMap}.prototype.set
-                        record_type_name = 'MapData_record_'
-
-                    elif field_names == ['Value']:
-                        assert record_type_names == ['boolean_value_record_', 'integer_value_record_']
-                        fst = fields.source_text()
-                        if fst == '[[Value]]: *false*':
-                            record_type_name = 'boolean_value_record_'
-                        elif fst == '[[Value]]: 1':
-                            record_type_name = 'integer_value_record_'
-                        else:
-                            assert 0, fst
-
-                    else:
-                        assert 0, field_names
-
-                add_pass_error(
-                    expr,
-                    "Inferred record type `%s`: be explicit!" % record_type_name
-                )
-                field_info = fields_for_record_type_named_[record_type_name]
-
-        else:
-            if constructor_prefix in [
-                'ReadModifyWriteSharedMemory',
-                'ReadSharedMemory',
-                'WriteSharedMemory',
-            ]:
-                record_type_name = constructor_prefix + ' event'
-            elif constructor_prefix in [
-                'PromiseReaction',
-                'PromiseCapability',
-                'AsyncGeneratorRequest',
-            ]:
-                record_type_name = constructor_prefix + ' Record'
-            elif constructor_prefix == 'PropertyDescriptor':
-                record_type_name = 'Property Descriptor'
-            else:
-                record_type_name = constructor_prefix
-            field_info = fields_for_record_type_named_[record_type_name]
-
-        envs = []
-        for (dsbn_name, ex) in get_field_items(fields):
-            if field_info is None:
-                # (because it's just a Record, not a particular (named) kind of Record)
-                # We can't really assert anything.
-                (t, env1) = tc_expr(ex, env0); assert env1 is env0
-            else:
-                declared_field_type = field_info[dsbn_name]
-                # If the constructor referred to an undeclared field, that would raise a KeyError
-                env1 = env0.ensure_expr_is_of_type(ex, declared_field_type)
-            envs.append(env1)
-        env2 = envs_or(envs)
-
-        # XXX: Should also ensure that each declared field is specified exactly once.
-
-        return ( NamedType(record_type_name), env2 )
-
-    @exprd.put(r'{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below')
-    def _(expr, env0, _):
-        [emu_xref, var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        return (T_Iterator_object_, env1)
-
     @exprd.put(r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}")
     @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context")
     def _(expr, env0, _):
@@ -6481,29 +4694,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
 
-    @exprd.put(r"{SETTABLE} : {var}[{EX}]")
-    @exprd.put(r"{SETTABLE} : {DOTTING}[{EX}]")
-    def _(expr, env0, _):
-        [seq_ex, subscript_var] = expr.children
-        (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
-        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
-        if isinstance(seq_type, ListType):
-            item_type = seq_type.element_type
-        elif seq_type == T_List:
-            item_type = T_TBD
-        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block):
-            item_type = T_MathInteger_
-        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block | T_Null):
-            add_pass_error(
-                expr,
-                "STA fails to confirm that %s isnt Null" %
-                (seq_ex.source_text())
-            )
-            item_type = T_MathInteger_
-        else:
-            assert 0, seq_type
-        return (item_type, env0)
-
     @exprd.put(r"{EXPR} : the MatchState ({var}, {EX}, {var})")
     def _(expr, env0, _):
         [input_var, ex, var] = expr.children
@@ -6519,73 +4709,11 @@ if 1:
         env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MatchState, env0)
 
-    @exprd.put(r"{EXPR} : an empty Set")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Set, env0)
-
-    @exprd.put(r"{EX} : « »")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_List, env0)
-
-    @exprd.put(r"{EX} : « {EXLIST} »")
-    def _(expr, env0, _):
-        [exlist] = expr.children
-        ex_types = set()
-        for ex in exes_in_exlist(exlist):
-            (ex_type, env1) = tc_expr(ex, env0); assert env1 is env0
-            ex_types.add(ex_type)
-        element_type = union_of_types(ex_types)
-        list_type = ListType(element_type)
-        return (list_type, env0)
-
     @exprd.put(r"{EXPR} : {var}'s _captures_ List")
     def _(expr, env0, _):
         [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
-
-    @exprd.put(r"{EX} : {DSBN}")
-    def _(expr, env0, _):
-        [dsbn] = expr.children
-        return (T_SlotName_, env0)
-
-    @exprd.put(r"{EXPR} : a newly created Property Descriptor with no fields")
-    @exprd.put(r"{EXPR} : a new Property Descriptor that initially has no fields")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Property_Descriptor, env0)
-
-    @exprd.put(r"{EXPR} : the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}")
-    def _(expr, env0, _):
-        [emu_xref1, emu_xref2, emu_xref3, dsbn, var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Realm_Record)
-        return (T_Property_Descriptor, env0)
-
-    @exprd.put(r"{EXPR} : {var}'s own property whose key is {var}")
-    def _(expr, env0, _):
-        [obj_var, key_var] = expr.children
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
-        return (T_property_, env0)
-
-    @exprd.put(r"{SETTABLE} : {var}'s {DSBN} attribute")
-    def _(expr, env0, _):
-        [prop_var, dsbn] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        if dsbn_name in ['Enumerable', 'Configurable']:
-            env0.assert_expr_is_of_type(prop_var, T_property_)
-            result_type = T_Boolean
-        elif dsbn_name in ['Value', 'Writable']:
-            env0.assert_expr_is_of_type(prop_var, T_data_property_)
-            result_type = T_Tangible_ if dsbn_name == 'Value' else T_Boolean
-        elif dsbn_name in ['Get', 'Set']:
-            env0.assert_expr_is_of_type(prop_var, T_accessor_property_)
-            result_type = T_Object | T_Undefined
-        else:
-            assert 0
-        return (result_type, env0)
 
     @exprd.put(r"{SETTABLE} : the {DSBN} internal slot of this Date object")
     def _(expr, env0, _):
@@ -6598,56 +4726,6 @@ if 1:
     def _(expr, env0, _):
         [error_type] = expr.children
         return (type_for_ERROR_TYPE(error_type), env0)
-
-    @exprd.put(r"{EXPR} : a copy of the List {var}")
-    @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        t = env0.assert_expr_is_of_type(var, T_List)
-        return (t, env0)
-
-    @exprd.put(r"{EXPR} : the first element of {var}")
-    @exprd.put(r"{EXPR} : the second element of {var}")
-    @exprd.put(r"{EXPR} : the last element in {var}")
-    @exprd.put(r"{EXPR} : the last element of {var}")
-    def _(expr, env0, _):
-        # todo: replace with ad hoc record
-        [var] = expr.children
-        list_type = env0.assert_expr_is_of_type(var, T_List)
-        return (list_type.element_type, env0)
-
-    @exprd.put(r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}")
-    @exprd.put(r"{EXPR} : the sole element of {var}")
-    def _(expr, env0, _):
-        [noi] = expr.children
-        list_type = env0.assert_expr_is_of_type(noi, T_List)
-        return (list_type.element_type, env0)
-
-    @exprd.put(r"{EXPR} : the element in {EX} whose {DSBN} is {EX}")
-    @exprd.put(r"{EXPR} : the element of {EX} whose {DSBN} field is {var}")
-    @exprd.put(r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}")
-    def _(expr, env0, _):
-        [list_ex, dsbn, val_ex] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
-        assert isinstance(list_type, ListType)
-        et = list_type.element_type
-        assert isinstance(et, NamedType)
-        fields = fields_for_record_type_named_[et.name]
-        whose_type = fields[dsbn_name]
-        env1.assert_expr_is_of_type(val_ex, whose_type)
-        return (et, env1)
-
-    @exprd.put(r"{EXPR} : a new Record")
-    def _(expr, env0, _):
-        # Once, in CreateIntrinsics
-        [] = expr.children
-        return (T_Intrinsics_Record, env0)
-
-    @exprd.put(r"{EXPR} : such an object created in a host-defined manner")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Object, env0)
 
     @exprd.put(r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
     def _(expr, env0, _):
@@ -6687,106 +4765,15 @@ if 1:
     def _(expr, env0, _):
         return (T_Tangible_, env0)
 
-    @exprd.put(r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}")
-    def _(expr, env0, _):
-        [s_var, nf_var, h_a] = expr.children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env0.assert_expr_is_of_type(nf_var, T_String)
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with both leading and trailing white space removed")
-    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with leading white space removed")
-    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with trailing white space removed")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the String value containing the single code unit {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_code_unit_)
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}")
-    def _(expr, env0, _):
-        [var1, var2, nont] = expr.children
-        assert same_source_text(var1, var2)
-        env0.assert_expr_is_of_type(var1, T_String)
-        return (T_String, env0)
-
     @exprd.put(r"{EXPR} : this Date object")
     def _(expr, env0, _):
         [] = expr.children
         return (T_Object | ThrowType(T_TypeError), env0)
 
-    @exprd.put(r"{EXPR} : the List that is {DOTTING}")
-    def _(expr, env0, _):
-        [dotting] = expr.children
-        (dotting_type, env1) = tc_expr(dotting, env0); assert env1 is env0
-        dotting_type.is_a_subtype_of_or_equal_to(T_List)
-        return (dotting_type, env0)
-
-    @exprd.put(r"{EXPR} : the number of leading zero bits in the unsigned 32-bit binary representation of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_IntegralNumber_)
-        return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{EX} : the remaining {EX} code units of {var}")
-    @exprd.put(r"{EXPR} : the other {EX} code units of {var}")
-    def _(expr, env0, _):
-        [ex, var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
-        return (T_String, env1)
-
-    @exprd.put(r"{EX} : the first {SUM} code units of {var}")
-    def _(expr, env0, _):
-        [summ, var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env1 = env0.ensure_expr_is_of_type(summ, T_MathInteger_)
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned")
-    def _(expr, env0, _):
-        [list_var, list_var2] = expr.children
-        assert same_source_text(list_var, list_var2)
-        env0.assert_expr_is_of_type(list_var, ListType(T_code_unit_))
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the String value that is made from {var} copies of {var} appended together")
-    def _(expr, env0, _):
-        [n_var, s_var] = expr.children
-        env0.assert_expr_is_of_type(s_var, T_String)
-        env1 = env0.ensure_expr_is_of_type(n_var, T_MathInteger_)
-        return (T_String, env1)
-
     @exprd.put(r"{EX} : the GlobalSymbolRegistry List")
     @exprd.put(r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})")
     def _(expr, env0, _):
         return (ListType(T_GlobalSymbolRegistry_Record), env0)
-
-    @exprd.put(r"{EXPR} : a new unique Symbol value whose {DSBN} value is {var}")
-    def _(expr, env0, _):
-        [dsbn, var] = expr.children
-        assert dsbn.source_text() == '[[Description]]'
-        env0.assert_expr_is_of_type(var, T_String | T_Undefined)
-        return (T_Symbol, env0)
-
-    @exprd.put(r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35")
-    def _(expr, env0, _):
-        [zvar, rvar] = expr.children
-        env0.assert_expr_is_of_type(zvar, T_String)
-        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{EXPR} : the String value consisting of repeated concatenations of {EX} truncated to length {var}")
-    def _(expr, env0, _):
-        [ex, var] = expr.children
-        env0.assert_expr_is_of_type(ex, T_String)
-        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
-        return (T_String, env1)
 
     @exprd.put(r"{EX} : {backticked_word}")
     def _(expr, env0, _):
@@ -6797,41 +4784,11 @@ if 1:
         else:
             assert 0, word
 
-    @exprd.put(r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}")
-    def _(expr, env0, _):
-        [dsbna, dsbnb, ex] = expr.children
-        assert dsbna.source_text() == '[[Key]]'
-        assert dsbnb.source_text() == '[[Value]]'
-        env0.assert_expr_is_of_type(ex, T_MapData_record_)
-        return (T_MapData_record_, env0)
-
-    @exprd.put(r"{EXPR} : the intrinsic function {percent_word}")
-    def _(expr, env0, _):
-        [percent_word] = expr.children
-        return (T_function_object_, env0)
-
-    @exprd.put(r"{EXPR} : the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})")
-    def _(expr, env0, _):
-        [str_lit] = expr.children
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the index within {var} of the first such code unit")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_MathNonNegativeInteger_, env0)
-
     @exprd.put(r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}")
     def _(expr, env0, _):
         [emu_xref, dotting] = expr.children
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_function_object_, env0)
-
-    @exprd.put(r"{EXPR} : the String value containing {var} occurrences of {code_unit_lit}")
-    def _(expr, env0, _):
-        [n, lit] = expr.children
-        env0.assert_expr_is_of_type(lit, T_code_unit_)
-        return (T_String, env0)
 
     @exprd.put('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
     def _(expr, env0, _):
@@ -6847,11 +4804,6 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_function_object_, env0)
-
-    @exprd.put("{EX} : {h_code_quote}")
-    def _(expr, env0, _):
-        [h_code_quote] = expr.children
-        return (T_String, env0)
 
     @exprd.put(r"{EXPR} : the time value (UTC) identifying the current time")
     def _(expr, env0, _):
@@ -6877,23 +4829,6 @@ if 1:
         env0.assert_expr_is_of_type(e, T_agent_signifier_)
         return (T_Agent_Events_Record, env0)
 
-    @exprd.put(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode")
-    @exprd.put(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary64 format")
-    @exprd.put(r"{EXPR} : the ECMAScript Number value corresponding to {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Number)
-        # XXX The intermediates are not really T_Number
-        return (T_Number, env0)
-
-    @exprd.put(r"{PAIR} : ({EX}, {EX})")
-    def _(expr, env0, _):
-        [a, b] = expr.children
-        # over-specific:
-        env0.assert_expr_is_of_type(a, T_event_)
-        env0.assert_expr_is_of_type(b, T_event_)
-        return (T_event_pair_, env0)
-
     @exprd.put("{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}")
     def _(expr, env0, _):
         var = expr.children[0]
@@ -6905,12 +4840,6 @@ if 1:
         [var, nont] = expr.children
         env0.assert_expr_is_of_type(var, T_function_object_)
         return (T_String, env0)
-
-    # explicit-exotics:
-    @exprd.put(r"{EX} : the internal slots listed in {h_emu_xref}")
-    def _(expr, env0, _):
-        # XXX really, the *names* of the internal slots...
-        return (ListType(T_SlotName_), env0)
 
     @exprd.put(r"{EX} : {backticked_oth}")
     def _(expr, env0, _):
@@ -6941,12 +4870,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
 
-    @exprd.put(r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Unicode_code_points_, env0)
-
     # for PR #1961 compound_assignment
     @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
     def _(expr, env0, _):
@@ -6973,12 +4896,6 @@ if 1:
             assert 0, table_result_type_str
         return (result_type, env0)
 
-    @exprd.put(r"{EXPR} : an implementation-approximated Number value representing {EXPR}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_)
-        return (T_Number, env0)
-
     @exprd.put(r"{EX} : a nondeterministically chosen byte value")
     def _(expr, env0, _):
         [] = expr.children
@@ -6989,45 +4906,10 @@ if 1:
         [error_type] = expr.children
         return (ListType(type_for_ERROR_TYPE(error_type)), env0)
 
-    @exprd.put(r"{EXPR} : that PrivateElement")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_PrivateElement, env0)
-
-    @exprd.put(r"{EXPR} : that Private Name")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Private_Name, env0)
-
-    @exprd.put(r"{EXPR} : a new Private Name whose {dsb_word} value is {var}")
-    def _(expr, env0, _):
-        [dsb_word, var] = expr.children
-        assert dsb_word.source_text() == '[[Description]]'
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Private_Name, env0)
-
-    @exprd.put(r"{EXPR} : the Private Name in {var} whose {dsb_word} is {var}")
-    def _(expr, env0, _):
-        [list_var, dsb_word, var] = expr.children
-        env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
-        assert dsb_word.source_text() == '[[Description]]'
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Private_Name, env0)
-
     @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
     def _(expr, env0, _):
         [] = expr.children
         return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects")
-    def _(expr, env0, _):
-        [cap_word, dsb_word, var, emu_xref, cap_word2] = expr.children
-        T = cap_word.source_text()
-        assert T in ['Boolean', 'Number', 'String', 'Symbol', 'BigInt']
-        assert dsb_word.source_text() == f"[[{T}Data]]"
-        assert var.source_text() == '_argument_'
-        assert cap_word2.source_text() == T
-        return (T_Object, env0)
 
     @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
     def _(expr, env0, _):
@@ -7050,29 +4932,12 @@ if 1:
         (t, env1) = tc_expr(subexpr, t_env)
         return (t, env1)
 
-    @exprd.put(r"{EXPR} : a new implementation-defined Completion Record")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Abrupt | T_Normal, env0)
-
     @exprd.put(r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
     def _(expr, env0, _):
         [vara, cond, varb] = expr.children
         # (t_env, f_env) = tc_cond(cond, env0)
         # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
         return (T_IntegralNumber_, env0)
-
-    @exprd.put(r"{EXPR} : the Record in {DOTTING} whose {dsb_word} is {var}")
-    def _(expr, env0, _):
-        [dotting, dsb_word, var] = expr.children
-        dsbn_name = dsb_word.source_text()[2:-2]
-        (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
-        assert isinstance(list_type, ListType)
-        et = list_type.element_type
-        fields = fields_for_record_type_named_[et.name]
-        whose_type = fields[dsbn_name]
-        env1.assert_expr_is_of_type(var, whose_type)
-        return (et, env0)
 
     @exprd.put(r"{EXPR} : that Record")
     def _(expr, env0, _):
@@ -7512,9 +5377,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 6.1.7.2 Object Internal Methods and Internal Slots
-set_up_internal_thing('slot', 'PrivateElements', ListType(T_PrivateElement))
 
 # 10.1 Ordinary Object Internal Methods and Internal Slots
 set_up_internal_thing('slot', 'Prototype',  T_Object | T_Null)
@@ -10476,6 +8338,2580 @@ if 1:
             return a_subset_of(T_function_object_)
         else:
             assert 0, emu_xref
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 6 ECMAScript Data Types and Values
+
+#> Within this specification,
+#> the notation “Type(_x_)” is used as shorthand for
+#> “the <em>type</em> of _x_”
+#> where “type” refers to the ECMAScript language and specification types
+#> defined in this clause.
+
+if 1:
+    @condd.put(r'{TYPE_TEST} : Type({TYPE_ARG}) is the same as Type({TYPE_ARG})')
+    @condd.put(r'{TYPE_TEST} : Type({TYPE_ARG}) is different from Type({TYPE_ARG})')
+    def _(cond, env0, asserting):
+        # Env can't represent the effect of these.
+        # If the incoming static types were different,
+        # the 'true' env could at least narrow those to their intersection,
+        # but the form only appears twice, and in both cases the static types are the same.
+        return (env0, env0)
+
+    @condd.put(r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}")
+    def _(cond, env0, asserting):
+        # once, in CreateListFromArrayLike
+        [type_arg, var] = cond.children
+        env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
+        return (env0, env0)
+
+    @exprd.put(r"{LITERAL} : {TYPE_NAME}")
+    def _(expr, env0, _):
+        [type_name] = expr.children
+        return (T_LangTypeName_, env0)
+
+    tbd['{VAL_DESC} : anything'] = T_host_defined_
+
+# ==============================================================================
+#@ 6.1 ECMAScript Language Types
+
+if 1:
+    tbd['{VAL_DESC} : an ECMAScript language value'] = T_Tangible_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values'] = T_Tangible_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types'] = T_LangTypeName_
+
+# ==============================================================================
+#@ 6.1.1 The Undefined Type
+
+if 1:
+    @exprd.put(r'{LITERAL} : *undefined*')
+    def _(expr, env0, _):
+        return (T_Undefined, env0)
+
+    tbd['{LITERAL} : *undefined*'] = T_Undefined
+
+# ==============================================================================
+#@ 6.1.2 The Null Type
+
+if 1:
+    @exprd.put(r'{LITERAL} : *null*')
+    def _(expr, env0, _):
+        return (T_Null, env0)
+
+    tbd['{LITERAL} : *null*'] = T_Null
+
+    tbd['{LITERAL} : the value *null*'] = T_Null
+
+# ==============================================================================
+#@ 6.1.3 The Boolean Type
+
+if 1:
+    tbd['{VAL_DESC} : a Boolean'] = T_Boolean
+
+    tbd['{LITERAL} : {BOOL_LITERAL}'] = a_subset_of(T_Boolean)
+
+    @exprd.put(r"{LITERAL} : {BOOL_LITERAL}")
+    def _(expr, env0, _):
+        return (T_Boolean, env0)
+
+# ==============================================================================
+#@ 6.1.4 The String Type
+
+# ------------------------------------------------------------------------------
+#> The <dfn>String type</dfn> is the set of all ordered sequences
+#> of zero or more 16-bit unsigned integer values (“elements”)
+#> up to a maximum length of 2<sup>53</sup> - 1 elements.
+#> The String type is generally used to represent textual data in a running ECMAScript program,
+#> in which case each element in the String is treated as a UTF-16 code unit value.
+
+if 1:
+    tbd['{VAL_DESC} : a String'] = T_String
+    tbd['{LITERAL} : {STR_LITERAL}'] = a_subset_of(T_String)
+    tbd['{VAL_DESC} : the String value {STR_LITERAL}'] = a_subset_of(T_String)
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : Strings'] = T_String
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*'     ] = T_String | T_Null
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*'] = T_String | T_Undefined
+
+    @exprd.put(r'{LITERAL} : {STR_LITERAL}')
+    def _(expr, env0, _):
+        return (T_String, env0)
+
+    @exprd.put(r'{STR_LITERAL} : *","* (a comma)')
+    @exprd.put(r'{STR_LITERAL} : the empty String')
+    @exprd.put(r'{STR_LITERAL} : {starred_str}')
+    @exprd.put(r'{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})')
+    def _(expr, env0, _):
+        return (T_String, env0)
+
+    @exprd.put(r"{EX} : the String {var}")
+    @exprd.put(r"{EXPR} : the String value {SETTABLE}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.ensure_expr_is_of_type(ex, T_String)
+        return (T_String, env0)
+
+    @exprd.put("{EX} : {h_code_quote}")
+    def _(expr, env0, _):
+        [h_code_quote] = expr.children
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : {var}'s single code unit element") # todo: element of String
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_code_unit_, env1)
+
+    @exprd.put(r'{EX} : the first code unit of {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_code_unit_, env1)
+
+# ----
+
+    @condd.put(r'{CONDITION_1} : {var} does not consist of a single code unit')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (env1, env1)
+
+    @condd.put(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit")
+    def _(cond, env0, asserting):
+        [svar, rvar] = cond.children
+        env0.assert_expr_is_of_type(svar, T_String)
+        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} starts with {STR_LITERAL}")
+    def _(cond, env0, asserting):
+        [var, str_literal] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits")
+    def _(cond, env0, asserting):
+        [var, str_literal, ex] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}")
+    def _(cond, env0, asserting):
+        [var, lita, litb] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        env0.assert_expr_is_of_type(lita, T_String)
+        env0.assert_expr_is_of_type(litb, T_String)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {var} is the same sequence of code units as {var}')
+    def _(cond, env0, asserting):
+        [var1, var2] = cond.children
+        env0.assert_expr_is_of_type(var1, T_String)
+        env0.ensure_expr_is_of_type(var2, T_String)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)')
+    def _(cond, env0, asserting):
+        # occurs once, in SameValueNonNumber
+        [vara, varb] = cond.children
+        enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
+        envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
+        return (envb, envb)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}")
+    def _(cond, env0, asserting):
+        [noi, *ss_] = cond.children
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> Each element is regarded as occupying a position within the sequence.
+#> These positions are indexed with non-negative integers.
+#> The first element (if any) is at index 0, the next element (if any) at index 1, and so on.
+
+    @exprd.put(r"{EX} : the code unit at index {EX} within {EX}")
+    def _(expr, env0, _):
+        [index_ex, str_ex] = expr.children
+        env0.assert_expr_is_of_type(str_ex, T_String)
+        env1 = env0.ensure_expr_is_of_type(index_ex, T_MathInteger_)
+        return (T_code_unit_, env1)
+
+    @exprd.put(r"{EXPR} : the index within {var} of the first such code unit")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_MathNonNegativeInteger_, env0)
+
+    @exprd.put(r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}")
+    def _(expr, env0, _):
+        [posa, posb] = expr.children
+        env0.assert_expr_is_of_type(posa, T_MathInteger_)
+        env0.assert_expr_is_of_type(posb, T_MathInteger_)
+        return (T_MathInteger_, env0)
+
+    @condd.put(r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits")
+    def _(cond, env0, asserting):
+        [posa, posb, var] = cond.children
+        env0.assert_expr_is_of_type(posa, T_MathInteger_)
+        env0.assert_expr_is_of_type(posb, T_MathInteger_)
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> The length of a String is the number of elements (i.e., 16-bit values) within it.
+#> The empty String has length zero and therefore contains no elements.
+
+    @exprd.put(r"{NUM_COMPARAND} : the length of {var}")
+    @exprd.put(r"{EX} : the length of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_MathNonNegativeInteger_, env1)
+
+# ------------------------------------------------------------------------------
+#> In this specification,
+#> the phrase "the <dfn>string-concatenation</dfn> of _A_, _B_, ..."
+#> (where each argument is a String value, a code unit, or a sequence of code units)
+#> denotes the String value whose sequence of code units
+#> is the concatenation of the code units (in order) of each of the arguments (in order).
+
+    @exprd.put(r"{MULTILINE_EXPR} : the string-concatenation of:{I_BULLETS}")
+    def _(expr, env0, _):
+        [bullets] = expr.children
+        # Should check the bullets
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX} and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    @exprd.put(r"{EXPR} : the string-concatenation of {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, {EX}, and {EX}")
+    def _(expr, env0, _):
+        env1 = env0
+        for ex in expr.children:
+            env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
+        return (T_String, env1)
+
+# ------------------------------------------------------------------------------
+#> The phrase "the <dfn>substring</dfn> of _S_ from _inclusiveStart_ to _exclusiveEnd_"
+#> (where _S_ is a String value or a sequence of code units and _inclusiveStart_ and _exclusiveEnd_ are integers)
+#> denotes the String value consisting of
+#> the consecutive code units of _S_
+#> beginning at index _inclusiveStart_ and ending immediately before index _exclusiveEnd_
+#> (which is the empty String when _inclusiveStart_ = _exclusiveEnd_).
+#> If the "to" suffix is omitted, the length of _S_ is used as the value of _exclusiveEnd_.
+
+    @exprd.put(r"{EX} : the substring of {var} from {EX} to {EX}")
+    def _(expr, env0, _):
+        [s_var, start_var, end_var] = expr.children
+        env0.assert_expr_is_of_type(s_var, T_String)
+        env1 = env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
+        env2 = env1.ensure_expr_is_of_type(end_var, T_MathNonNegativeInteger_)
+        return (T_String, env2)
+
+    @exprd.put(r"{EX} : the substring of {var} from index {dec_int_lit}")
+    @exprd.put(r"{EX} : the substring of {var} from {EX}")
+    def _(expr, env0, _):
+        [s_var, start_var] = expr.children
+        env0.assert_expr_is_of_type(s_var, T_String)
+        env0.ensure_expr_is_of_type(start_var, T_MathNonNegativeInteger_)
+        return (T_String, env0)
+
+# ------------------------------------------------------------------------------
+#> The phrase "<dfn>the ASCII word characters</dfn>"
+#> denotes the following String value,
+#> which consists solely of every letter and number in the Unicode Basic Latin block
+#> along with U+005F (LOW LINE):
+#> *"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_"*.
+#> For historical reasons, it has significance to various algorithms.
+
+    @exprd.put(r'{STR_LITERAL} : the ASCII word characters')
+    def _(expr, env0, _):
+        return (T_String, env0)
+
+# ------------------------------------------------------------------------------
+# Other ways to specify a String value:
+
+    @exprd.put(r"{EX} : the first {SUM} code units of {var}")
+    def _(expr, env0, _):
+        [summ, var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        env1 = env0.ensure_expr_is_of_type(summ, T_MathInteger_)
+        return (T_String, env1)
+
+    @exprd.put(r"{EX} : the remaining {EX} code units of {var}")
+    @exprd.put(r"{EXPR} : the other {EX} code units of {var}")
+    def _(expr, env0, _):
+        [ex, var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value consisting solely of {code_unit_lit}")
+    @exprd.put(r"{EXPR} : the String value containing only the code unit {var}")
+    @exprd.put(r"{EXPR} : the String value containing the single code unit {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_)
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value consisting of {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with both leading and trailing white space removed")
+    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with leading white space removed")
+    @exprd.put(r"{EXPR} : the String value that is a copy of {var} with trailing white space removed")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}")
+    def _(expr, env0, _):
+        [var, lita, var2, litb] = expr.children
+        assert var.children == var2.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value that is the result of normalizing {var} into the normalization form named by {var} as specified in {h_a}")
+    def _(expr, env0, _):
+        [s_var, nf_var, h_a] = expr.children
+        env0.assert_expr_is_of_type(s_var, T_String)
+        env0.assert_expr_is_of_type(nf_var, T_String)
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : the String value containing {var} occurrences of {code_unit_lit}")
+    def _(expr, env0, _):
+        [n, lit] = expr.children
+        env0.assert_expr_is_of_type(lit, T_code_unit_)
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : the String value that is made from {var} copies of {var} appended together")
+    def _(expr, env0, _):
+        [n_var, s_var] = expr.children
+        env0.assert_expr_is_of_type(s_var, T_String)
+        env1 = env0.ensure_expr_is_of_type(n_var, T_MathInteger_)
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value consisting of repeated concatenations of {EX} truncated to length {var}")
+    def _(expr, env0, _):
+        [ex, var] = expr.children
+        env0.assert_expr_is_of_type(ex, T_String)
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String")
+    def _(expr, env0, _):
+        [var, str_literal] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String")
+    def _(expr, env0, _):
+        [var, sep_var, sep_var2] = expr.children
+        assert sep_var.children == sep_var2.children
+        env0.assert_expr_is_of_type(sep_var, T_String)
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
+        return (T_String, env1)
+
+    @exprd.put(r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned")
+    def _(expr, env0, _):
+        [list_var, list_var2] = expr.children
+        assert same_source_text(list_var, list_var2)
+        env0.assert_expr_is_of_type(list_var, ListType(T_code_unit_))
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})")
+    def _(expr, env0, _):
+        [str_lit] = expr.children
+        return (T_String, env0)
+
+# ------------------------------------------------------------------------------
+# Going from a String value to some other type of value:
+
+    @exprd.put(r"{EXPR} : a List whose elements are the code units that are the elements of {var}")
+    @exprd.put(r"{EXPR} : a List consisting of the sequence of code units that are the elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (ListType(T_code_unit_), env0)
+
+    @exprd.put(r"{EXPR} : the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Unicode_code_points_, env0)
+
+    @exprd.put(r"{EXPR} : the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Unicode_code_points_, env0)
+
+    @exprd.put(r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35")
+    def _(expr, env0, _):
+        [zvar, rvar] = expr.children
+        env0.assert_expr_is_of_type(zvar, T_String)
+        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
+        return (T_MathInteger_, env0)
+
+# ------------------------------------------------------------------------------
+# Comparing a String value to a nonterminal:
+
+    # for 19.2.4 parseFloat
+    @condd.put(r"{CONDITION_1} : neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})")
+    def _(cond, env0, asserting):
+        [var1, var2, nont, emu_xref] = cond.children
+        assert same_source_text(var1, var2)
+        env0.assert_expr_is_of_type(var1, T_String)
+        return (env0, env0)
+
+    # for 19.2.4 parseFloat
+    @exprd.put(r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}")
+    def _(expr, env0, _):
+        [var1, var2, nont] = expr.children
+        assert same_source_text(var1, var2)
+        env0.assert_expr_is_of_type(var1, T_String)
+        return (T_String, env0)
+
+    # for B.2.1.2
+    @condd.put(r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, nont] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 6.1.5 The Symbol Type
+
+if 1:
+    tbd['{VAL_DESC} : a Symbol'] = T_Symbol
+
+    @condd.put(r'{CONDITION_1} : {var} and {var} are both the same Symbol value')
+    def _(cond, env0, asserting):
+        # occurs once, in SameValueNonNumber
+        [vara, varb] = cond.children
+        enva = env0.ensure_expr_is_of_type(vara, T_Symbol); assert enva is env0
+        envb = env0.ensure_expr_is_of_type(varb, T_Symbol); # assert envb is env0
+        return (envb, envb)
+
+# ----
+
+    @exprd.put(r"{LITERAL} : {atat_word}")
+    def _(expr, env0, _):
+        return (T_Symbol, env0)
+
+#> Each Symbol value immutably holds
+#> an associated value called [[Description]]
+#> that is either *undefined* or a String value.
+
+    @exprd.put(r"{EXPR} : a new unique Symbol value whose {DSBN} value is {var}")
+    def _(expr, env0, _):
+        [dsbn, var] = expr.children
+        assert dsbn.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String | T_Undefined)
+        return (T_Symbol, env0)
+
+    @exprd.put(r"{EXPR} : {var}'s {DSBN} value")
+    def _(expr, env0, _):
+        [var, dsbn] = expr.children
+        env0.assert_expr_is_of_type(var, T_Symbol)
+        assert dsbn.source_text() == '[[Description]]'
+        return (T_String | T_Undefined, env0)
+
+# ==============================================================================
+#@ 6.1.6 Numeric Types
+
+# ==============================================================================
+#@ 6.1.6.1 The Number Type
+
+if 1:
+    tbd['{VAL_DESC} : a Number'] = T_Number
+
+    tbd['{NUMBER_LITERAL} : {starred_nan_lit}'] = T_NaN_Number_
+    tbd['{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}'] = T_NegInfinityNumber_
+    tbd['{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}'] = T_PosInfinityNumber_
+    tbd['{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}'] = a_subset_of(T_IntegralNumber_)
+
+    @condd.put(r'{CONDITION_1} : {var} is the same Number value as {var}')
+    def _(cond, env0, asserting):
+        [var1, var2] = cond.children
+        env0.assert_expr_is_of_type(var1, T_Number)
+        env1 = env0.ensure_expr_is_of_type(var2, T_Number)
+        return (env1, env1)
+
+    @condd.put(r'{CONDITION_1} : {var} and {var} are the same Number value')
+    def _(cond, env0, asserting):
+        # in Abstract Relational Comparison
+        [vara, varb] = cond.children
+        enva = env0.ensure_expr_is_of_type(vara, T_Number); # assert enva is env0
+        envb = enva.ensure_expr_is_of_type(varb, T_Number); # assert envb is env0
+        return (envb, envb)
+
+    @condd.put(r"{CONDITION_1} : {var} is finite")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number):
+            return env1.with_type_test(var, 'is a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'is a', T_MathReal_, asserting)
+        else:
+            assert 0
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} are both finite")
+    def _(cond, env0, asserting):
+        [a, b] = cond.children
+        (a_t_env, a_f_env) = env0.with_type_test(a, 'is a', T_FiniteNumber_, asserting)
+        (b_t_env, b_f_env) = env0.with_type_test(b, 'is a', T_FiniteNumber_, asserting)
+        return (
+            env_and(a_t_env, b_t_env),
+            env_or(a_f_env, b_f_env)
+        )
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} are finite and non-zero")
+    def _(cond, env0, asserting):
+        [avar, bvar] = cond.children
+        env0.assert_expr_is_of_type(avar, T_Number)
+        env0.assert_expr_is_of_type(bvar, T_Number)
+        return (
+            env0
+                .with_expr_type_narrowed(avar, T_FiniteNumber_)
+                .with_expr_type_narrowed(bvar, T_FiniteNumber_),
+            env0
+        )
+
+    @condd.put(r"{CONDITION_1} : {var} is not finite")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
+            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
+        else:
+            assert 0
+
+    @condd.put(r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
+    def _(cond, env0, asserting):
+        [var, lita, litb] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
+        return (env1, env1)
+
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        return (T_NegInfinityNumber_, env0)
+
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        return (T_PosInfinityNumber_, env0)
+
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_nan_lit}")
+    @exprd.put(r'{NUMBER_LITERAL} : the *NaN* Number value')
+    def _(expr, env0, _):
+        return (T_NaN_Number_, env0)
+
+    @exprd.put(r"{NUMBER_LITERAL} : *0.5*{h_sub_fancy_f}")
+    @exprd.put(r"{NUMBER_LITERAL} : *-0.5*{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        return (T_NonIntegralFiniteNumber_, env0)
+
+    @exprd.put(r"{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        [_, _] = expr.children
+        return (T_IntegralNumber_, env0)
+
+    @exprd.put(r'{EXPR} : the Number value that corresponds to {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_MathInteger_)
+        return (T_Number, env1)
+
+    @exprd.put(r"{EX} : the Number value for {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        (ex_type, env1) = tc_expr(ex, env0)
+        # env1 = env0.ensure_expr_is_of_type(ex, T_MathReal_)
+        if ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
+            return (T_IntegralNumber_, env1)
+        elif ex_type.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
+            return (T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_, env1)
+        elif ex_type.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return (T_Number, env1)
+        else:
+            add_pass_error(
+                ex,
+                f"expected MathReal, got {ex_type}"
+            )
+            return (T_Number, env1)
+
+    @exprd.put(r"{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Number, env0)
+
+    @exprd.put(r"{EXPR} : the smallest (closest to -∞) integral Number value that is not less than {var}")
+    @exprd.put(r"{EXPR} : the greatest (closest to +∞) integral Number value that is not greater than {var}")
+    @exprd.put(r"{EXPR} : the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Number, env0)
+
+    @exprd.put(r"{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}")
+    def _(expr, env0, _):
+        [var, _] = expr.children
+        env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Number, env0)
+
+    @exprd.put(r"{EXPR} : an implementation-approximated Number value representing {EXPR}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathReal_)
+        return (T_Number, env0)
+
+    @exprd.put(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode")
+    @exprd.put(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary64 format")
+    @exprd.put(r"{EXPR} : the ECMAScript Number value corresponding to {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Number)
+        # XXX The intermediates are not really T_Number
+        return (T_Number, env0)
+
+    @exprd.put(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
+    @exprd.put(r'{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
+    def _(expr, env0, _):
+        var = expr.children[0]
+        env1 = env0.ensure_expr_is_of_type(var, T_Number)
+        return (ListType(T_MathInteger_), env1)
+
+# Treating an integral Number like a bit-string:
+
+    @exprd.put(r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_IntegralNumber_)
+        return (T_IntegralNumber_, env0)
+
+    @exprd.put(r"{EX} : the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+    @exprd.put(r"{EXPR} : the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+    @exprd.put(r"{EXPR} : the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string")
+    def _(expr, env0, _):
+        [avar, bvar] = expr.children
+        env1 = env0.ensure_expr_is_of_type(avar, T_IntegralNumber_)
+        env1.assert_expr_is_of_type(bvar, T_MathInteger_)
+        return (T_IntegralNumber_, env1)
+
+    @exprd.put(r"{EXPR} : the number of leading zero bits in the unsigned 32-bit binary representation of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_IntegralNumber_)
+        return (T_MathNonNegativeInteger_, env0)
+
+# ------------------------------------------------------------------------------
+
+tbd['{VAL_DESC} : an IEEE 754-2019 binary32 NaN value'] = a_subset_of(T_IEEE_binary32_)
+tbd['{VAL_DESC} : an IEEE 754-2019 binary64 NaN value'] = a_subset_of(T_IEEE_binary64_)
+
+# ==============================================================================
+#@ 6.1.6.2 The BigInt Type
+
+if 1:
+    tbd['{VAL_DESC} : a BigInt'] = T_BigInt
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : BigInts'] = T_BigInt
+    tbd['{LITERAL} : {BIGINT_LITERAL}'] = a_subset_of(T_BigInt)
+
+# ----
+
+    @exprd.put(r"{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}")
+    def _(expr, env0, _):
+        [_, _] = expr.children
+        return (T_BigInt, env0)
+
+    @exprd.put(r"{EXPR} : the BigInt value that represents {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathReal_|T_BigInt)
+        return (T_BigInt, env0)
+
+    @exprd.put(r"{EXPR} : the BigInt value that corresponds to {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_BigInt, env0)
+
+    @exprd.put(r"{EX} : the BigInt value for {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
+        return (T_BigInt, env0)
+
+    @exprd.put(r"{EX} : the sum of {var} and {var}")
+    @exprd.put(r"{EX} : the product of {var} and {var}")
+    @exprd.put(r"{EX} : the difference {var} minus {var}")
+    def _(expr, env0, _):
+        [x, y] = expr.children
+        env0.assert_expr_is_of_type(x, T_BigInt)
+        env0.assert_expr_is_of_type(y, T_BigInt)
+        return (T_BigInt, env0)
+
+    @exprd.put(r"{EXPR} : the String value consisting of the representation of {var} using radix {var}")
+    def _(expr, env0, _):
+        [x_var, radix_var] = expr.children
+        env0.assert_expr_is_of_type(x_var, T_BigInt)
+        env0.assert_expr_is_of_type(radix_var, T_MathInteger_)
+        return (T_String, env0)
+
+# ==============================================================================
+#@ 6.1.7 The Object Type
+
+#> An Object is logically a collection of properties.
+#> Each property is either a data property, or an accessor property:
+#>  -- A <dfn>data property</dfn> associates a key value with
+#>     an ECMAScript language value and a set of Boolean attributes.
+#>  -- An <dfn>accessor property</dfn> associates a key value with
+#>     one or two accessor functions, and a set of Boolean attributes.
+#>     The accessor functions are used to store or retrieve
+#>     an ECMAScript language value that is associated with the property.
+
+#> Properties are identified using key values.
+#> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
+#> All String and Symbol values, including the empty String, are valid as property keys.
+#> A <dfn>property name</dfn> is a property key that is a String value.
+
+if 1:
+    tbd['{VAL_DESC} : an Object'] = T_Object
+    tbd['{VAL_DESC} : an extensible object that does not have a {starred_str} own property'] = a_subset_of(T_Object)
+    tbd['{VAL_DESC} : a property key'] = T_String | T_Symbol
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : Objects'                            ] = T_Object
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_String | T_Symbol
+
+    @tbd.put('{VAL_DESC} : an? {PROPERTY_KIND} property')
+    def _(val_desc, env):
+        [kind] = val_desc.children
+        t = {
+            'accessor': T_accessor_property_,
+            'data'    : T_data_property_,
+        }[kind.source_text()]
+        return t
+
+    @condd.put(r'{CONDITION_1} : {var} and {var} are the same Object value')
+    def _(cond, env0, asserting):
+        # in SameValueNonNumber
+        [vara, varb] = cond.children
+        enva = env0.ensure_expr_is_of_type(vara, T_Object); # assert enva is env0
+        envb = enva.ensure_expr_is_of_type(varb, T_Object); # assert envb is env0
+        return (envb, envb)
+
+    @condd.put(r'{CONDITION_1} : {var} does not have an own property with key {var}')
+    @condd.put(r"{CONDITION_1} : {var} does not currently have a property {var}")
+    def _(cond, env0, asserting):
+        [obj_var, key_var] = cond.children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
+        return (env0, env0)
+
+    @condd.put(r'''{CONDITION_1} : The mathematical value of {var}'s {starred_str} property is {EX}''')
+    def _(cond, env0, asserting):
+        [var, prop_name, ex] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
+        return (env0, env0)
+
+    @nv.put(r"{EACH_THING} : own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order")
+    def _(each_thing, env0):
+        [loop_var, obj_var, lo_var] = each_thing.children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(lo_var, T_Number)
+        return env0.plus_new_entry(loop_var, T_String)
+
+    @nv.put(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending numeric index order")
+    @nv.put(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation")
+    def _(each_thing, env0):
+        [loop_var, obj_var, condition] = each_thing.children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env1 = env0.plus_new_entry(loop_var, T_String | T_Symbol)
+        (tenv, fenv) = tc_cond(condition, env1)
+        return tenv
+
+    @nv.put(r'{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.')
+    def _(anode, env0):
+        [var, emu_xref] = anode.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove the own property with name {var} from {var}.")
+    def _(anode, env0):
+        [name_var, obj_var] = anode.children
+        env0.assert_expr_is_of_type(name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        return env0
+
+    @exprd.put(r"{EXPR} : {var}'s own property whose key is {var}")
+    def _(expr, env0, _):
+        [obj_var, key_var] = expr.children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
+        return (T_property_, env0)
+
+    @exprd.put(r"{EXPR} : the String value of the property name")
+    def _(expr, env0, _):
+        # property of the Global Object
+        # todo: make that explicit
+        [] = expr.children
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : such an object created in a host-defined manner")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Object, env0)
+
+#> An <dfn>integer index</dfn>
+#> is a String-valued property key
+#> that is a canonical numeric string
+#> and whose numeric value is either *+0*<sub>𝔽</sub> or a positive integral Number ≤ 𝔽(2<sup>53</sup> - 1).
+
+    tbd['{VAL_DESC} : an integer index'] = a_subset_of(T_String)
+
+#> An <dfn>array index</dfn>
+#> is an integer index whose numeric value _i_
+#> is in the range <emu-eqn>*+0*<sub>𝔽</sub> ≤ _i_ &lt; 𝔽(2<sup>32</sup> - 1)</emu-eqn>.
+
+    tbd['{VAL_DESC} : an array index'] = a_subset_of(T_String)
+
+# ==============================================================================
+#@ 6.1.7.1 Property Attributes
+
+if 1:
+    @nv.put(r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
+    def _(anode, env0):
+        [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = anode.children
+        assert desc_var.source_text() == desc_var2.source_text()
+        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
+        return env0
+
+    @nv.put(r"{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field")
+    def _(anode, env0):
+        [name_var, obj_var] = anode.children
+        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        return env0
+
+    @nv.put(r"{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
+    def _(anode, env0):
+        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = anode.children
+        assert desc_var.source_text() == desc_var2.source_text()
+        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
+        return env0
+
+    @exprd.put(r"{SETTABLE} : {var}'s {DSBN} attribute")
+    def _(expr, env0, _):
+        [prop_var, dsbn] = expr.children
+        dsbn_name = dsbn.source_text()[2:-2]
+        if dsbn_name in ['Enumerable', 'Configurable']:
+            env0.assert_expr_is_of_type(prop_var, T_property_)
+            result_type = T_Boolean
+        elif dsbn_name in ['Value', 'Writable']:
+            env0.assert_expr_is_of_type(prop_var, T_data_property_)
+            result_type = T_Tangible_ if dsbn_name == 'Value' else T_Boolean
+        elif dsbn_name in ['Get', 'Set']:
+            env0.assert_expr_is_of_type(prop_var, T_accessor_property_)
+            result_type = T_Object | T_Undefined
+        else:
+            assert 0
+        return (result_type, env0)
+
+    @exprd.put(r'{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below')
+    def _(expr, env0, _):
+        [emu_xref, var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Object)
+        return (T_Iterator_object_, env1)
+
+# ==============================================================================
+#@ 6.1.7.2 Object Internal Methods and Internal Slots
+
+#> The actual semantics of objects, in ECMAScript, are specified via
+#> algorithms called <em>internal methods</em>.
+#> Each object in an ECMAScript engine is associated with
+#> a set of internal methods that defines its runtime behaviour
+
+if 1:
+    @condd.put(r'{CONDITION_1} : {var} has an? {DSBN} internal method')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Object)
+        dsbn_name = dsbn.source_text()[2:-2]
+        if dsbn_name == 'Call':
+            # one of the few where the presence/absence of an internal method is a type-test?
+            return env1.with_type_test(var, 'is a', T_function_object_, asserting)
+        elif dsbn_name == 'Construct':
+            return env1.with_type_test(var, 'is a', T_constructor_object_, asserting)
+        else:
+            assert 0, dsbn_name
+
+#> Internal slots correspond to internal state
+#> that is associated with objects
+#> and used by various ECMAScript specification algorithms.
+
+if 1:
+    tbd['{VAL_DESC} : an internal slot name'] = T_SlotName_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : internal slot names'    ] = T_SlotName_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : names of internal slots'] = T_SlotName_
+
+    @exprd.put(r"{EX} : {DSBN}")
+    def _(expr, env0, _):
+        [dsbn] = expr.children
+        return (T_SlotName_, env0)
+
+    tbd['{VAL_DESC} : an Object that has a {dsb_word} internal slot'] = a_subset_of(T_Object)
+
+    @condd.put(r'{CONDITION_1} : {var} has an? {DSBN} internal slot')
+    @condd.put(r'{CONDITION_1} : {var} also has a {DSBN} internal slot')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Object)
+        # Whether or not it has that particular slot, it's still an Object.
+        # XXX we could be more specific about the sub-kind of Object
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots")
+    def _(cond, env0, asserting):
+        # XXX could be a type-test
+        [var, *dsbn_] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot")
+    def _(cond, env0, asserting):
+        [var, dsbna, dsbnb] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        assert dsbna.source_text() == '[[StringData]]'
+        assert dsbnb.source_text() == '[[NumberData]]'
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object")
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object) # more specific?
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {var} does not have an? {DSBN} internal slot')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Object)
+        # Whether or not it has that particular slot, it's still an Object.
+        # XXX The particular DSBN could have a (sub-)type-constraining effect
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {var} does not have an? {var} internal slot")
+    def _(cond, env0, asserting):
+        [obj_var, slotname_var] = cond.children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(slotname_var, T_SlotName_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} does not have either a {DSBN} or an {DSBN} internal slot")
+    def _(cond, env0, asserting):
+        [var, dsbna, dsbnb] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})")
+    def _(cond, env0, asserting):
+        [var, emu_xref] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
+    # explicit-exotics:
+    @exprd.put(r"{EX} : the internal slots listed in {h_emu_xref}")
+    def _(expr, env0, _):
+        # XXX really, the *names* of the internal slots...
+        return (ListType(T_SlotName_), env0)
+
+#> All objects have an internal slot named [[PrivateElements]],
+#> which is a List of PrivateElements.
+#> This List represents the values of
+#> the private fields, methods, and accessors for the object.
+#> Initially, it is an empty List.
+
+set_up_internal_thing('slot', 'PrivateElements', ListType(T_PrivateElement))
+
+#> Internal methods and internal slots are identified within this specification
+#> using names enclosed in double square brackets [[ ]].
+
+#> <emu-xref href="#table-essential-internal-methods"></emu-xref>
+#> summarizes the <em>essential internal methods</em>
+#> used by this specification
+#> that are applicable to all objects created or manipulated by ECMAScript code.
+#> Every object must have algorithms for all of the essential internal methods.
+#> However, all objects do not necessarily use the same algorithms for those methods.
+
+if 1:
+    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.")
+    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.")
+    def _(anode, env0):
+        [var, emu_xref] = anode.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Object)
+        return env1
+
+    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
+    def _(anode, env0):
+        var = anode.children[0]
+        env0.assert_expr_is_of_type(var, T_Object)
+        return env0
+
+    # explicit-exotics:
+    @condd.put(r"{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods")
+    @condd.put(r"{CONDITION_1} : the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods")
+    def _(cond, env0, asserting):
+        var = cond.children[0]
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
+#> An <dfn>ordinary object</dfn> is an object that satisfies all of the following criteria:
+#>  -- For the internal methods listed in <emu-xref href="#table-essential-internal-methods"></emu-xref>,
+#>     the object uses those defined in
+#>     <emu-xref href="#sec-ordinary-object-internal-methods-and-internal-slots"></emu-xref>.
+#>  -- If the object has a [[Call]] internal method,
+#>     it uses either the one defined in
+#>     <emu-xref href="#sec-ecmascript-function-objects-call-thisargument-argumentslist"></emu-xref>
+#>     or the one defined in
+#>     <emu-xref href="#sec-built-in-function-objects-call-thisargument-argumentslist"></emu-xref>.
+#>  -- If the object has a [[Construct]] internal method,
+#>     it uses either the one defined in
+#>     <emu-xref href="#sec-ecmascript-function-objects-construct-argumentslist-newtarget"></emu-xref>
+#>     or the one defined in
+#>     <emu-xref href="#sec-built-in-function-objects-construct-argumentslist-newtarget"></emu-xref>.
+
+if 1:
+    tbd['{VAL_DESC} : an ordinary object'] = a_subset_of(T_Object)
+    tbd['{VAL_DESC} : an ordinary, extensible object with no non-configurable properties'] = a_subset_of(T_Object)
+    tbd['{VAL_DESC} : an extensible ordinary object with no own properties'] = a_subset_of(T_Object)
+
+    @condd.put(r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [dotting, emu_xref] = cond.children
+        env0.assert_expr_is_of_type(dotting, T_proc_)
+        return (env0, env0)
+
+#> An <dfn>exotic object</dfn> is an object that is not an ordinary object.
+
+#> A <dfn>function object</dfn> is an object that supports the [[Call]] internal method.
+#> A <dfn>constructor</dfn> is an object that supports the [[Construct]] internal method.
+
+    tbd['{VAL_DESC} : a function object'] = T_function_object_
+    tbd['{VAL_DESC} : a constructor'] = T_constructor_object_
+    tbd['{VAL_DESC} : a callable Object'] = T_function_object_
+
+# ------
+
+# Creating objects:
+
+if 1:
+    @exprd.put(r'{EXPR} : a newly created object with an internal slot for each name in {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
+        return (T_Object, env1)
+
+    @exprd.put(r'{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot')
+    def _(expr, env0, _):
+        [var1, var2, var3, dsbn] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
+        # env1 = env0.ensure_expr_is_of_type(var2, )
+        return (T_function_object_, env1)
+
+    @exprd.put(r"{EXPR} : a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects")
+    def _(expr, env0, _):
+        [cap_word, dsb_word, var, emu_xref, cap_word2] = expr.children
+        T = cap_word.source_text()
+        assert T in ['Boolean', 'Number', 'String', 'Symbol', 'BigInt']
+        assert dsb_word.source_text() == f"[[{T}Data]]"
+        assert var.source_text() == '_argument_'
+        assert cap_word2.source_text() == T
+        return (T_Object, env0)
+
+# ==============================================================================
+#@ 6.1.7.4 Well-Known Intrinsic Objects
+
+#> Within this specification
+#> a reference such as %name% means
+#> the intrinsic object, associated with the current realm, corresponding to the name.
+
+if 1:
+    @exprd.put(r"{LITERAL} : {percent_word}")
+    def _(expr, env0, _):
+        [percent_word] = expr.children
+        pws = percent_word.source_text()
+        if pws in [
+            '%Promise%',
+            '%RegExp%',
+            '%ArrayBuffer%',
+            '%SharedArrayBuffer%',
+        ]:
+            rt = T_constructor_object_
+        else:
+            rt = T_Object
+        return (rt, env0)
+        # We could be more specific in many cases, but I'm not sure it would make any difference.
+
+    @exprd.put(r"{EXPR} : the intrinsic function {percent_word}")
+    def _(expr, env0, _):
+        [percent_word] = expr.children
+        return (T_function_object_, env0)
+
+    @exprd.put(r"{EXPR} : {var}'s intrinsic object named {var}")
+    def _(expr, env0, _):
+        [r_var, n_var] = expr.children
+        env0.assert_expr_is_of_type(r_var, T_Realm_Record)
+        env0.assert_expr_is_of_type(n_var, T_String)
+        return (T_Object, env0)
+
+    # 10.1.{13,14}
+    @condd.put(r"{CONDITION_1} : {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object")
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 6.2 ECMAScript Specification Types
+
+# ==============================================================================
+#@ 6.2.2 The List and Record Specification Types
+
+# ------------------------------------------------------------------------------
+# List:
+
+if 1:
+    tbd['{VAL_DESC} : a possibly empty List'] = T_List
+
+    @tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION}')
+    def _(val_desc, env):
+        [led] = val_desc.children
+        (sub_t, sup_t) = type_bracket_for(led, env)
+        return (ListType(sub_t), ListType(sup_t))
+
+    @tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}')
+    def _(val_desc, env):
+        [led, ex] = val_desc.children
+        env.assert_expr_is_of_type(ex, T_MathInteger_)
+        (led_sub_t, led_sup_t) = type_bracket_for(led, env)
+        return a_subset_of(ListType(led_sup_t))
+        # inexact because of length restriction 
+
+    @tbd.put('{VAL_DESC} : a non-empty List of {LIST_ELEMENTS_DESCRIPTION}')
+    def _(val_desc, env):
+        [led] = val_desc.children
+        (led_sub_t, led_sup_t) = type_bracket_for(led, env)
+        return a_subset_of(ListType(led_sup_t))
+        # inexact because of 'non-empty'
+
+    tbd['{VAL_DESC} : a List of a single Number'] = a_subset_of(ListType(T_Number))
+    tbd['{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*'] = ListType(T_String | T_Undefined)
+
+# ------------------------------------------------------------------------------
+# make a List:
+
+if 1:
+    @exprd.put(r"{EX} : « »")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_List, env0)
+
+    @exprd.put(r"{EX} : « {EXLIST} »")
+    def _(expr, env0, _):
+        [exlist] = expr.children
+        ex_types = set()
+        for ex in exes_in_exlist(exlist):
+            (ex_type, env1) = tc_expr(ex, env0); assert env1 is env0
+            ex_types.add(ex_type)
+        element_type = union_of_types(ex_types)
+        list_type = ListType(element_type)
+        return (list_type, env0)
+
+    @exprd.put(r'{EXPR} : a new empty List')
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_List, env0) # (ListType(T_0), env0)
+
+    @exprd.put(r"{EXPR} : a List whose sole element is {EX}")
+    def _(expr, env0, _):
+        [element_expr] = expr.children
+        (element_type, env1) = tc_expr(element_expr, env0); assert env1.equals(env0)
+        return (ListType(element_type), env0)
+
+    @exprd.put(r"{EXPR} : a copy of the List {var}")
+    @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        t = env0.assert_expr_is_of_type(var, T_List)
+        return (t, env0)
+
+    @exprd.put(r"{EXPR} : the list-concatenation of {EX} and {EX}")
+    def _(expr, env0, _):
+        [var, noi] = expr.children
+        (t1, env1) = tc_expr(var, env0); assert env1 is env0
+        (t2, env2) = tc_expr(noi, env0); assert env2 is env0
+        if t1 == T_TBD and t2 == T_TBD:
+            list_type = T_List
+        elif t1 == T_TBD and (t2 == T_List or isinstance(t2, ListType)):
+            list_type = t2
+        elif t2 == T_TBD and (t1 == T_List or isinstance(t1, ListType)):
+            list_type = t1
+
+        elif isinstance(t1, ListType) and t2 == T_List:
+            list_type = t1
+
+        elif isinstance(t1, ListType) and isinstance(t2, ListType):
+            if t1.is_a_subtype_of_or_equal_to(t2):
+                list_type = t2
+            elif t2.is_a_subtype_of_or_equal_to(t1):
+                list_type = t1
+            else:
+                assert 0
+        else:
+            assert 0
+            # assert t1.element_type == t2.element_type
+        return (list_type, env0)
+
+    @exprd.put(r"{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}")
+    def _(expr, env0, _):
+        [exa, exb, exc] = expr.children
+        # kludge
+        if exa.source_text() == '_names1_':
+            et = T_String
+        elif exa.source_text() == '_declarations1_':
+            et = T_Parse_Node
+        elif exa.source_text() == '« _matched_ »':
+            et = T_String | T_IntegralNumber_
+        else:
+            assert 0, exa
+        lt = ListType(et)
+        env1 = env0.ensure_expr_is_of_type(exa, lt)
+        env2 = env1.ensure_expr_is_of_type(exb, lt)
+        env3 = env2.ensure_expr_is_of_type(exc, lt)
+        return (lt, env3)
+
+    @exprd.put(r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}')
+    def _(expr, env0, _):
+        [var, _, _, _] = expr.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        assert t.is_a_subtype_of_or_equal_to(T_List)
+        return (t, env0)
+
+    @exprd.put(r'{EXPR} : a List whose elements are the first {var} elements of {var}')
+    def _(expr, env0, _):
+        [nvar, listvar] = expr.children
+        env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
+        (t, env1) = tc_expr(listvar, env0); assert env1 is env0
+        assert t.is_a_subtype_of_or_equal_to(T_List)
+        return (t, env0)
+
+    @exprd.put(r"{EX} : {EX} occurrences of {code_unit_lit}")
+    def _(expr, env0, _):
+        [ex, cu_lit] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_)
+        env0.assert_expr_is_of_type(cu_lit, T_code_unit_)
+        return (ListType(T_code_unit_), env1)
+
+    @exprd.put(r"{EXPR} : the List of {nonterminal} items in {PROD_REF}, in source text order")
+    def _(expr, env0, _):
+        [nont, prod_ref] = expr.children
+        return (ListType(T_Parse_Node), env0)
+
+    @exprd.put(r"{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}")
+    def _(expr, env0, _):
+        [var, literal, var2] = expr.children
+        assert var.source_text() == var2.source_text()
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
+        return (ListType(lit_t), env1)
+
+    @exprd.put(r"{EXPR} : the List that is {DOTTING}")
+    def _(expr, env0, _):
+        [dotting] = expr.children
+        (dotting_type, env1) = tc_expr(dotting, env0); assert env1 is env0
+        dotting_type.is_a_subtype_of_or_equal_to(T_List)
+        return (dotting_type, env0)
+
+# ------------------------------------------------------------------------------
+# modify a List:
+
+    @nv.put(r"{COMMAND} : Append {EX} as an element of {var}.")
+    @nv.put(r"{COMMAND} : Append {EX} to the end of {EX}.")
+    @nv.put(r"{COMMAND} : Append {EX} to {EX}.")
+    @nv.put(r"{COMMAND} : Insert {var} as the first element of {var}.")
+    @nv.put(r"{COMMAND} : Prepend {var} to {var}.")
+    @nv.put(r"{SMALL_COMMAND} : append {EX} to {SETTABLE}")
+    def _(anode, env0):
+        [value_ex, list_ex] = anode.children
+        return env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
+
+    @nv.put(r"{COMMAND} : Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.")
+    def _(anode, env0):
+        [avar, bvar, list_var] = anode.children
+        env0.assert_expr_is_of_type(avar, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(bvar, T_Property_Descriptor)
+        (list_type, env1) = tc_expr(list_var, env0); assert env1 is env0
+        assert list_type == T_List
+        return env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
+
+    @nv.put(r"{COMMAND} : Append to {var} the elements of {var}.")
+    def _(anode, env0):
+        [lista, listb] = anode.children
+        env0.assert_expr_is_of_type(lista, ListType(T_SlotName_))
+        env0.assert_expr_is_of_type(listb, ListType(T_SlotName_))
+        return env0
+
+    @nv.put(r'{COMMAND} : Append to {var} each element of {var} that is not already an element of {var}.')
+    def _(anode, env0):
+        [vara, varb, varc] = anode.children
+        (vara_type, enva) = tc_expr(vara, env0); assert enva is env0
+        (varb_type, envb) = tc_expr(varb, env0); assert envb is env0
+        (varc_type, envc) = tc_expr(varc, env0); assert envc is env0
+        if vara_type == T_TBD and varb_type == T_TBD and varc_type == T_TBD:
+            pass
+        else:
+            assert vara_type.is_a_subtype_of_or_equal_to(T_List)
+            assert vara_type == varb_type
+            assert varb_type == varc_type
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove {var} from {var}.")
+    @nv.put(r"{COMMAND} : Remove {var} from {DOTTING}.")
+    def _(anode, env0):
+        [item_var, list_ex] = anode.children
+        list_type = env0.assert_expr_is_of_type(list_ex, T_List)
+        env0.assert_expr_is_of_type(item_var, list_type.element_type)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove the first element from {var}.")
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove the first {var} elements of {var}.")
+    def _(anode, env0):
+        [nvar, listvar] = anode.children
+        env0.assert_expr_is_of_type(nvar, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(listvar, T_List)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove the last element of {SETTABLE}.")
+    def _(anode, env0):
+        [settable] = anode.children
+        env0.assert_expr_is_of_type(settable, T_List)
+        return env0
+
+    @nv.put(r"{SMALL_COMMAND} : remove that element from the {var}")
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return env0
+
+    @nv.put(r"{COMMAND} : Replace {var} in {var} with {var}.")
+    def _(anode, env0):
+        [ex_var, list_var, rep_var] = anode.children
+        env0.assert_expr_is_of_type(list_var, ListType(T_PrivateElement))
+        env0.assert_expr_is_of_type(ex_var, T_PrivateElement)
+        env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
+        return env0
+
+    @nv.put(r"{COMMAND} : Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.")
+    def _(anode, env0):
+        [list_var, elem_ex, lit] = anode.children
+        env1 = env0.ensure_A_can_be_element_of_list_B(elem_ex, list_var)
+        env2 = env1.ensure_A_can_be_element_of_list_B(lit, list_var)
+        return env2
+
+    @nv.put(r'{SMALL_COMMAND} : reverse the order of the elements of {var}')
+    def _(anode, env0):
+        [var] = anode.children
+        return env0.ensure_expr_is_of_type(var, T_List)
+
+# ------------------------------------------------------------------------------
+# iterate over a List:
+
+    @nv.put(r"{EACH_THING} : element {var} of {EX}")
+    @nv.put(r"{EACH_THING} : element {var} of {var}, in reverse List order")
+    def _(each_thing, env0):
+        [loop_var, collection_expr] = each_thing.children
+        (list_type, env1) = tc_expr(collection_expr, env0); assert env1 is env0
+        if list_type == T_List:
+            # want to assert that this doesn't happen,
+            # but _kept_ in %TypedArray%.prototype.filter
+            element_type = T_TBD
+        elif list_type == T_TBD:
+            element_type = T_TBD
+        else:
+            assert isinstance(list_type, ListType), list_type
+            element_type = list_type.element_type
+        return env1.plus_new_entry(loop_var, element_type)
+
+# ------------------------------------------------------------------------------
+# ask questions about a List:
+
+    @condd.put(r'{CONDITION_1} : {EX} is empty')
+    @condd.put(r"{CONDITION_1} : {var} is not empty")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        # polymorphic
+        env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
+        # XXX For String, change spec to "is [not] the empty String" ?
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not empty")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
+        env0.assert_expr_is_of_type(noi, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is now an empty List")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} has no elements")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} has any elements")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : The length of {var} is {var}")
+    def _(cond, env0, asserting):
+        [list_var, len_var] = cond.children
+        env0.assert_expr_is_of_type(list_var, T_List)
+        env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the number of elements in the List {var}")
+    @exprd.put(r"{EX} : The number of elements in {var}")
+    @exprd.put(r"{EX} : the number of elements in {SETTABLE}")
+    @exprd.put(r"{EX} : the number of elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_List)
+        return (T_MathNonNegativeInteger_, env1)
+
+    @condd.put(r"{CONDITION_1} : {var} has {EX} elements")
+    def _(cond, env0, asserting):
+        [var, ex] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
+        env0.assert_expr_is_of_type(noi, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} contains any duplicate entries")
+    @condd.put(r"{CONDITION_1} : {var} contains no duplicate entries")
+    @condd.put(r"{CONDITION_1} : {var} has any duplicate entries")
+    @condd.put(r"{CONDITION_1} : {var} has no duplicate entries")
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries")
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} contains a single {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, nonterminal] = cond.children    
+        env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {EX} is an element of {var}')
+    @condd.put(r"{CONDITION_1} : {EX} is not an element of {var}")
+    def _(cond, env0, asserting):
+        [value_ex, list_var] = cond.children
+        env1 = env0.ensure_A_can_be_element_of_list_B(value_ex, list_var)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {var} is not currently an element of {var}")
+    def _(cond, env0, asserting):
+        [item_var, list_var] = cond.children
+        env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {SETTABLE} contains {EX}")
+    @condd.put(r"{CONDITION_1} : {EX} does not contain {EX}")
+    def _(cond, env0, asserting):
+        [container_ex, value_var] = cond.children
+        (container_type, container_env) = tc_expr(container_ex, env0)
+        if container_type.is_a_subtype_of_or_equal_to(T_String):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
+        else:
+            env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains {starred_str}")
+    def _(cond, env0, asserting):
+        [noi, ss] = cond.children
+        env0.assert_expr_is_of_type(noi, ListType(T_String))
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}")
+    def _(cond, env0, asserting):
+        [noi, ss] = cond.children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
+    def _(cond, env0, asserting):
+        [noi, ss, emu_grammar] = cond.children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {var} does not include the element {LITERAL}")
+    def _(cond, env0, asserting):
+        [list_var, item_lit] = cond.children
+        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String))
+        env0.assert_expr_is_of_type(item_lit, T_String)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [member_var, list_var, stcond] = cond.children
+        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String)) # over-specific
+        env2 = env1.plus_new_entry(member_var, T_String)
+        (t_env, f_env) = tc_cond(stcond, env2)
+        return (env1, env1)
+
+    @exprd.put(r"{EXPR} : the first element of {var}")
+    @exprd.put(r"{EXPR} : the second element of {var}")
+    @exprd.put(r"{EXPR} : the last element in {var}")
+    @exprd.put(r"{EXPR} : the last element of {var}")
+    def _(expr, env0, _):
+        # todo: replace with ad hoc record
+        [var] = expr.children
+        list_type = env0.assert_expr_is_of_type(var, T_List)
+        return (list_type.element_type, env0)
+
+    @exprd.put(r"{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EXPR} : the sole element of {var}")
+    def _(expr, env0, _):
+        [noi] = expr.children
+        list_type = env0.assert_expr_is_of_type(noi, T_List)
+        return (list_type.element_type, env0)
+
+    @exprd.put(r"{SETTABLE} : {var}[{EX}]")
+    @exprd.put(r"{SETTABLE} : {DOTTING}[{EX}]")
+    def _(expr, env0, _):
+        [seq_ex, subscript_var] = expr.children
+        (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
+        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
+        if isinstance(seq_type, ListType):
+            item_type = seq_type.element_type
+        elif seq_type == T_List:
+            item_type = T_TBD
+        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block):
+            item_type = T_MathInteger_
+        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block | T_Null):
+            add_pass_error(
+                expr,
+                "STA fails to confirm that %s isnt Null" %
+                (seq_ex.source_text())
+            )
+            item_type = T_MathInteger_
+        else:
+            assert 0, seq_type
+        return (item_type, env0)
+
+# ------------------------------------------------------------------------------
+# questions involving multiple Lists:
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} have the same number of elements")
+    def _(cond, env0, asserting):
+        [vara, varb] = cond.children
+        env0.assert_expr_is_of_type(vara, T_List)
+        env0.assert_expr_is_of_type(varb, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} do not have the same number of elements")
+    def _(cond, env0, asserting):
+        [vara, varb] = cond.children
+        env0.assert_expr_is_of_type(vara, T_List)
+        env0.assert_expr_is_of_type(varb, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var}, {var}, and {var} have the same number of elements")
+    def _(cond, env0, asserting):
+        [vara, varb, varc] = cond.children
+        env0.assert_expr_is_of_type(vara, T_List)
+        env0.assert_expr_is_of_type(varb, T_List)
+        env0.assert_expr_is_of_type(varc, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [noi1, noi2] = cond.children
+        env0.assert_expr_is_of_type(noi1, T_List)
+        env0.assert_expr_is_of_type(noi2, T_List)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [noia, noib, noic] = cond.children
+        env0.assert_expr_is_of_type(noia, T_List)
+        env0.assert_expr_is_of_type(noib, T_List)
+        env0.assert_expr_is_of_type(noic, T_List)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+# Record:
+
+#> The <dfn>Record</dfn> type
+#> is used to describe data aggregations
+#> within the algorithms of this specification. 
+
+if 1:
+    @exprd.put(r"{EXPR} : a new Record")
+    def _(expr, env0, _):
+        # Once, in CreateIntrinsics
+        [] = expr.children
+        return (T_Intrinsics_Record, env0)
+
+#> A Record type value consists of one or more named fields.
+#> The value of each field is an ECMAScript language value or specification value.
+#> Field names are always enclosed in double brackets, for example [[Value]].
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {SETTABLE} has an? {DSBN} field")
+    def _(cond, env0, asserting):
+        [settable, dsbn] = cond.children
+        dsbn_name = dsbn.source_text()[2:-2]
+        t = env0.assert_expr_is_of_type(settable, T_Record)
+        if t.name == 'Environment Record' and dsbn_name == 'NewTarget':
+            add_pass_error(
+                cond,
+                "STA can't confirm that `%s` could have a `%s` field"
+                % ( settable.source_text(), dsbn_name )
+            )
+            # We could confirm if we looked at the subtypes and what fields they have.
+            return env0.with_type_test(settable, 'is a', [T_0, T_Function_Environment_Record], asserting)
+        else:
+            assert dsbn_name in fields_for_record_type_named_[t.name], (t.name, dsbn_name)
+            return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {var} does not have an? {DSBN} field')
+    def _(cond, env0, asserting):
+        [var, dsbn] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Record)
+        # XXX We should check whether its type says it *could* have such a field.
+        # XXX The particular DSBN could have a (sub-)type-constraining effect
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : That Record's {dsb_word} is {EX}")
+    def _(cond, env0, asserting):
+        [dsb_word, ex] = cond.children
+        dsbn_name = dsb_word.source_text()[2:-2]
+        # "That Record" is from prev step's "contains a Record"
+        that_type = T_LoadedModule_Record_
+        fields = fields_for_record_type_named_[that_type.name]
+        field_type = fields[dsbn_name]
+        env0.assert_expr_is_of_type(ex, field_type)
+        return (env0, env0)
+
+    @tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})')
+    @tbd.put('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})')
+    @tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})')
+    @tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Records that have {dsb_word} and {dsb_word} fields')
+    def _(val_desc, env):
+        vd_st = val_desc.source_text()
+        t = {
+            'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)': T_CharacterClassResultRecord_,
+            'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
+            'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
+            'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
+            'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
+            'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
+            'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
+            'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)': T_ResolvingFunctions_record_,
+            'Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': T_ImportMeta_record_,
+            'Records that have [[Module]] and [[ExportName]] fields': T_ExportResolveSet_Record_,
+            'Records with fields [[Specifier]] (a String) and [[Module]] (a Module Record)' : T_LoadedModule_Record_,
+        }[vd_st]
+        return t
+
+    @tbd.put('{LIST_ELEMENTS_DESCRIPTION} : Record { {dsb_word}: Parse Node, {dsb_word}: Object }')
+    def _(led, env):
+        led_st = led.source_text()
+        t = {
+            'Record { [[Site]]: Parse Node, [[Array]]: Object }': T_templateMap_entry_,
+        }[led_st]
+        return t
+
+    @exprd.put(r"{SETTABLE} : the {DSBN} field of {EXPR}")
+    def _(expr, env0, _):
+        [dsbn, ex] = expr.children
+        dsbn_name = dsbn.source_text()[2:-2]
+        if dsbn_name == 'EventList':
+            env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
+            return (ListType(T_event_), env0)
+        elif dsbn_name == 'CandidateExecution':
+            env0.assert_expr_is_of_type(ex, T_Agent_Record)
+            return (T_candidate_execution, env0)
+        elif dsbn_name == 'LittleEndian':
+            env0.assert_expr_is_of_type(ex, T_Agent_Record)
+            return (T_Boolean, env0)
+        else:
+            assert 0, expr
+
+#> For notational convenience within this specification,
+#> an object literal-like syntax can be used to express a Record value.
+
+if 1:
+    @exprd.put('{RECORD_CONSTRUCTOR} : {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }')
+    def _(expr, env0, _):
+        [record_constructor_prefix, fields] = expr.children
+        constructor_prefix = record_constructor_prefix.source_text().replace('the ', '')
+
+        if constructor_prefix == 'Completion Record':
+            f_ = dict( get_field_items(fields) )
+            assert sorted(f_.keys()) == ['Target', 'Type', 'Value']
+            type_ex = f_['Type']
+            value_ex = f_['Value']
+            target_ex = f_['Target']
+
+            if fields.source_text() == '[[Type]]: _completionRecord_.[[Type]], [[Value]]: _value_, [[Target]]: _completionRecord_.[[Target]]':
+                # The specialest of special cases!
+                # Occurs once, in UpdateEmpty.
+                # In the context there,
+                # the static type of _completionRecord_ is
+                # (or would be, if STA were smart enough)
+                # T_tilde_empty_ | T_continue_ | T_break_,
+                # and the static type of _value_ is T_Tangible_ | T_tilde_empty_
+
+                return (T_Tangible_ | T_tilde_empty_ | T_continue_ | T_break_, env0)
+
+            else:
+                env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_tilde_empty_)
+                (value_type, _) = tc_expr(value_ex, env1) # bleah
+
+                env0.assert_expr_is_of_type(target_ex, T_String | T_tilde_empty_)
+
+                ct = type_corresponding_to_comptype_literal(type_ex)
+                if ct == T_Normal:
+                    t = value_type
+                elif ct == T_throw_:
+                    t = ThrowType(value_type)
+                else:
+                    t = ct
+
+                return (t, env1)
+
+        if constructor_prefix == 'Record':
+            field_names = sorted(get_field_names(fields))
+            record_type_names = find_record_types_with_fields(field_names)
+
+            if len(record_type_names) == 0:
+                add_pass_error(
+                    expr,
+                    "Could not infer a record type for fields: " + str(field_names)
+                )
+                record_type_name = 'Record'
+                field_info = None
+
+            else:
+                if len(record_type_names) == 1:
+                    [record_type_name] = record_type_names
+                else:
+                    if field_names == ['Key', 'Value']:
+                        assert record_type_names == ['ImportMeta_record_', 'MapData_record_']
+                        # In {Map,WeakMap}.prototype.set
+                        record_type_name = 'MapData_record_'
+
+                    elif field_names == ['Value']:
+                        assert record_type_names == ['boolean_value_record_', 'integer_value_record_']
+                        fst = fields.source_text()
+                        if fst == '[[Value]]: *false*':
+                            record_type_name = 'boolean_value_record_'
+                        elif fst == '[[Value]]: 1':
+                            record_type_name = 'integer_value_record_'
+                        else:
+                            assert 0, fst
+
+                    else:
+                        assert 0, field_names
+
+                add_pass_error(
+                    expr,
+                    "Inferred record type `%s`: be explicit!" % record_type_name
+                )
+                field_info = fields_for_record_type_named_[record_type_name]
+
+        else:
+            if constructor_prefix in [
+                'ReadModifyWriteSharedMemory',
+                'ReadSharedMemory',
+                'WriteSharedMemory',
+            ]:
+                record_type_name = constructor_prefix + ' event'
+            elif constructor_prefix in [
+                'PromiseReaction',
+                'PromiseCapability',
+                'AsyncGeneratorRequest',
+            ]:
+                record_type_name = constructor_prefix + ' Record'
+            elif constructor_prefix == 'PropertyDescriptor':
+                record_type_name = 'Property Descriptor'
+            else:
+                record_type_name = constructor_prefix
+            field_info = fields_for_record_type_named_[record_type_name]
+
+        envs = []
+        for (dsbn_name, ex) in get_field_items(fields):
+            if field_info is None:
+                # (because it's just a Record, not a particular (named) kind of Record)
+                # We can't really assert anything.
+                (t, env1) = tc_expr(ex, env0); assert env1 is env0
+            else:
+                declared_field_type = field_info[dsbn_name]
+                # If the constructor referred to an undeclared field, that would raise a KeyError
+                env1 = env0.ensure_expr_is_of_type(ex, declared_field_type)
+            envs.append(env1)
+        env2 = envs_or(envs)
+
+        # XXX: Should also ensure that each declared field is specified exactly once.
+
+        return ( NamedType(record_type_name), env2 )
+
+    @exprd.put(r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}")
+    def _(expr, env0, _):
+        [dsbna, dsbnb, ex] = expr.children
+        assert dsbna.source_text() == '[[Key]]'
+        assert dsbnb.source_text() == '[[Value]]'
+        env0.assert_expr_is_of_type(ex, T_MapData_record_)
+        return (T_MapData_record_, env0)
+
+#> In specification text and algorithms,
+#> dot notation may be used to refer to a specific field of a Record value.
+#> For example, if R is the record shown in the previous paragraph then
+#> R.[[Field2]] is shorthand for “the field of R named [[Field2]]”.
+
+if 1:
+    @exprd.put(r'{DOTTING} : {var}.{DSBN}')
+    @exprd.put(r"{DOTTING} : {DOTTING}.{DSBN}")
+    def _(expr, env0, _):
+        [lhs_var, dsbn] = expr.children
+        lhs_text = lhs_var.source_text()
+        dsbn_name = dsbn.source_text()[2:-2]
+        (lhs_t, env1) = tc_expr(lhs_var, env0)
+
+        # assert dsbn_name != 'Type'
+        # because anything involving [[Type]] has been intercepted at a higher level
+        # Nope, _reaction_.[[Type]]
+
+        # ----------------------------------
+
+        # Handle "Completion Records" specially.
+        while True: # ONCE
+            if dsbn_name not in ['Type', 'Target', 'Value']:
+                # We can't be dealing with a Completion Record
+                break
+            if lhs_t in [
+                T_ImportMeta_record_,
+                T_MapData_record_,
+                T_PromiseReaction_Record,
+                T_Property_Descriptor,
+                T_boolean_value_record_,
+                T_boolean_value_record_ | T_Boolean,
+                T_integer_value_record_,
+            ]:
+                # We know we're not dealing with a Completion Record
+                break
+
+            assert lhs_text not in [
+                '_D_',
+                '_Desc_',
+                '_alreadyResolved_',
+                '_current_',
+                '_desc_',
+                '_like_',
+                '_newLenDesc_',
+                '_oldLenDesc_',
+                '_reaction_',
+                '_remainingElementsCount_',
+            ]
+
+            result_memtypes = set()
+            for memtype in lhs_t.set_of_types():
+                if dsbn_name == 'Value':
+                    # Lots of things have a '[[Value]]' field.
+                    if memtype.is_a_subtype_of_or_equal_to(T_Abrupt):
+                        result_memtype = T_Tangible_ | T_tilde_empty_
+                    elif memtype == T_Normal:
+                        result_memtype = T_Tangible_ | T_tilde_empty_
+                    elif memtype.is_a_subtype_of_or_equal_to(T_Tangible_ | T_tilde_empty_):
+                        result_memtype = memtype
+
+                    elif memtype.is_a_subtype_of_or_equal_to(T_Reference_Record):
+                        # Completion Record's [[Value]] can be a Reference Record, despite the definition of CR?
+                        result_memtype = memtype
+                    elif memtype == T_Realm_Record:
+                        # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
+                        result_memtype = memtype
+                    elif memtype in [T_ClassFieldDefinition_Record, T_ClassStaticBlockDefinition_Record]:
+                        # ClassDefinitionEvaluation: `Set _element_ to _element_.[[Value]].`
+                        result_memtype = memtype
+                    elif memtype in [T_tilde_unused_, ListType(T_code_unit_), T_Top_]:
+                        # hm.
+                        result_memtype = memtype
+                    elif memtype == T_Module_Record:
+                        # ContinueDynamicImport
+                        result_memtype = memtype
+
+                    elif memtype.is_a_subtype_of_or_equal_to(T_Private_Name):
+                        result_memtype = T_function_object_
+                    elif memtype == T_Record:
+                        # All we know is that it's a Record with a [[Value]] field.
+                        result_memtype = T_TBD
+                    elif memtype == T_PrivateElement:
+                        result_memtype = T_Tangible_
+                    else:
+                        assert 0, memtype
+
+                elif dsbn_name == 'Target':
+                    if memtype in [T_continue_, T_break_, T_Abrupt]:
+                        result_memtype = T_String | T_tilde_empty_
+                    else:
+                        assert 0, memtype
+
+                elif dsbn_name == 'Type':
+                    assert 0
+
+                else:
+                    assert 0
+
+                result_memtypes.add(result_memtype)
+
+            result_type = union_of_types(result_memtypes)
+            return (result_type, env1)
+
+        # Finished with "Completion Records"
+        # ----------------------------------
+
+        # In some cases, we first need to change the type of lhs_var...
+
+        if lhs_t == T_0:
+            if lhs_text == '_starResolution_':
+                # ResolveExport _starResolution_
+                # The first time through the For loop,
+                # _starResolution has type Null,
+                # so after "If _starResolution_ is *null*,",
+                # in the Else branch it has type T_0.
+                # Properly, that should make us not do STA on the Else branch,
+                # then we would re-STA the loop-body
+                # with a wider type for _starResolution_.
+                # But I'm hoping to avoid the need to re-STA loop-bodies.
+                lhs_t = T_ResolvedBinding_Record
+            elif lhs_text == '_element_':
+                lhs_t = T_PrivateElement
+            else:
+                assert 0, expr.source_text()
+            add_pass_error(
+                expr,
+                "`%s` has type T_0, changing to %s" % (lhs_text, lhs_t)
+            )
+            env2 = env1
+
+        elif lhs_t == T_Property_Descriptor | T_Undefined:
+            # CreateGlobalFunctionBinding:
+            # If _existingProp_ is *undefined* or _existingProp_.[[Configurable]] is *true*
+            lhs_t = T_Property_Descriptor
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t == T_Object | T_Null:
+            # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
+            lhs_t = T_Object
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t == T_boolean_value_record_ | T_Boolean:
+            lhs_t = T_boolean_value_record_
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t == T_Realm_Record | T_Undefined:
+            lhs_t = T_Realm_Record
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t == T_Cyclic_Module_Record | T_tilde_empty_:
+            assert lhs_text in ['_m_.[[CycleRoot]]', '_module_', '_requiredModule_']
+            lhs_t = T_Cyclic_Module_Record
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        elif lhs_t == T_Tangible_:
+            # 3 times
+
+            assert dsbn_name == 'AsyncGeneratorState'
+
+            # After:
+            #   Let _result_ be Completion(AsyncGeneratorValidate(_generator_, ~empty~)).
+            #   IfAbruptRejectPromise(_result_, _promiseCapability_).
+            # it's guaranteed that _generator_ is a AsyncGenerator object,
+            # but STA isn't smart enough to know that.
+            lhs_t = T_AsyncGenerator_object_
+
+            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+
+        else:
+            env2 = env1
+
+        # --------------------------------------------
+
+        if lhs_t.is_a_subtype_of_or_equal_to(T_Object):
+            # _foo_.[[Bar]] references an object's internal method or internal slot.
+
+            it_type = type_of_internal_thing_[dsbn_name]
+
+            # XXX We should require that lhs_t is allowed to have this internal thing.
+
+            # But for some subtypes of Object, we can give a narrower type for the slot
+            if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == 'ArrayBufferData':
+                narrower_type = T_Shared_Data_Block
+                assert narrower_type.is_a_subtype_of_or_equal_to(it_type)
+                assert narrower_type != it_type
+                it_type = narrower_type
+            return (it_type, env2)
+
+        elif lhs_t == T_Symbol:
+            assert dsbn_name == 'Description'
+            return (T_String | T_Undefined, env2)
+
+        elif lhs_t == T_Private_Name:
+            assert dsbn_name == 'Description'
+            return (T_String, env2)
+
+        elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
+            # _foo_.[[Bar]] references a record's field
+            if isinstance(lhs_t, NamedType):
+                if lhs_t.name == 'Record':
+                    add_pass_error(
+                        expr,
+                        "type of `%s` is only 'Record', so don't know about a `%s` field"
+                        % (lhs_text, dsbn_name)
+                    )
+                    field_type = T_TBD
+                elif lhs_t.name == 'Intrinsics Record':
+                    field_type = {
+                        '%Array%'               : T_constructor_object_,
+                        '%Function.prototype%'  : T_Object,
+                        '%Object.prototype%'    : T_Object,
+                        '%ThrowTypeError%'      : T_function_object_,
+                    }[dsbn_name]
+                else:
+                    assert lhs_t.name in fields_for_record_type_named_, lhs_t.name
+                    fields_info = fields_for_record_type_named_[lhs_t.name]
+                    if dsbn_name in fields_info:
+                        field_type = fields_info[dsbn_name]
+                    else:
+                        add_pass_error(
+                            expr,
+                            f"`{lhs_text}` has type {lhs_t}, which doesn't have a `{dsbn_name}` field"
+                        )
+                        # Probably you need to add something to
+                        # fields_for_record_type_named_
+
+                        field_type = T_TBD
+
+                return (field_type, env2)
+
+            elif isinstance(lhs_t, UnionType):
+                types_for_field = set()
+                for mt in lhs_t.member_types:
+                    fields_info = fields_for_record_type_named_[mt.name]
+                    assert dsbn_name in fields_info
+                    field_type = fields_info[dsbn_name]
+                    types_for_field.add(field_type)
+                assert len(types_for_field) == 1
+                field_type = types_for_field.pop()
+                return (field_type, env2)
+
+            else:
+                assert 0, (expr.source_text(), lhs_t)
+
+        else:
+            # lhs_t is presumably a union of types, only one/some of which supports dot-operator
+            # In practice, this is a Record type.
+            # (In fact, in practice, it's a T_Reference_Record, but I don't need to be that specific.)
+
+            (record_part_of_type, nonrecord_part_of_type) = lhs_t.split_by(T_Record)
+            assert record_part_of_type != T_0
+            assert nonrecord_part_of_type != T_0
+
+            add_pass_error(
+                lhs_var,
+                f"Narrowing type {lhs_t} to {record_part_of_type} to support a dot-operator"
+            )
+
+            # Okay, but then what's the type of the dotting?
+            # Properly, this should be re-submitted.
+            assert isinstance(record_part_of_type, NamedType)
+            t = fields_for_record_type_named_[record_part_of_type.name][dsbn_name]
+            return (t, env2)
+
+# ------------------------------------------------------------------------------
+# List of Records
+
+if 1:
+    @condd.put(r"{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}")
+    def _(cond, env0, asserting):
+        [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = cond.children
+        assert dsb1.source_text() == '[[AsyncEvaluation]]'
+        assert dsb2.source_text() == '[[PendingAsyncDependencies]]'
+        assert dsb3.source_text() == '[[EvaluationError]]'
+        # could check that the lits have the right type.
+        env0.assert_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [ex, var, stcond] = cond.children
+        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
+        assert ex_t.is_a_subtype_of_or_equal_to(T_List)
+        assert ex_t.element_type.is_a_subtype_of_or_equal_to(T_Record)
+        env_for_cond = env0.plus_new_entry(var, ex_t.element_type)
+        (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
+        return (cond_t_env, env0)
+
+    @condd.put(r"{CONDITION_1} : {EX} contains a Record whose {dsb_word} is {var}")
+    @condd.put(r"{CONDITION_1} : Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [list_ex, dsb_word, var] = cond.children
+        dsbn_name = dsb_word.source_text()[2:-2]
+        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
+        assert isinstance(list_type, ListType)
+        et = list_type.element_type
+        fields = fields_for_record_type_named_[et.name]
+        field_type = fields[dsbn_name]
+        env1.assert_expr_is_of_type(var, field_type)
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the element in {EX} whose {DSBN} is {EX}")
+    @exprd.put(r"{EXPR} : the element of {EX} whose {DSBN} field is {var}")
+    @exprd.put(r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}")
+    def _(expr, env0, _):
+        [list_ex, dsbn, val_ex] = expr.children
+        dsbn_name = dsbn.source_text()[2:-2]
+        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
+        assert isinstance(list_type, ListType)
+        et = list_type.element_type
+        assert isinstance(et, NamedType)
+        fields = fields_for_record_type_named_[et.name]
+        whose_type = fields[dsbn_name]
+        env1.assert_expr_is_of_type(val_ex, whose_type)
+        return (et, env1)
+
+    @exprd.put(r"{EXPR} : the Record in {DOTTING} whose {dsb_word} is {var}")
+    def _(expr, env0, _):
+        [dotting, dsb_word, var] = expr.children
+        dsbn_name = dsb_word.source_text()[2:-2]
+        (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
+        assert isinstance(list_type, ListType)
+        et = list_type.element_type
+        fields = fields_for_record_type_named_[et.name]
+        whose_type = fields[dsbn_name]
+        env1.assert_expr_is_of_type(var, whose_type)
+        return (et, env0)
+
+# ==============================================================================
+#@ 6.2.3 The Set and Relation Specification Types
+
+#> Values of the Relation type
+#> are Sets of ordered pairs of values from its value domain.
+
+if 1:
+    @exprd.put(r"{EXPR} : an empty Set")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Set, env0)
+
+    @exprd.put(r"{PAIR} : ({EX}, {EX})")
+    def _(expr, env0, _):
+        [a, b] = expr.children
+        # over-specific:
+        env0.assert_expr_is_of_type(a, T_event_)
+        env0.assert_expr_is_of_type(b, T_event_)
+        return (T_event_pair_, env0)
+
+    @nv.put(r'{COMMAND} : Add {var} to {var}.')
+    @nv.put(r"{SMALL_COMMAND} : add {var} to {var}")
+    def _(anode, env0):
+        [item_var, collection_var] = anode.children
+        (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
+        (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
+        if item_type.is_a_subtype_of_or_equal_to(T_event_) and collection_type == T_Set:
+            pass
+        else:
+            assert 0
+        return env0
+
+    @condd.put(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are in {EX}")
+    @condd.put(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are not in {EX}")
+    @condd.put(r"{CONDITION_1} : either {PAIR} or {PAIR} is in {EX}")
+    def _(cond, env0, asserting):
+        [paira, pairb, ex] = cond.children
+        env0.assert_expr_is_of_type(paira, T_event_pair_)
+        env0.assert_expr_is_of_type(pairb, T_event_pair_)
+        env0.assert_expr_is_of_type(ex, T_Relation)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is not in {PREFIX_PAREN}")
+    def _(cond, env0, asserting):
+        [item_var, set_pp] = cond.children
+        env0.assert_expr_is_of_type(set_pp, T_Set)
+        env0.assert_expr_is_of_type(item_var, T_event_)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 6.2.4 The Completion Record Specification Type
+
+#> The following shorthand terms are sometimes used to refer to Completion Records.
+
+if 1:
+    tbd['{VAL_DESC} : a Completion Record'] = T_Abrupt | T_Normal
+    tbd['{VAL_DESC} : a normal completion'] = T_Normal
+    tbd['{VAL_DESC} : a return completion'] = T_return_
+    tbd['{VAL_DESC} : a throw completion'] = T_throw_
+    tbd['{VAL_DESC} : an abrupt completion'] = T_Abrupt
+    tbd['{VAL_DESC} : any value except a Completion Record'] = T_Tangible_ | T_Intangible_
+
+    @tbd.put('{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}')
+    def _(vd, env):
+        [child] = vd.children
+        return type_bracket_for(child, env)
+
+    @condd.put(r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
+    def _(cond, env0, asserting):
+        [var, literal, _] = cond.children
+        env0.assert_expr_is_of_type(literal, T_tilde_unused_)
+        return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
+
+    @exprd.put(r"{EXPR} : a new implementation-defined Completion Record")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Abrupt | T_Normal, env0)
+
+# ---------
+
+    @condd.put(r"{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [subcond] = cond.children
+        return tc_cond(subcond, env0, asserting)
+
+# ==============================================================================
+#@ 6.2.5 The Reference Record Specification Type
+
+if 1:
+    tbd['{VAL_DESC} : a Reference Record'] = T_Reference_Record
+    tbd['{VAL_DESC} : a Super Reference Record'] = a_subset_of(T_Reference_Record)
+
+# ==============================================================================
+#@ 6.2.6 The Property Descriptor Specification Type
+
+if 1:
+    tbd['{VAL_DESC} : a Property Descriptor'] = T_Property_Descriptor
+    tbd['{VAL_DESC} : a fully populated Property Descriptor'] = a_subset_of(T_Property_Descriptor)
+
+    @exprd.put(r"{EXPR} : a newly created Property Descriptor with no fields")
+    @exprd.put(r"{EXPR} : a new Property Descriptor that initially has no fields")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Property_Descriptor, env0)
+
+    @exprd.put(r"{EXPR} : the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}")
+    def _(expr, env0, _):
+        [emu_xref1, emu_xref2, emu_xref3, dsbn, var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Realm_Record)
+        return (T_Property_Descriptor, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} does not have any fields")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Property_Descriptor)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }')
+    def _(cond, env0, asserting):
+        [var, dsbn1, dsbn2] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Property_Descriptor)
+        assert dsbn1.source_text() == '[[Writable]]'
+        assert dsbn2.source_text() == '[[Enumerable]]'
+        return (env1, env1)
+
+    @nv.put(r"{EACH_THING} : field of {var}")
+    def _(each_thing, env0):
+        [desc_var] = each_thing.children
+        loop_var = None # todo: no loop variable!
+        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
+        return env0
+
+# ==============================================================================
+#@ 6.2.7 The Environment Record Specification Type
+
+# (See 9.1 Environment Records)
+
+# ==============================================================================
+#@ 6.2.8 The Abstract Closure Specification Type
+
+    tbd['{VAL_DESC} : an Abstract Closure with no parameters'] = ProcType([], T_Top_)
+    tbd['{VAL_DESC} : an Abstract Closure with two parameters'] = ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_)
+    tbd['{VAL_DESC} : an Abstract Closure'] = T_proc_
+
+    @exprd.put(r"{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}")
+    def _(expr, env0, _):
+        [clo_kind, clo_parameters, clo_captures, _, commands] = expr.children
+        clo_kind = clo_kind.source_text()
+
+        #XXX Should assert no intersection between clo_parameters and clo_captures
+
+        # -----
+
+        env_for_commands = Env()
+
+        n_parameters = len(clo_parameters.children)
+        # polymorphic
+        if clo_kind == 'Abstract Closure':
+            clo_param_types = [T_TBD] * n_parameters
+        elif clo_kind == 'MatcherContinuation':
+            assert n_parameters == 1
+            clo_param_types = [T_MatchState]
+        elif clo_kind == 'Matcher':
+            assert n_parameters == 2
+            clo_param_types = [T_MatchState, T_MatcherContinuation]
+        elif clo_kind == 'Job Abstract Closure':
+            assert n_parameters == 0
+            clo_param_types = []
+        elif clo_kind == 'read-modify-write modification function':
+            assert n_parameters == 2
+            clo_param_types = [ListType(T_MathInteger_), ListType(T_MathInteger_)]
+        else:
+            assert 0, clo_kind
+
+        for (clo_param_var, clo_param_type) in zip(clo_parameters.children, clo_param_types):
+            env_for_commands = env_for_commands.plus_new_entry(clo_param_var, clo_param_type)
+
+        for clo_capture_var in clo_captures.children:
+            clo_capture_type = env0.lookup(clo_capture_var)
+            env_for_commands = env_for_commands.plus_new_entry(clo_capture_var, clo_capture_type)
+
+        env_for_commands.vars['*return*'] = T_0
+
+        # -----
+
+        defns = [(None, commands)]
+        env_after_commands = tc_proc(None, defns, env_for_commands)
+        t = ProcType(clo_param_types, env_after_commands.vars['*return*'])
+        return (t, env0)
+
+# ==============================================================================
+#@ 6.2.9 Data Blocks
+
+if 1:
+    tbd['{VAL_DESC} : a Data Block'] = T_Data_Block
+    tbd['{VAL_DESC} : a Shared Data Block'] = T_Shared_Data_Block
+    tbd['{VAL_DESC} : a Shared Data Block event'] = T_Shared_Data_Block_event
+
+    @exprd.put(r'{EXPR} : a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception')
+    def _(expr, env0, _):
+        [var, error_type] = expr.children
+        (t, env1) = tc_expr(var, env0)
+        assert env1 is env0
+        assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
+        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
+        return (T_Data_Block, env1)
+
+    @exprd.put(r'{EXPR} : a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception')
+    def _(expr, env0, _):
+        [var, error_type] = expr.children
+        (t, env1) = tc_expr(var, env0)
+        assert env1 is env0
+        assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
+        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
+        return (T_Shared_Data_Block, env1)
+
+    @condd.put(r"{CONDITION_1} : {EX} and {EX} are the same Shared Data Block values")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
+        env1 = env0.ensure_expr_is_of_type(exa, T_Shared_Data_Block)
+        env2 = env1.ensure_expr_is_of_type(exb, T_Shared_Data_Block)
+        return (env2, env2)
+
+    @nv.put(r'{COMMAND} : Set all of the bytes of {var} to 0.')
+    def _(anode, env0):
+        [var] = anode.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Data_Block)
+        return env1
+
+    @nv.put(r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]")
+    @nv.put(r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].")
+    def _(anode, env0):
+        [var1, var2, var3, var4] = anode.children
+        env0.assert_expr_is_of_type(var1, ListType(T_MathInteger_))
+        env1 = env0.ensure_expr_is_of_type(var2, T_Data_Block)
+        assert var3.children == var2.children
+        env0.assert_expr_is_of_type(var4, T_MathInteger_)
+        return env1
+
+    @exprd.put(r"{EXPR} : the number of bytes in {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Data_Block | T_Shared_Data_Block)
+        return (T_MathNonNegativeInteger_, env1)
+
+    @exprd.put(r"{EXPR} : a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]")
+    def _(expr, env0, _):
+        [var1, var2, var3, var4] = expr.children
+        assert var1.children == var2.children
+        env0.assert_expr_is_of_type(var1, T_MathInteger_)
+        env1 = env0.ensure_expr_is_of_type(var3, T_Data_Block | T_Shared_Data_Block)
+        env0.assert_expr_is_of_type(var4, T_MathInteger_)
+        return (ListType(T_MathInteger_), env1)
+
+    @exprd.put(r"{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}")
+    def _(expr, env0, _):
+        [data_var, interval] = expr.children
+        env1 = env0.ensure_expr_is_of_type(data_var, T_Data_Block | T_Shared_Data_Block)
+        env1.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
+        return (ListType(T_MathNonNegativeInteger_), env1)
+
+    @nv.put(r"{EACH_THING} : index {var} of {var}")
+    def _(each_thing, env0):
+        [loop_var, collection_var] = each_thing.children
+        env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
+        return env0.plus_new_entry(loop_var, T_MathInteger_)
+
+    @condd.put(r"{CONDITION_1} : {EX} and {EX} are valid byte offsets within the memory of {var}")
+    def _(cond, env0, asserting):
+        [offset1, offset2, sdb] = cond.children
+        env1 = env0.ensure_expr_is_of_type(offset1, T_MathInteger_)
+        env1.assert_expr_is_of_type(offset2, T_MathInteger_)
+        env1.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
+        return (env1, env1)
+
+# ==============================================================================
+#@ 6.2.10 The PrivateElement Specification Type
+
+if 1:
+    tbd['{VAL_DESC} : a PrivateElement'] = T_PrivateElement
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : PrivateElements'                    ] = T_PrivateElement
+
+    @condd.put(r"{CONDITION_1} : {EX} contains a PrivateElement whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [ex, dsb_word, var] = cond.children
+        env0.assert_expr_is_of_type(ex, ListType(T_PrivateElement))
+        assert dsb_word.source_text() == '[[Key]]'
+        env0.assert_expr_is_of_type(var, T_Private_Name)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} contains a PrivateElement whose {dsb_word} is {DOTTING}")
+    def _(cond, env0, asserting):
+        [var, dsb_word, dotting] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_PrivateElement))
+        assert dsb_word.source_text() == '[[Key]]'
+        env1.assert_expr_is_of_type(dotting, T_Private_Name)
+        return (env1, env1)
+
+    @exprd.put(r"{EXPR} : that PrivateElement")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_PrivateElement, env0)
+
+# ==============================================================================
+#@ 6.2.11 The ClassFieldDefinition Record Specification Type
+
+if 1:
+    tbd['{VAL_DESC} : a ClassFieldDefinition Record'] = T_ClassFieldDefinition_Record
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : ClassFieldDefinition Records'] = T_ClassFieldDefinition_Record
+
+# ==============================================================================
+#@ 6.2.12 Private Names
+
+if 1:
+    tbd['{VAL_DESC} : a Private Name'] = T_Private_Name
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : Private Names'] = T_Private_Name
+    tbd['{VAL_DESC} : a property key or Private Name'] = T_String | T_Symbol | T_Private_Name
+
+    @condd.put(r"{CONDITION_1} : {EX} contains a Private Name whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [ex, dsb_word, var] = cond.children
+        env0.assert_expr_is_of_type(ex, ListType(T_Private_Name))
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : Exactly one element of {var} is a Private Name whose {dsb_word} is {var}")
+    def _(cond, env0, asserting):
+        [list_var, dsb_word, var] = cond.children
+        env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : a new Private Name whose {dsb_word} value is {var}")
+    def _(expr, env0, _):
+        [dsb_word, var] = expr.children
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Private_Name, env0)
+
+    @exprd.put(r"{EXPR} : the Private Name in {var} whose {dsb_word} is {var}")
+    def _(expr, env0, _):
+        [list_var, dsb_word, var] = expr.children
+        env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
+        assert dsb_word.source_text() == '[[Description]]'
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Private_Name, env0)
+
+    @exprd.put(r"{EXPR} : that Private Name")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Private_Name, env0)
+
+# ==============================================================================
+#@ 6.2.13 The ClassStaticBlockDefinition Record Specification Type
+
+if 1:
+    tbd['{VAL_DESC} : a ClassStaticBlockDefinition Record'] = T_ClassStaticBlockDefinition_Record
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
