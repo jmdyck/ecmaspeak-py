@@ -2760,149 +2760,6 @@ if 1:
         [child] = anode.children
         return tc_nonvalue(child, env0)
 
-    @nv.put(r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}")
-    def _(anode, env0):
-        [cond, comm] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0, asserting=True)
-        return tc_nonvalue(comm, t_env)
-
-    @nv.put(r'{EMU_ALG_BODY} : {IND_COMMANDS}{nlai}')
-    def _(anode, env0):
-        [ind_commands] = anode.children
-        env1 = tc_nonvalue(ind_commands, env0)
-        if env1 is not None:
-            # Control falls off the end of the algorithm.
-            add_pass_error(
-                ind_commands,
-                "Control falls off the end of the algorithm (need an explicit Return?)"
-            )
-            default_return_value = T_not_returned # or T_tilde_unused_, see PR #2397
-            proc_add_return(env1, default_return_value, ind_commands)
-            return None
-        else:
-            # All control paths end with a 'Return'
-            return None
-
-    @nv.put(r'{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}')
-    def _(anode, env0):
-        [commands, command] = anode.children
-        env1 = tc_nonvalue(commands, env0)
-        env2 = tc_nonvalue(command, env1)
-        return env2
-
-    # ---------------------------------
-    # constructs that create a metavariable
-
-    # Let {var} be ...
-
-    @nv.put(r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)")
-    @nv.put(r"{COMMAND} : Let {var} be {EXPR}.")
-    @nv.put(r"{COMMAND} : Let {var} be {MULTILINE_EXPR}")
-    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}")
-    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that an ordinary object should be created as the global object")
-    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object")
-    def _(anode, env0):
-        [var, expr] = anode.children[0:2]
-        [var_name] = var.children
-
-        (expr_t, env1) = tc_expr(expr, env0)
-
-        if var_name in env0.vars:
-            add_pass_error(
-                anode,
-                "re-Let on existing var `%s`. Use Set?" % var_name
-            )
-            var_t = env0.vars[var_name]
-            if expr_t == var_t:
-                # but at least we're not changing the type
-                return env1
-            elif expr_t == T_TBD:
-                return env1
-                add_pass_error(
-                    anode,
-                    "... also, ignoring the attempt to change the type of var to %s" % str(expr_t)
-                )
-            elif var_name in ['_v_', '_value_'] and var_t in [T_Normal, T_Tangible_ | T_not_set] and expr_t == T_Undefined:
-                # IteratorBindingInitialization, IteratorDestructuringAssignmentEvaluation, others?:
-                # This isn't a re-Let,
-                # because it's never the case that _v_ is already defined at this point,
-                # but my STA isn't smart enough to know that.
-                add_pass_error(
-                    anode,
-                    "... actually, it isn't, but STA isn't smart enough"
-                )
-                return env1
-            elif expr_t.is_a_subtype_of_or_equal_to(var_t):
-                add_pass_error(
-                    anode,
-                    "... also, this narrows the type of var from %s to %s" % (var_t, expr_t)
-                )
-                return env1.with_expr_type_narrowed(var, expr_t)
-            else:
-                add_pass_error(
-                    anode,
-                    "... also, this changes the type of var from %s to %s" % (var_t, expr_t)
-                )
-                return env1.with_expr_type_replaced(var, expr_t)
-        else:
-            # The normal case.
-            return env1.plus_new_entry(var, expr_t)
-
-    @nv.put(r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
-    def _(anode, env0):
-        [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = anode.children
-        assert same_source_text(let_var, let_var2)
-        assert same_source_text(rvar, rvar2)
-        assert same_source_text(rvar, rvar3)
-        assert same_source_text(zvar, zvar2)
-        (t, env1) = tc_expr(expr, env0)
-        return env1.plus_new_entry(let_var, t)
-
-    @nv.put(r"{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.")
-    def _(anode, env0):
-        [let_var, num_expr, var2, var3] = anode.children
-        assert same_source_text(var2, let_var)
-        assert same_source_text(var3, let_var)
-        new_env = env0.plus_new_entry(let_var, T_MathInteger_)
-        new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
-        return new_env
-
-    # Let {var} and {var} ... be ...
-
-    @nv.put(r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.")
-    def _(anode, env0):
-        [m_var, n2_var, n_var] = anode.children
-        env0.assert_expr_is_of_type(n_var, T_String)
-        return env0.plus_new_entry(m_var, T_Module_Record).plus_new_entry(n2_var, T_String)
-
-    @nv.put(r"{COMMAND} : Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.")
-    def _(anode, env0):
-        [e_var, n_var, cond, num_expr, e_var2, n_var2, e_var3, n_var3, product] = anode.children
-        assert same_source_text(e_var2, e_var)
-        assert same_source_text(e_var3, e_var)
-        assert same_source_text(n_var2, n_var)
-        assert same_source_text(n_var3, n_var)
-        new_env = env0.plus_new_entry(e_var, T_MathInteger_).plus_new_entry(n_var, T_MathInteger_)
-        (t_env, f_env) = tc_cond(cond, new_env)
-        t_env.assert_expr_is_of_type(num_expr, T_MathReal_)
-        t_env.assert_expr_is_of_type(product, T_MathReal_)
-        return t_env
-
-    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.")
-    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
-    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
-    def _(anode, env0):
-        [vara, varb, varc, cond] = anode.children[0:4]
-        env_for_cond = (
-            env0.plus_new_entry(vara, T_MathInteger_)
-                .plus_new_entry(varb, T_MathInteger_)
-                .plus_new_entry(varc, T_MathInteger_)
-        )
-        (t_env, f_env) = tc_cond(cond, env_for_cond)
-        return env_for_cond
-
-    # ---
-
     @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.")
     def _(anode, env0):
         [_, ctx_var, _, b_var] = anode.children
@@ -2943,199 +2800,6 @@ if 1:
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return env0
 
-    # ----------------------------------
-    # IF stuff
-
-    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.')
-    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.')
-    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
-    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.')
-    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.')
-    def _(anode, env0):
-        [cond, t_command, f_command] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0)
-        t_benv = tc_nonvalue(t_command, t_env)
-        f_benv = tc_nonvalue(f_command, f_env)
-        return env_or(t_benv, f_benv)
-
-    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
-    def _(anode, env0):
-        [cond_a, command_a, cond_b, command_b, command_c] = anode.children
-        (a_t_env, a_f_env) = tc_cond(cond_a, env0)
-        a_benv = tc_nonvalue(command_a, a_t_env)
-        (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
-        b_benv = tc_nonvalue(command_b, b_t_env)
-        c_benv = tc_nonvalue(command_c, b_f_env)
-        return envs_or([a_benv, b_benv, c_benv])
-
-    @nv.put(r'{IF_OTHER} : {IF_OPEN}{IF_TAIL}')
-    def _(anode, env0):
-        [if_open, if_tail] = anode.children
-
-        benvs = []
-
-        if if_open.prod.rhs_s in [
-            r'If {CONDITION}, {SMALL_COMMAND}.',
-            # r'If {CONDITION}, then {SMALL_COMMAND}.', # 2218
-            r'If {CONDITION}, then{IND_COMMANDS}',
-        ]:
-            [condition, then_part] = if_open.children[0:2]
-            (t_env, f_env) = tc_cond(condition, env0)
-            benvs.append( tc_nonvalue(then_part, t_env) )
-        else:
-            assert 0, str(if_open.prod)
-
-        while True:
-            if if_tail.prod.rhs_s == '{_NL_N} {ELSEIF_PART}{IF_TAIL}':
-                [elseif_part, next_if_tail] = if_tail.children
-                [condition, then_part] = elseif_part.children
-                (t_env, f_env) = tc_cond(condition, f_env)
-                benvs.append( tc_nonvalue(then_part, t_env) )
-                if_tail = next_if_tail
-
-            elif if_tail.prod.rhs_s == '{_NL_N} {ELSE_PART}':
-                [else_part] = if_tail.children
-                benvs.append( tc_nonvalue(else_part, f_env) )
-                break
-
-            elif if_tail.prod.rhs_s == '{EPSILON}':
-                [] = if_tail.children
-                # This is like "Else, nothing"
-                benvs.append( f_env )
-                break
-
-            else:
-                assert 0
-
-        result = envs_or(benvs)
-
-        # kludges to detect no-fall-through when STA can't:
-
-        if_open_st = if_open.source_text()
-
-        if if_open_st == 'If |BooleanLiteral| is the token `true`, return *true*.':
-            # This occurs once, in the Evaluation semantics for `Literal : BooleanLiteral`:
-            #     1. If |BooleanLiteral| is the token `false`, return *false*.
-            #     1. If |BooleanLiteral| is the token `true`, return *true*.
-            # These two steps exhaust the possibilities for |BooleanLiteral|,
-            # and each one results in a 'return',
-            # so it's impossible for control to fall through the second one.
-            # todo: change "If" to "Else"?
-            result = None
-
-        if if_open_st.startswith('If abs(\u211d(_base_)) &lt; 1, return'):
-            # Twice, near the bottom of Number::exponentiate,
-            # there are 3 steps of the form:
-            #     1. If abs(R(_base_)) > 1, return ...
-            #     1. If abs(R(_base_)) is 1, return ...
-            #     1. If abs(R(_base_)) &lt; 1, return ...
-            # These steps exhaust the possibilities for abs(R(_base_)),
-            # and since each one does a return,
-            # it's impossible for control to fall through the last one.
-            result = None
-
-        return result
-
-    # ----------------------------------
-    # Returning (normally or abruptly)
-
-    @nv.put(r"{COMMAND} : Return {EXPR}.")
-    @nv.put(r"{COMMAND} : Return {EXPR}. This may be of type Reference.")
-    @nv.put(r"{COMMAND} : Return {MULTILINE_EXPR}")
-    @nv.put(r"{SMALL_COMMAND} : return {EXPR}")
-    def _(anode, env0):
-        [expr] = anode.children
-        (t1, env1) = tc_expr(expr, env0)
-        # assert env1 is env0
-        if False and trace_this_op:
-            print("Return command's expr has type", t1)
-        proc_add_return(env1, t1, anode)
-        return None
-
-    @nv.put(r"{COMMAND} : Throw a {ERROR_TYPE} exception.")
-    @nv.put(r"{SMALL_COMMAND} : throw a {ERROR_TYPE} exception because the structure is cyclical")
-    @nv.put(r'{SMALL_COMMAND} : throw a {ERROR_TYPE} exception')
-    def _(anode, env0):
-        [error_type] = anode.children
-        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), anode)
-        return None
-
-    # ----------------------------------
-    # Iteration
-
-    @nv.put(r'{COMMAND} : Repeat,{IND_COMMANDS}')
-    def _(anode, env0):
-        [commands] = anode.children
-
-        env_at_bottom = tc_nonvalue(commands, env0)
-
-        # The only way to leave a condition-less Repeat
-        # is via a Return command,
-        # so there can't be anything (except maybe a NOTE) after the loop.
-        return None
-
-        # XXX Should repeat the analysis, feeding the bottom env to the top,
-        # XXX until no change.
-        # XXX (and likewise with other loops)
-
-
-    @nv.put(r'{COMMAND} : Repeat, while {CONDITION},{IND_COMMANDS}')
-    @nv.put(r"{COMMAND} : Repeat, until {CONDITION},{IND_COMMANDS}")
-    def _(anode, env0):
-        [cond, commands] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0)
-
-        p = str(anode.prod)
-        if 'while' in p:
-            (stay_env, exit_env) = (t_env, f_env)
-        elif 'until' in p:
-            (stay_env, exit_env) = (f_env, t_env)
-        else:
-            assert 0
-
-        bottom_env = tc_nonvalue(commands, stay_env)
-        reduced_bottom_env = bottom_env.reduce(stay_env.vars.keys())
-        # assert reduced_bottom_env.equals(stay_env)
-        result = exit_env
-
-        # hack!:
-        if cond.source_text() == '_matchSucceeded_ is *false*': # in RegExpBuiltinExec
-            # This case requires that variable _r_, introduced within the loop,
-            # survive the loop.
-            # (It doesn't have to survive from one iteration to the next,
-            # just from the last iteration to after.)
-            result = result.plus_new_entry('_r_', T_MatchState)
-
-        return result
-
-    @nv.put(r"{COMMAND} : While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}")
-    def _(anode, env0):
-        [cond, commands] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0)
-        bottom_env = tc_nonvalue(commands, t_env)
-        reduced_bottom_env = bottom_env.reduce(t_env.vars.keys())
-        return f_env
-
-    @nv.put(r'{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}')
-    @nv.put(r'{COMMAND} : For each {EACH_THING}, {SMALL_COMMAND}.')
-    def _(anode, env0):
-        [each_thing, commands] = anode.children
-
-        env_for_commands  = tc_nonvalue(each_thing, env0)
-
-        env_after_commands = tc_nonvalue(commands, env_for_commands)
-        # XXX do I need to feed this back somehow?
-
-        # Assume the loop-var doesn't survive the loop
-        # if loop_var:
-        #     result = env_after_commands.with_var_removed(loop_var)
-        # else:
-        #     result = env_after_commands
-
-        # The only variables that 'exit' the loop are those that existed beforehand.
-        names = env0.vars.keys()
-        return env_after_commands.reduce(names)
-
     if 1:
         # generic list:
         @nv.put(r"{EACH_THING} : element {var} of {EX}")
@@ -3153,73 +2817,6 @@ if 1:
                 assert isinstance(list_type, ListType), list_type
                 element_type = list_type.element_type
             return env1.plus_new_entry(loop_var, element_type)
-
-        # ---------------------
-
-        @nv.put("{EACH_THING} : {ITEM_NATURE} {var} of {EX}")
-        @nv.put("{EACH_THING} : {ITEM_NATURE} {var} that is an element of {EX}")
-        def _(each_thing, env0):
-            [item_nature, loop_var, collection_expr] = each_thing.children
-
-            if item_nature.prod.rhs_s == "code point":
-                item_type = T_code_point_
-                collection_type = T_Unicode_code_points_
-
-            elif item_nature.prod.rhs_s == r"event":
-                item_type = T_event_
-                collection_type = T_Set | ListType(T_event_)
-
-            elif item_nature.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event":
-                item_type = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
-                collection_type = T_Set
-
-            elif item_nature.prod.rhs_s == "{nonterminal}":
-                [nont] = item_nature.children
-                item_type = ptn_type_for(nont)
-                collection_type = ListType(T_Parse_Node)
-
-            elif item_nature.prod.rhs_s == "Record { {DSBN}, {DSBN} }":
-                [dsbn1, dsbn2] = item_nature.children
-                dsbns = (dsbn1.source_text(), dsbn2.source_text())
-                if dsbns == ('[[Module]]', '[[ExportName]]'):
-                    item_type = T_ExportResolveSet_Record_
-                elif dsbns == ('[[Key]]', '[[Value]]'):
-                    # hack:
-                    if collection_expr.source_text() == '_importMetaValues_':
-                        item_type = T_ImportMeta_record_ # PR 1892
-                    elif collection_expr.source_text() == '_entries_':
-                        item_type = T_MapData_record_
-                    else:
-                        assert 0, collection_expr
-                else:
-                    assert 0, dsbns
-                collection_type = ListType(item_type)
-
-            elif item_nature.prod.rhs_s == r"Record { {DSBN}, {DSBN}, {DSBN} }":
-                [dsbn1, dsbn2, dsbn3] = item_nature.children
-                assert dsbn1.source_text() == '[[WeakRefTarget]]'
-                assert dsbn2.source_text() == '[[HeldValue]]'
-                assert dsbn3.source_text() == '[[UnregisterToken]]'
-                item_type = T_FinalizationRegistryCellRecord_
-                collection_type = ListType(item_type)
-
-            else:
-                item_type = {
-                    "Agent Events Record" : T_Agent_Events_Record,
-                    "Cyclic Module Record": T_Cyclic_Module_Record,
-                    "ExportEntry Record"  : T_ExportEntry_Record,
-                    "ImportEntry Record"  : T_ImportEntry_Record,
-                    "Module Record"       : T_Module_Record,
-                    "Parse Node"          : T_Parse_Node,
-                    "Private Name"        : T_Private_Name,
-                    "PrivateElement"      : T_PrivateElement,
-                    "String"              : T_String,
-                    "integer"             : T_MathInteger_,
-                }[item_nature.prod.rhs_s]
-                collection_type = ListType(item_type)
-
-            env1 = env0.ensure_expr_is_of_type(collection_expr, collection_type)
-            return env1.plus_new_entry(loop_var, item_type)
 
         # ------------------------
         # property keys of an object:
@@ -3255,93 +2852,12 @@ if 1:
             env0.assert_expr_is_of_type(collection_var, T_Shared_Data_Block)
             return env0.plus_new_entry(loop_var, T_MathInteger_)
 
-        @nv.put(r"{EACH_THING} : {nonterminal} {var} that {var} contains")
-        def _(each_thing, env0):
-            [nont, loop_var, root_var] = each_thing.children
-            env0.assert_expr_is_of_type(root_var, T_Parse_Node)
-            return env0.plus_new_entry(loop_var, ptn_type_for(nont))
-
-        @nv.put(r"{EACH_THING} : integer {var} in {INTERVAL}")
-        def _(each_thing, env0):
-            [loop_var, interval] = each_thing.children
-            env0.assert_expr_is_of_type(interval, T_MathInteger_)
-            return env0.plus_new_entry(loop_var, T_MathInteger_)
-
         @nv.put(r"{EACH_THING} : field of {var}")
         def _(each_thing, env0):
             [desc_var] = each_thing.children
             loop_var = None # todo: no loop variable!
             env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
             return env0
-
-        # --------------------------------------------------
-        # things from a large (possibly infinite) set, those that satisfy a condition:
-
-        @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}")
-        @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in ascending order")
-        @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in descending order")
-        def _(each_thing, env0):
-            [item_nature, loop_var, condition] = each_thing.children
-            item_type = {
-                "FinalizationRegistry": T_FinalizationRegistry_object_,
-                "WeakMap"             : T_WeakMap_object_,
-                "WeakRef"             : T_WeakRef_object_,
-                "WeakSet"             : T_WeakSet_object_,
-                "event"               : T_Shared_Data_Block_event,
-                "integer"             : T_MathInteger_,
-            }[item_nature.prod.rhs_s]
-            env1 = env0.plus_new_entry(loop_var, item_type)
-            (tenv, fenv) = tc_cond(condition, env1)
-            return tenv
-
-        @nv.put(r"{EACH_THING} : child node {var} of this Parse Node")
-        def _(each_thing, env0):
-            [loop_var] = each_thing.children
-            env1 = env0.plus_new_entry(loop_var, T_Parse_Node)
-            return env1
-
-    # ----------------------------------
-    # Assert
-
-    @nv.put(r'{COMMAND} : Assert: {CONDITION}.')
-    def _(anode, env0):
-        [condition] = anode.children
-        (t_env, f_env) = tc_cond(condition, env0, asserting=True)
-        # throw away f_env
-        return t_env
-
-    @nv.put(r"{COMMAND} : Assert: If {CONDITION}, then {CONDITION}.")
-    @nv.put(r"{COMMAND} : Assert: If {CONDITION}, {CONDITION}.")
-    def _(anode, env0):
-        [cond1, cond2] = anode.children
-        (t1_env, f1_env) = tc_cond(cond1, env0)
-        (t2_env, f2_env) = tc_cond(cond2, t1_env, asserting=True)
-        return env_or(f1_env, t2_env)
-
-    @nv.put(r"{COMMAND} : Assert: {CONDITION_1} if and only if {CONDITION_1}.")
-    def _(anode, env0):
-        [cond1, cond2] = anode.children
-        (t1_env, f1_env) = tc_cond(cond1, env0)
-        (t2_env, f2_env) = tc_cond(cond2, env0)
-        return env_or(
-            env_and(t1_env, t2_env),
-            env_and(f1_env, f2_env)
-        )
-
-    @nv.put(r"{COMMAND} : Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.")
-    def _(anode, env0):
-        [cond_t, cond_x, cond_f] = anode.children
-        (xt_env, xf_env) = tc_cond(cond_x, env0)
-        (tt_env, tf_env) = tc_cond(cond_t, xt_env, asserting=True)
-        (ft_env, ff_env) = tc_cond(cond_f, xf_env, asserting=True)
-        return env_or(tt_env, ft_env)
-
-    @nv.put(r"{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.")
-    def _(anode, env0):
-        [conda, condb] = anode.children
-        (ta_env, fa_env) = tc_cond(conda, env0, asserting=True)
-        (tb_env, fb_env) = tc_cond(condb, env0, asserting=True)
-        return env_and(ta_env, tb_env)
 
     # ----------------------------------
     # execution context
@@ -3430,182 +2946,11 @@ if 1:
 
     # ----------------------------------
 
-    @nv.put(r'{COMMAND} : Set {SETTABLE} to {EXPR}.')
-    @nv.put(r'{COMMAND} : Set {SETTABLE} to {MULTILINE_EXPR}')
-    @nv.put(r'{SMALL_COMMAND} : set {SETTABLE} to {EXPR}')
-    def _(anode, env0):
-        [settable, expr] = anode.children
-        return env0.set_A_to_B(settable, expr)
-
     @nv.put(r'{COMMAND} : Set all of the bytes of {var} to 0.')
     def _(anode, env0):
         [var] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, T_Data_Block)
         return env1
-
-    @nv.put(r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).')
-    def _(anode, env0):
-        [var1, var2] = anode.children
-        [var_name1] = var1.children
-        [var_name2] = var2.children
-        assert var_name1 == var_name2
-        env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList)
-        return env1
-
-    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.")
-    @nv.put(r"{COMMAND} : Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.")
-    def _(anode, env0):
-        [var, emu_xref] = anode.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        return env1
-
-    @nv.put(r"{COMMAND} : Append {EX} as an element of {var}.")
-    @nv.put(r"{COMMAND} : Append {EX} to the end of {EX}.")
-    @nv.put(r"{COMMAND} : Append {EX} to {EX}.")
-    @nv.put(r"{COMMAND} : Insert {var} as the first element of {var}.")
-    @nv.put(r"{COMMAND} : Prepend {var} to {var}.")
-    @nv.put(r"{SMALL_COMMAND} : append {EX} to {SETTABLE}")
-    def _(anode, env0):
-        [value_ex, list_ex] = anode.children
-        return env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
-
-    @nv.put(r"{COMMAND} : Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.")
-    def _(anode, env0):
-        [avar, bvar, list_var] = anode.children
-        env0.assert_expr_is_of_type(avar, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(bvar, T_Property_Descriptor)
-        (list_type, env1) = tc_expr(list_var, env0); assert env1 is env0
-        assert list_type == T_List
-        return env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
-
-    @nv.put(r"{COMMAND} : Append to {var} the elements of {var}.")
-    def _(anode, env0):
-        [lista, listb] = anode.children
-        env0.assert_expr_is_of_type(lista, ListType(T_SlotName_))
-        env0.assert_expr_is_of_type(listb, ListType(T_SlotName_))
-        return env0
-
-    @nv.put(r'{COMMAND} : Append to {var} each element of {var} that is not already an element of {var}.')
-    def _(anode, env0):
-        [vara, varb, varc] = anode.children
-        (vara_type, enva) = tc_expr(vara, env0); assert enva is env0
-        (varb_type, envb) = tc_expr(varb, env0); assert envb is env0
-        (varc_type, envc) = tc_expr(varc, env0); assert envc is env0
-        if vara_type == T_TBD and varb_type == T_TBD and varc_type == T_TBD:
-            pass
-        else:
-            assert vara_type.is_a_subtype_of_or_equal_to(T_List)
-            assert vara_type == varb_type
-            assert varb_type == varc_type
-        return env0
-
-    @nv.put(r'{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.')
-    @nv.put(r'{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.')
-    @nv.put(r'{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.')
-    def _(anode, env0):
-        [dotting, emu_xref] = anode.children
-
-        # (t, env1) = tc_expr(settable, env0); assert env1 is env0
-        # XXX: could check that emu_xref is sensible for t, but not really worth it?
-
-        mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
-        sec_id = mo.group(1)
-        implied_base_t = {
-            # 10.2.*
-            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
-            'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
-
-            # 10.3.2
-            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_function_object_,
-
-            # 10.4.1.*
-            'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
-            'sec-bound-function-exotic-objects-construct-argumentslist-newtarget'                    : T_bound_function_exotic_object_,
-
-            # 10.4.2.*
-            'sec-array-exotic-objects-defineownproperty-p-desc'                                      : T_Array_object_,
-
-            # 10.4.3.*
-            'sec-string-exotic-objects-getownproperty-p'                                             : T_String_exotic_object_,
-            'sec-string-exotic-objects-defineownproperty-p-desc'                                     : T_String_exotic_object_,
-            'sec-string-exotic-objects-ownpropertykeys'                                              : T_String_exotic_object_,
-
-            # 10.4.4.*
-            'sec-arguments-exotic-objects-getownproperty-p'                                          : T_Object,
-            'sec-arguments-exotic-objects-defineownproperty-p-desc'                                  : T_Object,
-            'sec-arguments-exotic-objects-get-p-receiver'                                            : T_Object,
-            'sec-arguments-exotic-objects-set-p-v-receiver'                                          : T_Object,
-            'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
-
-            # 10.4.5.*
-            'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
-
-            # 10.5.*
-            'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
-            'sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget' : T_Proxy_exotic_object_,
-
-        }[sec_id]
-
-        assert dotting.prod.rhs_s == '{var}.{DSBN}'
-        [base_var, dsbn] = dotting.children
-
-        (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
-        if curr_base_t == T_Object:
-            return env1.with_expr_type_narrowed(base_var, implied_base_t)
-        elif curr_base_t == T_bound_function_exotic_object_ | T_Proxy_exotic_object_ | T_other_function_object_ and implied_base_t == T_constructor_object_:
-            return env1.with_expr_type_replaced(base_var, implied_base_t)
-        elif curr_base_t == implied_base_t:
-            return env1
-        else:
-            assert 0
-
-    @nv.put(r'{COMMAND} : Leave the critical section for {var}.')
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
-        return env0
-
-    @nv.put(r'{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.')
-    def _(anode, env0):
-        [var, emu_xref] = anode.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        return env0
-
-    @nv.put(r'{SMALL_COMMAND} : reverse the order of the elements of {var}')
-    def _(anode, env0):
-        [var] = anode.children
-        return env0.ensure_expr_is_of_type(var, T_List)
-
-    @nv.put(r'{COMMAND} : Add {var} to {var}.')
-    @nv.put(r"{SMALL_COMMAND} : add {var} to {var}")
-    def _(anode, env0):
-        [item_var, collection_var] = anode.children
-        (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
-        (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
-        if item_type.is_a_subtype_of_or_equal_to(T_event_) and collection_type == T_Set:
-            pass
-        else:
-            assert 0
-        return env0
-
-    @nv.put(r'{COMMAND} : {note}')
-    def _(anode, env0):
-        return env0
-
-    @nv.put(r'{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.')
-    def _(anode, env0):
-        [er_var, n_var, m_var, n2_var] = anode.children
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(m_var, T_Module_Record)
-        env0.assert_expr_is_of_type(n2_var, T_String)
-        return env0
 
     @nv.put(r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]")
     @nv.put(r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].")
@@ -3624,24 +2969,6 @@ if 1:
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(t_var, T_MathReal_ | T_MathPosInfinity_)
         return env0
-
-    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.")
-    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}")
-    @nv.put(r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}")
-    def _(anode, env0):
-        noi = anode.children[0]
-        (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
-        if noi_t.is_a_subtype_of_or_equal_to(T_tilde_unused_ | T_Undefined | T_tilde_empty_):
-            pass
-        else:
-            if 0:
-                # disable because it's noisy for no benefit?
-                add_pass_error(
-                    anode,
-                    "`Perform/Call` discards `%s` value"
-                    % str(noi_t)
-                )
-        return env1
 
     @nv.put(r"{COMMAND} : Create an own {PROPERTY_KIND} property named {var} of object {var} whose {dsb_word}, {dsb_word}, {dsb_word}, and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
     def _(anode, env0):
@@ -3667,33 +2994,6 @@ if 1:
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         return env0
-
-    @nv.put(r"{COMMAND} : ReturnIfAbrupt({EX}).")
-    @nv.put(r"{SMALL_COMMAND} : ReturnIfAbrupt({var})")
-    def _(anode, env0):
-        [ex] = anode.children
-        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
-        if ex_t == T_TBD:
-            # Doesn't make sense to compare_types
-            # And a proc_add_return(..., T_TBD) wouldn't help
-            return env1
-        else:
-            (normal_part_of_ex_t, abnormal_part_of_ex_t) = ex_t.split_by(T_Normal)
-            if normal_part_of_ex_t == T_0:
-                add_pass_error(
-                    anode,
-                    "ST of `%s` is `%s`, so could just Return, rather than ReturnIfAbrupt"
-                    % (ex.source_text(), ex_t)
-                )
-            if abnormal_part_of_ex_t == T_0:
-                add_pass_error(
-                    anode,
-                    "STA indicates that calling RIA is unnecessary, because `%s` can't be abrupt"
-                    % ex.source_text()
-                )
-
-            proc_add_return(env1, abnormal_part_of_ex_t, anode)
-            return env1.with_expr_type_narrowed(ex, normal_part_of_ex_t)
 
     @nv.put(r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
     def _(anode, env0):
@@ -3864,70 +3164,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         return env1
 
-    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}.")
-    @nv.put(r"{EE_RULE} : It is an early Syntax Error if {CONDITION}.")
-    def _(anode, env0):
-        [cond] = anode.children
-        tc_cond(cond, env0, False)
-        return None
-
-    @nv.put(r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>")
-    def _(anode, env0):
-        [local_ref1, h_emu_grammar, local_ref2, local_ref3] = anode.children
-        env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
-        env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
-        env0.assert_expr_is_of_type(local_ref3, T_Parse_Node)
-        return None
-
-    @nv.put(r"{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.")
-    def _(anode, env0):
-        [cond, h_emu_grammar] = anode.children
-        tc_cond(cond, env0, False)
-        return None
-
-    @nv.put(r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.")
-    def _(anode, env0):
-        [conda, condb] = anode.children
-        (tenv, fenv) = tc_cond(conda, env0, False)
-        tc_cond(condb, tenv, False)
-        return None
-
-    @nv.put(r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}")
-    def _(anode, env0):
-        [cond, bool_lit, h_emu_alg] = anode.children
-        tc_cond(cond, env0)
-        # XXX should check h_emu_alg
-        return None
-
-    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.")
-    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.")
-    def _(anode, env0):
-        [cond, g_sym, h_emu_xref] = anode.children
-        tc_cond(cond, env0)
-        return None
-
-    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.")
-    def _(anode, env0):
-        [conda, condb] = anode.children
-        (t_env, f_env) = tc_cond(condb, env0)
-        tc_cond(conda, f_env)
-        return None
-
-    @nv.put(r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
-    def _(anode, env0):
-        [nont, var, noi, cond] = anode.children
-        t = ptn_type_for(nont)
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(t))
-        env2 = env1.plus_new_entry(var, t)
-        tc_cond(cond, env2)
-        return None
-
-    @nv.put(r"{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.")
-    def _(anode, env0):
-        [local_ref, nont] = anode.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return None
-
     @nv.put(r"{COMMAND} : Replace {var} in {var} with {var}.")
     def _(anode, env0):
         [ex_var, list_var, rep_var] = anode.children
@@ -3983,91 +3219,6 @@ def tc_cond(cond, env0, asserting=False):
 if 1:
     condd = DecoratedFuncDict()
 
-    #----------------
-    # simple unit production
-
-    @condd.put(r'{CONDITION} : {CONDITION_1}')
-    @condd.put(r'{CONDITION_1} : {TYPE_TEST}')
-    @condd.put(r'{CONDITION_1} : {NUM_COMPARISON}')
-    def _(cond, env0, asserting):
-        [child] = cond.children
-        return tc_cond(child, env0, asserting)
-
-    # -------------
-    # combining conditions
-
-    @condd.put(r"{CONDITION} : either {CONDITION_1} or {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1} or if {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
-    def _(cond, env0, asserting):
-        logical = ('or', cond.children)
-        return tc_logical(logical, env0, asserting)
-
-    @condd.put(r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}")
-    @condd.put(r'{CONDITION} : {CONDITION_1} and {CONDITION_1}')
-    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}")
-    @condd.put(r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}')
-    def _(cond, env0, asserting):
-        logical = ('and', cond.children)
-        return tc_logical(logical, env0, asserting)
-
-    @condd.put(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [conda, condb, condc] = cond.children
-        logical = (
-            'or',
-            [
-                conda,
-                ('and', [condb, condc])
-            ]
-        )
-        return tc_logical(logical, env0, asserting)
-
-    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>")
-    def _(cond, env0, asserting):
-        [a, b, c] = cond.children
-        logical = (
-            'and',
-            [
-                ('or', [a, b]),
-                c
-            ]
-        )
-        return tc_logical(logical, env0, asserting)
-
-    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [a, b, c, d] = cond.children
-        logical = (
-            'or',
-            [
-                ('and', [a, b]),
-                ('and', [c, d]),
-            ]
-        )
-        return tc_logical(logical, env0, asserting)
-
-    @condd.put(r"{CONDITION} : ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})")
-    def _(cond, env0, asserting):
-        [a, b, c, d] = cond.children
-        logical = (
-            'and',
-            [
-                ('or', [a, b]),
-                ('or', [c, d]),
-            ]
-        )
-        return tc_logical(logical, env0, asserting)
-
     # ---------------
     # Type-conditions
 
@@ -4109,119 +3260,11 @@ if 1:
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
 
-    @condd.put(r'{CONDITION_1} : {LOCAL_REF} is present')
-    @condd.put(r'{CONDITION_1} : {LOCAL_REF} is not present')
-    def _(cond, env0, asserting):
-        [ex] = cond.children
-        if ex.is_a('{PROD_REF}'):
-            t = T_not_in_node
-        elif ex.is_a('{var}'):
-            # todo: get rid of this usage. (roll eyes at PR #953)
-            t = T_not_passed # assuming it's a parameter
-        else:
-            assert 0, ex.source_text()
-        copula = 'is a' if 'not present' in cond.prod.rhs_s else 'isnt a'
-        return env0.with_type_test(ex, copula, t, asserting)
-
     @condd.put(r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
     def _(cond, env0, asserting):
         [var, literal, _] = cond.children
         env0.assert_expr_is_of_type(literal, T_tilde_unused_)
         return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
-
-    @condd.put(r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}")
-    def _(cond, env0, asserting):
-        [var, nonta, nontb] = cond.children
-        return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
-
-    @condd.put(r"{CONDITION_1} : {EX} is also {VAL_DESC}")
-    @condd.put(r"{CONDITION_1} : {EX} is never {VAL_DESC}")
-    @condd.put(r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}")
-    @condd.put(r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}")
-    def _(cond, env0, asserting):
-        [ex, vd] = cond.children
-
-        # kludgey?
-        r = is_simple_call(ex)
-        if r:
-            assert cond.prod.rhs_s == r"{EX} is {VALUE_DESCRIPTION}"
-
-            (callee_op_name, var) = r
-            #
-            if callee_op_name == 'IsSharedArrayBuffer':
-                t = T_SharedArrayBuffer_object_
-            elif callee_op_name == 'IsPromise':
-                t = T_Promise_object_
-            elif callee_op_name == 'IsCallable':
-                t = T_function_object_
-            elif callee_op_name == 'IsConstructor':
-                t = T_constructor_object_
-            elif callee_op_name == 'IsPropertyKey':
-                t = T_String | T_Symbol
-            elif callee_op_name == 'IsIntegralNumber':
-                t = T_IntegralNumber_
-            else:
-                t = None
-            #
-            if t:
-                if vd.source_text() == '*true*':
-                    copula = 'is a'
-                elif vd.source_text() == '*false*':
-                    copula = 'isnt a'
-                else:
-                    assert 0
-                #
-                return env0.with_type_test(var, copula, t, asserting)
-
-        if 'not' in cond.prod.rhs_s or 'never' in cond.prod.rhs_s:
-            copula = 'isnt a'
-        else:
-            copula = 'is a'
-
-        # special handling for Completion Records' [[Type]] field:
-        while True: # ONCE
-            dotting = ex.is_a('{DOTTING}')
-            if dotting is None: break
-            (lhs, dsbn) = dotting.children
-            dsbn_name = dsbn.source_text()[2:-2]
-            if dsbn_name != 'Type': break
-            t = type_corresponding_to_comptype_literal(vd)
-            return env0.with_type_test(lhs, copula, t, asserting)
-
-        (sub_t, sup_t) = type_bracket_for(vd, env0)
-        return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
-
-    @condd.put(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}")
-    @condd.put(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC}")
-    def _(cond, env0, asserting):
-        [ex, *vds] = cond.children
-
-        sub_t = T_0
-        sup_t = T_0
-        for vd in vds:
-            (x_sub_t, x_sup_t) = type_bracket_for(vd, env0)
-            sub_t |= x_sub_t
-            sup_t |= x_sup_t
-
-        return env0.with_type_test(ex, 'isnt a', [sub_t, sup_t], asserting)
-
-    # -------
-
-    @condd.put(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}')
-    def _(cond, env0, asserting):
-        [exa, exb, lit] = cond.children
-        (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
-        if lit_type in [T_Undefined, T_NaN_Number_, T_tilde_accessor_]:
-            (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', lit_type, asserting)
-            (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', lit_type, asserting)
-            return (
-                env_and(a_t_env, b_t_env),
-                env_or(a_f_env, b_f_env)
-            )
-        else:
-            env0.assert_expr_is_of_type(exa, lit_type)
-            env0.assert_expr_is_of_type(exb, lit_type)
-            return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} is finite")
     def _(cond, env0, asserting):
@@ -4420,13 +3463,6 @@ if 1:
         assert t_env is f_env
         return (env1, env1)
 
-    @condd.put(r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [i_var, interval, stcond] = cond.children
-        env0.assert_expr_is_of_type(interval, T_MathInteger_)
-        env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
-        return tc_cond(stcond, env_for_cond)
-
     @condd.put(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}")
     def _(cond, env0, asserting):
         [let_var, i, stcond] = cond.children
@@ -4439,15 +3475,6 @@ if 1:
         [let_var, stcond] = cond.children
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(stcond, env_for_cond)
-
-    @condd.put(r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}")
-    def _(cond, env0, asserting):
-        [seta, setb, let_var, interval] = cond.children
-        env0.assert_expr_is_of_type(interval, T_MathInteger_)
-        env_for_settables = env0.plus_new_entry(let_var, T_MathInteger_)
-        env_for_settables.assert_expr_is_of_type(seta, T_MathInteger_)
-        env_for_settables.assert_expr_is_of_type(setb, T_MathInteger_)
-        return (env0, env0)
 
     # --------------------------------------------------
     # whatever
@@ -4465,197 +3492,6 @@ if 1:
         env0.assert_expr_is_of_type(var1, T_String)
         env0.ensure_expr_is_of_type(var2, T_String)
         return (env0, env0)
-
-    @condd.put(r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}')
-    def _(cond, env0, asserting):
-        [a, _, b, _, c] = cond.children
-        env0.assert_expr_is_of_type(a, T_MathInteger_)
-        env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
-        env0.assert_expr_is_of_type(c, T_MathInteger_)
-        env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
-        return (env2, env2)
-
-    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
-    def _(cond, env0, asserting):
-        [a, op, b] = cond.children
-        (a_t, env1) = tc_expr(a, env0);
-        (b_t, env2) = tc_expr(b, env1);
-        op_st = op.source_text()
-
-        t_envs = []
-        f_envs = []
-
-        a_memtypes = sorted(a_t.set_of_types())
-        b_memtypes = sorted(b_t.set_of_types())
-
-        for a_memtype in a_memtypes:
-            for b_memtype in b_memtypes:
-                triple = (a_memtype, op_st, b_memtype)
-                something = {
-
-                    # always error:
-                    (T_BigInt            , '>'   , T_FiniteNumber_     ): 'E',
-                    (T_BigInt            , '>'   , T_NegInfinityNumber_): 'E',
-                    (T_BigInt            , '>'   , T_PosInfinityNumber_): 'E',
-                    (T_BigInt            , '&lt;', T_FiniteNumber_     ): 'E',
-                    (T_BigInt            , '&lt;', T_NegInfinityNumber_): 'E',
-                    (T_BigInt            , '&lt;', T_PosInfinityNumber_): 'E',
-                    (T_BigInt            , '≠'   , T_Number            ): 'E',
-                    (T_FiniteNumber_     , '>'   , T_BigInt            ): 'E',
-                    (T_FiniteNumber_     , '&lt;', T_BigInt            ): 'E',
-                    (T_IntegralNumber_   , '≠'   , T_BigInt            ): 'E',
-                    (T_NegInfinityNumber_, '>'   , T_BigInt            ): 'E',
-                    (T_NegInfinityNumber_, '&lt;', T_BigInt            ): 'E',
-                    (T_PosInfinityNumber_, '&lt;', T_BigInt            ): 'E',
-                    (T_PosInfinityNumber_, '>'   , T_BigInt            ): 'E',
-                    (T_tilde_empty_      , '>'   , T_MathInteger_      ): 'E',
-                    #
-                    # Comparisons between Number and BigInt mostly come from
-                    # %TypedArray%.prototype.sort, which has:
-                    # 1. Assert: _x_ is a Number and _y_ is a Number, or _x_ is a BigInt and _y_ is a BigInt.
-                    # which this STA doesn't represent well.
-                    #
-                    # Also Atomics.wait (`If _v_ ≠ _w_, ...`)
-
-                    # could be error:
-                    (T_IntegralNumber_, '≠', T_Number   ): 'TFE', # because the Number might be NaN
-                    (T_IntegralNumber_, '≥', T_Tangible_): 'TFE',
-
-                    # ------------
-                    # Mathematical:
-
-                    # always true:
-                    (T_MathInteger_    , '≤'   , T_MathPosInfinity_): 'T',
-                    (T_MathNegInfinity_, '≤'   , T_MathInteger_    ): 'T',
-                    (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
-                    (T_MathPosInfinity_, '≥'   , T_MathInteger_    ): 'T',
-                    (T_MathPosInfinity_, '>'   , T_FiniteNumber_   ): 'T',
-                    (T_MathPosInfinity_, '>'   , T_MathInteger_    ): 'T',
-
-                    # always false:
-                    (T_MathNegInfinity_, '≥'   , T_MathInteger_): 'F',
-                    (T_MathNegInfinity_, '='   , T_MathInteger_): 'F',
-                    (T_MathPosInfinity_, '≤'   , T_MathInteger_): 'F',
-                    (T_MathPosInfinity_, '&lt;', T_MathInteger_): 'F',
-                    (T_MathPosInfinity_, '='   , T_MathInteger_): 'F',
-
-                    # can be true or false:
-                    (T_ExtendedMathReal_, '≥'   , T_MathInteger_     ): 'TF',
-                    (T_ExtendedMathReal_, '≤'   , T_MathInteger_     ): 'TF',
-                    (T_ExtendedMathReal_, '&lt;', T_ExtendedMathReal_): 'TF',
-                    (T_ExtendedMathReal_, '&lt;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '≥'   , T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '>'   , T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '≤'   , T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&lt;', T_ExtendedMathReal_): 'TF',
-                    (T_MathInteger_     , '&lt;', T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '≠'   , T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '≠'   , T_MathReal_        ): 'TF',
-                    (T_MathInteger_     , '='   , T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '≥'   , T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '>'   , T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '>'   , T_MathReal_        ): 'TF',
-                    (T_MathReal_        , '&lt;', T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '&lt;', T_MathReal_        ): 'TF',
-                    (T_MathReal_        , '≠'   , T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '='   , T_MathInteger_     ): 'TF',
-                    (T_MathReal_        , '='   , T_MathReal_        ): 'TF',
-
-                    (T_MathInteger_, 'is at least', T_MathInteger_): 'TF',
-
-                    (T_code_point_ , '≤', T_MathInteger_): 'TF', # but deserves a warning
-
-                    # -------
-                    # Number:
-
-                    # always true:
-                    (T_FiniteNumber_     , '>'   , T_NegInfinityNumber_): 'T',
-                    (T_FiniteNumber_     , '&lt;', T_PosInfinityNumber_): 'T',
-                    (T_NegInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'T',
-                    (T_NegInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'T',
-                    (T_NegInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'T',
-                    (T_PosInfinityNumber_, '>'   , T_FiniteNumber_     ): 'T',
-                    (T_PosInfinityNumber_, '>'   , T_IntegralNumber_   ): 'T',
-                    (T_PosInfinityNumber_, '>'   , T_NegInfinityNumber_): 'T',
-
-                    # always false:
-                    (T_FiniteNumber_     , '>'   , T_PosInfinityNumber_): 'F',
-                    (T_FiniteNumber_     , '&lt;', T_NegInfinityNumber_): 'F',
-                    (T_NegInfinityNumber_, '>'   , T_FiniteNumber_     ): 'F',
-                    (T_NegInfinityNumber_, '>'   , T_IntegralNumber_   ): 'F',
-                    (T_NegInfinityNumber_, '>'   , T_NegInfinityNumber_): 'F',
-                    (T_NegInfinityNumber_, '>'   , T_PosInfinityNumber_): 'F',
-                    (T_NegInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
-                    (T_PosInfinityNumber_, '>'   , T_PosInfinityNumber_): 'F',
-                    (T_PosInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'F',
-                    (T_PosInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'F',
-                    (T_PosInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
-                    (T_PosInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'F',
-
-                    # true or false:
-                    (T_FiniteNumber_           , '>'   , T_FiniteNumber_           ): 'TF',
-                    (T_FiniteNumber_           , '>'   , T_IntegralNumber_         ): 'TF',
-                    (T_FiniteNumber_           , '&lt;', T_FiniteNumber_           ): 'TF',
-                    (T_FiniteNumber_           , '&lt;', T_IntegralNumber_         ): 'TF',
-                    (T_IntegralNumber_         , '≥'   , T_IntegralNumber_         ): 'TF',
-                    (T_IntegralNumber_         , '>'   , T_IntegralNumber_         ): 'TF',
-                    (T_IntegralNumber_         , '='   , T_IntegralNumber_         ): 'TF',
-                    (T_NonIntegralFiniteNumber_, '≥'   , T_NonIntegralFiniteNumber_): 'TF',
-                    (T_NonIntegralFiniteNumber_, '>'   , T_IntegralNumber_         ): 'TF',
-                    (T_NonIntegralFiniteNumber_, '&lt;', T_IntegralNumber_         ): 'TF',
-                    (T_NonIntegralFiniteNumber_, '&lt;', T_NonIntegralFiniteNumber_): 'TF',
-
-                    # -------
-                    # BigInt:
-
-                    (T_BigInt, '>'   , T_BigInt): 'TF',
-                    (T_BigInt, '&lt;', T_BigInt): 'TF',
-                    (T_BigInt, '≠'   , T_BigInt): 'TF',
-
-                    # --------
-                    # Using the mathematical operator '≠' to compare non-numeric values:
-                    #
-                    # SetTypedArrayFromTypedArray has:
-                    #   1. If _target_.[[ContentType]] ≠ _source_.[[ContentType]], ...
-                    # TypedArraySpeciesCreate has:
-                    #   1. If _result_.[[ContentType]] ≠ _exemplar_.[[ContentType]], ...
-                    # InitializeTypedArrayFromTypedArray has:
-                    #   1. If _srcArray_.[[ContentType]] ≠ _O_.[[ContentType]], ...
-
-                    (T_tilde_BigInt_, '≠', T_tilde_Number_): 'TE',
-                    (T_tilde_Number_, '≠', T_tilde_BigInt_): 'TE',
-
-                    (T_tilde_BigInt_, '≠', T_tilde_BigInt_): 'FE',
-                    (T_tilde_Number_, '≠', T_tilde_Number_): 'FE',
-
-                }[triple]
-
-                env3 = (
-                    env2
-                    .with_expr_type_narrowed(a, a_memtype)
-                    .with_expr_type_narrowed(b, b_memtype)
-                )
-
-                if 'T' in something:
-                    # There is at least one pair of values
-                    # conforming to the given pair of static types
-                    # for which the comparison holds (is true).
-                    t_envs.append(env3)
-
-                if 'F' in something:
-                    # There is at least one pair of values
-                    # for which the comparison does not hold (is false).
-                    f_envs.append(env3)
-
-                if 'E' in something:
-                    # There is at least one pair of values
-                    # for which the comparison is ill-defined/non-sensical.
-                    add_pass_error(
-                        cond,
-                        f"comparison has incompatible types: {a_memtype} vs. {b_memtype}"
-                    )
-
-        return (envs_or(t_envs), envs_or(f_envs))
 
     @condd.put(r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}')
     def _(cond, env0, asserting):
@@ -4743,46 +3579,12 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
         return (env1, env1)
 
-    @condd.put(r"{CONDITION_1} : {EX} is different from {EX}")
-    @condd.put(r"{CONDITION_1} : {EX} is the same as {EX}")
-    @condd.put(r"{CONDITION_1} : {var} is not the same as {var}")
-    @condd.put(r"{CONDITION_1} : {EX} is not the same value as {var}")
-    @condd.put(r"{CONDITION_1} : {EX} is {PREFIX_PAREN}")
-    def _(cond, env0, asserting):
-        [exa, exb] = cond.children
-        (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
-        (exb_type, exb_env) = tc_expr(exb, env0); assert exb_env is env0
-        if exa_type == exb_type:
-            # good
-            env1 = env0
-        elif exa_type == T_TBD:
-            env1 = env0.with_expr_type_replaced(exa, exb_type)
-        elif exb_type == T_TBD:
-            env1 = env0.with_expr_type_replaced(exb, exa_type)
-        elif exa_type == T_Declarative_Environment_Record and exb_type == T_Environment_Record:
-            env1 = env0.with_expr_type_narrowed(exb, exa_type)
-        elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
-            env1 = env0
-        else:
-            assert 0, (exa_type, exb_type)
-        return (env1, env1)
-
     @condd.put(r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)')
     def _(cond, env0, asserting):
         # occurs once, in SameValueNonNumber
         [vara, varb] = cond.children
         enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
         envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
-        return (envb, envb)
-
-    @condd.put(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL} or both {LITERAL}')
-    def _(cond, env0, asserting):
-        # occurs once, in SameValueNonNumber
-        [exa, exb, litc, litd] = cond.children
-        assert litc.source_text() == '*true*'
-        assert litd.source_text() == '*false*'
-        enva = env0.ensure_expr_is_of_type(exa, T_Boolean); assert enva is env0
-        envb = env0.ensure_expr_is_of_type(exb, T_Boolean); # assert envb is env0
         return (envb, envb)
 
     @condd.put(r'{CONDITION_1} : {var} and {var} are both the same Symbol value')
@@ -4825,13 +3627,6 @@ if 1:
         env0.assert_expr_is_of_type(ex2, T_Module_Record)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {EX} is the same Parse Node as {EX}")
-    def _(cond, env0, asserting):
-        [exa, exb] = cond.children
-        env0.assert_expr_is_of_type(exa, T_Parse_Node)
-        env0.assert_expr_is_of_type(exb, T_Parse_Node)
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }')
     def _(cond, env0, asserting):
         [var, dsbn1, dsbn2] = cond.children
@@ -4839,23 +3634,6 @@ if 1:
         assert dsbn1.source_text() == '[[Writable]]'
         assert dsbn2.source_text() == '[[Enumerable]]'
         return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {EX} is {var}')
-    @condd.put(r"{CONDITION_1} : {EX} is the same value as {EX}")
-    def _(cond, env0, asserting):
-        [a_ex, b_ex] = cond.children
-        (a_t, a_env) = tc_expr(a_ex, env0)
-        (b_t, b_env) = tc_expr(b_ex, env0); assert b_env is env0
-        assert a_t != T_TBD
-        if b_t == T_TBD:
-            env1 = env0.with_expr_type_replaced(b_ex, a_t)
-        else:
-            # assert a_t.is_a_subtype_of_or_equal_to(b_t)
-            (common_t, _) = a_t.split_by(b_t)
-            assert common_t != T_0
-            env1 = env0
-        e = env_or(a_env, env0)
-        return (e, e)
 
     @condd.put(r'{CONDITION_1} : {var} has {var} in its range')
     def _(cond, env0, asserting):
@@ -4928,23 +3706,6 @@ if 1:
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         return (env0, env0)
 
-    @condd.put(r'{CONDITION_1} : {var} is as small as possible')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} is odd')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {PROD_REF} is `export` {nonterminal}')
-    def _(cond, env0, asserting):
-        [prod_ref, nont] = cond.children
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : {EX} is empty')
     @condd.put(r"{CONDITION_1} : {var} is not empty")
     def _(cond, env0, asserting):
@@ -4974,12 +3735,6 @@ if 1:
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}")
-    def _(cond, env0, asserting):
-        [var, *nont_] = cond.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}")
@@ -5038,12 +3793,6 @@ if 1:
         env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} has any elements")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -5053,11 +3802,6 @@ if 1:
     @condd.put(r"{CONDITION_1} : it must be in the Object Environment Record")
     def _(cond, env0, asserting):
         # elliptical
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : The following loop will terminate")
-    def _(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
@@ -5109,13 +3853,6 @@ if 1:
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {PROD_REF} is the token `false`")
-    @condd.put(r"{CONDITION_1} : {PROD_REF} is the token `true`")
-    def _(cond, env0, asserting):
-        [prod_ref] = cond.children
-        assert prod_ref.source_text() == '|BooleanLiteral|'
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} has no elements")
@@ -5199,14 +3936,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
         env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
-        return (env1, env1)
-
-    @condd.put(r"{CONDITION_1} : {var} is in {INTERVAL}")
-    @condd.put(r"{CONDITION_1} : {var} is not in {INTERVAL}")
-    def _(cond, env0, asserting):
-        [var, interval] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
-        env1.assert_expr_is_of_type(interval, T_MathInteger_)
         return (env1, env1)
 
     @condd.put(r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
@@ -5342,25 +4071,11 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}")
-    def _(cond, env0, asserting):
-        [exa, exb, lit] = cond.children
-        (t, env1) = tc_expr(lit, env0); assert env1 is env0
-        env1.assert_expr_is_of_type(exa, t)
-        env1.assert_expr_is_of_type(exb, t)
-        return (env1, env1)
-
     @condd.put(r"{CONDITION_1} : {var} is not currently an element of {var}")
     def _(cond, env0, asserting):
         [item_var, list_var] = cond.children
         env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
         return (env1, env1)
-
-    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is 10 or less")
-    def _(cond, env0, asserting):
-        [x] = cond.children
-        env0.assert_expr_is_of_type(x, T_MathInteger_)
-        return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
     def _(cond, env0, asserting):
@@ -5430,16 +4145,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Object)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} contains a {nonterminal}")
-    @condd.put(r"{CONDITION_1} : {var} contains an? {nonterminal} Parse Node")
-    @condd.put(r"{CONDITION_1} : {var} does not contain an? {nonterminal} Parse Node")
-    @condd.put(r"{CONDITION_1} : {var} does not contain two {nonterminal} Parse Nodes")
-    def _(cond, env0, asserting):
-        [var, nont] = cond.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        env0.assert_expr_is_of_type(nont, T_grammar_symbol_)
-        return (env0, env0)
-
     # PR ? function-strictness
     @condd.put(r"{CONDITION_1} : the source text matched by {var} is strict mode code")
     def _(cond, env0, asserting):
@@ -5453,14 +4158,6 @@ if 1:
         assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
         assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
         env0.assert_expr_is_of_type(var, T_code_unit_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} or {var} is {LITERAL}")
-    def _(cond, env0, asserting):
-        [v1, v2, lit] = cond.children
-        env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(v2, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(lit, T_Number)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} has a Synchronize event")
@@ -5542,32 +4239,6 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production")
-    def _(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, T_code_point_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}")
-    def _(cond, env0, asserting):
-        [nont] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}")
-    def _(cond, env0, asserting):
-        [nont] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter")
-    def _(cond, env0, asserting):
-        [prod_ref, cap_word] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}")
     def _(cond, env0, asserting):
         [noi, *ss_] = cond.children
@@ -5592,26 +4263,9 @@ if 1:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : any source text is matched by this production")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}")
     def _(cond, env0, asserting):
         [local_ref, g_sym] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}")
-    def _(cond, env0, asserting):
-        [local_ref, h_emu_grammar] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}")
-    def _(cond, env0, asserting):
-        [local_ref, *h_emu_grammar_] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
@@ -5653,26 +4307,6 @@ if 1:
         env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
-    def _(cond, env0, asserting):
-        [local_ref, nont] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}")
-    def _(cond, env0, asserting):
-        [local_ref, nonta, nontb] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}")
-    @condd.put(r"{CONDITION} : {CONDITION_1}, unless {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [conda, condb] = cond.children
-        tc_cond(conda, env0)
-        tc_cond(condb, env0)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
     def _(cond, env0, asserting):
         [g_sym] = cond.children
@@ -5684,39 +4318,6 @@ if 1:
         env0.assert_expr_is_of_type(noia, T_List)
         env0.assert_expr_is_of_type(noib, T_List)
         env0.assert_expr_is_of_type(noic, T_List)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same")
-    def _(cond, env0, asserting):
-        [local_ref, nonta, noi] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        # XXX noi
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}")
-    def _(cond, env0, asserting):
-        [noia, noib] = cond.children
-        env0.assert_expr_is_of_type(noia, T_MathInteger_)
-        env0.assert_expr_is_of_type(noib, T_MathInteger_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
-    @condd.put(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
-    def _(cond, env0, asserting):
-        [prod_ref, nont, step_xref, alg_xref] = cond.children
-        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
-    def _(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, T_code_point_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production")
-    def _(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
@@ -5776,12 +4377,6 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_MathReal_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}")
     def _(cond, env0, asserting):
         [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = cond.children
@@ -5806,13 +4401,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {EX} and {EX} are distinct values")
-    def _(cond, env0, asserting):
-        [exa, exb] = cond.children
-        (exa_type, env1) = tc_expr(exa, env0)
-        (exb_type, env2) = tc_expr(exb, env1)
-        return (env2, env2)
-
     @condd.put(r"{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation")
     def _(cond, env0, asserting):
         [] = cond.children
@@ -5828,11 +4416,6 @@ if 1:
         [var, ex] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : control reaches here")
-    def _(cond, env0, asserting):
-        [] = cond.children
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} is the running execution context again")
@@ -5972,49 +4555,6 @@ def _(vd, env):
     [child] = vd.children
     return type_bracket_for(child, env)
 
-@tbd.put('{VALUE_DESCRIPTION} : any of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : one of: {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-def _(value_description, env):
-    result_sub_t = T_0
-    result_sup_t = T_0
-    for val_desc in value_description.children:
-        (sub_t, sup_t) = type_bracket_for(val_desc, env)
-        result_sub_t |= sub_t
-        result_sup_t |= sup_t
-    return (result_sub_t, result_sup_t)
-
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}')
-def _(value_description, env):
-    # [pos_desc, neg_desc] = value_description.children
-    # t = type_bracket_for(pos_desc) - type_bracket_for(neg_desc)
-    vd_st = value_description.source_text()
-    if vd_st == 'an ECMAScript language value, but not a Number':
-        return T_Undefined | T_Null | T_Boolean | T_BigInt | T_String | T_Symbol | T_Object
-    elif vd_st == 'an ECMAScript language value, but not *undefined* or *null*':
-        return T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
-    elif vd_st == 'an ECMAScript language value, but not a TypedArray':
-        return a_subset_of(T_Tangible_)
-    elif vd_st == 'a Number, but not *NaN*':
-        return T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
-    elif vd_st == 'an Object, but not a TypedArray or an ArrayBuffer':
-        return a_subset_of(T_Object)
-    else:
-        assert 0, vd_st
-
 # ------------------
 
 @tbd.put('{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION}')
@@ -6067,71 +4607,16 @@ def _(val_desc, env):
     return a_subset_of(ListType(led_sup_t))
     # inexact because of 'non-empty'
 
-@tbd.put('{VAL_DESC} : a non-negative integer less than or equal to {EX}')
-@tbd.put('{VAL_DESC} : a non-negative integer which is ≤ {EXPR}')
-def _(val_desc, env):
-    [ex] = val_desc.children
-    env.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-    return a_subset_of(T_MathNonNegativeInteger_)
-
 @tbd.put('{VAL_DESC} : a property value or property value alias for the Unicode property {var} listed in {h_a}')
 def _(val_desc, env):
     [var, h_a] = val_desc.children
     env.assert_expr_is_of_type(var, T_Unicode_code_points_)
     return T_Unicode_code_points_
 
-@tbd.put('{VAL_DESC} : a {h_emu_xref}')
-def _(val_desc, env):
-    [emu_xref] = val_desc.children
-
-    if emu_xref.source_text() in [
-        '<emu-xref href="#leading-surrogate"></emu-xref>',
-        '<emu-xref href="#trailing-surrogate"></emu-xref>',
-    ]:
-        return a_subset_of(T_code_unit_)
-    elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
-        return a_subset_of(T_function_object_)
-    else:
-        assert 0, emu_xref
-
 @tbd.put('{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}')
 def _(val_desc, env):
     assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
     return T_RegExpMatcher_
-
-@tbd.put('{VAL_DESC} : an instance of the production {h_emu_grammar}')
-def _(val_desc, env):
-    [emu_grammar] = val_desc.children
-    emu_grammar_text = emu_grammar.source_text()
-    lhs = re.sub(r'<emu-grammar>(\w+) :.*', r'\1', emu_grammar_text)
-    prodn_type = ptn_type_for(lhs)
-    return a_subset_of(prodn_type)
-
-@tbd.put('{VAL_DESC} : an instance of {var}')
-def _(val_desc, env):
-    [var] = val_desc.children
-    env.assert_expr_is_of_type(var, T_grammar_symbol_)
-    return a_subset_of(T_Parse_Node)
-
-@tbd.put('{VAL_DESC} : an integer in {INTERVAL}')
-def _(val_desc, env):
-    [interval] = val_desc.children
-    if env is None:
-        if interval.source_text() in [
-            'the inclusive interval from 0 to 23',
-            'the inclusive interval from 0 to 59',
-            'the inclusive interval from 0 to 999',
-            'the inclusive interval from 1 to 12',
-            'the inclusive interval from 1 to 31',
-            'the inclusive interval from 2 to 36',
-        ]:
-            sup_t = T_MathNonNegativeInteger_
-        else:
-            assert 0, interval
-    else:
-        env.assert_expr_is_of_type(interval, T_MathInteger_)
-        sup_t = T_MathInteger_
-    return a_subset_of(sup_t)
 
 @tbd.put('{VAL_DESC} : an? {ENVIRONMENT_RECORD_KIND} Environment Record')
 def _(val_desc, env):
@@ -6147,44 +4632,6 @@ def _(val_desc, env):
     }[kind.source_text()]
     return t
 
-@tbd.put('{VAL_DESC} : an? {nonterminal}')
-@tbd.put('{VAL_DESC} : an? {nonterminal} Parse Node')
-def _(val_desc, env):
-    [nonterminal] = val_desc.children
-
-    if val_desc.source_text() == 'a |ReservedWord|':
-        # In Early Errors for ExportDeclaration, there is the condition
-        #     StringValue of _n_ is a |ReservedWord|
-        # This isn't asking if StringValue of _n_ is a Parse Node
-        # that is an instance of |ReservedWord|.
-        # Rather, it's asking if it's a String that could be matched by |ReservedWord|.
-        return a_subset_of(T_String)
-
-    return ptn_type_for(nonterminal)
-
-    # '_x_ is a {nonterminal}'
-    # might also mean that _x_ is a Parse Node
-    # that isn't itself an instance of {nonterminal},
-    # but connects by unit derivations to one that is.
-
-@tbd.put('{VAL_DESC} : the {nonterminal} of an? {nonterminal}')
-def _(val_desc, env):
-    [nont1, nont2] = val_desc.children
-    return a_subset_of(ptn_type_for(nont1))
-
-@tbd.put('{VAL_DESC} : the {nonterminal} {TERMINAL}')
-def _(val_desc, env):
-    [nont, term] = val_desc.children
-    assert nont.source_text() == '|ReservedWord|'
-    assert term.source_text() == "`super`"
-    return a_subset_of(T_grammar_symbol_)
-
-@tbd.put('{VAL_DESC} : {nonterminal}')
-def _(val_desc, env):
-    [nont] = val_desc.children
-    return a_subset_of(T_grammar_symbol_)
-
-tbd['{VAL_DESC} : -1'] = a_subset_of(T_MathInteger_)
 tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a BigInt'] = T_BigInt
 tbd['{VAL_DESC} : a Boolean'] = T_Boolean
@@ -6210,7 +4657,6 @@ tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a Module Record'] = T_Module_Record
 tbd['{VAL_DESC} : a Number'] = T_Number
-tbd['{VAL_DESC} : a Parse Node'] = T_Parse_Node
 tbd['{VAL_DESC} : a Private Name'] = T_Private_Name
 tbd['{VAL_DESC} : a PrivateElement'] = T_PrivateElement
 tbd['{VAL_DESC} : a PrivateEnvironment Record'] = T_PrivateEnvironment_Record
@@ -6266,18 +4712,10 @@ tbd['{VAL_DESC} : a constructor'] = T_constructor_object_
 tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
 tbd['{VAL_DESC} : a fully populated Property Descriptor'] = a_subset_of(T_Property_Descriptor)
 tbd['{VAL_DESC} : a function object'] = T_function_object_
-tbd['{VAL_DESC} : a grammar symbol'] = T_grammar_symbol_
 tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
 tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : a mathematical value'] = T_MathReal_
 tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
-tbd['{VAL_DESC} : a non-negative extended mathematical value'] = a_subset_of(T_MathReal_ | T_MathPosInfinity_)
-tbd['{VAL_DESC} : a non-negative integer that is evenly divisible by 4'] = a_subset_of(T_MathNonNegativeInteger_)
-tbd['{VAL_DESC} : a non-negative integer'] = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
-tbd['{VAL_DESC} : a non-negative integral Number'] = a_subset_of(T_IntegralNumber_)
-tbd['{VAL_DESC} : a nonterminal in one of the ECMAScript grammars'] = a_subset_of(T_grammar_symbol_)
 tbd['{VAL_DESC} : a normal completion'] = T_Normal
-tbd['{VAL_DESC} : a positive integer'] = a_subset_of(T_MathNonNegativeInteger_)
 tbd['{VAL_DESC} : a possibly empty List'] = T_List
 tbd['{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*'] = ListType(T_String | T_Undefined)
 tbd['{VAL_DESC} : a property key or Private Name'] = T_String | T_Symbol | T_Private_Name
@@ -6322,14 +4760,8 @@ tbd['{VAL_DESC} : an extensible object that does not have a {starred_str} own pr
 tbd['{VAL_DESC} : an extensible ordinary object with no own properties'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
-tbd['{VAL_DESC} : an instance of a nonterminal'] = a_subset_of(T_Parse_Node)
-tbd['{VAL_DESC} : an instance of a production in {h_emu_xref}'] = a_subset_of(T_Parse_Node)
 tbd['{VAL_DESC} : an integer index'] = a_subset_of(T_String)
-tbd['{VAL_DESC} : an integer'] = T_MathInteger_
-tbd['{VAL_DESC} : an integer ≥ {dsb_word}'] = a_subset_of(T_MathInteger_)
-tbd['{VAL_DESC} : an integral Number'] = T_IntegralNumber_
 tbd['{VAL_DESC} : an internal slot name'] = T_SlotName_
-tbd['{VAL_DESC} : an odd integral Number'] = a_subset_of(T_IntegralNumber_)
 tbd['{VAL_DESC} : an ordinary object'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an ordinary, extensible object with no non-configurable properties'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : any value except a Completion Record'] = T_Tangible_ | T_Intangible_
@@ -6341,7 +4773,6 @@ tbd['{VAL_DESC} : the active function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : {backticked_word}'] = a_subset_of(T_grammar_symbol_)
 
 # Note re 'a time value':
 # time value is defined to be 'IntegralNumber_ | NaN_Number_',
@@ -6358,11 +4789,6 @@ def _(led, env):
     [error_type] = led.children
     return type_for_ERROR_TYPE(error_type)
 
-@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : {nonterminal} Parse Nodes')
-def _(led, env):
-    [nonterminal] = led.children
-    return ptn_type_for(nonterminal)
-
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_AsyncGeneratorRequest_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : BigInts'                            ] = T_BigInt
@@ -6373,7 +4799,6 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values'         ] = T_Tan
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'                ] = T_ExportEntry_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_ImportEntry_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Objects'                            ] = T_Object
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes'                        ] = T_Parse_Node
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Private Names'                      ] = T_Private_Name
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PrivateElements'                    ] = T_PrivateElement
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
@@ -6398,29 +4823,10 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : property keys'                      ] = T_Str
 
 # ------------------
 
-tbd['{MATH_LITERAL} : {dec_int_lit}'] = a_subset_of(T_MathInteger_)
-tbd['{MATH_LITERAL} : +&infin;'] = T_MathPosInfinity_
-tbd['{MATH_LITERAL} : -&infin;'] = T_MathNegInfinity_
-tbd['{MATH_LITERAL} : +∞'] = T_MathPosInfinity_
-tbd['{MATH_LITERAL} : -∞'] = T_MathNegInfinity_
-
 tbd['{NUMBER_LITERAL} : {starred_nan_lit}'] = T_NaN_Number_
 tbd['{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}'] = T_NegInfinityNumber_
 tbd['{NUMBER_LITERAL} : {starred_pos_infinity_lit}{h_sub_fancy_f}'] = T_PosInfinityNumber_
 tbd['{NUMBER_LITERAL} : {starred_int_lit}{h_sub_fancy_f}'] = a_subset_of(T_IntegralNumber_)
-
-@tbd.put('{LITERAL} : {tilded_word}')
-def _(literal, env):
-    [tilded_word] = literal.children
-    return type_for_tilded_word(tilded_word)
-
-def type_for_tilded_word(tilded_word):
-    assert tilded_word.prod.lhs_s == '{tilded_word}'
-    [chars] = tilded_word.children
-    assert chars[0] == '~'
-    assert chars[-1] == '~'
-    uchars = chars[1:-1].replace('-', '_').replace('+', '_')
-    return NamedType(f"tilde_{uchars}_")
 
 tbd['{LITERAL} : *null*'] = T_Null
 tbd['{LITERAL} : *undefined*'] = T_Undefined
@@ -6607,347 +5013,19 @@ if 1:
     def _(expr, env0, _):
         return (T_Symbol, env0)
 
-    @exprd.put(r"{MATH_LITERAL} : +&infin;")
-    @exprd.put(r"{MATH_LITERAL} : +∞")
-    def _(expr, env0, _):
-        return (T_MathPosInfinity_, env0)
-
-    @exprd.put(r"{MATH_LITERAL} : -&infin;")
-    @exprd.put(r"{MATH_LITERAL} : -∞")
-    def _(expr, env0, _):
-        return (T_MathNegInfinity_, env0)
-
     @exprd.put(r"{LITERAL} : {TYPE_NAME}")
     def _(expr, env0, _):
         [type_name] = expr.children
         return (T_LangTypeName_, env0)
 
-    @exprd.put(r"{LITERAL} : {tilded_word}")
-    def _(expr, env0, _):
-        [tilded_word] = expr.children
-        return (type_for_tilded_word(tilded_word), env0)
-
-    # --------------------------------------------------------
-    # introduce metavariables:
-
-    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX}')
-    def _(expr, env0, _):
-        [exa, var, exb] = expr.children
-        (exb_type, env1) = tc_expr(exb, env0); assert env1 is env0
-        env2 = env1.plus_new_entry(var, exb_type)
-        (exa_type, env3) = tc_expr(exa, env2)
-        return (exa_type, env3)
-
-    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}')
-    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}')
-    def _(expr, env0, _):
-        [ex3, var2, ex2, var1, ex1] = expr.children
-
-        (ex1_type, ex1_env) = tc_expr(ex1, env0); assert ex1_env is env0
-        env1 = ex1_env.plus_new_entry(var1, ex1_type)
-
-        (ex2_type, ex2_env) = tc_expr(ex2, env1); assert ex2_env is env1
-        env2 = ex2_env.plus_new_entry(var2, ex2_type)
-
-        (ex3_type, ex3_env) = tc_expr(ex3, env2); assert ex3_env is env2
-        return (ex3_type, ex3_env)
-
     # --------------------------------------------------------
     # invocation of named operation:
-
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}")
-    def _(expr, env0, _):
-        [_, noi, _] = expr.children
-        return tc_expr(noi, env0)
-
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})")
-    def _(expr, env0, _):
-        [pp, _] = expr.children
-        return tc_expr(pp, env0)
-
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}")
-    def _(expr, env0, _):
-        [callee, local_ref] = expr.children[0:2]
-        callee_op_name = callee.source_text()
-        if callee_op_name in ['UTF16EncodeCodePoint', 'UTF16SurrogatePairToCodePoint']:
-            # An abstract operation that uses SDO-style invocation.
-            return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
-        else:
-            return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
-
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}")
-    def _(expr, env0, _):
-        [callee, local_ref, with_args] = expr.children
-        callee_op_name = callee.source_text()
-        if with_args.prod.rhs_s in [
-            'with argument {EX}',
-            'with arguments {EX} and {EX}',
-            'with arguments {var}, {var}, and {var}',
-        ]:
-            args = with_args.children
-        else:
-            assert 0, with_args.prod.rhs_s
-        return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
 
     @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}")
     @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}")
     def _(expr, env0, _):
         [lhs, rhs] = expr.children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
-
-
-    # ------
-
-    @exprd.put(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
-    def _(expr, env0, _):
-        [opn_before_paren, arglist] = expr.children[0:2]
-        args = exes_in_exlist_opt(arglist)
-
-        if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
-            (_, opn_before_paren, _) = opn_before_paren.children
-
-        if opn_before_paren.prod.rhs_s in [
-            r'{DOTTING}',
-            r'{var}',
-        ]:
-            [thing] = opn_before_paren.children
-            (t, env0) = tc_expr(thing, env0)
-            assert isinstance(t, ProcType)
-            params = with_fake_param_names(t.param_types)
-            return_type = t.return_type
-
-        elif opn_before_paren.prod.rhs_s == r'{var}.{cap_word}':
-            [var, cap_word] = opn_before_paren.children
-            callee_op_name = cap_word.source_text()
-
-            callee_op = spec.alg_info_['op'][callee_op_name]
-            assert callee_op.species in [
-                'op: discriminated by type: env rec',
-                'op: discriminated by type: module rec',
-            ]
-
-            # XXX If PR #955 is accepted, that will change things around here.
-
-            # When there's a type hierarchy (under Environment Record or Module Record),
-            # and sub-types augment the set of types defined at the root,
-            # then the use of one of those added methods
-            # implies a tighter constraint on the type of the LHS.
-
-            assert len(callee_op.headers) > 0
-            forp_types = [
-                header.tah.for_param_type
-                for header in callee_op.headers
-            ]
-            if callee_op_name in ['Link', 'Evaluate']:
-                # These are abstract methods of all Module Records,
-                # but the spec only has definitions for Cyclic Module Records.
-                forp_types.append(T_other_Module_Record)
-            elif callee_op_name in ['GetExportedNames', 'ResolveExport']:
-                # These are abstract methods of all Module Records,
-                # but the spec only has definitions for Source Text Module Records.
-                forp_types.append(T_other_Module_Record)
-                forp_types.append(T_other_Cyclic_Module_Record)
-            elif callee_op_name in ['InitializeEnvironment', 'ExecuteModule']:
-                # These are abstract methods of all Cyclic Module Records,
-                # but the spec only has definitions for Source Text Module Records.
-                forp_types.append(T_other_Cyclic_Module_Record)
-
-            union_of_forp_types = union_of_types(forp_types)
-
-            env0 = env0.ensure_expr_is_of_type(var, union_of_forp_types)
-
-            params = callee_op.parameters_with_types
-            return_type = callee_op.return_type
-
-        elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
-            callee_op_name = opn_before_paren.source_text()
-
-            # NormalCompletion and ThrowCompletion are regular abstract operations now,
-            # so you might expect that we'd use their deduced return types.
-            # However, that would lose information, so we don't.
-
-            if callee_op_name == 'NormalCompletion':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
-                return_type = arg_type
-                return (return_type, env0)
-                # don't call tc_args etc
-
-            elif callee_op_name == 'ThrowCompletion':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                if arg_type == T_TBD: arg_type = T_Normal
-                assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
-                return_type = ThrowType(arg_type)
-                return (return_type, env0)
-
-            elif callee_op_name == 'Completion':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, env1) = tc_expr(arg, env0)
-                return_type = arg_type # bleah
-                return (return_type, env1)
-
-            elif callee_op_name == 'abs':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                if arg_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
-                    return (T_MathInteger_, env0)
-                elif arg_type.is_a_subtype_of_or_equal_to(T_MathReal_):
-                    return (T_MathReal_, env0)
-                else:
-                    add_pass_error(
-                        arg,
-                        f"expected a MathReal, got {arg_type}"
-                    )
-                    return (T_MathReal_, env0)
-
-            elif callee_op_name in ['floor', 'truncate']:
-                assert len(args) == 1
-                [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
-                return (T_MathInteger_, env1)
-
-            elif callee_op_name == '\u211d': # DOUBLE-STRUCK CAPITAL R (fancy_r)
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0)
-                if arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_IntegralNumber_):
-                    return (T_MathInteger_, arg_env)
-                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
-                    return (T_MathReal_, env0)
-                else:
-                    add_pass_error(
-                        arg,
-                        f"expected a BigInt or a finite Number, got {arg_type}"
-                    )
-                    return (T_ExtendedMathReal_, env0)
-
-            elif callee_op_name == '\u2124': # DOUBLE-STRUCK CAPITAL Z (fancy_z)
-                assert len(args) == 1
-                [arg] = args
-                env0.assert_expr_is_of_type(arg, T_MathInteger_)
-                return (T_BigInt, env0)
-
-            elif callee_op_name == '\U0001d53d': # MATHEMATICAL DOUBLE-STRUCK CAPITAL F (fancy_f)
-                assert len(args) == 1
-                [arg] = args
-                (t, env1) = tc_expr(arg, env0)
-                if t.is_a_subtype_of_or_equal_to(T_MathInteger_):
-                    result_type = T_IntegralNumber_
-                elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
-                    result_type = T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
-                elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-                    result_type = T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
-                elif t == T_TBD:
-                    result_type = T_IntegralNumber_ # hm
-                else:
-                    add_pass_error(arg,
-                        f"ERROR: arg is of type {t} but fancy_f requires ExtendedMathReal"
-                    )
-                    result_type = T_Number
-                return (result_type, env1)
-
-            elif callee_op_name in ['min', 'max']:
-                assert len(args) == 2
-                env1 = env0
-                argtypes = []
-                for arg in args:
-                    (t, env1) = tc_expr(arg, env1)
-                    if not t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-                        add_pass_error(arg,
-                            f"arg is of type {t} but param requires ExtendedMathReal"
-                        )
-                        if t == T_MathInteger_ | T_tilde_empty_:
-                            # InnerModuleEvaluation
-                            t = T_MathInteger_
-                    argtypes.append(t)
-
-                if callee_op_name == 'min':
-                    # We allow an arg to be +infinity, but that won't be the result.
-                    # (As long as both args aren't +infinity.)
-                    add_type = T_MathPosInfinity_
-                else:
-                    add_type = T_MathNegInfinity_
-
-                for math_type in [T_MathInteger_, T_MathReal_, T_ExtendedMathReal_]:
-                    if all(
-                        t.is_a_subtype_of_or_equal_to(math_type | add_type)
-                        for t in argtypes
-                    ):
-                        return (math_type, env1)
-                assert 0
-                return (T_ExtendedMathReal_, env1)
-
-            elif callee_op_name in [
-                # 30232 Day Number and Time within Day
-                'Day',
-                'TimeWithinDay',
-
-                # 30264 Month Number
-                'MonthFromTime',
-
-                # 30286 Date Number
-                'DateFromTime',
-
-                # 30305 Week Day
-                'WeekDay',
-
-                # 30376 Hours, Minutes, Second, and Milliseconds
-                'HourFromTime',
-                'MinFromTime',
-                'SecFromTime',
-                'msFromTime',
-
-                # 'DaylightSavingTA',
-            ]:
-                assert len(args) == 1
-                [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_FiniteNumber_)
-                return (T_FiniteNumber_, env1)
-
-            # 30424 Year Number
-            elif callee_op_name == 'YearFromTime':
-                assert len(args) == 1
-                [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_Number)
-                return (T_IntegralNumber_, env1)
-
-
-            # ---------------
-
-            else:
-                callee_op = spec.alg_info_['op'][callee_op_name]
-                if callee_op.species == 'op: discriminated by syntax: steps':
-                    add_pass_error(
-                        expr,
-                        "Unusual to invoke a SDO via prefix-paren notation: " + expr.source_text()
-                    )
-                    assert len(args) == 1
-                    return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
-                else:
-                    assert callee_op.species.startswith('op: singular'), callee_op.species
-                params = callee_op.parameters_with_types
-                return_type = callee_op.return_type
-                # fall through to tc_args etc
-
-                # if callee_op_name == 'ResolveBinding': pdb.set_trace()
-
-        else:
-            assert 0, opn_before_paren.prod.rhs_s
-
-        # context = 'in call to `%s`' % opn_before_paren.source_text()
-        env2 = tc_args(params, args, env0, expr)
-        return (return_type, env2)
 
     # --------------------------------------------------------
 
@@ -7227,51 +5305,6 @@ if 1:
             return (t, env2)
 
     # -------------------------------------------------
-
-    @exprd.put(r"{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}")
-    def _(expr, env0, _):
-        [exa, cond, exb] = expr.children
-        (t_env, f_env) = tc_cond(cond, env0)
-        (ta, enva) = tc_expr(exa, t_env)
-        (tb, envb) = tc_expr(exb, f_env)
-        return (ta | tb, env_or(enva, envb))
-
-    # -------------------------------------------------
-    # return T_BigInt
-
-    @exprd.put(r"{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}")
-    def _(expr, env0, _):
-        [_, _] = expr.children
-        return (T_BigInt, env0)
-
-    @exprd.put(r"{EXPR} : the BigInt value that represents {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_|T_BigInt)
-        return (T_BigInt, env0)
-
-    @exprd.put(r"{EXPR} : the BigInt value that corresponds to {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (T_BigInt, env0)
-
-    @exprd.put(r"{EX} : the BigInt value for {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return (T_BigInt, env0)
-
-    @exprd.put(r"{EX} : the sum of {var} and {var}")
-    @exprd.put(r"{EX} : the product of {var} and {var}")
-    @exprd.put(r"{EX} : the difference {var} minus {var}")
-    def _(expr, env0, _):
-        [x, y] = expr.children
-        env0.assert_expr_is_of_type(x, T_BigInt)
-        env0.assert_expr_is_of_type(y, T_BigInt)
-        return (T_BigInt, env0)
-
-    # -------------------------------------------------
     # return T_Number
 
     @exprd.put(r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}")
@@ -7376,98 +5409,6 @@ if 1:
         return (T_Number, env0)
 
     # --------------------------------------------------------
-    # return T_MathInteger_
-
-    @exprd.put(r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}")
-    def _(expr, env0, _):
-        [prod_ref, nont] = expr.children
-        return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{NUM_EXPR} : {EX} raised to the power {EX}")
-    def _(expr, env0, _):
-        [a, b] = expr.children
-        env0.assert_expr_is_of_type(a, T_MathInteger_)
-        env0.assert_expr_is_of_type(b, T_MathInteger_)
-        return (T_MathInteger_, env0) # unless exponent is negative
-
-    @exprd.put(r"{EX} : the integer represented by the 32-bit two's complement bit string {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_) # bit string
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{EX} : {EX}, rounding down to the nearest integer, including for negative numbers")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_)
-        return (T_MathInteger_, env0)
-
-    # --------------------------------------------------------
-    # return T_MathReal_
-
-    @exprd.put(r"{MATH_LITERAL} : 8.64")
-    @exprd.put(r"{MATH_LITERAL} : 0.5")
-    def _(expr, env0, _):
-        return (T_MathReal_, env0)
-
-    @exprd.put(r'{EXPR} : the negative of {EX}')
-    def _(expr, env0, _):
-        [ex] = expr.children
-        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
-        assert ex_t == T_TBD or ex_t == T_MathInteger_
-        return (ex_t, env0)
-
-    @exprd.put(r"{PRODUCT} : the negation of {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_)
-        return (T_MathReal_, env0)
-
-    @exprd.put(r"{PRODUCT} : the quotient {FACTOR} / {FACTOR}")
-    def _(expr, env0, _):
-        [vara, varb] = expr.children
-        env1 = env0.ensure_expr_is_of_type(vara, T_MathReal_)
-        env2 = env1.ensure_expr_is_of_type(varb, T_MathReal_)
-        return (T_MathReal_, env2)
-
-    @exprd.put(r'{NUM_EXPR} : π / 2')
-    @exprd.put(r'{NUM_EXPR} : π / 4')
-    @exprd.put(r'{NUM_EXPR} : π')
-    @exprd.put(r'{NUM_EXPR} : 3π / 4')
-    @exprd.put(r'{NUM_EXPR} : -π / 2')
-    @exprd.put(r'{NUM_EXPR} : -π / 4')
-    @exprd.put(r'{NUM_EXPR} : -π')
-    @exprd.put(r'{NUM_EXPR} : -3π / 4')
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_MathReal_, env0)
-
-    @exprd.put(r"{EXPR} : the result of the {MATH_FUNC} of {EX}")
-    def _(expr, env0, _):
-        [math_func, ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
-        return (T_MathReal_, env1)
-
-    @exprd.put(r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
-        return (T_MathReal_, env1)
-
-    @exprd.put(r"{EXPR} : the result of raising {EX} to the {EX} power")
-    def _(expr, env0, _):
-        [avar, bvar] = expr.children
-        env1 = env0.ensure_expr_is_of_type(avar, T_MathReal_)
-        env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
-        return (T_MathReal_, env2)
-
-    @exprd.put(r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return (T_MathReal_, env0)
-
-    # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:
 
     @exprd.put(r"{NUM_COMPARAND} : the length of {var}")
@@ -7490,12 +5431,6 @@ if 1:
     def _(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MatchState)
-        return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r'{EX} : the number of code points in {PROD_REF}')
-    def _(expr, env0, _):
-        [prod_ref] = expr.children
-        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_MathNonNegativeInteger_, env0)
 
     @exprd.put(r"{EXPR} : the number of bytes in {var}")
@@ -7529,51 +5464,12 @@ if 1:
     # ----
     # return T_MathInteger_: arithmetic:
 
-    @exprd.put(r"{MATH_LITERAL} : {hex_int_lit}")
-    @exprd.put(r"{MATH_LITERAL} : {dec_int_lit}")
-    @exprd.put(r"{MATH_LITERAL} : -5")
-    @exprd.put(r"{BASE} : 10")
-    @exprd.put(r"{BASE} : 2")
-    def _(expr, env0, _):
-        # [] = expr.children
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{FACTOR} : {BASE}<sup>{EX}</sup>")
-    def _(expr, env0, _):
-        [base, exponent] = expr.children
-        (base_t, env1) = tc_expr(base, env0); assert env1 is env0
-        if base_t == T_MathInteger_:
-            env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_ | T_BigInt)
-        else:
-            assert 0, base_t
-        return (base_t, env1) # XXX unless exponent is negative
-
-    @exprd.put(r"{EX} : the remainder of dividing {EX} by {EX}")
-    def _(expr, env0, _):
-        [aex, bex] = expr.children
-        env0.assert_expr_is_of_type(aex, T_MathInteger_)
-        env0.assert_expr_is_of_type(bex, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_MathInteger_, env0)
-
-    # ----
-
     @exprd.put(r"{NUM_COMPARAND} : the numeric value of {var}")
     @exprd.put(r"{EX} : the numeric value of {EX}")
     def _(expr, env0, _):
         [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
         return (T_MathInteger_, env1)
-
-    @exprd.put(r"{EXPR} : the integer that is {EXPR}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return (T_MathInteger_, env0)
 
     # ----
 
@@ -7586,19 +5482,6 @@ if 1:
     @exprd.put(r"{EXPR} : the numeric value according to {h_emu_xref}")
     def _(expr, env0, _):
         return (T_MathInteger_, env0)
-
-    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (T_MathInteger_, env1)
-
-    @exprd.put(r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}")
-    def _(expr, env0, _):
-        [var, product] = expr.children
-        env1 = env0.ensure_expr_is_of_type(product, T_MathInteger_ | T_Number); assert env1 is env0
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (T_MathInteger_, env1)
 
     @exprd.put(r"{EX} : {var}'s _endIndex_")
     @exprd.put(r"{EX} : {var}'s _endIndex_ value")
@@ -7622,24 +5505,6 @@ if 1:
         env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
         return (T_MathInteger_, env0)
 
-    @exprd.put(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}")
-    def _(expr, env0, _):
-        [emu_grammar, root_var] = expr.children
-        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
-        return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}")
-    def _(expr, env0, _):
-        [emu_grammar, root_var, x_var, x_var2] = expr.children
-        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
-        env0.assert_expr_is_of_type(x_var, T_Parse_Node)
-        assert x_var.source_text() == x_var2.source_text()
-        return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
-    def _(expr, env0, _):
-        return (T_MathNonNegativeInteger_, env0)
-
     @exprd.put(r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}")
     def _(expr, env0, _):
         [posa, posb] = expr.children
@@ -7652,170 +5517,6 @@ if 1:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_code_point_, env0)
-
-    # ----
-
-    @exprd.put(r"{EXPR} : the result of applying the bitwise AND operation to {var} and {var}")
-    @exprd.put(r"{EXPR} : the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}")
-    @exprd.put(r"{EXPR} : the result of applying the bitwise inclusive OR operation to {var} and {var}")
-    def _(expr, env0, _):
-        [x, y] = expr.children
-        env0.assert_expr_is_of_type(x, T_MathInteger_) # "bit string"
-        env0.assert_expr_is_of_type(y, T_MathInteger_) # "bit string"
-        return (T_MathInteger_, env0) # "bit string"
-
-    @exprd.put(r"{EXPR} : the 32-bit two's complement bit string representing {EX}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (T_MathInteger_, env0) # bit string
-
-    # -------------------------------------------------
-    # return MathReal_ or MathInteger_ or Number or BigInt or Integer_ (arithmetic)
-
-    @exprd.put(r'{SUM} : {TERM} {SUM_OPERATOR} {TERM}')
-    @exprd.put(r"{SUM} : {SUM} {SUM_OPERATOR} {TERM}")
-    @exprd.put(r'{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}')
-    def _(expr, env0, _):
-        [a, op, b] = expr.children
-        (a_t, env1) = tc_expr(a, env0)
-        (b_t, env2) = tc_expr(b, env1)
-        op_st = op.source_text()
-
-        def type_arithmetic(a_mt, op_st, b_mt, a, b):
-            triple = (a_mt, op_st, b_mt)
-            result_t = {
-
-                # --------
-
-                # Mathematical values:
-
-                (T_ExtendedMathReal_, 'modulo', T_MathInteger_): 'ST of A includes infinities',
-                (T_ExtendedMathReal_, 'modulo', T_MathReal_   ): 'ST of A includes infinities',
-
-                (T_ExtendedMathReal_, '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '×'      , T_MathInteger_     ): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '+'      , T_MathInteger_     ): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '-'      , T_MathInteger_     ): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '/'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
-                (T_ExtendedMathReal_, '/'      , T_MathInteger_     ): T_ExtendedMathReal_,
-                (T_MathInteger_     , '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
-                (T_MathInteger_     , '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
-
-                (T_MathPosInfinity_ , '+'      , T_MathReal_        ): T_MathPosInfinity_,
-
-                (T_MathInteger_    , '+'      , T_MathNegInfinity_): T_MathNegInfinity_,
-
-                (T_MathInteger_, '×'      , T_MathReal_   ): T_MathReal_,
-                (T_MathInteger_, '+'      , T_MathReal_   ): T_MathReal_,
-                (T_MathInteger_, '-'      , T_MathReal_   ): T_MathReal_,
-                (T_MathInteger_, '/'      , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '×'      , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '×'      , T_MathReal_   ): T_MathReal_,
-                (T_MathReal_   , '+'      , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '+'      , T_MathReal_   ): T_MathReal_,
-                (T_MathReal_   , '-'      , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '-'      , T_MathReal_   ): T_MathReal_,
-                (T_MathReal_   , '/'      , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , '/'      , T_MathReal_   ): T_MathReal_,
-                (T_MathReal_   , 'modulo' , T_MathInteger_): T_MathReal_,
-                (T_MathReal_   , 'modulo' , T_MathReal_   ): T_MathReal_,
-
-                (T_MathInteger_, '×'      , T_MathInteger_): T_MathInteger_,
-                (T_MathInteger_, '+'      , T_MathInteger_): T_MathInteger_,
-                (T_MathInteger_, '-'      , T_MathInteger_): T_MathInteger_,
-                (T_MathInteger_, 'modulo' , T_MathInteger_): T_MathInteger_,
-                (T_MathInteger_, 'plus'   , T_MathInteger_): T_MathInteger_,
-                (T_MathInteger_, 'times'  , T_MathInteger_): T_MathInteger_,
-                (T_code_point_ , '-'      , T_MathInteger_): T_MathInteger_, # warn
-                (T_code_unit_  , '-'      , T_MathInteger_): T_MathInteger_, # warn
-
-                # --------
-
-                # Numbers:
-
-                (T_Number       , '-'      , T_IntegralNumber_): 'A could be NaN',
-
-                (T_FiniteNumber_     , '×'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn [assuming finite is > 0]
-                (T_FiniteNumber_     , '+'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn
-                (T_FiniteNumber_     , '-'      , T_PosInfinityNumber_): T_NegInfinityNumber_, # warn
-                (T_NegInfinityNumber_, '+'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
-                (T_NegInfinityNumber_, '-'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
-                (T_NegInfinityNumber_, '/'      , T_FiniteNumber_     ): T_NegInfinityNumber_, # warn [assuming finite is > 0]
-
-                (T_FiniteNumber_     , '×'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn [assuming finite is > 0]
-                (T_FiniteNumber_     , '+'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn
-                (T_FiniteNumber_     , '-'      , T_NegInfinityNumber_): T_PosInfinityNumber_, # warn
-                (T_PosInfinityNumber_, '+'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
-                (T_PosInfinityNumber_, '-'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
-                (T_PosInfinityNumber_, '/'      , T_FiniteNumber_     ): T_PosInfinityNumber_, # warn [assuming finite is > 0]
-
-                (T_FiniteNumber_  , '×'      , T_FiniteNumber_  ): T_FiniteNumber_,
-                (T_FiniteNumber_  , '+'      , T_FiniteNumber_  ): T_FiniteNumber_,
-                (T_FiniteNumber_  , '+'      , T_IntegralNumber_): T_FiniteNumber_,
-                (T_FiniteNumber_  , '-'      , T_FiniteNumber_  ): T_FiniteNumber_,
-                (T_FiniteNumber_  , '-'      , T_IntegralNumber_): T_FiniteNumber_,
-                (T_FiniteNumber_  , '/'      , T_FiniteNumber_  ): T_FiniteNumber_, # assuming that b isn't 0
-                (T_IntegralNumber_, '/'      , T_FiniteNumber_  ): T_FiniteNumber_,
-
-                (T_IntegralNumber_, '+', T_IntegralNumber_): T_IntegralNumber_,
-                (T_IntegralNumber_, '-', T_IntegralNumber_): T_IntegralNumber_,
-
-                # --------
-
-                # BigInts:
-
-                (T_BigInt, '×'      , T_BigInt): T_BigInt,
-                (T_BigInt, '-'      , T_BigInt): T_BigInt,
-
-                # --------
-
-                # misc:
-
-                (T_not_set     , '×'      , T_MathInteger_): 'A is non-numeric',
-                (T_tilde_empty_, '-'      , T_MathInteger_): 'A is non-numeric',
-
-            }[triple]
-
-            if result_t == 'A is non-numeric':
-                add_pass_error(a, f"ST of operand is {a_t}, which includes {a_mt}, which is non-numeric")
-                result_t = T_MathInteger_ # XXX
-            elif result_t == 'A could be NaN':
-                add_pass_error(a, f"ST of operand is {a_t}, which includes *NaN*, which you can't do arithmetic on")
-                result_t = T_Number
-            elif result_t == 'B could be NaN':
-                add_pass_error(b, f"ST of operand is {b_t}, which includes *NaN*, which you can't do arithmetic on")
-                result_t = T_Number
-            elif result_t == 'ST of A includes infinities':
-                add_pass_error(a, "operand could be infinite, which doesn't make sense with 'modulo'")
-                result_t = T_MathInteger_
-            else:
-                assert isinstance(result_t, Type)
-
-            return result_t
-                    
-
-        result_t = T_0
-        for a_mt in a_t.set_of_types():
-            for b_mt in b_t.set_of_types():
-                result_t = result_t | type_arithmetic(a_mt, op_st, b_mt, a, b)
-        return (result_t, env2)
-
-    @exprd.put(r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}")
-    def _(expr, env0, _):
-        ex = expr.children[-1]
-        (t, env1) = tc_expr(ex, env0); assert env1 is env0
-        assert (
-            t == T_TBD
-            or
-            t.is_a_subtype_of_or_equal_to(T_MathReal_)
-            or
-            t.is_a_subtype_of_or_equal_to(T_Number)
-            or
-            t.is_a_subtype_of_or_equal_to(T_BigInt)
-        )
-        return (t, env1)
 
     # -------------------------
     # return T_String
@@ -7933,14 +5634,6 @@ if 1:
     def _(expr, env0, _):
         [emu_xref, noi] = expr.children
         env1 = env0.ensure_expr_is_of_type(noi, T_IntegralNumber_)
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as a decimal number")
-    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
-    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
         return (T_String, env1)
 
     @exprd.put(r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}")
@@ -8082,30 +5775,8 @@ if 1:
     def _(expr, env0, _):
         return (T_code_point_, env0)
 
-    @exprd.put(r"{EX} : the code point matched by {PROD_REF}")
-    def _(expr, env0, _):
-        [nont] = expr.children
-        return (T_code_point_, env0)
-
-    @exprd.put(r"{EX} : the single code point matched by this production")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_code_point_, env0)
-
     # ----------------------------------------------------------
     # return T_Unicode_code_points_
-
-    @exprd.put(r'{EXPR} : the source text that was recognized as {PROD_REF}')
-    def _(expr, env0, _):
-        [nonterminal] = expr.children
-        # XXX Should check whether nonterminal makes sense
-        # with respect to the emu-grammar accompanying this alg/expr.
-        return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : the source text matched by {PROD_REF}")
-    def _(expr, env0, _):
-        [nont] = expr.children
-        return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
     @exprd.put(r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
     def _(expr, env0, _):
@@ -8137,14 +5808,6 @@ if 1:
         var = expr.children[0]
         env1 = env0.ensure_expr_is_of_type(var, T_Number)
         return (ListType(T_MathInteger_), env1)
-
-    @exprd.put(r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order')
-    @exprd.put(r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order")
-    def _(expr, env0, _):
-        [n_var, v_var] = expr.children
-        env0.assert_expr_is_of_type(n_var, T_MathNonNegativeInteger_)
-        env0.assert_expr_is_of_type(v_var, T_MathNonNegativeInteger_)
-        return (ListType(T_MathInteger_), env0)
 
     @exprd.put(r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values")
     def _(expr, env0, _):
@@ -8302,87 +5965,10 @@ if 1:
     # --------------------------------------------------------
     # return T_Parse_Node
 
-    @exprd.put(r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}")
-    def _(expr, env0, _):
-        [nonterminal, local_ref] = expr.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (ptn_type_for(nonterminal), env0)
-
-    # ----
-
-    @exprd.put(r"{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
-    def _(expr, env0, _):
-        [nonterminal, var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        # XXX could check that t is a nonterminal that actually has a child of that type
-        # but that requires having the whole grammar handy
-        return (ptn_type_for(nonterminal), env0)
-
-    @exprd.put(r'{PROD_REF} : this {nonterminal}')
-    def _(expr, env0, _):
-        [nonterminal] = expr.children
-        # XXX check
-        return (ptn_type_for(nonterminal), env0)
-
-    @exprd.put(r'{PROD_REF} : {nonterminal}')
-    def _(expr, env0, _):
-        [nonterminal] = expr.children
-        return (ptn_type_for(nonterminal), env0)
-
-    @exprd.put(r"{PROD_REF} : {nonterminal} {var}")
-    def _(expr, env0, _):
-        [nonterminal, var] = expr.children
-        t = ptn_type_for(nonterminal)
-        env0.assert_expr_is_of_type(var, t)
-        return (t, env0)
-
-    @exprd.put(r'{PROD_REF} : the {ORDINAL} {nonterminal}')
-    def _(expr, env0, _):
-        [ordinal, nonterminal] = expr.children
-        # XXX should check that the 'current' production has such.
-        return (ptn_type_for(nonterminal), env0)
-
-    @exprd.put(r'{PROD_REF} : the {nonterminal}')
-    def _(expr, env0, _):
-        nonterminal = expr.children[-1]
-        return (ptn_type_for(nonterminal), env0)
-
-    @exprd.put(r"{PROD_REF} : that {nonterminal}")
-    def _(expr, env0, _):
-        [nont] = expr.children
-        return (ptn_type_for(nont), env0)
-
-    @exprd.put(r"{EXPR} : an instance of the production {h_emu_grammar}")
-    def _(expr, env0, _):
-        [emu_grammar] = expr.children
-        assert emu_grammar.source_text() == '<emu-grammar>FormalParameters : [empty]</emu-grammar>'
-        return (ptn_type_for('FormalParameters'), env0)
-
-    @exprd.put(r"{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}")
-    def _(expr, env0, _):
-        [*nont_, var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (T_Parse_Node, env0)
-
     @exprd.put(r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse")
     def _(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
-        return (T_Parse_Node, env0)
-
-    @exprd.put(r"{PROD_REF} : this phrase")
-    @exprd.put(r"{PROD_REF} : this production")
-    def _(expr, env0, _):
-        return (T_Parse_Node, env0)
-
-    @exprd.put(r"{PROD_REF} : the derived {nonterminal}")
-    def _(expr, env0, _):
-        [nont] = expr.children
-        return (T_Parse_Node, env0)
-
-    @exprd.put(r"{PROD_REF} : the {nonterminal} containing {LOCAL_REF}")
-    def _(expr, env0, _):
-        [nonta, local_ref] = expr.children
         return (T_Parse_Node, env0)
 
     # --------------------------------------------------------
@@ -8732,44 +6318,6 @@ if 1:
     # -------------------------------------------------
     # whatever
 
-    @exprd.put(r'{nonterminal} : \| [A-Za-z][A-Za-z0-9]* \?? (\[ .+? \])? \|')
-    def _(expr, env0, _):
-        nont_name = expr.source_text()[1:-1]
-        # Note that |Foo| often denotes a Parse Node,
-        # rather than a grammar symbol,
-        # but we capture those cases before they can get to here.
-        return (T_grammar_symbol_, env0)
-
-    @exprd.put(r"{EXPR} : the grammar symbol {nonterminal}")
-    def _(expr, env0, _):
-        [nont] = expr.children
-        return (T_grammar_symbol_, env0)
-
-    @exprd.put(r"{G_SYM} : {nonterminal}")
-    @exprd.put(r"{G_SYM} : {TERMINAL}")
-    def _(expr, env0, _):
-        return (T_grammar_symbol_, env0)
-
-    @exprd.put(r'{var} : \b _ [A-Za-z][A-Za-z0-9]* _ \b')
-    def _(expr, env0, _):
-        [var_name] = expr.children
-        return (env0.vars[var_name], env0)
-
-    @exprd.put(r'{SETTABLE} : {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        [var_name] = var.children
-        if var_name not in env0.vars:
-            add_pass_error(
-                var,
-                "NOT DEFINED"
-            )
-            t = T_TBD
-        else:
-            t = env0.vars[var_name]
-            # print("the type of %s is %s" % (var_name, t))
-        return (t, env0)
-
     @exprd.put(r'{EXPR} : the Agent Record of the surrounding agent')
     @exprd.put(r"{EXPR} : the surrounding agent's Agent Record")
     def _(expr, env0, _):
@@ -8915,127 +6463,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         return (T_Iterator_object_, env1)
 
-    @exprd.put(r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}")
-    def _(expr, env0, expr_value_will_be_discarded):
-        [noi] = expr.children
-        (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded)
-        if noi_t == T_TBD:
-            # Don't do the comparison to Normal,
-            # because that loses the TBD-ness,
-            # which is used as a sentinel all over.
-            return (noi_t, env1)
-        else:
-            # (normal_part_of_type, abrupt_part_of_type) = noi_t.split_by(T_Normal)
-            # if abrupt_part_of_type != T_0:
-            #     add_pass_error(
-            #         expr,
-            #         "warning: `%s` static type includes `%s`, but isn't prefixed by ! or ?"
-            #         % (expr.source_text(), abrupt_part_of_type)
-            #     )
-            #     # But that might be okay.
-            #     # E.g. Return {NAMED_OPERATION_INVOCATION} -- inserting a '?' would have no effect.
-            #     # or if next instruction is ReturnIfAbrupt.
-            #     # So I dropped this warning,
-            #     # and just rely on Abrupt values being flagged if necessary down the line.
-            return (noi_t, env1)
-
-    @exprd.put(r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
-    def _(expr, env0, _):
-        [noi] = expr.children
-        (noi_t, env1) = tc_expr(noi, env0)
-
-        if noi_t == T_TBD:
-            return (T_TBD, env1)
-
-        (abrupt_part_of_type, normal_part_of_type) = noi_t.split_by(T_Abrupt)
-
-        if abrupt_part_of_type == T_0:
-            # add_pass_error(
-            #     noi,
-            #     "The static type of the invocation is `%s`, so shouldn't need a '!'" % str(noi_t)
-            # )
-            # There are a lot of these now, and it's only goig to increase.
-            pass
-        else:
-            # add_pass_error(
-            #     expr,
-            #     "STA fails to confirm that `%s` will return a Normal" % noi.source_text()
-            # )
-            # It's unsurprising, perhaps even *expected*,
-            # that STA can't confirm it.
-            pass
-
-        return (normal_part_of_type, env1)
-
-    @exprd.put(r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}')
-    @exprd.put(r"{EX} : ? {DOTTING}")
-    @exprd.put(r"{EX} : ? {var}")
-    def _(expr, env0, _):
-        [operand] = expr.children
-        (operand_t, env1) = tc_expr(operand, env0)
-
-        if operand_t == T_TBD:
-            return (T_TBD, env1)
-
-        (abrupt_part_of_type, normal_part_of_type) = operand_t.split_by(T_Abrupt)
-
-        if normal_part_of_type == T_0:
-            add_pass_error(
-                expr,
-                "used '?', but STA says operation can't return normal: " + expr.source_text()
-            )
-
-        if abrupt_part_of_type == T_0:
-            add_pass_error(
-                expr,
-                "used '?', but STA says operation can't return abrupt: " + expr.source_text()
-            )
-
-        proc_add_return(env1, abrupt_part_of_type, expr)
-
-        env2 = env1
-        if str(operand.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
-            [pp] = operand.children
-            assert str(pp.prod).startswith(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
-            [opn_before_paren, exlist_opt] = pp.children[0:2]
-            prefix = opn_before_paren.source_text()
-
-            if prefix == 'RequireInternalSlot':
-                # This amounts to a type-test.
-                # I.e., in the not-returning-early env resulting from this NAMED_OPERATION_INVOCATION,
-                # we can narrow the type of the first arg to RequireInternalSlot.
-                (obj_arg, slotname_arg) = exes_in_exlist_opt(exlist_opt)
-
-                t = {
-                    '[[ArrayBufferData]]'       : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
-                    '[[AsyncGeneratorContext]]' : T_AsyncGenerator_object_,
-                    '[[AsyncGeneratorQueue]]'   : T_AsyncGenerator_object_,
-                    '[[AsyncGeneratorState]]'   : T_AsyncGenerator_object_,
-                    '[[Cells]]'                 : T_FinalizationRegistry_object_,
-                    '[[DataView]]'              : T_Object,
-                    '[[GeneratorBrand]]'        : T_Object,
-                    '[[GeneratorState]]'        : T_Object,
-                    '[[MapData]]'               : T_Object,
-                    '[[RegExpMatcher]]'         : T_Object,
-                    '[[SetData]]'               : T_Object,
-                    '[[TypedArrayName]]'        : T_TypedArray_object_,
-                    '[[WeakMapData]]'           : T_WeakMap_object_,
-                    '[[WeakRefTarget]]'         : T_WeakRef_object_,
-                    '[[WeakSetData]]'           : T_WeakSet_object_,
-                }[slotname_arg.source_text()]
-
-                env2 = env1.with_expr_type_narrowed(obj_arg, t)
-
-            elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray']:
-                obj_arg = exes_in_exlist_opt(exlist_opt)[0]
-                env2 = env1.with_expr_type_narrowed(obj_arg, T_TypedArray_object_)
-
-            elif prefix == 'GeneratorValidate':
-                gen_arg = exes_in_exlist_opt(exlist_opt)[0]
-                env2 = env1.with_expr_type_narrowed(gen_arg, T_Object)
-
-        return (normal_part_of_type, env2)
-
     @exprd.put(r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}")
     @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context")
     def _(expr, env0, _):
@@ -9047,18 +6474,6 @@ if 1:
             'Realm'              : T_Realm_Record,
         }[component_name.source_text()]
         return (t, env0)
-
-    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (T_IEEE_binary32_, env1)
-
-    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (T_IEEE_binary64_, env1)
 
     @exprd.put(r"{EXPR} : a copy of {var}'s _captures_ List")
     def _(expr, env0, _):
@@ -9183,12 +6598,6 @@ if 1:
     def _(expr, env0, _):
         [error_type] = expr.children
         return (type_for_ERROR_TYPE(error_type), env0)
-
-    @exprd.put(r"{EXPR} : a copy of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        return (t, env1)
 
     @exprd.put(r"{EXPR} : a copy of the List {var}")
     @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}")
@@ -9318,23 +6727,11 @@ if 1:
         dotting_type.is_a_subtype_of_or_equal_to(T_List)
         return (dotting_type, env0)
 
-    @exprd.put(r"{EXPR} : the number of leading 1 bits in {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
-        return (T_MathNonNegativeInteger_, env0)
-
     @exprd.put(r"{EXPR} : the number of leading zero bits in the unsigned 32-bit binary representation of {var}")
     def _(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_IntegralNumber_)
         return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (ListType(T_code_unit_), env0)
 
     @exprd.put(r"{EX} : the remaining {EX} code units of {var}")
     @exprd.put(r"{EXPR} : the other {EX} code units of {var}")
@@ -9489,13 +6886,6 @@ if 1:
         # XXX The intermediates are not really T_Number
         return (T_Number, env0)
 
-    @exprd.put(r"{EX} : The remainder of dividing {EX} by {EX}")
-    def _(expr, env0, _):
-        [a, b] = expr.children
-        env0.assert_expr_is_of_type(a, T_MathInteger_)
-        env0.assert_expr_is_of_type(b, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
     @exprd.put(r"{PAIR} : ({EX}, {EX})")
     def _(expr, env0, _):
         [a, b] = expr.children
@@ -9594,13 +6984,6 @@ if 1:
         [] = expr.children
         return (T_MathNonNegativeInteger_, env0)
 
-    @exprd.put(r"{EXPR} : the result of clamping {var} between 0 and {EX}")
-    def _(expr, env0, _):
-        [var, upper_ex] = expr.children
-        env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
-        env0.assert_expr_is_of_type(var, T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
-        return (T_MathNonNegativeInteger_, env0)
-
     @exprd.put(r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present")
     def _(expr, env0, _):
         [error_type] = expr.children
@@ -9646,20 +7029,6 @@ if 1:
         assert cap_word2.source_text() == T
         return (T_Object, env0)
 
-    @exprd.put(r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit")
-    @exprd.put(r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathReal_)
-        return (T_MathReal_, env0)
-
-    @exprd.put(r"{EXPR} : an implementation-defined choice of either {var} or {var}")
-    def _(expr, env0, _):
-        [vara, varb] = expr.children
-        env0.assert_expr_is_of_type(vara, T_MathReal_)
-        env0.assert_expr_is_of_type(varb, T_MathReal_)
-        return (T_MathReal_, env0)
-
     @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
     def _(expr, env0, _):
         [var, dsb_word, literal, cap_word] = expr.children
@@ -9685,15 +7054,6 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_Abrupt | T_Normal, env0)
-
-    @exprd.put(r"{INTERVAL} : the inclusive interval from {EX} to {EX}")
-    @exprd.put(r"{INTERVAL} : the interval from {EX} (inclusive) to {EX} (exclusive)")
-    def _(expr, env0, _):
-        [lo, hi] = expr.children
-        env0.assert_expr_is_of_type(lo, T_MathInteger_)
-        env0.assert_expr_is_of_type(hi, T_MathInteger_)
-        return (T_MathInteger_, env0)
-        # Should maybe be ListType(T_MathInteger_) or something similar
 
     @exprd.put(r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
     def _(expr, env0, _):
@@ -10341,6 +7701,2781 @@ if 1:
     def _(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 5 Notational Conventions
+
+#@ 5.1 Syntactic and Lexical Grammars
+
+# ==============================================================================
+#@ 5.1.1 Context-Free Grammars
+
+#> A <em>context-free grammar</em> consists of a number of <em>productions</em>.
+#> Each production has an abstract symbol called a <em>nonterminal</em>
+#> as its <em>left-hand side</em>,
+#> and a sequence of zero or more nonterminal and <em>terminal</em> symbols
+#> as its <em>right-hand side</em>.
+#> For each grammar, the terminal symbols are drawn from a specified alphabet.
+
+if 1:
+    # grammar symbol
+
+    tbd['{VAL_DESC} : a grammar symbol'] = T_grammar_symbol_
+
+    # -------------------
+    # nonterminal symbols
+
+    @exprd.put(r'{nonterminal} : \| [A-Za-z][A-Za-z0-9]* \?? (\[ .+? \])? \|')
+    def _(expr, env0, _):
+        nont_name = expr.source_text()[1:-1]
+        # Note that |Foo| often denotes a Parse Node,
+        # rather than a grammar symbol,
+        # but we capture those cases before they can get to here.
+        return (T_grammar_symbol_, env0)
+
+    @exprd.put(r"{EXPR} : the grammar symbol {nonterminal}")
+    def _(expr, env0, _):
+        [nont] = expr.children
+        return (T_grammar_symbol_, env0)
+
+    @exprd.put(r"{G_SYM} : {nonterminal}")
+    def _(expr, env0, _):
+        return (T_grammar_symbol_, env0)
+
+    @tbd.put('{VAL_DESC} : {nonterminal}')
+    def _(val_desc, env):
+        [nont] = val_desc.children
+        return a_subset_of(T_grammar_symbol_)
+
+    tbd['{VAL_DESC} : a nonterminal in one of the ECMAScript grammars'] = a_subset_of(T_grammar_symbol_)
+
+    # ----------------
+    # terminal symbols
+
+    tbd['{VAL_DESC} : {backticked_word}'] = a_subset_of(T_grammar_symbol_)
+
+    @exprd.put(r"{G_SYM} : {TERMINAL}")
+    def _(expr, env0, _):
+        return (T_grammar_symbol_, env0)
+
+    @tbd.put('{VAL_DESC} : the {nonterminal} {TERMINAL}')
+    def _(val_desc, env):
+        [nont, term] = val_desc.children
+        assert nont.source_text() == '|ReservedWord|'
+        assert term.source_text() == "`super`"
+        return a_subset_of(T_grammar_symbol_)
+
+# ==============================================================================
+#@ 5.1.4 The Syntactic Grammar
+
+#> It defines a set of productions,
+#> starting from two alternative goal symbols |Script| and |Module|, ...
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}")
+    def _(cond, env0, asserting):
+        [nont] = cond.children
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}")
+    def _(cond, env0, asserting):
+        [nont] = cond.children
+        return (env0, env0)
+
+#> When a parse is successful, it constructs a parse tree,
+#> a rooted tree structure in which each node is a <dfn>Parse Node</dfn>.
+
+if 1:
+    tbd['{VAL_DESC} : a Parse Node'] = T_Parse_Node
+
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes'] = T_Parse_Node
+
+#> Each Parse Node is an <em>instance</em> of a symbol in the grammar;
+#> it represents a span of the source text that can be derived from that symbol.
+
+if 1:
+    tbd['{VAL_DESC} : an instance of a nonterminal'] = a_subset_of(T_Parse_Node)
+
+    @tbd.put('{VAL_DESC} : an instance of {var}')
+    def _(val_desc, env):
+        [var] = val_desc.children
+        env.assert_expr_is_of_type(var, T_grammar_symbol_)
+        return a_subset_of(T_Parse_Node)
+
+    @tbd.put('{VAL_DESC} : an? {nonterminal}')
+    @tbd.put('{VAL_DESC} : an? {nonterminal} Parse Node')
+    def _(val_desc, env):
+        [nonterminal] = val_desc.children
+
+        if val_desc.source_text() == 'a |ReservedWord|':
+            # In Early Errors for ExportDeclaration, there is the condition
+            #     StringValue of _n_ is a |ReservedWord|
+            # This isn't asking if StringValue of _n_ is a Parse Node
+            # that is an instance of |ReservedWord|.
+            # Rather, it's asking if it's a String that could be matched by |ReservedWord|.
+            return a_subset_of(T_String)
+
+        return ptn_type_for(nonterminal)
+
+        # '_x_ is a {nonterminal}'
+        # might also mean that _x_ is a Parse Node
+        # that isn't itself an instance of {nonterminal},
+        # but connects by unit derivations to one that is.
+
+    @tbd.put('{LIST_ELEMENTS_DESCRIPTION} : {nonterminal} Parse Nodes')
+    def _(led, env):
+        [nonterminal] = led.children
+        return ptn_type_for(nonterminal)
+
+    @exprd.put(r'{EXPR} : the source text that was recognized as {PROD_REF}')
+    def _(expr, env0, _):
+        [nonterminal] = expr.children
+        # XXX Should check whether nonterminal makes sense
+        # with respect to the emu-grammar accompanying this alg/expr.
+        return (T_Unicode_code_points_, env0)
+
+    @exprd.put(r"{EXPR} : the source text matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [nont] = expr.children
+        return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
+
+    @exprd.put(r"{EX} : the code point matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [nont] = expr.children
+        return (T_code_point_, env0)
+
+    @exprd.put(r"{EX} : the single code point matched by this production")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_code_point_, env0)
+
+    @exprd.put(r'{EX} : the number of code points in {PROD_REF}')
+    def _(expr, env0, _):
+        [prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        return (T_MathNonNegativeInteger_, env0)
+
+    @exprd.put(r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}")
+    def _(expr, env0, _):
+        [prod_ref, nont] = expr.children
+        return (T_MathNonNegativeInteger_, env0)
+
+    @condd.put(r"{CONDITION_1} : any source text is matched by this production")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    # 13.2.3.1
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is the token `false`")
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is the token `true`")
+    def _(cond, env0, asserting):
+        [prod_ref] = cond.children
+        assert prod_ref.source_text() == '|BooleanLiteral|'
+        return (env0, env0)
+
+#> When a Parse Node is an instance of a nonterminal,
+#> it is also an instance of some production
+#> that has that nonterminal as its left-hand side.
+
+if 1:
+    tbd['{VAL_DESC} : an instance of a production in {h_emu_xref}'] = a_subset_of(T_Parse_Node)
+
+    @tbd.put('{VAL_DESC} : an instance of the production {h_emu_grammar}')
+    def _(val_desc, env):
+        [emu_grammar] = val_desc.children
+        emu_grammar_text = emu_grammar.source_text()
+        lhs = re.sub(r'<emu-grammar>(\w+) :.*', r'\1', emu_grammar_text)
+        prodn_type = ptn_type_for(lhs)
+        return a_subset_of(prodn_type)
+
+    @exprd.put(r"{EXPR} : an instance of the production {h_emu_grammar}")
+    def _(expr, env0, _):
+        [emu_grammar] = expr.children
+        assert emu_grammar.source_text() == '<emu-grammar>FormalParameters : [empty]</emu-grammar>'
+        return (ptn_type_for('FormalParameters'), env0)
+
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}")
+    def _(cond, env0, asserting):
+        [local_ref, h_emu_grammar] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}")
+    def _(cond, env0, asserting):
+        [local_ref, *h_emu_grammar_] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {PROD_REF} is `export` {nonterminal}')
+    def _(cond, env0, asserting):
+        [prod_ref, nont] = cond.children
+        return (env0, env0)
+
+#> Moreover, it has zero or more <em>children</em>,
+#> one for each symbol on the production's right-hand side:
+#> each child is a Parse Node that is an instance of the corresponding symbol.
+
+if 1:
+    @nv.put(r"{EACH_THING} : child node {var} of this Parse Node")
+    def _(each_thing, env0):
+        [loop_var] = each_thing.children
+        env1 = env0.plus_new_entry(loop_var, T_Parse_Node)
+        return env1
+
+# (Each child of _P_ is 'nested' directly within _P_.)
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
+    def _(cond, env0, asserting):
+        [local_ref, nont] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}")
+    def _(cond, env0, asserting):
+        [local_ref, nonta, nontb] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+# (_P_ 'contains' its children and their children, and so on)
+
+    @condd.put(r"{CONDITION_1} : {var} contains a {nonterminal}")
+    @condd.put(r"{CONDITION_1} : {var} contains an? {nonterminal} Parse Node")
+    @condd.put(r"{CONDITION_1} : {var} does not contain an? {nonterminal} Parse Node")
+    @condd.put(r"{CONDITION_1} : {var} does not contain two {nonterminal} Parse Nodes")
+    def _(cond, env0, asserting):
+        [var, nont] = cond.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        env0.assert_expr_is_of_type(nont, T_grammar_symbol_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
+    @nv.put(r"{EACH_THING} : {nonterminal} {var} that {var} contains")
+    def _(each_thing, env0):
+        [nont, loop_var, root_var] = each_thing.children
+        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
+        return env0.plus_new_entry(loop_var, ptn_type_for(nont))
+
+    @exprd.put(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}")
+    def _(expr, env0, _):
+        [emu_grammar, root_var] = expr.children
+        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
+        return (T_MathNonNegativeInteger_, env0)
+
+    @exprd.put(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}")
+    def _(expr, env0, _):
+        [emu_grammar, root_var, x_var, x_var2] = expr.children
+        env0.assert_expr_is_of_type(root_var, T_Parse_Node)
+        env0.assert_expr_is_of_type(x_var, T_Parse_Node)
+        assert x_var.source_text() == x_var2.source_text()
+        return (T_MathNonNegativeInteger_, env0)
+
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same")
+    def _(cond, env0, asserting):
+        [local_ref, nonta, noi] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        # XXX noi
+        return (env0, env0)
+
+# (You can ask about nodes that contain _P_)
+
+    @exprd.put(r"{PROD_REF} : the {nonterminal} containing {LOCAL_REF}")
+    def _(expr, env0, _):
+        [nonta, local_ref] = expr.children
+        return (T_Parse_Node, env0)
+
+    @exprd.put(r"{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}")
+    def _(expr, env0, _):
+        [*nont_, var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (T_Parse_Node, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, *nont_] = cond.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+    @condd.put(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+    def _(cond, env0, asserting):
+        [prod_ref, nont, step_xref, alg_xref] = cond.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        return (env0, env0)
+
+#> Parse Nodes are considered <dfn>the same Parse Node</dfn>
+#> if and only if they represent the same span of source text,
+#> are instances of the same grammar symbol,
+#> and resulted from the same parser invocation.
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {EX} is the same Parse Node as {EX}")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
+        env0.assert_expr_is_of_type(exa, T_Parse_Node)
+        env0.assert_expr_is_of_type(exb, T_Parse_Node)
+        return (env0, env0)
+
+#> ... In such cases a more restrictive supplemental grammar is provided
+#> that further restricts the acceptable token sequences.
+#> Typically, an early error rule will then state that, in certain contexts,
+#> "_P_ <dfn>must cover</dfn> an _N_",
+#> where _P_ is a Parse Node (an instance of the generalized production)
+#> and _N_ is a nonterminal from the supplemental grammar.
+#> This means:
+#>  -- The sequence of tokens originally matched by _P_
+#>     is parsed again using _N_ as the goal symbol.
+#>     If _N_ takes grammatical parameters, then they are set to
+#>     the same values used when _P_ was originally parsed.
+#>  -- If the sequence of tokens can be parsed as a single instance of _N_,
+#>     with no tokens left over, then:
+#>       -- We refer to that instance of _N_ (a Parse Node, unique for a given _P_)
+#>          as "the _N_ that is <dfn>covered</dfn> by _P_".
+#>       -- All Early Error rules for _N_ and its derived productions
+#>          also apply to the _N_ that is covered by _P_.
+#>  -- Otherwise (if the parse fails), it is an early Syntax Error.
+
+if 1:
+    @nv.put(r"{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.")
+    def _(anode, env0):
+        [local_ref, nont] = anode.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return None
+
+    @exprd.put(r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}")
+    def _(expr, env0, _):
+        [nonterminal, local_ref] = expr.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (ptn_type_for(nonterminal), env0)
+
+# (this text would be matched by that nonterminal/production
+# if it were source text in an appropriate context)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, T_code_point_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, T_code_point_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production")
+    def _(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, T_MathInteger_)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 5.1.5.4 Grammatical Parameters
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter")
+    def _(cond, env0, asserting):
+        [prod_ref, cap_word] = cond.children
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 5.2 Algorithm Conventions
+
+if 1:
+    @condd.put(r"{CONDITION_1} : control reaches here")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> The specification often uses a numbered list to specify steps in an algorithm.
+#> Algorithm steps may be subdivided into sequential substeps.
+#> Substeps are indented
+#> and may themselves be further divided into indented substeps.
+
+if 1:
+    @nv.put(r'{EMU_ALG_BODY} : {IND_COMMANDS}{nlai}')
+    def _(anode, env0):
+        [ind_commands] = anode.children
+        env1 = tc_nonvalue(ind_commands, env0)
+        if env1 is not None:
+            # Control falls off the end of the algorithm.
+            add_pass_error(
+                ind_commands,
+                "Control falls off the end of the algorithm (need an explicit Return?)"
+            )
+            default_return_value = T_not_returned # or T_tilde_unused_, see PR #2397
+            proc_add_return(env1, default_return_value, ind_commands)
+            return None
+        else:
+            # All control paths end with a 'Return'
+            return None
+
+    @nv.put(r'{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}')
+    def _(anode, env0):
+        [commands, command] = anode.children
+        env1 = tc_nonvalue(commands, env0)
+        env2 = tc_nonvalue(command, env1)
+        return env2
+
+# ------------------------------------------------------------------------------
+#> A step or substep may be written as an “if” predicate that conditions its substeps.
+#> In this case, the substeps are only applied if the predicate is true.
+#> If a step or substep begins with the word “else”,
+#> it is a predicate that is the negation of
+#> the preceding “if” predicate step at the same level.
+
+if 1:
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.')
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.')
+    def _(anode, env0):
+        [cond, t_command, f_command] = anode.children
+        (t_env, f_env) = tc_cond(cond, env0)
+        t_benv = tc_nonvalue(t_command, t_env)
+        f_benv = tc_nonvalue(f_command, f_env)
+        return env_or(t_benv, f_benv)
+
+    @nv.put(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
+    def _(anode, env0):
+        [cond_a, command_a, cond_b, command_b, command_c] = anode.children
+        (a_t_env, a_f_env) = tc_cond(cond_a, env0)
+        a_benv = tc_nonvalue(command_a, a_t_env)
+        (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
+        b_benv = tc_nonvalue(command_b, b_t_env)
+        c_benv = tc_nonvalue(command_c, b_f_env)
+        return envs_or([a_benv, b_benv, c_benv])
+
+    @nv.put(r'{IF_OTHER} : {IF_OPEN}{IF_TAIL}')
+    def _(anode, env0):
+        [if_open, if_tail] = anode.children
+
+        benvs = []
+
+        if if_open.prod.rhs_s in [
+            r'If {CONDITION}, {SMALL_COMMAND}.',
+            # r'If {CONDITION}, then {SMALL_COMMAND}.', # 2218
+            r'If {CONDITION}, then{IND_COMMANDS}',
+        ]:
+            [condition, then_part] = if_open.children[0:2]
+            (t_env, f_env) = tc_cond(condition, env0)
+            benvs.append( tc_nonvalue(then_part, t_env) )
+        else:
+            assert 0, str(if_open.prod)
+
+        while True:
+            if if_tail.prod.rhs_s == '{_NL_N} {ELSEIF_PART}{IF_TAIL}':
+                [elseif_part, next_if_tail] = if_tail.children
+                [condition, then_part] = elseif_part.children
+                (t_env, f_env) = tc_cond(condition, f_env)
+                benvs.append( tc_nonvalue(then_part, t_env) )
+                if_tail = next_if_tail
+
+            elif if_tail.prod.rhs_s == '{_NL_N} {ELSE_PART}':
+                [else_part] = if_tail.children
+                benvs.append( tc_nonvalue(else_part, f_env) )
+                break
+
+            elif if_tail.prod.rhs_s == '{EPSILON}':
+                [] = if_tail.children
+                # This is like "Else, nothing"
+                benvs.append( f_env )
+                break
+
+            else:
+                assert 0
+
+        result = envs_or(benvs)
+
+        # kludges to detect no-fall-through when STA can't:
+
+        if_open_st = if_open.source_text()
+
+        if if_open_st == 'If |BooleanLiteral| is the token `true`, return *true*.':
+            # This occurs once, in the Evaluation semantics for `Literal : BooleanLiteral`:
+            #     1. If |BooleanLiteral| is the token `false`, return *false*.
+            #     1. If |BooleanLiteral| is the token `true`, return *true*.
+            # These two steps exhaust the possibilities for |BooleanLiteral|,
+            # and each one results in a 'return',
+            # so it's impossible for control to fall through the second one.
+            # todo: change "If" to "Else"?
+            result = None
+
+        if if_open_st.startswith('If abs(\u211d(_base_)) &lt; 1, return'):
+            # Twice, near the bottom of Number::exponentiate,
+            # there are 3 steps of the form:
+            #     1. If abs(R(_base_)) > 1, return ...
+            #     1. If abs(R(_base_)) is 1, return ...
+            #     1. If abs(R(_base_)) &lt; 1, return ...
+            # These steps exhaust the possibilities for abs(R(_base_)),
+            # and since each one does a return,
+            # it's impossible for control to fall through the last one.
+            result = None
+
+        return result
+
+    @nv.put(r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}")
+    def _(anode, env0):
+        [cond, comm] = anode.children
+        (t_env, f_env) = tc_cond(cond, env0, asserting=True)
+        return tc_nonvalue(comm, t_env)
+
+    # -------------------------------------------------
+
+    @exprd.put(r"{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}")
+    def _(expr, env0, _):
+        [exa, cond, exb] = expr.children
+        (t_env, f_env) = tc_cond(cond, env0)
+        (ta, enva) = tc_expr(exa, t_env)
+        (tb, envb) = tc_expr(exb, f_env)
+        return (ta | tb, env_or(enva, envb))
+
+# ------------------------------------------------------------------------------
+#> A step may specify the iterative application of its substeps.</p>
+
+if 1:
+    @nv.put(r'{COMMAND} : Repeat,{IND_COMMANDS}')
+    def _(anode, env0):
+        [commands] = anode.children
+
+        env_at_bottom = tc_nonvalue(commands, env0)
+
+        # The only way to leave a condition-less Repeat
+        # is via a Return command,
+        # so there can't be anything (except maybe a NOTE) after the loop.
+        return None
+
+        # XXX Should repeat the analysis, feeding the bottom env to the top,
+        # XXX until no change.
+        # XXX (and likewise with other loops)
+
+
+    @nv.put(r'{COMMAND} : Repeat, while {CONDITION},{IND_COMMANDS}')
+    @nv.put(r"{COMMAND} : Repeat, until {CONDITION},{IND_COMMANDS}")
+    def _(anode, env0):
+        [cond, commands] = anode.children
+        (t_env, f_env) = tc_cond(cond, env0)
+
+        p = str(anode.prod)
+        if 'while' in p:
+            (stay_env, exit_env) = (t_env, f_env)
+        elif 'until' in p:
+            (stay_env, exit_env) = (f_env, t_env)
+        else:
+            assert 0
+
+        bottom_env = tc_nonvalue(commands, stay_env)
+        reduced_bottom_env = bottom_env.reduce(stay_env.vars.keys())
+        # assert reduced_bottom_env.equals(stay_env)
+        result = exit_env
+
+        # hack!:
+        if cond.source_text() == '_matchSucceeded_ is *false*': # in RegExpBuiltinExec
+            # This case requires that variable _r_, introduced within the loop,
+            # survive the loop.
+            # (It doesn't have to survive from one iteration to the next,
+            # just from the last iteration to after.)
+            result = result.plus_new_entry('_r_', T_MatchState)
+
+        return result
+
+    @nv.put(r"{COMMAND} : While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}")
+    def _(anode, env0):
+        [cond, commands] = anode.children
+        (t_env, f_env) = tc_cond(cond, env0)
+        bottom_env = tc_nonvalue(commands, t_env)
+        reduced_bottom_env = bottom_env.reduce(t_env.vars.keys())
+        return f_env
+
+    @nv.put(r'{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}')
+    @nv.put(r'{COMMAND} : For each {EACH_THING}, {SMALL_COMMAND}.')
+    def _(anode, env0):
+        [each_thing, commands] = anode.children
+
+        env_for_commands  = tc_nonvalue(each_thing, env0)
+
+        env_after_commands = tc_nonvalue(commands, env_for_commands)
+        # XXX do I need to feed this back somehow?
+
+        # Assume the loop-var doesn't survive the loop
+        # if loop_var:
+        #     result = env_after_commands.with_var_removed(loop_var)
+        # else:
+        #     result = env_after_commands
+
+        # The only variables that 'exit' the loop are those that existed beforehand.
+        names = env0.vars.keys()
+        return env_after_commands.reduce(names)
+
+    @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}")
+    @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in ascending order")
+    @nv.put(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in descending order")
+    def _(each_thing, env0):
+        [item_nature, loop_var, condition] = each_thing.children
+        item_type = {
+            "FinalizationRegistry": T_FinalizationRegistry_object_,
+            "WeakMap"             : T_WeakMap_object_,
+            "WeakRef"             : T_WeakRef_object_,
+            "WeakSet"             : T_WeakSet_object_,
+            "event"               : T_Shared_Data_Block_event,
+            "integer"             : T_MathInteger_,
+        }[item_nature.prod.rhs_s]
+        env1 = env0.plus_new_entry(loop_var, item_type)
+        (tenv, fenv) = tc_cond(condition, env1)
+        return tenv
+
+    @nv.put("{EACH_THING} : {ITEM_NATURE} {var} of {EX}")
+    @nv.put("{EACH_THING} : {ITEM_NATURE} {var} that is an element of {EX}")
+    def _(each_thing, env0):
+        [item_nature, loop_var, collection_expr] = each_thing.children
+
+        if item_nature.prod.rhs_s == "code point":
+            item_type = T_code_point_
+            collection_type = T_Unicode_code_points_
+
+        elif item_nature.prod.rhs_s == r"event":
+            item_type = T_event_
+            collection_type = T_Set | ListType(T_event_)
+
+        elif item_nature.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event":
+            item_type = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+            collection_type = T_Set
+
+        elif item_nature.prod.rhs_s == "{nonterminal}":
+            [nont] = item_nature.children
+            item_type = ptn_type_for(nont)
+            collection_type = ListType(T_Parse_Node)
+
+        elif item_nature.prod.rhs_s == "Record { {DSBN}, {DSBN} }":
+            [dsbn1, dsbn2] = item_nature.children
+            dsbns = (dsbn1.source_text(), dsbn2.source_text())
+            if dsbns == ('[[Module]]', '[[ExportName]]'):
+                item_type = T_ExportResolveSet_Record_
+            elif dsbns == ('[[Key]]', '[[Value]]'):
+                # hack:
+                if collection_expr.source_text() == '_importMetaValues_':
+                    item_type = T_ImportMeta_record_ # PR 1892
+                elif collection_expr.source_text() == '_entries_':
+                    item_type = T_MapData_record_
+                else:
+                    assert 0, collection_expr
+            else:
+                assert 0, dsbns
+            collection_type = ListType(item_type)
+
+        elif item_nature.prod.rhs_s == r"Record { {DSBN}, {DSBN}, {DSBN} }":
+            [dsbn1, dsbn2, dsbn3] = item_nature.children
+            assert dsbn1.source_text() == '[[WeakRefTarget]]'
+            assert dsbn2.source_text() == '[[HeldValue]]'
+            assert dsbn3.source_text() == '[[UnregisterToken]]'
+            item_type = T_FinalizationRegistryCellRecord_
+            collection_type = ListType(item_type)
+
+        else:
+            item_type = {
+                "Agent Events Record" : T_Agent_Events_Record,
+                "Cyclic Module Record": T_Cyclic_Module_Record,
+                "ExportEntry Record"  : T_ExportEntry_Record,
+                "ImportEntry Record"  : T_ImportEntry_Record,
+                "Module Record"       : T_Module_Record,
+                "Parse Node"          : T_Parse_Node,
+                "Private Name"        : T_Private_Name,
+                "PrivateElement"      : T_PrivateElement,
+                "String"              : T_String,
+                "integer"             : T_MathInteger_,
+            }[item_nature.prod.rhs_s]
+            collection_type = ListType(item_type)
+
+        env1 = env0.ensure_expr_is_of_type(collection_expr, collection_type)
+        return env1.plus_new_entry(loop_var, item_type)
+
+    @condd.put(r"{CONDITION_1} : The following loop will terminate")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> A step that begins with “<dfn>Assert</dfn>:”
+#> asserts an invariant condition of its algorithm.
+
+if 1:
+    @nv.put(r'{COMMAND} : Assert: {CONDITION}.')
+    def _(anode, env0):
+        [condition] = anode.children
+        (t_env, f_env) = tc_cond(condition, env0, asserting=True)
+        # throw away f_env
+        return t_env
+
+    @nv.put(r"{COMMAND} : Assert: If {CONDITION}, then {CONDITION}.")
+    @nv.put(r"{COMMAND} : Assert: If {CONDITION}, {CONDITION}.")
+    def _(anode, env0):
+        [cond1, cond2] = anode.children
+        (t1_env, f1_env) = tc_cond(cond1, env0)
+        (t2_env, f2_env) = tc_cond(cond2, t1_env, asserting=True)
+        return env_or(f1_env, t2_env)
+
+    @nv.put(r"{COMMAND} : Assert: {CONDITION_1} if and only if {CONDITION_1}.")
+    def _(anode, env0):
+        [cond1, cond2] = anode.children
+        (t1_env, f1_env) = tc_cond(cond1, env0)
+        (t2_env, f2_env) = tc_cond(cond2, env0)
+        return env_or(
+            env_and(t1_env, t2_env),
+            env_and(f1_env, f2_env)
+        )
+
+    @nv.put(r"{COMMAND} : Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.")
+    def _(anode, env0):
+        [cond_t, cond_x, cond_f] = anode.children
+        (xt_env, xf_env) = tc_cond(cond_x, env0)
+        (tt_env, tf_env) = tc_cond(cond_t, xt_env, asserting=True)
+        (ft_env, ff_env) = tc_cond(cond_f, xf_env, asserting=True)
+        return env_or(tt_env, ft_env)
+
+    @nv.put(r"{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.")
+    def _(anode, env0):
+        [conda, condb] = anode.children
+        (ta_env, fa_env) = tc_cond(conda, env0, asserting=True)
+        (tb_env, fb_env) = tc_cond(condb, env0, asserting=True)
+        return env_and(ta_env, tb_env)
+
+# ------------------------------------------------------------------------------
+#> Algorithm steps may declare named aliases for any value
+#> using the form “Let _x_ be _someValue_”.
+
+if 1:
+    @exprd.put(r'{var} : \b _ [A-Za-z][A-Za-z0-9]* _ \b')
+    def _(expr, env0, _):
+        [var_name] = expr.children
+        return (env0.vars[var_name], env0)
+
+    # Let {var} be ...
+
+    @nv.put(r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)")
+    @nv.put(r"{COMMAND} : Let {var} be {EXPR}.")
+    @nv.put(r"{COMMAND} : Let {var} be {MULTILINE_EXPR}")
+    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}")
+    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that an ordinary object should be created as the global object")
+    @nv.put(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object")
+    def _(anode, env0):
+        [var, expr] = anode.children[0:2]
+        [var_name] = var.children
+
+        (expr_t, env1) = tc_expr(expr, env0)
+
+        if var_name in env0.vars:
+            add_pass_error(
+                anode,
+                "re-Let on existing var `%s`. Use Set?" % var_name
+            )
+            var_t = env0.vars[var_name]
+            if expr_t == var_t:
+                # but at least we're not changing the type
+                return env1
+            elif expr_t == T_TBD:
+                return env1
+                add_pass_error(
+                    anode,
+                    "... also, ignoring the attempt to change the type of var to %s" % str(expr_t)
+                )
+            elif var_name in ['_v_', '_value_'] and var_t in [T_Normal, T_Tangible_ | T_not_set] and expr_t == T_Undefined:
+                # IteratorBindingInitialization, IteratorDestructuringAssignmentEvaluation, others?:
+                # This isn't a re-Let,
+                # because it's never the case that _v_ is already defined at this point,
+                # but my STA isn't smart enough to know that.
+                add_pass_error(
+                    anode,
+                    "... actually, it isn't, but STA isn't smart enough"
+                )
+                return env1
+            elif expr_t.is_a_subtype_of_or_equal_to(var_t):
+                add_pass_error(
+                    anode,
+                    "... also, this narrows the type of var from %s to %s" % (var_t, expr_t)
+                )
+                return env1.with_expr_type_narrowed(var, expr_t)
+            else:
+                add_pass_error(
+                    anode,
+                    "... also, this changes the type of var from %s to %s" % (var_t, expr_t)
+                )
+                return env1.with_expr_type_replaced(var, expr_t)
+        else:
+            # The normal case.
+            return env1.plus_new_entry(var, expr_t)
+
+    @nv.put(r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
+    def _(anode, env0):
+        [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = anode.children
+        assert same_source_text(let_var, let_var2)
+        assert same_source_text(rvar, rvar2)
+        assert same_source_text(rvar, rvar3)
+        assert same_source_text(zvar, zvar2)
+        (t, env1) = tc_expr(expr, env0)
+        return env1.plus_new_entry(let_var, t)
+
+    @nv.put(r"{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.")
+    def _(anode, env0):
+        [let_var, num_expr, var2, var3] = anode.children
+        assert same_source_text(var2, let_var)
+        assert same_source_text(var3, let_var)
+        new_env = env0.plus_new_entry(let_var, T_MathInteger_)
+        new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
+        return new_env
+
+    # Let {var} and {var} ... be ...
+
+    @nv.put(r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.")
+    def _(anode, env0):
+        [m_var, n2_var, n_var] = anode.children
+        env0.assert_expr_is_of_type(n_var, T_String)
+        return env0.plus_new_entry(m_var, T_Module_Record).plus_new_entry(n2_var, T_String)
+
+    @nv.put(r"{COMMAND} : Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.")
+    def _(anode, env0):
+        [e_var, n_var, cond, num_expr, e_var2, n_var2, e_var3, n_var3, product] = anode.children
+        assert same_source_text(e_var2, e_var)
+        assert same_source_text(e_var3, e_var)
+        assert same_source_text(n_var2, n_var)
+        assert same_source_text(n_var3, n_var)
+        new_env = env0.plus_new_entry(e_var, T_MathInteger_).plus_new_entry(n_var, T_MathInteger_)
+        (t_env, f_env) = tc_cond(cond, new_env)
+        t_env.assert_expr_is_of_type(num_expr, T_MathReal_)
+        t_env.assert_expr_is_of_type(product, T_MathReal_)
+        return t_env
+
+    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.")
+    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
+    @nv.put(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
+    def _(anode, env0):
+        [vara, varb, varc, cond] = anode.children[0:4]
+        env_for_cond = (
+            env0.plus_new_entry(vara, T_MathInteger_)
+                .plus_new_entry(varb, T_MathInteger_)
+                .plus_new_entry(varc, T_MathInteger_)
+        )
+        (t_env, f_env) = tc_cond(cond, env_for_cond)
+        return env_for_cond
+
+#> These aliases are reference-like in that both _x_ and _someValue_ refer to the same underlying data
+#> and modifications to either are visible to both.
+#> Algorithm steps that want to avoid this reference-like behaviour
+#> should explicitly make a copy of the right-hand side:
+#> “Let _x_ be a copy of _someValue_” creates a shallow copy of _someValue_.
+
+    @exprd.put(r"{EXPR} : a copy of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        return (t, env1)
+
+#> Once declared, an alias may be referenced in any subsequent steps
+#> and must not be referenced from steps prior to the alias's declaration.
+
+    @exprd.put(r'{SETTABLE} : {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        [var_name] = var.children
+        if var_name not in env0.vars:
+            add_pass_error(
+                var,
+                "NOT DEFINED"
+            )
+            t = T_TBD
+        else:
+            t = env0.vars[var_name]
+            # print("the type of %s is %s" % (var_name, t))
+        return (t, env0)
+
+# ------------------------------------------------------------------------------
+# (there are other ways to declare an alias)
+
+    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX}')
+    def _(expr, env0, _):
+        [exa, var, exb] = expr.children
+        (exb_type, env1) = tc_expr(exb, env0); assert env1 is env0
+        env2 = env1.plus_new_entry(var, exb_type)
+        (exa_type, env3) = tc_expr(exa, env2)
+        return (exa_type, env3)
+
+    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}')
+    @exprd.put(r'{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}')
+    def _(expr, env0, _):
+        [ex3, var2, ex2, var1, ex1] = expr.children
+
+        (ex1_type, ex1_env) = tc_expr(ex1, env0); assert ex1_env is env0
+        env1 = ex1_env.plus_new_entry(var1, ex1_type)
+
+        (ex2_type, ex2_env) = tc_expr(ex2, env1); assert ex2_env is env1
+        env2 = ex2_env.plus_new_entry(var2, ex2_type)
+
+        (ex3_type, ex3_env) = tc_expr(ex3, env2); assert ex3_env is env2
+        return (ex3_type, ex3_env)
+
+# ------------------------------------------------------------------------------
+#> Aliases may be modified using the form “Set _x_ to _someOtherValue_”.</p>
+
+if 1:
+    @nv.put(r'{COMMAND} : Set {SETTABLE} to {EXPR}.')
+    @nv.put(r'{COMMAND} : Set {SETTABLE} to {MULTILINE_EXPR}')
+    @nv.put(r'{SMALL_COMMAND} : set {SETTABLE} to {EXPR}')
+    def _(anode, env0):
+        [settable, expr] = anode.children
+        return env0.set_A_to_B(settable, expr)
+
+    @nv.put(r'{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.')
+    @nv.put(r'{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.')
+    @nv.put(r'{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.')
+    def _(anode, env0):
+        [dotting, emu_xref] = anode.children
+
+        # (t, env1) = tc_expr(settable, env0); assert env1 is env0
+        # XXX: could check that emu_xref is sensible for t, but not really worth it?
+
+        mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
+        sec_id = mo.group(1)
+        implied_base_t = {
+            # 10.2.*
+            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
+            'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
+
+            # 10.3.2
+            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_function_object_,
+
+            # 10.4.1.*
+            'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
+            'sec-bound-function-exotic-objects-construct-argumentslist-newtarget'                    : T_bound_function_exotic_object_,
+
+            # 10.4.2.*
+            'sec-array-exotic-objects-defineownproperty-p-desc'                                      : T_Array_object_,
+
+            # 10.4.3.*
+            'sec-string-exotic-objects-getownproperty-p'                                             : T_String_exotic_object_,
+            'sec-string-exotic-objects-defineownproperty-p-desc'                                     : T_String_exotic_object_,
+            'sec-string-exotic-objects-ownpropertykeys'                                              : T_String_exotic_object_,
+
+            # 10.4.4.*
+            'sec-arguments-exotic-objects-getownproperty-p'                                          : T_Object,
+            'sec-arguments-exotic-objects-defineownproperty-p-desc'                                  : T_Object,
+            'sec-arguments-exotic-objects-get-p-receiver'                                            : T_Object,
+            'sec-arguments-exotic-objects-set-p-v-receiver'                                          : T_Object,
+            'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
+
+            # 10.4.5.*
+            'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
+
+            # 10.5.*
+            'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
+            'sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget' : T_Proxy_exotic_object_,
+
+        }[sec_id]
+
+        assert dotting.prod.rhs_s == '{var}.{DSBN}'
+        [base_var, dsbn] = dotting.children
+
+        (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
+        if curr_base_t == T_Object:
+            return env1.with_expr_type_narrowed(base_var, implied_base_t)
+        elif curr_base_t == T_bound_function_exotic_object_ | T_Proxy_exotic_object_ | T_other_function_object_ and implied_base_t == T_constructor_object_:
+            return env1.with_expr_type_replaced(base_var, implied_base_t)
+        elif curr_base_t == implied_base_t:
+            return env1
+        else:
+            assert 0
+
+# ------------------------------------------------------------------------------
+# (This section is where "Return" steps should be mentioned?)
+
+if 1:
+    @nv.put(r"{COMMAND} : Return {EXPR}.")
+    @nv.put(r"{COMMAND} : Return {EXPR}. This may be of type Reference.")
+    @nv.put(r"{COMMAND} : Return {MULTILINE_EXPR}")
+    @nv.put(r"{SMALL_COMMAND} : return {EXPR}")
+    def _(anode, env0):
+        [expr] = anode.children
+        (t1, env1) = tc_expr(expr, env0)
+        # assert env1 is env0
+        if False and trace_this_op:
+            print("Return command's expr has type", t1)
+        proc_add_return(env1, t1, anode)
+        return None
+
+# ------------------------------------------------------------------------------
+# (This section is where "Note" steps should be mentioned?)
+
+if 1:
+    @nv.put(r'{COMMAND} : {note}')
+    def _(anode, env0):
+        return env0
+
+# ------------------------------------------------------------------------------
+# (This section is where conditions should be mentioned?)
+
+    @condd.put(r'{CONDITION} : {CONDITION_1}')
+    @condd.put(r'{CONDITION_1} : {TYPE_TEST}')
+    @condd.put(r'{CONDITION_1} : {NUM_COMPARISON}')
+    def _(cond, env0, asserting):
+        [child] = cond.children
+        return tc_cond(child, env0, asserting)
+
+    @condd.put(r"{CONDITION} : either {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or if {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
+    def _(cond, env0, asserting):
+        logical = ('or', cond.children)
+        return tc_logical(logical, env0, asserting)
+
+    @condd.put(r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}")
+    @condd.put(r'{CONDITION} : {CONDITION_1} and {CONDITION_1}')
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}")
+    @condd.put(r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}')
+    def _(cond, env0, asserting):
+        logical = ('and', cond.children)
+        return tc_logical(logical, env0, asserting)
+
+    @condd.put(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [conda, condb, condc] = cond.children
+        logical = (
+            'or',
+            [
+                conda,
+                ('and', [condb, condc])
+            ]
+        )
+        return tc_logical(logical, env0, asserting)
+
+    @condd.put(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>")
+    def _(cond, env0, asserting):
+        [a, b, c] = cond.children
+        logical = (
+            'and',
+            [
+                ('or', [a, b]),
+                c
+            ]
+        )
+        return tc_logical(logical, env0, asserting)
+
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [a, b, c, d] = cond.children
+        logical = (
+            'or',
+            [
+                ('and', [a, b]),
+                ('and', [c, d]),
+            ]
+        )
+        return tc_logical(logical, env0, asserting)
+
+    @condd.put(r"{CONDITION} : ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})")
+    def _(cond, env0, asserting):
+        [a, b, c, d] = cond.children
+        logical = (
+            'and',
+            [
+                ('or', [a, b]),
+                ('or', [c, d]),
+            ]
+        )
+        return tc_logical(logical, env0, asserting)
+
+    @condd.put(r"{CONDITION} : {CONDITION_1} unless {CONDITION_1}")
+    @condd.put(r"{CONDITION} : {CONDITION_1}, unless {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [conda, condb] = cond.children
+        tc_cond(conda, env0)
+        tc_cond(condb, env0)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 5.2.1 Abstract Operations
+
+if 1:
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.")
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}")
+    @nv.put(r"{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}")
+    def _(anode, env0):
+        noi = anode.children[0]
+        (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded=True)
+        if noi_t.is_a_subtype_of_or_equal_to(T_tilde_unused_ | T_Undefined | T_tilde_empty_):
+            pass
+        else:
+            if 0:
+                # disable because it's noisy for no benefit?
+                add_pass_error(
+                    anode,
+                    "`Perform/Call` discards `%s` value"
+                    % str(noi_t)
+                )
+        return env1
+
+    @exprd.put(r"{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, expr_value_will_be_discarded):
+        [noi] = expr.children
+        (noi_t, env1) = tc_expr(noi, env0, expr_value_will_be_discarded)
+        if noi_t == T_TBD:
+            # Don't do the comparison to Normal,
+            # because that loses the TBD-ness,
+            # which is used as a sentinel all over.
+            return (noi_t, env1)
+        else:
+            # (normal_part_of_type, abrupt_part_of_type) = noi_t.split_by(T_Normal)
+            # if abrupt_part_of_type != T_0:
+            #     add_pass_error(
+            #         expr,
+            #         "warning: `%s` static type includes `%s`, but isn't prefixed by ! or ?"
+            #         % (expr.source_text(), abrupt_part_of_type)
+            #     )
+            #     # But that might be okay.
+            #     # E.g. Return {NAMED_OPERATION_INVOCATION} -- inserting a '?' would have no effect.
+            #     # or if next instruction is ReturnIfAbrupt.
+            #     # So I dropped this warning,
+            #     # and just rely on Abrupt values being flagged if necessary down the line.
+            return (noi_t, env1)
+
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}")
+    def _(expr, env0, _):
+        [_, noi, _] = expr.children
+        return tc_expr(noi, env0)
+
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})")
+    def _(expr, env0, _):
+        [pp, _] = expr.children
+        return tc_expr(pp, env0)
+
+#> Abstract operations are typically referenced using a functional application style
+#> such as OperationName(_arg1_, _arg2_).
+
+if 1:
+    @exprd.put(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
+    def _(expr, env0, _):
+        [opn_before_paren, arglist] = expr.children[0:2]
+        args = exes_in_exlist_opt(arglist)
+
+        if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
+            (_, opn_before_paren, _) = opn_before_paren.children
+
+        if opn_before_paren.prod.rhs_s in [
+            r'{DOTTING}',
+            r'{var}',
+        ]:
+            [thing] = opn_before_paren.children
+            (t, env0) = tc_expr(thing, env0)
+            assert isinstance(t, ProcType)
+            params = with_fake_param_names(t.param_types)
+            return_type = t.return_type
+
+        elif opn_before_paren.prod.rhs_s == r'{var}.{cap_word}':
+            [var, cap_word] = opn_before_paren.children
+            callee_op_name = cap_word.source_text()
+
+            callee_op = spec.alg_info_['op'][callee_op_name]
+            assert callee_op.species in [
+                'op: discriminated by type: env rec',
+                'op: discriminated by type: module rec',
+            ]
+
+            # XXX If PR #955 is accepted, that will change things around here.
+
+            # When there's a type hierarchy (under Environment Record or Module Record),
+            # and sub-types augment the set of types defined at the root,
+            # then the use of one of those added methods
+            # implies a tighter constraint on the type of the LHS.
+
+            assert len(callee_op.headers) > 0
+            forp_types = [
+                header.tah.for_param_type
+                for header in callee_op.headers
+            ]
+            if callee_op_name in ['Link', 'Evaluate']:
+                # These are abstract methods of all Module Records,
+                # but the spec only has definitions for Cyclic Module Records.
+                forp_types.append(T_other_Module_Record)
+            elif callee_op_name in ['GetExportedNames', 'ResolveExport']:
+                # These are abstract methods of all Module Records,
+                # but the spec only has definitions for Source Text Module Records.
+                forp_types.append(T_other_Module_Record)
+                forp_types.append(T_other_Cyclic_Module_Record)
+            elif callee_op_name in ['InitializeEnvironment', 'ExecuteModule']:
+                # These are abstract methods of all Cyclic Module Records,
+                # but the spec only has definitions for Source Text Module Records.
+                forp_types.append(T_other_Cyclic_Module_Record)
+
+            union_of_forp_types = union_of_types(forp_types)
+
+            env0 = env0.ensure_expr_is_of_type(var, union_of_forp_types)
+
+            params = callee_op.parameters_with_types
+            return_type = callee_op.return_type
+
+        elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
+            callee_op_name = opn_before_paren.source_text()
+
+            # NormalCompletion and ThrowCompletion are regular abstract operations now,
+            # so you might expect that we'd use their deduced return types.
+            # However, that would lose information, so we don't.
+
+            if callee_op_name == 'NormalCompletion':
+                assert len(args) == 1
+                [arg] = args
+                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+                assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
+                return_type = arg_type
+                return (return_type, env0)
+                # don't call tc_args etc
+
+            elif callee_op_name == 'ThrowCompletion':
+                assert len(args) == 1
+                [arg] = args
+                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+                if arg_type == T_TBD: arg_type = T_Normal
+                assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
+                return_type = ThrowType(arg_type)
+                return (return_type, env0)
+
+            elif callee_op_name == 'Completion':
+                assert len(args) == 1
+                [arg] = args
+                (arg_type, env1) = tc_expr(arg, env0)
+                return_type = arg_type # bleah
+                return (return_type, env1)
+
+            elif callee_op_name == 'abs':
+                assert len(args) == 1
+                [arg] = args
+                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+                if arg_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
+                    return (T_MathInteger_, env0)
+                elif arg_type.is_a_subtype_of_or_equal_to(T_MathReal_):
+                    return (T_MathReal_, env0)
+                else:
+                    add_pass_error(
+                        arg,
+                        f"expected a MathReal, got {arg_type}"
+                    )
+                    return (T_MathReal_, env0)
+
+            elif callee_op_name in ['floor', 'truncate']:
+                assert len(args) == 1
+                [arg] = args
+                env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
+                return (T_MathInteger_, env1)
+
+            elif callee_op_name == '\u211d': # DOUBLE-STRUCK CAPITAL R (fancy_r)
+                assert len(args) == 1
+                [arg] = args
+                (arg_type, arg_env) = tc_expr(arg, env0)
+                if arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_IntegralNumber_):
+                    return (T_MathInteger_, arg_env)
+                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
+                    return (T_MathReal_, env0)
+                else:
+                    add_pass_error(
+                        arg,
+                        f"expected a BigInt or a finite Number, got {arg_type}"
+                    )
+                    return (T_ExtendedMathReal_, env0)
+
+            elif callee_op_name == '\u2124': # DOUBLE-STRUCK CAPITAL Z (fancy_z)
+                assert len(args) == 1
+                [arg] = args
+                env0.assert_expr_is_of_type(arg, T_MathInteger_)
+                return (T_BigInt, env0)
+
+            elif callee_op_name == '\U0001d53d': # MATHEMATICAL DOUBLE-STRUCK CAPITAL F (fancy_f)
+                assert len(args) == 1
+                [arg] = args
+                (t, env1) = tc_expr(arg, env0)
+                if t.is_a_subtype_of_or_equal_to(T_MathInteger_):
+                    result_type = T_IntegralNumber_
+                elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
+                    result_type = T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
+                elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+                    result_type = T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
+                elif t == T_TBD:
+                    result_type = T_IntegralNumber_ # hm
+                else:
+                    add_pass_error(arg,
+                        f"ERROR: arg is of type {t} but fancy_f requires ExtendedMathReal"
+                    )
+                    result_type = T_Number
+                return (result_type, env1)
+
+            elif callee_op_name in ['min', 'max']:
+                assert len(args) == 2
+                env1 = env0
+                argtypes = []
+                for arg in args:
+                    (t, env1) = tc_expr(arg, env1)
+                    if not t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+                        add_pass_error(arg,
+                            f"arg is of type {t} but param requires ExtendedMathReal"
+                        )
+                        if t == T_MathInteger_ | T_tilde_empty_:
+                            # InnerModuleEvaluation
+                            t = T_MathInteger_
+                    argtypes.append(t)
+
+                if callee_op_name == 'min':
+                    # We allow an arg to be +infinity, but that won't be the result.
+                    # (As long as both args aren't +infinity.)
+                    add_type = T_MathPosInfinity_
+                else:
+                    add_type = T_MathNegInfinity_
+
+                for math_type in [T_MathInteger_, T_MathReal_, T_ExtendedMathReal_]:
+                    if all(
+                        t.is_a_subtype_of_or_equal_to(math_type | add_type)
+                        for t in argtypes
+                    ):
+                        return (math_type, env1)
+                assert 0
+                return (T_ExtendedMathReal_, env1)
+
+            elif callee_op_name in [
+                # 30232 Day Number and Time within Day
+                'Day',
+                'TimeWithinDay',
+
+                # 30264 Month Number
+                'MonthFromTime',
+
+                # 30286 Date Number
+                'DateFromTime',
+
+                # 30305 Week Day
+                'WeekDay',
+
+                # 30376 Hours, Minutes, Second, and Milliseconds
+                'HourFromTime',
+                'MinFromTime',
+                'SecFromTime',
+                'msFromTime',
+
+                # 'DaylightSavingTA',
+            ]:
+                assert len(args) == 1
+                [arg] = args
+                env1 = env0.ensure_expr_is_of_type(arg, T_FiniteNumber_)
+                return (T_FiniteNumber_, env1)
+
+            # 30424 Year Number
+            elif callee_op_name == 'YearFromTime':
+                assert len(args) == 1
+                [arg] = args
+                env1 = env0.ensure_expr_is_of_type(arg, T_Number)
+                return (T_IntegralNumber_, env1)
+
+
+            # ---------------
+
+            else:
+                callee_op = spec.alg_info_['op'][callee_op_name]
+                if callee_op.species == 'op: discriminated by syntax: steps':
+                    add_pass_error(
+                        expr,
+                        "Unusual to invoke a SDO via prefix-paren notation: " + expr.source_text()
+                    )
+                    assert len(args) == 1
+                    return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
+                else:
+                    assert callee_op.species.startswith('op: singular'), callee_op.species
+                params = callee_op.parameters_with_types
+                return_type = callee_op.return_type
+                # fall through to tc_args etc
+
+                # if callee_op_name == 'ResolveBinding': pdb.set_trace()
+
+        else:
+            assert 0, opn_before_paren.prod.rhs_s
+
+        # context = 'in call to `%s`' % opn_before_paren.source_text()
+        env2 = tc_args(params, args, env0, expr)
+        return (return_type, env2)
+
+#> Some abstract operations are treated as
+#> polymorphically dispatched methods of class-like specification abstractions.
+#> Such method-like abstract operations are typically referenced
+#> using a method application style such as _someValue_.OperationName(_arg1_, _arg2_).
+
+# ==============================================================================
+#@ 5.2.2 Syntax-Directed Operations
+
+#> When an algorithm is associated with a grammar production,
+#> it may reference the terminal and nonterminal symbols
+#> of the production alternative
+#> as if they were parameters of the algorithm.
+
+if 1:
+    @exprd.put(r"{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
+    def _(expr, env0, _):
+        [nonterminal, var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        # XXX could check that t is a nonterminal that actually has a child of that type
+        # but that requires having the whole grammar handy
+        return (ptn_type_for(nonterminal), env0)
+
+    @exprd.put(r'{PROD_REF} : this {nonterminal}')
+    def _(expr, env0, _):
+        [nonterminal] = expr.children
+        # XXX check
+        return (ptn_type_for(nonterminal), env0)
+
+    @exprd.put(r'{PROD_REF} : {nonterminal}')
+    def _(expr, env0, _):
+        [nonterminal] = expr.children
+        return (ptn_type_for(nonterminal), env0)
+
+    @exprd.put(r"{PROD_REF} : {nonterminal} {var}")
+    def _(expr, env0, _):
+        [nonterminal, var] = expr.children
+        t = ptn_type_for(nonterminal)
+        env0.assert_expr_is_of_type(var, t)
+        return (t, env0)
+
+    @exprd.put(r'{PROD_REF} : the {ORDINAL} {nonterminal}')
+    def _(expr, env0, _):
+        [ordinal, nonterminal] = expr.children
+        # XXX should check that the 'current' production has such.
+        return (ptn_type_for(nonterminal), env0)
+
+    @exprd.put(r'{PROD_REF} : the {nonterminal}')
+    def _(expr, env0, _):
+        nonterminal = expr.children[-1]
+        return (ptn_type_for(nonterminal), env0)
+
+    @exprd.put(r"{PROD_REF} : that {nonterminal}")
+    def _(expr, env0, _):
+        [nont] = expr.children
+        return (ptn_type_for(nont), env0)
+
+    @exprd.put(r"{PROD_REF} : this phrase")
+    @exprd.put(r"{PROD_REF} : this production")
+    def _(expr, env0, _):
+        return (T_Parse_Node, env0)
+
+    @exprd.put(r"{PROD_REF} : the derived {nonterminal}")
+    def _(expr, env0, _):
+        [nont] = expr.children
+        return (T_Parse_Node, env0)
+
+    @tbd.put('{VAL_DESC} : the {nonterminal} of an? {nonterminal}')
+    def _(val_desc, env):
+        [nont1, nont2] = val_desc.children
+        return a_subset_of(ptn_type_for(nont1))
+
+    @condd.put(r'{CONDITION_1} : {LOCAL_REF} is present')
+    @condd.put(r'{CONDITION_1} : {LOCAL_REF} is not present')
+    def _(cond, env0, asserting):
+        [ex] = cond.children
+        if ex.is_a('{PROD_REF}'):
+            t = T_not_in_node
+        elif ex.is_a('{var}'):
+            # todo: get rid of this usage. (roll eyes at PR #953)
+            t = T_not_passed # assuming it's a parameter
+        else:
+            assert 0, ex.source_text()
+        copula = 'is a' if 'not present' in cond.prod.rhs_s else 'isnt a'
+        return env0.with_type_test(ex, copula, t, asserting)
+
+#> The <dfn>source text matched by</dfn> a grammar production
+#> or Parse Node derived from it
+#> is the portion of the source text
+#> that starts at the beginning of the first terminal that participated in the match
+#> and ends at the end of the last terminal that participated in the match.
+
+#> Syntax-directed operations are invoked with a parse node and, optionally, other parameters ...
+
+if 1:
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}")
+    def _(expr, env0, _):
+        [callee, local_ref] = expr.children[0:2]
+        callee_op_name = callee.source_text()
+        if callee_op_name in ['UTF16EncodeCodePoint', 'UTF16SurrogatePairToCodePoint']:
+            # An abstract operation that uses SDO-style invocation.
+            return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
+        else:
+            return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
+
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}")
+    def _(expr, env0, _):
+        [callee, local_ref, with_args] = expr.children
+        callee_op_name = callee.source_text()
+        if with_args.prod.rhs_s in [
+            'with argument {EX}',
+            'with arguments {EX} and {EX}',
+            'with arguments {var}, {var}, and {var}',
+        ]:
+            args = with_args.children
+        else:
+            assert 0, with_args.prod.rhs_s
+        return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
+
+# ==============================================================================
+#@ 5.2.3 Runtime Semantics
+
+# ==============================================================================
+#@ 5.2.3.2 Throw an Exception
+
+if 1:
+    @nv.put(r"{COMMAND} : Throw a {ERROR_TYPE} exception.")
+    @nv.put(r"{SMALL_COMMAND} : throw a {ERROR_TYPE} exception because the structure is cyclical")
+    @nv.put(r'{SMALL_COMMAND} : throw a {ERROR_TYPE} exception')
+    def _(anode, env0):
+        [error_type] = anode.children
+        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), anode)
+        return None
+
+# ==============================================================================
+#@ 5.2.3.3 ReturnIfAbrupt
+
+if 1:
+    @nv.put(r"{COMMAND} : ReturnIfAbrupt({EX}).")
+    @nv.put(r"{SMALL_COMMAND} : ReturnIfAbrupt({var})")
+    def _(anode, env0):
+        [ex] = anode.children
+        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
+        if ex_t == T_TBD:
+            # Doesn't make sense to compare_types
+            # And a proc_add_return(..., T_TBD) wouldn't help
+            return env1
+        else:
+            (normal_part_of_ex_t, abnormal_part_of_ex_t) = ex_t.split_by(T_Normal)
+            if normal_part_of_ex_t == T_0:
+                add_pass_error(
+                    anode,
+                    "ST of `%s` is `%s`, so could just Return, rather than ReturnIfAbrupt"
+                    % (ex.source_text(), ex_t)
+                )
+            if abnormal_part_of_ex_t == T_0:
+                add_pass_error(
+                    anode,
+                    "STA indicates that calling RIA is unnecessary, because `%s` can't be abrupt"
+                    % ex.source_text()
+                )
+
+            proc_add_return(env1, abnormal_part_of_ex_t, anode)
+            return env1.with_expr_type_narrowed(ex, normal_part_of_ex_t)
+
+# ==============================================================================
+#@ 5.2.3.4 ReturnIfAbrupt Shorthands
+
+if 1:
+    @exprd.put(r'{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}')
+    @exprd.put(r"{EX} : ? {DOTTING}")
+    @exprd.put(r"{EX} : ? {var}")
+    def _(expr, env0, _):
+        [operand] = expr.children
+        (operand_t, env1) = tc_expr(operand, env0)
+
+        if operand_t == T_TBD:
+            return (T_TBD, env1)
+
+        (abrupt_part_of_type, normal_part_of_type) = operand_t.split_by(T_Abrupt)
+
+        if normal_part_of_type == T_0:
+            add_pass_error(
+                expr,
+                "used '?', but STA says operation can't return normal: " + expr.source_text()
+            )
+
+        if abrupt_part_of_type == T_0:
+            add_pass_error(
+                expr,
+                "used '?', but STA says operation can't return abrupt: " + expr.source_text()
+            )
+
+        proc_add_return(env1, abrupt_part_of_type, expr)
+
+        env2 = env1
+        if str(operand.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
+            [pp] = operand.children
+            assert str(pp.prod).startswith(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
+            [opn_before_paren, exlist_opt] = pp.children[0:2]
+            prefix = opn_before_paren.source_text()
+
+            if prefix == 'RequireInternalSlot':
+                # This amounts to a type-test.
+                # I.e., in the not-returning-early env resulting from this NAMED_OPERATION_INVOCATION,
+                # we can narrow the type of the first arg to RequireInternalSlot.
+                (obj_arg, slotname_arg) = exes_in_exlist_opt(exlist_opt)
+
+                t = {
+                    '[[ArrayBufferData]]'       : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
+                    '[[AsyncGeneratorContext]]' : T_AsyncGenerator_object_,
+                    '[[AsyncGeneratorQueue]]'   : T_AsyncGenerator_object_,
+                    '[[AsyncGeneratorState]]'   : T_AsyncGenerator_object_,
+                    '[[Cells]]'                 : T_FinalizationRegistry_object_,
+                    '[[DataView]]'              : T_Object,
+                    '[[GeneratorBrand]]'        : T_Object,
+                    '[[GeneratorState]]'        : T_Object,
+                    '[[MapData]]'               : T_Object,
+                    '[[RegExpMatcher]]'         : T_Object,
+                    '[[SetData]]'               : T_Object,
+                    '[[TypedArrayName]]'        : T_TypedArray_object_,
+                    '[[WeakMapData]]'           : T_WeakMap_object_,
+                    '[[WeakRefTarget]]'         : T_WeakRef_object_,
+                    '[[WeakSetData]]'           : T_WeakSet_object_,
+                }[slotname_arg.source_text()]
+
+                env2 = env1.with_expr_type_narrowed(obj_arg, t)
+
+            elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray']:
+                obj_arg = exes_in_exlist_opt(exlist_opt)[0]
+                env2 = env1.with_expr_type_narrowed(obj_arg, T_TypedArray_object_)
+
+            elif prefix == 'GeneratorValidate':
+                gen_arg = exes_in_exlist_opt(exlist_opt)[0]
+                env2 = env1.with_expr_type_narrowed(gen_arg, T_Object)
+
+        return (normal_part_of_type, env2)
+
+    @exprd.put(r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
+    def _(expr, env0, _):
+        [noi] = expr.children
+        (noi_t, env1) = tc_expr(noi, env0)
+
+        if noi_t == T_TBD:
+            return (T_TBD, env1)
+
+        (abrupt_part_of_type, normal_part_of_type) = noi_t.split_by(T_Abrupt)
+
+        if abrupt_part_of_type == T_0:
+            # add_pass_error(
+            #     noi,
+            #     "The static type of the invocation is `%s`, so shouldn't need a '!'" % str(noi_t)
+            # )
+            # There are a lot of these now, and it's only goig to increase.
+            pass
+        else:
+            # add_pass_error(
+            #     expr,
+            #     "STA fails to confirm that `%s` will return a Normal" % noi.source_text()
+            # )
+            # It's unsurprising, perhaps even *expected*,
+            # that STA can't confirm it.
+            pass
+
+        return (normal_part_of_type, env1)
+
+# ==============================================================================
+#@ 5.2.3.5 Implicit Normal Completion
+
+# ==============================================================================
+#@ 5.2.4 Static Semantics
+
+#> A special kind of static semantic rule is an Early Error Rule.
+
+if 1:
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}.")
+    @nv.put(r"{EE_RULE} : It is an early Syntax Error if {CONDITION}.")
+    def _(anode, env0):
+        [cond] = anode.children
+        tc_cond(cond, env0, False)
+        return None
+
+    @nv.put(r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>")
+    def _(anode, env0):
+        [local_ref1, h_emu_grammar, local_ref2, local_ref3] = anode.children
+        env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
+        env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
+        env0.assert_expr_is_of_type(local_ref3, T_Parse_Node)
+        return None
+
+    @nv.put(r"{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.")
+    def _(anode, env0):
+        [cond, h_emu_grammar] = anode.children
+        tc_cond(cond, env0, False)
+        return None
+
+    @nv.put(r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.")
+    def _(anode, env0):
+        [conda, condb] = anode.children
+        (tenv, fenv) = tc_cond(conda, env0, False)
+        tc_cond(condb, tenv, False)
+        return None
+
+    @nv.put(r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}")
+    def _(anode, env0):
+        [cond, bool_lit, h_emu_alg] = anode.children
+        tc_cond(cond, env0)
+        # XXX should check h_emu_alg
+        return None
+
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.")
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.")
+    def _(anode, env0):
+        [cond, g_sym, h_emu_xref] = anode.children
+        tc_cond(cond, env0)
+        return None
+
+    @nv.put(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.")
+    def _(anode, env0):
+        [conda, condb] = anode.children
+        (t_env, f_env) = tc_cond(condb, env0)
+        tc_cond(conda, f_env)
+        return None
+
+    @nv.put(r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
+    def _(anode, env0):
+        [nont, var, noi, cond] = anode.children
+        t = ptn_type_for(nont)
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(t))
+        env2 = env1.plus_new_entry(var, t)
+        tc_cond(cond, env2)
+        return None
+
+# ==============================================================================
+#@ 5.2.5 Mathematical Operations
+
+#> This specification makes reference to these kinds of numeric values:
+#>  -- <dfn>Mathematical values</dfn>: Arbitrary real numbers, used as the default numeric type.
+#>  -- <dfn>Extended mathematical values</dfn>: Mathematical values together with +∞ and -∞.
+#>  -- <em>Numbers</em>: IEEE 754-2019 double-precision floating point values.
+#>  -- <em>BigInts</em>: ECMAScript language values representing arbitrary integers in a one-to-one correspondence.
+
+if 1:
+    tbd['{VAL_DESC} : a mathematical value'] = T_MathReal_
+    tbd['{VAL_DESC} : a non-negative extended mathematical value'] = a_subset_of(T_MathReal_ | T_MathPosInfinity_)
+
+#> Numeric operators such as +, ×, =, and ≥ refer to those operations
+#> as determined by the type of the operands.
+#> When applied to mathematical values,
+#>      the operators refer to the usual mathematical operations.
+#> When applied to extended mathematical values,
+#>      the operators refer to the usual mathematical operations over the extended real numbers;
+#>      indeterminate forms are not defined
+#>      and their use in this specification should be considered an editorial error.
+#> When applied to Numbers,
+#>      the operators refer to the relevant operations within IEEE 754-2019.
+#> When applied to BigInts,
+#>      the operators refer to the usual mathematical operations
+#>      applied to the mathematical value of the BigInt.
+#> ...
+#> Numeric operators applied to mixed-type operands
+#> (such as a Number and a mathematical value)
+#> are not defined and should be considered an editorial error in this specification.
+
+if 1:
+    @exprd.put(r'{SUM} : {TERM} {SUM_OPERATOR} {TERM}')
+    @exprd.put(r"{SUM} : {SUM} {SUM_OPERATOR} {TERM}")
+    @exprd.put(r'{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}')
+    def _(expr, env0, _):
+        [a, op, b] = expr.children
+        (a_t, env1) = tc_expr(a, env0)
+        (b_t, env2) = tc_expr(b, env1)
+        op_st = op.source_text()
+
+        def type_arithmetic(a_mt, op_st, b_mt, a, b):
+            triple = (a_mt, op_st, b_mt)
+            result_t = {
+
+                # --------
+
+                # Mathematical values:
+
+                (T_ExtendedMathReal_, 'modulo', T_MathInteger_): 'ST of A includes infinities',
+                (T_ExtendedMathReal_, 'modulo', T_MathReal_   ): 'ST of A includes infinities',
+
+                (T_ExtendedMathReal_, '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '×'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '+'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '-'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '/'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_ExtendedMathReal_, '/'      , T_MathInteger_     ): T_ExtendedMathReal_,
+                (T_MathInteger_     , '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+                (T_MathInteger_     , '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+
+                (T_MathPosInfinity_ , '+'      , T_MathReal_        ): T_MathPosInfinity_,
+
+                (T_MathInteger_    , '+'      , T_MathNegInfinity_): T_MathNegInfinity_,
+
+                (T_MathInteger_, '×'      , T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '+'      , T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '-'      , T_MathReal_   ): T_MathReal_,
+                (T_MathInteger_, '/'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '×'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '×'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , '+'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '+'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , '-'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '-'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , '/'      , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , '/'      , T_MathReal_   ): T_MathReal_,
+                (T_MathReal_   , 'modulo' , T_MathInteger_): T_MathReal_,
+                (T_MathReal_   , 'modulo' , T_MathReal_   ): T_MathReal_,
+
+                (T_MathInteger_, '×'      , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, '+'      , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, '-'      , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, 'modulo' , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, 'plus'   , T_MathInteger_): T_MathInteger_,
+                (T_MathInteger_, 'times'  , T_MathInteger_): T_MathInteger_,
+                (T_code_point_ , '-'      , T_MathInteger_): T_MathInteger_, # warn
+                (T_code_unit_  , '-'      , T_MathInteger_): T_MathInteger_, # warn
+
+                # --------
+
+                # Numbers:
+
+                (T_Number       , '-'      , T_IntegralNumber_): 'A could be NaN',
+
+                (T_FiniteNumber_     , '×'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn [assuming finite is > 0]
+                (T_FiniteNumber_     , '+'      , T_NegInfinityNumber_): T_NegInfinityNumber_, # warn
+                (T_FiniteNumber_     , '-'      , T_PosInfinityNumber_): T_NegInfinityNumber_, # warn
+                (T_NegInfinityNumber_, '+'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
+                (T_NegInfinityNumber_, '-'      , T_IntegralNumber_   ): T_NegInfinityNumber_, # warn
+                (T_NegInfinityNumber_, '/'      , T_FiniteNumber_     ): T_NegInfinityNumber_, # warn [assuming finite is > 0]
+
+                (T_FiniteNumber_     , '×'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn [assuming finite is > 0]
+                (T_FiniteNumber_     , '+'      , T_PosInfinityNumber_): T_PosInfinityNumber_, # warn
+                (T_FiniteNumber_     , '-'      , T_NegInfinityNumber_): T_PosInfinityNumber_, # warn
+                (T_PosInfinityNumber_, '+'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
+                (T_PosInfinityNumber_, '-'      , T_IntegralNumber_   ): T_PosInfinityNumber_, # warn
+                (T_PosInfinityNumber_, '/'      , T_FiniteNumber_     ): T_PosInfinityNumber_, # warn [assuming finite is > 0]
+
+                (T_FiniteNumber_  , '×'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '+'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '+'      , T_IntegralNumber_): T_FiniteNumber_,
+                (T_FiniteNumber_  , '-'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '-'      , T_IntegralNumber_): T_FiniteNumber_,
+                (T_FiniteNumber_  , '/'      , T_FiniteNumber_  ): T_FiniteNumber_, # assuming that b isn't 0
+                (T_IntegralNumber_, '/'      , T_FiniteNumber_  ): T_FiniteNumber_,
+
+                (T_IntegralNumber_, '+', T_IntegralNumber_): T_IntegralNumber_,
+                (T_IntegralNumber_, '-', T_IntegralNumber_): T_IntegralNumber_,
+
+                # --------
+
+                # BigInts:
+
+                (T_BigInt, '×'      , T_BigInt): T_BigInt,
+                (T_BigInt, '-'      , T_BigInt): T_BigInt,
+
+                # --------
+
+                # misc:
+
+                (T_not_set     , '×'      , T_MathInteger_): 'A is non-numeric',
+                (T_tilde_empty_, '-'      , T_MathInteger_): 'A is non-numeric',
+
+            }[triple]
+
+            if result_t == 'A is non-numeric':
+                add_pass_error(a, f"ST of operand is {a_t}, which includes {a_mt}, which is non-numeric")
+                result_t = T_MathInteger_ # XXX
+            elif result_t == 'A could be NaN':
+                add_pass_error(a, f"ST of operand is {a_t}, which includes *NaN*, which you can't do arithmetic on")
+                result_t = T_Number
+            elif result_t == 'B could be NaN':
+                add_pass_error(b, f"ST of operand is {b_t}, which includes *NaN*, which you can't do arithmetic on")
+                result_t = T_Number
+            elif result_t == 'ST of A includes infinities':
+                add_pass_error(a, "operand could be infinite, which doesn't make sense with 'modulo'")
+                result_t = T_MathInteger_
+            else:
+                assert isinstance(result_t, Type)
+
+            return result_t
+                    
+        result_t = T_0
+        for a_mt in a_t.set_of_types():
+            for b_mt in b_t.set_of_types():
+                result_t = result_t | type_arithmetic(a_mt, op_st, b_mt, a, b)
+        return (result_t, env2)
+
+    @exprd.put(r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}")
+    def _(expr, env0, _):
+        ex = expr.children[-1]
+        (t, env1) = tc_expr(ex, env0); assert env1 is env0
+        assert (
+            t == T_TBD
+            or
+            t.is_a_subtype_of_or_equal_to(T_MathReal_)
+            or
+            t.is_a_subtype_of_or_equal_to(T_Number)
+            or
+            t.is_a_subtype_of_or_equal_to(T_BigInt)
+        )
+        return (t, env1)
+
+    @exprd.put(r'{EXPR} : the negative of {EX}')
+    def _(expr, env0, _):
+        [ex] = expr.children
+        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
+        assert ex_t == T_TBD or ex_t == T_MathInteger_
+        return (ex_t, env0)
+
+    @exprd.put(r"{PRODUCT} : the negation of {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathReal_)
+        return (T_MathReal_, env0)
+
+    @exprd.put(r"{EX} : the remainder of dividing {EX} by {EX}")
+    @exprd.put(r"{EX} : The remainder of dividing {EX} by {EX}")
+    def _(expr, env0, _):
+        [aex, bex] = expr.children
+        env0.assert_expr_is_of_type(aex, T_MathInteger_)
+        env0.assert_expr_is_of_type(bex, T_MathInteger_)
+        return (T_MathInteger_, env0)
+
+    @exprd.put(r"{PRODUCT} : the quotient {FACTOR} / {FACTOR}")
+    def _(expr, env0, _):
+        [vara, varb] = expr.children
+        env1 = env0.ensure_expr_is_of_type(vara, T_MathReal_)
+        env2 = env1.ensure_expr_is_of_type(varb, T_MathReal_)
+        return (T_MathReal_, env2)
+
+    @exprd.put(r"{EX} : {EX}, rounding down to the nearest integer, including for negative numbers")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathReal_)
+        return (T_MathInteger_, env0)
+
+    @exprd.put(r"{FACTOR} : {BASE}<sup>{EX}</sup>")
+    def _(expr, env0, _):
+        [base, exponent] = expr.children
+        (base_t, env1) = tc_expr(base, env0); assert env1 is env0
+        if base_t == T_MathInteger_:
+            env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_ | T_BigInt)
+        else:
+            assert 0, base_t
+        return (base_t, env1) # XXX unless exponent is negative
+
+    @exprd.put(r"{NUM_EXPR} : {EX} raised to the power {EX}")
+    def _(expr, env0, _):
+        [a, b] = expr.children
+        env0.assert_expr_is_of_type(a, T_MathInteger_)
+        env0.assert_expr_is_of_type(b, T_MathInteger_)
+        return (T_MathInteger_, env0) # unless exponent is negative
+
+    @exprd.put(r"{EXPR} : the result of raising {EX} to the {EX} power")
+    def _(expr, env0, _):
+        [avar, bvar] = expr.children
+        env1 = env0.ensure_expr_is_of_type(avar, T_MathReal_)
+        env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
+        return (T_MathReal_, env2)
+
+    @exprd.put(r'{NUM_EXPR} : π / 2')
+    @exprd.put(r'{NUM_EXPR} : π / 4')
+    @exprd.put(r'{NUM_EXPR} : π')
+    @exprd.put(r'{NUM_EXPR} : 3π / 4')
+    @exprd.put(r'{NUM_EXPR} : -π / 2')
+    @exprd.put(r'{NUM_EXPR} : -π / 4')
+    @exprd.put(r'{NUM_EXPR} : -π')
+    @exprd.put(r'{NUM_EXPR} : -3π / 4')
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_MathReal_, env0)
+
+    @exprd.put(r"{EXPR} : the result of the {MATH_FUNC} of {EX}")
+    def _(expr, env0, _):
+        [math_func, ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
+        return (T_MathReal_, env1)
+
+    @exprd.put(r"{EXPR} : the result of subtracting 1 from the exponential function of {EX}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
+        return (T_MathReal_, env1)
+
+    @exprd.put(r"{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (T_MathReal_, env0)
+
+    @exprd.put(r"{EXPR} : an implementation-defined choice of either {var} or {var}")
+    def _(expr, env0, _):
+        [vara, varb] = expr.children
+        env0.assert_expr_is_of_type(vara, T_MathReal_)
+        env0.assert_expr_is_of_type(varb, T_MathReal_)
+        return (T_MathReal_, env0)
+
+# comparisons:
+
+    @condd.put(r'{CONDITION_1} : {var} is odd')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (env0, env0)
+
+    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is 10 or less")
+    def _(cond, env0, asserting):
+        [x] = cond.children
+        env0.assert_expr_is_of_type(x, T_MathInteger_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [noia, noib] = cond.children
+        env0.assert_expr_is_of_type(noia, T_MathInteger_)
+        env0.assert_expr_is_of_type(noib, T_MathInteger_)
+        return (env0, env0)
+
+    @condd.put(r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}')
+    def _(cond, env0, asserting):
+        [a, _, b, _, c] = cond.children
+        env0.assert_expr_is_of_type(a, T_MathInteger_)
+        env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
+        env0.assert_expr_is_of_type(c, T_MathInteger_)
+        env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
+        return (env2, env2)
+
+    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
+    def _(cond, env0, asserting):
+        [a, op, b] = cond.children
+        (a_t, env1) = tc_expr(a, env0);
+        (b_t, env2) = tc_expr(b, env1);
+        op_st = op.source_text()
+
+        t_envs = []
+        f_envs = []
+
+        a_memtypes = sorted(a_t.set_of_types())
+        b_memtypes = sorted(b_t.set_of_types())
+
+        for a_memtype in a_memtypes:
+            for b_memtype in b_memtypes:
+                triple = (a_memtype, op_st, b_memtype)
+                something = {
+
+                    # always error:
+                    (T_BigInt            , '>'   , T_FiniteNumber_     ): 'E',
+                    (T_BigInt            , '>'   , T_NegInfinityNumber_): 'E',
+                    (T_BigInt            , '>'   , T_PosInfinityNumber_): 'E',
+                    (T_BigInt            , '&lt;', T_FiniteNumber_     ): 'E',
+                    (T_BigInt            , '&lt;', T_NegInfinityNumber_): 'E',
+                    (T_BigInt            , '&lt;', T_PosInfinityNumber_): 'E',
+                    (T_BigInt            , '≠'   , T_Number            ): 'E',
+                    (T_FiniteNumber_     , '>'   , T_BigInt            ): 'E',
+                    (T_FiniteNumber_     , '&lt;', T_BigInt            ): 'E',
+                    (T_IntegralNumber_   , '≠'   , T_BigInt            ): 'E',
+                    (T_NegInfinityNumber_, '>'   , T_BigInt            ): 'E',
+                    (T_NegInfinityNumber_, '&lt;', T_BigInt            ): 'E',
+                    (T_PosInfinityNumber_, '&lt;', T_BigInt            ): 'E',
+                    (T_PosInfinityNumber_, '>'   , T_BigInt            ): 'E',
+                    (T_tilde_empty_      , '>'   , T_MathInteger_      ): 'E',
+                    #
+                    # Comparisons between Number and BigInt mostly come from
+                    # %TypedArray%.prototype.sort, which has:
+                    # 1. Assert: _x_ is a Number and _y_ is a Number, or _x_ is a BigInt and _y_ is a BigInt.
+                    # which this STA doesn't represent well.
+                    #
+                    # Also Atomics.wait (`If _v_ ≠ _w_, ...`)
+
+                    # could be error:
+                    (T_IntegralNumber_, '≠', T_Number   ): 'TFE', # because the Number might be NaN
+                    (T_IntegralNumber_, '≥', T_Tangible_): 'TFE',
+
+                    # ------------
+                    # Mathematical:
+
+                    # always true:
+                    (T_MathInteger_    , '≤'   , T_MathPosInfinity_): 'T',
+                    (T_MathNegInfinity_, '≤'   , T_MathInteger_    ): 'T',
+                    (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '≥'   , T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '>'   , T_FiniteNumber_   ): 'T',
+                    (T_MathPosInfinity_, '>'   , T_MathInteger_    ): 'T',
+
+                    # always false:
+                    (T_MathNegInfinity_, '≥'   , T_MathInteger_): 'F',
+                    (T_MathNegInfinity_, '='   , T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '≤'   , T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '&lt;', T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '='   , T_MathInteger_): 'F',
+
+                    # can be true or false:
+                    (T_ExtendedMathReal_, '≥'   , T_MathInteger_     ): 'TF',
+                    (T_ExtendedMathReal_, '≤'   , T_MathInteger_     ): 'TF',
+                    (T_ExtendedMathReal_, '&lt;', T_ExtendedMathReal_): 'TF',
+                    (T_ExtendedMathReal_, '&lt;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≥'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '>'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≤'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '&lt;', T_ExtendedMathReal_): 'TF',
+                    (T_MathInteger_     , '&lt;', T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≠'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≠'   , T_MathReal_        ): 'TF',
+                    (T_MathInteger_     , '='   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '≥'   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '>'   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '>'   , T_MathReal_        ): 'TF',
+                    (T_MathReal_        , '&lt;', T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '&lt;', T_MathReal_        ): 'TF',
+                    (T_MathReal_        , '≠'   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '='   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '='   , T_MathReal_        ): 'TF',
+
+                    (T_MathInteger_, 'is at least', T_MathInteger_): 'TF',
+
+                    (T_code_point_ , '≤', T_MathInteger_): 'TF', # but deserves a warning
+
+                    # -------
+                    # Number:
+
+                    # always true:
+                    (T_FiniteNumber_     , '>'   , T_NegInfinityNumber_): 'T',
+                    (T_FiniteNumber_     , '&lt;', T_PosInfinityNumber_): 'T',
+                    (T_NegInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'T',
+                    (T_NegInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'T',
+                    (T_NegInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'T',
+                    (T_PosInfinityNumber_, '>'   , T_FiniteNumber_     ): 'T',
+                    (T_PosInfinityNumber_, '>'   , T_IntegralNumber_   ): 'T',
+                    (T_PosInfinityNumber_, '>'   , T_NegInfinityNumber_): 'T',
+
+                    # always false:
+                    (T_FiniteNumber_     , '>'   , T_PosInfinityNumber_): 'F',
+                    (T_FiniteNumber_     , '&lt;', T_NegInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_FiniteNumber_     ): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_IntegralNumber_   ): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_NegInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '>'   , T_PosInfinityNumber_): 'F',
+                    (T_NegInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '>'   , T_PosInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_FiniteNumber_     ): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_IntegralNumber_   ): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_NegInfinityNumber_): 'F',
+                    (T_PosInfinityNumber_, '&lt;', T_PosInfinityNumber_): 'F',
+
+                    # true or false:
+                    (T_FiniteNumber_           , '>'   , T_FiniteNumber_           ): 'TF',
+                    (T_FiniteNumber_           , '>'   , T_IntegralNumber_         ): 'TF',
+                    (T_FiniteNumber_           , '&lt;', T_FiniteNumber_           ): 'TF',
+                    (T_FiniteNumber_           , '&lt;', T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '≥'   , T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '>'   , T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '='   , T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '≥'   , T_NonIntegralFiniteNumber_): 'TF',
+                    (T_NonIntegralFiniteNumber_, '>'   , T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '&lt;', T_IntegralNumber_         ): 'TF',
+                    (T_NonIntegralFiniteNumber_, '&lt;', T_NonIntegralFiniteNumber_): 'TF',
+
+                    # -------
+                    # BigInt:
+
+                    (T_BigInt, '>'   , T_BigInt): 'TF',
+                    (T_BigInt, '&lt;', T_BigInt): 'TF',
+                    (T_BigInt, '≠'   , T_BigInt): 'TF',
+
+                    # --------
+                    # Using the mathematical operator '≠' to compare non-numeric values:
+                    #
+                    # SetTypedArrayFromTypedArray has:
+                    #   1. If _target_.[[ContentType]] ≠ _source_.[[ContentType]], ...
+                    # TypedArraySpeciesCreate has:
+                    #   1. If _result_.[[ContentType]] ≠ _exemplar_.[[ContentType]], ...
+                    # InitializeTypedArrayFromTypedArray has:
+                    #   1. If _srcArray_.[[ContentType]] ≠ _O_.[[ContentType]], ...
+
+                    (T_tilde_BigInt_, '≠', T_tilde_Number_): 'TE',
+                    (T_tilde_Number_, '≠', T_tilde_BigInt_): 'TE',
+
+                    (T_tilde_BigInt_, '≠', T_tilde_BigInt_): 'FE',
+                    (T_tilde_Number_, '≠', T_tilde_Number_): 'FE',
+
+                }[triple]
+
+                env3 = (
+                    env2
+                    .with_expr_type_narrowed(a, a_memtype)
+                    .with_expr_type_narrowed(b, b_memtype)
+                )
+
+                if 'T' in something:
+                    # There is at least one pair of values
+                    # conforming to the given pair of static types
+                    # for which the comparison holds (is true).
+                    t_envs.append(env3)
+
+                if 'F' in something:
+                    # There is at least one pair of values
+                    # for which the comparison does not hold (is false).
+                    f_envs.append(env3)
+
+                if 'E' in something:
+                    # There is at least one pair of values
+                    # for which the comparison is ill-defined/non-sensical.
+                    add_pass_error(
+                        cond,
+                        f"comparison has incompatible types: {a_memtype} vs. {b_memtype}"
+                    )
+
+        return (envs_or(t_envs), envs_or(f_envs))
+
+    @condd.put(r'{CONDITION_1} : {var} is as small as possible')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> This specification denotes most numeric values in base 10;
+#> it also uses numeric values of the form 0x followed by digits 0-9 or A-F as base-16 values.
+
+if 1:
+    @exprd.put(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
+    def _(expr, env0, _):
+        return (T_MathNonNegativeInteger_, env0)
+
+    tbd['{VAL_DESC} : -1'] = a_subset_of(T_MathInteger_)
+
+    tbd['{MATH_LITERAL} : {dec_int_lit}'] = a_subset_of(T_MathInteger_)
+    tbd['{MATH_LITERAL} : +&infin;'] = T_MathPosInfinity_
+    tbd['{MATH_LITERAL} : -&infin;'] = T_MathNegInfinity_
+    tbd['{MATH_LITERAL} : +∞'] = T_MathPosInfinity_
+    tbd['{MATH_LITERAL} : -∞'] = T_MathNegInfinity_
+
+    @exprd.put(r"{MATH_LITERAL} : {hex_int_lit}")
+    @exprd.put(r"{MATH_LITERAL} : {dec_int_lit}")
+    @exprd.put(r"{MATH_LITERAL} : -5")
+    @exprd.put(r"{BASE} : 10")
+    @exprd.put(r"{BASE} : 2")
+    def _(expr, env0, _):
+        # [] = expr.children
+        return (T_MathInteger_, env0)
+
+    @exprd.put(r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_MathInteger_, env0)
+
+    @exprd.put(r"{MATH_LITERAL} : 8.64")
+    @exprd.put(r"{MATH_LITERAL} : 0.5")
+    def _(expr, env0, _):
+        return (T_MathReal_, env0)
+
+    @exprd.put(r"{MATH_LITERAL} : +&infin;")
+    @exprd.put(r"{MATH_LITERAL} : +∞")
+    def _(expr, env0, _):
+        return (T_MathPosInfinity_, env0)
+
+    @exprd.put(r"{MATH_LITERAL} : -&infin;")
+    @exprd.put(r"{MATH_LITERAL} : -∞")
+    def _(expr, env0, _):
+        return (T_MathNegInfinity_, env0)
+
+# ------------------------------------------------------------------------------
+#> When the term <dfn>integer</dfn> is used in this specification,
+#> it refers to a mathematical value which is in the set of integers,
+#> unless otherwise stated.
+
+if 1:
+    tbd['{VAL_DESC} : an integer'] = T_MathInteger_
+    tbd['{VAL_DESC} : an integer ≥ {dsb_word}'] = a_subset_of(T_MathInteger_)
+    tbd['{VAL_DESC} : a non-negative integer that is evenly divisible by 4'] = a_subset_of(T_MathNonNegativeInteger_)
+    tbd['{VAL_DESC} : a non-negative integer'] = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
+    tbd['{VAL_DESC} : a positive integer'] = a_subset_of(T_MathNonNegativeInteger_)
+
+    @exprd.put(r"{EXPR} : the integer that is {EXPR}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathInteger_)
+        return (T_MathInteger_, env0)
+
+    @tbd.put('{VAL_DESC} : a non-negative integer less than or equal to {EX}')
+    @tbd.put('{VAL_DESC} : a non-negative integer which is ≤ {EXPR}')
+    def _(val_desc, env):
+        [ex] = val_desc.children
+        env.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return a_subset_of(T_MathNonNegativeInteger_)
+
+# ------------------------------------------------------------------------------
+#> When the term <dfn>integral Number</dfn> is used in this specification,
+#> it refers to a Number value whose mathematical value is in the set of integers.
+
+if 1:
+    tbd['{VAL_DESC} : an integral Number'] = T_IntegralNumber_
+    tbd['{VAL_DESC} : an odd integral Number'] = a_subset_of(T_IntegralNumber_)
+    tbd['{VAL_DESC} : a non-negative integral Number'] = a_subset_of(T_IntegralNumber_)
+
+# ------------------------------------------------------------------------------
+#> The notation “<emu-eqn>_x_ modulo _y_</emu-eqn>”
+#> (_y_ must be finite and non-zero)
+#> computes a value _k_ of the same sign as _y_ (or zero)
+#> such that <emu-eqn>abs(_k_) &lt; abs(_y_) and _x_ - _k_ = _q_ × _y_</emu-eqn>
+#> for some integer _q_.
+
+# ------------------------------------------------------------------------------
+#> The phrase "the result of <dfn>clamping</dfn> _x_ between _lower_ and _upper_"
+#> (where _x_ is an extended mathematical value
+#> and _lower_ and _upper_ are mathematical values such that _lower_ ≤ _upper_)
+#> produces _lower_ if _x_ &lt; _lower_,
+#> produces _upper_ if _x_ > _upper_,
+#> and otherwise produces _x_.
+
+if 1:
+    @exprd.put(r"{EXPR} : the result of clamping {var} between 0 and {EX}")
+    def _(expr, env0, _):
+        [var, upper_ex] = expr.children
+        env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
+        env0.assert_expr_is_of_type(var, T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
+        return (T_MathNonNegativeInteger_, env0)
+
+# ------------------------------------------------------------------------------
+#> An <dfn>interval</dfn> from lower bound _a_ to upper bound _b_
+#> is a possibly-infinite, possibly-empty set of numeric values of the same numeric type.
+#> Each bound will be described as either inclusive or exclusive, but not both.
+
+if 1:
+    @exprd.put(r"{INTERVAL} : the inclusive interval from {EX} to {EX}")
+    @exprd.put(r"{INTERVAL} : the interval from {EX} (inclusive) to {EX} (exclusive)")
+    def _(expr, env0, _):
+        [lo, hi] = expr.children
+        env0.assert_expr_is_of_type(lo, T_MathInteger_)
+        env0.assert_expr_is_of_type(hi, T_MathInteger_)
+        return (T_MathInteger_, env0)
+        # Should maybe be ListType(T_MathInteger_) or something similar
+
+    @condd.put(r"{CONDITION_1} : {var} is in {INTERVAL}")
+    @condd.put(r"{CONDITION_1} : {var} is not in {INTERVAL}")
+    def _(cond, env0, asserting):
+        [var, interval] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
+        env1.assert_expr_is_of_type(interval, T_MathInteger_)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [i_var, interval, stcond] = cond.children
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
+        env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
+        return tc_cond(stcond, env_for_cond)
+
+    @condd.put(r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}")
+    def _(cond, env0, asserting):
+        [seta, setb, let_var, interval] = cond.children
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
+        env_for_settables = env0.plus_new_entry(let_var, T_MathInteger_)
+        env_for_settables.assert_expr_is_of_type(seta, T_MathInteger_)
+        env_for_settables.assert_expr_is_of_type(setb, T_MathInteger_)
+        return (env0, env0)
+
+    @tbd.put('{VAL_DESC} : an integer in {INTERVAL}')
+    def _(val_desc, env):
+        [interval] = val_desc.children
+        if env is None:
+            if interval.source_text() in [
+                'the inclusive interval from 0 to 23',
+                'the inclusive interval from 0 to 59',
+                'the inclusive interval from 0 to 999',
+                'the inclusive interval from 1 to 12',
+                'the inclusive interval from 1 to 31',
+                'the inclusive interval from 2 to 36',
+            ]:
+                sup_t = T_MathNonNegativeInteger_
+            else:
+                assert 0, interval
+        else:
+            env.assert_expr_is_of_type(interval, T_MathInteger_)
+            sup_t = T_MathInteger_
+        return a_subset_of(sup_t)
+
+    @nv.put(r"{EACH_THING} : integer {var} in {INTERVAL}")
+    def _(each_thing, env0):
+        [loop_var, interval] = each_thing.children
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
+        return env0.plus_new_entry(loop_var, T_MathInteger_)
+
+# ------------------------------------------------------------------------------
+# (The spec should talk about bit strings somewhere.)
+
+if 1:
+    @exprd.put(r"{EXPR} : the number of leading 1 bits in {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
+        return (T_MathNonNegativeInteger_, env0)
+
+    @exprd.put(r"{EX} : the integer represented by the 32-bit two's complement bit string {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_) # bit string
+        return (T_MathInteger_, env0)
+
+    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_MathInteger_, env1)
+
+    @exprd.put(r"{EXPR} : the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}")
+    def _(expr, env0, _):
+        [var, product] = expr.children
+        env1 = env0.ensure_expr_is_of_type(product, T_MathInteger_ | T_Number); assert env1 is env0
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_MathInteger_, env1)
+
+    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_IEEE_binary32_, env1)
+
+    @exprd.put(r'{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_IEEE_binary64_, env1)
+
+    @exprd.put(r"{EXPR} : the result of applying the bitwise AND operation to {var} and {var}")
+    @exprd.put(r"{EXPR} : the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}")
+    @exprd.put(r"{EXPR} : the result of applying the bitwise inclusive OR operation to {var} and {var}")
+    def _(expr, env0, _):
+        [x, y] = expr.children
+        env0.assert_expr_is_of_type(x, T_MathInteger_) # "bit string"
+        env0.assert_expr_is_of_type(y, T_MathInteger_) # "bit string"
+        return (T_MathInteger_, env0) # "bit string"
+
+    @exprd.put(r"{EXPR} : the 32-bit two's complement bit string representing {EX}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_MathInteger_, env0) # bit string
+
+    @exprd.put(r'{EXPR} : a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order')
+    @exprd.put(r"{EXPR} : a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order")
+    def _(expr, env0, _):
+        [n_var, v_var] = expr.children
+        env0.assert_expr_is_of_type(n_var, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(v_var, T_MathNonNegativeInteger_)
+        return (ListType(T_MathInteger_), env0)
+
+# ------------------------------------------------------------------------------
+# (Although the spec goes into detail about
+# the mappings from string-ish to numeric and numeric to String,
+# it also assumes such mappings for simple cases.)
+
+if 1:
+    @exprd.put(r"{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (ListType(T_code_unit_), env0)
+
+    @exprd.put(r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit")
+    @exprd.put(r"{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathReal_)
+        return (T_MathReal_, env0)
+
+    @condd.put(r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_MathReal_)
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as a decimal number")
+    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
+    @exprd.put(r"{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
+        return (T_String, env1)
+
+# ==============================================================================
+#@ 5.2.6 Value Notation
+
+#> Values which are internal to the specification
+#> and not directly observable from ECMAScript code
+#> are indicated with a ~sans-serif~ typeface.
+
+if 1:
+    @tbd.put('{LITERAL} : {tilded_word}')
+    def _(literal, env):
+        [tilded_word] = literal.children
+        return type_for_tilded_word(tilded_word)
+
+    @exprd.put(r"{LITERAL} : {tilded_word}")
+    def _(expr, env0, _):
+        [tilded_word] = expr.children
+        return (type_for_tilded_word(tilded_word), env0)
+
+def type_for_tilded_word(tilded_word):
+    assert tilded_word.prod.lhs_s == '{tilded_word}'
+    [chars] = tilded_word.children
+    assert chars[0] == '~'
+    assert chars[-1] == '~'
+    uchars = chars[1:-1].replace('-', '_').replace('+', '_')
+    return NamedType(f"tilde_{uchars}_")
+
+# ==============================================================================
+#@ 5.2.7 Identity
+
+#> In this specification,
+#> the word “is” is used to compare two values through equality,
+#> as in “If _bool_ is *true*, then”.
+
+# (So I'm putting all the "X is Y" forms here.)
+
+if 1:
+    @condd.put(r'{CONDITION_1} : {EX} is {var}')
+    @condd.put(r"{CONDITION_1} : {EX} is the same value as {EX}")
+    def _(cond, env0, asserting):
+        [a_ex, b_ex] = cond.children
+        (a_t, a_env) = tc_expr(a_ex, env0)
+        (b_t, b_env) = tc_expr(b_ex, env0); assert b_env is env0
+        assert a_t != T_TBD
+        if b_t == T_TBD:
+            env1 = env0.with_expr_type_replaced(b_ex, a_t)
+        else:
+            # assert a_t.is_a_subtype_of_or_equal_to(b_t)
+            (common_t, _) = a_t.split_by(b_t)
+            assert common_t != T_0
+            env1 = env0
+        e = env_or(a_env, env0)
+        return (e, e)
+
+    @condd.put(r"{CONDITION_1} : {EX} is different from {EX}")
+    @condd.put(r"{CONDITION_1} : {EX} is the same as {EX}")
+    @condd.put(r"{CONDITION_1} : {var} is not the same as {var}")
+    @condd.put(r"{CONDITION_1} : {EX} is not the same value as {var}")
+    @condd.put(r"{CONDITION_1} : {EX} is {PREFIX_PAREN}")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
+        (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
+        (exb_type, exb_env) = tc_expr(exb, env0); assert exb_env is env0
+        if exa_type == exb_type:
+            # good
+            env1 = env0
+        elif exa_type == T_TBD:
+            env1 = env0.with_expr_type_replaced(exa, exb_type)
+        elif exb_type == T_TBD:
+            env1 = env0.with_expr_type_replaced(exb, exa_type)
+        elif exa_type == T_Declarative_Environment_Record and exb_type == T_Environment_Record:
+            env1 = env0.with_expr_type_narrowed(exb, exa_type)
+        elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
+            env1 = env0
+        else:
+            assert 0, (exa_type, exb_type)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {EX} and {EX} are distinct values")
+    def _(cond, env0, asserting):
+        [exa, exb] = cond.children
+        (exa_type, env1) = tc_expr(exa, env0)
+        (exb_type, env2) = tc_expr(exb, env1)
+        return (env2, env2)
+
+# ------
+
+    @condd.put(r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}")
+    def _(cond, env0, asserting):
+        [exa, exb, lit] = cond.children
+        (t, env1) = tc_expr(lit, env0); assert env1 is env0
+        env1.assert_expr_is_of_type(exa, t)
+        env1.assert_expr_is_of_type(exb, t)
+        return (env1, env1)
+
+    @condd.put(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}')
+    def _(cond, env0, asserting):
+        [exa, exb, lit] = cond.children
+        (lit_type, lit_env) = tc_expr(lit, env0); assert lit_env is env0
+        if lit_type in [T_Undefined, T_NaN_Number_, T_tilde_accessor_]:
+            (a_t_env, a_f_env) = env0.with_type_test(exa, 'is a', lit_type, asserting)
+            (b_t_env, b_f_env) = env0.with_type_test(exb, 'is a', lit_type, asserting)
+            return (
+                env_and(a_t_env, b_t_env),
+                env_or(a_f_env, b_f_env)
+            )
+        else:
+            env0.assert_expr_is_of_type(exa, lit_type)
+            env0.assert_expr_is_of_type(exb, lit_type)
+            return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL} or both {LITERAL}')
+    def _(cond, env0, asserting):
+        # occurs once, in SameValueNonNumber
+        [exa, exb, litc, litd] = cond.children
+        assert litc.source_text() == '*true*'
+        assert litd.source_text() == '*false*'
+        enva = env0.ensure_expr_is_of_type(exa, T_Boolean); assert enva is env0
+        envb = env0.ensure_expr_is_of_type(exb, T_Boolean); # assert envb is env0
+        return (envb, envb)
+
+    @condd.put(r"{CONDITION_1} : {var} or {var} is {LITERAL}")
+    def _(cond, env0, asserting):
+        [v1, v2, lit] = cond.children
+        env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
+        env0.assert_expr_is_of_type(v2, T_Number|T_BigInt)
+        env0.assert_expr_is_of_type(lit, T_Number)
+        return (env0, env0)
+
+# ------
+
+    @condd.put(r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}")
+    def _(cond, env0, asserting):
+        [var, nonta, nontb] = cond.children
+        return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
+
+    @condd.put(r"{CONDITION_1} : {EX} is also {VAL_DESC}")
+    @condd.put(r"{CONDITION_1} : {EX} is never {VAL_DESC}")
+    @condd.put(r"{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}")
+    @condd.put(r"{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}")
+    def _(cond, env0, asserting):
+        [ex, vd] = cond.children
+
+        # kludgey?
+        r = is_simple_call(ex)
+        if r:
+            assert cond.prod.rhs_s == r"{EX} is {VALUE_DESCRIPTION}"
+
+            (callee_op_name, var) = r
+            #
+            if callee_op_name == 'IsSharedArrayBuffer':
+                t = T_SharedArrayBuffer_object_
+            elif callee_op_name == 'IsPromise':
+                t = T_Promise_object_
+            elif callee_op_name == 'IsCallable':
+                t = T_function_object_
+            elif callee_op_name == 'IsConstructor':
+                t = T_constructor_object_
+            elif callee_op_name == 'IsPropertyKey':
+                t = T_String | T_Symbol
+            elif callee_op_name == 'IsIntegralNumber':
+                t = T_IntegralNumber_
+            else:
+                t = None
+            #
+            if t:
+                if vd.source_text() == '*true*':
+                    copula = 'is a'
+                elif vd.source_text() == '*false*':
+                    copula = 'isnt a'
+                else:
+                    assert 0
+                #
+                return env0.with_type_test(var, copula, t, asserting)
+
+        if 'not' in cond.prod.rhs_s or 'never' in cond.prod.rhs_s:
+            copula = 'isnt a'
+        else:
+            copula = 'is a'
+
+        # special handling for Completion Records' [[Type]] field:
+        while True: # ONCE
+            dotting = ex.is_a('{DOTTING}')
+            if dotting is None: break
+            (lhs, dsbn) = dotting.children
+            dsbn_name = dsbn.source_text()[2:-2]
+            if dsbn_name != 'Type': break
+            t = type_corresponding_to_comptype_literal(vd)
+            return env0.with_type_test(lhs, copula, t, asserting)
+
+        (sub_t, sup_t) = type_bracket_for(vd, env0)
+        return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
+
+    @condd.put(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}")
+    @condd.put(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC}")
+    def _(cond, env0, asserting):
+        [ex, *vds] = cond.children
+
+        sub_t = T_0
+        sup_t = T_0
+        for vd in vds:
+            (x_sub_t, x_sup_t) = type_bracket_for(vd, env0)
+            sub_t |= x_sub_t
+            sup_t |= x_sup_t
+
+        return env0.with_type_test(ex, 'isnt a', [sub_t, sup_t], asserting)
+
+    # -------
+
+    @tbd.put('{VALUE_DESCRIPTION} : any of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : one of: {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+    def _(value_description, env):
+        result_sub_t = T_0
+        result_sup_t = T_0
+        for val_desc in value_description.children:
+            (sub_t, sup_t) = type_bracket_for(val_desc, env)
+            result_sub_t |= sub_t
+            result_sup_t |= sup_t
+        return (result_sub_t, result_sup_t)
+
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}')
+    def _(value_description, env):
+        # [pos_desc, neg_desc] = value_description.children
+        # t = type_bracket_for(pos_desc) - type_bracket_for(neg_desc)
+        vd_st = value_description.source_text()
+        if vd_st == 'an ECMAScript language value, but not a Number':
+            return T_Undefined | T_Null | T_Boolean | T_BigInt | T_String | T_Symbol | T_Object
+        elif vd_st == 'an ECMAScript language value, but not *undefined* or *null*':
+            return T_Boolean | T_Number | T_BigInt | T_String | T_Symbol | T_Object
+        elif vd_st == 'an ECMAScript language value, but not a TypedArray':
+            return a_subset_of(T_Tangible_)
+        elif vd_st == 'a Number, but not *NaN*':
+            return T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
+        elif vd_st == 'an Object, but not a TypedArray or an ArrayBuffer':
+            return a_subset_of(T_Object)
+        else:
+            assert 0, vd_st
+
+    @tbd.put('{VAL_DESC} : a {h_emu_xref}')
+    def _(val_desc, env):
+        [emu_xref] = val_desc.children
+        # polymorphic
+        if emu_xref.source_text() in [
+            '<emu-xref href="#leading-surrogate"></emu-xref>',
+            '<emu-xref href="#trailing-surrogate"></emu-xref>',
+        ]:
+            return a_subset_of(T_code_unit_)
+        elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
+            return a_subset_of(T_function_object_)
+        else:
+            assert 0, emu_xref
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
