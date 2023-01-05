@@ -7266,13 +7266,6 @@ if 1:
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_BigInt, env0)
 
-    @exprd.put(r"{EXPR} : the BigInt whose sign is the sign of {var} and whose magnitude is {EX}")
-    def _(expr, env0, _):
-        [sign_var, mag_ex] = expr.children
-        env0.assert_expr_is_of_type(sign_var, T_MathReal_)
-        env0.assert_expr_is_of_type(mag_ex, T_MathInteger_)
-        return (T_BigInt, env0)
-
     @exprd.put(r"{EX} : the sum of {var} and {var}")
     @exprd.put(r"{EX} : the product of {var} and {var}")
     @exprd.put(r"{EX} : the difference {var} minus {var}")
@@ -7393,12 +7386,6 @@ if 1:
     def _(expr, env0, _):
         [prod_ref, nont] = expr.children
         return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{EX} : {var} rounded towards 0 to the next integer value")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathReal_)
-        return (T_MathInteger_, env0)
 
     @exprd.put(r"{NUM_EXPR} : {EX} raised to the power {EX}")
     def _(expr, env0, _):
@@ -7570,13 +7557,6 @@ if 1:
         [aex, bex] = expr.children
         env0.assert_expr_is_of_type(aex, T_MathInteger_)
         env0.assert_expr_is_of_type(bex, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{EXPR} : the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}")
-    def _(expr, env0, _):
-        [var, ex] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathReal_ | T_Number)
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
     @exprd.put(r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")

@@ -801,7 +801,6 @@
     the Agent Record of the surrounding agent
     the BigInt value that corresponds to {var}
     the BigInt value that represents {EX}
-    the BigInt whose sign is the sign of {var} and whose magnitude is {EX}
     the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}
@@ -903,7 +902,6 @@
     the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
-    the mathematical value whose sign is the sign of {var} and whose magnitude is {EX}
     the negative of {EX}
     the number of bytes in {var}
     the number of elements in the List {var}
@@ -1043,7 +1041,6 @@
     {backticked_word}
     {code_point_lit}
     {h_code_quote}
-    {var} rounded towards 0 to the next integer value
     {var}'s _endIndex_
     {var}'s _endIndex_ value
     {var}'s _input_
