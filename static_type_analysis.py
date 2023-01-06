@@ -3617,12 +3617,12 @@ if 1:
         env0.assert_expr_is_of_type(var4, T_MathInteger_)
         return env1
 
-    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
     def _(anode, env0):
         [noi, w_var, t_var, *blah] = anode.children
         env0.assert_expr_is_of_type(noi, T_tilde_unused_)
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(t_var, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(t_var, T_MathReal_ | T_MathPosInfinity_)
         return env0
 
     @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.")
@@ -6276,6 +6276,7 @@ tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
 tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
 tbd['{VAL_DESC} : a mathematical value'] = T_MathReal_
 tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
+tbd['{VAL_DESC} : a non-negative extended mathematical value'] = a_subset_of(T_MathReal_ | T_MathPosInfinity_)
 tbd['{VAL_DESC} : a non-negative integer that is evenly divisible by 4'] = a_subset_of(T_MathNonNegativeInteger_)
 tbd['{VAL_DESC} : a non-negative integer'] = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
 tbd['{VAL_DESC} : a non-negative integral Number'] = a_subset_of(T_IntegralNumber_)
@@ -7706,6 +7707,8 @@ if 1:
                 (T_ExtendedMathReal_, '/'      , T_MathInteger_     ): T_ExtendedMathReal_,
                 (T_MathInteger_     , '×'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
                 (T_MathInteger_     , '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
+
+                (T_MathPosInfinity_ , '+'      , T_MathReal_        ): T_MathPosInfinity_,
 
                 (T_MathInteger_    , '+'      , T_MathNegInfinity_): T_MathNegInfinity_,
 
@@ -9721,6 +9724,11 @@ if 1:
         # InnerModuleLoading
         [] = expr.children
         return (T_LoadedModule_Record_, env0)
+
+    @exprd.put(r"{EXPR} : an implementation-defined non-negative mathematical value")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_MathReal_, env0)
 
 # ------------------------------------------------------------------------------
 

@@ -200,7 +200,7 @@
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following steps:{IND_COMMANDS}
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
-    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can notify either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.
+    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Perform {PP_NAMED_OPERATION_INVOCATION}. {note}
     Prepend {var} to {var}.
@@ -786,6 +786,7 @@
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
     an implementation-approximated Number value representing {EXPR}
+    an implementation-defined non-negative mathematical value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
     an implementation-defined choice of either {var} or {var}
@@ -1441,6 +1442,7 @@
     a mathematical value
     a module namespace exotic object
     a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
+    a non-negative extended mathematical value
     a non-negative integer
     a non-negative integer less than or equal to {EX}
     a non-negative integer that is evenly divisible by 4
