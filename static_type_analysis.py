@@ -2757,15 +2757,6 @@ if 1:
         [child] = anode.children
         return tc_nonvalue(child, env0)
 
-    # ---
-    # parse
-
-    @nv.put(r"{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.")
-    def _(anode, env0):
-        [noi, error_type] = anode.children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        return env0
-
     # -----------------------
 
     @nv.put(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
@@ -2776,29 +2767,6 @@ if 1:
         return env0
 
     # ----------------------------------
-
-    @nv.put(r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).')
-    def _(anode, env0):
-        [var1, var2] = anode.children
-        [var_name1] = var1.children
-        [var_name2] = var2.children
-        assert var_name1 == var_name2
-        env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList)
-        return env1
-
-    @nv.put(r'{COMMAND} : Leave the critical section for {var}.')
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
-        return env0
-
-    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
-    def _(anode, env0):
-        [noi, w_var, t_var, *blah] = anode.children
-        env0.assert_expr_is_of_type(noi, T_tilde_unused_)
-        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(t_var, T_MathReal_ | T_MathPosInfinity_)
-        return env0
 
     @nv.put(r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
     def _(anode, env0):
@@ -2811,21 +2779,6 @@ if 1:
 
         proc_add_return(env0, T_Promise_object_, anode)
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
-
-    # -----
-
-    @nv.put(r"{COMMAND} : Remove {var} from the list of waiters in {var}.")
-    def _(anode, env0):
-        [sig, wl] = anode.children
-        env0.assert_expr_is_of_type(sig, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl, T_WaiterList)
-        return env0
-
-    @nv.put(r"{COMMAND} : Notify the agent {var}.")
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_agent_signifier_)
-        return env0
 
 # ------------------------------------------------------------------------------
 
@@ -2896,17 +2849,6 @@ if 1:
     # --------------------------------------------------
     # whatever
 
-    @condd.put(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList')
-    def _(cond, env0, asserting):
-        # nothing to check
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : The surrounding agent is in the critical section for {var}')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}')
     def _(cond, env0, asserting):
         [var, code_unit_lit] = cond.children
@@ -2945,27 +2887,6 @@ if 1:
             assert 0, container_t
         return (env0, env0)
 
-    @condd.put(r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}')
-    def _(cond, env0, asserting):
-        [ab_var, st_var, t_var] = cond.children
-        env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-        env0.assert_expr_is_of_type(st_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} is on the list of waiters in {var}')
-    def _(cond, env0, asserting):
-        [w_var, wl_var] = cond.children
-        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl_var, T_WaiterList)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}')
-    def _(cond, env0, asserting):
-        [w_var, *blah] = cond.children
-        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : we return here")
     def _(cond, env0, asserting):
         [] = cond.children
@@ -3000,19 +2921,6 @@ if 1:
 
     # ----
 
-    @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList")
-    def _(cond, env0, asserting):
-        [sig_var] = cond.children
-        env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in {var}")
-    def _(cond, env0, asserting):
-        [sig_var, wl_var] = cond.children
-        env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl_var, T_WaiterList)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
     def _(cond, env0, asserting):
         [ea, eb, exe] = cond.children
@@ -3038,12 +2946,6 @@ if 1:
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {EX} is listed in the “Code Point” column of {h_emu_xref}")
-    def _(cond, env0, asserting):
-        [ex, emu_xref] = cond.children
-        env0.assert_expr_is_of_type(ex, T_code_point_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
     def _(cond, env0, asserting):
         [var, emu_xref1, emu_xref2] = cond.children
@@ -3056,12 +2958,6 @@ if 1:
         assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
         assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
         env0.assert_expr_is_of_type(var, T_code_unit_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} has a Synchronize event")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once")
@@ -3183,7 +3079,6 @@ def _(vd, env):
 
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
-tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
 tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
@@ -3193,10 +3088,8 @@ tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteShare
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a Set of events'] = T_Set
-tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
-tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
 tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
 tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
@@ -3205,13 +3098,10 @@ tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
 tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
 tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
 tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
-tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
 tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
@@ -3227,7 +3117,6 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_Asy
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
-tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : events'                             ] = T_event_
@@ -3413,14 +3302,6 @@ if 1:
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_code_point_, env0)
 
-    # -------------------------
-    # return T_String
-
-    @exprd.put(r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row")
-    def _(expr, env0, _):
-        [var] = expr.children
-        return (T_String, env0)
-
     # ----------------------------------------------------------
     # return T_code_unit_
 
@@ -3478,12 +3359,6 @@ if 1:
     # --------------------
     # ListType(T_MathInteger_)
 
-    @exprd.put(r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (ListType(T_MathInteger_), env0)
-
     @exprd.put(r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}")
     def _(expr, env0, _):
         [dotting] = expr.children
@@ -3500,19 +3375,6 @@ if 1:
         return (ListType(T_code_point_), env0)
 
     # ----
-
-    @exprd.put(r"{EXPR} : the WaiterList that is referenced by the pair ({var}, {var})")
-    def _(expr, env0, _):
-        [sdb, i] = expr.children
-        env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
-        env0.assert_expr_is_of_type(i, T_MathInteger_)
-        return (T_WaiterList, env0)
-
-    @exprd.put(r"{EXPR} : a reference to the list of waiters in {var}")
-    def _(expr, env0, _):
-        [wl] = expr.children
-        env0.assert_expr_is_of_type(wl, T_WaiterList)
-        return (ListType(T_agent_signifier_), env0)
 
     @exprd.put(r"{EX} : {backticked_word}")
     def _(expr, env0, _):
@@ -3541,26 +3403,10 @@ if 1:
         [] = expr.children
         return (T_Synchronize_event, env0)
 
-    @exprd.put(r"{SETTABLE} : the Synchronize event in {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
-        return (T_Synchronize_event, env0)
-
-    @exprd.put(r"{EX} : a nondeterministically chosen byte value")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_MathNonNegativeInteger_, env0)
-
     @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
     def _(expr, env0, _):
         [] = expr.children
         return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : an implementation-defined non-negative mathematical value")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_MathReal_, env0)
 
 # ------------------------------------------------------------------------------
 
@@ -3989,13 +3835,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 25.1 ArrayBuffer Objects
-# 25.2 SharedArrayBuffer Objects
-set_up_internal_thing('slot', 'ArrayBufferData',       T_Data_Block | T_Shared_Data_Block | T_Null)
-    # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
-set_up_internal_thing('slot', 'ArrayBufferByteLength', T_MathInteger_)
-set_up_internal_thing('slot', 'ArrayBufferDetachKey',  T_host_defined_)
 
 # 26.1 WeakRef Objects
 set_up_internal_thing('slot', 'WeakRefTarget', T_Object)
@@ -11323,6 +11162,215 @@ set_up_internal_thing('slot', 'WeakMapData', ListType(T_MapData_record_))
 
 # 24.4 WeakSet Objects
 set_up_internal_thing('slot', 'WeakSetData', ListType(T_Tangible_ | T_tilde_empty_))
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 25 Structured Data
+
+# ==============================================================================
+#@ 25.1 ArrayBuffer Objects
+
+if 1:
+    tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
+    tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
+    tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
+
+set_up_internal_thing('slot', 'ArrayBufferData',       T_Data_Block | T_Shared_Data_Block | T_Null)
+    # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
+set_up_internal_thing('slot', 'ArrayBufferByteLength', T_MathInteger_)
+set_up_internal_thing('slot', 'ArrayBufferDetachKey',  T_host_defined_)
+
+if 1:
+    # 25.1.2.*
+    @condd.put(r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}')
+    def _(cond, env0, asserting):
+        [ab_var, st_var, t_var] = cond.children
+        env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+        env0.assert_expr_is_of_type(st_var, T_MathInteger_)
+        env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type)
+        return (env0, env0)
+
+    @exprd.put(r"{EX} : a nondeterministically chosen byte value")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_MathNonNegativeInteger_, env0)
+
+    @exprd.put(r"{EXPR} : a List of length {var} whose elements are nondeterministically chosen byte values")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (ListType(T_MathInteger_), env0)
+
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'] = a_subset_of(T_MathInteger_)
+
+# ==============================================================================
+#@ 25.2 SharedArrayBuffer Objects
+
+if 1:
+    tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
+
+# ==============================================================================
+#@ 25.4.1 WaiterList Objects
+
+if 1:
+    tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
+
+#> A <dfn>WaiterList</dfn> is a semantic object
+#> that contains an ordered list of agent signifiers
+#> for those agents that are waiting on a location (_block_, _i_) in shared memory;
+#> _block_ is a Shared Data Block and _i_ a byte offset into the memory of _block_.
+
+    @exprd.put(r"{EXPR} : the WaiterList that is referenced by the pair ({var}, {var})")
+    def _(expr, env0, _):
+        [sdb, i] = expr.children
+        env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
+        env0.assert_expr_is_of_type(i, T_MathInteger_)
+        return (T_WaiterList, env0)
+
+    @exprd.put(r"{EXPR} : a reference to the list of waiters in {var}")
+    def _(expr, env0, _):
+        [wl] = expr.children
+        env0.assert_expr_is_of_type(wl, T_WaiterList)
+        return (ListType(T_agent_signifier_), env0)
+
+    @nv.put(r"{COMMAND} : Remove {var} from the list of waiters in {var}.")
+    def _(anode, env0):
+        [sig, wl] = anode.children
+        env0.assert_expr_is_of_type(sig, T_agent_signifier_)
+        env0.assert_expr_is_of_type(wl, T_WaiterList)
+        return env0
+
+    @condd.put(r'{CONDITION_1} : {var} is on the list of waiters in {var}')
+    def _(cond, env0, asserting):
+        [w_var, wl_var] = cond.children
+        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
+        env0.assert_expr_is_of_type(wl_var, T_WaiterList)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList")
+    def _(cond, env0, asserting):
+        [sig_var] = cond.children
+        env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in {var}")
+    def _(cond, env0, asserting):
+        [sig_var, wl_var] = cond.children
+        env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
+        env0.assert_expr_is_of_type(wl_var, T_WaiterList)
+        return (env0, env0)
+
+# (A WaiterList has a critical section.)
+
+    @nv.put(r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).')
+    def _(anode, env0):
+        [var1, var2] = anode.children
+        [var_name1] = var1.children
+        [var_name2] = var2.children
+        assert var_name1 == var_name2
+        env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList)
+        return env1
+
+    @nv.put(r'{COMMAND} : Leave the critical section for {var}.')
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
+        return env0
+
+    @condd.put(r'{CONDITION_1} : The surrounding agent is in the critical section for {var}')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList')
+    def _(cond, env0, asserting):
+        # nothing to check
+        return (env0, env0)
+
+#> A WaiterList object also optionally contains a Synchronize event
+#> denoting the previous leaving of its critical section.
+
+    @condd.put(r"{CONDITION_1} : {var} has a Synchronize event")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
+        return (env0, env0)
+
+    @exprd.put(r"{SETTABLE} : the Synchronize event in {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_WaiterList)
+        return (T_Synchronize_event, env0)
+
+#> Initially a WaiterList object has an empty list and no Synchronize event.
+
+#> The agent cluster has a store of WaiterList objects; the store is indexed by (_block_, _i_).
+#> WaiterLists are agent-independent: a lookup in the store of WaiterLists by (_block_, _i_)
+#> will result in the same WaiterList object in any agent in the agent cluster.
+
+# ==============================================================================
+#@ 25.4.2.9 SuspendAgent
+
+if 1:
+    @exprd.put(r"{EXPR} : an implementation-defined non-negative mathematical value")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_MathReal_, env0)
+
+    @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
+    def _(anode, env0):
+        [noi, w_var, t_var, *blah] = anode.children
+        env0.assert_expr_is_of_type(noi, T_tilde_unused_)
+        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
+        env0.assert_expr_is_of_type(t_var, T_MathReal_ | T_MathPosInfinity_)
+        return env0
+
+    @condd.put(r'{CONDITION_1} : {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}')
+    def _(cond, env0, asserting):
+        [w_var, *blah] = cond.children
+        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 25.4.2.10 NotifyWaiter
+
+if 1:
+    @nv.put(r"{COMMAND} : Notify the agent {var}.")
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_agent_signifier_)
+        return env0
+
+# ==============================================================================
+#@ 25.5.1 JSON.parse
+
+if 1:
+    @nv.put(r"{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.")
+    def _(anode, env0):
+        [noi, error_type] = anode.children
+        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+        return env0
+
+# ==============================================================================
+#@ 25.5.2.1 JSON Serialization Record
+
+if 1:
+    tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
+
+# ==============================================================================
+#@ 25.5.2.3 QuoteJSONString
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {EX} is listed in the “Code Point” column of {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [ex, emu_xref] = cond.children
+        env0.assert_expr_is_of_type(ex, T_code_point_)
+        return (env0, env0)
+
+    @exprd.put(r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row")
+    def _(expr, env0, _):
+        [var] = expr.children
+        return (T_String, env0)
 
 main()
 
