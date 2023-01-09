@@ -2776,19 +2776,7 @@ if 1:
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return env0
 
-    if 1:
-
-        # ------------------------
-        # property keys of an object:
-
-        @nv.put(r"{EACH_THING} : property of the Global Object specified in clause {h_emu_xref}")
-        def _(each_thing, env0):
-            [emu_xref] = each_thing.children
-            # no loop_var!
-            return env0
-
-        # -----------------------
-        # other collections:
+    # -----------------------
 
     @nv.put(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
     def _(anode, env0):
@@ -11179,6 +11167,17 @@ if 1:
     def _(expr, env0, _):
         [xref] = expr.children
         return (T_MathNonNegativeInteger_, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 19 The Global Object
+
+if 1:
+    # for 9.3.4 SetDefaultGlobalBindings
+    @nv.put(r"{EACH_THING} : property of the Global Object specified in clause {h_emu_xref}")
+    def _(each_thing, env0):
+        [emu_xref] = each_thing.children
+        # no loop_var!
+        return env0
 
 main()
 
