@@ -2945,18 +2945,6 @@ if 1:
         proc_add_return(env0, T_Promise_object_, anode)
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
-    @nv.put(r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
-    def _(anode, env0):
-        [vara, varb] = anode.children
-        env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
-        env0.assert_expr_is_of_type(varb, T_Iterator_Record)
-
-        proc_add_return(env0, T_Tangible_ | T_tilde_empty_ | T_throw_, anode)
-
-        (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
-        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
-        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
-
     @nv.put(r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.")
     def _(anode, env0):
         [_, key_var, oer_var] = anode.children
@@ -3901,7 +3889,6 @@ tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_objec
 tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : an Environment Record'] = T_Environment_Record
 tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
-tbd['{VAL_DESC} : an Iterator Record'] = T_Iterator_Record
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
@@ -4845,13 +4832,6 @@ if 1:
     def _(expr, env0, _):
         [_] = expr.children
         return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}")
-    def _(expr, env0, _):
-        [var, xref] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Primitive)
-        assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
-        return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
 
     @exprd.put(r"{EX} : the CaptureRange {PAIR}")
     def _(expr, env0, _):
@@ -10912,6 +10892,42 @@ if 1:
 
 if 1:
     tbd['{VAL_DESC} : a ClassStaticBlockDefinition Record'] = T_ClassStaticBlockDefinition_Record
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 7 Abstract Operations
+
+# ==============================================================================
+#@ 7.1.13 ToBigInt
+
+if 1:
+    @exprd.put(r"{EXPR} : the value that {var} corresponds to in {h_emu_xref}")
+    def _(expr, env0, _):
+        [var, xref] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_Primitive)
+        assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
+        return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
+
+# ==============================================================================
+#@ 7.4.1 Iterator Records
+
+if 1:
+    tbd['{VAL_DESC} : an Iterator Record'] = T_Iterator_Record
+
+# ==============================================================================
+#@ 7.4.8 IfAbruptCloseIterator
+
+if 1:
+    @nv.put(r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
+    def _(anode, env0):
+        [vara, varb] = anode.children
+        env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
+        env0.assert_expr_is_of_type(varb, T_Iterator_Record)
+
+        proc_add_return(env0, T_Tangible_ | T_tilde_empty_ | T_throw_, anode)
+
+        (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
+        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
+        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
