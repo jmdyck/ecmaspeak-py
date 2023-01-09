@@ -2834,11 +2834,6 @@ if 1:
         proc_add_return(env0, T_Promise_object_, anode)
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
-    @nv.put(r"{COMMAND} : Perform an implementation-defined debugging action.")
-    def _(anode, env0):
-        [] = anode.children
-        return env0
-
     # -----
 
     @nv.put(r"{COMMAND} : Remove {var} from the list of waiters in {var}.")
@@ -3089,18 +3084,7 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} binds a single name")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : an implementation-defined debugging facility is available and enabled")
     def _(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
@@ -3416,7 +3400,6 @@ def _(val_desc, env):
 tbd['{VAL_DESC} : a CharSet'] = T_CharSet
 tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
-tbd['{VAL_DESC} : a For-In Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
 tbd['{VAL_DESC} : a GraphLoadingState Record'] = T_GraphLoadingState_Record
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
@@ -11114,6 +11097,38 @@ if 1:
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 14 ECMAScript Language: Statements and Declarations
+
+# ==============================================================================
+#@ 14.7.5.7 ForIn/OfBodyEvaluation
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {var} binds a single name")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 14.7.5.10 For-In Iterator Objects
+
+tbd['{VAL_DESC} : a For-In Iterator'] = T_Iterator_object_
+
+# ==============================================================================
+#@ 14.16 The `debugger` Statement
+
+if 1:
+    @condd.put(r"{CONDITION_1} : an implementation-defined debugging facility is available and enabled")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @nv.put(r"{COMMAND} : Perform an implementation-defined debugging action.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
 
 main()
 
