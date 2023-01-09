@@ -2794,35 +2794,6 @@ def tc_cond(cond, env0, asserting=False):
 if 1:
     condd = DecoratedFuncDict()
 
-    # ---
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
-    def _(cond, env0, asserting):
-        # XXX spec is ambiguous: "each is A or B" vs "either both A or both B"
-        [ea, eb] = cond.children
-        (a_t_env, a_f_env) = env0.with_type_test(ea, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(eb, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
-        return (
-            env_and(a_t_env, b_t_env),
-            env_or(a_f_env, b_f_env)
-        )
-
-    # -------------------------------------------------
-    # introduce metavariable:
-
-    @condd.put(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}")
-    def _(cond, env0, asserting):
-        [let_var, i, stcond] = cond.children
-        env0.assert_expr_is_of_type(i, T_MathInteger_)
-        env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
-        return tc_cond(stcond, env_for_cond)
-
-    @condd.put(r"{CONDITION_1} : there exists an event {var} such that {CONDITION}")
-    def _(cond, env0, asserting):
-        [let_var, stcond] = cond.children
-        env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
-        return tc_cond(stcond, env_for_cond)
-
     # --------------------------------------------------
     # whatever
 
@@ -2831,13 +2802,6 @@ if 1:
         [var, code_unit_lit] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
         return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {var} has {var} in its range')
-    def _(cond, env0, asserting):
-        [sdbe_var, loc_var] = cond.children
-        env1 = env0.ensure_expr_is_of_type(sdbe_var, T_Shared_Data_Block_event)
-        env2 = env1.ensure_expr_is_of_type(loc_var, T_MathInteger_)
-        return (env2, env2)
 
     @condd.put(r'{CONDITION_1} : {EX} is in {EX}')
     @condd.put(r'{CONDITION_1} : {var} is not in {var}')
@@ -2877,31 +2841,6 @@ if 1:
         return (env0, env0)
 
     # ----
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
-    def _(cond, env0, asserting):
-        [ea, eb, exe] = cond.children
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(exe, T_candidate_execution)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} do not have disjoint ranges")
-    @condd.put(r"{CONDITION_1} : {var} and {var} have equal ranges")
-    @condd.put(r"{CONDITION_1} : {var} and {var} have overlapping ranges")
-    def _(cond, env0, asserting):
-        [ea, eb] = cond.children
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {EX} is not {var}")
-    def _(cond, env0, asserting):
-        [ea, eb] = cond.children
-        # over-specific:
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
-        return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
     def _(cond, env0, asserting):
@@ -3034,36 +2973,17 @@ def _(vd, env):
 
 # ------------------
 
-tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
-tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
-tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
-tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
-tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
-tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
-tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
 tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
-tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
-tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
-tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
-tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
 
 # ------------------
 
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
-tbd['{LIST_ELEMENTS_DESCRIPTION} : events'                             ] = T_event_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events'        ] = T_event_pair_
 
 # ------------------
 
@@ -3328,23 +3248,10 @@ if 1:
         else:
             assert 0, word
 
-    @exprd.put(r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
-    def _(expr, env0, _):
-        [dotting, dsbn, e] = expr.children
-        env0.assert_expr_is_of_type(dotting, ListType(T_Agent_Events_Record))
-        assert dsbn.source_text() == '[[AgentSignifier]]'
-        env0.assert_expr_is_of_type(e, T_agent_signifier_)
-        return (T_Agent_Events_Record, env0)
-
     @exprd.put(r"{EX} : {backticked_oth}")
     def _(expr, env0, _):
         [_] = expr.children
         return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : a new Synchronize event")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Synchronize_event, env0)
 
     @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
     def _(expr, env0, _):
@@ -11423,6 +11330,156 @@ set_up_internal_thing('slot', 'RevocableProxy', T_Proxy_exotic_object_ | T_Null)
 
 #@ 28.3 Module Namespace Objects
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 29 Memory Model
+
+# ==============================================================================
+#@ 29.1 Memory Model Fundamentals
+
+#> A <dfn>Shared Data Block event</dfn> is either
+#> a <dfn>ReadSharedMemory</dfn>,
+#> <dfn>WriteSharedMemory</dfn>, or
+#> <dfn>ReadModifyWriteSharedMemory</dfn> Record.
+
+if 1:
+    tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
+    tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
+    tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+    tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
+
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : events'] = T_event_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
+    def _(cond, env0, asserting):
+        # XXX spec is ambiguous: "each is A or B" vs "either both A or both B"
+        [ea, eb] = cond.children
+        (a_t_env, a_f_env) = env0.with_type_test(ea, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
+        (b_t_env, b_f_env) = env0.with_type_test(eb, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
+        return (
+            env_and(a_t_env, b_t_env),
+            env_or(a_f_env, b_f_env)
+        )
+
+    @condd.put(r"{CONDITION_1} : there exists an event {var} such that {CONDITION}")
+    def _(cond, env0, asserting):
+        [let_var, stcond] = cond.children
+        env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
+        return tc_cond(stcond, env_for_cond)
+
+    @condd.put(r"{CONDITION_1} : {EX} is not {var}")
+    def _(cond, env0, asserting):
+        [ea, eb] = cond.children
+        # over-specific:
+        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
+        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
+        return (env0, env0)
+
+#> A <dfn>Synchronize event</dfn> has no fields,
+#> and exists purely to directly constrain the permitted orderings of other events.
+
+    @exprd.put(r"{EXPR} : a new Synchronize event")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Synchronize_event, env0)
+
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events'] = T_event_pair_
+
+#> Let the range of
+#> a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
+#> be the Set of contiguous integers
+#> from its [[ByteIndex]] to [[ByteIndex]] + [[ElementSize]] - 1.
+
+    @condd.put(r'{CONDITION_1} : {var} has {var} in its range')
+    def _(cond, env0, asserting):
+        [sdbe_var, loc_var] = cond.children
+        env1 = env0.ensure_expr_is_of_type(sdbe_var, T_Shared_Data_Block_event)
+        env2 = env1.ensure_expr_is_of_type(loc_var, T_MathInteger_)
+        return (env2, env2)
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} do not have disjoint ranges")
+    @condd.put(r"{CONDITION_1} : {var} and {var} have equal ranges")
+    @condd.put(r"{CONDITION_1} : {var} and {var} have overlapping ranges")
+    def _(cond, env0, asserting):
+        [ea, eb] = cond.children
+        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
+        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}")
+    def _(cond, env0, asserting):
+        [let_var, i, stcond] = cond.children
+        env0.assert_expr_is_of_type(i, T_MathInteger_)
+        env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
+        return tc_cond(stcond, env_for_cond)
+
+# ==============================================================================
+#@ 29.2 Agent Events Records
+
+if 1:
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'] = T_Agent_Events_Record
+
+    @exprd.put(r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [dotting, dsbn, e] = expr.children
+        env0.assert_expr_is_of_type(dotting, ListType(T_Agent_Events_Record))
+        assert dsbn.source_text() == '[[AgentSignifier]]'
+        env0.assert_expr_is_of_type(e, T_agent_signifier_)
+        return (T_Agent_Events_Record, env0)
+
+# ==============================================================================
+#@ 29.3 Chosen Value Records
+
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'] = T_Chosen_Value_Record
+
+# ==============================================================================
+#@ 29.4 Candidate Executions
+
+tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
+tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
+
+# ==============================================================================
+#@ 29.5 Abstract Operations for the Memory Model
+
+if 1:
+    tbd['{VAL_DESC} : a Set of events'] = T_Set
+
+# ==============================================================================
+#@ 29.6 Relations of Candidate Executions
+
+#@ 29.6.1 agent-order
+tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
+
+#@ 29.6.2 reads-bytes-from
+tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
+
+#@ 29.6.3 reads-from
+tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
+
+#@ 29.6.4 host-synchronizes-with
+tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
+
+#@ 29.6.5 synchronizes-with
+tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
+
+#@ 29.6.6 happens-before
+tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
+
+# ==============================================================================
+#@ 29.8 Races
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
+    def _(cond, env0, asserting):
+        [ea, eb, exe] = cond.children
+        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
+        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
+        env0.assert_expr_is_of_type(exe, T_candidate_execution)
+        return (env0, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 main()
 
