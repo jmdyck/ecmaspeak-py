@@ -3255,17 +3255,6 @@ if 1:
         assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`")
-    def _(cond, env0, asserting):
-        [noi] = cond.children
-        env0.assert_expr_is_of_type(noi, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
-    def _(cond, env0, asserting):
-        [g_sym] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
     def _(cond, env0, asserting):
         [prod_ref, h_emu_xref] = cond.children
@@ -4258,32 +4247,6 @@ if 1:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (T_Synchronize_event, env0)
-
-    # for PR #1961 compound_assignment
-    @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
-    def _(expr, env0, _):
-        [table_result_type, var, h_figure] = expr.children
-        table_result_type_str = table_result_type.source_text()
-        if table_result_type_str == 'sequence of Unicode code points':
-            result_type = T_Unicode_code_points_
-        else:
-            assert 0, table_result_type_str
-        return (result_type, env0)
-
-    @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
-    def _(expr, env0, _):
-        [table_result_type, vara, varb, h_figure] = expr.children
-        table_result_type_str = table_result_type.source_text()
-        if table_result_type_str == 'abstract operation':
-            # result_type = (
-            #     ProcType([T_Number, T_Number], T_Number | T_throw_)
-            #     |
-            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_)
-            # )
-            result_type = ProcType([T_Number|T_BigInt, T_Number|T_BigInt], T_Number|T_BigInt | T_throw_)
-        else:
-            assert 0, table_result_type_str
-        return (result_type, env0)
 
     @exprd.put(r"{EX} : a nondeterministically chosen byte value")
     def _(expr, env0, _):
@@ -11093,6 +11056,64 @@ if 1:
         return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 13 ECMAScript Language: Expressions
+
+# ==============================================================================
+#@ 13.1.1 Static Semantics: Early Errors [for Identifiers]
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`")
+    def _(cond, env0, asserting):
+        [noi] = cond.children
+        env0.assert_expr_is_of_type(noi, T_String)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 13.3.6.1 Runtime Semantics: Evaluation [of Function Calls]
+
+#> A |CallExpression| evaluation that executes step
+#> <emu-xref href="#step-callexpression-evaluation-direct-eval"></emu-xref>
+#> is a <dfn>direct eval</dfn>
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
+    def _(cond, env0, asserting):
+        [g_sym] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 13.15.2 Runtime Semantics: Evaluation [of Assignment Operators]
+
+if 1:
+    # for PR #1961 compound_assignment
+    @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
+    def _(expr, env0, _):
+        [table_result_type, var, h_figure] = expr.children
+        table_result_type_str = table_result_type.source_text()
+        if table_result_type_str == 'sequence of Unicode code points':
+            result_type = T_Unicode_code_points_
+        else:
+            assert 0, table_result_type_str
+        return (result_type, env0)
+
+# ==============================================================================
+#@ 13.15.3 ApplyStringOrNumericBinaryOperator
+
+if 1:
+    @exprd.put(r"{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
+    def _(expr, env0, _):
+        [table_result_type, vara, varb, h_figure] = expr.children
+        table_result_type_str = table_result_type.source_text()
+        if table_result_type_str == 'abstract operation':
+            # result_type = (
+            #     ProcType([T_Number, T_Number], T_Number | T_throw_)
+            #     |
+            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_)
+            # )
+            result_type = ProcType([T_Number|T_BigInt, T_Number|T_BigInt], T_Number|T_BigInt | T_throw_)
+        else:
+            assert 0, table_result_type_str
+        return (result_type, env0)
 
 main()
 
