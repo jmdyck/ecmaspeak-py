@@ -2742,21 +2742,6 @@ def tc_nonvalue(anode, env0):
 if 1:
     nv = DecoratedFuncDict()
 
-    @nv.put(r'{IND_COMMANDS} : {_indent_}{COMMANDS}{_outdent_}')
-    @nv.put(r'{COMMANDS} : {_NL_N} {COMMAND}')
-    @nv.put(r'{COMMAND} : {IF_CLOSED}')
-    @nv.put(r'{COMMAND} : {IF_OTHER}')
-    @nv.put(r'{ELSE_PART} : Else, {SMALL_COMMAND}.')
-    @nv.put(r'{ELSE_PART} : Else,{IND_COMMANDS}')
-    @nv.put(r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.')
-    @nv.put(r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}")
-
-    @nv.put(r"{COMMAND} : Optionally, {SMALL_COMMAND}.")
-    @nv.put(r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}")
-    def _(anode, env0):
-        [child] = anode.children
-        return tc_nonvalue(child, env0)
-
 # ------------------------------------------------------------------------------
 
 def tc_cond(cond, env0, asserting=False):
@@ -2892,14 +2877,6 @@ def type_bracket_for(vd, env):
 
 def a_subset_of(t): return (T_0, t)
 
-@tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}')
-@tbd.put('{VAL_DESC} : {LITERAL}')
-@tbd.put('{LITERAL} : {NUMBER_LITERAL}')
-@tbd.put('{LITERAL} : {MATH_LITERAL}')
-def _(vd, env):
-    [child] = vd.children
-    return type_bracket_for(child, env)
-
 # ------------------------------------------------------------------------------
 
 def convert_nature_to_type(nature):
@@ -3016,47 +2993,6 @@ def tc_expr(expr, env0, expr_value_will_be_discarded=False):
 
 if 1:
     exprd = DecoratedFuncDict()
-
-    @exprd.put(r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}")
-    @exprd.put(r"{EXPR} : {EX}")
-    @exprd.put(r"{EX} : ({EX})")
-    @exprd.put(r"{EX} : The value of {SETTABLE}")
-    @exprd.put(r"{EX} : the value of {SETTABLE}")
-    @exprd.put(r"{EX} : the {var} flag")
-    @exprd.put(r"{EX} : {code_point_lit}")
-    @exprd.put(r"{EX} : {LITERAL}")
-    @exprd.put(r"{EX} : {LOCAL_REF}")
-    @exprd.put(r"{EX} : {NUM_EXPR}")
-    @exprd.put(r"{EX} : {PAIR}")
-    @exprd.put(r"{EX} : {PP_NAMED_OPERATION_INVOCATION}")
-    @exprd.put(r"{EX} : {RECORD_CONSTRUCTOR}")
-    @exprd.put(r"{FACTOR} : ({NUM_EXPR})")
-    @exprd.put(r"{FACTOR} : {BIGINT_LITERAL}")
-    @exprd.put(r"{FACTOR} : {MATH_LITERAL}")
-    @exprd.put(r"{FACTOR} : {NUMBER_LITERAL}")
-    @exprd.put(r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}")
-    @exprd.put(r"{FACTOR} : {SETTABLE}")
-    @exprd.put(r"{LITERAL} : {BIGINT_LITERAL}")
-    @exprd.put(r"{LITERAL} : {MATH_LITERAL}")
-    @exprd.put(r"{LITERAL} : {NUMBER_LITERAL}")
-    @exprd.put(r"{LITERAL} : {code_unit_lit}")
-    @exprd.put(r"{LOCAL_REF} : {PROD_REF}")
-    @exprd.put(r"{LOCAL_REF} : {SETTABLE}")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}")
-    @exprd.put(r"{NUM_COMPARAND} : {FACTOR}")
-    @exprd.put(r"{NUM_COMPARAND} : {SUM}")
-    @exprd.put(r"{NUM_COMPARAND} : {PRODUCT}")
-    @exprd.put(r"{NUM_EXPR} : {PRODUCT}")
-    @exprd.put(r"{NUM_EXPR} : {SUM}")
-    @exprd.put(r"{RHSS} : {RHS}")
-    @exprd.put(r"{SETTABLE} : {DOTTING}")
-    @exprd.put(r"{TERM} : {FACTOR}")
-    @exprd.put(r"{TERM} : {PRODUCT}")
-    @exprd.put(r"{TYPE_ARG} : {DOTTING}")
-    @exprd.put(r"{TYPE_ARG} : {var}")
-    def _(expr, env0, expr_value_will_be_discarded):
-        [child] = expr.children
-        return tc_expr(child, env0, expr_value_will_be_discarded)
 
 # ------------------------------------------------------------------------------
 
@@ -3572,6 +3508,75 @@ def handle_internal_thing_declaration(method_or_slot, row):
         assert 0, method_or_slot
 
     set_up_internal_thing(method_or_slot, debracketed_thing_name, t)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# Unit productions (and other similar productions)
+# where the semantics are just to delegate to a child node.
+
+if 1:
+    @nv.put(r'{IND_COMMANDS} : {_indent_}{COMMANDS}{_outdent_}')
+    @nv.put(r'{COMMANDS} : {_NL_N} {COMMAND}')
+    @nv.put(r'{COMMAND} : {IF_CLOSED}')
+    @nv.put(r'{COMMAND} : {IF_OTHER}')
+    @nv.put(r'{ELSE_PART} : Else, {SMALL_COMMAND}.')
+    @nv.put(r'{ELSE_PART} : Else,{IND_COMMANDS}')
+    @nv.put(r'{ELSE_PART} : Otherwise, {SMALL_COMMAND}.')
+    @nv.put(r"{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}")
+    @nv.put(r"{COMMAND} : Optionally, {SMALL_COMMAND}.")
+    @nv.put(r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}")
+    def _(anode, env0):
+        [child] = anode.children
+        return tc_nonvalue(child, env0)
+
+    @tbd.put('{VALUE_DESCRIPTION} : {VAL_DESC}')
+    @tbd.put('{VAL_DESC} : {LITERAL}')
+    @tbd.put('{LITERAL} : {NUMBER_LITERAL}')
+    @tbd.put('{LITERAL} : {MATH_LITERAL}')
+    def _(vd, env):
+        [child] = vd.children
+        return type_bracket_for(child, env)
+
+    @exprd.put(r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EXPR} : {EX}")
+    @exprd.put(r"{EX} : ({EX})")
+    @exprd.put(r"{EX} : The value of {SETTABLE}")
+    @exprd.put(r"{EX} : the value of {SETTABLE}")
+    @exprd.put(r"{EX} : the {var} flag")
+    @exprd.put(r"{EX} : {code_point_lit}")
+    @exprd.put(r"{EX} : {LITERAL}")
+    @exprd.put(r"{EX} : {LOCAL_REF}")
+    @exprd.put(r"{EX} : {NUM_EXPR}")
+    @exprd.put(r"{EX} : {PAIR}")
+    @exprd.put(r"{EX} : {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EX} : {RECORD_CONSTRUCTOR}")
+    @exprd.put(r"{FACTOR} : ({NUM_EXPR})")
+    @exprd.put(r"{FACTOR} : {BIGINT_LITERAL}")
+    @exprd.put(r"{FACTOR} : {MATH_LITERAL}")
+    @exprd.put(r"{FACTOR} : {NUMBER_LITERAL}")
+    @exprd.put(r"{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{FACTOR} : {SETTABLE}")
+    @exprd.put(r"{LITERAL} : {BIGINT_LITERAL}")
+    @exprd.put(r"{LITERAL} : {MATH_LITERAL}")
+    @exprd.put(r"{LITERAL} : {NUMBER_LITERAL}")
+    @exprd.put(r"{LITERAL} : {code_unit_lit}")
+    @exprd.put(r"{LOCAL_REF} : {PROD_REF}")
+    @exprd.put(r"{LOCAL_REF} : {SETTABLE}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}")
+    @exprd.put(r"{NUM_COMPARAND} : {FACTOR}")
+    @exprd.put(r"{NUM_COMPARAND} : {SUM}")
+    @exprd.put(r"{NUM_COMPARAND} : {PRODUCT}")
+    @exprd.put(r"{NUM_EXPR} : {PRODUCT}")
+    @exprd.put(r"{NUM_EXPR} : {SUM}")
+    @exprd.put(r"{RHSS} : {RHS}")
+    @exprd.put(r"{SETTABLE} : {DOTTING}")
+    @exprd.put(r"{TERM} : {FACTOR}")
+    @exprd.put(r"{TERM} : {PRODUCT}")
+    @exprd.put(r"{TYPE_ARG} : {DOTTING}")
+    @exprd.put(r"{TYPE_ARG} : {var}")
+    def _(expr, env0, expr_value_will_be_discarded):
+        [child] = expr.children
+        return tc_expr(child, env0, expr_value_will_be_discarded)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # code point & code unit
