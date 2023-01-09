@@ -2975,15 +2975,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
         return (env1, env1)
 
-    @condd.put(r"{CONDITION_1} : {var} and {var} are the same Module Record")
-    @condd.put(r"{CONDITION_1} : {var} and {DOTTING} are the same Module Record")
-    @condd.put(r"{CONDITION_1} : {DOTTING} and {DOTTING} are not the same Module Record")
-    def _(cond, env0, asserting):
-        [ex1, ex2] = cond.children
-        env0.assert_expr_is_of_type(ex1, T_Module_Record)
-        env0.assert_expr_is_of_type(ex2, T_Module_Record)
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : {var} has {var} in its range')
     def _(cond, env0, asserting):
         [sdbe_var, loc_var] = cond.children
@@ -3037,38 +3028,6 @@ if 1:
         env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : We've reached the starting point of an `export *` circularity")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} provides the direct binding for this export")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} imports a specific binding for this export")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : This is a circular import request")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : A `default` export was not explicitly defined by this module")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : There is more than one `*` import that includes the requested name")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : we return here")
     def _(cond, env0, asserting):
         [] = cond.children
@@ -3087,12 +3046,6 @@ if 1:
     @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : All named exports from {var} are resolvable")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed")
@@ -3218,12 +3171,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} does not provide the direct binding for this export")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Module_Record)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once")
     def _(cond, env0, asserting):
         [noi, *bw_] = cond.children
@@ -3252,26 +3199,6 @@ if 1:
     @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}")
     def _(cond, env0, asserting):
         [prod_refa, prod_refb, h_a] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
-    def _(cond, env0, asserting):
-        [dotting, lita, litb] = cond.children
-        assert lita.source_text() == '*false*'
-        assert litb.source_text() == '*true*'
-        env0.assert_expr_is_of_type(dotting, T_Boolean)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
@@ -3388,10 +3315,8 @@ def _(val_desc, env):
     return T_RegExpMatcher_
 
 tbd['{VAL_DESC} : a CharSet'] = T_CharSet
-tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
-tbd['{VAL_DESC} : a GraphLoadingState Record'] = T_GraphLoadingState_Record
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
 tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
 tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
@@ -3399,7 +3324,6 @@ tbd['{VAL_DESC} : a MatchState'] = T_MatchState
 tbd['{VAL_DESC} : a Matcher'] = T_Matcher
 tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
-tbd['{VAL_DESC} : a Module Record'] = T_Module_Record
 tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
 tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
@@ -3408,11 +3332,8 @@ tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteShare
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
-tbd['{VAL_DESC} : a ResolvedBinding Record'] = T_ResolvedBinding_Record
-tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
 tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
-tbd['{VAL_DESC} : a Source Text Module Record'] = T_Source_Text_Module_Record
 tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
 tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
@@ -3449,7 +3370,6 @@ tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
@@ -3472,11 +3392,7 @@ def _(led, env):
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_AsyncGeneratorRequest_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records'              ] = T_Cyclic_Module_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'                ] = T_ExportEntry_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_ImportEntry_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
 tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_character_
@@ -4224,13 +4140,6 @@ if 1:
         [] = expr.children
         return (T_Unicode_code_points_, env0)
 
-    @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
-    def _(expr, env0, _):
-        [var, dsb_word, literal, cap_word] = expr.children
-        assert dsb_word.source_text() == '[[AsyncEvaluation]]'
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
-        return (ListType(T_Cyclic_Module_Record), env1)
-
     @exprd.put(r"{RHSS} : {RHSS}{RHS}")
     def _(expr, env0, _):
         [rhss, rhs] = expr.children
@@ -4251,12 +4160,6 @@ if 1:
         # (t_env, f_env) = tc_cond(cond, env0)
         # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
         return (T_IntegralNumber_, env0)
-
-    @exprd.put(r"{EXPR} : that Record")
-    def _(expr, env0, _):
-        # InnerModuleLoading
-        [] = expr.children
-        return (T_LoadedModule_Record_, env0)
 
     @exprd.put(r"{EXPR} : an implementation-defined non-negative mathematical value")
     def _(expr, env0, _):
@@ -11140,6 +11043,141 @@ if 1:
         assert dsbwa.source_text() == '[[Call]]'
         assert dsbwb.source_text() == '[[Construct]]'
         return (ListType(T_Tangible_), env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 16 ECMAScript Language: Scripts and Modules
+
+# ==============================================================================
+#@ 16.1.4 Script Records
+
+tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
+
+# ==============================================================================
+#@ 16.2.1.4 Abstract Module Records
+
+if 1:
+    tbd['{VAL_DESC} : a Module Record'] = T_Module_Record
+    tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} are the same Module Record")
+    @condd.put(r"{CONDITION_1} : {var} and {DOTTING} are the same Module Record")
+    @condd.put(r"{CONDITION_1} : {DOTTING} and {DOTTING} are not the same Module Record")
+    def _(cond, env0, asserting):
+        [ex1, ex2] = cond.children
+        env0.assert_expr_is_of_type(ex1, T_Module_Record)
+        env0.assert_expr_is_of_type(ex2, T_Module_Record)
+        return (env0, env0)
+
+    tbd['{VAL_DESC} : a ResolvedBinding Record'] = T_ResolvedBinding_Record
+
+# ==============================================================================
+#@ 16.2.1.5 Cyclic Module Records
+
+if 1:
+    tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records'] = T_Cyclic_Module_Record
+
+    tbd['{VAL_DESC} : a GraphLoadingState Record'] = T_GraphLoadingState_Record
+
+    #@ 16.2.1.5.1.1 InnerModuleLoading
+    @exprd.put(r"{EXPR} : that Record")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_LoadedModule_Record_, env0)
+
+    #@ 16.2.1.5.3.1 InnerModuleEvaluation
+    @condd.put(r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
+    def _(cond, env0, asserting):
+        [dotting, lita, litb] = cond.children
+        assert lita.source_text() == '*false*'
+        assert litb.source_text() == '*true*'
+        env0.assert_expr_is_of_type(dotting, T_Boolean)
+        return (env0, env0)
+
+    #@ 16.2.1.5.3.4 AsyncModuleExecutionFulfilled
+    @exprd.put(r"{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
+    def _(expr, env0, _):
+        [var, dsb_word, literal, cap_word] = expr.children
+        assert dsb_word.source_text() == '[[AsyncEvaluation]]'
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
+        return (ListType(T_Cyclic_Module_Record), env1)
+
+# ==============================================================================
+#@ 16.2.1.6 Source Text Module Records
+
+tbd['{VAL_DESC} : a Source Text Module Record'] = T_Source_Text_Module_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'] = T_Source_Text_Module_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'       ] = T_ImportEntry_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'       ] = T_ExportEntry_Record
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {var} provides the direct binding for this export")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} imports a specific binding for this export")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
+        return (env0, env0)
+
+if 1:
+    #@ 16.2.1.6.2 GetExportedNames
+    @condd.put(r"{CONDITION_1} : We've reached the starting point of an `export *` circularity")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    #@ 16.2.1.6.3 ResolveExport
+    @condd.put(r"{CONDITION_1} : This is a circular import request")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    #@ 16.2.1.6.3 ResolveExport
+    @condd.put(r"{CONDITION_1} : A `default` export was not explicitly defined by this module")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    #@ 16.2.1.6.3 ResolveExport
+    @condd.put(r"{CONDITION_1} : There is more than one `*` import that includes the requested name")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    #@ 16.2.1.6.3 ResolveExport
+    @condd.put(r"{CONDITION_1} : {var} does not provide the direct binding for this export")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Module_Record)
+        return (env0, env0)
+
+    #@ 16.2.1.6.4 InitializeEnvironment
+    @condd.put(r"{CONDITION_1} : All named exports from {var} are resolvable")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
+        return (env0, env0)
+
+    #@ 16.2.1.6.5 ExecuteModule
+    @condd.put(r"{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 16.2.1.7 GetImportedModule
+
+if 1:
+    @condd.put(r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
+        return (env0, env0)
 
 main()
 
