@@ -2794,81 +2794,10 @@ def tc_cond(cond, env0, asserting=False):
 if 1:
     condd = DecoratedFuncDict()
 
-    # --------------------------------------------------
-    # whatever
-
-    @condd.put(r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}')
-    def _(cond, env0, asserting):
-        [var, code_unit_lit] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
-        return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {EX} is in {EX}')
-    @condd.put(r'{CONDITION_1} : {var} is not in {var}')
-    @condd.put(r'{CONDITION_1} : {var} occurs exactly once in {var}')
-    def _(cond, env0, asserting):
-        [item_var, container_var] = cond.children
-        (container_t, env1) = tc_expr(container_var, env0); assert env1 is env0
-        if container_t == T_String:
-            env0.assert_expr_is_of_type(item_var, T_code_unit_)
-        elif container_t == T_CharSet:
-            env0.assert_expr_is_of_type(item_var, T_character_)
-        elif container_t == T_Relation:
-            env0.assert_expr_is_of_type(item_var, T_event_pair_)
-        elif isinstance(container_t, ListType):
-            el_type = container_t.element_type
-            if el_type == T_Cyclic_Module_Record:
-                # The stack only contains CMRs,
-                # but _requiredModule_ might be a non-C MR:
-                env0.assert_expr_is_of_type(item_var, T_Module_Record)
-                # It's still reasonable to ask if _requiredModule_ is in the stack.
-            else:
-                assert 0, container_t
-        else:
-            assert 0, container_t
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed")
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Module_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (env0, env0)
-
-    # ----
-
-    @condd.put(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
-    def _(cond, env0, asserting):
-        [var, emu_xref1, emu_xref2] = cond.children
-        env0.assert_expr_is_of_type(var, T_code_point_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}")
-    def _(cond, env0, asserting):
-        [var, xrefa, xrefb] = cond.children
-        assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
-        assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
-        env0.assert_expr_is_of_type(var, T_code_unit_)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once")
-    def _(cond, env0, asserting):
-        [noi, *bw_] = cond.children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        for bw in bw_:
-            assert len(bw.source_text()) == 3 # single-character 'words'
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}")
-    def _(cond, env0, asserting):
-        [noi, bw] = cond.children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
@@ -2970,24 +2899,6 @@ def a_subset_of(t): return (T_0, t)
 def _(vd, env):
     [child] = vd.children
     return type_bracket_for(child, env)
-
-# ------------------
-
-tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
-tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
-tbd['{VAL_DESC} : a code point'] = T_code_point_
-tbd['{VAL_DESC} : a code unit'] = T_code_unit_
-tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
-tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
-
-# ------------------
-
-tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
-
-# ------------------
-
-tbd['{LITERAL} : {code_unit_lit}'] = a_subset_of(T_code_unit_)
 
 # ------------------------------------------------------------------------------
 
@@ -3146,117 +3057,6 @@ if 1:
     def _(expr, env0, expr_value_will_be_discarded):
         [child] = expr.children
         return tc_expr(child, env0, expr_value_will_be_discarded)
-
-    # ----
-    # return T_MathInteger_: arithmetic:
-
-    @exprd.put(r"{NUM_COMPARAND} : the numeric value of {var}")
-    @exprd.put(r"{EX} : the numeric value of {EX}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
-        return (T_MathInteger_, env1)
-
-    # ----
-
-    @exprd.put(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (T_code_point_, env0)
-
-    # ----------------------------------------------------------
-    # return T_code_unit_
-
-    @exprd.put(r'{code_unit_lit} : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
-    @exprd.put(r'{code_unit_lit} : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
-    def _(expr, env0, _):
-        return (T_code_unit_, env0)
-
-    @exprd.put(r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}")
-    def _(expr, env0, _):
-        [nonterminal, emu_xref] = expr.children
-        return (T_code_unit_, env0)
-
-    @exprd.put(r"{EX} : the code unit whose value is {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
-        return (T_code_unit_, env0)
-
-    @exprd.put(r"{EXPR} : the code unit whose numeric value is that of {EXPR}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_code_point_)
-        return (T_code_unit_, env0)
-
-    @exprd.put(r"{EXPR} : the code unit whose numeric value is {EX}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (T_code_unit_, env0)
-    # return T_code_point_
-
-    @exprd.put(r"{EXPR} : the code point {var}")
-        # This means "the code point whose numeric value is {var}"
-    @exprd.put(r"{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (T_code_point_, env0)
-
-    @exprd.put(r"{EXPR} : the code point whose numeric value is that of {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_code_unit_)
-        return (T_code_point_, env0)
-
-    @exprd.put(r'{code_point_lit} : ` [^`]+ ` \x20 U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
-    @exprd.put(r'{code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
-    def _(expr, env0, _):
-        return (T_code_point_, env0)
-
-    # ----------------------------------------------------------
-    # return ListType
-
-    # --------------------
-    # ListType(T_MathInteger_)
-
-    @exprd.put(r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}")
-    def _(expr, env0, _):
-        [dotting] = expr.children
-        env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
-        return (ListType(T_MathInteger_), env1)
-
-    # -------------------------------------------------
-    # whatever
-
-    @exprd.put(r"{EXPR} : the List of Unicode code points {var}")
-    def _(expr, env0, _):
-        [v] = expr.children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (ListType(T_code_point_), env0)
-
-    # ----
-
-    @exprd.put(r"{EX} : {backticked_word}")
-    def _(expr, env0, _):
-        [backticked_word] = expr.children
-        word = backticked_word.source_text()[1:-1]
-        if word == 'General_Category':
-            return (T_Unicode_code_points_, env0)
-        else:
-            assert 0, word
-
-    @exprd.put(r"{EX} : {backticked_oth}")
-    def _(expr, env0, _):
-        [_] = expr.children
-        return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Unicode_code_points_, env0)
 
 # ------------------------------------------------------------------------------
 
@@ -3772,6 +3572,205 @@ def handle_internal_thing_declaration(method_or_slot, row):
         assert 0, method_or_slot
 
     set_up_internal_thing(method_or_slot, debracketed_thing_name, t)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# code point & code unit
+
+# The spec doesn't define the terms 'code point' or 'code unit'.
+# (It doesn't even refer to Unicode's definitions.)
+# So there isn't an obvious place to handle pseudocode productions
+# that relate to those terms. Instead, I'll put them here.
+# (I considered 11.1 'Source Text' for 'code point',
+# and 6.1.4 'The String Type' for 'code unit'.)
+
+# ==============================================================================
+# code point
+
+if 1:
+    tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
+    tbd['{VAL_DESC} : a code point'] = T_code_point_
+    tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'] = T_code_point_
+
+    @exprd.put(r'{code_point_lit} : ` [^`]+ ` \x20 U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    @exprd.put(r'{code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    def _(expr, env0, _):
+        return (T_code_point_, env0)
+
+    @condd.put(r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}')
+    def _(cond, env0, asserting):
+        [var, code_unit_lit] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_code_point_) # odd
+        return (env1, env1)
+
+    # for 19.2.6.6
+    @condd.put(r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the code point {var}")
+        # This means "the code point whose numeric value is {var}"
+    @exprd.put(r"{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_code_point_, env0)
+
+    @exprd.put(r"{EXPR} : the code point whose numeric value is that of {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_code_unit_)
+        return (T_code_point_, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [var, emu_xref1, emu_xref2] = cond.children
+        env0.assert_expr_is_of_type(var, T_code_point_)
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_code_point_, env0)
+
+    @exprd.put(r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}")
+    def _(expr, env0, _):
+        [dotting] = expr.children
+        env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
+        return (ListType(T_MathInteger_), env1)
+
+# ----------
+
+    tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
+
+    @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Unicode_code_points_, env0)
+
+    @exprd.put(r"{EX} : {backticked_word}")
+    def _(expr, env0, _):
+        [backticked_word] = expr.children
+        word = backticked_word.source_text()[1:-1]
+        if word == 'General_Category':
+            return (T_Unicode_code_points_, env0)
+        else:
+            assert 0, word
+
+    @exprd.put(r"{EX} : {backticked_oth}")
+    def _(expr, env0, _):
+        [_] = expr.children
+        return (T_Unicode_code_points_, env0)
+
+    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once")
+    def _(cond, env0, asserting):
+        [noi, *bw_] = cond.children
+        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+        for bw in bw_:
+            assert len(bw.source_text()) == 3 # single-character 'words'
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}")
+    def _(cond, env0, asserting):
+        [noi, bw] = cond.children
+        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+        assert len(bw.source_text()) == 3 # single-character 'word'
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the List of Unicode code points {var}")
+    def _(expr, env0, _):
+        [v] = expr.children
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
+
+# ==============================================================================
+# code unit
+
+# (We can infer that it means "a UTF-16 code unit value".)
+
+if 1:
+    tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
+    tbd['{VAL_DESC} : a code unit'] = T_code_unit_
+
+    @exprd.put(r'{code_unit_lit} : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    @exprd.put(r'{code_unit_lit} : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
+    def _(expr, env0, _):
+        return (T_code_unit_, env0)
+
+    tbd['{LITERAL} : {code_unit_lit}'] = a_subset_of(T_code_unit_)
+
+    @exprd.put(r"{EX} : the code unit whose value is {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
+        return (T_code_unit_, env0)
+
+    @exprd.put(r"{EXPR} : the code unit whose numeric value is {EX}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (T_code_unit_, env0)
+
+    @exprd.put(r"{EXPR} : the code unit whose numeric value is that of {EXPR}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_code_point_)
+        return (T_code_unit_, env0)
+
+    @exprd.put(r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}")
+    def _(expr, env0, _):
+        [nonterminal, emu_xref] = expr.children
+        return (T_code_unit_, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [var, xrefa, xrefb] = cond.children
+        assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
+        assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
+        env0.assert_expr_is_of_type(var, T_code_unit_)
+        return (env0, env0)
+
+# ==============================================================================
+# code point and/or code unit
+
+if 1:
+    @exprd.put(r"{NUM_COMPARAND} : the numeric value of {var}")
+    @exprd.put(r"{EX} : the numeric value of {EX}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        # polymorphic
+        env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
+        return (T_MathInteger_, env1)
+
+    @condd.put(r'{CONDITION_1} : {EX} is in {EX}')
+    @condd.put(r'{CONDITION_1} : {var} is not in {var}')
+    @condd.put(r'{CONDITION_1} : {var} occurs exactly once in {var}')
+    def _(cond, env0, asserting):
+        [item_var, container_var] = cond.children
+        (container_t, env1) = tc_expr(container_var, env0); assert env1 is env0
+        # polymorphic
+        if container_t == T_String:
+            env0.assert_expr_is_of_type(item_var, T_code_unit_)
+        elif container_t == T_CharSet:
+            env0.assert_expr_is_of_type(item_var, T_character_)
+        elif container_t == T_Relation:
+            env0.assert_expr_is_of_type(item_var, T_event_pair_)
+        elif isinstance(container_t, ListType):
+            el_type = container_t.element_type
+            if el_type == T_Cyclic_Module_Record:
+                # The stack only contains CMRs,
+                # but _requiredModule_ might be a non-C MR:
+                env0.assert_expr_is_of_type(item_var, T_Module_Record)
+                # It's still reasonable to ask if _requiredModule_ is in the stack.
+            else:
+                assert 0, container_t
+        else:
+            assert 0, container_t
+        return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 4 Overview
