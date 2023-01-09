@@ -3034,7 +3034,6 @@ def _(vd, env):
 
 # ------------------
 
-tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
@@ -3779,9 +3778,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 28.2.2.1 Proxy.revocable
-set_up_internal_thing('slot', 'RevocableProxy', T_Proxy_exotic_object_ | T_Null)
 
 # ------------------------------------------------------------------------------
 
@@ -11418,6 +11414,15 @@ if 1:
     def _(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 28 Reflection
+
+#@ 28.2.2.1 Proxy.revocable
+set_up_internal_thing('slot', 'RevocableProxy', T_Proxy_exotic_object_ | T_Null)
+
+#@ 28.3 Module Namespace Objects
+tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 
 main()
 
