@@ -5209,11 +5209,6 @@ if 1:
         env1.assert_expr_is_of_type(interval, T_MathInteger_)
         return (env1, env1)
 
-    @condd.put(r"{CONDITION_1} : the host is a web browser")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -10334,6 +10329,18 @@ def handle_internal_thing_declaration(method_or_slot, row):
         assert 0, method_or_slot
 
     set_up_internal_thing(method_or_slot, debracketed_thing_name, t)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 4 Overview
+
+# ==============================================================================
+#@ 4.2 Hosts and Implementations
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the host is a web browser")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
