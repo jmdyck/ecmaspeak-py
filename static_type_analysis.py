@@ -2827,12 +2827,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_agent_signifier_)
         return env0
 
-    @nv.put(r"{COMMAND} : Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.")
-    def _(anode, env0):
-        [var, _, comparator, _, comparator] = anode.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
-        return env1
-
 # ------------------------------------------------------------------------------
 
 def tc_cond(cond, env0, asserting=False):
@@ -3200,9 +3194,6 @@ tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
 tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
-tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
-tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
-tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
 tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
@@ -3404,22 +3395,6 @@ if 1:
         [child] = expr.children
         return tc_expr(child, env0, expr_value_will_be_discarded)
 
-    # -------------------------------------------------
-    # return T_Number
-
-    @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}")
-    def _(expr, env0, _):
-        [emu_xref, var] = expr.children
-        assert var.source_text() in ['_type_', '_srcType_', '_elementType_']
-        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
-        return (T_MathInteger_, env1)
-
-    @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for {EX}")
-    def _(expr, env0, _):
-        [emu_xref, ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_String)
-        return (T_MathInteger_, env1)
-
     # ----
     # return T_MathInteger_: arithmetic:
 
@@ -3440,12 +3415,6 @@ if 1:
 
     # -------------------------
     # return T_String
-
-    @exprd.put(r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}")
-    def _(expr, env0, _):
-        [emu_xref, ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_String)
-        return (T_TypedArray_element_type, env0)
 
     @exprd.put(r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row")
     def _(expr, env0, _):
@@ -3522,15 +3491,6 @@ if 1:
         return (ListType(T_MathInteger_), env1)
 
     # -------------------------------------------------
-    # return proc type
-
-    @exprd.put(r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}')
-    def _(expr, env0, _):
-        [emu_xref, var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
-        return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
-
-    # -------------------------------------------------
     # whatever
 
     @exprd.put(r"{EXPR} : the List of Unicode code points {var}")
@@ -3562,17 +3522,6 @@ if 1:
             return (T_Unicode_code_points_, env0)
         else:
             assert 0, word
-
-    @exprd.put(r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}")
-    def _(expr, env0, _):
-        [emu_xref, dotting] = expr.children
-        env0.assert_expr_is_of_type(dotting, T_String)
-        return (T_function_object_, env0)
-
-    @exprd.put(r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor")
-    def _(expr, env0, _):
-        [emu_xref] = expr.children
-        return (T_String, env0)
 
     @exprd.put(r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
     def _(expr, env0, _):
@@ -11314,6 +11263,63 @@ if 1:
 
 tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Match_Record | T_Undefined
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 23 Indexed Collections
+
+# ==============================================================================
+#@ 23.1.3.30.1 SortIndexedProperties
+
+if 1:
+    @nv.put(r"{COMMAND} : Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.")
+    def _(anode, env0):
+        [var, _, comparator, _, comparator] = anode.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
+        return env1
+
+# ==============================================================================
+#@ 23.2 TypedArray Objects
+
+if 1:
+    tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
+    tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
+    tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
+
+    @exprd.put(r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}")
+    def _(expr, env0, _):
+        [emu_xref, dotting] = expr.children
+        env0.assert_expr_is_of_type(dotting, T_String)
+        return (T_function_object_, env0)
+
+    @exprd.put(r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor")
+    def _(expr, env0, _):
+        [emu_xref] = expr.children
+        return (T_String, env0)
+
+    @exprd.put(r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}')
+    def _(expr, env0, _):
+        [emu_xref, var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
+        return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
+
+    @exprd.put(r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}")
+    def _(expr, env0, _):
+        [emu_xref, ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_String)
+        return (T_TypedArray_element_type, env0)
+
+    @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for Element Type {var}")
+    def _(expr, env0, _):
+        [emu_xref, var] = expr.children
+        assert var.source_text() in ['_type_', '_srcType_', '_elementType_']
+        env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
+        return (T_MathInteger_, env1)
+
+    @exprd.put(r"{EXPR} : the Element Size value specified in {h_emu_xref} for {EX}")
+    def _(expr, env0, _):
+        [emu_xref, ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_String)
+        return (T_MathInteger_, env1)
 
 main()
 
