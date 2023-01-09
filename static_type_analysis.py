@@ -2779,12 +2779,6 @@ def tc_cond(cond, env0, asserting=False):
 if 1:
     condd = DecoratedFuncDict()
 
-    @condd.put(r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Module_Record)
-        return (env0, env0)
-
 # ------------------------------------------------------------------------------
 
 def tc_logical(logical_structure, env0, asserting):
