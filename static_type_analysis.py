@@ -2865,13 +2865,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_CharSet)
         return env0
 
-    @nv.put(r"{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.")
-    def _(anode, env0):
-        [text_var, goal_var] = anode.children
-        env0.assert_expr_is_of_type(text_var, T_Unicode_code_points_)
-        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
-        return env0
-
     @nv.put(r"{COMMAND} : Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.")
     def _(anode, env0):
         [var, _, comparator, _, comparator] = anode.children
@@ -2928,22 +2921,6 @@ if 1:
             env_or(a_f_env, b_f_env)
         )
 
-    # --------------------------------------------------
-    # relating to strict code:
-
-    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code")
-    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code")
-    @condd.put(r"{CONDITION_1} : the source text matched by {var} is non-strict code")
-    def _(cond, env0, asserting):
-        [prod_ref] = cond.children
-        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     # -------------------------------------------------
     # introduce metavariable:
 
@@ -2985,12 +2962,6 @@ if 1:
         [var] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : the Directive Prologue of {PROD_REF} contains a Use Strict Directive')
-    def _(cond, env0, asserting):
-        [prod_ref] = cond.children
-        # XXX check that prod_ref makes sense
-        return (env0, env0)
 
     @condd.put(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList')
     def _(cond, env0, asserting):
@@ -3249,13 +3220,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (env0, env0)
 
-    # PR ? function-strictness
-    @condd.put(r"{CONDITION_1} : the source text matched by {var} is strict mode code")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}")
     def _(cond, env0, asserting):
         [var, xrefa, xrefb] = cond.children
@@ -3291,21 +3255,10 @@ if 1:
         assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : the parse succeeded and no early errors were found")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`")
     def _(cond, env0, asserting):
         [noi] = cond.children
         env0.assert_expr_is_of_type(noi, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
-    def _(cond, env0, asserting):
-        [local_ref] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
@@ -3471,7 +3424,6 @@ def _(val_desc, env):
     assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
     return T_RegExpMatcher_
 
-tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a CharSet'] = T_CharSet
 tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
@@ -3536,7 +3488,6 @@ tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
-tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
@@ -4010,15 +3961,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (ListType(T_character_), env1)
 
-    # --------------------------------------------------------
-    # return T_Parse_Node
-
-    @exprd.put(r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_grammar_symbol_)
-        return (T_Parse_Node, env0)
-
     # -------------------------------------------------
     # return T_CharSet
 
@@ -4347,11 +4289,6 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present")
-    def _(expr, env0, _):
-        [error_type] = expr.children
-        return (ListType(type_for_ERROR_TYPE(error_type)), env0)
 
     @exprd.put(r"{EXPR} : the empty sequence of Unicode code points")
     def _(expr, env0, _):
@@ -11082,6 +11019,80 @@ if 1:
 
 set_up_internal_thing('slot', 'ProxyHandler', T_Object | T_Null)
 set_up_internal_thing('slot', 'ProxyTarget',  T_Object | T_Null)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 11 ECMAScript Language: Source Text
+
+# ==============================================================================
+#@ 11.1 Source Text
+
+#> <dfn>ECMAScript source text</dfn> is a sequence of Unicode code points.
+
+tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
+tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
+
+# ==============================================================================
+#@ 11.1.6 Static Semantics: ParseText
+
+if 1:
+    @nv.put(r"{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.")
+    def _(anode, env0):
+        [text_var, goal_var] = anode.children
+        env0.assert_expr_is_of_type(text_var, T_Unicode_code_points_)
+        env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
+        return env0
+
+    @condd.put(r"{CONDITION_1} : the parse succeeded and no early errors were found")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_grammar_symbol_)
+        return (T_Parse_Node, env0)
+
+    @exprd.put(r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present")
+    def _(expr, env0, _):
+        [error_type] = expr.children
+        return (ListType(type_for_ERROR_TYPE(error_type)), env0)
+
+# ==============================================================================
+#@ 11.2.1 Directive Prologues and the Use Strict Directive
+
+if 1:
+    @condd.put(r'{CONDITION_1} : the Directive Prologue of {PROD_REF} contains a Use Strict Directive')
+    def _(cond, env0, asserting):
+        [prod_ref] = cond.children
+        # XXX check that prod_ref makes sense
+        return (env0, env0)
+
+# ==============================================================================
+#@ 11.2.2 Strict Mode Code
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code")
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code")
+    @condd.put(r"{CONDITION_1} : the source text matched by {var} is strict mode code")
+    @condd.put(r"{CONDITION_1} : the source text matched by {var} is non-strict code")
+    def _(cond, env0, asserting):
+        [prod_ref] = cond.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
+    def _(cond, env0, asserting):
+        [local_ref] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 main()
 
