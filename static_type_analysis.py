@@ -2827,17 +2827,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_agent_signifier_)
         return env0
 
-    @nv.put(r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.")
-    def _(anode, env0):
-        # XXX
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.")
-    def _(anode, env0):
-        [var, nont] = anode.children
-        env0.assert_expr_is_of_type(var, T_CharSet)
-        return env0
-
     @nv.put(r"{COMMAND} : Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.")
     def _(anode, env0):
         [var, _, comparator, _, comparator] = anode.children
@@ -2897,16 +2886,6 @@ if 1:
     # -------------------------------------------------
     # introduce metavariable:
 
-    @condd.put(r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}')
-    @condd.put(r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}')
-    def _(cond, env0, asserting):
-        [member_var, set_var, stcond] = cond.children
-        env1 = env0.ensure_expr_is_of_type(set_var, T_CharSet)
-        env2 = env1.plus_new_entry(member_var, T_character_)
-        (t_env, f_env) = tc_cond(stcond, env2)
-        assert t_env is f_env
-        return (env1, env1)
-
     @condd.put(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}")
     def _(cond, env0, asserting):
         [let_var, i, stcond] = cond.children
@@ -2922,19 +2901,6 @@ if 1:
 
     # --------------------------------------------------
     # whatever
-
-    @condd.put(r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}')
-    def _(cond, env0, asserting):
-        [h_a, var] = cond.children
-        assert h_a.source_text() == '<a href="https://unicode.org/Public/UCD/latest/ucd/CaseFolding.txt"><code>CaseFolding.txt</code></a>'
-        env1 = env0.ensure_expr_is_of_type(var, T_character_)
-        return (env1, env1)
-
-    @condd.put(r'{CONDITION_1} : {var} does not contain exactly one character')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
-        return (env1, env1)
 
     @condd.put(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList')
     def _(cond, env0, asserting):
@@ -3032,44 +2998,10 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : the character {EX} is one of {nonterminal}")
-    def _(cond, env0, asserting):
-        [ex, nonterminal] = cond.children
-        env0.assert_expr_is_of_type(ex, T_character_)
-        assert nonterminal.source_text() == '|LineTerminator|'
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}")
-    def _(cond, env0, asserting):
-        [anoi, bnoi] = cond.children
-        env0.assert_expr_is_of_type(anoi, T_character_)
-        env0.assert_expr_is_of_type(bnoi, T_character_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point")
     def _(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} each contain exactly one character")
-    def _(cond, env0, asserting):
-        [a,b] = cond.children
-        env0.assert_expr_is_of_type(a, T_CharSet)
-        env0.assert_expr_is_of_type(b, T_CharSet)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} contains any {nonterminal}")
-    def _(cond, env0, asserting):
-        [rvar, nonterminal] = cond.children
-        env0.assert_expr_is_of_type(rvar, T_Object)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}")
-    def _(cond, env0, asserting):
-        [ivar, rvar, nonterminal] = cond.children
-        env0.assert_expr_is_of_type(ivar, T_MathInteger_)
-        env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
     # ----
@@ -3151,21 +3083,6 @@ if 1:
         [noi, bw] = cond.children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         assert len(bw.source_text()) == 3 # single-character 'word'
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
-    def _(cond, env0, asserting):
-        [prod_ref, h_emu_xref] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}")
-    def _(cond, env0, asserting):
-        [prod_ref, h_a, h_emu_xref] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}")
-    def _(cond, env0, asserting):
-        [prod_refa, prod_refb, h_a] = cond.children
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
@@ -3270,26 +3187,9 @@ def _(vd, env):
 
 # ------------------
 
-@tbd.put('{VAL_DESC} : a property value or property value alias for the Unicode property {var} listed in {h_a}')
-def _(val_desc, env):
-    [var, h_a] = val_desc.children
-    env.assert_expr_is_of_type(var, T_Unicode_code_points_)
-    return T_Unicode_code_points_
-
-@tbd.put('{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}')
-def _(val_desc, env):
-    assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
-    return T_RegExpMatcher_
-
-tbd['{VAL_DESC} : a CharSet'] = T_CharSet
 tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
-tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
-tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
-tbd['{VAL_DESC} : a MatchState'] = T_MatchState
-tbd['{VAL_DESC} : a Matcher'] = T_Matcher
-tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
 tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
@@ -3298,7 +3198,6 @@ tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
 tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
-tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
 tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
@@ -3306,19 +3205,11 @@ tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
 tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
-tbd['{VAL_DESC} : a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a Unicode property name'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a Unicode property value'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
 tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
 tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
-tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
 tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
-tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
 tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
@@ -3334,7 +3225,6 @@ tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
-tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
@@ -3347,9 +3237,7 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Cho
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
-tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_character_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
-tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Match_Record | T_Undefined
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : events'                             ] = T_event_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events'        ] = T_event_pair_
@@ -3532,15 +3420,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_MathInteger_, env1)
 
-    # --------------------------------------------------------
-    # return T_MathInteger_: The size of some collection:
-
-    @exprd.put(r"{EXPR} : the number of elements in {var}'s _captures_ List")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MatchState)
-        return (T_MathNonNegativeInteger_, env0)
-
     # ----
     # return T_MathInteger_: arithmetic:
 
@@ -3552,38 +3431,6 @@ if 1:
         return (T_MathInteger_, env1)
 
     # ----
-
-    @exprd.put(r'{EXPR} : the character value of character {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_character_)
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{EXPR} : the numeric value according to {h_emu_xref}")
-    def _(expr, env0, _):
-        return (T_MathInteger_, env0)
-
-    @exprd.put(r"{EX} : {var}'s _endIndex_")
-    @exprd.put(r"{EX} : {var}'s _endIndex_ value")
-    @exprd.put(r"{NUM_COMPARAND} : {var}'s _endIndex_")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState | T_CaptureRange)
-        return (T_MathInteger_, env1)
-
-    @exprd.put(r"{EX} : {var}'s _startIndex_")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_CaptureRange)
-        return (T_MathInteger_, env1)
-
-    @exprd.put(r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}")
-    def _(expr, env0, _):
-        [list_var, index_var, str_var] = expr.children
-        env0.assert_expr_is_of_type(list_var, T_List)
-        env0.assert_expr_is_of_type(index_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
-        return (T_MathInteger_, env0)
 
     @exprd.put(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
     def _(expr, env0, _):
@@ -3604,38 +3451,6 @@ if 1:
     def _(expr, env0, _):
         [var] = expr.children
         return (T_String, env0)
-
-    # ----------------------------------------------------------
-    # return T_character_
-
-    @exprd.put(r"{EXPR} : the character matched by {PROD_REF}")
-    def _(expr, env0, _):
-        [prod_ref] = expr.children
-        return (T_character_, env0)
-
-    @exprd.put(r"{EXPR} : the character whose character value is {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
-        return (T_character_, env1)
-
-    @exprd.put(r'{EXPR} : the result of applying that mapping to {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_character_)
-        return (T_character_, env1)
-
-    @exprd.put(r'{EXPR} : the one character in CharSet {var}')
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
-        return (T_character_, env1)
-
-    @exprd.put(r"{EXPR} : the character {SETTABLE}")
-    def _(expr, env0, _):
-        [settable] = expr.children
-        env1 = env0.ensure_expr_is_of_type(settable, T_character_)
-        return (T_character_, env1)
 
     # ----------------------------------------------------------
     # return T_code_unit_
@@ -3689,21 +3504,6 @@ if 1:
         return (T_code_point_, env0)
 
     # ----------------------------------------------------------
-    # return T_Unicode_code_points_
-
-    @exprd.put(r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
-        return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EXPR} : the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_code_point_)
-        return (T_Unicode_code_points_, env0)
-
-    # ----------------------------------------------------------
     # return ListType
 
     # --------------------
@@ -3721,140 +3521,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
         return (ListType(T_MathInteger_), env1)
 
-    # ---------------
-    # ListType(other)
-
-    @exprd.put(r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List")
-    def _(expr, env0, _):
-        [n_var, state_var] = expr.children
-        env0.assert_expr_is_of_type(n_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(state_var, T_MatchState)
-        return (T_captures_entry_, env0)
-
-    @exprd.put(r"{EX} : {var}'s _input_")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
-        return (ListType(T_character_), env1)
-
-    # -------------------------------------------------
-    # return T_CharSet
-
-    @exprd.put(r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}')
-    def _(expr, env0, _):
-        [var1, var2] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var1, T_MathInteger_)
-        env2 = env0.ensure_expr_is_of_type(var2, T_MathInteger_)
-        assert env1 is env0
-        assert env2 is env0
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing the single character {code_point_lit}")
-    @exprd.put(r"{EXPR} : the CharSet containing the single character {var}")
-    def _(expr, env0, _):
-        [ex] = expr.children
-        env0.ensure_expr_is_of_type(ex, T_character_)
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing the character matched by {PROD_REF}")
-    def _(expr, env0, _):
-        [prod_ref] = expr.children
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : a one-element CharSet containing the character {var}")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_character_)
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the union of CharSets {var}, {var} and {var}")
-    def _(expr, env0, _):
-        [va, vb, vc] = expr.children
-        enva = env0.ensure_expr_is_of_type(va, T_CharSet)
-        envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
-        envc = env0.ensure_expr_is_of_type(vc, T_CharSet)
-        return (T_CharSet, envs_or([enva, envb, envc]))
-
-    @exprd.put(r"{EXPR} : the union of {var} and {var}")
-    @exprd.put(r"{EXPR} : the union of CharSets {var} and {var}")
-    def _(expr, env0, _):
-        [va, vb] = expr.children
-        enva = env0.ensure_expr_is_of_type(va, T_CharSet)
-        envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
-        return (T_CharSet, env_or(enva, envb))
-
-    @exprd.put(r"{EXPR} : the CharSet of all characters")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing every character in {STR_LITERAL}")
-    def _(expr, env0, _):
-        [strlit] = expr.children
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}")
-    def _(expr, env0, _):
-        [noi] = expr.children
-        env0.assert_expr_is_of_type(noi, T_CharSet)
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions")
-    def _(expr, env0, _):
-        [nont1, nont2] = expr.children
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the empty CharSet")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}")
-    def _(expr, env0, _):
-        [va, vb] = expr.children
-        env0.assert_expr_is_of_type(va, ListType(T_code_point_))
-        env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}")
-    def _(expr, env0, _):
-        [v] = expr.children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”")
-    def _(expr, env0, _):
-        [v] = expr.children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}")
-    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}")
-    def _(expr, env0, _):
-        [noi] = expr.children
-        env0.assert_expr_is_of_type(noi, T_CharSet)
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}")
-    def _(expr, env0, _):
-        [loop_var, loop_var2, cs_var, noi, cs_var2] = expr.children
-        assert loop_var.source_text() == loop_var2.source_text()
-        assert cs_var.source_text() == cs_var2.source_text()
-        env0.assert_expr_is_of_type(cs_var, T_CharSet)
-        env1 = env0.plus_new_entry(loop_var, T_character_)
-        env1.assert_expr_is_of_type(noi, T_character_)
-        return (T_CharSet, env0)
-
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar}")
-    def _(expr, env0, _):
-        [emu_grammar] = expr.children
-        return (T_CharSet, env0)
-
     # -------------------------------------------------
     # return proc type
 
@@ -3867,46 +3533,7 @@ if 1:
     # -------------------------------------------------
     # whatever
 
-    @exprd.put(r"{EXPR} : a copy of {var}'s _captures_ List")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
-        return (T_captures_list_, env1)
-
-    @exprd.put(r"{EXPR} : the MatchState ({var}, {EX}, {var})")
-    def _(expr, env0, _):
-        [input_var, ex, var] = expr.children
-        env0.assert_expr_is_of_type(input_var, ListType(T_character_))
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
-        env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
-        return (T_MatchState, env0)
-
-    @exprd.put(r"{EXPR} : {var}'s MatchState")
-    def _(expr, env0, _):
-        # todo?: change to Assert: _r_ is a MatchState
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MatchState)
-        return (T_MatchState, env0)
-
-    @exprd.put(r"{EXPR} : {var}'s _captures_ List")
-    def _(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
-        return (T_captures_list_, env1)
-
-    @exprd.put(r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
-    def _(expr, env0, _):
-        [_, v, _] = expr.children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (ListType(T_code_point_), env0)
-
     @exprd.put(r"{EXPR} : the List of Unicode code points {var}")
-    def _(expr, env0, _):
-        [v] = expr.children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (ListType(T_code_point_), env0)
-
-    @exprd.put(r"{EXPR} : the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row")
     def _(expr, env0, _):
         [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
@@ -3942,11 +3569,6 @@ if 1:
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_function_object_, env0)
 
-    @exprd.put('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
-    def _(expr, env0, _):
-        # XXX
-        return (T_String, env0)
-
     @exprd.put(r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor")
     def _(expr, env0, _):
         [emu_xref] = expr.children
@@ -3964,12 +3586,6 @@ if 1:
     def _(expr, env0, _):
         [_] = expr.children
         return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{EX} : the CaptureRange {PAIR}")
-    def _(expr, env0, _):
-        [pair] = expr.children
-        # XXX
-        return (T_CaptureRange, env0)
 
     @exprd.put(r"{EXPR} : a new Synchronize event")
     def _(expr, env0, _):
@@ -4424,15 +4040,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 22.1 String Objects
-set_up_internal_thing('slot', 'StringData', T_String)
-
-# 22.2 RegExp (Regular Expression) Objects
-set_up_internal_thing('slot', 'RegExpMatcher',  T_RegExpMatcher_)
-set_up_internal_thing('slot', 'OriginalSource', T_String)
-set_up_internal_thing('slot', 'OriginalFlags',  T_String)
-set_up_internal_thing('slot', 'RegExpRecord',   T_RegExp_Record)
 
 # 24.1 Map Objects
 set_up_internal_thing('slot', 'MapData', ListType(T_MapData_record_))
@@ -11247,6 +10854,466 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_String, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 22 Text Processing
+
+# ==============================================================================
+#@ 22.1 String Objects
+
+set_up_internal_thing('slot', 'StringData', T_String)
+
+if 1:
+    #@ 22.1.3.27 String.prototype.toLowerCase
+    @exprd.put(r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        return (T_Unicode_code_points_, env0)
+
+# ==============================================================================
+#@ 22.2.1.6 Static Semantics: CharacterValue
+
+if 1:
+    @exprd.put(r"{EXPR} : the numeric value according to {h_emu_xref}")
+    def _(expr, env0, _):
+        return (T_MathInteger_, env0)
+
+# ==============================================================================
+#@ 22.2.2 Pattern Semantics
+
+#> In the context of describing the behaviour of a BMP pattern
+#> “character” means a single 16-bit Unicode BMP code point.
+#> In the context of describing the behaviour of a Unicode pattern
+#> “character” means a UTF-16 encoded code point
+#> (<emu-xref href="#sec-ecmascript-language-types-string-type"></emu-xref>).
+#> In either context, “character value” means the numeric value of the corresponding non-encoded code point.
+
+if 1:
+    tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'] = T_character_
+
+    @exprd.put(r"{EXPR} : the character matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [prod_ref] = expr.children
+        return (T_character_, env0)
+
+    @exprd.put(r"{EXPR} : the character whose character value is {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
+        return (T_character_, env1)
+
+    @exprd.put(r'{EXPR} : the result of applying that mapping to {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_character_)
+        return (T_character_, env1)
+
+    @exprd.put(r"{EXPR} : the character {SETTABLE}")
+    def _(expr, env0, _):
+        [settable] = expr.children
+        env1 = env0.ensure_expr_is_of_type(settable, T_character_)
+        return (T_character_, env1)
+
+    @exprd.put(r'{EXPR} : the character value of character {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_character_)
+        return (T_MathInteger_, env0)
+
+    @condd.put(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}")
+    def _(cond, env0, asserting):
+        [anoi, bnoi] = cond.children
+        env0.assert_expr_is_of_type(anoi, T_character_)
+        env0.assert_expr_is_of_type(bnoi, T_character_)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 22.2.2.1 Notation
+
+# ------------------------------------------------------------------------------
+# CharSet
+if 1:
+    tbd['{VAL_DESC} : a CharSet'] = T_CharSet
+
+    @nv.put(r"{COMMAND} : Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.")
+    def _(anode, env0):
+        [var, nont] = anode.children
+        env0.assert_expr_is_of_type(var, T_CharSet)
+        return env0
+
+    @condd.put(r'{CONDITION_1} : {var} does not contain exactly one character')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
+        return (env1, env1)
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} each contain exactly one character")
+    def _(cond, env0, asserting):
+        [a,b] = cond.children
+        env0.assert_expr_is_of_type(a, T_CharSet)
+        env0.assert_expr_is_of_type(b, T_CharSet)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}')
+    @condd.put(r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}')
+    def _(cond, env0, asserting):
+        [member_var, set_var, stcond] = cond.children
+        env1 = env0.ensure_expr_is_of_type(set_var, T_CharSet)
+        env2 = env1.plus_new_entry(member_var, T_character_)
+        (t_env, f_env) = tc_cond(stcond, env2)
+        assert t_env is f_env
+        return (env1, env1)
+
+    @exprd.put(r'{EXPR} : the one character in CharSet {var}')
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
+        return (T_character_, env1)
+
+    @exprd.put(r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}')
+    def _(expr, env0, _):
+        [var1, var2] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var1, T_MathInteger_)
+        env2 = env0.ensure_expr_is_of_type(var2, T_MathInteger_)
+        assert env1 is env0
+        assert env2 is env0
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing the single character {code_point_lit}")
+    @exprd.put(r"{EXPR} : the CharSet containing the single character {var}")
+    def _(expr, env0, _):
+        [ex] = expr.children
+        env0.ensure_expr_is_of_type(ex, T_character_)
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing the character matched by {PROD_REF}")
+    def _(expr, env0, _):
+        [prod_ref] = expr.children
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : a one-element CharSet containing the character {var}")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_character_)
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the union of CharSets {var}, {var} and {var}")
+    def _(expr, env0, _):
+        [va, vb, vc] = expr.children
+        enva = env0.ensure_expr_is_of_type(va, T_CharSet)
+        envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
+        envc = env0.ensure_expr_is_of_type(vc, T_CharSet)
+        return (T_CharSet, envs_or([enva, envb, envc]))
+
+    @exprd.put(r"{EXPR} : the union of {var} and {var}")
+    @exprd.put(r"{EXPR} : the union of CharSets {var} and {var}")
+    def _(expr, env0, _):
+        [va, vb] = expr.children
+        enva = env0.ensure_expr_is_of_type(va, T_CharSet)
+        envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
+        return (T_CharSet, env_or(enva, envb))
+
+    @exprd.put(r"{EXPR} : the CharSet of all characters")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing every character in {STR_LITERAL}")
+    def _(expr, env0, _):
+        [strlit] = expr.children
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [noi] = expr.children
+        env0.assert_expr_is_of_type(noi, T_CharSet)
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions")
+    def _(expr, env0, _):
+        [nont1, nont2] = expr.children
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the empty CharSet")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}")
+    def _(expr, env0, _):
+        [va, vb] = expr.children
+        env0.assert_expr_is_of_type(va, ListType(T_code_point_))
+        env0.assert_expr_is_of_type(vb, ListType(T_code_point_))
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}")
+    def _(expr, env0, _):
+        [v] = expr.children
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”")
+    def _(expr, env0, _):
+        [v] = expr.children
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}")
+    @exprd.put(r"{EXPR} : the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [noi] = expr.children
+        env0.assert_expr_is_of_type(noi, T_CharSet)
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}")
+    def _(expr, env0, _):
+        [loop_var, loop_var2, cs_var, noi, cs_var2] = expr.children
+        assert loop_var.source_text() == loop_var2.source_text()
+        assert cs_var.source_text() == cs_var2.source_text()
+        env0.assert_expr_is_of_type(cs_var, T_CharSet)
+        env1 = env0.plus_new_entry(loop_var, T_character_)
+        env1.assert_expr_is_of_type(noi, T_character_)
+        return (T_CharSet, env0)
+
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar}")
+    def _(expr, env0, _):
+        [emu_grammar] = expr.children
+        return (T_CharSet, env0)
+
+# ------------------------------------------------------------------------------
+# CaptureRange
+
+if 1:
+    @exprd.put(r"{EX} : the CaptureRange {PAIR}")
+    def _(expr, env0, _):
+        [pair] = expr.children
+        # XXX
+        return (T_CaptureRange, env0)
+
+    @exprd.put(r"{EX} : {var}'s _startIndex_")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_CaptureRange)
+        return (T_MathInteger_, env1)
+
+# ------------------------------------------------------------------------------
+# MatchState
+
+    tbd['{VAL_DESC} : a MatchState'] = T_MatchState
+
+    @exprd.put(r"{EXPR} : the MatchState ({var}, {EX}, {var})")
+    def _(expr, env0, _):
+        [input_var, ex, var] = expr.children
+        env0.assert_expr_is_of_type(input_var, ListType(T_character_))
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
+        env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
+        return (T_MatchState, env0)
+
+    @exprd.put(r"{EXPR} : {var}'s MatchState")
+    def _(expr, env0, _):
+        # todo?: change to Assert: _r_ is a MatchState
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MatchState)
+        return (T_MatchState, env0)
+
+    @exprd.put(r"{EX} : {var}'s _input_")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
+        return (ListType(T_character_), env1)
+
+    @exprd.put(r"{EX} : {var}'s _endIndex_")
+    @exprd.put(r"{EX} : {var}'s _endIndex_ value")
+    @exprd.put(r"{NUM_COMPARAND} : {var}'s _endIndex_")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState | T_CaptureRange)
+        return (T_MathInteger_, env1)
+
+    @exprd.put(r"{EXPR} : {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
+        return (T_captures_list_, env1)
+
+    @exprd.put(r"{EXPR} : a copy of {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
+        return (T_captures_list_, env1)
+
+    @exprd.put(r"{EXPR} : the number of elements in {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MatchState)
+        return (T_MathNonNegativeInteger_, env0)
+
+    @exprd.put(r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List")
+    def _(expr, env0, _):
+        [n_var, state_var] = expr.children
+        env0.assert_expr_is_of_type(n_var, T_MathInteger_)
+        env0.assert_expr_is_of_type(state_var, T_MatchState)
+        return (T_captures_entry_, env0)
+
+# ------------------------------------------------------------------------------
+
+tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
+tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
+tbd['{VAL_DESC} : a Matcher'] = T_Matcher
+
+# ==============================================================================
+#@ 22.2.2.1.1 RegExp Records
+
+tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
+
+# ==============================================================================
+#@ 22.2.2.2 Runtime Semantics: CompilePattern
+
+if 1:
+    @tbd.put('{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}')
+    def _(val_desc, env):
+        assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
+        return T_RegExpMatcher_
+
+# ==============================================================================
+#@ 22.2.2.4 Runtime Semantics: CompileAssertion
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the character {EX} is one of {nonterminal}")
+    def _(cond, env0, asserting):
+        [ex, nonterminal] = cond.children
+        env0.assert_expr_is_of_type(ex, T_character_)
+        assert nonterminal.source_text() == '|LineTerminator|'
+        return (env0, env0)
+
+# ==============================================================================
+#@ 22.2.2.7.3 Canonicalize
+
+if 1:
+    @condd.put(r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}')
+    def _(cond, env0, asserting):
+        [h_a, var] = cond.children
+        assert h_a.source_text() == '<a href="https://unicode.org/Public/UCD/latest/ucd/CaseFolding.txt"><code>CaseFolding.txt</code></a>'
+        env1 = env0.ensure_expr_is_of_type(var, T_character_)
+        return (env1, env1)
+
+    @exprd.put(r"{EXPR} : the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm")
+    def _(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_code_point_)
+        return (T_Unicode_code_points_, env0)
+
+# ==============================================================================
+# 22.2.2.9.3 UnicodeMatchProperty
+
+# Unicode property {name, alias, value, value alias}
+if 1:
+    tbd['{VAL_DESC} : a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : a Unicode property name'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : a Unicode property value'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+    tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
+
+    @tbd.put('{VAL_DESC} : a property value or property value alias for the Unicode property {var} listed in {h_a}')
+    def _(val_desc, env):
+        [var, h_a] = val_desc.children
+        env.assert_expr_is_of_type(var, T_Unicode_code_points_)
+        return T_Unicode_code_points_
+
+    @exprd.put(r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
+    def _(expr, env0, _):
+        [_, v, _] = expr.children
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
+
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [prod_ref, h_emu_xref] = cond.children
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}")
+    def _(cond, env0, asserting):
+        [prod_ref, h_a, h_emu_xref] = cond.children
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}")
+    def _(cond, env0, asserting):
+        [prod_refa, prod_refb, h_a] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 22.2.2.9.4 UnicodeMatchPropertyValue
+
+if 1:
+    @exprd.put(r"{EXPR} : the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row")
+    def _(expr, env0, _):
+        [v] = expr.children
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
+
+# ==============================================================================
+#@ 22.2.3 Abstract Operations for RegExp Creation
+
+set_up_internal_thing('slot', 'OriginalSource', T_String)
+set_up_internal_thing('slot', 'OriginalFlags',  T_String)
+set_up_internal_thing('slot', 'RegExpRecord',   T_RegExp_Record)
+set_up_internal_thing('slot', 'RegExpMatcher',  T_RegExpMatcher_)
+
+# ==============================================================================
+#@ 22.2.6.13.1 EscapeRegExpPattern
+
+if 1:
+    @exprd.put('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
+    def _(expr, env0, _):
+        # XXX
+        return (T_String, env0)
+
+    @nv.put(r"{COMMAND} : The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.")
+    def _(anode, env0):
+        # XXX
+        return env0
+
+# ==============================================================================
+#@ 22.2.7.2 RegExpBuiltinExec
+
+if 1:
+    tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
+
+    @exprd.put(r"{EXPR} : the index into {var} of the character that was obtained from element {EX} of {var}")
+    def _(expr, env0, _):
+        [list_var, index_var, str_var] = expr.children
+        env0.assert_expr_is_of_type(list_var, T_List)
+        env0.assert_expr_is_of_type(index_var, T_MathInteger_)
+        env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
+        return (T_MathInteger_, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} contains any {nonterminal}")
+    def _(cond, env0, asserting):
+        [rvar, nonterminal] = cond.children
+        env0.assert_expr_is_of_type(rvar, T_Object)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}")
+    def _(cond, env0, asserting):
+        [ivar, rvar, nonterminal] = cond.children
+        env0.assert_expr_is_of_type(ivar, T_MathInteger_)
+        env0.assert_expr_is_of_type(rvar, T_Object)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 22.2.7.5 Match Records
+
+tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
+tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Match_Record | T_Undefined
 
 main()
 
