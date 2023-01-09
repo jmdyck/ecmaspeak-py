@@ -3097,12 +3097,6 @@ if 1:
         env0.assert_expr_is_of_type(wl_var, T_WaiterList)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_String | T_Symbol)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
     def _(cond, env0, asserting):
         [ea, eb, exe] = cond.children
@@ -3367,11 +3361,6 @@ tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
 
 # ------------------
 
-@tbd.put('{LIST_ELEMENTS_DESCRIPTION} : {ERROR_TYPE} objects')
-def _(led, env):
-    [error_type] = led.children
-    return type_for_ERROR_TYPE(error_type)
-
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_AsyncGeneratorRequest_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
@@ -3382,7 +3371,6 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_cha
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either Match Records or *undefined*'] = T_Match_Record | T_Undefined
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
-tbd['{LIST_ELEMENTS_DESCRIPTION} : errors'                             ] = T_SyntaxError | T_ReferenceError
 tbd['{LIST_ELEMENTS_DESCRIPTION} : events'                             ] = T_event_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events'        ] = T_event_pair_
 
@@ -3974,11 +3962,6 @@ if 1:
         assert dsbn_name == 'DateValue'
         return (T_Number, env0)
 
-    @exprd.put(r"{EX} : a newly created {ERROR_TYPE} object")
-    def _(expr, env0, _):
-        [error_type] = expr.children
-        return (type_for_ERROR_TYPE(error_type), env0)
-
     @exprd.put(r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
     def _(expr, env0, _):
         [_, v, _] = expr.children
@@ -4016,11 +3999,6 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_Object | ThrowType(T_TypeError), env0)
-
-    @exprd.put(r"{EX} : the GlobalSymbolRegistry List")
-    @exprd.put(r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})")
-    def _(expr, env0, _):
-        return (ListType(T_GlobalSymbolRegistry_Record), env0)
 
     @exprd.put(r"{EX} : {backticked_word}")
     def _(expr, env0, _):
@@ -4065,18 +4043,6 @@ if 1:
         assert dsbn.source_text() == '[[AgentSignifier]]'
         env0.assert_expr_is_of_type(e, T_agent_signifier_)
         return (T_Agent_Events_Record, env0)
-
-    @exprd.put("{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}")
-    def _(expr, env0, _):
-        var = expr.children[0]
-        env0.assert_expr_is_of_type(var, T_function_object_)
-        return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}")
-    def _(expr, env0, _):
-        [var, nont] = expr.children
-        env0.assert_expr_is_of_type(var, T_function_object_)
-        return (T_String, env0)
 
     @exprd.put(r"{EX} : {backticked_oth}")
     def _(expr, env0, _):
@@ -4563,12 +4529,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 20.3 Boolean Objects
-set_up_internal_thing('slot', 'BooleanData', T_Boolean)
-
-# 20.4 Symbol Objects
-set_up_internal_thing('slot', 'SymbolData', T_Symbol)
 
 # 21.1 Number Objects
 set_up_internal_thing('slot', 'NumberData', T_Number)
@@ -11178,6 +11138,66 @@ if 1:
         [emu_xref] = each_thing.children
         # no loop_var!
         return env0
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 20 Fundamental Objects
+
+# ==============================================================================
+#@ 20.2.3.5 Function.prototype.toString
+
+if 1:
+    @exprd.put("{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}")
+    def _(expr, env0, _):
+        var = expr.children[0]
+        env0.assert_expr_is_of_type(var, T_function_object_)
+        return (T_String, env0)
+
+    @exprd.put(r"{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}")
+    def _(expr, env0, _):
+        [var, nont] = expr.children
+        env0.assert_expr_is_of_type(var, T_function_object_)
+        return (T_String, env0)
+
+# ==============================================================================
+#@ 20.3 Boolean Objects
+
+set_up_internal_thing('slot', 'BooleanData', T_Boolean)
+
+# ==============================================================================
+#@ 20.4 Symbol Objects
+
+set_up_internal_thing('slot', 'SymbolData', T_Symbol)
+
+# ==============================================================================
+#@ 20.4.2.2 Symbol.for
+
+if 1:
+    @exprd.put(r"{EX} : the GlobalSymbolRegistry List")
+    @exprd.put(r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})")
+    def _(expr, env0, _):
+        return (ListType(T_GlobalSymbolRegistry_Record), env0)
+
+    @condd.put(r"{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_String | T_Symbol)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 20.5 Error Objects
+
+if 1:
+    @tbd.put('{LIST_ELEMENTS_DESCRIPTION} : {ERROR_TYPE} objects')
+    def _(led, env):
+        [error_type] = led.children
+        return type_for_ERROR_TYPE(error_type)
+
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : errors'] = T_SyntaxError | T_ReferenceError
+
+    @exprd.put(r"{EX} : a newly created {ERROR_TYPE} object")
+    def _(expr, env0, _):
+        [error_type] = expr.children
+        return (type_for_ERROR_TYPE(error_type), env0)
 
 main()
 
