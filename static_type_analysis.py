@@ -944,9 +944,6 @@ def maybe_UnionType(member_types):
 
 # ------------------------------------------------------------------------------
 
-def type_for_environment_record_kind(kind):
-    return NamedType(kind.source_text() + ' Environment Record')
-
 def ptn_type_for(nonterminal):
     if isinstance(nonterminal, str):
         if nonterminal.startswith('|'):
@@ -2760,27 +2757,6 @@ if 1:
         [child] = anode.children
         return tc_nonvalue(child, env0)
 
-    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.")
-    def _(anode, env0):
-        [_, ctx_var, _, b_var] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        return env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
-
-    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
-    def _(anode, env0):
-        [_, ctx_var, _, resa_ex] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
-        return env1
-
-    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.")
-    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.")
-    def _(anode, env0):
-        [_, ctx_var, _, resa_ex, resb_var] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
-        return env1.plus_new_entry(resb_var, T_Tangible_)
-
     @nv.put(r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
     def _(anode, env0):
         [var, cond, literal] = anode.children
@@ -2814,84 +2790,6 @@ if 1:
         # -----------------------
         # other collections:
 
-    # ----------------------------------
-    # execution context
-
-    @nv.put(r'{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.')
-    def _(anode, env0):
-        [var1, var2] = anode.children
-        assert var1.children == var2.children
-        env1 = env0.ensure_expr_is_of_type(var1, T_execution_context)
-        return env1
-
-    @nv.put(r'{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.')
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove {var} from the execution context stack and restore {var} as the running execution context.")
-    def _(anode, env0):
-        [avar, bvar] = anode.children
-        env0.assert_expr_is_of_type(avar, T_execution_context)
-        env0.assert_expr_is_of_type(bvar, T_execution_context)
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove {var} from the execution context stack.")
-    def _(anode, env0):
-        [avar] = anode.children
-        env0.assert_expr_is_of_type(avar, T_execution_context)
-        return env0
-
-    @nv.put(r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
-    def _(anode, env0):
-        [] = anode.children
-        return env0
-
-    @nv.put(r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.")
-    def _(anode, env0):
-        [vara, exb, varc, vard] = anode.children
-        env0.assert_expr_is_of_type(vara, T_execution_context)
-        env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
-        env0.assert_expr_is_of_type(varc, T_execution_context)
-        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_)
-
-    @nv.put(r"{COMMAND} : Suspend {var} and remove it from the execution context stack.")
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return env0
-
-    @nv.put(r"{COMMAND} : Suspend the running execution context.")
-    def _(anode, env0):
-        [] = anode.children
-        return env0
-
-    @nv.put(r'{SMALL_COMMAND} : suspend {var}')
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return env0
-
-    @nv.put(r'{COMMAND} : Suspend {var}.')
-    def _(anode, env0):
-        [var] = anode.children
-        return env0.ensure_expr_is_of_type(var, T_execution_context)
-
-    @nv.put(r"{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}")
-    def _(anode, env0):
-        [settable, commands] = anode.children
-        env0.assert_expr_is_of_type(settable, T_host_defined_)
-        defns = [(None, commands)]
-        env_at_bottom = tc_proc(None, defns, env0)
-        return env0
-
-    @nv.put(r"{COMMAND} : Perform any necessary implementation-defined initialization of {var}.")
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return env0
-
     @nv.put(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
     def _(anode, env0):
         [tw, var] = anode.children
@@ -2916,15 +2814,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_WaiterList)
         return env0
 
-    @nv.put(r'{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.')
-    def _(anode, env0):
-        [er_var, n_var, m_var, n2_var] = anode.children
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(m_var, T_Module_Record)
-        env0.assert_expr_is_of_type(n2_var, T_String)
-        return env0
-
     @nv.put(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
     def _(anode, env0):
         [noi, w_var, t_var, *blah] = anode.children
@@ -2945,52 +2834,9 @@ if 1:
         proc_add_return(env0, T_Promise_object_, anode)
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
-    @nv.put(r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.")
-    def _(anode, env0):
-        [_, key_var, oer_var] = anode.children
-        env0.assert_expr_is_of_type(key_var, T_String)
-        env0.assert_expr_is_of_type(oer_var, T_Environment_Record)
-        return env0
-
-    @nv.put(r"{COMMAND} : Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.")
-    @nv.put(r"{COMMAND} : Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.")
-    def _(anode, env0):
-        [er_var, n_var, s_var] = anode.children
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(s_var, T_Boolean)
-        return env0
-
-    @nv.put(r"{COMMAND} : Remove the binding for {var} from {var}.")
-    def _(anode, env0):
-        [n_var, er_var] = anode.children
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        return env0
-
-    @nv.put(r"{SMALL_COMMAND} : change its bound value to {var}")
-    def _(anode, env0):
-        # once, in SetMutableBinding
-        # elliptical
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_Tangible_)
-        return env0
-
     @nv.put(r"{COMMAND} : Perform an implementation-defined debugging action.")
     def _(anode, env0):
         [] = anode.children
-        return env0
-
-    @nv.put(r"{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}")
-    def _(anode, env0):
-        [var, emu_xref, _] = anode.children
-        env0.assert_expr_is_of_type(var, T_Intrinsics_Record)
-        return env0
-
-    @nv.put(r"{COMMAND} : Create any host-defined global object properties on {var}.")
-    def _(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_Object)
         return env0
 
     # -----
@@ -3013,11 +2859,6 @@ if 1:
         # XXX
         return env0
 
-    @nv.put(r"{COMMAND} : Choose any such {var}.")
-    def _(anode, env0):
-        [var] = anode.children
-        return env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
-
     @nv.put(r"{COMMAND} : Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.")
     def _(anode, env0):
         [var, nont] = anode.children
@@ -3036,16 +2877,6 @@ if 1:
         [var, _, comparator, _, comparator] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         return env1
-
-    @nv.put(r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error")
-    def _(anode, env0):
-        [] = anode.children
-        return env0
-
-    @nv.put(r"{COMMAND} : Discard all resources associated with the current execution context.")
-    def _(anode, env0):
-        [] = anode.children
-        return env0
 
 # ------------------------------------------------------------------------------
 
@@ -3096,51 +2927,6 @@ if 1:
             env_and(a_t_env, b_t_env),
             env_or(a_f_env, b_f_env)
         )
-
-    # ------------------------
-    # relating to Environment Record bindings:
-
-    @condd.put(r"{CONDITION_1} : {var} does not already have a binding for {var}")
-    @condd.put(r"{CONDITION_1} : {var} does not have a binding for {var}")
-    @condd.put(r"{CONDITION_1} : {var} has a binding for the name that is the value of {var}")
-    @condd.put(r"{CONDITION_1} : {var} has a binding for {var}")
-    @condd.put(r"{CONDITION_1} : {var} must have an uninitialized binding for {var}")
-    def _(cond, env0, asserting):
-        [er_var, n_var] = cond.children
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        env0.assert_expr_is_of_type(n_var, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} cannot be deleted")
-    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} has not yet been initialized")
-    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is a mutable binding")
-    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is a strict binding")
-    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is an uninitialized binding")
-    def _(cond, env0, asserting):
-        [n_var, er_var] = cond.children
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the binding for {var} is an indirect binding")
-    def _(cond, env0, asserting):
-        # todo: make ER explicit in spec?
-        [n_var] = cond.children
-        env0.assert_expr_is_of_type(n_var, T_String)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the binding exists")
-    def _(cond, env0, asserting):
-        # elliptical
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}')
-    def _(cond, env0, asserting):
-        [settable, var] = cond.children
-        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_tilde_empty_)
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
 
     # --------------------------------------------------
     # relating to strict code:
@@ -3211,25 +2997,6 @@ if 1:
         # nothing to check
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : The execution context stack has at least two elements")
-    @condd.put(r"{CONDITION_1} : The execution context stack is not empty")
-    @condd.put(r"{CONDITION_1} : the execution context stack is empty")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
-    def _(cond, env0, asserting):
-        [a_var, b_var] = cond.children
-        env0.assert_expr_is_of_type(a_var, T_execution_context)
-        env0.assert_expr_is_of_type(b_var, T_execution_context)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : no such execution context exists')
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r'{CONDITION_1} : The surrounding agent is in the critical section for {var}')
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3289,12 +3056,6 @@ if 1:
         env0.assert_expr_is_of_type(ab_var, T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
         env0.assert_expr_is_of_type(st_var, T_MathInteger_)
         env0.assert_expr_is_of_type(t_var, T_TypedArray_element_type)
-        return (env0, env0)
-
-    @condd.put(r'{CONDITION_1} : {var} is not already suspended')
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
     @condd.put(r'{CONDITION_1} : {var} is on the list of waiters in {var}')
@@ -3357,12 +3118,6 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : it must be in the Object Environment Record")
-    def _(cond, env0, asserting):
-        # elliptical
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} binds a single name")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3372,17 +3127,6 @@ if 1:
     @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : This is an attempt to change the value of an immutable binding")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is now the running execution context")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : an implementation-defined debugging facility is available and enabled")
@@ -3400,13 +3144,6 @@ if 1:
     @condd.put(r"{CONDITION_1} : {DOTTING} exists and has been initialized")
     def _(cond, env0, asserting):
         [dotting] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} and {var} are not the same Realm Record")
-    def _(cond, env0, asserting):
-        [avar, bvar] = cond.children
-        env0.assert_expr_is_of_type(avar, T_Realm_Record)
-        env0.assert_expr_is_of_type(bvar, T_Realm_Record)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : All named exports from {var} are resolvable")
@@ -3435,18 +3172,6 @@ if 1:
         env0.assert_expr_is_of_type(bnoi, T_character_)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Realm_Record)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the host requires that the `this` binding in {var}'s global scope return an object other than the global object")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Realm_Record)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} does not contain a valid UTF-8 encoding of a Unicode code point")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3473,12 +3198,6 @@ if 1:
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} does not have a Generator component")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return (env0, env0)
-
     # ----
 
     @condd.put(r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList")
@@ -3503,13 +3222,6 @@ if 1:
     @condd.put(r"{CONDITION_1} : only one argument was passed")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
-    def _(cond, env0, asserting):
-        [vara, varb] = cond.children
-        env0.assert_expr_is_of_type(vara, T_execution_context)
-        env0.assert_expr_is_of_type(varb, T_execution_context)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
@@ -3591,18 +3303,6 @@ if 1:
         assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}")
-    def _(cond, env0, asserting):
-        [a, b] = cond.children
-        env0.assert_expr_is_of_type(a, T_agent_signifier_)
-        env0.assert_expr_is_of_type(b, T_agent_signifier_)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the parse succeeded and no early errors were found")
     def _(cond, env0, asserting):
         [] = cond.children
@@ -3664,20 +3364,9 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
     def _(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {var} is the running execution context again")
-    def _(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
@@ -3799,11 +3488,6 @@ def _(val_desc, env):
     assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
     return T_RegExpMatcher_
 
-@tbd.put('{VAL_DESC} : an? {ENVIRONMENT_RECORD_KIND} Environment Record')
-def _(val_desc, env):
-    [kind] = val_desc.children
-    return type_for_environment_record_kind(kind)
-
 tbd['{VAL_DESC} : ECMAScript source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a CharSet'] = T_CharSet
 tbd['{VAL_DESC} : a Cyclic Module Record'] = T_Cyclic_Module_Record
@@ -3812,8 +3496,6 @@ tbd['{VAL_DESC} : a For-In Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
 tbd['{VAL_DESC} : a GraphLoadingState Record'] = T_GraphLoadingState_Record
 tbd['{VAL_DESC} : a JSON Serialization Record'] = T_JSON_Serialization_Record
-tbd['{VAL_DESC} : a Job Abstract Closure'] = T_Job
-tbd['{VAL_DESC} : a JobCallback Record'] = T_JobCallback_Record
 tbd['{VAL_DESC} : a Match Record'] = T_Match_Record
 tbd['{VAL_DESC} : a MatchResult'] = T_MatchResult
 tbd['{VAL_DESC} : a MatchState'] = T_MatchState
@@ -3821,7 +3503,6 @@ tbd['{VAL_DESC} : a Matcher'] = T_Matcher
 tbd['{VAL_DESC} : a MatcherContinuation'] = T_MatcherContinuation
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a Module Record'] = T_Module_Record
-tbd['{VAL_DESC} : a PrivateEnvironment Record'] = T_PrivateEnvironment_Record
 tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
 tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
@@ -3831,8 +3512,6 @@ tbd['{VAL_DESC} : a Proxy object'] = T_Proxy_exotic_object_
 tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
-tbd['{VAL_DESC} : a Realm Record'] = T_Realm_Record
-tbd['{VAL_DESC} : a Record whose field names are intrinsic keys and whose values are objects'] = T_Intrinsics_Record
 tbd['{VAL_DESC} : a RegExp Record'] = T_RegExp_Record
 tbd['{VAL_DESC} : a ResolvedBinding Record'] = T_ResolvedBinding_Record
 tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
@@ -3878,22 +3557,17 @@ tbd['{VAL_DESC} : an Array'] = T_Array_object_
 tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
 tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
-tbd['{VAL_DESC} : an ECMAScript execution context'] = T_execution_context
 tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
-tbd['{VAL_DESC} : an Environment Record'] = T_Environment_Record
 tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
 tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
-tbd['{VAL_DESC} : an execution context'] = T_execution_context
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
 tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
 tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
-tbd['{VAL_DESC} : the active function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
@@ -3922,7 +3596,6 @@ tbd['{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'                ] = T_Imp
 tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records'         ] = T_Source_Text_Module_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
-tbd['{LIST_ELEMENTS_DESCRIPTION} : agent signifiers'                   ] = T_agent_signifier_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : byte values'                        ] = a_subset_of(T_MathInteger_)
 tbd['{LIST_ELEMENTS_DESCRIPTION} : characters'                         ] = T_character_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
@@ -4508,43 +4181,7 @@ if 1:
         [emu_xref] = expr.children
         return (T_alg_steps, env0)
 
-    # ------------------------------------------------
-    # return T_execution_context
-
-    @exprd.put(r"{EXPR} : a new execution context")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_execution_context, env0)
-
-    @exprd.put(r"{EXPR} : a new ECMAScript code execution context")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_execution_context, env0)
-
-    @exprd.put(r'{EXPR} : the running execution context')
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_execution_context, env0)
-
-    @exprd.put(r'{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}')
-    def _(expr, env0, _):
-        [literal] = expr.children
-        return (T_execution_context, env0)
-
-    @exprd.put(r"{EXPR} : the second to top element of the execution context stack")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_execution_context, env0)
-
     # -------------------------------------------------
-
-    @exprd.put(r"{EXPR} : the value currently bound to {var} in {var}")
-    @exprd.put(r"{SETTABLE} : the bound value for {var} in {var}")
-    def _(expr, env0, _):
-        [n_var, er_var] = expr.children
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        return (T_Tangible_, env0)
 
     @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
     def _(expr, env0, _):
@@ -4565,49 +4202,6 @@ if 1:
         return (T_Tangible_ | T_throw_, env0)
 
     # -------------------------------------------------
-    # return component of T_execution_context
-
-    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} component of {var}")
-    @exprd.put(r"{SETTABLE} : The {EXECUTION_CONTEXT_COMPONENT} of {var}")
-    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}")
-    @exprd.put(r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}")
-    def _(expr, env0, _):
-        if expr.prod.rhs_s.endswith('{var}'):
-            [component_name, var] = expr.children
-        else:
-            [var, component_name] = expr.children
-
-        component_name = component_name.source_text()
-
-        # env0.assert_expr_is_of_type(var, T_execution_context)
-
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t == T_TBD:
-            t = T_execution_context
-            env2 = env1.with_expr_type_replaced(var, t)
-        else:
-            env2 = env1
-
-        result_type = {
-            # todo: make it a record?
-            # 7110: Table 22: State Components for All Execution Contexts
-            'code evaluation state': T_host_defined_,
-            'Function'      : T_function_object_,
-            'Realm'         : T_Realm_Record,
-            'ScriptOrModule': T_Module_Record | T_Script_Record,
-
-            # 7159: Table 23: Additional State Components for ECMAScript Code Execution Contexts
-            'LexicalEnvironment' : T_Environment_Record,
-            'VariableEnvironment': T_Environment_Record,
-            'PrivateEnvironment' : T_PrivateEnvironment_Record,
-
-            # 7191: Table 24: Additional State Components for Generator Execution Contexts
-            'Generator' : T_Object,
-        }[component_name]
-
-        return (result_type, env2)
-
-    # -------------------------------------------------
     # return proc type
 
     @exprd.put(r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}')
@@ -4617,48 +4211,7 @@ if 1:
         return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
 
     # -------------------------------------------------
-    # return Environment_Record
-
-    @exprd.put(r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings')
-    @exprd.put(r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record')
-    def _(expr, env0, _):
-        [kind] = expr.children
-        t = type_for_environment_record_kind(kind)
-        return (t, env0)
-
-    # -------------------------------------------------
-    # return T_Realm_Record
-
-    @exprd.put(r'{EX} : the current Realm Record')
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Realm_Record, env0)
-
-    @exprd.put(r"{EXPR} : a new Realm Record")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Realm_Record, env0)
-
-    # -------------------------------------------------
     # whatever
-
-    @exprd.put(r'{EXPR} : the Agent Record of the surrounding agent')
-    @exprd.put(r"{EXPR} : the surrounding agent's Agent Record")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Agent_Record, env0)
-
-    @exprd.put(r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}")
-    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context")
-    def _(expr, env0, _):
-        [component_name] = expr.children
-        t = {
-            'LexicalEnvironment' : T_Environment_Record,
-            'VariableEnvironment': T_Environment_Record,
-            'PrivateEnvironment' : T_PrivateEnvironment_Record, # | T_Null
-            'Realm'              : T_Realm_Record,
-        }[component_name.source_text()]
-        return (t, env0)
 
     @exprd.put(r"{EXPR} : a copy of {var}'s _captures_ List")
     def _(expr, env0, _):
@@ -4771,11 +4324,6 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_constructor_object_ | T_Undefined, env0)
-
-    @exprd.put(r"{EXPR} : the active function object")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_function_object_, env0)
 
     @exprd.put(r"{EXPR} : the time value (UTC) identifying the current time")
     def _(expr, env0, _):
@@ -10932,6 +10480,555 @@ if 1:
     def _(expr, env0, _):
         [lhs, rhs] = expr.children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 9 Executable Code and Execution Contexts
+
+# ==============================================================================
+#@ 9.1 Environment Records
+
+def type_for_environment_record_kind(kind):
+    return NamedType(kind.source_text() + ' Environment Record')
+
+if 1:
+    tbd['{VAL_DESC} : an Environment Record'] = T_Environment_Record
+
+    @tbd.put('{VAL_DESC} : an? {ENVIRONMENT_RECORD_KIND} Environment Record')
+    def _(val_desc, env):
+        [kind] = val_desc.children
+        return type_for_environment_record_kind(kind)
+
+    @exprd.put(r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings')
+    @exprd.put(r'{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record')
+    def _(expr, env0, _):
+        [kind] = expr.children
+        t = type_for_environment_record_kind(kind)
+        return (t, env0)
+
+# ==============================================================================
+#@ 9.1.1.1 Declarative Environment Records
+
+if 1:
+    @nv.put(r"{COMMAND} : Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.")
+    @nv.put(r"{COMMAND} : Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.")
+    def _(anode, env0):
+        [er_var, n_var, s_var] = anode.children
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(s_var, T_Boolean)
+        return env0
+
+    @nv.put(r"{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.")
+    def _(anode, env0):
+        [_, key_var, oer_var] = anode.children
+        env0.assert_expr_is_of_type(key_var, T_String)
+        env0.assert_expr_is_of_type(oer_var, T_Environment_Record)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove the binding for {var} from {var}.")
+    def _(anode, env0):
+        [n_var, er_var] = anode.children
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        return env0
+
+    @condd.put(r"{CONDITION_1} : {var} does not already have a binding for {var}")
+    @condd.put(r"{CONDITION_1} : {var} does not have a binding for {var}")
+    @condd.put(r"{CONDITION_1} : {var} has a binding for the name that is the value of {var}")
+    @condd.put(r"{CONDITION_1} : {var} has a binding for {var}")
+    @condd.put(r"{CONDITION_1} : {var} must have an uninitialized binding for {var}")
+    def _(cond, env0, asserting):
+        [er_var, n_var] = cond.children
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        env0.assert_expr_is_of_type(n_var, T_String)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} cannot be deleted")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} has not yet been initialized")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is a mutable binding")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is a strict binding")
+    @condd.put(r"{CONDITION_1} : the binding for {var} in {var} is an uninitialized binding")
+    def _(cond, env0, asserting):
+        [n_var, er_var] = cond.children
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the value currently bound to {var} in {var}")
+    @exprd.put(r"{SETTABLE} : the bound value for {var} in {var}")
+    def _(expr, env0, _):
+        [n_var, er_var] = expr.children
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        return (T_Tangible_, env0)
+
+    # 9.1.1.1.5 SetMutableBinding
+    @nv.put(r"{SMALL_COMMAND} : change its bound value to {var}")
+    def _(anode, env0):
+        # elliptical
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_Tangible_)
+        return env0
+
+    # 9.1.1.1.5 SetMutableBinding
+    @condd.put(r"{CONDITION_1} : This is an attempt to change the value of an immutable binding")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 9.1.1.4 Global Environment Records
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the binding exists")
+    def _(cond, env0, asserting):
+        # elliptical
+        [] = cond.children
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : it must be in the Object Environment Record")
+    def _(cond, env0, asserting):
+        # elliptical
+        [] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 9.1.1.5 Module Environment Records
+
+if 1:
+    @nv.put(r'{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.')
+    def _(anode, env0):
+        [er_var, n_var, m_var, n2_var] = anode.children
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(m_var, T_Module_Record)
+        env0.assert_expr_is_of_type(n2_var, T_String)
+        return env0
+
+    @condd.put(r"{CONDITION_1} : the binding for {var} is an indirect binding")
+    def _(cond, env0, asserting):
+        # todo: make ER explicit in spec?
+        [n_var] = cond.children
+        env0.assert_expr_is_of_type(n_var, T_String)
+        return (env0, env0)
+
+    @condd.put(r'{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}')
+    def _(cond, env0, asserting):
+        [settable, var] = cond.children
+        env0.assert_expr_is_of_type(settable, T_Environment_Record | T_tilde_empty_)
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 9.2 PrivateEnvironment Records
+
+if 1:
+    tbd['{VAL_DESC} : a PrivateEnvironment Record'] = T_PrivateEnvironment_Record
+
+# ==============================================================================
+#@ 9.3 Realms
+
+if 1:
+    tbd['{VAL_DESC} : a Realm Record'] = T_Realm_Record
+
+    @exprd.put(r"{EXPR} : a new Realm Record")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Realm_Record, env0)
+
+    @exprd.put(r'{EX} : the current Realm Record')
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Realm_Record, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} and {var} are not the same Realm Record")
+    def _(cond, env0, asserting):
+        [avar, bvar] = cond.children
+        env0.assert_expr_is_of_type(avar, T_Realm_Record)
+        env0.assert_expr_is_of_type(bvar, T_Realm_Record)
+        return (env0, env0)
+
+    tbd['{VAL_DESC} : a Record whose field names are intrinsic keys and whose values are objects'] = T_Intrinsics_Record
+
+    # 9.3.2 CreateIntrinsics
+    @nv.put(r"{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}")
+    def _(anode, env0):
+        [var, emu_xref, _] = anode.children
+        env0.assert_expr_is_of_type(var, T_Intrinsics_Record)
+        return env0
+
+# ==============================================================================
+#@ 9.4 Execution Contexts
+
+#> An <dfn>execution context</dfn> is a specification device
+#> that is used to track the runtime evaluation of code
+#> by an ECMAScript implementation.
+
+if 1:
+    tbd['{VAL_DESC} : an execution context'] = T_execution_context
+    tbd['{VAL_DESC} : an ECMAScript execution context'] = T_execution_context
+
+    @exprd.put(r"{EXPR} : a new execution context")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_execution_context, env0)
+
+# ------------------------------------------------------------------------------
+#> At any point in time,
+#> there is at most one execution context per agent that is actually executing code.
+#> This is known as the agent's <dfn>running execution context</dfn>.
+#> All references to the running execution context in this specification
+#> denote the running execution context of the surrounding agent.
+
+    @exprd.put(r'{EXPR} : the running execution context')
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_execution_context, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is now the running execution context")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : {var} is the running execution context again")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> The <dfn>execution context stack</dfn> is used to track execution contexts.
+#> The running execution context is always the top element of this stack.
+
+    @nv.put(r'{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.')
+    def _(anode, env0):
+        [var1, var2] = anode.children
+        assert var1.children == var2.children
+        env1 = env0.ensure_expr_is_of_type(var1, T_execution_context)
+        return env1
+
+    @nv.put(r'{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.')
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove {var} from the execution context stack and restore {var} as the running execution context.")
+    def _(anode, env0):
+        [avar, bvar] = anode.children
+        env0.assert_expr_is_of_type(avar, T_execution_context)
+        env0.assert_expr_is_of_type(bvar, T_execution_context)
+        return env0
+
+    @nv.put(r"{COMMAND} : Remove {var} from the execution context stack.")
+    def _(anode, env0):
+        [avar] = anode.children
+        env0.assert_expr_is_of_type(avar, T_execution_context)
+        return env0
+
+    # 9.4.1
+    @exprd.put(r'{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}')
+    def _(expr, env0, _):
+        [literal] = expr.children
+        return (T_execution_context, env0)
+
+    # 9.4.1
+    @condd.put(r'{CONDITION_1} : no such execution context exists')
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the second to top element of the execution context stack")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_execution_context, env0)
+
+    @condd.put(r"{CONDITION_1} : The execution context stack has at least two elements")
+    @condd.put(r"{CONDITION_1} : The execution context stack is not empty")
+    @condd.put(r"{CONDITION_1} : the execution context stack is empty")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> Each execution context has at least the state components listed in
+#> <emu-xref href="#table-state-components-for-all-execution-contexts"></emu-xref>.
+
+    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} component of {var}")
+    @exprd.put(r"{SETTABLE} : The {EXECUTION_CONTEXT_COMPONENT} of {var}")
+    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of {var}")
+    @exprd.put(r"{SETTABLE} : {var}'s {EXECUTION_CONTEXT_COMPONENT}")
+    def _(expr, env0, _):
+        if expr.prod.rhs_s.endswith('{var}'):
+            [component_name, var] = expr.children
+        else:
+            [var, component_name] = expr.children
+
+        component_name = component_name.source_text()
+
+        # env0.assert_expr_is_of_type(var, T_execution_context)
+
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t == T_TBD:
+            t = T_execution_context
+            env2 = env1.with_expr_type_replaced(var, t)
+        else:
+            env2 = env1
+
+        result_type = {
+            # todo: make it a record?
+            # 7110: Table 22: State Components for All Execution Contexts
+            'code evaluation state': T_host_defined_,
+            'Function'      : T_function_object_,
+            'Realm'         : T_Realm_Record,
+            'ScriptOrModule': T_Module_Record | T_Script_Record,
+
+            # 7159: Table 23: Additional State Components for ECMAScript Code Execution Contexts
+            'LexicalEnvironment' : T_Environment_Record,
+            'VariableEnvironment': T_Environment_Record,
+            'PrivateEnvironment' : T_PrivateEnvironment_Record,
+
+            # 7191: Table 24: Additional State Components for Generator Execution Contexts
+            'Generator' : T_Object,
+        }[component_name]
+
+        return (result_type, env2)
+
+    @exprd.put(r"{SETTABLE} : the running execution context's {EXECUTION_CONTEXT_COMPONENT}")
+    @exprd.put(r"{SETTABLE} : the {EXECUTION_CONTEXT_COMPONENT} of the running execution context")
+    def _(expr, env0, _):
+        [component_name] = expr.children
+        t = {
+            'LexicalEnvironment' : T_Environment_Record,
+            'VariableEnvironment': T_Environment_Record,
+            'PrivateEnvironment' : T_PrivateEnvironment_Record, # | T_Null
+            'Realm'              : T_Realm_Record,
+        }[component_name.source_text()]
+        return (t, env0)
+
+# ------------------------------------------------------------------------------
+#> Evaluation of code by the running execution context
+#> may be suspended at various points defined within this specification.
+
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.")
+    def _(anode, env0):
+        [_, ctx_var, _, b_var] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        return env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
+
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
+    def _(anode, env0):
+        [_, ctx_var, _, resa_ex] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
+        return env1
+
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.")
+    @nv.put(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.")
+    def _(anode, env0):
+        [_, ctx_var, _, resa_ex, resb_var] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
+        return env1.plus_new_entry(resb_var, T_Tangible_)
+
+    @nv.put(r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
+
+    @nv.put(r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.")
+    def _(anode, env0):
+        [vara, exb, varc, vard] = anode.children
+        env0.assert_expr_is_of_type(vara, T_execution_context)
+        env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
+        env0.assert_expr_is_of_type(varc, T_execution_context)
+        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_)
+
+    @nv.put(r"{COMMAND} : Suspend {var} and remove it from the execution context stack.")
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return env0
+
+    @nv.put(r"{COMMAND} : Suspend the running execution context.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
+
+    @nv.put(r'{SMALL_COMMAND} : suspend {var}')
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return env0
+
+    @nv.put(r'{COMMAND} : Suspend {var}.')
+    def _(anode, env0):
+        [var] = anode.children
+        return env0.ensure_expr_is_of_type(var, T_execution_context)
+
+    @nv.put(r"{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}")
+    def _(anode, env0):
+        [settable, commands] = anode.children
+        env0.assert_expr_is_of_type(settable, T_host_defined_)
+        defns = [(None, commands)]
+        env_at_bottom = tc_proc(None, defns, env0)
+        return env0
+
+    @condd.put(r'{CONDITION_1} : {var} is not already suspended')
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
+    def _(cond, env0, asserting):
+        [a_var, b_var] = cond.children
+        env0.assert_expr_is_of_type(a_var, T_execution_context)
+        env0.assert_expr_is_of_type(b_var, T_execution_context)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
+    def _(cond, env0, asserting):
+        [vara, varb] = cond.children
+        env0.assert_expr_is_of_type(vara, T_execution_context)
+        env0.assert_expr_is_of_type(varb, T_execution_context)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> The value of the Function component
+#> of the running execution context
+#> is also called the <dfn>active function object</dfn>.
+
+    tbd['{VAL_DESC} : the active function object'] = a_subset_of(T_function_object_)
+
+    @exprd.put(r"{EXPR} : the active function object")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_function_object_, env0)
+
+# ------------------------------------------------------------------------------
+#> <dfn>ECMAScript code execution contexts</dfn>
+#> have the additional state components listed in
+#> <emu-xref href="#table-additional-state-components-for-ecmascript-code-execution-contexts"></emu-xref>
+
+    @exprd.put(r"{EXPR} : a new ECMAScript code execution context")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_execution_context, env0)
+
+# ------------------------------------------------------------------------------
+#> Execution contexts representing the evaluation of Generators
+#> have the additional state components listed in
+#> <emu-xref href="#table-additional-state-components-for-generator-execution-contexts"></emu-xref>.
+
+    @condd.put(r"{CONDITION_1} : {var} does not have a Generator component")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
+
+    # 10.3.1
+    @nv.put(r"{COMMAND} : Perform any necessary implementation-defined initialization of {var}.")
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return env0
+
+    # 15.10.3
+    @condd.put(r"{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    # 15.10.3
+    @nv.put(r"{COMMAND} : Discard all resources associated with the current execution context.")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
+
+# ==============================================================================
+#@ 9.5 Jobs and Host Operations to Enqueue Jobs
+
+if 1:
+    tbd['{VAL_DESC} : a Job Abstract Closure'] = T_Job
+    tbd['{VAL_DESC} : a JobCallback Record'] = T_JobCallback_Record
+
+# ==============================================================================
+#@ 9.6 InitializeHostDefinedRealm
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Realm_Record)
+        return (env0, env0)
+
+    @condd.put(r"{CONDITION_1} : the host requires that the `this` binding in {var}'s global scope return an object other than the global object")
+    def _(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Realm_Record)
+        return (env0, env0)
+
+    @nv.put(r"{COMMAND} : Create any host-defined global object properties on {var}.")
+    def _(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return env0
+
+# ==============================================================================
+#@ 9.7 Agents
+
+#> While an agent's executing thread executes jobs,
+#> the agent is the <dfn>surrounding agent</dfn>
+#> for the code in those jobs.
+
+if 1:
+    @exprd.put(r'{EXPR} : the Agent Record of the surrounding agent')
+    @exprd.put(r"{EXPR} : the surrounding agent's Agent Record")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Agent_Record, env0)
+
+    @condd.put(r"{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+#> An <dfn>agent signifier</dfn> is a globally-unique opaque value
+#> used to identify an Agent.
+
+if 1:
+    tbd['{VAL_DESC} : an agent signifier'] = T_agent_signifier_
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : agent signifiers'] = T_agent_signifier_
+
+    @condd.put(r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}")
+    def _(cond, env0, asserting):
+        [a, b] = cond.children
+        env0.assert_expr_is_of_type(a, T_agent_signifier_)
+        env0.assert_expr_is_of_type(b, T_agent_signifier_)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 9.10 Processing Model of WeakRef and FinalizationRegistry Objects
+
+if 1:
+    # 9.10.4.1
+    @nv.put(r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error")
+    def _(anode, env0):
+        [] = anode.children
+        return env0
+
+# ==============================================================================
+#@ 9.13 CleanupFinalizationRegistry
+
+if 1:
+    @nv.put(r"{COMMAND} : Choose any such {var}.")
+    def _(anode, env0):
+        [var] = anode.children
+        return env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
