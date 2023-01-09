@@ -3134,18 +3134,6 @@ if 1:
         [] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {var} contains a formal parameter mapping for {var}")
-    def _(cond, env0, asserting):
-        [avar, bvar] = cond.children
-        env0.assert_expr_is_of_type(avar, T_Object)
-        env0.assert_expr_is_of_type(bvar, T_String | T_Symbol)
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : {DOTTING} exists and has been initialized")
-    def _(cond, env0, asserting):
-        [dotting] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : All named exports from {var} are resolvable")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3364,11 +3352,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
     def _(cond, env0, asserting):
         [var] = cond.children
@@ -3507,8 +3490,6 @@ tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
 tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
 tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
-tbd['{VAL_DESC} : a Proxy exotic object'] = T_Proxy_exotic_object_
-tbd['{VAL_DESC} : a Proxy object'] = T_Proxy_exotic_object_
 tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
@@ -3518,7 +3499,6 @@ tbd['{VAL_DESC} : a Script Record'] = T_Script_Record
 tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a SharedArrayBuffer'] = T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : a Source Text Module Record'] = T_Source_Text_Module_Record
-tbd['{VAL_DESC} : a String exotic object'] = T_String_exotic_object_
 tbd['{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}'] = a_subset_of(T_String)
 tbd['{VAL_DESC} : a TypedArray element type'] = T_TypedArray_element_type
 tbd['{VAL_DESC} : a TypedArray'] = T_TypedArray_object_
@@ -3533,8 +3513,6 @@ tbd['{VAL_DESC} : a WaiterList'] = T_WaiterList
 tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
 tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
 tbd['{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
-tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
-tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
 tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
 tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}'] = a_subset_of(T_Unicode_code_points_)
@@ -3544,29 +3522,20 @@ tbd['{VAL_DESC} : a code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
 tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
 tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
 tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
 tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
 tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
-tbd['{VAL_DESC} : a set of algorithm steps'] = T_alg_steps
 tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
 tbd['{VAL_DESC} : a time value'] = T_IntegralNumber_
-tbd['{VAL_DESC} : an Array exotic object'] = T_Array_object_
-tbd['{VAL_DESC} : an Array'] = T_Array_object_
 tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
 tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
-tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_object_)
-tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
-tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
 tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
 tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
-tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an instance of a concrete subclass of Module Record'] = T_Module_Record
-tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
 tbd['{VAL_DESC} : source text'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
@@ -4041,11 +4010,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (ListType(T_character_), env1)
 
-    @exprd.put(r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
-    def _(expr, env0, _):
-        [xref] = expr.children
-        return (ListType(T_SlotName_), env0)
-
     # --------------------------------------------------------
     # return T_Parse_Node
 
@@ -4182,26 +4146,6 @@ if 1:
         return (T_alg_steps, env0)
 
     # -------------------------------------------------
-
-    @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
-    def _(expr, env0, _):
-        [avar, bvar, cvar, dvar] = expr.children
-        assert avar.children == bvar.children
-        env0.assert_expr_is_of_type(avar, T_function_object_)
-        env0.assert_expr_is_of_type(cvar, T_Tangible_)
-        env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
-        return (T_Tangible_ | T_throw_, env0)
-
-    @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
-    def _(expr, env0, _):
-        [avar, bvar, cvar, dvar] = expr.children
-        assert avar.children == bvar.children
-        env0.assert_expr_is_of_type(avar, T_function_object_)
-        env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
-        env0.assert_expr_is_of_type(dvar, T_Tangible_)
-        return (T_Tangible_ | T_throw_, env0)
-
-    # -------------------------------------------------
     # return proc type
 
     @exprd.put(r'{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}')
@@ -4285,11 +4229,6 @@ if 1:
         env0.assert_expr_is_of_type(wl, T_WaiterList)
         return (ListType(T_agent_signifier_), env0)
 
-    @exprd.put(r"{EX} : *this* value")
-    @exprd.put(r"{EX} : the *this* value")
-    def _(expr, env0, _):
-        return (T_Tangible_, env0)
-
     @exprd.put(r"{EXPR} : this Date object")
     def _(expr, env0, _):
         [] = expr.children
@@ -4319,11 +4258,6 @@ if 1:
     def _(expr, env0, _):
         # XXX
         return (T_String, env0)
-
-    @exprd.put(r"{EX} : NewTarget")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_constructor_object_ | T_Undefined, env0)
 
     @exprd.put(r"{EXPR} : the time value (UTC) identifying the current time")
     def _(expr, env0, _):
@@ -4890,28 +4824,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 10.1 Ordinary Object Internal Methods and Internal Slots
-set_up_internal_thing('slot', 'Prototype',  T_Object | T_Null)
-set_up_internal_thing('slot', 'Extensible', T_Boolean)
-
-# 10.3 Built-in Function Objects
-set_up_internal_thing('slot', 'InitialName', T_Null | T_String)
-
-# 10.4.4 Arguments Exotic Objects
-set_up_internal_thing('slot', 'ParameterMap', T_Object)
-
-# 10.4.5 Integer-Indexed Exotic Objects
-set_up_internal_thing('slot', 'ViewedArrayBuffer', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-set_up_internal_thing('slot', 'ArrayLength',       T_MathInteger_)
-set_up_internal_thing('slot', 'ByteOffset',        T_MathInteger_)
-set_up_internal_thing('slot', 'ContentType',       T_tilde_BigInt_ | T_tilde_Number_)
-set_up_internal_thing('slot', 'TypedArrayName',    T_String)
-set_up_internal_thing('slot', 'ByteLength',        T_MathInteger_)
-
-# 10.5 Proxy Object Internal Methods and Internal Slots
-set_up_internal_thing('slot', 'ProxyHandler', T_Object | T_Null)
-set_up_internal_thing('slot', 'ProxyTarget',  T_Object | T_Null)
 
 # 20.3 Boolean Objects
 set_up_internal_thing('slot', 'BooleanData', T_Boolean)
@@ -11031,6 +10943,145 @@ if 1:
         return env0.ensure_expr_is_of_type(var, T_FinalizationRegistryCellRecord_)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 10 Ordinary and Exotic Objects Behaviours
+
+# ==============================================================================
+#@ 10.1 Ordinary Object Internal Methods and Internal Slots
+
+set_up_internal_thing('slot', 'Prototype',  T_Object | T_Null)
+set_up_internal_thing('slot', 'Extensible', T_Boolean)
+
+# ==============================================================================
+#@ 10.2 ECMAScript Function Objects
+
+if 1:
+    tbd['{VAL_DESC} : an ECMAScript function object'] = a_subset_of(T_function_object_)
+    tbd['{VAL_DESC} : an ECMAScript function'] = a_subset_of(T_function_object_)
+
+    # 10.2.4
+    @condd.put(r"{CONDITION_1} : {DOTTING} exists and has been initialized")
+    def _(cond, env0, asserting):
+        [dotting] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 10.3 Built-in Function Objects
+
+if 1:
+    tbd['{VAL_DESC} : a built-in function object'] = a_subset_of(T_function_object_)
+
+set_up_internal_thing('slot', 'InitialName', T_Null | T_String)
+
+if 1:
+    @exprd.put(r"{EX} : *this* value")
+    @exprd.put(r"{EX} : the *this* value")
+    def _(expr, env0, _):
+        return (T_Tangible_, env0)
+
+    @exprd.put(r"{EX} : NewTarget")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_constructor_object_ | T_Undefined, env0)
+
+    # 10.3.1
+    @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
+    def _(expr, env0, _):
+        [avar, bvar, cvar, dvar] = expr.children
+        assert avar.children == bvar.children
+        env0.assert_expr_is_of_type(avar, T_function_object_)
+        env0.assert_expr_is_of_type(cvar, T_Tangible_)
+        env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
+        return (T_Tangible_ | T_throw_, env0)
+
+    # 10.3.2
+    @exprd.put(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
+    def _(expr, env0, _):
+        [avar, bvar, cvar, dvar] = expr.children
+        assert avar.children == bvar.children
+        env0.assert_expr_is_of_type(avar, T_function_object_)
+        env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
+        env0.assert_expr_is_of_type(dvar, T_Tangible_)
+        return (T_Tangible_ | T_throw_, env0)
+
+    # 10.3.3
+    @exprd.put(r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
+    def _(expr, env0, _):
+        [xref] = expr.children
+        return (ListType(T_SlotName_), env0)
+
+    # 10.3.3
+    tbd['{VAL_DESC} : some other definition of a function\'s behaviour provided in this specification'] = T_alg_steps
+    tbd['{VAL_DESC} : a set of algorithm steps'] = T_alg_steps
+
+# ==============================================================================
+#@ 10.4.1 Bound Function Exotic Objects
+
+tbd['{VAL_DESC} : a bound function exotic object'] = T_bound_function_exotic_object_
+
+# ==============================================================================
+#@ 10.4.2 Array Exotic Objects
+
+if 1:
+    tbd['{VAL_DESC} : an Array exotic object'] = T_Array_object_
+    tbd['{VAL_DESC} : an Array'] = T_Array_object_
+
+# ==============================================================================
+#@ 10.4.3 String Exotic Objects
+
+if 1:
+    tbd['{VAL_DESC} : a String exotic object'] = T_String_exotic_object_
+
+# ==============================================================================
+#@ 10.4.4 Arguments Exotic Objects
+
+if 1:
+    tbd['{VAL_DESC} : an arguments exotic object'] = a_subset_of(T_Object)
+
+set_up_internal_thing('slot', 'ParameterMap', T_Object)
+
+if 1:
+    # 10.4.4.{2,4}
+    @condd.put(r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    # 10.4.4.3
+    @condd.put(r"{CONDITION_1} : {var} contains a formal parameter mapping for {var}")
+    def _(cond, env0, asserting):
+        [avar, bvar] = cond.children
+        env0.assert_expr_is_of_type(avar, T_Object)
+        env0.assert_expr_is_of_type(bvar, T_String | T_Symbol)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 10.4.5 Integer-Indexed Exotic Objects
+
+if 1:
+    tbd['{VAL_DESC} : an Integer-Indexed exotic object'] = T_Integer_Indexed_object_
+
+set_up_internal_thing('slot', 'ViewedArrayBuffer', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+set_up_internal_thing('slot', 'ArrayLength',       T_MathInteger_)
+set_up_internal_thing('slot', 'ByteOffset',        T_MathInteger_)
+set_up_internal_thing('slot', 'ContentType',       T_tilde_BigInt_ | T_tilde_Number_)
+set_up_internal_thing('slot', 'TypedArrayName',    T_String)
+set_up_internal_thing('slot', 'ByteLength',        T_MathInteger_)
+
+# ==============================================================================
+#@ 10.4.6 Module Namespace Exotic Objects
+
+if 1:
+    tbd['{VAL_DESC} : a module namespace exotic object'] = T_Object
+
+# ==============================================================================
+# 10.5 Proxy Object Internal Methods and Internal Slots
+
+if 1:
+    tbd['{VAL_DESC} : a Proxy exotic object'] = T_Proxy_exotic_object_
+    tbd['{VAL_DESC} : a Proxy object'] = T_Proxy_exotic_object_
+
+set_up_internal_thing('slot', 'ProxyHandler', T_Object | T_Null)
+set_up_internal_thing('slot', 'ProxyTarget',  T_Object | T_Null)
 
 main()
 
