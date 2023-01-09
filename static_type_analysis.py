@@ -2757,16 +2757,6 @@ if 1:
         [child] = anode.children
         return tc_nonvalue(child, env0)
 
-    @nv.put(r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
-    def _(anode, env0):
-        [var, cond, literal] = anode.children
-        # once, in MakeDay
-        env0.assert_expr_is_of_type(literal, T_Number)
-        env1 = env0.plus_new_entry(var, T_FiniteNumber_)
-        (t_env, f_env) = tc_cond(cond, env1)
-        proc_add_return(env1, T_Number, literal)
-        return env1
-
     # ---
     # parse
 
@@ -3331,7 +3321,6 @@ tbd['{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “
 tbd['{VAL_DESC} : a character'] = T_code_unit_ | T_code_point_
 tbd['{VAL_DESC} : a code point'] = T_code_point_
 tbd['{VAL_DESC} : a code unit'] = T_code_unit_
-tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
 tbd['{VAL_DESC} : a happens-before Relation'] = T_Relation
 tbd['{VAL_DESC} : a host-synchronizes-with Relation'] = T_Relation
 tbd['{VAL_DESC} : a read-modify-write modification function'] = T_ReadModifyWrite_modification_closure
@@ -3339,7 +3328,6 @@ tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event
 tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : a time value'] = T_IntegralNumber_
 tbd['{VAL_DESC} : an ArrayBuffer or SharedArrayBuffer'] = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 tbd['{VAL_DESC} : an ArrayBuffer'] = T_ArrayBuffer_object_
 tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
@@ -3350,14 +3338,6 @@ tbd['{VAL_DESC} : an initialized RegExp instance'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
-
-# Note re 'a time value':
-# time value is defined to be 'IntegralNumber_ | NaN_Number_',
-# but the only use is for UTC()'s return value,
-# which is the result of a subtraction,
-# so probably shouldn't be NaN.
-# So I've translated it as T_IntegralNumber_.
-# I.e., the spec should say "a *finite* time value".
 
 # ------------------
 
@@ -3552,12 +3532,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_MathInteger_, env1)
 
-    @exprd.put(r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)")
-    def _(expr, env0, _):
-        for var in expr.children:
-            env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Number, env0)
-
     # --------------------------------------------------------
     # return T_MathInteger_: The size of some collection:
 
@@ -3566,23 +3540,6 @@ if 1:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MathNonNegativeInteger_, env0)
-
-    @exprd.put(r"{FACTOR} : {CONSTANT_NAME}")
-    @exprd.put(r"{EX} : {CONSTANT_NAME}")
-    def _(expr, env0, _):
-        [constant_name] = expr.children
-        constant_name_str = constant_name.source_text()
-        # hack:
-        result_type = {
-            'HoursPerDay'      : T_MathNonNegativeInteger_,
-            'MinutesPerHour'   : T_MathNonNegativeInteger_,
-            'SecondsPerMinute' : T_MathNonNegativeInteger_,
-            'msPerDay'         : T_FiniteNumber_,
-            'msPerHour'        : T_FiniteNumber_,
-            'msPerMinute'      : T_FiniteNumber_,
-            'msPerSecond'      : T_FiniteNumber_,
-        }[constant_name_str]
-        return (result_type, env0)
 
     # ----
     # return T_MathInteger_: arithmetic:
@@ -3642,24 +3599,6 @@ if 1:
         [emu_xref, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_TypedArray_element_type, env0)
-
-    @exprd.put(r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}")
-    def _(expr, env0, _):
-        [emu_xref, noi] = expr.children
-        env1 = env0.ensure_expr_is_of_type(noi, T_IntegralNumber_)
-        return (T_String, env1)
-
-    @exprd.put(r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}")
-    def _(expr, env0, _):
-        [exa, exb] = expr.children
-        env0.assert_expr_is_of_type(exa, T_String)
-        env0.assert_expr_is_of_type(exb, T_String)
-        return (T_String, env0)
-
-    @exprd.put(r"{EX} : an implementation-defined timezone name")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_String, env0)
 
     @exprd.put(r"{EX} : the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row")
     def _(expr, env0, _):
@@ -3955,13 +3894,6 @@ if 1:
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
 
-    @exprd.put(r"{SETTABLE} : the {DSBN} internal slot of this Date object")
-    def _(expr, env0, _):
-        [dsbn] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        assert dsbn_name == 'DateValue'
-        return (T_Number, env0)
-
     @exprd.put(r"{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
     def _(expr, env0, _):
         [_, v, _] = expr.children
@@ -3995,11 +3927,6 @@ if 1:
         env0.assert_expr_is_of_type(wl, T_WaiterList)
         return (ListType(T_agent_signifier_), env0)
 
-    @exprd.put(r"{EXPR} : this Date object")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_Object | ThrowType(T_TypeError), env0)
-
     @exprd.put(r"{EX} : {backticked_word}")
     def _(expr, env0, _):
         [backticked_word] = expr.children
@@ -4019,17 +3946,6 @@ if 1:
     def _(expr, env0, _):
         # XXX
         return (T_String, env0)
-
-    @exprd.put(r"{EXPR} : the time value (UTC) identifying the current time")
-    def _(expr, env0, _):
-        [] = expr.children
-        return (T_IntegralNumber_, env0)
-
-    @exprd.put(r"{EXPR} : the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})")
-    def _(expr, env0, _):
-        [var, emu_xref] = expr.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (T_Number, env0)
 
     @exprd.put(r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor")
     def _(expr, env0, _):
@@ -4075,27 +3991,6 @@ if 1:
     def _(expr, env0, _):
         [] = expr.children
         return (T_Unicode_code_points_, env0)
-
-    @exprd.put(r"{RHSS} : {RHSS}{RHS}")
-    def _(expr, env0, _):
-        [rhss, rhs] = expr.children
-        (t1, env1) = tc_expr(rhss, env0)
-        (t2, env2) = tc_expr(rhs, env1)
-        return (t1 | t2, env2)
-
-    @exprd.put(r"{RHS} : {nlai}= {EXPR} if {CONDITION}")
-    def _(expr, env0, _):
-        [subexpr, cond] = expr.children
-        (t_env, f_env) = tc_cond(cond, env0)
-        (t, env1) = tc_expr(subexpr, t_env)
-        return (t, env1)
-
-    @exprd.put(r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
-    def _(expr, env0, _):
-        [vara, cond, varb] = expr.children
-        # (t_env, f_env) = tc_cond(cond, env0)
-        # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
-        return (T_IntegralNumber_, env0)
 
     @exprd.put(r"{EXPR} : an implementation-defined non-negative mathematical value")
     def _(expr, env0, _):
@@ -4529,15 +4424,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 21.1 Number Objects
-set_up_internal_thing('slot', 'NumberData', T_Number)
-
-# 21.2 BigInt Objects
-set_up_internal_thing('slot', 'BigIntData', T_BigInt)
-
-# 21.4 Date Objects
-set_up_internal_thing('slot', 'DateValue', T_IntegralNumber_ | T_NaN_Number_)
 
 # 22.1 String Objects
 set_up_internal_thing('slot', 'StringData', T_String)
@@ -11198,6 +11084,169 @@ if 1:
     def _(expr, env0, _):
         [error_type] = expr.children
         return (type_for_ERROR_TYPE(error_type), env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 21 Numbers and Dates
+
+# ==============================================================================
+#@ 21.1 Number Objects
+set_up_internal_thing('slot', 'NumberData', T_Number)
+
+# ==============================================================================
+#@ 21.2 BigInt Objects
+set_up_internal_thing('slot', 'BigIntData', T_BigInt)
+
+# ==============================================================================
+#@ 21.4 Date Objects
+
+# ==============================================================================
+#@ 21.4.1 Overview of Date Objects and Definitions of Abstract Operations
+
+# All of the uses of <emu-eqn> to define abstract operations and constants
+# appear within this section.
+# (Well, except for `floor` in 5.2.5.)
+
+if 1:
+    @exprd.put(r"{RHSS} : {RHSS}{RHS}")
+    def _(expr, env0, _):
+        [rhss, rhs] = expr.children
+        (t1, env1) = tc_expr(rhss, env0)
+        (t2, env2) = tc_expr(rhs, env1)
+        return (t1 | t2, env2)
+
+    @exprd.put(r"{RHS} : {nlai}= {EXPR} if {CONDITION}")
+    def _(expr, env0, _):
+        [subexpr, cond] = expr.children
+        (t_env, f_env) = tc_cond(cond, env0)
+        (t, env1) = tc_expr(subexpr, t_env)
+        return (t, env1)
+
+    @exprd.put(r"{FACTOR} : {CONSTANT_NAME}")
+    @exprd.put(r"{EX} : {CONSTANT_NAME}")
+    def _(expr, env0, _):
+        [constant_name] = expr.children
+        constant_name_str = constant_name.source_text()
+        # hack:
+        result_type = {
+            'HoursPerDay'      : T_MathNonNegativeInteger_,
+            'MinutesPerHour'   : T_MathNonNegativeInteger_,
+            'SecondsPerMinute' : T_MathNonNegativeInteger_,
+            'msPerDay'         : T_FiniteNumber_,
+            'msPerHour'        : T_FiniteNumber_,
+            'msPerMinute'      : T_FiniteNumber_,
+            'msPerSecond'      : T_FiniteNumber_,
+        }[constant_name_str]
+        return (result_type, env0)
+
+# ==============================================================================
+#@ 21.4.1.1 Time Values and Time Range
+
+if 1:
+    tbd['{VAL_DESC} : a time value'] = T_IntegralNumber_
+    tbd['{VAL_DESC} : a finite time value'] = T_IntegralNumber_
+
+# Time value is defined to be 'IntegralNumber_ | NaN_Number_',
+# but the only use is for UTC()'s return value,
+# which is the result of a subtraction,
+# so probably shouldn't be NaN.
+# So I've translated it as T_IntegralNumber_.
+# I.e., the spec should say "a *finite* time value".
+
+# ==============================================================================
+#@ 21.4.1.12 UTC
+
+if 1:
+    @exprd.put(r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
+    def _(expr, env0, _):
+        [vara, cond, varb] = expr.children
+        # (t_env, f_env) = tc_cond(cond, env0)
+        # refers to _possibleInstantsBefore_ which hasn't been defined yet, it's complicated
+        return (T_IntegralNumber_, env0)
+
+# ==============================================================================
+#@ 21.4.1.14 MakeTime
+
+    @exprd.put(r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)")
+    def _(expr, env0, _):
+        for var in expr.children:
+            env0.assert_expr_is_of_type(var, T_Number)
+        return (T_Number, env0)
+
+# ==============================================================================
+#@ 21.4.1.15 MakeDay
+
+if 1:
+    @nv.put(r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
+    def _(anode, env0):
+        [var, cond, literal] = anode.children
+        # once, in MakeDay
+        env0.assert_expr_is_of_type(literal, T_Number)
+        env1 = env0.plus_new_entry(var, T_FiniteNumber_)
+        (t_env, f_env) = tc_cond(cond, env1)
+        proc_add_return(env1, T_Number, literal)
+        return env1
+
+# ==============================================================================
+#@ 21.4.2 The Date Constructor
+
+set_up_internal_thing('slot', 'DateValue', T_IntegralNumber_ | T_NaN_Number_)
+
+# ==============================================================================
+#@ 21.4.2.1 Date 
+
+if 1:
+    @exprd.put(r"{EXPR} : the time value (UTC) identifying the current time")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_IntegralNumber_, env0)
+
+    @exprd.put(r"{EXPR} : the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})")
+    def _(expr, env0, _):
+        [var, emu_xref] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_Number, env0)
+
+# ==============================================================================
+#@ 21.4.4 Properties of the Date Prototype Object
+
+if 1:
+    @exprd.put(r"{EXPR} : this Date object")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_Object | ThrowType(T_TypeError), env0)
+
+    @exprd.put(r"{SETTABLE} : the {DSBN} internal slot of this Date object")
+    def _(expr, env0, _):
+        [dsbn] = expr.children
+        dsbn_name = dsbn.source_text()[2:-2]
+        assert dsbn_name == 'DateValue'
+        return (T_Number, env0)
+
+# ==============================================================================
+#@ 21.4.4.41.2 DateString
+
+if 1:
+    @exprd.put(r"{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}")
+    def _(expr, env0, _):
+        [emu_xref, noi] = expr.children
+        env1 = env0.ensure_expr_is_of_type(noi, T_IntegralNumber_)
+        return (T_String, env1)
+
+# ==============================================================================
+#@ 21.4.4.41.3 TimeZoneString
+
+if 1:
+    @exprd.put(r"{EXPR} : an implementation-defined string that is either {EX} or {EXPR}")
+    def _(expr, env0, _):
+        [exa, exb] = expr.children
+        env0.assert_expr_is_of_type(exa, T_String)
+        env0.assert_expr_is_of_type(exb, T_String)
+        return (T_String, env0)
+
+    @exprd.put(r"{EX} : an implementation-defined timezone name")
+    def _(expr, env0, _):
+        [] = expr.children
+        return (T_String, env0)
 
 main()
 
