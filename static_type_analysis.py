@@ -3115,11 +3115,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_String | T_Symbol)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : only one argument was passed")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {var} and {var} are in a race in {var}")
     def _(cond, env0, asserting):
         [ea, eb, exe] = cond.children
@@ -3596,11 +3591,6 @@ if 1:
         env0.assert_expr_is_of_type(var, T_MatchState)
         return (T_MathNonNegativeInteger_, env0)
 
-    @exprd.put(r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
-    def _(expr, env0, _):
-        [xref] = expr.children
-        return (T_MathNonNegativeInteger_, env0)
-
     @exprd.put(r"{FACTOR} : {CONSTANT_NAME}")
     @exprd.put(r"{EX} : {CONSTANT_NAME}")
     def _(expr, env0, _):
@@ -3949,14 +3939,6 @@ if 1:
     def _(expr, env0, _):
         [emu_grammar] = expr.children
         return (T_CharSet, env0)
-
-    # ------------------------------------------------
-    # return T_alg_steps
-
-    @exprd.put(r"{EXPR} : the algorithm steps defined in {h_emu_xref}")
-    def _(expr, env0, _):
-        [emu_xref] = expr.children
-        return (T_alg_steps, env0)
 
     # -------------------------------------------------
     # return proc type
@@ -11178,6 +11160,25 @@ if 1:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
         return (env0, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 18 ECMAScript Standard Built-in Objects
+
+if 1:
+    @exprd.put(r"{EXPR} : the algorithm steps defined in {h_emu_xref}")
+    def _(expr, env0, _):
+        [emu_xref] = expr.children
+        return (T_alg_steps, env0)
+
+    @condd.put(r"{CONDITION_1} : only one argument was passed")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
+    def _(expr, env0, _):
+        [xref] = expr.children
+        return (T_MathNonNegativeInteger_, env0)
 
 main()
 
