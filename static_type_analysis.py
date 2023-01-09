@@ -3254,16 +3254,6 @@ if 1:
         [prod_refa, prod_refb, h_a] = cond.children
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : This is only possible for getter/setter pairs")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
     def _(cond, env0, asserting):
         [dotting, lita, litb] = cond.children
@@ -3912,13 +3902,6 @@ if 1:
 
     # ---------------
     # ListType(other)
-
-    @exprd.put(r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}")
-    def _(expr, env0, _):
-        [dsbwa, dsbwb] = expr.children
-        assert dsbwa.source_text() == '[[Call]]'
-        assert dsbwb.source_text() == '[[Construct]]'
-        return (ListType(T_Tangible_), env0)
 
     @exprd.put(r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List")
     def _(expr, env0, _):
@@ -11129,6 +11112,34 @@ if 1:
     def _(anode, env0):
         [] = anode.children
         return env0
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 15 ECMAScript Language: Functions and Classes
+
+# ==============================================================================
+#@ 15.7.1 Static Semantics: Early Errors [for Class Definitions]
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 15.7.14 Runtime Semantics: ClassDefinitionEvaluation
+
+if 1:
+    @condd.put(r"{CONDITION_1} : This is only possible for getter/setter pairs")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @exprd.put(r"{EXPR} : the List of arguments that was passed to this function by {dsb_word} or {dsb_word}")
+    def _(expr, env0, _):
+        [dsbwa, dsbwb] = expr.children
+        assert dsbwa.source_text() == '[[Call]]'
+        assert dsbwb.source_text() == '[[Construct]]'
+        return (ListType(T_Tangible_), env0)
 
 main()
 
