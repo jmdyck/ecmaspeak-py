@@ -2757,29 +2757,6 @@ if 1:
         [child] = anode.children
         return tc_nonvalue(child, env0)
 
-    # -----------------------
-
-    @nv.put(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
-    def _(anode, env0):
-        [tw, var] = anode.children
-        assert tw.source_text() == '~completed~'
-        env0.assert_expr_is_of_type(var, T_Object)
-        return env0
-
-    # ----------------------------------
-
-    @nv.put(r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
-    def _(anode, env0):
-        [vara, varb] = anode.children
-        env0.assert_expr_is_of_type(varb, T_PromiseCapability_Record)
-        (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
-
-        env0.assert_expr_is_of_type(vara, T_Top_)
-        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
-
-        proc_add_return(env0, T_Promise_object_, anode)
-        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
-
 # ------------------------------------------------------------------------------
 
 def tc_cond(cond, env0, asserting=False):
@@ -2885,26 +2862,6 @@ if 1:
                 assert 0, container_t
         else:
             assert 0, container_t
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : we return here")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the async function either threw an exception or performed an implicit or explicit return; all awaiting is done")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the async generator either threw an exception or performed either an implicit or explicit return")
-    def _(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-    @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
-    def _(cond, env0, asserting):
-        [] = cond.children
         return (env0, env0)
 
     @condd.put(r"{CONDITION_1} : Evaluate has already been invoked on {var} and successfully completed")
@@ -3077,12 +3034,7 @@ def _(vd, env):
 
 # ------------------
 
-tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
-tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
-tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
-tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
-tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
 tbd['{VAL_DESC} : a ReadModifyWriteSharedMemory event'] = T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event'] = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event'] = T_Shared_Data_Block_event
@@ -3100,20 +3052,14 @@ tbd['{VAL_DESC} : a reads-bytes-from mathematical function'] = ProcType([T_event
 tbd['{VAL_DESC} : a reads-from Relation'] = T_Relation
 tbd['{VAL_DESC} : a sequence of Unicode code points'] = T_Unicode_code_points_
 tbd['{VAL_DESC} : a synchronizes-with Relation'] = T_Relation
-tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
-tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
-tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
 tbd['{VAL_DESC} : an agent-order Relation'] = T_Relation
-tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
 tbd['{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}'] = a_subset_of(T_Unicode_code_points_)
 tbd['{VAL_DESC} : {backticked_oth}'] = a_subset_of(T_Unicode_code_points_)
 
 # ------------------
 
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Agent Events Records'               ] = T_Agent_Events_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'      ] = T_AsyncGeneratorRequest_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : Chosen Value Records'               ] = T_Chosen_Value_Record
-tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'            ] = T_PromiseReaction_Record
 tbd['{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
 tbd['{LIST_ELEMENTS_DESCRIPTION} : code points'                        ] = T_code_point_
 tbd['{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events'] = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
@@ -3833,18 +3779,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 27.2.1.3 CreatResolvingFunctions
-set_up_internal_thing('slot', 'Promise',         T_Object)
-set_up_internal_thing('slot', 'AlreadyResolved', T_boolean_value_record_)
-
-# 27.2.4 Properties of the Promise Constructor
-set_up_internal_thing('slot', 'AlreadyCalled',     T_boolean_value_record_ | T_Boolean)
-set_up_internal_thing('slot', 'Index',             T_MathInteger_)
-set_up_internal_thing('slot', 'Capability',        T_PromiseCapability_Record)
-set_up_internal_thing('slot', 'RemainingElements', T_integer_value_record_)
-set_up_internal_thing('slot', 'Values',            ListType(T_Tangible_))
-set_up_internal_thing('slot', 'Errors',            ListType(T_Tangible_))
 
 # 28.2.2.1 Proxy.revocable
 set_up_internal_thing('slot', 'RevocableProxy', T_Proxy_exotic_object_ | T_Null)
@@ -11380,6 +11314,110 @@ tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 
 set_up_internal_thing('slot', 'CleanupCallback', T_JobCallback_Record)
 set_up_internal_thing('slot', 'Cells',           ListType(T_FinalizationRegistryCellRecord_))
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 27 Control Abstraction Objects
+
+# ==============================================================================
+#@ 27.1 Iteration
+
+tbd['{VAL_DESC} : an Iterator'] = T_Iterator_object_
+
+tbd['{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface'] = a_subset_of(T_Object)
+
+# ==============================================================================
+#@ 27.2 Promise Objects
+
+if 1:
+    tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
+
+#@ 27.2.1.1 PromiseCapability Records
+
+    tbd['{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}'] = T_PromiseCapability_Record
+    tbd['{VAL_DESC} : a PromiseCapability Record'] = T_PromiseCapability_Record
+
+#@ 27.2.1.1.1 IfAbruptRejectPromise
+
+    @nv.put(r"{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
+    def _(anode, env0):
+        [vara, varb] = anode.children
+        env0.assert_expr_is_of_type(varb, T_PromiseCapability_Record)
+        (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
+
+        env0.assert_expr_is_of_type(vara, T_Top_)
+        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
+
+        proc_add_return(env0, T_Promise_object_, anode)
+        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+
+#@ 27.2.1.2 PromiseReaction Records
+
+    tbd['{VAL_DESC} : a PromiseReaction Record'] = T_PromiseReaction_Record
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records'] = T_PromiseReaction_Record
+
+#@ 27.2.1.3 CreateResolvingFunctions
+
+set_up_internal_thing('slot', 'Promise',         T_Object)
+set_up_internal_thing('slot', 'AlreadyResolved', T_boolean_value_record_)
+
+#@ 27.2.4 Properties of the Promise Constructor
+
+set_up_internal_thing('slot', 'AlreadyCalled',     T_boolean_value_record_ | T_Boolean)
+set_up_internal_thing('slot', 'Index',             T_MathInteger_)
+set_up_internal_thing('slot', 'Capability',        T_PromiseCapability_Record)
+set_up_internal_thing('slot', 'RemainingElements', T_integer_value_record_)
+set_up_internal_thing('slot', 'Values',            ListType(T_Tangible_))
+set_up_internal_thing('slot', 'Errors',            ListType(T_Tangible_))
+
+# ==============================================================================
+#@ 27.5 Generator Objects
+
+#> A Generator is an instance of a generator function
+#> and conforms to both the <i>Iterator</i> and <i>Iterable</i> interfaces.
+
+if 1:
+    tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
+    tbd['{VAL_DESC} : the execution context of a generator'] = a_subset_of(T_execution_context)
+
+    @condd.put(r"{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    @nv.put(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
+    def _(anode, env0):
+        [tw, var] = anode.children
+        assert tw.source_text() == '~completed~'
+        env0.assert_expr_is_of_type(var, T_Object)
+        return env0
+
+# 27.{5,6,7}
+    @condd.put(r"{CONDITION_1} : we return here")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+# ==============================================================================
+#@ 27.6 AsyncGenerator Objects
+
+if 1:
+    tbd['{VAL_DESC} : an AsyncGenerator'] = T_AsyncGenerator_object_
+
+    @condd.put(r"{CONDITION_1} : the async generator either threw an exception or performed either an implicit or explicit return")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    tbd['{LIST_ELEMENTS_DESCRIPTION} : AsyncGeneratorRequest Records'] = T_AsyncGeneratorRequest_Record
+
+# ==============================================================================
+#@ 27.7.5.2 AsyncBlockStart
+
+if 1:
+    @condd.put(r"{CONDITION_1} : the async function either threw an exception or performed an implicit or explicit return; all awaiting is done")
+    def _(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
 
 main()
 
