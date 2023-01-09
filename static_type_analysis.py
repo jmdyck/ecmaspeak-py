@@ -3620,12 +3620,6 @@ if 1:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
-    @condd.put(r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}")
-    def _(cond, env0, asserting):
-        [local_ref, g_sym] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
     @condd.put(r"{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval")
     def _(cond, env0, asserting):
         [g_sym] = cond.children
@@ -4099,15 +4093,6 @@ if 1:
     def _(expr, env0, expr_value_will_be_discarded):
         [child] = expr.children
         return tc_expr(child, env0, expr_value_will_be_discarded)
-
-    # --------------------------------------------------------
-    # invocation of named operation:
-
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}")
-    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}")
-    def _(expr, env0, _):
-        [lhs, rhs] = expr.children
-        return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
 
     # -------------------------------------------------
     # return T_Number
@@ -10928,6 +10913,25 @@ if 1:
         (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
         (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 8 Syntax-Directed Operations
+
+# ==============================================================================
+#@ 8.5.1 Static Semantics: Contains
+
+if 1:
+    @condd.put(r"{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}") # spec bug: should say "is *true*"
+    def _(cond, env0, asserting):
+        [local_ref, g_sym] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}")
+    @exprd.put(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}")
+    def _(expr, env0, _):
+        [lhs, rhs] = expr.children
+        return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
