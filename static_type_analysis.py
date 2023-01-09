@@ -3077,7 +3077,6 @@ def _(vd, env):
 
 # ------------------
 
-tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
 tbd['{VAL_DESC} : a Generator'] = a_subset_of(T_Iterator_object_)
 tbd['{VAL_DESC} : a Module Namespace Object'] = T_Object
 tbd['{VAL_DESC} : a Promise'] = T_Promise_object_
@@ -3090,7 +3089,6 @@ tbd['{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteShare
 tbd['{VAL_DESC} : a Set of events'] = T_Set
 tbd['{VAL_DESC} : a UTF-16 code unit'] = T_code_unit_
 tbd['{VAL_DESC} : a Unicode code point'] = T_code_point_
-tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
 tbd['{VAL_DESC} : a WriteSharedMemory event'] = T_WriteSharedMemory_event
 tbd['{VAL_DESC} : a candidate execution'] = T_candidate_execution
 tbd['{VAL_DESC} : a candidate execution Record'] = T_candidate_execution
@@ -3835,13 +3833,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
         assert t == stype
     else:
         type_of_internal_thing_[debracketed_name] = stype
-
-# 26.1 WeakRef Objects
-set_up_internal_thing('slot', 'WeakRefTarget', T_Object)
-
-# 26.2 FinalizationRegistry Objects
-set_up_internal_thing('slot', 'CleanupCallback', T_JobCallback_Record)
-set_up_internal_thing('slot', 'Cells',           ListType(T_FinalizationRegistryCellRecord_))
 
 # 27.2.1.3 CreatResolvingFunctions
 set_up_internal_thing('slot', 'Promise',         T_Object)
@@ -11371,6 +11362,24 @@ if 1:
     def _(expr, env0, _):
         [var] = expr.children
         return (T_String, env0)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 26 Managing Memory
+
+# ==============================================================================
+#@ 26.1 WeakRef Objects
+
+tbd['{VAL_DESC} : a WeakRef'] = T_WeakRef_object_
+
+set_up_internal_thing('slot', 'WeakRefTarget', T_Object)
+
+# ==============================================================================
+#@ 26.2 FinalizationRegistry Objects
+
+tbd['{VAL_DESC} : a FinalizationRegistry'] = T_FinalizationRegistry_object_
+
+set_up_internal_thing('slot', 'CleanupCallback', T_JobCallback_Record)
+set_up_internal_thing('slot', 'Cells',           ListType(T_FinalizationRegistryCellRecord_))
 
 main()
 
