@@ -3990,18 +3990,6 @@ def set_up_internal_thing(method_or_slot, debracketed_name, stype):
     else:
         type_of_internal_thing_[debracketed_name] = stype
 
-# 24.1 Map Objects
-set_up_internal_thing('slot', 'MapData', ListType(T_MapData_record_))
-
-# 24.2 Set Objects
-set_up_internal_thing('slot', 'SetData', ListType(T_Tangible_ | T_tilde_empty_))
-
-# 24.3 WeakMap Objects
-set_up_internal_thing('slot', 'WeakMapData', ListType(T_MapData_record_))
-
-# 24.4 WeakSet Objects
-set_up_internal_thing('slot', 'WeakSetData', ListType(T_Tangible_ | T_tilde_empty_))
-
 # 25.1 ArrayBuffer Objects
 # 25.2 SharedArrayBuffer Objects
 set_up_internal_thing('slot', 'ArrayBufferData',       T_Data_Block | T_Shared_Data_Block | T_Null)
@@ -11320,6 +11308,21 @@ if 1:
         [emu_xref, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_MathInteger_, env1)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 24 Keyed Collections
+
+# 24.1 Map Objects
+set_up_internal_thing('slot', 'MapData', ListType(T_MapData_record_))
+
+# 24.2 Set Objects
+set_up_internal_thing('slot', 'SetData', ListType(T_Tangible_ | T_tilde_empty_))
+
+# 24.3 WeakMap Objects
+set_up_internal_thing('slot', 'WeakMapData', ListType(T_MapData_record_))
+
+# 24.4 WeakSet Objects
+set_up_internal_thing('slot', 'WeakSetData', ListType(T_Tangible_ | T_tilde_empty_))
 
 main()
 
