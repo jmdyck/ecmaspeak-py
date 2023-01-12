@@ -10219,13 +10219,12 @@ class _:
         [var] = anode.children
         return env0.ensure_expr_is_of_type(var, T_execution_context)
 
-@P(r"{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}")
+@P(r"{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context, {var} will be called with no arguments.")
 class _:
     def s_nv(anode, env0):
-        [settable, commands] = anode.children
+        [settable, var] = anode.children
         env0.assert_expr_is_of_type(settable, T_host_defined_)
-        defns = [(None, commands)]
-        env_at_bottom = tc_proc(None, defns, env0)
+        env0.assert_expr_is_of_type(var, ProcType([], T_Top_))
         return env0
 
 @P(r'{CONDITION_1} : {var} is not already suspended')

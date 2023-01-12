@@ -234,7 +234,7 @@
     Set {DOTTING} as described in {h_emu_xref}.
     Set {DOTTING} as specified in {h_emu_xref}.
     Set {DOTTING} to the definition specified in {h_emu_xref}.
-    Set {SETTABLE} such that when evaluation is resumed for that execution context the following steps will be performed:{IND_COMMANDS}
+    Set {SETTABLE} such that when evaluation is resumed for that execution context, {var} will be called with no arguments.
     Set {SETTABLE} to {EXPR}.
     Set {SETTABLE} to {MULTILINE_EXPR}
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
