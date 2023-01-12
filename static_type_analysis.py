@@ -1973,6 +1973,8 @@ class Env:
             assert expr_text in [
                 '_e_.[[LocalName]]', # ResolveExport
                 '_ee_.[[LocalName]]',
+                '_resolvingFunctions_.[[Reject]]', # NewPromiseCapability
+                '_resolvingFunctions_.[[Resolve]]', # NewPromiseCapability
                 '_scriptRecord_.[[Realm]]',
                 '_srcBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
                 '_targetBuffer_.[[ArrayBufferData]]', # %TypedArray%.prototype.set
@@ -3272,8 +3274,8 @@ fields_for_record_type_named_ = {
 
     # 39438: CreateResolvingFunctions NO TABLE, not even mentioned
     'ResolvingFunctions_record_': {
-        'Resolve' : T_function_object_,
-        'Reject'  : T_function_object_,
+        'Resolve' : T_function_object_ | T_Undefined,
+        'Reject'  : T_function_object_ | T_Undefined,
     },
 
     # 39769: NO TABLE, not even mentioned
@@ -3314,11 +3316,6 @@ def process_declared_record_type_info():
 
                 key = (record_schema.tc_schema_name, debracketed_field_name)
                 tweak = {
-                    # Need these until PR #2980 is merged
-                    ('PromiseCapability Record'   , 'Promise'       ): ( T_Object           , T_Object | T_Undefined ),
-                    ('PromiseCapability Record'   , 'Resolve'       ): ( T_function_object_ , T_function_object_ | T_Undefined ),
-                    ('PromiseCapability Record'   , 'Reject'        ): ( T_function_object_ , T_function_object_ | T_Undefined ),
-
                     # --------------
                     # Just me?
                     ('AsyncGeneratorRequest Record', 'Completion' ): ( T_Abrupt | T_Normal, T_Tangible_ | T_return_ | T_throw_ | T_tilde_empty_ ),
