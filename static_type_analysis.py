@@ -1062,6 +1062,7 @@ named_type_hierarchy = {
                     'PTN_ForBinding': {},
                     'PTN_Script': {},
                     'PTN_Pattern': {},
+                    'PTN_Template_Literal': {},
                 },
                 'Private Name': {},
                 'Record': {
@@ -3195,8 +3196,8 @@ fields_for_record_type_named_ = {
 
     # 8.2: NO TABLE
     'templateMap_entry_': {
-        'Site'    : T_Parse_Node,
-        'Array'   : T_Object,
+        'Site'    : T_PTN_Template_Literal,
+        'Array'   : T_Array_object_,
     },
 
     # 11933: NO TABLE, no mention
@@ -8769,7 +8770,6 @@ class _:
 @P('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})')
 @P('{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})')
 @P('{LIST_ELEMENTS_DESCRIPTION} : Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})')
-@P('{LIST_ELEMENTS_DESCRIPTION} : Records that have {dsb_word} and {dsb_word} fields')
 class _:
     def s_tb(val_desc, env):
         vd_st = val_desc.source_text()
@@ -8783,18 +8783,10 @@ class _:
             'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
             'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)': T_ResolvingFunctions_record_,
             'Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': T_ImportMeta_record_,
-            'Records that have [[Module]] and [[ExportName]] fields': T_ExportResolveSet_Record_,
+            'Records with fields [[Module]] (a Module Record) and [[ExportName]] (a String)': T_ExportResolveSet_Record_,
+            'Records with fields [[Site]] (a |TemplateLiteral| Parse Node) and [[Array]] (an Array)': T_templateMap_entry_,
             'Records with fields [[Specifier]] (a String) and [[Module]] (a Module Record)' : T_LoadedModule_Record_,
         }[vd_st]
-        return t
-
-@P('{LIST_ELEMENTS_DESCRIPTION} : Record { {dsb_word}: Parse Node, {dsb_word}: Object }')
-class _:
-    def s_tb(led, env):
-        led_st = led.source_text()
-        t = {
-            'Record { [[Site]]: Parse Node, [[Array]]: Object }': T_templateMap_entry_,
-        }[led_st]
         return t
 
 @P(r"{SETTABLE} : the {DSBN} field of {EXPR}")

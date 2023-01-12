@@ -1546,8 +1546,6 @@
     Private Names
     PrivateElements
     PromiseReaction Records
-    Record { {dsb_word}: Parse Node, {dsb_word}: Object }
-    Records that have {dsb_word} and {dsb_word} fields
     Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})
     Source Text Module Records
     Strings
