@@ -7250,7 +7250,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_String))
         return (T_String, env1)
 
-@P(r"{EXPR} : the String value whose code units are the elements in the List {var}. If {var} has no elements, the empty String is returned")
+@P(r"{EXPR} : the String value whose code units are the elements of the List {var}. If {var} has no elements, the empty String is returned")
 class _:
     def s_expr(expr, env0, _):
         [list_var, list_var2] = expr.children
@@ -8514,7 +8514,6 @@ class _:
 @P(r"{EXPR} : the number of elements in the List {var}")
 @P(r"{EX} : The number of elements in {var}")
 @P(r"{EX} : the number of elements in {SETTABLE}")
-@P(r"{EX} : the number of elements of {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -8629,7 +8628,6 @@ class _:
 
 @P(r"{EXPR} : the first element of {var}")
 @P(r"{EXPR} : the second element of {var}")
-@P(r"{EXPR} : the last element in {var}")
 @P(r"{EXPR} : the last element of {var}")
 class _:
     def s_expr(expr, env0, _):
@@ -9252,7 +9250,7 @@ class _:
         env1.assert_expr_is_of_type(var, field_type)
         return (env0, env0)
 
-@P(r"{EXPR} : the element in {EX} whose {DSBN} is {EX}")
+@P(r"{EXPR} : the element of {EX} whose {DSBN} is {EX}")
 @P(r"{EXPR} : the element of {EX} whose {DSBN} field is {var}")
 @P(r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}")
 class _:
