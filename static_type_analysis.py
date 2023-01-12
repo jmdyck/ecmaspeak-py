@@ -3313,11 +3313,7 @@ def process_declared_record_type_info():
 
                 key = (record_schema.tc_schema_name, debracketed_field_name)
                 tweak = {
-                    # See PR #2963:
-                    ('Function Environment Record', 'FunctionObject'): ( T_Object           , T_function_object_ ),
-                    ('Script Record'              , 'ECMAScriptCode'): ( T_Parse_Node       , T_PTN_Script ), 
-                    ('Source Text Module Record'  , 'Context'       ): ( T_execution_context, T_execution_context | T_tilde_empty_ ),
-                    ('Source Text Module Record'  , 'ImportMeta'    ): ( T_Object           , T_Object | T_tilde_empty_ ),
+                    # Need these until PR #2980 is merged
                     ('PromiseCapability Record'   , 'Promise'       ): ( T_Object           , T_Object | T_Undefined ),
                     ('PromiseCapability Record'   , 'Resolve'       ): ( T_function_object_ , T_function_object_ | T_Undefined ),
                     ('PromiseCapability Record'   , 'Reject'        ): ( T_function_object_ , T_function_object_ | T_Undefined ),
@@ -9991,7 +9987,7 @@ class _:
 class _:
     s_tb = T_execution_context
 
-@P('{VAL_DESC} : an ECMAScript execution context')
+@P('{VAL_DESC} : an ECMAScript code execution context')
 class _:
     s_tb = T_execution_context
 

@@ -1474,7 +1474,7 @@
     an ArrayBuffer
     an ArrayBuffer or SharedArrayBuffer
     an AsyncGenerator
-    an ECMAScript execution context
+    an ECMAScript code execution context
     an ECMAScript function
     an ECMAScript function object
     an ECMAScript language value
