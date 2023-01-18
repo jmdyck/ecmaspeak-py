@@ -2110,7 +2110,7 @@ class Env:
         #   I.e., sub_t <= target-set <= sup_t
         #   (where we interpret a static type as a set of values,
         #   and '<=' means 'is a subset of').
-        # 
+        #
         # (When there's a static type whose set of values exactly matches the target set,
         # then sub_t == sup_t, and `target_t` can be just that type,
         # rather than a pair of types.)
@@ -3431,7 +3431,7 @@ def handle_internal_thing_declaration(method_or_slot, row):
         return_type |= T_throw_
 
         t = ProcType(param_types, return_type)
-        
+
     elif method_or_slot == 'slot':
         field_value_type = row.cell_nodes[1]._syntax_tree
         value_description = field_value_type.children[0]
@@ -5841,7 +5841,7 @@ class _:
                 assert isinstance(result_t, Type)
 
             return result_t
-                    
+
         result_t = T_0
         for a_mt in a_t.set_of_types():
             for b_mt in b_t.set_of_types():
@@ -6898,7 +6898,7 @@ class _:
 class _:
     s_tb = T_String
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*'     )
+@P('{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*')
 class _:
     s_tb = T_String | T_Null
 
@@ -7682,11 +7682,11 @@ class _:
 class _:
     s_tb = T_String | T_Symbol
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : Objects'                            )
+@P('{LIST_ELEMENTS_DESCRIPTION} : Objects')
 class _:
     s_tb = T_Object
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : property keys'                      )
+@P('{LIST_ELEMENTS_DESCRIPTION} : property keys')
 class _:
     s_tb = T_String | T_Symbol
 
@@ -7884,7 +7884,7 @@ class _:
 class _:
     s_tb = T_SlotName_
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : internal slot names'    )
+@P('{LIST_ELEMENTS_DESCRIPTION} : internal slot names')
 class _:
     s_tb = T_SlotName_
 
@@ -8170,7 +8170,7 @@ class _:
         env.assert_expr_is_of_type(ex, T_MathInteger_)
         (led_sub_t, led_sup_t) = type_bracket_for(led, env)
         return a_subset_of(ListType(led_sup_t))
-        # inexact because of length restriction 
+        # inexact because of length restriction
 
 @P('{VAL_DESC} : a non-empty List of {LIST_ELEMENTS_DESCRIPTION}')
 class _:
@@ -8541,7 +8541,7 @@ class _:
 @P(r"{CONDITION_1} : {var} contains a single {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
-        [var, nonterminal] = cond.children    
+        [var, nonterminal] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
 
@@ -8717,7 +8717,7 @@ class _:
 
 #> The <dfn>Record</dfn> type
 #> is used to describe data aggregations
-#> within the algorithms of this specification. 
+#> within the algorithms of this specification.
 
 @P(r"{EXPR} : a new Record")
 class _:
@@ -9614,7 +9614,7 @@ class _:
 class _:
     s_tb = T_PrivateElement
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : PrivateElements'                    )
+@P('{LIST_ELEMENTS_DESCRIPTION} : PrivateElements')
 class _:
     s_tb = T_PrivateElement
 
@@ -10857,11 +10857,11 @@ class _:
 class _:
     s_tb = T_Source_Text_Module_Record
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records'       )
+@P('{LIST_ELEMENTS_DESCRIPTION} : ImportEntry Records')
 class _:
     s_tb = T_ImportEntry_Record
 
-@P('{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records'       )
+@P('{LIST_ELEMENTS_DESCRIPTION} : ExportEntry Records')
 class _:
     s_tb = T_ExportEntry_Record
 
@@ -11152,7 +11152,7 @@ class _:
 set_up_internal_thing('slot', 'DateValue', T_IntegralNumber_ | T_NaN_Number_)
 
 # ==============================================================================
-#@ 21.4.2.1 Date 
+#@ 21.4.2.1 Date
 
 @P(r"{EXPR} : the time value (UTC) identifying the current time")
 class _:
