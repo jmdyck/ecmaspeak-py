@@ -4767,7 +4767,7 @@ class _:
 #> should explicitly make a copy of the right-hand side:
 #> “Let _x_ be a copy of _someValue_” creates a shallow copy of _someValue_.
 
-@P(r"{EXPR} : a copy of {var}")
+@P(r"{EXPR} : a copy of {EX}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -8507,7 +8507,7 @@ class _:
 
 @P(r"{EXPR} : the number of elements in the List {var}")
 @P(r"{EX} : The number of elements in {var}")
-@P(r"{EX} : the number of elements in {SETTABLE}")
+@P(r"{EX} : the number of elements in {EX}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -8636,6 +8636,14 @@ class _:
     def s_expr(expr, env0, _):
         [noi] = expr.children
         list_type = env0.assert_expr_is_of_type(noi, T_List)
+        return (list_type.element_type, env0)
+
+@P(r"{EXPR} : {var}<sup>th</sup> element of {EX}")
+class _:
+    def s_expr(expr, env0, _):
+        [subscript_var, list_ex] = expr.children
+        env0.assert_expr_is_of_type(subscript_var, T_MathInteger_)
+        list_type = env0.assert_expr_is_of_type(list_ex, T_List)
         return (list_type.element_type, env0)
 
 @P(r"{SETTABLE} : {var}[{EX}]")
@@ -11529,34 +11537,12 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState | T_CaptureRange)
         return (T_MathInteger_, env1)
 
-@P(r"{EXPR} : {var}'s _captures_ List")
+@P(r"{EX} : {var}'s _captures_ List")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
         return (T_captures_list_, env1)
-
-@P(r"{EXPR} : a copy of {var}'s _captures_ List")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
-        return (T_captures_list_, env1)
-
-@P(r"{EXPR} : the number of elements in {var}'s _captures_ List")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MatchState)
-        return (T_MathNonNegativeInteger_, env0)
-
-@P(r"{EXPR} : {var}<sup>th</sup> element of {var}'s _captures_ List")
-class _:
-    def s_expr(expr, env0, _):
-        [n_var, state_var] = expr.children
-        env0.assert_expr_is_of_type(n_var, T_MathInteger_)
-        env0.assert_expr_is_of_type(state_var, T_MatchState)
-        return (T_captures_entry_, env0)
 
 # ------------------------------------------------------------------------------
 
