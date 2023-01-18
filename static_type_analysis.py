@@ -3559,7 +3559,6 @@ class _:
 @P(r"{SETTABLE} : {DOTTING}")
 @P(r"{TERM} : {FACTOR}")
 @P(r"{TERM} : {PRODUCT}")
-@P(r"{TYPE_ARG} : {DOTTING}")
 @P(r"{TYPE_ARG} : {var}")
 class _:
     s_expr = s_expr_pass_down
@@ -4517,7 +4516,6 @@ class _:
         return tenv
 
 @P("{EACH_THING} : {ITEM_NATURE} {var} of {EX}")
-@P("{EACH_THING} : {ITEM_NATURE} {var} that is an element of {EX}")
 class _:
     def s_nv(each_thing, env0):
         [item_nature, loop_var, collection_expr] = each_thing.children
@@ -6220,7 +6218,6 @@ class _:
         return (T_MathInteger_, env0)
 
 @P(r"{MATH_LITERAL} : {hex_int_lit}")
-@P(r"{MATH_LITERAL} : -5")
 @P(r"{BASE} : 10")
 @P(r"{BASE} : 2")
 class _:
@@ -11329,7 +11326,6 @@ class _:
         env0.assert_expr_is_of_type(b, T_CharSet)
         return (env0, env0)
 
-@P(r'{CONDITION_1} : there does not exist a member {var} of {var} such that {CONDITION_1}')
 @P(r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}')
 class _:
     def s_cond(cond, env0, asserting):
