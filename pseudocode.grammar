@@ -26,7 +26,7 @@
 {EE_RULE} :
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
     <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>
-    For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
+    For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
     If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
     It is a Syntax Error if {CONDITION_1}<ins>, unless {CONDITION_1} and {CONDITION_1}</ins>.
@@ -174,24 +174,24 @@
     Create any host-defined global object properties on {var}.
     Create own properties of {var} corresponding to the definitions in {h_emu_xref}.
     Discard all resources associated with the current execution context.
-    Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
+    Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
     IfAbruptCloseIterator({var}, {var}).
     IfAbruptRejectPromise({var}, {var}).
     Insert {var} as the first element of {var}.
     Leave the critical section for {var}.
-    Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.
-    Let {var} and {var} be the indirection values provided when this binding for {var} was created.
-    Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
-    Let {var} be {EXPR}.
-    Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
-    Let {var} be {EXPR}. (It may be evaluated repeatedly.)
-    Let {var} be {MULTILINE_EXPR}
-    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
-    Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
-    Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
-    Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
+    Let {DEFVAR} and {DEFVAR} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.
+    Let {DEFVAR} and {DEFVAR} be the indirection values provided when this binding for {var} was created.
+    Let {DEFVAR} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
+    Let {DEFVAR} be {EXPR}.
+    Let {DEFVAR} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
+    Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)
+    Let {DEFVAR} be {MULTILINE_EXPR}
+    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
+    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
+    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
+    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Notify the agent {var}.
     Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
     Optionally, {SMALL_COMMAND}.
@@ -224,7 +224,7 @@
     Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
-    Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.
+    Resume {var} passing {EX}. If {var} is ever resumed again, let {DEFVAR} be the Completion Record with which it is resumed.
     Return {EXPR}.
     Return {EXPR}. This may be of type Reference.
     Return {MULTILINE_EXPR}
@@ -253,9 +253,9 @@
     {IF_CLOSED}
     {IF_OTHER}
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.
     {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.
     {note}
 
@@ -298,9 +298,9 @@
     add {var} to {var}
     append {EX} to {SETTABLE}
     change its bound value to {var}
-    let {var} be {EXPR}
-    let {var} be {EXPR}, indicating that an ordinary object should be created as the global object
-    let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
+    let {DEFVAR} be {EXPR}
+    let {DEFVAR} be {EXPR}, indicating that an ordinary object should be created as the global object
+    let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     perform any host-defined steps for reporting the error
     perform {PP_NAMED_OPERATION_INVOCATION}
     remove that element from the {var}
@@ -316,23 +316,23 @@
 # ------------------------------------------------------
 
 {EACH_THING} :
-    child node {var} of this Parse Node
-    element {var} of {EX}
-    element {var} of {var}, in reverse List order
+    child node {DEFVAR} of this Parse Node
+    element {DEFVAR} of {EX}
+    element {DEFVAR} of {var}, in reverse List order
     field of {var}
-    index {var} of {var}
-    integer {var} in {INTERVAL}
-    own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation
-    own property key {var} of {var} such that {CONDITION}, in ascending numeric index order
-    own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
+    index {DEFVAR} of {var}
+    integer {DEFVAR} in {INTERVAL}
+    own property key {DEFVAR} of {var} such that {CONDITION}, in ascending chronological order of property creation
+    own property key {DEFVAR} of {var} such that {CONDITION}, in ascending numeric index order
+    own property key {DEFVAR} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
-    {ITEM_NATURE} {var} of {EX}
-    {ITEM_NATURE} {var} such that {CONDITION}
-    {ITEM_NATURE} {var} such that {CONDITION}, in ascending order
-    {ITEM_NATURE} {var} such that {CONDITION}, in descending order
-    {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
-    {nonterminal} {var} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
-    {nonterminal} {var} that {var} contains
+    {ITEM_NATURE} {DEFVAR} of {EX}
+    {ITEM_NATURE} {DEFVAR} such that {CONDITION}
+    {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order
+    {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in descending order
+    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
+    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
+    {nonterminal} {DEFVAR} that {var} contains
 
 {ITEM_NATURE} :
     Agent Events Record
@@ -489,14 +489,14 @@
     the source text matched by {var} is strict mode code
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
-    there does not exist an element {var} of {var} such that {CONDITION_1}
-    there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}
-    there exists a member {var} of {var} such that {CONDITION_1}
-    there exists an event {var} such that {CONDITION}
-    there exists an integer {var} in {INTERVAL} such that {CONDITION_1}
+    there does not exist an element {DEFVAR} of {var} such that {CONDITION_1}
+    there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}
+    there exists a member {DEFVAR} of {var} such that {CONDITION_1}
+    there exists an event {DEFVAR} such that {CONDITION}
+    there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}
     we return here
     {DOTTING} and {DOTTING} are not the same Module Record
-    {DOTTING} contains a Record {var} such that {CONDITION_1}
+    {DOTTING} contains a Record {DEFVAR} such that {CONDITION_1}
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {DOTTING} is {LITERAL} and was never previously set to {LITERAL}
@@ -560,7 +560,7 @@
     {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
-    {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}
+    {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
     {SETTABLE} contains {EX}
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
@@ -719,8 +719,8 @@
 
 {CLOSURE_PARAMETERS} :
     no parameters
-    parameters ({var})
-    parameters ({var}, {var})
+    parameters ({DEFVAR})
+    parameters ({DEFVAR}, {DEFVAR})
 
 {CLOSURE_CAPTURES} :
     nothing
@@ -807,7 +807,7 @@
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
-    the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
+    the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
     the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}
     the CharSet containing every character in {STR_LITERAL}
@@ -894,7 +894,7 @@
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the intrinsic function {percent_word}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
-    the largest integral Number {var} (closest to +∞) such that {CONDITION_1}
+    the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last element of {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {EX}, {EX}, and {EX}
@@ -963,9 +963,9 @@
     this Date object
     {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
-    {EX}, where {var} is {EX}
-    {EX}, where {var} is {EX} and {var} is {EX}
-    {EX}, where {var} is {EX}, and {var} is {EX}
+    {EX}, where {DEFVAR} is {EX}
+    {EX}, where {DEFVAR} is {EX} and {DEFVAR} is {EX}
+    {EX}, where {DEFVAR} is {EX}, and {DEFVAR} is {EX}
     {var}'s MatchState
     {var}'s intrinsic object named {var}
     {var}'s own property whose key is {var}
@@ -1076,6 +1076,9 @@
 {INTERVAL} :
     the inclusive interval from {EX} to {EX}
     the interval from {EX} (inclusive) to {EX} (exclusive)
+
+{DEFVAR} :
+    {var}
 
 # ------------------------------------------------------
 

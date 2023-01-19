@@ -1746,7 +1746,7 @@ class Env:
         if isinstance(var, str):
             var_name = var
         elif isinstance(var, ANode):
-            [var_name] = var.children
+            var_name = var.source_text()
         else:
             assert 0
 
@@ -1764,7 +1764,7 @@ class Env:
         return e
 
     def with_var_removed(self, var):
-        [var_name] = var.children
+        var_name = var.source_text()
         assert var_name in self.vars
         e = self.copy()
         del e.vars[var_name]
@@ -4069,7 +4069,7 @@ class _:
 #> one for each symbol on the production's right-hand side:
 #> each child is a Parse Node that is an instance of the corresponding symbol.
 
-@P(r"{EACH_THING} : child node {var} of this Parse Node")
+@P(r"{EACH_THING} : child node {DEFVAR} of this Parse Node")
 class _:
     def s_nv(each_thing, env0):
         [loop_var] = each_thing.children
@@ -4112,7 +4112,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-@P(r"{EACH_THING} : {nonterminal} {var} that {var} contains")
+@P(r"{EACH_THING} : {nonterminal} {DEFVAR} that {var} contains")
 class _:
     def s_nv(each_thing, env0):
         [nont, loop_var, root_var] = each_thing.children
@@ -4497,9 +4497,9 @@ class _:
         names = env0.vars.keys()
         return env_after_commands.reduce(names)
 
-@P(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}")
-@P(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in ascending order")
-@P(r"{EACH_THING} : {ITEM_NATURE} {var} such that {CONDITION}, in descending order")
+@P(r"{EACH_THING} : {ITEM_NATURE} {DEFVAR} such that {CONDITION}")
+@P(r"{EACH_THING} : {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order")
+@P(r"{EACH_THING} : {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in descending order")
 class _:
     def s_nv(each_thing, env0):
         [item_nature, loop_var, condition] = each_thing.children
@@ -4515,7 +4515,7 @@ class _:
         (tenv, fenv) = tc_cond(condition, env1)
         return tenv
 
-@P("{EACH_THING} : {ITEM_NATURE} {var} of {EX}")
+@P("{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}")
 class _:
     def s_nv(each_thing, env0):
         [item_nature, loop_var, collection_expr] = each_thing.children
@@ -4645,18 +4645,18 @@ class _:
         [var_name] = expr.children
         return (env0.vars[var_name], env0)
 
-    # Let {var} be ...
+    # Let {DEFVAR} be ...
 
-@P(r"{COMMAND} : Let {var} be {EXPR}. (It may be evaluated repeatedly.)")
-@P(r"{COMMAND} : Let {var} be {EXPR}.")
-@P(r"{COMMAND} : Let {var} be {MULTILINE_EXPR}")
-@P(r"{SMALL_COMMAND} : let {var} be {EXPR}")
-@P(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that an ordinary object should be created as the global object")
-@P(r"{SMALL_COMMAND} : let {var} be {EXPR}, indicating that {var}'s global `this` binding should be the global object")
+@P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)")
+@P(r"{COMMAND} : Let {DEFVAR} be {EXPR}.")
+@P(r"{COMMAND} : Let {DEFVAR} be {MULTILINE_EXPR}")
+@P(r"{SMALL_COMMAND} : let {DEFVAR} be {EXPR}")
+@P(r"{SMALL_COMMAND} : let {DEFVAR} be {EXPR}, indicating that an ordinary object should be created as the global object")
+@P(r"{SMALL_COMMAND} : let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object")
 class _:
     def s_nv(anode, env0):
         [var, expr] = anode.children[0:2]
-        [var_name] = var.children
+        var_name = var.source_text()
 
         (expr_t, env1) = tc_expr(expr, env0)
 
@@ -4701,7 +4701,7 @@ class _:
             # The normal case.
             return env1.plus_new_entry(var, expr_t)
 
-@P(r"{COMMAND} : Let {var} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
+@P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
 class _:
     def s_nv(anode, env0):
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = anode.children
@@ -4712,7 +4712,7 @@ class _:
         (t, env1) = tc_expr(expr, env0)
         return env1.plus_new_entry(let_var, t)
 
-@P(r"{COMMAND} : Let {var} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.")
+@P(r"{COMMAND} : Let {DEFVAR} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.")
 class _:
     def s_nv(anode, env0):
         [let_var, num_expr, var2, var3] = anode.children
@@ -4722,16 +4722,16 @@ class _:
         new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
         return new_env
 
-    # Let {var} and {var} ... be ...
+    # Let {DEFVAR} and {DEFVAR} ... be ...
 
-@P(r"{COMMAND} : Let {var} and {var} be the indirection values provided when this binding for {var} was created.")
+@P(r"{COMMAND} : Let {DEFVAR} and {DEFVAR} be the indirection values provided when this binding for {var} was created.")
 class _:
     def s_nv(anode, env0):
         [m_var, n2_var, n_var] = anode.children
         env0.assert_expr_is_of_type(n_var, T_String)
         return env0.plus_new_entry(m_var, T_Module_Record).plus_new_entry(n2_var, T_String)
 
-@P(r"{COMMAND} : Let {var} and {var} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.")
+@P(r"{COMMAND} : Let {DEFVAR} and {DEFVAR} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.")
 class _:
     def s_nv(anode, env0):
         [e_var, n_var, cond, num_expr, e_var2, n_var2, e_var3, n_var3, product] = anode.children
@@ -4745,9 +4745,9 @@ class _:
         t_env.assert_expr_is_of_type(product, T_MathReal_)
         return t_env
 
-@P(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.")
-@P(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
-@P(r"{COMMAND} : Let {var}, {var}, and {var} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
+@P(r"{COMMAND} : Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.")
+@P(r"{COMMAND} : Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
+@P(r"{COMMAND} : Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.")
 class _:
     def s_nv(anode, env0):
         [vara, varb, varc, cond] = anode.children[0:4]
@@ -4794,7 +4794,7 @@ class _:
 # ------------------------------------------------------------------------------
 # (there are other ways to declare an alias)
 
-@P(r'{EXPR} : {EX}, where {var} is {EX}')
+@P(r'{EXPR} : {EX}, where {DEFVAR} is {EX}')
 class _:
     def s_expr(expr, env0, _):
         [exa, var, exb] = expr.children
@@ -4803,8 +4803,8 @@ class _:
         (exa_type, env3) = tc_expr(exa, env2)
         return (exa_type, env3)
 
-@P(r'{EXPR} : {EX}, where {var} is {EX} and {var} is {EX}')
-@P(r'{EXPR} : {EX}, where {var} is {EX}, and {var} is {EX}')
+@P(r'{EXPR} : {EX}, where {DEFVAR} is {EX} and {DEFVAR} is {EX}')
+@P(r'{EXPR} : {EX}, where {DEFVAR} is {EX}, and {DEFVAR} is {EX}')
 class _:
     def s_expr(expr, env0, _):
         [ex3, var2, ex2, var1, ex1] = expr.children
@@ -5674,7 +5674,7 @@ class _:
         tc_cond(conda, f_env)
         return None
 
-@P(r"{EE_RULE} : For each {nonterminal} {var} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
+@P(r"{EE_RULE} : For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
 class _:
     def s_nv(anode, env0):
         [nont, var, noi, cond] = anode.children
@@ -6356,7 +6356,7 @@ class _:
         env1.assert_expr_is_of_type(interval, T_MathInteger_)
         return (env1, env1)
 
-@P(r"{CONDITION_1} : there exists an integer {var} in {INTERVAL} such that {CONDITION_1}")
+@P(r"{CONDITION_1} : there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [i_var, interval, stcond] = cond.children
@@ -6364,7 +6364,7 @@ class _:
         env_for_cond = env0.plus_new_entry(i_var, T_MathInteger_)
         return tc_cond(stcond, env_for_cond)
 
-@P(r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {var} in {INTERVAL}")
+@P(r"{CONDITION_1} : {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}")
 class _:
     def s_cond(cond, env0, asserting):
         [seta, setb, let_var, interval] = cond.children
@@ -6395,7 +6395,7 @@ class _:
             sup_t = T_MathInteger_
         return a_subset_of(sup_t)
 
-@P(r"{EACH_THING} : integer {var} in {INTERVAL}")
+@P(r"{EACH_THING} : integer {DEFVAR} in {INTERVAL}")
 class _:
     def s_nv(each_thing, env0):
         [loop_var, interval] = each_thing.children
@@ -7726,7 +7726,7 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (env0, env0)
 
-@P(r"{EACH_THING} : own property key {var} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order")
+@P(r"{EACH_THING} : own property key {DEFVAR} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order")
 class _:
     def s_nv(each_thing, env0):
         [loop_var, obj_var, lo_var] = each_thing.children
@@ -7734,8 +7734,8 @@ class _:
         env0.assert_expr_is_of_type(lo_var, T_Number)
         return env0.plus_new_entry(loop_var, T_String)
 
-@P(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending numeric index order")
-@P(r"{EACH_THING} : own property key {var} of {var} such that {CONDITION}, in ascending chronological order of property creation")
+@P(r"{EACH_THING} : own property key {DEFVAR} of {var} such that {CONDITION}, in ascending numeric index order")
+@P(r"{EACH_THING} : own property key {DEFVAR} of {var} such that {CONDITION}, in ascending chronological order of property creation")
 class _:
     def s_nv(each_thing, env0):
         [loop_var, obj_var, condition] = each_thing.children
@@ -8436,8 +8436,8 @@ class _:
 # ------------------------------------------------------------------------------
 # iterate over a List:
 
-@P(r"{EACH_THING} : element {var} of {EX}")
-@P(r"{EACH_THING} : element {var} of {var}, in reverse List order")
+@P(r"{EACH_THING} : element {DEFVAR} of {EX}")
+@P(r"{EACH_THING} : element {DEFVAR} of {var}, in reverse List order")
 class _:
     def s_nv(each_thing, env0):
         [loop_var, collection_expr] = each_thing.children
@@ -8608,7 +8608,7 @@ class _:
         env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
         return (env0, env0)
 
-@P(r"{CONDITION_1} : there does not exist an element {var} of {var} such that {CONDITION_1}")
+@P(r"{CONDITION_1} : there does not exist an element {DEFVAR} of {var} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [member_var, list_var, stcond] = cond.children
@@ -9215,7 +9215,7 @@ class _:
         env0.assert_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (env0, env0)
 
-@P(r"{CONDITION_1} : {DOTTING} contains a Record {var} such that {CONDITION_1}")
+@P(r"{CONDITION_1} : {DOTTING} contains a Record {DEFVAR} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [ex, var, stcond] = cond.children
@@ -9591,7 +9591,7 @@ class _:
         env1.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
         return (ListType(T_MathNonNegativeInteger_), env1)
 
-@P(r"{EACH_THING} : index {var} of {var}")
+@P(r"{EACH_THING} : index {DEFVAR} of {var}")
 class _:
     def s_nv(each_thing, env0):
         [loop_var, collection_var] = each_thing.children
@@ -10142,7 +10142,7 @@ class _:
 #> Evaluation of code by the running execution context
 #> may be suspended at various points defined within this specification.
 
-@P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {var} be the value returned by the resumed computation.")
+@P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.")
 class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, b_var] = anode.children
@@ -10157,8 +10157,8 @@ class _:
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
         return env1
 
-@P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the Completion Record returned by the resumed computation.")
-@P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {var} be the value returned by the resumed computation.")
+@P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
+@P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.")
 class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex, resb_var] = anode.children
@@ -10172,7 +10172,7 @@ class _:
         [] = anode.children
         return env0
 
-@P(r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {var} be the Completion Record with which it is resumed.")
+@P(r"{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {DEFVAR} be the Completion Record with which it is resumed.")
 class _:
     def s_nv(anode, env0):
         [vara, exb, varc, vard] = anode.children
@@ -11135,7 +11135,7 @@ class _:
 # ==============================================================================
 #@ 21.4.1.15 MakeDay
 
-@P(r"{COMMAND} : Find a finite time value {var} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
+@P(r"{COMMAND} : Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
 class _:
     def s_nv(anode, env0):
         [var, cond, literal] = anode.children
@@ -11326,7 +11326,7 @@ class _:
         env0.assert_expr_is_of_type(b, T_CharSet)
         return (env0, env0)
 
-@P(r'{CONDITION_1} : there exists a member {var} of {var} such that {CONDITION_1}')
+@P(r'{CONDITION_1} : there exists a member {DEFVAR} of {var} such that {CONDITION_1}')
 class _:
     def s_cond(cond, env0, asserting):
         [member_var, set_var, stcond] = cond.children
@@ -11459,7 +11459,7 @@ class _:
         env0.assert_expr_is_of_type(noi, T_CharSet)
         return (T_CharSet, env0)
 
-@P(r"{EXPR} : the CharSet containing all characters {var} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}")
+@P(r"{EXPR} : the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}")
 class _:
     def s_expr(expr, env0, _):
         [loop_var, loop_var2, cs_var, noi, cs_var2] = expr.children
@@ -12276,7 +12276,7 @@ class _:
             env_or(a_f_env, b_f_env)
         )
 
-@P(r"{CONDITION_1} : there exists an event {var} such that {CONDITION}")
+@P(r"{CONDITION_1} : there exists an event {DEFVAR} such that {CONDITION}")
 class _:
     def s_cond(cond, env0, asserting):
         [let_var, stcond] = cond.children
@@ -12328,7 +12328,7 @@ class _:
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
         return (env0, env0)
 
-@P(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {var} that has {var} in its range such that {CONDITION_1}")
+@P(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [let_var, i, stcond] = cond.children
