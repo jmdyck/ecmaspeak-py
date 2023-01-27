@@ -10442,10 +10442,10 @@ class _:
         return (T_constructor_object_ | T_Undefined, env0)
 
     # 10.3.1
-@P(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
+@P(r"{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
 class _:
     def s_expr(expr, env0, _):
-        [avar, bvar, cvar, dvar] = expr.children
+        [_, _, avar, bvar, cvar, dvar] = expr.children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, T_Tangible_)
@@ -10453,10 +10453,10 @@ class _:
         return (T_Tangible_ | T_throw_, env0)
 
     # 10.3.2
-@P(r"{EXPR} : the Completion Record that is the result of evaluating {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
+@P(r"{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
 class _:
     def s_expr(expr, env0, _):
-        [avar, bvar, cvar, dvar] = expr.children
+        [_, _, avar, bvar, cvar, dvar] = expr.children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
