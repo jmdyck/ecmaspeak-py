@@ -1682,15 +1682,16 @@ def union_of_other_memtypes(memtypes):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 class Env:
-    def __init__(self):
+    def __init__(self, outer=None):
         self.vars = {}
         self.parameter_names = set()
+        self.outer = outer
 
     def __str__(self):
         return str(self.vars)
 
     def copy(self):
-        e = Env()
+        e = Env(self.outer)
         e.vars = self.vars.copy()
         e.parameter_names = self.parameter_names.copy()
         return e
@@ -2268,7 +2269,7 @@ class Env:
             assert 0, copula
 
     def reduce(self, header_names):
-        e = Env()
+        e = Env(self.outer)
         for (vn, vt) in self.vars.items():
             if vn in header_names:
                 e.vars[vn] = vt
@@ -2289,7 +2290,7 @@ def envs_and(envs):
     # optimization:
     if len(envs) == 2 and envs[0].vars == envs[1].vars: return envs[0]
 
-    e = Env()
+    e = Env(envs[0].outer)
     vars = set.intersection(*[ set(env.vars.keys()) for env in envs ])
     for expr_text in vars:
         ts = [ env.vars[expr_text] for env in envs ]
@@ -2312,7 +2313,7 @@ def envs_or(envs):
     if len(envs) == 0: return None
     if len(envs) == 1: return envs[0]
 
-    e = Env()
+    e = Env(envs[0].outer)
 
     all_vars = set()
     for env in envs:
@@ -9460,7 +9461,7 @@ class _:
 
         # -----
 
-        env_for_commands = Env()
+        env_for_commands = Env(env0)
 
         n_parameters = len(clo_parameters.children)
         # polymorphic
