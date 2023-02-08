@@ -1743,7 +1743,7 @@ class Env:
 
     # ----------------------------------------------------------------
 
-    def plus_new_entry(self, var, t):
+    def plus_new_entry(self, var, t, shadowing_outer_is_okay=False):
         if isinstance(var, str):
             var_name = var
         elif isinstance(var, ANode):
@@ -1792,6 +1792,28 @@ class Env:
                     "... also, this changes the type of var from %s to %s" % (var_t, t)
                 )
                 return self.with_expr_type_replaced(var, t)
+
+        if not shadowing_outer_is_okay and (
+            self.outer is not None and var_name in self.outer.vars
+            or
+            self.outer is not None and self.outer.outer is not None and var_name in self.outer.outer.vars
+
+            # Currently, the spec has a few examples of
+            # an Abstract Closure within an Abstract Closure:
+            # - ContinueDynamicImport
+            # - CompilePattern
+            # - CompileSubpattern
+            # - CompileAssertion
+            # - CompileAtom
+            # - Promise.prototype.finally
+            # but no deeper nesting,
+            # so we don't need to go past self.outer.outer.
+        ):
+            add_pass_error(
+                var,
+                f"re-use of outer var `{var_name}`"
+            )
+            # but still add the entry
 
         assert isinstance(t, Type)
         e = self.copy()
@@ -9487,7 +9509,7 @@ class _:
 
         for clo_capture_var in clo_captures.children:
             clo_capture_type = env0.lookup(clo_capture_var)
-            env_for_commands = env_for_commands.plus_new_entry(clo_capture_var, clo_capture_type)
+            env_for_commands = env_for_commands.plus_new_entry(clo_capture_var, clo_capture_type, shadowing_outer_is_okay=True)
 
         env_for_commands.vars['*return*'] = T_0
 
