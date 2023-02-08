@@ -1750,13 +1750,47 @@ class Env:
         else:
             assert 0
 
-        # assert var_name not in self.vars, var_name
-        # disabled assertion dur to _f_ in Number.prototype.toExponential
         if var_name in self.vars:
             add_pass_error(
                 var,
-                f"plus_new_entry for `{var_name}` when it's already in the env!"
+                "re-Let on existing var `%s`. Use Set?" % var_name
             )
+            var_t = self.vars[var_name]
+            if t == var_t:
+                # but at least we're not changing the type
+                return self
+
+            elif t == T_TBD:
+                return self
+                add_pass_error(
+                    var,
+                    "... also, ignoring the attempt to change the type of var to %s" % str(t)
+                )
+
+            elif var_name in ['_v_', '_value_'] and var_t in [T_Normal, T_Tangible_ | T_not_set] and t == T_Undefined:
+                # IteratorBindingInitialization, IteratorDestructuringAssignmentEvaluation, others?:
+                # This isn't a re-Let,
+                # because it's never the case that _v_ is already defined at this point,
+                # but my STA isn't smart enough to know that.
+                add_pass_error(
+                    var,
+                    "... actually, it isn't, but STA isn't smart enough"
+                )
+                return self
+
+            elif t.is_a_subtype_of_or_equal_to(var_t):
+                add_pass_error(
+                    var,
+                    "... also, this narrows the type of var from %s to %s" % (var_t, t)
+                )
+                return self.with_expr_type_narrowed(var, t)
+
+            else:
+                add_pass_error(
+                    var,
+                    "... also, this changes the type of var from %s to %s" % (var_t, t)
+                )
+                return self.with_expr_type_replaced(var, t)
 
         assert isinstance(t, Type)
         e = self.copy()
@@ -4659,47 +4693,7 @@ class _:
         var_name = var.source_text()
 
         (expr_t, env1) = tc_expr(expr, env0)
-
-        if var_name in env0.vars:
-            add_pass_error(
-                anode,
-                "re-Let on existing var `%s`. Use Set?" % var_name
-            )
-            var_t = env0.vars[var_name]
-            if expr_t == var_t:
-                # but at least we're not changing the type
-                return env1
-            elif expr_t == T_TBD:
-                return env1
-                add_pass_error(
-                    anode,
-                    "... also, ignoring the attempt to change the type of var to %s" % str(expr_t)
-                )
-            elif var_name in ['_v_', '_value_'] and var_t in [T_Normal, T_Tangible_ | T_not_set] and expr_t == T_Undefined:
-                # IteratorBindingInitialization, IteratorDestructuringAssignmentEvaluation, others?:
-                # This isn't a re-Let,
-                # because it's never the case that _v_ is already defined at this point,
-                # but my STA isn't smart enough to know that.
-                add_pass_error(
-                    anode,
-                    "... actually, it isn't, but STA isn't smart enough"
-                )
-                return env1
-            elif expr_t.is_a_subtype_of_or_equal_to(var_t):
-                add_pass_error(
-                    anode,
-                    "... also, this narrows the type of var from %s to %s" % (var_t, expr_t)
-                )
-                return env1.with_expr_type_narrowed(var, expr_t)
-            else:
-                add_pass_error(
-                    anode,
-                    "... also, this changes the type of var from %s to %s" % (var_t, expr_t)
-                )
-                return env1.with_expr_type_replaced(var, expr_t)
-        else:
-            # The normal case.
-            return env1.plus_new_entry(var, expr_t)
+        return env1.plus_new_entry(var, expr_t)
 
 @P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
 class _:
@@ -9463,8 +9457,6 @@ class _:
     def s_expr(expr, env0, _):
         [clo_kind, clo_parameters, clo_captures, _, commands] = expr.children
         clo_kind = clo_kind.source_text()
-
-        #XXX Should assert no intersection between clo_parameters and clo_captures
 
         # -----
 
