@@ -154,9 +154,7 @@
     ? {var}.OperationName().
     Add {var} to {var}.
     Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
-    Append to {var} each element of {var} that is not already an element of {var}.
     Append to {var} the elements of {var}.
-    Append {EX} as an element of {var}.
     Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
@@ -185,7 +183,7 @@
     Let {DEFVAR} and {DEFVAR} be the indirection values provided when this binding for {var} was created.
     Let {DEFVAR} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
     Let {DEFVAR} be {EXPR}.
-    Let {DEFVAR} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
+    Let {DEFVAR} be {EXPR}. (However, if {var} = 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not one of 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
     Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)
     Let {DEFVAR} be {MULTILINE_EXPR}
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
@@ -303,7 +301,7 @@
     let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     perform any host-defined steps for reporting the error
     perform {PP_NAMED_OPERATION_INVOCATION}
-    remove that element from the {var}
+    remove {var} from {var}
     return {EXPR}
     reverse the order of the elements of {var}
     set the corresponding attribute of the property named {var} of object {var} to the value of the field
@@ -324,7 +322,7 @@
     integer {DEFVAR} in {INTERVAL}
     own property key {DEFVAR} of {var} such that {CONDITION}, in ascending chronological order of property creation
     own property key {DEFVAR} of {var} such that {CONDITION}, in ascending numeric index order
-    own property key {DEFVAR} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order
+    own property key {DEFVAR} of {var} such that {CONDITION}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
     {ITEM_NATURE} {DEFVAR} of {EX}
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
@@ -383,23 +381,16 @@
 
 {CONDITION} :
     ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
-    either {CONDITION_1} or {CONDITION_1}
     {CONDITION_1}
-    {CONDITION_1} and if {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1} and {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1} or if {CONDITION_1}
     {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>
-    {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
-    {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}
     {CONDITION_1} unless {CONDITION_1}
+    {CONDITION_1} unless {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, unless {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
@@ -439,9 +430,8 @@
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text is matched by this production
-    both {EX} and {EX} are {LITERAL}
     control reaches here
-    either {PAIR} or {PAIR} is in {EX}
+    either {DOTTING} or {DOTTING} is {LITERAL}
     it must be in the Object Environment Record
     neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
@@ -460,7 +450,7 @@
     the binding for {var} is an indirect binding
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
-    the character {EX} is one of {nonterminal}
+    the character {EX} is matched by {nonterminal}
     the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits
     the decimal representation of {var} has 20 or fewer significant digits
     the duplicate entries are only bound by {cap_word}
@@ -473,7 +463,6 @@
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
-    the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
     the parse succeeded and no early errors were found
@@ -503,31 +492,25 @@
     {EX} and {EX} are both {LITERAL}
     {EX} and {EX} are both {LITERAL} or both {LITERAL}
     {EX} and {EX} are distinct values
-    {EX} and {EX} are the same Shared Data Block values
     {EX} and {EX} are valid byte offsets within the memory of {var}
-    {EX} contains a Private Name whose {dsb_word} is {var}
-    {EX} contains a PrivateElement whose {dsb_word} is {var}
     {EX} contains a Record whose {dsb_word} is {var}
+    {EX} contains either {PAIR} or {PAIR}
+    {EX} contains {EX}
+    {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}
     {EX} does not contain {EX}
     {EX} is also {VAL_DESC}
-    {EX} is an element of {var}
-    {EX} is different from {EX}
     {EX} is empty
-    {EX} is in {EX}
     {EX} is listed in the “Code Point” column of {h_emu_xref}
     {EX} is neither {VAL_DESC} nor {VAL_DESC}
     {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
     {EX} is never {VAL_DESC}
-    {EX} is not an element of {var}
-    {EX} is not the same value as {var}
+    {EX} is not {PREFIX_PAREN}
+    {EX} is not {SETTABLE}
     {EX} is not {VALUE_DESCRIPTION}
-    {EX} is not {var}
     {EX} is the same Parse Node as {EX}
-    {EX} is the same as {EX}
-    {EX} is the same value as {EX}
     {EX} is {PREFIX_PAREN}
+    {EX} is {SETTABLE}
     {EX} is {VALUE_DESCRIPTION}
-    {EX} is {var}
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same
     {LOCAL_REF} is contained in strict mode code
@@ -542,18 +525,12 @@
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
-    {NAMED_OPERATION_INVOCATION} contains {starred_str}
-    {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}
     {NAMED_OPERATION_INVOCATION} is not empty
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production
-    {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`
-    {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}
+    {NAMED_OPERATION_INVOCATION} is the StringValue of any |ReservedWord| except for `yield` or `await`
     {NUM_COMPARISON}
-    {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once
-    {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}
-    {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
     {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
@@ -561,21 +538,17 @@
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
-    {SETTABLE} contains {EX}
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
     {var} also has a {DSBN} internal slot
     {var} and {DOTTING} are the same Module Record
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
-    {var} and {var} are both the same Symbol value
-    {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)
+    {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} are finite and non-zero
     {var} and {var} are in a race in {var}
     {var} and {var} are not the same Realm Record
     {var} and {var} are the same Module Record
-    {var} and {var} are the same Number value
-    {var} and {var} are the same Object value
     {var} and {var} do not have disjoint ranges
     {var} and {var} do not have the same number of elements
     {var} and {var} each contain exactly one character
@@ -584,18 +557,20 @@
     {var} and {var} have the same number of elements
     {var} binds a single name
     {var} can be interpreted as an expansion of {nonterminal}
-    {var} contains a PrivateElement whose {dsb_word} is {DOTTING}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
     {var} contains a single {nonterminal}
     {var} contains a {nonterminal}
     {var} contains an? {nonterminal} Parse Node
-    {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once
+    {var} contains any code point more than once
+    {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}
+    {var} contains any code unit more than once
+    {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"*
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
     {var} does not already have a binding for {var}
-    {var} does not consist of a single code unit
+    {var} does not contain Type({TYPE_ARG})
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
     {var} does not contain a valid UTF-8 encoding of a Unicode code point
     {var} does not contain an? {nonterminal} Parse Node
@@ -613,7 +588,6 @@
     {var} does not include the element {LITERAL}
     {var} does not provide the direct binding for this export
     {var} has a Synchronize event
-    {var} has a binding for the name that is the value of {var}
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
     {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
@@ -634,14 +608,11 @@
     {var} imports a specific binding for this export
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is as small as possible
-    {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}
-    {var} is not a {h_emu_xref} or {h_emu_xref}
     {var} is not already suspended
-    {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}
-    {var} is not currently an element of {var}
+    {var} is not contained within an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {var} is not empty
     {var} is not finite
     {var} is not in {INTERVAL}
@@ -649,14 +620,11 @@
     {var} is not in {var}
     {var} is not on the list of waiters in any WaiterList
     {var} is not on the list of waiters in {var}
-    {var} is not the same as {var}
     {var} is now an empty List
     {var} is now the running execution context
     {var} is odd
     {var} is on the list of waiters in {var}
     {var} is the running execution context again
-    {var} is the same Number value as {var}
-    {var} is the same sequence of code units as {var}
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
@@ -672,21 +640,20 @@
     data
 
 {TYPE_TEST} :
-    Type({TYPE_ARG}) is different from Type({TYPE_ARG})
-    Type({TYPE_ARG}) is not an element of {var}
-    Type({TYPE_ARG}) is the same as Type({TYPE_ARG})
+    Type({TYPE_ARG}) is Type({TYPE_ARG})
+    Type({TYPE_ARG}) is not Type({TYPE_ARG})
 
 {TYPE_ARG} :
     {var}
 
 {NUM_COMPARISON} :
-    {NUM_COMPARAND} is 10 or less
-    {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}
     {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
     {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
 
 {NUM_COMPARAND} :
     the length of {var}
+    the number of elements in the result of {NAMED_OPERATION_INVOCATION}
+    the number of elements in {var}
     the numeric value of {var}
     {FACTOR}
     {PRODUCT}
@@ -701,6 +668,8 @@
     ≠
     =
     is at least
+    is greater than or equal to
+    is strictly greater than
 
 # ---------------------------------------------------------------
 
@@ -759,22 +728,22 @@
     a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order
     a List whose sole element is {EX}
-    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
+    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {EX}
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
     a new ECMAScript code execution context
-    a new Private Name whose {dsb_word} value is {var}
+    a new Private Name whose {dsb_word} is {var}
     a new Property Descriptor that initially has no fields
     a new Realm Record
     a new Record
     a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
+    a new Symbol whose {DSBN} is {var}
     a new Synchronize event
     a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
     a new empty List
     a new execution context
     a new implementation-defined Completion Record
-    a new unique Symbol value whose {DSBN} value is {var}
     a new {ENVIRONMENT_RECORD_KIND} Environment Record
     a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings
     a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects
@@ -792,8 +761,6 @@
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
     such an object created in a host-defined manner
-    that Private Name
-    that PrivateElement
     that Record
     the 32-bit two's complement bit string representing {EX}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
@@ -809,7 +776,7 @@
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
     the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
     the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}
-    the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}
+    the CharSet containing all characters with a character value in the inclusive interval from {var} to {var}
     the CharSet containing every character in {STR_LITERAL}
     the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the single character {code_point_lit}
@@ -825,14 +792,12 @@
     the List of arguments that was passed to this function by {dsb_word} or {dsb_word}
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of {nonterminal} items in {PROD_REF}, in source text order
-    the List that is {DOTTING}
     the MatchState ({var}, {EX}, {var})
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
     the Record in {DOTTING} whose {dsb_word} is {var}
-    the Record { {DSBN}, {DSBN} } that is the value of {EX}
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
     the String representation of {EX}, formatted as an uppercase hexadecimal number
@@ -871,14 +836,11 @@
     the character whose character value is {var}
     the character {SETTABLE}
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
-    the code point whose numeric value is that of {var}
-    the code point whose numeric value is {NAMED_OPERATION_INVOCATION}
+    the code point whose numeric value is {EX}
     the code point {var}
-    the code unit whose numeric value is that of {EXPR}
     the code unit whose numeric value is {EX}
     the element of {EX} whose {DSBN} is {EX}
     the element of {EX} whose {DSBN} field is {var}
-    the element of {EX} whose {DSBN} is the same as {EX}
     the empty CharSet
     the empty sequence of Unicode code points
     the first element of {var}
@@ -888,7 +850,6 @@
     the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})
     the index into {var} of the character that was obtained from element {EX} of {var}
     the index within {var} of the first such code unit
-    the integer that is {EXPR}
     the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
     the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
@@ -1022,7 +983,6 @@
     the substring of {var} from {EX} to {EX}
     the sum of {var} and {var}
     the value of {SETTABLE}
-    the {var} flag
     {CONSTANT_NAME}
     {DSBN}
     {EX} occurrences of {code_unit_lit}
@@ -1193,6 +1153,7 @@
     Script Record
     Source Text Module Record
     WriteSharedMemory
+    a new ExportEntry Record
     the ClassFieldDefinition Record
     the ClassStaticBlockDefinition Record
     the ExportEntry Record
@@ -1325,15 +1286,19 @@
 # --------------------------------
 
 {VALUE_DESCRIPTION} :
-    any of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC} or {VAL_DESC}
     either {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}
     one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of: {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}
     {VAL_DESC} or {VAL_DESC}
     {VAL_DESC}, but not {VALUE_DESCRIPTION}
@@ -1345,7 +1310,6 @@
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :
-    -1
     ECMAScript source text
     a BigInt
     a Boolean
@@ -1362,7 +1326,6 @@
     a JSON Serialization Record
     a Job Abstract Closure
     a JobCallback Record
-    a List of a single Number
     a List of {LIST_ELEMENTS_DESCRIPTION}
     a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}
     a Match Record
@@ -1443,9 +1406,7 @@
     a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
     a non-negative extended mathematical value
     a non-negative integer
-    a non-negative integer less than or equal to {EX}
     a non-negative integer that is evenly divisible by 4
-    a non-negative integer which is ≤ {EXPR}
     a non-negative integral Number
     a nonterminal in one of the ECMAScript grammars
     a normal completion
@@ -1488,6 +1449,7 @@
     an Object
     an Object that conforms to the <i>IteratorResult</i> interface
     an Object that has a {dsb_word} internal slot
+    an Object that is defined by either an {nonterminal} or an {nonterminal}
     an abrupt completion
     an agent signifier
     an agent-order Relation
@@ -1521,7 +1483,6 @@
     some other definition of a function's behaviour provided in this specification
     source text
     the Environment Record for a |Catch| clause
-    the String value {STR_LITERAL}
     the active function object
     the execution context of a generator
     the single code point {code_point_lit} or {code_point_lit}
@@ -1589,7 +1550,6 @@
 {LITERAL} :
     *null*
     *undefined*
-    the value *null*
     {BIGINT_LITERAL}
     {BOOL_LITERAL}
     {MATH_LITERAL}

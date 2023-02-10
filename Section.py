@@ -995,8 +995,8 @@ def _handle_structured_header(section):
                     ("It returns the number of left-capturing parentheses.+", 'a non-negative integer'),
                     ("It returns the one's complement of _x_.+", 'unknown'),
                     ("It returns the sequence of Unicode code points that .+", 'a sequence of Unicode code points'),
-                    ("It returns the value of its associated binding object's property whose name is the String value of the argument identifier _N_.", 'an ECMAScript language value'),
-                    ("It returns the value of its bound identifier whose name is the value of the argument _N_.", 'an ECMAScript language value'),
+                    ("It returns the value of its associated binding object's property whose name is _N_.", 'an ECMAScript language value'),
+                    ("It returns the value of its bound identifier whose name is _N_.", 'an ECMAScript language value'),
                     ("It returns the value of the \*\"length\"\* property of an array-like object.", 'a non-negative integer'),
                 ]:
                     if re.fullmatch(pattern, sentence):
@@ -2733,7 +2733,7 @@ def _(section, mo):
     (r"Before performing the comparisons, this method performs the following steps to prepare the Strings:", 'emu-alg'),
     (r"Each `Math.random` function created for distinct realms must produce a distinct sequence of values from successive calls."),
     (r"When replacing a code unit of numeric value .+"),
-    (r"If _start_ is larger than _end_, they are swapped."),
+    (r"If _start_ is strictly greater than _end_, they are swapped."),
     (r"If either argument is \*NaN\* or negative, it is replaced with zero; .+"),
     (r"In the IEEE 754-2019 double precision binary representation, .+"),
     (r"The GlobalSymbolRegistry is a List that is globally available. .+"),

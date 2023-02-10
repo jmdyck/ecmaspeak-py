@@ -3590,7 +3590,6 @@ class _:
 @P(r"{EX} : ({EX})")
 @P(r"{EX} : The value of {SETTABLE}")
 @P(r"{EX} : the value of {SETTABLE}")
-@P(r"{EX} : the {var} flag")
 @P(r"{EX} : {code_point_lit}")
 @P(r"{EX} : {LITERAL}")
 @P(r"{EX} : {LOCAL_REF}")
@@ -3682,18 +3681,11 @@ class _:
 
 @P(r"{EXPR} : the code point {var}")
         # This means "the code point whose numeric value is {var}"
-@P(r"{EXPR} : the code point whose numeric value is {NAMED_OPERATION_INVOCATION}")
+@P(r"{EXPR} : the code point whose numeric value is {EX}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (T_code_point_, env0)
-
-@P(r"{EXPR} : the code point whose numeric value is that of {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_code_unit_)
         return (T_code_point_, env0)
 
 @P(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
@@ -3736,6 +3728,8 @@ class _:
         word = backticked_word.source_text()[1:-1]
         if word == 'General_Category':
             return (T_Unicode_code_points_, env0)
+        elif word == 'u':
+            return (T_code_point_, env0)
         else:
             assert 0, word
 
@@ -3745,21 +3739,14 @@ class _:
         [_] = expr.children
         return (T_Unicode_code_points_, env0)
 
-@P(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}, or if it contains the same code point more than once")
+@P(r"{CONDITION_1} : {var} contains any code point more than once")
+@P(r"{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, *bw_] = cond.children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         for bw in bw_:
             assert len(bw.source_text()) == 3 # single-character 'words'
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} contains {backticked_word}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, bw] = cond.children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        assert len(bw.source_text()) == 3 # single-character 'word'
         return (env0, env0)
 
 @P(r"{EXPR} : the List of Unicode code points {var}")
@@ -3807,27 +3794,11 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (T_code_unit_, env0)
 
-@P(r"{EXPR} : the code unit whose numeric value is that of {EXPR}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_code_point_)
-        return (T_code_unit_, env0)
-
 @P(r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}")
 class _:
     def s_expr(expr, env0, _):
         [nonterminal, emu_xref] = expr.children
         return (T_code_unit_, env0)
-
-@P(r"{CONDITION_1} : {var} is not a {h_emu_xref} or {h_emu_xref}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, xrefa, xrefb] = cond.children
-        assert xrefa.source_text() == '<emu-xref href="#leading-surrogate"></emu-xref>'
-        assert xrefb.source_text() == '<emu-xref href="#trailing-surrogate"></emu-xref>'
-        env0.assert_expr_is_of_type(var, T_code_unit_)
-        return (env0, env0)
 
 # ==============================================================================
 # code point and/or code unit
@@ -3841,7 +3812,6 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
         return (T_MathInteger_, env1)
 
-@P(r'{CONDITION_1} : {EX} is in {EX}')
 @P(r'{CONDITION_1} : {var} is not in {var}')
 @P(r'{CONDITION_1} : {var} occurs exactly once in {var}')
 class _:
@@ -4215,7 +4185,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (T_Parse_Node, env0)
 
-@P(r"{CONDITION_1} : {var} is not contained within an? {nonterminal}, {nonterminal}, or {nonterminal}")
+@P(r"{CONDITION_1} : {var} is not contained within an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
         [var, *nont_] = cond.children
@@ -4718,7 +4688,7 @@ class _:
         (expr_t, env1) = tc_expr(expr, env0)
         return env1.plus_new_entry(var, expr_t)
 
-@P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (However, if {var} is 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
+@P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (However, if {var} = 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not one of 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
 class _:
     def s_nv(anode, env0):
         [let_var, expr, rvar, zvar, rvar2, let_var2, zvar2, rvar3] = anode.children
@@ -4949,13 +4919,8 @@ class _:
         [child] = cond.children
         return tc_cond(child, env0, asserting)
 
-@P(r"{CONDITION} : either {CONDITION_1} or {CONDITION_1}")
-@P(r"{CONDITION} : {CONDITION_1} or if {CONDITION_1}")
-@P(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
-@P(r"{CONDITION} : {CONDITION_1} or {CONDITION_1} or {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1} or {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}")
-@P(r"{CONDITION} : {CONDITION_1}, or {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
 class _:
@@ -4963,9 +4928,7 @@ class _:
         logical = ('or', cond.children)
         return tc_logical(logical, env0, asserting)
 
-@P(r"{CONDITION} : {CONDITION_1} and if {CONDITION_1}")
 @P(r'{CONDITION} : {CONDITION_1} and {CONDITION_1}')
-@P(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} and {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}")
 @P(r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}')
 class _:
@@ -4999,7 +4962,6 @@ class _:
         )
         return tc_logical(logical, env0, asserting)
 
-@P(r"{CONDITION} : {CONDITION_1} and {CONDITION_1} or {CONDITION_1} and {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}")
 class _:
@@ -5034,6 +4996,15 @@ class _:
         [conda, condb] = cond.children
         tc_cond(conda, env0)
         tc_cond(condb, env0)
+        return (env0, env0)
+
+@P(r"{CONDITION} : {CONDITION_1} unless {CONDITION_1} and {CONDITION_1}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [conda, condb, condc] = cond.children
+        tc_cond(conda, env0)
+        tc_cond(condb, env0)
+        tc_cond(condc, env0)
         return (env0, env0)
 
 # ==============================================================================
@@ -5998,21 +5969,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
 
-@P(r"{NUM_COMPARISON} : {NUM_COMPARAND} is 10 or less")
-class _:
-    def s_cond(cond, env0, asserting):
-        [x] = cond.children
-        env0.assert_expr_is_of_type(x, T_MathInteger_)
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is larger than {NAMED_OPERATION_INVOCATION}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noia, noib] = cond.children
-        env0.assert_expr_is_of_type(noia, T_MathInteger_)
-        env0.assert_expr_is_of_type(noib, T_MathInteger_)
-        return (env0, env0)
-
 @P(r'{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}')
 class _:
     def s_cond(cond, env0, asserting):
@@ -6077,16 +6033,22 @@ class _:
                     (T_MathInteger_    , '≤'   , T_MathPosInfinity_): 'T',
                     (T_MathNegInfinity_, '≤'   , T_MathInteger_    ): 'T',
                     (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
-                    (T_MathPosInfinity_, '≥'   , T_MathInteger_    ): 'T',
+                    (T_MathNegInfinity_, '='   , T_MathNegInfinity_): 'T',
+                    (T_MathPosInfinity_, '='   , T_MathPosInfinity_): 'T',
                     (T_MathPosInfinity_, '>'   , T_FiniteNumber_   ): 'T',
                     (T_MathPosInfinity_, '>'   , T_MathInteger_    ): 'T',
+                    (T_MathPosInfinity_, '≥'   , T_MathInteger_    ): 'T',
 
                     # always false:
                     (T_MathNegInfinity_, '≥'   , T_MathInteger_): 'F',
                     (T_MathNegInfinity_, '='   , T_MathInteger_): 'F',
+                    (T_MathNegInfinity_, '='   , T_MathPosInfinity_): 'F',
                     (T_MathPosInfinity_, '≤'   , T_MathInteger_): 'F',
                     (T_MathPosInfinity_, '&lt;', T_MathInteger_): 'F',
                     (T_MathPosInfinity_, '='   , T_MathInteger_): 'F',
+                    (T_MathPosInfinity_, '='   , T_MathNegInfinity_): 'F',
+                    (T_MathInteger_    , '='   , T_MathNegInfinity_): 'F',
+                    (T_MathInteger_    , '='   , T_MathPosInfinity_): 'F',
 
                     # can be true or false:
                     (T_ExtendedMathReal_, '≥'   , T_MathInteger_     ): 'TF',
@@ -6109,6 +6071,9 @@ class _:
                     (T_MathReal_        , '≠'   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '='   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '='   , T_MathReal_        ): 'TF',
+
+                    (T_MathInteger_     , 'is greater than or equal to', T_MathInteger_): 'TF',
+                    (T_MathInteger_     , 'is strictly greater than'   , T_MathInteger_): 'TF',
 
                     (T_MathInteger_, 'is at least', T_MathInteger_): 'TF',
 
@@ -6222,10 +6187,6 @@ class _:
     def s_expr(expr, env0, _):
         return (T_MathNonNegativeInteger_, env0)
 
-@P('{VAL_DESC} : -1')
-class _:
-    s_tb = a_subset_of(T_MathInteger_)
-
 @P('{MATH_LITERAL} : {dec_int_lit}')
 class _:
     s_tb = a_subset_of(T_MathInteger_)
@@ -6294,21 +6255,6 @@ class _:
 @P('{VAL_DESC} : a positive integer')
 class _:
     s_tb = a_subset_of(T_MathNonNegativeInteger_)
-
-@P(r"{EXPR} : the integer that is {EXPR}")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
-@P('{VAL_DESC} : a non-negative integer less than or equal to {EX}')
-@P('{VAL_DESC} : a non-negative integer which is ≤ {EXPR}')
-class _:
-    def s_tb(val_desc, env):
-        [ex] = val_desc.children
-        env.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return a_subset_of(T_MathNonNegativeInteger_)
 
 # ------------------------------------------------------------------------------
 #> When the term <dfn>integral Number</dfn> is used in this specification,
@@ -6561,29 +6507,10 @@ def type_for_tilded_word(tilded_word):
 
 # (So I'm putting all the "X is Y" forms here.)
 
-@P(r'{CONDITION_1} : {EX} is {var}')
-@P(r"{CONDITION_1} : {EX} is the same value as {EX}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [a_ex, b_ex] = cond.children
-        (a_t, a_env) = tc_expr(a_ex, env0)
-        (b_t, b_env) = tc_expr(b_ex, env0); assert b_env is env0
-        assert a_t != T_TBD
-        if b_t == T_TBD:
-            env1 = env0.with_expr_type_replaced(b_ex, a_t)
-        else:
-            # assert a_t.is_a_subtype_of_or_equal_to(b_t)
-            (common_t, _) = a_t.split_by(b_t)
-            assert common_t != T_0
-            env1 = env0
-        e = env_or(a_env, env0)
-        return (e, e)
-
-@P(r"{CONDITION_1} : {EX} is different from {EX}")
-@P(r"{CONDITION_1} : {EX} is the same as {EX}")
-@P(r"{CONDITION_1} : {var} is not the same as {var}")
-@P(r"{CONDITION_1} : {EX} is not the same value as {var}")
+@P(r"{CONDITION_1} : {EX} is not {PREFIX_PAREN}")
+@P(r"{CONDITION_1} : {EX} is not {SETTABLE}")
 @P(r"{CONDITION_1} : {EX} is {PREFIX_PAREN}")
+@P(r"{CONDITION_1} : {EX} is {SETTABLE}")
 class _:
     def s_cond(cond, env0, asserting):
         [exa, exb] = cond.children
@@ -6596,12 +6523,14 @@ class _:
             env1 = env0.with_expr_type_replaced(exa, exb_type)
         elif exb_type == T_TBD:
             env1 = env0.with_expr_type_replaced(exb, exa_type)
-        elif exa_type == T_Declarative_Environment_Record and exb_type == T_Environment_Record:
-            env1 = env0.with_expr_type_narrowed(exb, exa_type)
-        elif exa_type.is_a_subtype_of_or_equal_to(T_Number) and exb_type.is_a_subtype_of_or_equal_to(T_Number):
-            env1 = env0
         else:
-            assert 0, (exa_type, exb_type)
+            (common_t, _) = exa_type.split_by(exb_type)
+            assert common_t != T_0
+            env1 = ( env0
+                .with_expr_type_narrowed(exa, common_t)
+                .with_expr_type_narrowed(exb, common_t)
+            )
+        # but the true and false envs should be differently constrained
         return (env1, env1)
 
 @P(r"{CONDITION_1} : {EX} and {EX} are distinct values")
@@ -6613,15 +6542,6 @@ class _:
         return (env2, env2)
 
 # ------
-
-@P(r"{CONDITION_1} : both {EX} and {EX} are {LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [exa, exb, lit] = cond.children
-        (t, env1) = tc_expr(lit, env0); assert env1 is env0
-        env1.assert_expr_is_of_type(exa, t)
-        env1.assert_expr_is_of_type(exb, t)
-        return (env1, env1)
 
 @P(r'{CONDITION_1} : {EX} and {EX} are both {LITERAL}')
 class _:
@@ -6652,21 +6572,17 @@ class _:
         return (envb, envb)
 
 @P(r"{CONDITION_1} : {var} or {var} is {LITERAL}")
+@P(r"{CONDITION_1} : either {DOTTING} or {DOTTING} is {LITERAL}")
 class _:
     def s_cond(cond, env0, asserting):
         [v1, v2, lit] = cond.children
-        env0.assert_expr_is_of_type(v1, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(v2, T_Number|T_BigInt)
-        env0.assert_expr_is_of_type(lit, T_Number)
+        (t1, env1) = tc_expr(v1, env0); assert env1 is env0
+        (t2, env2) = tc_expr(v2, env0); assert env2 is env0
+        assert t1 == t2
+        env0.assert_expr_is_of_type(lit, t1)
         return (env0, env0)
 
 # ------
-
-@P(r"{CONDITION_1} : {var} is either a String, Number, Boolean, Null, or an Object that is defined by either an {nonterminal} or an {nonterminal}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, nonta, nontb] = cond.children
-        return env0.with_type_test(var, 'is a', T_String | T_Number | T_Boolean | T_Null | T_Object, asserting)
 
 @P(r"{CONDITION_1} : {EX} is also {VAL_DESC}")
 @P(r"{CONDITION_1} : {EX} is never {VAL_DESC}")
@@ -6743,15 +6659,19 @@ class _:
 
     # -------
 
-@P('{VALUE_DESCRIPTION} : any of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@P('{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-@P('{VALUE_DESCRIPTION} : one of: {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
+@P('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @P('{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
@@ -6812,8 +6732,8 @@ class _:
 #> where “type” refers to the ECMAScript language and specification types
 #> defined in this clause.
 
-@P(r'{TYPE_TEST} : Type({TYPE_ARG}) is the same as Type({TYPE_ARG})')
-@P(r'{TYPE_TEST} : Type({TYPE_ARG}) is different from Type({TYPE_ARG})')
+@P(r'{TYPE_TEST} : Type({TYPE_ARG}) is Type({TYPE_ARG})')
+@P(r'{TYPE_TEST} : Type({TYPE_ARG}) is not Type({TYPE_ARG})')
 class _:
     def s_cond(cond, env0, asserting):
         # Env can't represent the effect of these.
@@ -6822,11 +6742,11 @@ class _:
         # but the form only appears twice, and in both cases the static types are the same.
         return (env0, env0)
 
-@P(r"{TYPE_TEST} : Type({TYPE_ARG}) is not an element of {var}")
+@P(r"{CONDITION_1} : {var} does not contain Type({TYPE_ARG})")
 class _:
     def s_cond(cond, env0, asserting):
         # once, in CreateListFromArrayLike
-        [type_arg, var] = cond.children
+        [var, type_arg] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
         return (env0, env0)
 
@@ -6875,10 +6795,6 @@ class _:
     def s_expr(expr, env0, _):
         return (T_Null, env0)
 
-@P('{LITERAL} : the value *null*')
-class _:
-    s_tb = T_Null
-
 # ==============================================================================
 #@ 6.1.3 The Boolean Type
 
@@ -6906,10 +6822,6 @@ class _:
 @P('{VAL_DESC} : a String')
 class _:
     s_tb = T_String
-
-@P('{VAL_DESC} : the String value {STR_LITERAL}')
-class _:
-    s_tb = a_subset_of(T_String)
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : Strings')
 class _:
@@ -6968,14 +6880,8 @@ class _:
 
 # ----
 
-@P(r'{CONDITION_1} : {var} does not consist of a single code unit')
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (env1, env1)
-
-@P(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"* or if it contains the same code unit more than once')
+@P(r'{CONDITION_1} : {var} contains any code unit more than once')
+@P(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"*')
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
@@ -7014,15 +6920,7 @@ class _:
         env0.assert_expr_is_of_type(litb, T_String)
         return (env0, env0)
 
-@P(r'{CONDITION_1} : {var} is the same sequence of code units as {var}')
-class _:
-    def s_cond(cond, env0, asserting):
-        [var1, var2] = cond.children
-        env0.assert_expr_is_of_type(var1, T_String)
-        env0.ensure_expr_is_of_type(var2, T_String)
-        return (env0, env0)
-
-@P(r'{CONDITION_1} : {var} and {var} are exactly the same sequence of code units (same length and same code units at corresponding indices)')
+@P(r'{CONDITION_1} : {var} and {var} have the same length and the same code units in the same positions')
 class _:
     def s_cond(cond, env0, asserting):
         # occurs once, in SameValueNonNumber
@@ -7030,13 +6928,6 @@ class _:
         enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
         envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
         return (envb, envb)
-
-@P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is: {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, {starred_str}, or {starred_str}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, *ss_] = cond.children
-        env0.assert_expr_is_of_type(noi, T_String)
-        return (env0, env0)
 
 # ------------------------------------------------------------------------------
 #> Each element is regarded as occupying a position within the sequence.
@@ -7341,15 +7232,6 @@ class _:
 class _:
     s_tb = T_Symbol
 
-@P(r'{CONDITION_1} : {var} and {var} are both the same Symbol value')
-class _:
-    def s_cond(cond, env0, asserting):
-        # occurs once, in SameValueNonNumber
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_Symbol); assert enva is env0
-        envb = env0.ensure_expr_is_of_type(varb, T_Symbol); # assert envb is env0
-        return (envb, envb)
-
 # ----
 
 @P(r"{LITERAL} : {atat_word}")
@@ -7361,7 +7243,7 @@ class _:
 #> an associated value called [[Description]]
 #> that is either *undefined* or a String value.
 
-@P(r"{EXPR} : a new unique Symbol value whose {DSBN} value is {var}")
+@P(r"{EXPR} : a new Symbol whose {DSBN} is {var}")
 class _:
     def s_expr(expr, env0, _):
         [dsbn, var] = expr.children
@@ -7386,23 +7268,6 @@ class _:
 @P('{VAL_DESC} : a Number')
 class _:
     s_tb = T_Number
-
-@P(r'{CONDITION_1} : {var} is the same Number value as {var}')
-class _:
-    def s_cond(cond, env0, asserting):
-        [var1, var2] = cond.children
-        env0.assert_expr_is_of_type(var1, T_Number)
-        env1 = env0.ensure_expr_is_of_type(var2, T_Number)
-        return (env1, env1)
-
-@P(r'{CONDITION_1} : {var} and {var} are the same Number value')
-class _:
-    def s_cond(cond, env0, asserting):
-        # in Abstract Relational Comparison
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_Number); # assert enva is env0
-        envb = enva.ensure_expr_is_of_type(varb, T_Number); # assert envb is env0
-        return (envb, envb)
 
 @P(r"{CONDITION_1} : {var} is finite")
 class _:
@@ -7691,6 +7556,10 @@ class _:
 class _:
     s_tb = T_Object
 
+@P(r"{VAL_DESC} : an Object that is defined by either an {nonterminal} or an {nonterminal}")
+class _:
+    s_tb = a_subset_of(T_Object)
+
 @P('{VAL_DESC} : an extensible object that does not have a {starred_str} own property')
 class _:
     s_tb = a_subset_of(T_Object)
@@ -7717,15 +7586,6 @@ class _:
         }[kind.source_text()]
         return t
 
-@P(r'{CONDITION_1} : {var} and {var} are the same Object value')
-class _:
-    def s_cond(cond, env0, asserting):
-        # in SameValueNonNumber
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_Object); # assert enva is env0
-        envb = enva.ensure_expr_is_of_type(varb, T_Object); # assert envb is env0
-        return (envb, envb)
-
 @P(r'{CONDITION_1} : {var} does not have an own property with key {var}')
 @P(r"{CONDITION_1} : {var} does not currently have a property {var}")
 class _:
@@ -7743,16 +7603,9 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
         return (env0, env0)
 
-@P(r"{EACH_THING} : own property key {DEFVAR} of {var} that is an array index, whose numeric value is greater than or equal to {var}, in descending numeric index order")
-class _:
-    def s_nv(each_thing, env0):
-        [loop_var, obj_var, lo_var] = each_thing.children
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(lo_var, T_Number)
-        return env0.plus_new_entry(loop_var, T_String)
-
 @P(r"{EACH_THING} : own property key {DEFVAR} of {var} such that {CONDITION}, in ascending numeric index order")
 @P(r"{EACH_THING} : own property key {DEFVAR} of {var} such that {CONDITION}, in ascending chronological order of property creation")
+@P(r"{EACH_THING} : own property key {DEFVAR} of {var} such that {CONDITION}, in descending numeric index order")
 class _:
     def s_nv(each_thing, env0):
         [loop_var, obj_var, condition] = each_thing.children
@@ -8197,10 +8050,6 @@ class _:
         return a_subset_of(ListType(led_sup_t))
         # inexact because of 'non-empty'
 
-@P('{VAL_DESC} : a List of a single Number')
-class _:
-    s_tb = a_subset_of(ListType(T_Number))
-
 @P('{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*')
 class _:
     s_tb = ListType(T_String | T_Undefined)
@@ -8334,18 +8183,9 @@ class _:
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
 
-@P(r"{EXPR} : the List that is {DOTTING}")
-class _:
-    def s_expr(expr, env0, _):
-        [dotting] = expr.children
-        (dotting_type, env1) = tc_expr(dotting, env0); assert env1 is env0
-        dotting_type.is_a_subtype_of_or_equal_to(T_List)
-        return (dotting_type, env0)
-
 # ------------------------------------------------------------------------------
 # modify a List:
 
-@P(r"{COMMAND} : Append {EX} as an element of {var}.")
 @P(r"{COMMAND} : Append {EX} to the end of {EX}.")
 @P(r"{COMMAND} : Append {EX} to {EX}.")
 @P(r"{COMMAND} : Insert {var} as the first element of {var}.")
@@ -8372,21 +8212,6 @@ class _:
         [lista, listb] = anode.children
         env0.assert_expr_is_of_type(lista, ListType(T_SlotName_))
         env0.assert_expr_is_of_type(listb, ListType(T_SlotName_))
-        return env0
-
-@P(r'{COMMAND} : Append to {var} each element of {var} that is not already an element of {var}.')
-class _:
-    def s_nv(anode, env0):
-        [vara, varb, varc] = anode.children
-        (vara_type, enva) = tc_expr(vara, env0); assert enva is env0
-        (varb_type, envb) = tc_expr(varb, env0); assert envb is env0
-        (varc_type, envc) = tc_expr(varc, env0); assert envc is env0
-        if vara_type == T_TBD and varb_type == T_TBD and varc_type == T_TBD:
-            pass
-        else:
-            assert vara_type.is_a_subtype_of_or_equal_to(T_List)
-            assert vara_type == varb_type
-            assert varb_type == varc_type
         return env0
 
 @P(r"{COMMAND} : Remove {var} from {var}.")
@@ -8420,21 +8245,21 @@ class _:
         env0.assert_expr_is_of_type(settable, T_List)
         return env0
 
-@P(r"{SMALL_COMMAND} : remove that element from the {var}")
+@P(r"{SMALL_COMMAND} : remove {var} from {var}")
 class _:
     def s_nv(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_List)
-        return env0
+        [elem_var, list_var] = anode.children
+        env1 = env0.ensure_A_can_be_element_of_list_B(elem_var, list_var)
+        return env1
 
 @P(r"{COMMAND} : Replace {var} in {var} with {var}.")
 class _:
     def s_nv(anode, env0):
         [ex_var, list_var, rep_var] = anode.children
-        env0.assert_expr_is_of_type(list_var, ListType(T_PrivateElement))
-        env0.assert_expr_is_of_type(ex_var, T_PrivateElement)
-        env0.assert_expr_is_of_type(rep_var, T_PrivateElement)
-        return env0
+        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_PrivateElement))
+        env1.assert_expr_is_of_type(ex_var, T_PrivateElement)
+        env1.assert_expr_is_of_type(rep_var, T_PrivateElement)
+        return env1
 
 @P(r"{COMMAND} : Replace the element of {SETTABLE} whose value is {var} with an element whose value is {LITERAL}.")
 class _:
@@ -8522,6 +8347,8 @@ class _:
 @P(r"{EXPR} : the number of elements in the List {var}")
 @P(r"{EX} : The number of elements in {var}")
 @P(r"{EX} : the number of elements in {EX}")
+@P(r"{NUM_COMPARAND} : the number of elements in the result of {NAMED_OPERATION_INVOCATION}")
+@P(r"{NUM_COMPARAND} : the number of elements in {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -8534,13 +8361,6 @@ class _:
         [var, ex] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : the number of elements in the result of {NAMED_OPERATION_INVOCATION} is greater than 2<sup>32</sup> - 1")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi] = cond.children
-        env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
 @P(r"{CONDITION_1} : {var} contains any duplicate entries")
@@ -8562,39 +8382,40 @@ class _:
         env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
 
-@P(r'{CONDITION_1} : {EX} is an element of {var}')
-@P(r"{CONDITION_1} : {EX} is not an element of {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [value_ex, list_var] = cond.children
-        env1 = env0.ensure_A_can_be_element_of_list_B(value_ex, list_var)
-        return (env1, env1)
-
-@P(r"{CONDITION_1} : {var} is not currently an element of {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [item_var, list_var] = cond.children
-        env1 = env0.ensure_A_can_be_element_of_list_B(item_var, list_var)
-        return (env1, env1)
-
-@P(r"{CONDITION_1} : {SETTABLE} contains {EX}")
+@P(r"{CONDITION_1} : {EX} contains {EX}")
 @P(r"{CONDITION_1} : {EX} does not contain {EX}")
 class _:
     def s_cond(cond, env0, asserting):
         [container_ex, value_var] = cond.children
         (container_type, container_env) = tc_expr(container_ex, env0)
+        # polymorphic
         if container_type.is_a_subtype_of_or_equal_to(T_String):
             env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
+        elif container_type.is_a_subtype_of_or_equal_to(T_CharSet):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_character_)
+        elif container_type.is_a_subtype_of_or_equal_to(T_Relation):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_event_pair_)
         else:
             env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
         return (env1, env1)
 
-@P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains {starred_str}")
+@P(r"{CONDITION_1} : {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
-        [noi, ss] = cond.children
-        env0.assert_expr_is_of_type(noi, ListType(T_String))
-        return (env0, env0)
+        [list_ex, val_desc, new_var, stcond] = cond.children
+        (list_t, env1) = tc_expr(list_ex, env0); assert env1 is env0
+        assert list_t.is_a_subtype_of_or_equal_to(T_List)
+
+        (sub_t, sup_t) = type_bracket_for(val_desc, env0)
+        if list_t == T_List:
+            pass
+        else:
+            assert sup_t.is_a_subtype_of_or_equal_to(list_t.element_type)
+
+        env_for_cond = env0.plus_new_entry(new_var, sup_t)
+        (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
+        return (cond_t_env, env0)
+
 
 @P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}")
 class _:
@@ -8923,6 +8744,8 @@ class _:
                 record_type_name = constructor_prefix + ' Record'
             elif constructor_prefix == 'PropertyDescriptor':
                 record_type_name = 'Property Descriptor'
+            elif constructor_prefix == 'a new ExportEntry Record':
+                record_type_name = 'ExportEntry Record'
             else:
                 record_type_name = constructor_prefix
             field_info = fields_for_record_type_named_[record_type_name]
@@ -8943,15 +8766,6 @@ class _:
         # XXX: Should also ensure that each declared field is specified exactly once.
 
         return ( NamedType(record_type_name), env2 )
-
-@P(r"{EXPR} : the Record { {DSBN}, {DSBN} } that is the value of {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [dsbna, dsbnb, ex] = expr.children
-        assert dsbna.source_text() == '[[Key]]'
-        assert dsbnb.source_text() == '[[Value]]'
-        env0.assert_expr_is_of_type(ex, T_MapData_record_)
-        return (T_MapData_record_, env0)
 
 #> In specification text and algorithms,
 #> dot notation may be used to refer to a specific field of a Record value.
@@ -9259,7 +9073,6 @@ class _:
 
 @P(r"{EXPR} : the element of {EX} whose {DSBN} is {EX}")
 @P(r"{EXPR} : the element of {EX} whose {DSBN} field is {var}")
-@P(r"{EXPR} : the element of {EX} whose {DSBN} is the same as {EX}")
 class _:
     def s_expr(expr, env0, _):
         [list_ex, dsbn, val_ex] = expr.children
@@ -9322,10 +9135,18 @@ class _:
 
 @P(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are in {EX}")
 @P(r"{CONDITION_1} : the pairs {PAIR} and {PAIR} are not in {EX}")
-@P(r"{CONDITION_1} : either {PAIR} or {PAIR} is in {EX}")
 class _:
     def s_cond(cond, env0, asserting):
         [paira, pairb, ex] = cond.children
+        env0.assert_expr_is_of_type(paira, T_event_pair_)
+        env0.assert_expr_is_of_type(pairb, T_event_pair_)
+        env0.assert_expr_is_of_type(ex, T_Relation)
+        return (env0, env0)
+
+@P(r"{CONDITION_1} : {EX} contains either {PAIR} or {PAIR}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [ex, paira, pairb] = cond.children
         env0.assert_expr_is_of_type(paira, T_event_pair_)
         env0.assert_expr_is_of_type(pairb, T_event_pair_)
         env0.assert_expr_is_of_type(ex, T_Relation)
@@ -9555,14 +9376,6 @@ class _:
         proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Shared_Data_Block, env1)
 
-@P(r"{CONDITION_1} : {EX} and {EX} are the same Shared Data Block values")
-class _:
-    def s_cond(cond, env0, asserting):
-        [exa, exb] = cond.children
-        env1 = env0.ensure_expr_is_of_type(exa, T_Shared_Data_Block)
-        env2 = env1.ensure_expr_is_of_type(exb, T_Shared_Data_Block)
-        return (env2, env2)
-
 @P(r'{COMMAND} : Set all of the bytes of {var} to 0.')
 class _:
     def s_nv(anode, env0):
@@ -9633,30 +9446,6 @@ class _:
 class _:
     s_tb = T_PrivateElement
 
-@P(r"{CONDITION_1} : {EX} contains a PrivateElement whose {dsb_word} is {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [ex, dsb_word, var] = cond.children
-        env0.assert_expr_is_of_type(ex, ListType(T_PrivateElement))
-        assert dsb_word.source_text() == '[[Key]]'
-        env0.assert_expr_is_of_type(var, T_Private_Name)
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {var} contains a PrivateElement whose {dsb_word} is {DOTTING}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, dsb_word, dotting] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, ListType(T_PrivateElement))
-        assert dsb_word.source_text() == '[[Key]]'
-        env1.assert_expr_is_of_type(dotting, T_Private_Name)
-        return (env1, env1)
-
-@P(r"{EXPR} : that PrivateElement")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_PrivateElement, env0)
-
 # ==============================================================================
 #@ 6.2.11 The ClassFieldDefinition Record Specification Type
 
@@ -9701,7 +9490,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-@P(r"{EXPR} : a new Private Name whose {dsb_word} value is {var}")
+@P(r"{EXPR} : a new Private Name whose {dsb_word} is {var}")
 class _:
     def s_expr(expr, env0, _):
         [dsb_word, var] = expr.children
@@ -9716,12 +9505,6 @@ class _:
         env0.assert_expr_is_of_type(list_var, ListType(T_Private_Name))
         assert dsb_word.source_text() == '[[Description]]'
         env0.assert_expr_is_of_type(var, T_String)
-        return (T_Private_Name, env0)
-
-@P(r"{EXPR} : that Private Name")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
         return (T_Private_Name, env0)
 
 # ==============================================================================
@@ -9846,7 +9629,6 @@ class _:
 
 @P(r"{CONDITION_1} : {var} does not already have a binding for {var}")
 @P(r"{CONDITION_1} : {var} does not have a binding for {var}")
-@P(r"{CONDITION_1} : {var} has a binding for the name that is the value of {var}")
 @P(r"{CONDITION_1} : {var} has a binding for {var}")
 @P(r"{CONDITION_1} : {var} must have an uninitialized binding for {var}")
 class _:
@@ -10381,14 +10163,6 @@ class _:
 class _:
     s_tb = T_agent_signifier_
 
-@P(r"{NUM_COMPARISON} : {NUM_COMPARAND} is equivalent to {NUM_COMPARAND}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [a, b] = cond.children
-        env0.assert_expr_is_of_type(a, T_agent_signifier_)
-        env0.assert_expr_is_of_type(b, T_agent_signifier_)
-        return (env0, env0)
-
 # ==============================================================================
 #@ 9.10 Processing Model of WeakRef and FinalizationRegistry Objects
 
@@ -10667,7 +10441,7 @@ class _:
 # ==============================================================================
 #@ 13.1.1 Static Semantics: Early Errors [for Identifiers]
 
-@P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the same String value as the StringValue of any |ReservedWord| except for `yield` or `await`")
+@P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the StringValue of any |ReservedWord| except for `yield` or `await`")
 class _:
     def s_cond(cond, env0, asserting):
         [noi] = cond.children
@@ -11302,14 +11076,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_MathInteger_, env0)
 
-@P(r"{CONDITION_1} : {PP_NAMED_OPERATION_INVOCATION} is not the same character value as {PP_NAMED_OPERATION_INVOCATION}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [anoi, bnoi] = cond.children
-        env0.assert_expr_is_of_type(anoi, T_character_)
-        env0.assert_expr_is_of_type(bnoi, T_character_)
-        return (env0, env0)
-
 # ==============================================================================
 #@ 22.2.2.1 Notation
 
@@ -11358,7 +11124,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (T_character_, env1)
 
-@P(r'{EXPR} : the CharSet containing all characters with a character value greater than or equal to {var} and less than or equal to {var}')
+@P(r'{EXPR} : the CharSet containing all characters with a character value in the inclusive interval from {var} to {var}')
 class _:
     def s_expr(expr, env0, _):
         [var1, var2] = expr.children
@@ -11588,7 +11354,7 @@ class _:
 # ==============================================================================
 #@ 22.2.2.4 Runtime Semantics: CompileAssertion
 
-@P(r"{CONDITION_1} : the character {EX} is one of {nonterminal}")
+@P(r"{CONDITION_1} : the character {EX} is matched by {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
         [ex, nonterminal] = cond.children
@@ -11699,7 +11465,7 @@ set_up_internal_thing('slot', 'RegExpMatcher',  T_RegExpMatcher_)
 # ==============================================================================
 #@ 22.2.6.13.1 EscapeRegExpPattern
 
-@P('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not be identical to {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
+@P('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
 class _:
     def s_expr(expr, env0, _):
         # XXX
@@ -12297,15 +12063,6 @@ class _:
         [let_var, stcond] = cond.children
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
         return tc_cond(stcond, env_for_cond)
-
-@P(r"{CONDITION_1} : {EX} is not {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [ea, eb] = cond.children
-        # over-specific:
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event | T_host_defined_ | T_Undefined)
-        return (env0, env0)
 
 #> A <dfn>Synchronize event</dfn> has no fields,
 #> and exists purely to directly constrain the permitted orderings of other events.
