@@ -641,8 +641,6 @@ def check_vars_in_alg_defn(alg_defn):
         d_thing.okay_if_unused = alg_defn.header.species.startswith('op: discriminated by')
 
     for d in alg_defn.anode.each_descendant_or_self():
-        # This would be way easier if the pseudocode.grammar
-        # distinguished defining occurrences of {var}s.
         if d.prod.lhs_s == '{var}':
             d_thing = things[d.source_text()]
             p = d.parent
