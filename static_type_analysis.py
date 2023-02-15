@@ -2048,7 +2048,7 @@ class Env:
                 'PrototypePropertyNameList of |ClassElementList|',
                 '\u211d(_m_) / 12', # MakeDay
                 '\u211d(_number_)', # ToUint8Clamp
-                'NormalCompletion(_value_)', # Await
+                'NormalCompletion(_v_)', # Await
             ], expr_text.encode('unicode_escape')
             if 0:
                 add_pass_error(
