@@ -4573,7 +4573,7 @@ class _:
                 # hack:
                 if collection_expr.source_text() == '_importMetaValues_':
                     item_type = T_ImportMeta_record_ # PR 1892
-                elif collection_expr.source_text() == '_entries_':
+                elif collection_expr.source_text() in ['_M_.[[MapData]]', '_M_.[[WeakMapData]]']:
                     item_type = T_MapData_record_
                 else:
                     assert 0, collection_expr
@@ -8223,7 +8223,7 @@ class _:
         env0.assert_expr_is_of_type(item_var, list_type.element_type)
         return env0
 
-@P(r"{COMMAND} : Remove the first element from {var}.")
+@P(r"{COMMAND} : Remove the first element from {SETTABLE}.")
 class _:
     def s_nv(anode, env0):
         [var] = anode.children
@@ -8244,13 +8244,6 @@ class _:
         [settable] = anode.children
         env0.assert_expr_is_of_type(settable, T_List)
         return env0
-
-@P(r"{SMALL_COMMAND} : remove {var} from {var}")
-class _:
-    def s_nv(anode, env0):
-        [elem_var, list_var] = anode.children
-        env1 = env0.ensure_A_can_be_element_of_list_B(elem_var, list_var)
-        return env1
 
 @P(r"{COMMAND} : Replace {var} in {var} with {var}.")
 class _:
@@ -8299,20 +8292,13 @@ class _:
 # ask questions about a List:
 
 @P(r'{CONDITION_1} : {EX} is empty')
-@P(r"{CONDITION_1} : {var} is not empty")
+@P(r"{CONDITION_1} : {EX} is not empty")
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
         # polymorphic
         env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
         # XXX For String, change spec to "is [not] the empty String" ?
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not empty")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi] = cond.children
-        env0.assert_expr_is_of_type(noi, T_List)
         return (env0, env0)
 
 @P(r"{CONDITION_1} : {var} is now an empty List")
@@ -8446,7 +8432,7 @@ class _:
         env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
         return (env0, env0)
 
-@P(r"{CONDITION_1} : there does not exist an element {DEFVAR} of {var} such that {CONDITION_1}")
+@P(r"{CONDITION_1} : there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [member_var, list_var, stcond] = cond.children
@@ -8455,7 +8441,7 @@ class _:
         (t_env, f_env) = tc_cond(stcond, env2)
         return (env1, env1)
 
-@P(r"{EXPR} : the first element of {var}")
+@P(r"{EXPR} : the first element of {SETTABLE}")
 @P(r"{EXPR} : the second element of {var}")
 @P(r"{EXPR} : the last element of {var}")
 class _:
@@ -12116,6 +12102,7 @@ class _:
     s_tb = T_Agent_Events_Record
 
 @P(r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
+@P(r"{EXPR} : the Agent Events Record of {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
 class _:
     def s_expr(expr, env0, _):
         [dotting, dsbn, e] = expr.children

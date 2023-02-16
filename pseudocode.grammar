@@ -205,7 +205,7 @@
     Push {var} onto the execution context stack; {var} is now the running execution context.
     Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.
     Remove the binding for {var} from {var}.
-    Remove the first element from {var}.
+    Remove the first element from {SETTABLE}.
     Remove the first {var} elements of {var}.
     Remove the last element of {SETTABLE}.
     Remove the own property with name {var} from {var}.
@@ -301,7 +301,6 @@
     let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     perform any host-defined steps for reporting the error
     perform {PP_NAMED_OPERATION_INVOCATION}
-    remove {var} from {var}
     return {EXPR}
     reverse the order of the elements of {var}
     set the corresponding attribute of the property named {var} of object {var} to the value of the field
@@ -478,7 +477,7 @@
     the source text matched by {var} is strict mode code
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
-    there does not exist an element {DEFVAR} of {var} such that {CONDITION_1}
+    there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}
     there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}
     there exists a member {DEFVAR} of {var} such that {CONDITION_1}
     there exists an event {DEFVAR} such that {CONDITION}
@@ -504,6 +503,7 @@
     {EX} is neither {VAL_DESC} nor {VAL_DESC}
     {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
     {EX} is never {VAL_DESC}
+    {EX} is not empty
     {EX} is not {PREFIX_PAREN}
     {EX} is not {SETTABLE}
     {EX} is not {VALUE_DESCRIPTION}
@@ -525,7 +525,6 @@
     {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}
     {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s
     {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}
-    {NAMED_OPERATION_INVOCATION} is not empty
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production
@@ -613,7 +612,6 @@
     {var} is in {INTERVAL}
     {var} is not already suspended
     {var} is not contained within an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
-    {var} is not empty
     {var} is not finite
     {var} is not in {INTERVAL}
     {var} is not in {PREFIX_PAREN}
@@ -765,6 +763,7 @@
     the 32-bit two's complement bit string representing {EX}
     the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
+    the Agent Events Record of {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
     the BigInt value that corresponds to {var}
     the BigInt value that represents {EX}
@@ -843,7 +842,7 @@
     the element of {EX} whose {DSBN} field is {var}
     the empty CharSet
     the empty sequence of Unicode code points
-    the first element of {var}
+    the first element of {SETTABLE}
     the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}
     the grammar symbol {nonterminal}
     the greatest (closest to +∞) integral Number value that is not greater than {var}
