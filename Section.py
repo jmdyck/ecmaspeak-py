@@ -1647,6 +1647,29 @@ def _handle_changes_section(section):
         scan_section(section, patterns)
 
     # --------------------------------------------------------------------------
+    elif section.section_num.startswith('B.') and section.section_title == 'Static Semantics: ParsePattern ( _patternText_, _u_ )':
+        # B.1.2.9
+        # This defines an extended version of an abstract operation.
+        # It seems like it should be converted to have a structured header,
+        # but note that Annex B sections that give
+        # an extended version of an *SDO* don't have a structured header
+        # (even though the main-body defn of the SDO does).
+        #
+        # If we changed it to have a structured header,
+        # then "The semantics of X is extended as follows" would fall in an odd place?
+        patterns = [
+            (
+                [
+                    ('p', "The semantics of EMU-XREF is extended as follows:"),
+                    ('p', "The abstract operation ParsePattern .+"),
+                    'emu-alg',
+                ],
+                lambda p1, p2, emu_alg: blah_solo_op('ParsePattern', emu_alg)
+            ),
+        ]
+        scan_section(section, patterns)
+
+    # --------------------------------------------------------------------------
     elif (mo := re.fullmatch('Changes to ([A-Z]\w+)', section.section_title)):
         op_name = mo.group(1)
         patterns = [
