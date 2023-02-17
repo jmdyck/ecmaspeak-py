@@ -12101,7 +12101,6 @@ class _:
 class _:
     s_tb = T_Agent_Events_Record
 
-@P(r"{EXPR} : the Agent Events Record in {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
 @P(r"{EXPR} : the Agent Events Record of {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}")
 class _:
     def s_expr(expr, env0, _):
