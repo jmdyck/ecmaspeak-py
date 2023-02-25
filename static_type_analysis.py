@@ -1084,6 +1084,7 @@ named_type_hierarchy = {
                     'ExportEntry Record': {},
                     'ExportResolveSet_Record_': {},
                     'FinalizationRegistryCellRecord_': {},
+                    'FindResultRecord_': {},
                     'GlobalSymbolRegistry Record': {},
                     'GraphLoadingState Record': {},
                     'ImportEntry Record': {},
@@ -1185,6 +1186,7 @@ named_type_hierarchy = {
                     'tilde_all_': {},
                     'tilde_all_but_default_': {},
                     'tilde_ambiguous_': {},
+                    'tilde_ascending_': {},
                     'tilde_assignment_': {},
                     'tilde_asyncGenerator_': {},
                     'tilde_async_': {},
@@ -1194,6 +1196,7 @@ named_type_hierarchy = {
                     'tilde_base_': {},
                     'tilde_completed_': {},
                     'tilde_derived_': {},
+                    'tilde_descending_': {},
                     'tilde_empty_': {},
                     'tilde_end_': {},
                     'tilde_enumerate_': {},
@@ -3305,6 +3308,12 @@ fields_for_record_type_named_ = {
     'CharacterClassResultRecord_': {
         'CharSet': T_CharSet,
         'Invert' : T_Boolean,
+    },
+
+    # 23.1.3.9
+    'FindResultRecord_': {
+        'Index': T_IntegralNumber_,
+        'Value': T_Tangible_,
     },
 
     # 25.2.3.2 FinalizationRegistry.prototype.register
@@ -6365,6 +6374,14 @@ class _:
         env0.assert_expr_is_of_type(interval, T_MathInteger_)
         return env0.plus_new_entry(loop_var, T_MathInteger_)
 
+@P(r"{EXPR} : a List of the integers in {INTERVAL}, in ascending order")
+@P(r"{EXPR} : a List of the integers in {INTERVAL}, in descending order")
+class _:
+    def s_expr(expr, env0, _):
+        [interval] = expr.children
+        env0.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
+        return (ListType(T_MathNonNegativeInteger_), env0)
+
 # ------------------------------------------------------------------------------
 # (The spec should talk about bit strings somewhere.)
 
@@ -8602,6 +8619,7 @@ class _:
         t = {
             'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)': T_CharacterClassResultRecord_,
             'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
+            'a Record with fields [[Index]] (an integral Number) and [[Value]] (an ECMAScript language value)': T_FindResultRecord_,
             'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
             'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
             'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
@@ -8836,6 +8854,8 @@ class _:
                         # All we know is that it's a Record with a [[Value]] field.
                         result_memtype = T_TBD
                     elif memtype == T_PrivateElement:
+                        result_memtype = T_Tangible_
+                    elif memtype == T_FindResultRecord_:
                         result_memtype = T_Tangible_
                     else:
                         assert 0, memtype
