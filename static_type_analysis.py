@@ -1229,9 +1229,11 @@ named_type_hierarchy = {
                     'tilde_normal_': {},
                     'tilde_number_': {},
                     'tilde_pending_': {},
+                    'tilde_read_through_holes_': {},
                     'tilde_rejected_': {},
                     'tilde_sealed_': {},
                     'tilde_simple_': {},
+                    'tilde_skip_holes_': {},
                     'tilde_start_': {},
                     'tilde_start_end_': {},
                     'tilde_strict_': {},
@@ -11552,6 +11554,13 @@ class _:
 @P('{VAL_DESC} : a String which is the name of a TypedArray constructor in {h_emu_xref}')
 class _:
     s_tb = a_subset_of(T_String)
+
+@P(r'{EXPR} : the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}')
+class _:
+    def s_expr(expr, env0, _):
+        [dotting, emu_xref] = expr.children
+        env0.assert_expr_is_of_type(dotting, T_String)
+        return (T_function_object_, env0)
 
 @P(r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}")
 class _:

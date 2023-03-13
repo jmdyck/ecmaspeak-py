@@ -854,6 +854,7 @@
     the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the intrinsic function {percent_word}
+    the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
     the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last element of {var}
