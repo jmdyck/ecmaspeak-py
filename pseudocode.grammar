@@ -191,7 +191,6 @@
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Notify the agent {var}.
-    Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.
     Optionally, {SMALL_COMMAND}.
     Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Perform an implementation-defined debugging action.
@@ -847,7 +846,6 @@
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the intrinsic function {percent_word}
     the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
-    the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}
     the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last element of {var}
     the list-concatenation of {EX} and {EX}

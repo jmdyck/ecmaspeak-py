@@ -11525,13 +11525,6 @@ class _:
         env0.assert_expr_is_of_type(dotting, T_String)
         return (T_function_object_, env0)
 
-@P(r"{EXPR} : the intrinsic object listed in column one of {h_emu_xref} for {DOTTING}")
-class _:
-    def s_expr(expr, env0, _):
-        [emu_xref, dotting] = expr.children
-        env0.assert_expr_is_of_type(dotting, T_String)
-        return (T_function_object_, env0)
-
 @P(r"{EXPR} : the String value of the Constructor Name value specified in {h_emu_xref} for this <var>TypedArray</var> constructor")
 class _:
     def s_expr(expr, env0, _):
@@ -11931,14 +11924,6 @@ class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
-
-@P(r'{COMMAND} : Once a generator enters the {tilded_word} state it never leaves it and its associated execution context is never resumed. Any execution state associated with {var} can be discarded at this point.')
-class _:
-    def s_nv(anode, env0):
-        [tw, var] = anode.children
-        assert tw.source_text() == '~completed~'
-        env0.assert_expr_is_of_type(var, T_Object)
-        return env0
 
 # 27.{5,6,7}
 @P(r"{CONDITION_1} : we return here")
