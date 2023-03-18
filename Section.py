@@ -631,7 +631,7 @@ def _handle_oddball_op_section(section):
         # 9.10.3
         op_name = 'WeakRef emptying thing'
         assert section.block_children[0].source_text().startswith(
-            "<p>At any time, if a set of objects _S_ is not live,"
+            "<p>At any time, if a set of objects and/or symbols _S_ is not live,"
         )
         params = [ AlgParam('_S_', '', 'unknown') ]
 
@@ -2759,7 +2759,7 @@ def _(section, mo):
     (r"If _start_ is strictly greater than _end_, they are swapped."),
     (r"If either argument is \*NaN\* or negative, it is replaced with zero; .+"),
     (r"In the IEEE 754-2019 double precision binary representation, .+"),
-    (r"The GlobalSymbolRegistry is a List that is globally available. .+"),
+    (r"The GlobalSymbolRegistry is an append-only List that is globally available. .+"),
     (r"The actual return values are implementation-defined .+"),
     (r"The meaning of the optional second and third parameters to this method .+"),
     (r"The optional _reviver_ parameter is a function that takes two parameters, .+"),

@@ -953,7 +953,6 @@
     the BigInt value for {EX}
     the CaptureRange {PAIR}
     the GlobalSymbolRegistry List
-    the GlobalSymbolRegistry List (see {h_emu_xref})
     the Number value for {EX}
     the String {var}
     the code point matched by {PROD_REF}
@@ -1518,6 +1517,7 @@
     characters
     code points
     either Match Records or *undefined*
+    either Objects or Symbols
     either Strings or *null*
     either Strings or *undefined*
     either WriteSharedMemory or ReadModifyWriteSharedMemory events

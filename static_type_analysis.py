@@ -2015,6 +2015,9 @@ class Env:
                 or
                 old_t == T_Proxy_exotic_object_ | T_bound_function_exotic_object_ | T_other_function_object_ and new_t == T_constructor_object_
                 # MakeConstructor changes _F_ from a non-constructor to a constructor.
+                or
+                old_t == T_Tangible_ and new_t == T_Object | T_Symbol | T_tilde_empty_
+                # FinalizationRegistry.prototype.register, because STA doesn't know that CanBeHeldWeakly is a type-test
             ):
                 # It's unclear whether it's worth posting an error for these.
                 if 0:
@@ -3320,7 +3323,7 @@ fields_for_record_type_named_ = {
 
     # 25.2.3.2 FinalizationRegistry.prototype.register
     'FinalizationRegistryCellRecord_': {
-        'WeakRefTarget'  : T_Object | T_tilde_empty_,
+        'WeakRefTarget'  : T_Object | T_Symbol | T_tilde_empty_,
         'HeldValue'      : T_Tangible_,
         'UnregisterToken': T_Object | T_tilde_empty_,
     },
@@ -7591,6 +7594,10 @@ class _:
 class _:
     s_tb = T_Object
 
+@P('{LIST_ELEMENTS_DESCRIPTION} : either Objects or Symbols')
+class _:
+    s_tb = T_Object | T_Symbol
+
 @P('{LIST_ELEMENTS_DESCRIPTION} : property keys')
 class _:
     s_tb = T_String | T_Symbol
@@ -10804,7 +10811,6 @@ set_up_internal_thing('slot', 'SymbolData', T_Symbol)
 #@ 20.4.2.2 Symbol.for
 
 @P(r"{EX} : the GlobalSymbolRegistry List")
-@P(r"{EX} : the GlobalSymbolRegistry List (see {h_emu_xref})")
 class _:
     def s_expr(expr, env0, _):
         return (ListType(T_GlobalSymbolRegistry_Record), env0)
@@ -11867,7 +11873,7 @@ class _:
 class _:
     s_tb = T_WeakRef_object_
 
-set_up_internal_thing('slot', 'WeakRefTarget', T_Object)
+set_up_internal_thing('slot', 'WeakRefTarget', T_Object | T_Symbol | T_tilde_empty_)
 
 # ==============================================================================
 #@ 26.2 FinalizationRegistry Objects
