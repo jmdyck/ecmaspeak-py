@@ -432,7 +432,6 @@
     control reaches here
     either {DOTTING} or {DOTTING} is {LITERAL}
     it must be in the Object Environment Record
-    neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})
     no such execution context exists
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
@@ -450,7 +449,6 @@
     the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods
     the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
     the character {EX} is matched by {nonterminal}
-    the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits
     the decimal representation of {var} has 20 or fewer significant digits
     the duplicate entries are only bound by {cap_word}
     the execution context stack is empty
@@ -555,7 +553,6 @@
     {var} and {var} have overlapping ranges
     {var} and {var} have the same number of elements
     {var} binds a single name
-    {var} can be interpreted as an expansion of {nonterminal}
     {var} contains a code unit that is not a radix-{var} digit
     {var} contains a formal parameter mapping for {var}
     {var} contains a single {nonterminal}
@@ -615,7 +612,6 @@
     {var} is not finite
     {var} is not in {INTERVAL}
     {var} is not in {PREFIX_PAREN}
-    {var} is not in {var}
     {var} is not on the list of waiters in any WaiterList
     {var} is not on the list of waiters in {var}
     {var} is now an empty List
@@ -763,7 +759,6 @@
     such an object created in a host-defined manner
     that Record
     the 32-bit two's complement bit string representing {EX}
-    the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}
     the Agent Events Record of {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
     the BigInt value that corresponds to {var}
@@ -805,8 +800,6 @@
     the String value consisting of the representation of {var} using radix {var}
     the String value consisting of {EX}
     the String value consisting solely of {code_unit_lit}
-    the String value containing only the code unit {var}
-    the String value containing the single code unit {var}
     the String value containing {var} occurrences of {code_unit_lit}
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {code_unit_lit}. A comma is not inserted either before the first String or after the last String
     the String value formed by concatenating all the element Strings of {var} with each adjacent pair of Strings separated with {var}. The {var} String is not inserted either before the first String or after the last String
@@ -838,7 +831,6 @@
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the code point whose numeric value is {EX}
     the code point {var}
-    the code unit whose numeric value is {EX}
     the element of {EX} whose {DSBN} is {EX}
     the element of {EX} whose {DSBN} field is {var}
     the empty CharSet
@@ -860,7 +852,7 @@
     the last element of {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {EX}, {EX}, and {EX}
-    the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}
+    the longest prefix of {var} that satisfies the syntax of a {nonterminal}, which might be {var} itself. If there is no such prefix, return {NUMBER_LITERAL}
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
     the negative of {EX}
@@ -957,8 +949,8 @@
     the String {var}
     the code point matched by {PROD_REF}
     the code unit at index {EX} within {EX}
-    the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}
-    the code unit whose value is {EX}
+    the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}
+    the code unit whose numeric value is {EX}
     the current Realm Record
     the difference {var} minus {var}
     the digits of the decimal representation of {var} (in order, with no leading zeroes)

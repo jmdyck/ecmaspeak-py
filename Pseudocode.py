@@ -1636,6 +1636,9 @@ nts_behind_var_in_sdo_call = {
     # 23979
     ('StringNumericValue', '_parsedNumber_') : ['StrDecimalLiteral'],
 
+    # 29052 ParseHexOctet
+    ('MV', '_parseResult_'): ['HexDigits'],
+
     # 30931 RegExpInitialize
     ('CompilePattern', '_parseResult_'): ['Pattern'],
 

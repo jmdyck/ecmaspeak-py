@@ -3794,21 +3794,14 @@ class _:
     s_tb = a_subset_of(T_code_unit_)
     s_expr = s_expr_pass_down
 
-@P(r"{EX} : the code unit whose value is {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_ | T_MathInteger_)
-        return (T_code_unit_, env0)
-
-@P(r"{EXPR} : the code unit whose numeric value is {EX}")
+@P(r"{EX} : the code unit whose numeric value is {EX}")
 class _:
     def s_expr(expr, env0, _):
         [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (T_code_unit_, env0)
 
-@P(r"{EX} : the code unit whose value is determined by {PROD_REF} according to {h_emu_xref}")
+@P(r"{EX} : the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}")
 class _:
     def s_expr(expr, env0, _):
         [nonterminal, emu_xref] = expr.children
@@ -3826,7 +3819,6 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
         return (T_MathInteger_, env1)
 
-@P(r'{CONDITION_1} : {var} is not in {var}')
 @P(r'{CONDITION_1} : {var} occurs exactly once in {var}')
 class _:
     def s_cond(cond, env0, asserting):
@@ -6971,23 +6963,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_String)
         return (T_MathNonNegativeInteger_, env0)
 
-@P(r"{EXPR} : the 8-bit value represented by the two hexadecimal digits at index {EX} and {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [posa, posb] = expr.children
-        env0.assert_expr_is_of_type(posa, T_MathInteger_)
-        env0.assert_expr_is_of_type(posb, T_MathInteger_)
-        return (T_MathInteger_, env0)
-
-@P(r"{CONDITION_1} : the code units at index ({SUM}) and ({SUM}) within {var} do not represent hexadecimal digits")
-class _:
-    def s_cond(cond, env0, asserting):
-        [posa, posb, var] = cond.children
-        env0.assert_expr_is_of_type(posa, T_MathInteger_)
-        env0.assert_expr_is_of_type(posb, T_MathInteger_)
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
 # ------------------------------------------------------------------------------
 #> The length of a String is the number of elements (i.e., 16-bit values) within it.
 #> The empty String has length zero and therefore contains no elements.
@@ -7092,8 +7067,6 @@ class _:
         return (T_String, env1)
 
 @P(r"{EXPR} : the String value consisting solely of {code_unit_lit}")
-@P(r"{EXPR} : the String value containing only the code unit {var}")
-@P(r"{EXPR} : the String value containing the single code unit {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -7222,30 +7195,14 @@ class _:
 # Comparing a String value to a nonterminal:
 
     # for 19.2.4 parseFloat
-@P(r"{CONDITION_1} : neither {var} nor any prefix of {var} satisfies the syntax of a {nonterminal} (see {h_emu_xref})")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var1, var2, nont, emu_xref] = cond.children
-        assert same_source_text(var1, var2)
-        env0.assert_expr_is_of_type(var1, T_String)
-        return (env0, env0)
-
-    # for 19.2.4 parseFloat
-@P(r"{EXPR} : the longest prefix of {var}, which might be {var} itself, that satisfies the syntax of a {nonterminal}")
+@P(r"{EXPR} : the longest prefix of {var} that satisfies the syntax of a {nonterminal}, which might be {var} itself. If there is no such prefix, return {NUMBER_LITERAL}")
 class _:
     def s_expr(expr, env0, _):
-        [var1, var2, nont] = expr.children
+        [var1, nont, var2, lit] = expr.children
         assert same_source_text(var1, var2)
-        env0.assert_expr_is_of_type(var1, T_String)
-        return (T_String, env0)
-
-    # for B.2.1.2
-@P(r"{CONDITION_1} : {var} can be interpreted as an expansion of {nonterminal}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, nont] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
+        env0.assert_expr_is_of_type(var1, T_Unicode_code_points_)
+        proc_add_return(env0, T_Number, lit)
+        return (T_Unicode_code_points_, env0)
 
 # ==============================================================================
 #@ 6.1.5 The Symbol Type
