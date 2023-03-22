@@ -10136,7 +10136,7 @@ class _:
     s_tb = T_agent_signifier_
 
 # ==============================================================================
-#@ 9.10 Processing Model of WeakRef and FinalizationRegistry Objects
+#@ 9.10 Processing Model of WeakRef and FinalizationRegistry Targets
 
 # 9.10.4.1
 @P(r"{SMALL_COMMAND} : perform any host-defined steps for reporting the error")
