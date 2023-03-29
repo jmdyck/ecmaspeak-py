@@ -1289,28 +1289,6 @@ traverse(named_type_hierarchy, None)
 
 troot = tnode_for_type_[T_Top_]
 
-def ensure_tnode_for(type):
-    assert isinstance(type, Type)
-    if type in tnode_for_type_:
-        return tnode_for_type_[type]
-    else:
-        if isinstance(type, NamedType):
-            assert 0, type
-        elif isinstance(type, ThrowType):
-            parent_type = T_throw_
-        elif isinstance(type, ListType):
-            parent_type = T_List # XXX but this fails to capture subtypes within
-        elif isinstance(type, ProcType):
-            parent_type = T_proc_
-        else:
-            assert 0, type
-        return TNode(type, tnode_for_type_[parent_type])
-        # which has the side-effect of adding it to tnode_for_type_
-
-ensure_tnode_for( ListType(T_other_) )
-ensure_tnode_for( ProcType((), T_other_) )
-ensure_tnode_for( ThrowType(T_other_) )
-
 # ------------------------------------------------------------------------------
 
 T_TBD = TBDType()
@@ -1449,14 +1427,26 @@ def union_of_types(types):
     assert len(memtypes) > 0
 
     list_memtypes = []
+    abrupt_memtypes = []
+    proc_memtypes = []
     other_memtypes = []
     for mt in memtypes:
         if mt == T_List or isinstance(mt, ListType):
             list_memtypes.append(mt)
+        elif mt in [T_Abrupt, T_continue_, T_break_, T_return_, T_throw_] or isinstance(mt, ThrowType):
+            abrupt_memtypes.append(mt)
+        elif isinstance(mt, ProcType):
+            # There isn't a T_Proc, or a NamedType that resolves to a ProcType.
+            proc_memtypes.append(mt)
         else:
             other_memtypes.append(mt)
 
-    result_memtypes = union_of_list_memtypes(list_memtypes) + union_of_other_memtypes(other_memtypes)
+    result_memtypes = (
+        union_of_list_memtypes(list_memtypes)
+        + union_of_abrupt_memtypes(abrupt_memtypes)
+        + union_of_proc_memtypes(proc_memtypes)
+        + union_of_other_memtypes(other_memtypes)
+    )
 
     assert result_memtypes
 
@@ -1498,6 +1488,43 @@ def union_of_list_memtypes(list_memtypes):
 
 # ------------------------------------------------------------------------------
 
+def union_of_abrupt_memtypes(abrupt_memtypes):
+
+    if len(abrupt_memtypes) <= 1:
+        return abrupt_memtypes
+
+    if T_Abrupt in abrupt_memtypes:
+        # That subsumes all other abrupt-types
+        return [T_Abrupt]
+
+    result_types = []
+
+    for memtype in [T_break_, T_continue_, T_return_, T_throw_]:
+        if memtype in abrupt_memtypes:
+            result_types.append(memtype)
+        elif memtype == T_throw_:
+            error_types = []
+            for mt in abrupt_memtypes:
+                if isinstance(mt, ThrowType):
+                    error_types.append(mt.error_type)
+            if error_types:
+                error_type_union = union_of_types(error_types)
+                t = ThrowType(error_type_union)
+                result_types.append(t)
+
+    return result_types
+
+# ------------------------------------------------------------------------------
+
+def union_of_proc_memtypes(proc_memtypes):
+
+    if len(proc_memtypes) <= 1:
+        return proc_memtypes
+
+    assert 0
+
+# ------------------------------------------------------------------------------
+
 def union_of_other_memtypes(memtypes):
 
     if len(memtypes) <= 1:
@@ -1506,9 +1533,8 @@ def union_of_other_memtypes(memtypes):
     tnodes = []
     for mt in memtypes:
         assert isinstance(mt, Type), mt
-        assert not isinstance(mt, UnionType), mt
-        assert not isinstance(mt, ListType), mt
-        tnodes.append(ensure_tnode_for(mt))
+        assert isinstance(mt, NamedType), mt
+        tnodes.append(tnode_for_type_[mt])
 
     assert tnodes
 
