@@ -1530,56 +1530,44 @@ def union_of_other_memtypes(memtypes):
     if len(memtypes) <= 1:
         return memtypes
 
-    tnodes = []
-    for mt in memtypes:
-        assert isinstance(mt, Type), mt
-        assert isinstance(mt, NamedType), mt
-        tnodes.append(tnode_for_type_[mt])
-
-    assert tnodes
-
-    for tnode in tnodes:
-        tnode._include_all = True
-
-    result_members = []
+    memtypes_set = set(memtypes)
 
     def recurse(tnode):
-        # Return True iff all of tnode is included in the union.
+        if not tnode.children: return
 
-        if hasattr(tnode, '_include_all'): return True
-
-        if tnode.children:
-
-            children_included = [
-                recurse(child)
-                for child in tnode.children
-            ]
-
-            if False and trace_this_op:
-                print(tnode.type, "children_included = ", children_included)
-
-            if all(children_included):
-                tnode._include_all = True
-                return True
-            else:
-                for child in tnode.children:
-                    if hasattr(child, '_include_all'):
-                        result_members.append(child.type)
-                return False
+        if tnode.type in memtypes_set:
+            # {tnode.type} subsumes all subtypes,
+            # so since {tnode.type} is in {memtypes_set}
+            # remove any of its subtypes that are in {memtypes_set}.
+            rm_all_descendants_of(tnode)
 
         else:
-            return False
+            # {tnode.type} isn't in memtypes_set,
+            # but if all of its children are,
+            # then we can replace them with {tnode.type}
 
-    if recurse(troot):
-        result_members.append(troot.type)
+            for child_tnode in tnode.children:
+                recurse(child_tnode)
 
-    for tnode in tnodes:
-        anc = tnode
-        while anc is not None:
-            if hasattr(anc, '_include_all'): del anc._include_all
-            anc = anc.parent
+            if all(
+                child_tnode.type in memtypes_set
+                for child_tnode in tnode.children
+            ):
+                stderr("! replacing ...")
+                for child_tnode in tnode.children:
+                    stderr("!    ", child_tnode.type)
+                    memtypes_set.remove(child_tnode.type)
+                stderr("! with", tnode.type)
+                memtypes_set.add(tnode.type)
 
-    return result_members
+    def rm_all_descendants_of(tnode):
+        for child_tnode in tnode.children:
+            memtypes_set.discard(child_tnode.type)
+            rm_all_descendants_of(child_tnode)
+
+    recurse(troot)
+
+    return list(memtypes_set)
 
 # ------------------------------------------------------------------------------
 
