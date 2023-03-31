@@ -13,8 +13,6 @@ import Pseudocode
 
 def process_tables():
 
-    spec.RecordSchema_for_name_ = {}
-
     for emu_table in spec.doc_node.each_descendant_named('emu-table'):
         caption = emu_table._caption
         header_line = '; '.join(emu_table._header_row.cell_texts)
@@ -116,10 +114,19 @@ def process_tables():
 def ensure_RecordSchema(tc_schema_name):
     if tc_schema_name in spec.RecordSchema_for_name_:
         return spec.RecordSchema_for_name_[tc_schema_name]
+    elif tc_schema_name == TC_SCHEMA_NAME_FOR_ROOT_SCHEMA:
+        # Not in spec.RecordSchema_for_name_
+        return root_schema_name
     else:
-        record_schema = RecordSchema(tc_schema_name)
-        spec.RecordSchema_for_name_[tc_schema_name] = record_schema
-        return record_schema
+        super_tc_schema_name = sub_to_super_relation.get(tc_schema_name, TC_SCHEMA_NAME_FOR_ROOT_SCHEMA)
+        # This means that a Record schema that is not declared to be
+        # a sub-schema of some other Record schema
+        # is here represented as a sub-schema of the 'root' schema.
+        # I.e., all record schemas are in a single hierarchy,
+        # which makes some processing easier.
+
+        return RecordSchema(tc_schema_name, super_tc_schema_name)
+        # which has a side-effect of adding the schema to spec.RecordSchema_for_name_
 
 # There are a couple of Record-schema hierarchies,
 # and we want to capture that hierarchy in RecordSchema instances.
@@ -153,29 +160,26 @@ sub_to_super_relation = {
 }
 
 class RecordSchema:
-    def __init__(self, tc_schema_name):
+    def __init__(self, tc_schema_name, super_tc_schema_name):
         self.tc_schema_name = tc_schema_name
         self.addl_field_decls = {}
         self.addl_method_decls = {}
         self.method_defns = {}
         self.sub_schemas = []
 
-        if tc_schema_name == '':
+        if super_tc_schema_name is None:
+            assert tc_schema_name == TC_SCHEMA_NAME_FOR_ROOT_SCHEMA # just checking
             self.super_schema = None
             self.level = 0
-        elif tc_schema_name in sub_to_super_relation:
-            super_tc_schema_name = sub_to_super_relation[tc_schema_name]
+            # Don't put the root schema into spec.RecordSchema_for_name_
+        else:
             self.super_schema = ensure_RecordSchema(super_tc_schema_name)
             self.super_schema.sub_schemas.append(self)
             self.level = 1 + self.super_schema.level
-        else:
-            self.super_schema = EMPTY_record_schema
-            # That is, a Record schema that is not declared to be
-            # a sub-schema of some other Record schema
-            # is here represented as a sub-schema of the Empty Record schema.
-            # I think this will be useful, but maybe not.
-            self.super_schema.sub_schemas.append(self)
-            self.level = 1
+            spec.RecordSchema_for_name_[tc_schema_name] = self
+
+    def __repr__(self):
+        return f"RecordSchema({self.tc_schema_name!r}, {None if self.super_schema is None else self.super_schema.tc_schema_name!r})"
 
     def __str__(self):
         return f"RecordSchema({self.tc_schema_name!r}, {len(self.addl_field_decls)} fields, {len(self.addl_method_decls)} methods, {len(self.sub_schemas)} sub-schemas)"
@@ -212,7 +216,7 @@ class RecordSchema:
         sup = self
         while True:
             sup = sup.super_schema
-            if sup.tc_schema_name == '': return
+            if sup.tc_schema_name == TC_SCHEMA_NAME_FOR_ROOT_SCHEMA: return
             yield sup
 
     def preorder_traverse_subtree(self):
@@ -220,7 +224,9 @@ class RecordSchema:
         for sub in self.sub_schemas:
             yield from sub.preorder_traverse_subtree()
 
-EMPTY_record_schema = RecordSchema('')
+spec.RecordSchema_for_name_ = {}
+TC_SCHEMA_NAME_FOR_ROOT_SCHEMA = 'Empty Record'
+root_schema_name = RecordSchema(TC_SCHEMA_NAME_FOR_ROOT_SCHEMA, None)
 
 class FieldDecl:
     def __init__(self, name, nature, meaning, value_description=None):
@@ -358,7 +364,7 @@ def print_schema_hierarchies():
         else:
             return 1
 
-    for rs in EMPTY_record_schema.sub_schemas:
+    for rs in root_schema_name.sub_schemas:
         if rs.sub_schemas:
             print_hierarchy(rs)
 
