@@ -116,7 +116,7 @@ def ensure_RecordSchema(tc_schema_name):
         return spec.RecordSchema_for_name_[tc_schema_name]
     elif tc_schema_name == TC_SCHEMA_NAME_FOR_ROOT_SCHEMA:
         # Not in spec.RecordSchema_for_name_
-        return root_schema_name
+        return root_schema
     else:
         super_tc_schema_name = sub_to_super_relation.get(tc_schema_name, TC_SCHEMA_NAME_FOR_ROOT_SCHEMA)
         # This means that a Record schema that is not declared to be
@@ -226,7 +226,7 @@ class RecordSchema:
 
 spec.RecordSchema_for_name_ = {}
 TC_SCHEMA_NAME_FOR_ROOT_SCHEMA = 'Empty Record'
-root_schema_name = RecordSchema(TC_SCHEMA_NAME_FOR_ROOT_SCHEMA, None)
+root_schema = RecordSchema(TC_SCHEMA_NAME_FOR_ROOT_SCHEMA, None)
 
 class FieldDecl:
     def __init__(self, name, nature, meaning, value_description=None):
@@ -364,7 +364,7 @@ def print_schema_hierarchies():
         else:
             return 1
 
-    for rs in root_schema_name.sub_schemas:
+    for rs in root_schema.sub_schemas:
         if rs.sub_schemas:
             print_hierarchy(rs)
 
