@@ -171,6 +171,7 @@ class RecordSchema:
             assert tc_schema_name == TC_SCHEMA_NAME_FOR_ROOT_SCHEMA # just checking
             self.super_schema = None
             self.level = 0
+            spec.root_RecordSchema = self
             # Don't put the root schema into spec.RecordSchema_for_name_
         else:
             self.super_schema = ensure_RecordSchema(super_tc_schema_name)
