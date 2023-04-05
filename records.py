@@ -71,6 +71,8 @@ def extract_record_schemas():
                 [method_signature, method_purpose] = row.cell_texts
                 record_schema.add_method_decl(MethodDecl(method_signature, method_purpose))
 
+    # ==========================================================================
+
     # So that covers all Record-schemas that are declared
     # via "Fields" table and/or "Methods" table.
     # However, there are a couple more...
@@ -83,7 +85,7 @@ def extract_record_schemas():
     # Presumably there's no "Fields" table because
     # such a table would basically just duplicate
     # the "Property Attributes" tables.
-    #
+
     record_schema = ensure_RecordSchema('Property Descriptor')
     record_schema.add_field_decl(FieldDecl('[[Get]]',          'an Object or *undefined*', ''))
     record_schema.add_field_decl(FieldDecl('[[Set]]',          'an Object or *undefined*', ''))
@@ -92,19 +94,23 @@ def extract_record_schemas():
     record_schema.add_field_decl(FieldDecl('[[Enumerable]]',   'a Boolean', ''))
     record_schema.add_field_decl(FieldDecl('[[Configurable]]', 'a Boolean', ''))
 
+    # --------------------------------------------------------------------------
+
     # 9.1 "Environment Records":
     #> Every Environment Record has an [[OuterEnv]] field,
     #> which is either *null* or a reference to an outer Environment Record.
-    #
+
     record_schema = ensure_RecordSchema('Environment Record')
     assert len(record_schema.addl_field_decls) == 0
     record_schema.add_field_decl(FieldDecl('[[OuterEnv]]', '*null* or an Environment Record', 'used to model the logical nesting of Environment Record values'))
+
+    # --------------------------------------------------------------------------
 
     # 16.2.1.4 "Abstract Module Records":
     # (on the `ResolveExport` row of the "Abstract Methods of Module Records" table)
     #> Bindings are represented by a <dfn>ResolvedBinding Record</dfn>,
     #> of the form { [[Module]]: Module Record, [[BindingName]]: String | ~namespace~ }.
-    #
+
     record_schema = ensure_RecordSchema('ResolvedBinding Record')
     record_schema.add_field_decl(FieldDecl('[[Module]]', 'a Module Record', ''))
     record_schema.add_field_decl(FieldDecl('[[BindingName]]', 'a String or ~namespace~', ''))
