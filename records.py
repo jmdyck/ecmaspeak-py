@@ -265,6 +265,71 @@ def print_schema_hierarchies():
     f = open_for_output('record_schemas')
     def output(*args): print(*args, file=f)
 
+    def dump_schema(rs):
+        ind = '        ' * (rs.level-1)
+
+        output()
+        output(f"{ind}{rs.tc_schema_name}:")
+
+        if rs.super_schema is None or rs.super_schema is root_schema:
+            addl = ''
+        else:
+            addl = 'additional '
+
+        output(f"{ind}    {addl}fields:")
+        if rs.addl_field_decls:
+            for field_decl in rs.addl_field_decls.values():
+                output(f"{ind}      -")
+                output(f"{ind}        name:    {field_decl.name}")
+                output(f"{ind}        nature:  {field_decl.nature}")
+                output(f"{ind}        meaning: {field_decl.meaning}")
+                # output(f"{ind}    val desc: {field_decl.value_description}")
+        else:
+            output(f"{ind}        (none)")
+
+        if rs.addl_method_decls:
+            output()
+            output(f"{ind}    {addl}methods:")
+            for method_decl in rs.addl_method_decls.values():
+                single_line_purpose = re.sub(r'\s+', ' ', method_decl.purpose)
+                output(f"{ind}      -")
+                output(f"{ind}        signature: {method_decl.signature}")
+                output(f"{ind}        purpose:   {single_line_purpose}")
+
+        if rs.method_defns:
+            output()
+            output(f"{ind}    method definitions:")
+            for method_defn in rs.method_defns.values():
+                # output(f"{ind}        {method_defn.name}")
+                # output(f"{ind}        {method_defn.alg_header}")
+                # output(f"{ind}        {method_defn.alg_defn}")
+
+                section = method_defn.alg_header.section
+                output(f"{ind}        {section.section_num} {section.section_title}")
+
+                if method_defn.alg_defn is None:
+                    # This method definition "is never used within this specification".
+                    # defn_part += '*'
+                    pass
+                else:
+                    # defn_part += str(method_defn.alg_defn)
+                    pass
+                # output(f"{ind}        {defn_part}")
+
+        if rs.sub_schemas:
+            output()
+            output(f"{ind}    sub-schemas:")
+            for sub_schema in rs.sub_schemas:
+                dump_schema(sub_schema)
+
+    for schema in root_schema.sub_schemas:
+        dump_schema(schema)
+
+    output()
+    output("=" * 111)
+
+    # --------------------------------------------------------------------------
+
     def print_hierarchy(root):
         root_abbrev = ''.join(
             word[0]
