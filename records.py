@@ -115,6 +115,38 @@ def extract_record_schemas():
     record_schema.add_field_decl(FieldDecl('[[Module]]', 'a Module Record', ''))
     record_schema.add_field_decl(FieldDecl('[[BindingName]]', 'a String or ~namespace~', ''))
 
+    # --------------------------------------------------------------------------
+
+    # 29.1 "Memory Model Fundamentals":
+    #> A <dfn>Shared Data Block event</dfn> is either
+    #> a <dfn>ReadSharedMemory</dfn>, <dfn>WriteSharedMemory</dfn>, or <dfn>ReadModifyWriteSharedMemory</dfn> Record.
+    #
+    # It's tempting to make 'Shared Data Block event' (SDBE)
+    # an abstract record schema that the others descend from,
+    # but that's problematic for static analysis.
+    #
+    # - If you say it has no fields, then
+    #   if _event_ is declared/inferred to be a SDBE,
+    #   then _event_.[[Order]] (say) is tough to type-check,
+    #   because SDBE doesn't itself have an [[Order]] field.
+    #
+    # - If instead you say that it has the 5 fields
+    #   that are common to the three *SharedMemory Event schemas,
+    #   you'd need to drop/exclude those fields
+    #   from the *SharedMemory Event schemas.
+    #   But then you'd lose the fact that the different schemas
+    #   constrain [[Order]] and [[NoTear]] differently.
+    #
+    # (Instead, static analysis defines SDBE as a UnionType.)
+
+    #> Some operations may also introduce <dfn>Synchronize</dfn> events.
+    #> A <dfn variants="Synchronize events">Synchronize event</dfn> has no fields,
+    #> and exists purely to directly constrain the permitted orderings of other events.
+    record_schema = ensure_RecordSchema('Synchronize Event')
+
+    #> In addition to Shared Data Block and Synchronize events, there are host-specific events.
+    record_schema = ensure_RecordSchema('Host-Specific Event')
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def ensure_RecordSchema(tc_schema_name):
