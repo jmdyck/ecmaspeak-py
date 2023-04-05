@@ -262,7 +262,7 @@ class MethodDefn:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def print_schema_hierarchies():
-    f = open_for_output('record_schema_hierarchies')
+    f = open_for_output('record_schemas')
     def output(*args): print(*args, file=f)
 
     def print_hierarchy(root):
