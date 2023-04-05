@@ -50,7 +50,7 @@ def main():
     Pseudocode.create_all_parsers()
 
     check_tables()
-    records.process_tables()
+    records.extract_record_schemas()
     Section.make_and_check_sections()
     records.print_schema_hierarchies()
     process_intrinsics_facts()

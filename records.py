@@ -11,7 +11,7 @@ import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def process_tables():
+def extract_record_schemas():
 
     for emu_table in spec.doc_node.each_descendant_named('emu-table'):
         caption = emu_table._caption
