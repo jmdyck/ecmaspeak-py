@@ -16,15 +16,15 @@ from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
 from Graph import Graph
 from DecoratedFuncDict import DecoratedFuncDict
+import records
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+outdir = sys.argv[1]
+shared.register_output_dir(outdir)
+spec.restore()
+
 def main():
-    outdir = sys.argv[1]
-
-    shared.register_output_dir(outdir)
-    spec.restore()
-
     prep_for_STA()
     gather_nonterminals()
     levels = compute_dependency_levels()
@@ -1062,72 +1062,20 @@ named_type_hierarchy = {
                 },
                 'Private Name': {},
                 'Record': {
-                    'Agent Record': {},
-                    'Agent Events Record': {},
-                    'AsyncGeneratorRequest Record': {},
-                    'Chosen Value Record': {},
-                    'ClassFieldDefinition Record': {},
-                    'ClassStaticBlockDefinition Record': {},
                     'CharacterClassResultRecord_': {},
-                    'Environment Record': {
-                        'Declarative Environment Record': {
-                            'Function Environment Record': {},
-                            'Module Environment Record': {},
-                        },
-                        'Object Environment Record': {},
-                        'Global Environment Record': {},
-                    },
-                    'ExportEntry Record': {},
                     'ExportResolveSet_Record_': {},
                     'FinalizationRegistryCellRecord_': {},
                     'FindResultRecord_': {},
-                    'GlobalSymbolRegistry Record': {},
-                    'GraphLoadingState Record': {},
-                    'ImportEntry Record': {},
                     'ImportMeta_record_': {},
                     'Intrinsics Record': {},
-                    'Iterator Record': {},
-                    'JSON Serialization Record': {},
                     'Job_record_': {},
-                    'JobCallback Record': {},
                     'LoadedModule_Record_': {},
                     'MapData_record_': {},
-                    'Match Record': {},
-                    'Module Record': {
-                        'Cyclic Module Record': {
-                            'Source Text Module Record': {},
-                            'other Cyclic Module Record': {},
-                        },
-                        'other Module Record': {},
-                    },
-                    'PrivateElement': {},
-                    'PrivateEnvironment Record': {},
-                    'PromiseCapability Record': {},
-                    'PromiseReaction Record': {},
-                    'Property Descriptor': {
-                        # subtypes data and accessor and generic?
-                    },
                     'QuantifierPrefixResultRecord_': {},
                     'QuantifierResultRecord_': {},
-                    'Realm Record': {},
-                    'Reference Record': {},
-                    'RegExp Record': {},
-                    'ResolvedBinding Record': {},
                     'ResolvingFunctions_record_': {},
-                    'Script Record': {},
-                    #
                     'boolean_value_record_': {},
-                    'Candidate Execution Record': {},
                     'CodePointAt_record_': {},
-                    'Event': {
-                        'Shared Data Block Event': {
-                            'ReadModifyWriteSharedMemory Event': {},
-                            'ReadSharedMemory Event': {},
-                            'WriteSharedMemory Event': {},
-                        },
-                        'Synchronize Event': {},
-                        'Host-Specific Event': {},
-                    },
                     'integer_value_record_': {},
                     'methodDef_record_': {},
                     'templateMap_entry_': {},
@@ -1268,22 +1216,45 @@ class TNode:
 
         tnode_for_type_[type] = self
 
+def NamedType_etc(type_name):
+    assert isinstance(type_name, str)
+    t = NamedType(type_name)
+    variable_name = 'T_' + type_name.replace(' ', '_').replace('-', '_')
+    globals()[variable_name] = t
+    return t
+
 def traverse(typesdict, p):
     for (type_name, subtypesdict) in typesdict.items():
     # sorted(typesdict.items(), key=lambda tup: 1 if tup[0] == 'List' else 0):
-        assert isinstance(type_name, str)
-        t = NamedType(type_name)
-        #
-        variable_name = 'T_' + type_name.replace(' ', '_')
-        globals()[variable_name] = t
-        #
-        tnode = TNode(t, p)
+        type = NamedType_etc(type_name)
+        tnode = TNode(type, p)
         traverse(subtypesdict, tnode)
 
 stderr("initializing the type hierarchy...")
 traverse(named_type_hierarchy, None)
 
 troot = tnode_for_type_[T_Top_]
+
+# ------------------------------------------------------------------------------
+
+# The spec declares Module Record with only one sub-schema, Cyclic Module Record.
+# And it declares Cyclic Module Record with only one sub-schema, Source Text Module Record.
+# But letting that stand causes problems for STA,
+# because it assumes you can replace a union-of-all-subtypes with the supertype,
+# but we don't want to replace (e.g.) Cyclic Module Record with Module Record.
+# The spec assumes that other specs/implementations can define
+# other sub-schemas of [Cyclic] Module Record,
+# so we create some ad hoc sub-schemas to prevent the union-of-all-subtypes mistake.
+rs = records.RecordSchema('other Module Record', 'Module Record')
+rs = records.RecordSchema('other Cyclic Module Record', 'Cyclic Module Record')
+
+def traverse_record_schema(super_schema, super_tnode):
+    for sub_schema in super_schema.sub_schemas:
+        sub_type = NamedType_etc(sub_schema.tc_schema_name)
+        sub_tnode = TNode(sub_type, super_tnode)
+        traverse_record_schema(sub_schema, sub_tnode)
+
+traverse_record_schema(spec.root_RecordSchema, tnode_for_type_[T_Record])
 
 # ------------------------------------------------------------------------------
 
@@ -1306,6 +1277,10 @@ T_captures_list_  = ListType(T_captures_entry_)
 T_Unicode_code_points_ = ListType(T_code_point_)
 
 T_Integer_Indexed_object_ = T_TypedArray_object_
+
+T_Shared_Data_Block_Event = T_ReadSharedMemory_Event | T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
+
+T_Event = T_Shared_Data_Block_Event | T_Synchronize_Event | T_Host_Specific_Event
 
 # ------------------------------------------
 
@@ -3168,13 +3143,6 @@ fields_for_record_type_named_ = {
         'Key'     : T_String | T_Symbol,
     },
 
-    'other Module Record': {
-        'Realm'           : T_Realm_Record,
-        'Environment'     : T_Module_Environment_Record | T_tilde_empty_,
-        'Namespace'       : T_Object | T_tilde_empty_,
-        'HostDefined'     : T_host_defined_,
-    },
-
     # 24003
     'ExportResolveSet_Record_': {
         'Module'     : T_Module_Record,
@@ -3239,15 +3207,6 @@ fields_for_record_type_named_ = {
     # 39784: PerformPromiseAll NO TABLE, not even mentioned
     'integer_value_record_': {
         'Value' : T_MathInteger_,
-    },
-
-    # 40060 ...
-    'Shared Data Block Event': {
-        'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_ | T_tilde_Init_,
-        'NoTear'      : T_Boolean,
-        'Block'       : T_Shared_Data_Block,
-        'ByteIndex'   : T_MathInteger_,
-        'ElementSize' : T_MathInteger_,
     },
 
 }
@@ -8857,8 +8816,7 @@ class _:
                     assert dsbn_name in fields_info
                     field_type = fields_info[dsbn_name]
                     types_for_field.add(field_type)
-                assert len(types_for_field) == 1
-                field_type = types_for_field.pop()
+                field_type = union_of_types(types_for_field)
                 return (field_type, env2)
 
             else:
