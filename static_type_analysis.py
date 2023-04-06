@@ -1119,14 +1119,14 @@ named_type_hierarchy = {
                     'boolean_value_record_': {},
                     'candidate execution': {},
                     'CodePointAt_record_': {},
-                    'event_': {
-                        'Shared Data Block event': {
-                            'ReadModifyWriteSharedMemory event': {},
-                            'ReadSharedMemory event': {},
-                            'WriteSharedMemory event': {},
+                    'Event': {
+                        'Shared Data Block Event': {
+                            'ReadModifyWriteSharedMemory Event': {},
+                            'ReadSharedMemory Event': {},
+                            'WriteSharedMemory Event': {},
                         },
-                        'Synchronize event': {},
-                        'host-specific event': {},
+                        'Synchronize Event': {},
+                        'Host-Specific Event': {},
                     },
                     'integer_value_record_': {},
                     'methodDef_record_': {},
@@ -2816,7 +2816,7 @@ def convert_nature_to_type(nature):
             'unknown': T_TBD,
 
             # memory model:
-            'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_event,
+            'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_Event,
 
             # for phrase:
             'Parse Node': T_Parse_Node,
@@ -3242,7 +3242,7 @@ fields_for_record_type_named_ = {
     },
 
     # 40060 ...
-    'Shared Data Block event': {
+    'Shared Data Block Event': {
         'Order'       : T_tilde_SeqCst_ | T_tilde_Unordered_ | T_tilde_Init_,
         'NoTear'      : T_Boolean,
         'Block'       : T_Shared_Data_Block,
@@ -3285,7 +3285,6 @@ def process_declared_record_type_info():
         ffrtn_name = record_schema.tc_schema_name
         # map from the title-case schema name in spec.RecordSchema_for_name_
         # to the name that the spec uses in practice (e.g., in {VAL_DESC}).
-        ffrtn_name = re.sub(' Event$', ' event', ffrtn_name)
         ffrtn_name = re.sub('Candidate Execution Record', 'candidate execution', ffrtn_name)
 
         assert ffrtn_name not in fields_for_record_type_named_
@@ -4422,7 +4421,7 @@ class _:
             "WeakMap"             : T_WeakMap_object_,
             "WeakRef"             : T_WeakRef_object_,
             "WeakSet"             : T_WeakSet_object_,
-            "event"               : T_Shared_Data_Block_event,
+            "event"               : T_Shared_Data_Block_Event,
             "integer"             : T_MathInteger_,
         }[item_nature.prod.rhs_s]
         env1 = env0.plus_new_entry(loop_var, item_type)
@@ -4439,11 +4438,11 @@ class _:
             collection_type = T_Unicode_code_points_
 
         elif item_nature.prod.rhs_s == r"event":
-            item_type = T_event_
-            collection_type = T_Set | ListType(T_event_)
+            item_type = T_Event
+            collection_type = T_Set | ListType(T_Event)
 
         elif item_nature.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event":
-            item_type = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+            item_type = T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
             collection_type = T_Set
 
         elif item_nature.prod.rhs_s == "{nonterminal}":
@@ -8487,7 +8486,7 @@ class _:
         dsbn_name = dsbn.source_text()[2:-2]
         if dsbn_name == 'EventList':
             env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
-            return (ListType(T_event_), env0)
+            return (ListType(T_Event), env0)
         elif dsbn_name == 'CandidateExecution':
             env0.assert_expr_is_of_type(ex, T_Agent_Record)
             return (T_candidate_execution, env0)
@@ -8586,7 +8585,7 @@ class _:
                 'ReadSharedMemory',
                 'WriteSharedMemory',
             ]:
-                record_type_name = constructor_prefix + ' event'
+                record_type_name = constructor_prefix + ' Event'
             elif constructor_prefix in [
                 'PromiseReaction',
                 'PromiseCapability',
@@ -8969,8 +8968,8 @@ class _:
     def s_expr(expr, env0, _):
         [a, b] = expr.children
         # over-specific:
-        env0.assert_expr_is_of_type(a, T_event_)
-        env0.assert_expr_is_of_type(b, T_event_)
+        env0.assert_expr_is_of_type(a, T_Event)
+        env0.assert_expr_is_of_type(b, T_Event)
         return (T_event_pair_, env0)
 
 @P(r'{COMMAND} : Add {var} to {var}.')
@@ -8980,7 +8979,7 @@ class _:
         [item_var, collection_var] = anode.children
         (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
         (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
-        if item_type.is_a_subtype_of_or_equal_to(T_event_) and collection_type == T_Set:
+        if item_type.is_a_subtype_of_or_equal_to(T_Event) and collection_type == T_Set:
             pass
         else:
             assert 0
@@ -9010,7 +9009,7 @@ class _:
     def s_cond(cond, env0, asserting):
         [item_var, set_pp] = cond.children
         env0.assert_expr_is_of_type(set_pp, T_Set)
-        env0.assert_expr_is_of_type(item_var, T_event_)
+        env0.assert_expr_is_of_type(item_var, T_Event)
         return (env0, env0)
 
 # ==============================================================================
@@ -9207,7 +9206,7 @@ class _:
 
 @P('{VAL_DESC} : a Shared Data Block event')
 class _:
-    s_tb = T_Shared_Data_Block_event
+    s_tb = T_Shared_Data_Block_Event
 
 @P(r'{EXPR} : a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception')
 class _:
@@ -11618,7 +11617,7 @@ class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_WaiterList)
-        return (T_Synchronize_event, env0)
+        return (T_Synchronize_Event, env0)
 
 #> Initially a WaiterList object has an empty list and no Synchronize event.
 
@@ -11863,39 +11862,39 @@ class _:
 
 @P('{VAL_DESC} : a WriteSharedMemory event')
 class _:
-    s_tb = T_WriteSharedMemory_event
+    s_tb = T_WriteSharedMemory_Event
 
 @P('{VAL_DESC} : a ReadModifyWriteSharedMemory event')
 class _:
-    s_tb = T_ReadModifyWriteSharedMemory_event
+    s_tb = T_ReadModifyWriteSharedMemory_Event
 
 @P('{VAL_DESC} : a ReadSharedMemory or ReadModifyWriteSharedMemory event')
 class _:
-    s_tb = T_ReadSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+    s_tb = T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
 
 @P('{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event')
 class _:
-    s_tb = T_Shared_Data_Block_event
+    s_tb = T_Shared_Data_Block_Event
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : events')
 class _:
-    s_tb = T_event_
+    s_tb = T_Event
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events')
 class _:
-    s_tb = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+    s_tb = T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events')
 class _:
-    s_tb = T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event
+    s_tb = T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
 
 @P(r"{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
 class _:
     def s_cond(cond, env0, asserting):
         # XXX spec is ambiguous: "each is A or B" vs "either both A or both B"
         [ea, eb] = cond.children
-        (a_t_env, a_f_env) = env0.with_type_test(ea, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(eb, 'is a', T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event, asserting)
+        (a_t_env, a_f_env) = env0.with_type_test(ea, 'is a', T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event, asserting)
+        (b_t_env, b_f_env) = env0.with_type_test(eb, 'is a', T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event, asserting)
         return (
             env_and(a_t_env, b_t_env),
             env_or(a_f_env, b_f_env)
@@ -11905,7 +11904,7 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [let_var, stcond] = cond.children
-        env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_event)
+        env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_Event)
         return tc_cond(stcond, env_for_cond)
 
 #> A <dfn>Synchronize event</dfn> has no fields,
@@ -11915,7 +11914,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
-        return (T_Synchronize_event, env0)
+        return (T_Synchronize_Event, env0)
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events')
 class _:
@@ -11930,7 +11929,7 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [sdbe_var, loc_var] = cond.children
-        env1 = env0.ensure_expr_is_of_type(sdbe_var, T_Shared_Data_Block_event)
+        env1 = env0.ensure_expr_is_of_type(sdbe_var, T_Shared_Data_Block_Event)
         env2 = env1.ensure_expr_is_of_type(loc_var, T_MathInteger_)
         return (env2, env2)
 
@@ -11940,8 +11939,8 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [ea, eb] = cond.children
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
+        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_Event)
+        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_Event)
         return (env0, env0)
 
 @P(r"{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}")
@@ -11949,7 +11948,7 @@ class _:
     def s_cond(cond, env0, asserting):
         [let_var, i, stcond] = cond.children
         env0.assert_expr_is_of_type(i, T_MathInteger_)
-        env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event)
+        env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event)
         return tc_cond(stcond, env_for_cond)
 
 # ==============================================================================
@@ -12004,7 +12003,7 @@ class _:
 #@ 29.6.2 reads-bytes-from
 @P('{VAL_DESC} : a reads-bytes-from mathematical function')
 class _:
-    s_tb = ProcType([T_event_], ListType(T_WriteSharedMemory_event | T_ReadModifyWriteSharedMemory_event))
+    s_tb = ProcType([T_Event], ListType(T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event))
 
 #@ 29.6.3 reads-from
 @P('{VAL_DESC} : a reads-from Relation')
@@ -12033,8 +12032,8 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [ea, eb, exe] = cond.children
-        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_event)
-        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_event)
+        env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_Event)
+        env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_Event)
         env0.assert_expr_is_of_type(exe, T_candidate_execution)
         return (env0, env0)
 
