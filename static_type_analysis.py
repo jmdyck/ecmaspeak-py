@@ -1117,7 +1117,7 @@ named_type_hierarchy = {
                     'Script Record': {},
                     #
                     'boolean_value_record_': {},
-                    'candidate execution': {},
+                    'Candidate Execution Record': {},
                     'CodePointAt_record_': {},
                     'Event': {
                         'Shared Data Block Event': {
@@ -2823,7 +2823,7 @@ def convert_nature_to_type(nature):
 
             'an immutable prototype exotic object': T_Object,
 
-            'an execution': T_candidate_execution, # ???
+            'an execution': T_Candidate_Execution_Record, # ???
 
             'a Declarative Environment Record': T_Declarative_Environment_Record,
             'a Function Environment Record': T_Function_Environment_Record,
@@ -3283,9 +3283,9 @@ def process_declared_record_type_info():
         if record_schema.tc_schema_name == 'Completion Record': continue
 
         ffrtn_name = record_schema.tc_schema_name
-        # map from the title-case schema name in spec.RecordSchema_for_name_
+        # At this point, I used to map
+        # from the title-case schema name in spec.RecordSchema_for_name_
         # to the name that the spec uses in practice (e.g., in {VAL_DESC}).
-        ffrtn_name = re.sub('Candidate Execution Record', 'candidate execution', ffrtn_name)
 
         assert ffrtn_name not in fields_for_record_type_named_
         fields_for_record_type_named_[ffrtn_name] = d_from_spec
@@ -8489,7 +8489,7 @@ class _:
             return (ListType(T_Event), env0)
         elif dsbn_name == 'CandidateExecution':
             env0.assert_expr_is_of_type(ex, T_Agent_Record)
-            return (T_candidate_execution, env0)
+            return (T_Candidate_Execution_Record, env0)
         elif dsbn_name == 'LittleEndian':
             env0.assert_expr_is_of_type(ex, T_Agent_Record)
             return (T_Boolean, env0)
@@ -11979,11 +11979,11 @@ class _:
 
 @P('{VAL_DESC} : a candidate execution')
 class _:
-    s_tb = T_candidate_execution
+    s_tb = T_Candidate_Execution_Record
 
 @P('{VAL_DESC} : a candidate execution Record')
 class _:
-    s_tb = T_candidate_execution
+    s_tb = T_Candidate_Execution_Record
 
 # ==============================================================================
 #@ 29.5 Abstract Operations for the Memory Model
@@ -12034,7 +12034,7 @@ class _:
         [ea, eb, exe] = cond.children
         env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_Event)
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_Event)
-        env0.assert_expr_is_of_type(exe, T_candidate_execution)
+        env0.assert_expr_is_of_type(exe, T_Candidate_Execution_Record)
         return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
