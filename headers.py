@@ -529,7 +529,7 @@ class AlgHeader:
                     for param in self.params
                     )
                 }
-                returns: {self.return_nature_node.source_text()}
+                returns: {self.return_nature_node.source_text() if self.return_nature_node else 'None'}
                 # defns: {len(self.u_defns)}
         """
 
