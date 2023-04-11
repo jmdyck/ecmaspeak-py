@@ -1088,17 +1088,7 @@ named_type_hierarchy = {
                     # but doesn't seem to be treated that way.
                 'SlotName_': {},
                 'TypedArray_element_type': {
-                    'tilde_Int8_': {},
-                    'tilde_Uint8_': {},
-                    'tilde_Uint8C_': {},
-                    'tilde_Int16_': {},
-                    'tilde_Uint16_': {},
-                    'tilde_Int32_': {},
-                    'tilde_Uint32_': {},
-                    'tilde_BigInt64_': {},
-                    'tilde_BigUint64_': {},
-                    'tilde_Float32_': {},
-                    'tilde_Float64_': {},
+                    # children are filled in via code
                 },
                 'WaiterList' : {},
                 'agent_signifier_' : {},
@@ -1117,81 +1107,7 @@ named_type_hierarchy = {
                     'accessor_property_': {},
                 },
                 'tilde_': {
-                    'tilde_BigInt_': {},
-                    'tilde_ConstructorMethod_': {},
-                    'tilde_Fulfill_': {},
-                    'tilde_Init_': {},
-                    'tilde_NonConstructorMethod_': {},
-                    'tilde_Number_': {},
-                    'tilde_Reject_': {},
-                    'tilde_SeqCst_': {},
-                    'tilde_Unordered_': {},
-                    'tilde_accessor_': {},
-                    'tilde_all_': {},
-                    'tilde_all_but_default_': {},
-                    'tilde_ambiguous_': {},
-                    'tilde_ascending_': {},
-                    'tilde_assignment_': {},
-                    'tilde_asyncGenerator_': {},
-                    'tilde_async_': {},
-                    'tilde_async_iterate_': {},
-                    'tilde_awaiting_return_': {},
-                    'tilde_backward_': {},
-                    'tilde_base_': {},
-                    'tilde_completed_': {},
-                    'tilde_derived_': {},
-                    'tilde_descending_': {},
-                    'tilde_empty_': {},
-                    'tilde_end_': {},
-                    'tilde_enumerate_': {},
-                    'tilde_evaluated_': {},
-                    'tilde_evaluating_': {},
-                    'tilde_evaluating_async_': {},
-                    'tilde_executing_': {},
-                    'tilde_field_': {},
-                    'tilde_forward_': {},
-                    'tilde_frozen_': {},
-                    'tilde_fulfilled_': {},
-                    'tilde_generator_': {},
-                    'tilde_global_': {},
-                    'tilde_initialized_': {},
-                    'tilde_invalid_': {},
-                    'tilde_iterate_': {},
-                    'tilde_key_': {},
-                    'tilde_key_value_': {},
-                    'tilde_lexicalBinding_': {},
-                    'tilde_lexical_': {},
-                    'tilde_lexical_this_': {},
-                    'tilde_linked_': {},
-                    'tilde_linking_': {},
-                    'tilde_method_': {},
-                    'tilde_namespace_': {},
-                    'tilde_namespace_object_': {},
-                    'tilde_new_': {},
-                    'tilde_non_generator_': {},
-                    'tilde_non_lexical_this_': {},
-                    'tilde_normal_': {},
-                    'tilde_number_': {},
-                    'tilde_pending_': {},
-                    'tilde_read_through_holes_': {},
-                    'tilde_rejected_': {},
-                    'tilde_sealed_': {},
-                    'tilde_simple_': {},
-                    'tilde_skip_holes_': {},
-                    'tilde_start_': {},
-                    'tilde_start_end_': {},
-                    'tilde_strict_': {},
-                    'tilde_string_': {},
-                    'tilde_suspendedStart_': {},
-                    'tilde_suspendedYield_': {},
-                    'tilde_symbol_': {},
-                    'tilde_sync_': {},
-                    'tilde_uninitialized_': {},
-                    'tilde_unlinked_': {},
-                    'tilde_unresolvable_': {},
-                    'tilde_unused_': {},
-                    'tilde_value_': {},
-                    'tilde_varBinding_': {},
+                    # children are filled in via code
                 },
                 'other_': {},
             },
@@ -1255,6 +1171,38 @@ def traverse_record_schema(super_schema, super_tnode):
         traverse_record_schema(sub_schema, sub_tnode)
 
 traverse_record_schema(spec.root_RecordSchema, tnode_for_type_[T_Record])
+
+# ------------------------------------------------------------------------------
+
+# Define tilde-types
+
+# The spec doesn't have a form for 'declaring' tilde-words,
+# so all you can do is look for uses of them.
+# There are various places that tilde-words appear,
+# but it turns out you can find all the distinct ones
+# by looking for them just in algorithms.
+
+tilde_words = set()
+for bif_or_op in ['bif', 'op']:
+    for alg in spec.alg_info_[bif_or_op].values():
+        for alg_defn in alg.all_definitions():
+            st = alg_defn.anode.source_text()
+            for tilde_word in re.findall(r'~\S+~', st):
+                tilde_words.add(tilde_word)
+
+for tilde_word in sorted(tilde_words):
+    if tilde_word == '~failure~':
+        parent_type = T_MatchResult
+        continue # For now, it's clearer if it appears in the named_type_hierarchy
+    elif re.fullmatch(r'~\w+(8|8C|16|32|64)~', tilde_word):
+        parent_type = T_TypedArray_element_type
+    else:
+        parent_type = T_tilde_
+    parent_tnode = tnode_for_type_[parent_type]
+
+    tilde_type_name = 'tilde' + re.sub('\W', '_', tilde_word)
+    type = NamedType_etc(tilde_type_name)
+    tnode = TNode(type, parent_tnode)
 
 # ------------------------------------------------------------------------------
 
