@@ -3224,19 +3224,6 @@ def process_declared_record_type_info():
                     t = convert_nature_to_type(field_decl.nature)
                 else:
                     t = convert_nature_node_to_type(field_decl.value_description)
-
-                key = (record_schema.tc_schema_name, debracketed_field_name)
-                tweak = {
-                    # --------------
-                    # Just me?
-                    ('AsyncGeneratorRequest Record', 'Completion' ): ( T_Abrupt | T_Normal, T_Tangible_ | T_return_ | T_throw_ | T_tilde_empty_ ),
-                    ('JobCallback Record'          , 'HostDefined'): ( T_host_defined_    , T_host_defined_ | T_tilde_empty_ ),
-                }.get(key, None)
-                if tweak:
-                    (t_from_spec, t_for_compat) = tweak
-                    assert t == t_from_spec
-                    t = t_for_compat
-
                 d_from_spec[debracketed_field_name] = t
 
         if record_schema.tc_schema_name == 'Completion Record': continue
@@ -3248,6 +3235,22 @@ def process_declared_record_type_info():
 
         assert ffrtn_name not in fields_for_record_type_named_
         fields_for_record_type_named_[ffrtn_name] = d_from_spec
+
+    def tweak_record_schema_field_type(schema_name, debracketed_field_name, t_from_spec, t_for_compat):
+        fields_dict = fields_for_record_type_named_[schema_name]
+        assert fields_dict[debracketed_field_name] == t_from_spec
+        fields_dict[debracketed_field_name] = t_for_compat
+
+    tweak_record_schema_field_type(
+        'AsyncGeneratorRequest Record', 'Completion',
+        T_Abrupt | T_Normal,
+        T_Tangible_ | T_return_ | T_throw_ | T_tilde_empty_
+    )
+    tweak_record_schema_field_type(
+        'JobCallback Record', 'HostDefined',
+        T_host_defined_,
+        T_host_defined_ | T_tilde_empty_
+    )
 
     # ----------------
 
