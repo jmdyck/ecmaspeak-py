@@ -871,8 +871,8 @@
     the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
     the result of applying the bitwise inclusive OR operation to {var} and {var}
     the result of clamping {var} between 0 and {EX}
-    the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode
-    the result of converting {var} to a value in IEEE 754-2019 binary64 format
+    the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode
+    the result of converting {var} to IEEE 754-2019 binary64 format
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})

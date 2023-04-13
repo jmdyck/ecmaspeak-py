@@ -7187,8 +7187,8 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
 
-@P(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary32 format using roundTiesToEven mode")
-@P(r"{EXPR} : the result of converting {var} to a value in IEEE 754-2019 binary64 format")
+@P(r"{EXPR} : the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode")
+@P(r"{EXPR} : the result of converting {var} to IEEE 754-2019 binary64 format")
 @P(r"{EXPR} : the ECMAScript Number value corresponding to {var}")
 class _:
     def s_expr(expr, env0, _):
