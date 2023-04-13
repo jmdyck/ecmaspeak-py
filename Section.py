@@ -2023,6 +2023,8 @@ def extract_intrinsic_info_from_p_ul_section(section):
             re.fullmatch(r'(also )?creates and initializes a new \w+( object)? when called as a function rather than as a constructor.( A call of the object as a function is equivalent to calling it as a constructor with the same arguments.)? Thus the function call .+ is equivalent to the object creation expression .+ with the same arguments.', li_ist)
             or
             re.fullmatch(r'creates and initializes a new \w+( object)? when called as a constructor.', li_ist)
+            or
+            re.fullmatch(r'when called as a function, returns either a new RegExp object, or the argument itself if the only argument is a RegExp object.', li_ist)
         ):
             section.put_fact(subject, 'is', 'a constructor')
 
