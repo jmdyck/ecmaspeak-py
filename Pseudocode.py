@@ -21,6 +21,8 @@ def do_stuff_with_pseudocode():
 
     check_vars()
 
+    check_for_unbalanced_ifs()
+
     analyze_static_dependencies()
     check_sdo_coverage()
 
@@ -678,6 +680,66 @@ def check_vars_in_alg_defn(alg_defn):
                 thing.uses[0],
                 f"{varname} is not defined in this algorithm"
             )
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_for_unbalanced_ifs():
+    stderr('check_for_unbalanced_ifs ...')
+
+    # Check algorithms for 'unbalanced' If-commands:
+    # arms should either be all-indented or all-inline.
+
+    for (alg_name, alg_info) in (
+        sorted(spec.alg_info_['op'].items())
+        +
+        sorted(spec.alg_info_['bif'].items())
+    ):
+        for alg_defn in alg_info.all_definitions():
+            for d in alg_defn.anode.each_descendant_or_self():
+                if d.prod.lhs_s == '{IF_OTHER}':
+                    arms = [* each_if_arm(d)]
+                    assert len(arms) > 0
+
+                    arm_nts = set(
+                        str(arm.prod.lhs_s)
+                        for arm in arms
+                    )
+                    if len(arm_nts) == 1: continue
+                    arm_nts_str = ' '.join(
+                        str(arm.prod.lhs_s)
+                        for arm in arms
+                    )
+                    msg_at_node(d, f"If-command has 'unbalanced' arms: {arm_nts_str}")
+
+def each_if_arm(anode):
+    if anode.prod.lhs_s == '{IF_OTHER}':
+        assert anode.prod.rhs_s == '{IF_OPEN}{IF_TAIL}'
+        [if_open, if_tail] = anode.children
+        yield from each_if_arm(if_open)
+        yield from each_if_arm(if_tail)
+    elif anode.prod.lhs_s in ['{IF_OPEN}', '{ELSEIF_PART}']:
+        [condition, commands] = anode.children
+        assert commands.prod.lhs_s in ['{IND_COMMANDS}', '{SMALL_COMMAND}']
+        yield commands
+    elif anode.prod.lhs_s == '{IF_TAIL}':
+        if anode.prod.rhs_s == '{EPSILON}':
+            [] = anode.children
+        elif anode.prod.rhs_s == '{_NL_N} {ELSEIF_PART}{IF_TAIL}':
+            [elseif_part, if_tail] = anode.children
+            yield from each_if_arm(elseif_part)
+            yield from each_if_arm(if_tail)
+        elif anode.prod.rhs_s == '{_NL_N} {ELSE_PART}':
+            [else_part] = anode.children
+            yield from each_if_arm(else_part)
+        else:
+            assert 0, str(anode.prod)
+    elif anode.prod.lhs_s == '{ELSE_PART}':
+        commands = anode.children[-1]
+        assert commands.prod.lhs_s in ['{IND_COMMANDS}', '{SMALL_COMMAND}', '{COMMAND}']
+        yield commands
+    else:
+        assert 0, anode.prod_lhs_s
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
