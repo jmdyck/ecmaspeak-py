@@ -696,6 +696,7 @@ def check_for_unbalanced_ifs():
         sorted(spec.alg_info_['bif'].items())
     ):
         for alg_defn in alg_info.all_definitions():
+            if alg_defn.anode is None: continue
             for d in alg_defn.anode.each_descendant_or_self():
                 if d.prod.lhs_s == '{IF_OTHER}':
                     arms = [* each_if_arm(d)]

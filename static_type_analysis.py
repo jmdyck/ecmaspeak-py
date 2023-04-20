@@ -4222,13 +4222,6 @@ class _:
 
         return result
 
-@P(r"{ELSE_PART} : Else, {CONDITION_1}. {COMMAND}")
-class _:
-    def s_nv(anode, env0):
-        [cond, comm] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0, asserting=True)
-        return tc_nonvalue(comm, t_env)
-
     # -------------------------------------------------
 
 @P(r"{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}")
@@ -5265,7 +5258,6 @@ class _:
 #@ 5.2.3.3 ReturnIfAbrupt
 
 @P(r"{COMMAND} : ReturnIfAbrupt({EX}).")
-@P(r"{SMALL_COMMAND} : ReturnIfAbrupt({var})")
 class _:
     def s_nv(anode, env0):
         [ex] = anode.children
@@ -9144,7 +9136,6 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_Data_Block)
         return env1
 
-@P(r"{SMALL_COMMAND} : store the individual bytes of {var} into {var}, starting at {var}[{var}]")
 @P(r"{COMMAND} : Store the individual bytes of {var} into {var}, starting at {var}[{var}].")
 class _:
     def s_nv(anode, env0):
@@ -9421,7 +9412,7 @@ class _:
         return (T_Tangible_, env0)
 
     # 9.1.1.1.5 SetMutableBinding
-@P(r"{SMALL_COMMAND} : change its bound value to {var}")
+@P(r"{COMMAND} : Change its bound value to {var}.")
 class _:
     def s_nv(anode, env0):
         # elliptical

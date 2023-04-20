@@ -164,6 +164,7 @@
     Assert: {CONDITION_1}, since {CONDITION_1}.
     Assert: {CONDITION}.
     Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
+    Change its bound value to {var}.
     Choose any such {var}.
     Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.
     Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.
@@ -283,7 +284,6 @@
     Else if {CONDITION}, {SMALL_COMMAND}.
 
 {ELSE_PART} :
-    Else, {CONDITION_1}. {COMMAND}
     Else, {SMALL_COMMAND}.
     Else,{IND_COMMANDS}
     Otherwise, {SMALL_COMMAND}.
@@ -291,10 +291,8 @@
 # ----------------------------------------------
 
 {SMALL_COMMAND} :
-    ReturnIfAbrupt({var})
     add {var} to {var}
     append {EX} to {SETTABLE}
-    change its bound value to {var}
     let {DEFVAR} be {EXPR}
     let {DEFVAR} be {EXPR}, indicating that an ordinary object should be created as the global object
     let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
@@ -304,7 +302,6 @@
     reverse the order of the elements of {var}
     set the corresponding attribute of the property named {var} of object {var} to the value of the field
     set {SETTABLE} to {EXPR}
-    store the individual bytes of {var} into {var}, starting at {var}[{var}]
     suspend {var}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
