@@ -365,17 +365,19 @@ def _validate(node):
 
     # ------------------------
 
-    required_attrs = required_attrs_[node.element_name]
-    optional_attrs = optional_attrs_[node.element_name]
     attrs = node.attrs.keys()
 
-    def stringify_set(s):
-        return ' '.join(sorted(s))
+    if node.element_name in required_attrs_:
+        required_attrs = required_attrs_[node.element_name]
+        optional_attrs = optional_attrs_[node.element_name]
 
-    if not (attrs >= required_attrs):
-        msg_at_posn(node.start_posn, f"required attribute(s) are missing: {stringify_set(required_attrs - attrs)}")
-    if not (attrs <= required_attrs | optional_attrs):
-        msg_at_posn(node.start_posn, f"unexpected attribute(s): {stringify_set(attrs - (required_attrs | optional_attrs))}")
+        def stringify_set(s):
+            return ' '.join(sorted(s))
+
+        if not (attrs >= required_attrs):
+            msg_at_posn(node.start_posn, f"required attribute(s) are missing: {stringify_set(required_attrs - attrs)}")
+        if not (attrs <= required_attrs | optional_attrs):
+            msg_at_posn(node.start_posn, f"unexpected attribute(s): {stringify_set(attrs - (required_attrs | optional_attrs))}")
 
     for (attr_name, attr_value) in node.attrs.items():
         assert attr_value is None or isinstance(attr_value, str)
