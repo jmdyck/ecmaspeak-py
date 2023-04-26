@@ -888,7 +888,10 @@ class ProcType(Type):
         elif self == T_RegExpMatcher_:
             return "RegExpMatcher_"
         else:
-            return "(%s -> %s)" % (self.param_types, self.return_type)
+            return "{(%s) -> %s}" % (
+                ', '.join(str(pt) for pt in self.param_types),
+                self.return_type
+            )
     def unparse(self, _=False): return str(self)
 
     param_types = property(itemgetter(1))
