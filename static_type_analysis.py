@@ -876,7 +876,8 @@ class ThrowType(Type):
 class ProcType(Type):
     __slots__ = ()
     def __new__(cls, param_types, return_type):
-        return tuple.__new__(cls, ('ProcType', tuple(param_types), return_type))
+        assert isinstance(param_types, tuple)
+        return tuple.__new__(cls, ('ProcType', param_types, return_type))
     def __repr__(self): return "%s(%r, %r)" % self
     def __str__(self):
         if self == T_MatcherContinuation:
@@ -1215,12 +1216,12 @@ T_character_ = T_code_unit_ | T_code_point_
 
 T_MathNonNegativeInteger_ = T_MathInteger_ # for now
 
-T_MatcherContinuation = ProcType([T_MatchState                       ], T_MatchResult)
-T_Matcher             = ProcType([T_MatchState, T_MatcherContinuation], T_MatchResult)
-T_RegExpMatcher_  = ProcType([ListType(T_character_), T_MathNonNegativeInteger_], T_MatchResult)
-T_Job             = ProcType([                       ], T_Tangible_ | T_tilde_empty_ | T_throw_)
+T_MatcherContinuation = ProcType((T_MatchState,                      ), T_MatchResult)
+T_Matcher             = ProcType((T_MatchState, T_MatcherContinuation), T_MatchResult)
+T_RegExpMatcher_  = ProcType((ListType(T_character_), T_MathNonNegativeInteger_), T_MatchResult)
+T_Job             = ProcType((                       ), T_Tangible_ | T_tilde_empty_ | T_throw_)
 
-T_ReadModifyWrite_modification_closure = ProcType([ListType(T_MathInteger_), ListType(T_MathInteger_)], ListType(T_MathInteger_))
+T_ReadModifyWrite_modification_closure = ProcType((ListType(T_MathInteger_), ListType(T_MathInteger_)), ListType(T_MathInteger_))
 
 T_captures_entry_ = T_CaptureRange | T_Undefined
 T_captures_list_  = ListType(T_captures_entry_)
@@ -3294,7 +3295,7 @@ def handle_internal_thing_declaration(method_or_slot, row):
         #> or a throw completion.
         return_type |= T_throw_
 
-        t = ProcType(param_types, return_type)
+        t = ProcType(tuple(param_types), return_type)
 
     elif method_or_slot == 'slot':
         field_value_type = row.cell_nodes[1]._syntax_tree
@@ -9042,11 +9043,11 @@ class _:
 
 @P('{VAL_DESC} : an Abstract Closure with no parameters')
 class _:
-    s_tb = ProcType([], T_Top_)
+    s_tb = ProcType((), T_Top_)
 
 @P('{VAL_DESC} : an Abstract Closure with two parameters')
 class _:
-    s_tb = ProcType([T_Tangible_, T_Tangible_], T_Number | T_throw_)
+    s_tb = ProcType((T_Tangible_, T_Tangible_), T_Number | T_throw_)
 
 @P('{VAL_DESC} : an Abstract Closure')
 class _:
@@ -9094,7 +9095,7 @@ class _:
 
         defns = [(None, commands)]
         env_after_commands = tc_proc(None, defns, env_for_commands)
-        t = ProcType(clo_param_types, env_after_commands.vars['*return*'])
+        t = ProcType(tuple(clo_param_types), env_after_commands.vars['*return*'])
         return (t, env0)
 
 # ==============================================================================
@@ -9764,7 +9765,7 @@ class _:
     def s_nv(anode, env0):
         [settable, var] = anode.children
         env0.assert_expr_is_of_type(settable, T_host_defined_)
-        env0.assert_expr_is_of_type(var, ProcType([], T_Top_))
+        env0.assert_expr_is_of_type(var, ProcType((), T_Top_))
         return env0
 
 @P(r'{CONDITION_1} : {var} is not already suspended')
@@ -10245,7 +10246,7 @@ class _:
             #     |
             #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_)
             # )
-            result_type = ProcType([T_Number|T_BigInt, T_Number|T_BigInt], T_Number|T_BigInt | T_throw_)
+            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), T_Number|T_BigInt | T_throw_)
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
@@ -11319,7 +11320,7 @@ class _:
     def s_expr(expr, env0, _):
         [emu_xref, var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
-        return (ProcType([T_Tangible_], T_IntegralNumber_), env1)
+        return (ProcType((T_Tangible_,), T_IntegralNumber_), env1)
 
 @P(r"{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}")
 class _:
@@ -11906,7 +11907,7 @@ class _:
 #@ 29.6.2 reads-bytes-from
 @P('{VAL_DESC} : a reads-bytes-from mathematical function')
 class _:
-    s_tb = ProcType([T_Event], ListType(T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event))
+    s_tb = ProcType((T_Event,), ListType(T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event))
 
 #@ 29.6.3 reads-from
 @P('{VAL_DESC} : a reads-from Relation')
