@@ -6,10 +6,11 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 import re, atexit, time, sys, pdb
-from operator import itemgetter
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest
 from pprint import pprint
+from dataclasses import dataclass
+from typing import FrozenSet, Tuple
 
 import shared, HTML
 from shared import stderr, spec, DL
@@ -588,7 +589,7 @@ class TypedAlgHeader:
 subtype_memo = {}
 split_memo = {}
 
-class Type(tuple):
+class Type():
 
     def set_of_types(self):
         return self.member_types if isinstance(self, UnionType) else frozenset([self])
@@ -829,22 +830,31 @@ def member_is_a_subtype_or_equal(A, B):
 
     # --------------------------------------------------------------------------
 
+@dataclass(frozen = True)
 class TBDType(Type):
-    __slots__ = ()
-    def __new__(cls):
-        return tuple.__new__(cls, ('TBDType',))
-    def __repr__(self): return "%s()" % self
+    pass
+
     def __str__(self): return 'TBD'
     def unparse(self, parenthesuze=False): return 'TBD'
 
+@dataclass(frozen = True, order = True)
 class NamedType(Type):
-    __slots__ = ()
-    def __new__(cls, name):
-        assert isinstance(name, str)
-        assert re.fullmatch(r'[\w -]+', name), name
-        assert not name.startswith('a '), name
-        return tuple.__new__(cls, ('NamedType', name))
-    def __repr__(self): return "%s(%r)" % self
+    name: str
+
+    # We specify `order = True` so that @dataclass generates __lt__() etc,
+    # so that we can sort instances of this class.
+    # (The only place that we do so is in the semantics for {NUM_COMPARISON},
+    # which generates multiple complaints due to STA's lack of smartness,
+    # and we want those complaints to be in a consistent order,
+    # to prevent spurious diffs.
+    # Eventually, STA may be smart enough that those complaints go away,
+    # and we won't need order=True any more.)
+
+    def __post_init__(self):
+        assert isinstance(self.name, str)
+        assert re.fullmatch(r'[\w -]+', self.name), self.name
+        assert not self.name.startswith('a '), self.name
+
     def __str__(self): return self.name
     def unparse(self, parenthesize=False):
         if self.name.startswith('PTN_'):
@@ -853,32 +863,37 @@ class NamedType(Type):
             return x
         else:
             return self.name
-    name = property(itemgetter(1))
 
+@dataclass(frozen = True)
 class ListType(Type):
-    __slots__ = ()
-    def __new__(cls, element_type):
-        return tuple.__new__(cls, ('ListType', element_type))
-    def __repr__(self): return "%s(%r)" % self
+    element_type: Type
+
+    def __post_init__(self):
+        assert isinstance(self.element_type, Type)
+
     def __str__(self): return "List of %s" % str(self.element_type)
     def unparse(self, _=False): return "List of %s" % self.element_type.unparse(True)
-    element_type = property(itemgetter(1))
 
+@dataclass(frozen = True)
 class ThrowType(Type):
-    __slots__ = ()
-    def __new__(cls, error_type):
-        return tuple.__new__(cls, ('ThrowType', error_type))
-    def __repr__(self): return "%s(%r)" % self
+    error_type: Type
+
+    def __post_init__(self):
+        assert isinstance(self.error_type, Type)
+
     def __str__(self): return "throw_(%s)" % str(self.error_type)
     def unparse(self, _=False): return "throw_ *%s*" % self.error_type.unparse(True)
-    error_type = property(itemgetter(1))
 
+@dataclass(frozen = True)
 class ProcType(Type):
-    __slots__ = ()
-    def __new__(cls, param_types, return_type):
-        assert isinstance(param_types, tuple)
-        return tuple.__new__(cls, ('ProcType', param_types, return_type))
-    def __repr__(self): return "%s(%r, %r)" % self
+    param_types: Tuple[Type]
+    return_type: Type
+
+    def __post_init__(self):
+        assert isinstance(self.param_types, tuple)
+        for pt in self.param_types: assert isinstance(pt, Type)
+        assert isinstance(self.return_type, Type)
+
     def __str__(self):
         if self == T_MatcherContinuation:
             return "MatcherContinuation"
@@ -895,22 +910,21 @@ class ProcType(Type):
             )
     def unparse(self, _=False): return str(self)
 
-    param_types = property(itemgetter(1))
-    return_type = property(itemgetter(2))
-
+@dataclass(frozen = True)
 class UnionType(Type):
     # A union of (non-union) types.
     # Must satisfy the constraint that no member-type
     # is a subtype or supertype of any other member-type.
     # (XXX: Should check that in __new__.)
 
-    __slots__ = ()
-    def __new__(cls, member_types):
-        assert len(member_types) != 1
-        for type in member_types:
-            assert not isinstance(type, UnionType)
-        return tuple.__new__(cls, ('UnionType', frozenset(member_types)))
-    def __repr__(self): return "%s(%r)" % self
+    member_types: FrozenSet[Type]
+
+    def __post_init__(self):
+        assert len(self.member_types) != 1
+        for mt in self.member_types:
+            assert isinstance(mt, Type)
+            assert not isinstance(mt, UnionType)
+
     def __str__(self): return "(%s)" % ' | '.join(sorted(map(str, self.member_types)))
 
     def unparse(self, parenthesize=False):
@@ -931,16 +945,14 @@ class UnionType(Type):
         if parenthesize: x = '(' + x + ')'
         return prefix + x
 
-    member_types = property(itemgetter(1))
-
-T_0 = UnionType([])
-
 def maybe_UnionType(member_types):
     assert not isinstance(member_types, Type)
     if len(member_types) == 1:
         return list(member_types)[0]
     else:
-        return UnionType(member_types)
+        return UnionType(frozenset(member_types))
+
+T_0 = maybe_UnionType([])
 
 # ------------------------------------------------------------------------------
 
@@ -1123,6 +1135,8 @@ tnode_for_type_ = {}
 
 class TNode:
     def __init__(self, type, parent):
+        assert isinstance(type, Type)
+        assert parent is None or isinstance(parent, TNode)
         self.type = type
         self.parent = parent
 
@@ -1373,10 +1387,7 @@ def union_of_types(types):
 
     assert result_memtypes
 
-    if len(result_memtypes) == 1:
-        result = result_memtypes.pop()
-    else:
-        result = UnionType(result_memtypes)
+    result = maybe_UnionType(result_memtypes)
 
     # print("union of", ', '.join(str(t) for t in types), " = ", result)
 
