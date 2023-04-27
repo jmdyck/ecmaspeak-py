@@ -1049,8 +1049,10 @@ def check_non_defining_prodns(emu_grammars):
                     # ------------------
 
                     if notes['annotations suppressed'] and notes['annotations intact']:
+                        suppressed_str = ', '.join(notes['annotations suppressed'])
+                        intact_str = ', '.join(notes['annotations intact'])
                         msg_at_node(u_production_n,
-                            f"WARNING: RHS suppresses some annotations ({notes['annotations suppressed']}) but leaves some intact ({notes['annotations intact']})"
+                            f"WARNING: RHS suppresses some annotations ({suppressed_str}) but leaves some intact ({intact_str})"
                         )
 
                     # ------------------
@@ -1273,13 +1275,13 @@ def u_item_matches_d_item(u_item_n, d_item_n):
         # 2523 occurrences
 
         if k.startswith('LAC_') or k == 'NLTH':
-            note['annotations intact'] = u_item_n
+            note['annotations intact'] = u_item_n.source_text()
 
     return note
 
 def d_item_doesnt_require_a_matching_u_item(d_item_n):
     if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
-        return {'annotations suppressed': d_item_n, 'L-900': 1}
+        return {'annotations suppressed': d_item_n.source_text(), 'L-900': 1}
 
     if d_item_n.kind == 'GNT' and d_item_n._is_optional:
         return {'optional-GNT': (d_item_n._nt_name, 'omitted'), 'L-903': 1}
