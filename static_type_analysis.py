@@ -3045,7 +3045,7 @@ def get_field_items(fields):
     for field in get_fields(fields):
         assert str(field.prod) == '{FIELD} : {DSBN}: {EX}'
         [dsbn, ex] = field.children
-        dsbn_name = dsbn.source_text()[2:-2]
+        dsbn_name = dsbn.source_text()
         yield (dsbn_name, ex)
 
 def get_fields(fields):
@@ -3070,80 +3070,80 @@ fields_for_record_type_named_ = {
 
     #? # 2651: Table 8: Completion Record Fields
     #? 'Completion Record': {
-    #?     'Type'   : T_completion_kind_,
-    #?     'Value'  : T_Tangible_ | T_tilde_empty_,
-    #?     'Target' : T_String | T_tilde_empty_,
+    #?     '[[Type]]'   : T_completion_kind_,
+    #?     '[[Value]]'  : T_Tangible_ | T_tilde_empty_,
+    #?     '[[Target]]' : T_String | T_tilde_empty_,
     #? },
 
     'LoadedModule_Record_': {
-        'Specifier' : T_String,
-        'Module'    : T_Module_Record,
+        '[[Specifier]]' : T_String,
+        '[[Module]]'    : T_Module_Record,
     },
 
     # 8.2: NO TABLE
     'templateMap_entry_': {
-        'Site'    : T_PTN_Template_Literal,
-        'Array'   : T_Array_object_,
+        '[[Site]]'    : T_PTN_Template_Literal,
+        '[[Array]]'   : T_Array_object_,
     },
 
     # 11933: NO TABLE, no mention
     'CodePointAt_record_': {
-        'CodePoint'          : T_code_point_,
-        'CodeUnitCount'      : T_MathInteger_,
-        'IsUnpairedSurrogate': T_Boolean,
+        '[[CodePoint]]'          : T_code_point_,
+        '[[CodeUnitCount]]'      : T_MathInteger_,
+        '[[IsUnpairedSurrogate]]': T_Boolean,
     },
 
     # PR 1892 (add import.meta):
     # 14234: no table
     'ImportMeta_record_': {
-        'Key'   : T_String | T_Symbol,
-        'Value' : T_Tangible_,
+        '[[Key]]'   : T_String | T_Symbol,
+        '[[Value]]' : T_Tangible_,
     },
 
     # 21275: NO TABLE, no mention
     'methodDef_record_': {
-        'Closure' : T_function_object_,
-        'Key'     : T_String | T_Symbol,
+        '[[Closure]]' : T_function_object_,
+        '[[Key]]'     : T_String | T_Symbol,
     },
 
     # 24003
     'ExportResolveSet_Record_': {
-        'Module'     : T_Module_Record,
-        'ExportName' : T_String,
+        '[[Module]]'     : T_Module_Record,
+        '[[ExportName]]' : T_String,
     },
 
     # 22.2.2.?
     'QuantifierResultRecord_': {
-        'Min'   : T_MathNonNegativeInteger_,
-        'Max'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
-        'Greedy': T_Boolean,
+        '[[Min]]'   : T_MathNonNegativeInteger_,
+        '[[Max]]'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
+        '[[Greedy]]': T_Boolean,
     },
     'QuantifierPrefixResultRecord_': {
-        'Min'   : T_MathNonNegativeInteger_,
-        'Max'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
+        '[[Min]]'   : T_MathNonNegativeInteger_,
+        '[[Max]]'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
     },
     'CharacterClassResultRecord_': {
-        'CharSet': T_CharSet,
-        'Invert' : T_Boolean,
+        '[[CharSet]]': T_CharSet,
+        '[[Invert]]' : T_Boolean,
     },
 
     # 23.1.3.9
     'FindResultRecord_': {
-        'Index': T_IntegralNumber_,
-        'Value': T_Tangible_,
+        '[[Index]]': T_IntegralNumber_,
+        '[[Value]]': T_Tangible_,
     },
 
     # 25.2.3.2 FinalizationRegistry.prototype.register
     'FinalizationRegistryCellRecord_': {
-        'WeakRefTarget'  : T_Object | T_Symbol | T_tilde_empty_,
-        'HeldValue'      : T_Tangible_,
-        'UnregisterToken': T_Object | T_tilde_empty_,
+        '[[WeakRefTarget]]'  : T_Object | T_Symbol | T_tilde_empty_,
+        '[[HeldValue]]'      : T_Tangible_,
+        '[[UnregisterToken]]': T_Object | T_tilde_empty_,
     },
 
     # 39099: no table, no mention
     'MapData_record_': {
-        'Key'   : T_Tangible_ | T_tilde_empty_,
-        'Value' : T_Tangible_ | T_tilde_empty_,
+        '[[Key]]'   : T_Tangible_ | T_tilde_empty_,
+        '[[Value]]' : T_Tangible_ | T_tilde_empty_,
         # but Value is empty only if Key is empty?
         # So if you establish that _e_.[[Key]] isn't ~empty~,
         # you know that _e_.[[Value]] isn't ~empty~ ?
@@ -3152,24 +3152,24 @@ fields_for_record_type_named_ = {
     # 39415: CreateResolvingFunctions NO TABLE, not even mentioned
     # 29803: `Promise.all` Resolve Element Functions NO TABLE, barely mentioned
     'boolean_value_record_': {
-        'Value' : T_Boolean,
+        '[[Value]]' : T_Boolean,
     },
 
     # 39438: CreateResolvingFunctions NO TABLE, not even mentioned
     'ResolvingFunctions_record_': {
-        'Resolve' : T_function_object_ | T_Undefined,
-        'Reject'  : T_function_object_ | T_Undefined,
+        '[[Resolve]]' : T_function_object_ | T_Undefined,
+        '[[Reject]]'  : T_function_object_ | T_Undefined,
     },
 
     # 39769: NO TABLE, not even mentioned
     'Job_record_': {
-        'Job'  : T_Job,
-        'Realm': T_Realm_Record | T_Null,
+        '[[Job]]'  : T_Job,
+        '[[Realm]]': T_Realm_Record | T_Null,
     },
 
     # 39784: PerformPromiseAll NO TABLE, not even mentioned
     'integer_value_record_': {
-        'Value' : T_MathInteger_,
+        '[[Value]]' : T_MathInteger_,
     },
 
 }
@@ -3181,13 +3181,11 @@ def process_declared_record_type_info():
         schemas = reversed([* record_schema.self_and_supers() ])
         for schema in schemas:
             for field_decl in schema.addl_field_decls.values():
-                mo = re.fullmatch(r'\[\[(\w+)\]\]', field_decl.name)
-                debracketed_field_name = mo.group(1) # backwards compat
                 if field_decl.value_description is None:
                     t = convert_nature_to_type(field_decl.nature)
                 else:
                     t = convert_nature_node_to_type(field_decl.value_description)
-                d_from_spec[debracketed_field_name] = t
+                d_from_spec[field_decl.name] = t
 
         if record_schema.tc_schema_name == 'Completion Record': continue
 
@@ -3199,18 +3197,18 @@ def process_declared_record_type_info():
         assert ffrtn_name not in fields_for_record_type_named_
         fields_for_record_type_named_[ffrtn_name] = d_from_spec
 
-    def tweak_record_schema_field_type(schema_name, debracketed_field_name, t_from_spec, t_for_compat):
+    def tweak_record_schema_field_type(schema_name, field_name, t_from_spec, t_for_compat):
         fields_dict = fields_for_record_type_named_[schema_name]
-        assert fields_dict[debracketed_field_name] == t_from_spec
-        fields_dict[debracketed_field_name] = t_for_compat
+        assert fields_dict[field_name] == t_from_spec
+        fields_dict[field_name] = t_for_compat
 
     tweak_record_schema_field_type(
-        'AsyncGeneratorRequest Record', 'Completion',
+        'AsyncGeneratorRequest Record', '[[Completion]]',
         T_Abrupt | T_Normal,
         T_Tangible_ | T_return_ | T_throw_ | T_tilde_empty_
     )
     tweak_record_schema_field_type(
-        'JobCallback Record', 'HostDefined',
+        'JobCallback Record', '[[HostDefined]]',
         T_host_defined_,
         T_host_defined_ | T_tilde_empty_
     )
@@ -3231,17 +3229,17 @@ def find_record_types_with_fields(field_names):
 
 type_of_internal_thing_ = {}
 
-def set_up_internal_thing(method_or_slot, debracketed_name, stype):
+def set_up_internal_thing(method_or_slot, thing_name, stype):
     # Ignore `method_or_slot`
-    if debracketed_name in type_of_internal_thing_:
+    if thing_name in type_of_internal_thing_:
         # [[GeneratorBrand]] is declared for both
         # Generator Instances and AsyncGenerator Instances.
-        assert debracketed_name == 'GeneratorBrand', debracketed_name
+        assert thing_name == '[[GeneratorBrand]]', thing_name
 
-        t = type_of_internal_thing_[debracketed_name]
+        t = type_of_internal_thing_[thing_name]
         assert t == stype
     else:
-        type_of_internal_thing_[debracketed_name] = stype
+        type_of_internal_thing_[thing_name] = stype
 
 # ------------------------------------------------------------------------------
 
@@ -3267,7 +3265,6 @@ def set_up_declared_internal_methods_and_slots():
 
 def handle_internal_thing_declaration(method_or_slot, row):
     (thing_name, thing_nature, thing_desc) = row.cell_texts
-    debracketed_thing_name = re.fullmatch('\[\[(\w+)\]\]', thing_name).group(1) # backwards compat
 
     if method_or_slot == 'method':
 
@@ -3313,7 +3310,7 @@ def handle_internal_thing_declaration(method_or_slot, row):
         value_description = field_value_type.children[0]
         t = convert_nature_node_to_type(value_description)
 
-        if debracketed_thing_name in ['PromiseFulfillReactions', 'PromiseRejectReactions']:
+        if thing_name in ['[[PromiseFulfillReactions]]', '[[PromiseRejectReactions]]']:
             assert row.cell_texts[1] == 'a List of PromiseReaction Records'
             assert t == ListType(T_PromiseReaction_Record)
             # But there are steps (in FulfillPromise and RejectPromise)
@@ -3328,7 +3325,7 @@ def handle_internal_thing_declaration(method_or_slot, row):
     else:
         assert 0, method_or_slot
 
-    set_up_internal_thing(method_or_slot, debracketed_thing_name, t)
+    set_up_internal_thing(method_or_slot, thing_name, t)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -6445,8 +6442,8 @@ class _:
             dotting = ex.is_a('{DOTTING}')
             if dotting is None: break
             (lhs, dsbn) = dotting.children
-            dsbn_name = dsbn.source_text()[2:-2]
-            if dsbn_name != 'Type': break
+            dsbn_name = dsbn.source_text()
+            if dsbn_name != '[[Type]]': break
             t = type_corresponding_to_comptype_literal(vd)
             return env0.with_type_test(lhs, copula, t, asserting)
 
@@ -7483,14 +7480,14 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [prop_var, dsbn] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        if dsbn_name in ['Enumerable', 'Configurable']:
+        dsbn_name = dsbn.source_text()
+        if dsbn_name in ['[[Enumerable]]', '[[Configurable]]']:
             env0.assert_expr_is_of_type(prop_var, T_property_)
             result_type = T_Boolean
-        elif dsbn_name in ['Value', 'Writable']:
+        elif dsbn_name in ['[[Value]]', '[[Writable]]']:
             env0.assert_expr_is_of_type(prop_var, T_data_property_)
-            result_type = T_Tangible_ if dsbn_name == 'Value' else T_Boolean
-        elif dsbn_name in ['Get', 'Set']:
+            result_type = T_Tangible_ if dsbn_name == '[[Value]]' else T_Boolean
+        elif dsbn_name in ['[[Get]]', '[[Set]]']:
             env0.assert_expr_is_of_type(prop_var, T_accessor_property_)
             result_type = T_Object | T_Undefined
         else:
@@ -7517,11 +7514,11 @@ class _:
     def s_cond(cond, env0, asserting):
         [var, dsbn] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        dsbn_name = dsbn.source_text()[2:-2]
-        if dsbn_name == 'Call':
+        dsbn_name = dsbn.source_text()
+        if dsbn_name == '[[Call]]':
             # one of the few where the presence/absence of an internal method is a type-test?
             return env1.with_type_test(var, 'is a', T_function_object_, asserting)
-        elif dsbn_name == 'Construct':
+        elif dsbn_name == '[[Construct]]':
             return env1.with_type_test(var, 'is a', T_constructor_object_, asserting)
         else:
             assert 0, dsbn_name
@@ -7630,7 +7627,7 @@ class _:
 #> the private fields, methods, and accessors for the object.
 #> Initially, it is an empty List.
 
-set_up_internal_thing('slot', 'PrivateElements', ListType(T_PrivateElement))
+set_up_internal_thing('slot', '[[PrivateElements]]', ListType(T_PrivateElement))
 
 #> Internal methods and internal slots are identified within this specification
 #> using names enclosed in double square brackets [[ ]].
@@ -8338,12 +8335,12 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [settable, dsbn] = cond.children
-        dsbn_name = dsbn.source_text()[2:-2]
+        dsbn_name = dsbn.source_text()
         t = env0.assert_expr_is_of_type(settable, T_Record)
-        if t.name == 'Environment Record' and dsbn_name == 'NewTarget':
+        if t.name == 'Environment Record' and dsbn_name == '[[NewTarget]]':
             add_pass_error(
                 cond,
-                "STA can't confirm that `%s` could have a `%s` field"
+                "STA can't confirm that `%s` could have a %s field"
                 % ( settable.source_text(), dsbn_name )
             )
             # We could confirm if we looked at the subtypes and what fields they have.
@@ -8365,7 +8362,7 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [dsb_word, ex] = cond.children
-        dsbn_name = dsb_word.source_text()[2:-2]
+        dsbn_name = dsb_word.source_text()
         # "That Record" is from prev step's "contains a Record"
         that_type = T_LoadedModule_Record_
         fields = fields_for_record_type_named_[that_type.name]
@@ -8400,14 +8397,14 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [dsbn, ex] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        if dsbn_name == 'EventList':
+        dsbn_name = dsbn.source_text()
+        if dsbn_name == '[[EventList]]':
             env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
             return (ListType(T_Event), env0)
-        elif dsbn_name == 'CandidateExecution':
+        elif dsbn_name == '[[CandidateExecution]]':
             env0.assert_expr_is_of_type(ex, T_Agent_Record)
             return (T_Candidate_Execution_Record, env0)
-        elif dsbn_name == 'LittleEndian':
+        elif dsbn_name == '[[LittleEndian]]':
             env0.assert_expr_is_of_type(ex, T_Agent_Record)
             return (T_Boolean, env0)
         else:
@@ -8424,10 +8421,10 @@ class _:
 
         if constructor_prefix == 'Completion Record':
             f_ = dict( get_field_items(fields) )
-            assert sorted(f_.keys()) == ['Target', 'Type', 'Value']
-            type_ex = f_['Type']
-            value_ex = f_['Value']
-            target_ex = f_['Target']
+            assert sorted(f_.keys()) == ['[[Target]]', '[[Type]]', '[[Value]]']
+            type_ex = f_['[[Type]]']
+            value_ex = f_['[[Value]]']
+            target_ex = f_['[[Target]]']
 
             if fields.source_text() == '[[Type]]: _completionRecord_.[[Type]], [[Value]]: _value_, [[Target]]: _completionRecord_.[[Target]]':
                 # The specialest of special cases!
@@ -8472,12 +8469,12 @@ class _:
                 if len(record_type_names) == 1:
                     [record_type_name] = record_type_names
                 else:
-                    if field_names == ['Key', 'Value']:
+                    if field_names == ['[[Key]]', '[[Value]]']:
                         assert record_type_names == ['ImportMeta_record_', 'MapData_record_']
                         # In {Map,WeakMap}.prototype.set
                         record_type_name = 'MapData_record_'
 
-                    elif field_names == ['Value']:
+                    elif field_names == ['[[Value]]']:
                         assert record_type_names == ['boolean_value_record_', 'integer_value_record_']
                         fst = fields.source_text()
                         if fst == '[[Value]]: *false*':
@@ -8545,10 +8542,10 @@ class _:
     def s_expr(expr, env0, _):
         [lhs_var, dsbn] = expr.children
         lhs_text = lhs_var.source_text()
-        dsbn_name = dsbn.source_text()[2:-2]
+        dsbn_name = dsbn.source_text()
         (lhs_t, env1) = tc_expr(lhs_var, env0)
 
-        # assert dsbn_name != 'Type'
+        # assert dsbn_name != '[[Type]]'
         # because anything involving [[Type]] has been intercepted at a higher level
         # Nope, _reaction_.[[Type]]
 
@@ -8556,7 +8553,7 @@ class _:
 
         # Handle "Completion Records" specially.
         while True: # ONCE
-            if dsbn_name not in ['Type', 'Target', 'Value']:
+            if dsbn_name not in ['[[Type]]', '[[Target]]', '[[Value]]']:
                 # We can't be dealing with a Completion Record
                 break
             if lhs_t in [
@@ -8586,7 +8583,7 @@ class _:
 
             result_memtypes = set()
             for memtype in lhs_t.set_of_types():
-                if dsbn_name == 'Value':
+                if dsbn_name == '[[Value]]':
                     # Lots of things have a '[[Value]]' field.
                     if memtype.is_a_subtype_of_or_equal_to(T_Abrupt):
                         result_memtype = T_Tangible_ | T_tilde_empty_
@@ -8623,13 +8620,13 @@ class _:
                     else:
                         assert 0, memtype
 
-                elif dsbn_name == 'Target':
+                elif dsbn_name == '[[Target]]':
                     if memtype in [T_continue_, T_break_, T_Abrupt]:
                         result_memtype = T_String | T_tilde_empty_
                     else:
                         assert 0, memtype
 
-                elif dsbn_name == 'Type':
+                elif dsbn_name == '[[Type]]':
                     assert 0
 
                 else:
@@ -8694,7 +8691,7 @@ class _:
         elif lhs_t == T_Tangible_:
             # 3 times
 
-            assert dsbn_name == 'AsyncGeneratorState'
+            assert dsbn_name == '[[AsyncGeneratorState]]'
 
             # After:
             #   Let _result_ be Completion(AsyncGeneratorValidate(_generator_, ~empty~)).
@@ -8718,7 +8715,7 @@ class _:
             # XXX We should require that lhs_t is allowed to have this internal thing.
 
             # But for some subtypes of Object, we can give a narrower type for the slot
-            if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == 'ArrayBufferData':
+            if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == '[[ArrayBufferData]]':
                 narrower_type = T_Shared_Data_Block
                 assert narrower_type.is_a_subtype_of_or_equal_to(it_type)
                 assert narrower_type != it_type
@@ -8726,11 +8723,11 @@ class _:
             return (it_type, env2)
 
         elif lhs_t == T_Symbol:
-            assert dsbn_name == 'Description'
+            assert dsbn_name == '[[Description]]'
             return (T_String | T_Undefined, env2)
 
         elif lhs_t == T_Private_Name:
-            assert dsbn_name == 'Description'
+            assert dsbn_name == '[[Description]]'
             return (T_String, env2)
 
         elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
@@ -8739,16 +8736,16 @@ class _:
                 if lhs_t.name == 'Record':
                     add_pass_error(
                         expr,
-                        "type of `%s` is only 'Record', so don't know about a `%s` field"
+                        "type of `%s` is only 'Record', so don't know about a %s field"
                         % (lhs_text, dsbn_name)
                     )
                     field_type = T_TBD
                 elif lhs_t.name == 'Intrinsics Record':
                     field_type = {
-                        '%Array%'               : T_constructor_object_,
-                        '%Function.prototype%'  : T_Object,
-                        '%Object.prototype%'    : T_Object,
-                        '%ThrowTypeError%'      : T_function_object_,
+                        '[[%Array%]]'               : T_constructor_object_,
+                        '[[%Function.prototype%]]'  : T_Object,
+                        '[[%Object.prototype%]]'    : T_Object,
+                        '[[%ThrowTypeError%]]'      : T_function_object_,
                     }[dsbn_name]
                 else:
                     assert lhs_t.name in fields_for_record_type_named_, lhs_t.name
@@ -8758,7 +8755,7 @@ class _:
                     else:
                         add_pass_error(
                             expr,
-                            f"`{lhs_text}` has type {lhs_t}, which doesn't have a `{dsbn_name}` field"
+                            f"`{lhs_text}` has type {lhs_t}, which doesn't have a {dsbn_name} field"
                         )
                         # Probably you need to add something to
                         # fields_for_record_type_named_
@@ -8830,7 +8827,7 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [list_ex, dsb_word, var] = cond.children
-        dsbn_name = dsb_word.source_text()[2:-2]
+        dsbn_name = dsb_word.source_text()
         (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
@@ -8844,7 +8841,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [list_ex, dsbn, val_ex] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
+        dsbn_name = dsbn.source_text()
         (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
@@ -8858,7 +8855,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [dotting, dsb_word, var] = expr.children
-        dsbn_name = dsb_word.source_text()[2:-2]
+        dsbn_name = dsb_word.source_text()
         (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
@@ -9955,8 +9952,8 @@ class _:
 # ==============================================================================
 #@ 10.1 Ordinary Object Internal Methods and Internal Slots
 
-set_up_internal_thing('slot', 'Prototype',  T_Object | T_Null)
-set_up_internal_thing('slot', 'Extensible', T_Boolean)
+set_up_internal_thing('slot', '[[Prototype]]',  T_Object | T_Null)
+set_up_internal_thing('slot', '[[Extensible]]', T_Boolean)
 
 # ==============================================================================
 #@ 10.2 ECMAScript Function Objects
@@ -9983,7 +9980,7 @@ class _:
 class _:
     s_tb = a_subset_of(T_function_object_)
 
-set_up_internal_thing('slot', 'InitialName', T_Null | T_String)
+set_up_internal_thing('slot', '[[InitialName]]', T_Null | T_String)
 
 @P(r"{EX} : *this* value")
 @P(r"{EX} : the *this* value")
@@ -10067,7 +10064,7 @@ class _:
 class _:
     s_tb = a_subset_of(T_Object)
 
-set_up_internal_thing('slot', 'ParameterMap', T_Object)
+set_up_internal_thing('slot', '[[ParameterMap]]', T_Object)
 
 # 10.4.4.{2,4}
 @P(r"{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
@@ -10092,12 +10089,12 @@ class _:
 class _:
     s_tb = T_Integer_Indexed_object_
 
-set_up_internal_thing('slot', 'ViewedArrayBuffer', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-set_up_internal_thing('slot', 'ArrayLength',       T_MathInteger_)
-set_up_internal_thing('slot', 'ByteOffset',        T_MathInteger_)
-set_up_internal_thing('slot', 'ContentType',       T_tilde_BigInt_ | T_tilde_Number_)
-set_up_internal_thing('slot', 'TypedArrayName',    T_String)
-set_up_internal_thing('slot', 'ByteLength',        T_MathInteger_)
+set_up_internal_thing('slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+set_up_internal_thing('slot', '[[ArrayLength]]',       T_MathInteger_)
+set_up_internal_thing('slot', '[[ByteOffset]]',        T_MathInteger_)
+set_up_internal_thing('slot', '[[ContentType]]',       T_tilde_BigInt_ | T_tilde_Number_)
+set_up_internal_thing('slot', '[[TypedArrayName]]',    T_String)
+set_up_internal_thing('slot', '[[ByteLength]]',        T_MathInteger_)
 
 # ==============================================================================
 #@ 10.4.6 Module Namespace Exotic Objects
@@ -10117,8 +10114,8 @@ class _:
 class _:
     s_tb = T_Proxy_exotic_object_
 
-set_up_internal_thing('slot', 'ProxyHandler', T_Object | T_Null)
-set_up_internal_thing('slot', 'ProxyTarget',  T_Object | T_Null)
+set_up_internal_thing('slot', '[[ProxyHandler]]', T_Object | T_Null)
+set_up_internal_thing('slot', '[[ProxyTarget]]',  T_Object | T_Null)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 11 ECMAScript Language: Source Text
@@ -10552,12 +10549,12 @@ class _:
 # ==============================================================================
 #@ 20.3 Boolean Objects
 
-set_up_internal_thing('slot', 'BooleanData', T_Boolean)
+set_up_internal_thing('slot', '[[BooleanData]]', T_Boolean)
 
 # ==============================================================================
 #@ 20.4 Symbol Objects
 
-set_up_internal_thing('slot', 'SymbolData', T_Symbol)
+set_up_internal_thing('slot', '[[SymbolData]]', T_Symbol)
 
 # ==============================================================================
 #@ 20.4.2.2 Symbol.for
@@ -10598,11 +10595,11 @@ class _:
 
 # ==============================================================================
 #@ 21.1 Number Objects
-set_up_internal_thing('slot', 'NumberData', T_Number)
+set_up_internal_thing('slot', '[[NumberData]]', T_Number)
 
 # ==============================================================================
 #@ 21.2 BigInt Objects
-set_up_internal_thing('slot', 'BigIntData', T_BigInt)
+set_up_internal_thing('slot', '[[BigIntData]]', T_BigInt)
 
 # ==============================================================================
 #@ 21.4 Date Objects
@@ -10704,7 +10701,7 @@ class _:
 # ==============================================================================
 #@ 21.4.2 The Date Constructor
 
-set_up_internal_thing('slot', 'DateValue', T_IntegralNumber_ | T_NaN_Number_)
+set_up_internal_thing('slot', '[[DateValue]]', T_IntegralNumber_ | T_NaN_Number_)
 
 # ==============================================================================
 #@ 21.4.2.1 Date
@@ -10735,8 +10732,8 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [dsbn] = expr.children
-        dsbn_name = dsbn.source_text()[2:-2]
-        assert dsbn_name == 'DateValue'
+        dsbn_name = dsbn.source_text()
+        assert dsbn_name == '[[DateValue]]'
         return (T_Number, env0)
 
 # ==============================================================================
@@ -10772,7 +10769,7 @@ class _:
 # ==============================================================================
 #@ 22.1 String Objects
 
-set_up_internal_thing('slot', 'StringData', T_String)
+set_up_internal_thing('slot', '[[StringData]]', T_String)
 
 #@ 22.1.3.27 String.prototype.toLowerCase
 @P(r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
@@ -11223,10 +11220,10 @@ class _:
 # ==============================================================================
 #@ 22.2.3 Abstract Operations for RegExp Creation
 
-set_up_internal_thing('slot', 'OriginalSource', T_String)
-set_up_internal_thing('slot', 'OriginalFlags',  T_String)
-set_up_internal_thing('slot', 'RegExpRecord',   T_RegExp_Record)
-set_up_internal_thing('slot', 'RegExpMatcher',  T_RegExpMatcher_)
+set_up_internal_thing('slot', '[[OriginalSource]]', T_String)
+set_up_internal_thing('slot', '[[OriginalFlags]]',  T_String)
+set_up_internal_thing('slot', '[[RegExpRecord]]',   T_RegExp_Record)
+set_up_internal_thing('slot', '[[RegExpMatcher]]',  T_RegExpMatcher_)
 
 # ==============================================================================
 #@ 22.2.6.13.1 EscapeRegExpPattern
@@ -11359,16 +11356,16 @@ class _:
 #@ 24 Keyed Collections
 
 # 24.1 Map Objects
-set_up_internal_thing('slot', 'MapData', ListType(T_MapData_record_))
+set_up_internal_thing('slot', '[[MapData]]', ListType(T_MapData_record_))
 
 # 24.2 Set Objects
-set_up_internal_thing('slot', 'SetData', ListType(T_Tangible_ | T_tilde_empty_))
+set_up_internal_thing('slot', '[[SetData]]', ListType(T_Tangible_ | T_tilde_empty_))
 
 # 24.3 WeakMap Objects
-set_up_internal_thing('slot', 'WeakMapData', ListType(T_MapData_record_))
+set_up_internal_thing('slot', '[[WeakMapData]]', ListType(T_MapData_record_))
 
 # 24.4 WeakSet Objects
-set_up_internal_thing('slot', 'WeakSetData', ListType(T_Tangible_ | T_tilde_empty_))
+set_up_internal_thing('slot', '[[WeakSetData]]', ListType(T_Tangible_ | T_tilde_empty_))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 25 Structured Data
@@ -11388,10 +11385,10 @@ class _:
 class _:
     s_tb = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 
-set_up_internal_thing('slot', 'ArrayBufferData',       T_Data_Block | T_Shared_Data_Block | T_Null)
+set_up_internal_thing('slot', '[[ArrayBufferData]]',       T_Data_Block | T_Shared_Data_Block | T_Null)
     # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
-set_up_internal_thing('slot', 'ArrayBufferByteLength', T_MathInteger_)
-set_up_internal_thing('slot', 'ArrayBufferDetachKey',  T_host_defined_)
+set_up_internal_thing('slot', '[[ArrayBufferByteLength]]', T_MathInteger_)
+set_up_internal_thing('slot', '[[ArrayBufferDetachKey]]',  T_host_defined_)
 
 # 25.1.2.*
 @P(r'{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}')
@@ -11618,7 +11615,7 @@ class _:
 class _:
     s_tb = T_WeakRef_object_
 
-set_up_internal_thing('slot', 'WeakRefTarget', T_Object | T_Symbol | T_tilde_empty_)
+set_up_internal_thing('slot', '[[WeakRefTarget]]', T_Object | T_Symbol | T_tilde_empty_)
 
 # ==============================================================================
 #@ 26.2 FinalizationRegistry Objects
@@ -11627,8 +11624,8 @@ set_up_internal_thing('slot', 'WeakRefTarget', T_Object | T_Symbol | T_tilde_emp
 class _:
     s_tb = T_FinalizationRegistry_object_
 
-set_up_internal_thing('slot', 'CleanupCallback', T_JobCallback_Record)
-set_up_internal_thing('slot', 'Cells',           ListType(T_FinalizationRegistryCellRecord_))
+set_up_internal_thing('slot', '[[CleanupCallback]]', T_JobCallback_Record)
+set_up_internal_thing('slot', '[[Cells]]',           ListType(T_FinalizationRegistryCellRecord_))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 27 Control Abstraction Objects
@@ -11688,17 +11685,17 @@ class _:
 
 #@ 27.2.1.3 CreateResolvingFunctions
 
-set_up_internal_thing('slot', 'Promise',         T_Object)
-set_up_internal_thing('slot', 'AlreadyResolved', T_boolean_value_record_)
+set_up_internal_thing('slot', '[[Promise]]',         T_Object)
+set_up_internal_thing('slot', '[[AlreadyResolved]]', T_boolean_value_record_)
 
 #@ 27.2.4 Properties of the Promise Constructor
 
-set_up_internal_thing('slot', 'AlreadyCalled',     T_boolean_value_record_ | T_Boolean)
-set_up_internal_thing('slot', 'Index',             T_MathInteger_)
-set_up_internal_thing('slot', 'Capability',        T_PromiseCapability_Record)
-set_up_internal_thing('slot', 'RemainingElements', T_integer_value_record_)
-set_up_internal_thing('slot', 'Values',            ListType(T_Tangible_))
-set_up_internal_thing('slot', 'Errors',            ListType(T_Tangible_))
+set_up_internal_thing('slot', '[[AlreadyCalled]]',     T_boolean_value_record_ | T_Boolean)
+set_up_internal_thing('slot', '[[Index]]',             T_MathInteger_)
+set_up_internal_thing('slot', '[[Capability]]',        T_PromiseCapability_Record)
+set_up_internal_thing('slot', '[[RemainingElements]]', T_integer_value_record_)
+set_up_internal_thing('slot', '[[Values]]',            ListType(T_Tangible_))
+set_up_internal_thing('slot', '[[Errors]]',            ListType(T_Tangible_))
 
 # ==============================================================================
 #@ 27.5 Generator Objects
@@ -11757,7 +11754,7 @@ class _:
 #@ 28 Reflection
 
 #@ 28.2.2.1 Proxy.revocable
-set_up_internal_thing('slot', 'RevocableProxy', T_Proxy_exotic_object_ | T_Null)
+set_up_internal_thing('slot', '[[RevocableProxy]]', T_Proxy_exotic_object_ | T_Null)
 
 #@ 28.3 Module Namespace Objects
 @P('{VAL_DESC} : a Module Namespace Object')
