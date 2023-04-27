@@ -82,7 +82,7 @@ def retain_for_sta(header):
 
 def gather_nonterminals():
     # Find all the Nonterminals that are mentioned in pseudocode,
-    # and create a NamedType and a TNode for each.
+    # and create a HierType and a TNode for each.
     #
     # This is a kludge because grammar info doesn't get passed through pickling yet.
 
@@ -368,7 +368,7 @@ class TypedAlgHeader:
             elif self.for_param_type:
                 discriminator = self.for_param_type
             elif alg_defn.discriminator:
-                discriminator = NamedType(alg_defn.discriminator)
+                discriminator = HierType(alg_defn.discriminator)
             else:
                 discriminator = None
 
@@ -758,8 +758,8 @@ def member_is_a_subtype_or_equal(A, B):
 
     if A == B: return True
 
-    if isinstance(A, NamedType):
-        if isinstance(B, NamedType):
+    if isinstance(A, HierType):
+        if isinstance(B, HierType):
             A_tnode = tnode_for_type_[A]
             B_tnode = tnode_for_type_[B]
             if A_tnode.level < B_tnode.level:
@@ -789,7 +789,7 @@ def member_is_a_subtype_or_equal(A, B):
     elif isinstance(A, ListType):
         if isinstance(B, ListType):
             return (A.element_type.is_a_subtype_of_or_equal_to(B.element_type))
-        elif isinstance(B, NamedType):
+        elif isinstance(B, HierType):
             return (T_List.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ThrowType):
             return False
@@ -799,7 +799,7 @@ def member_is_a_subtype_or_equal(A, B):
     elif isinstance(A, ThrowType):
         if isinstance(B, ThrowType):
             return (A.error_type.is_a_subtype_of_or_equal_to(B.error_type))
-        elif isinstance(B, NamedType):
+        elif isinstance(B, HierType):
             return (T_throw_.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
             return False
@@ -817,7 +817,7 @@ def member_is_a_subtype_or_equal(A, B):
                 and
                 A.return_type.is_a_subtype_of_or_equal_to(B.return_type)
             )
-        elif isinstance(B, NamedType):
+        elif isinstance(B, HierType):
             return (T_proc_.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
             return False
@@ -838,8 +838,19 @@ class TBDType(Type):
     def unparse(self, parenthesuze=False): return 'TBD'
 
 @dataclass(frozen = True, order = True)
-class NamedType(Type):
+class HierType(Type):
     name: str
+
+    # The instances of this class represent static types that form a hierarchy.
+    # Specifically, for any two such types A and B,
+    # it must be the case that either:
+    #  - A == B,
+    #  - A is a subtype of B,
+    #  - B is a subtype of A, or
+    #  - A and B are disjoint.
+    #
+    # (Note that this condition *doesn't* hold for
+    # UnionTypes, ProcTypes, etc.)
 
     # We specify `order = True` so that @dataclass generates __lt__() etc,
     # so that we can sort instances of this class.
@@ -973,7 +984,7 @@ def ptn_type_for(nonterminal):
     else:
         assert 0
     type_name = 'PTN_' + nont_basename
-    type = NamedType(type_name)
+    type = HierType(type_name)
     if optionality: type = type | T_not_in_node
     return type
 
@@ -1150,9 +1161,9 @@ class TNode:
 
         tnode_for_type_[type] = self
 
-def NamedType_etc(type_name):
+def HierType_etc(type_name):
     assert isinstance(type_name, str)
-    t = NamedType(type_name)
+    t = HierType(type_name)
     variable_name = 'T_' + type_name.replace(' ', '_').replace('-', '_')
     globals()[variable_name] = t
     return t
@@ -1160,7 +1171,7 @@ def NamedType_etc(type_name):
 def traverse(typesdict, p):
     for (type_name, subtypesdict) in typesdict.items():
     # sorted(typesdict.items(), key=lambda tup: 1 if tup[0] == 'List' else 0):
-        type = NamedType_etc(type_name)
+        type = HierType_etc(type_name)
         tnode = TNode(type, p)
         traverse(subtypesdict, tnode)
 
@@ -1184,7 +1195,7 @@ rs = records.RecordSchema('other Cyclic Module Record', 'Cyclic Module Record')
 
 def traverse_record_schema(super_schema, super_tnode):
     for sub_schema in super_schema.sub_schemas:
-        sub_type = NamedType_etc(sub_schema.tc_schema_name)
+        sub_type = HierType_etc(sub_schema.tc_schema_name)
         sub_tnode = TNode(sub_type, super_tnode)
         traverse_record_schema(sub_schema, sub_tnode)
 
@@ -1219,7 +1230,7 @@ for tilde_word in sorted(tilde_words):
     parent_tnode = tnode_for_type_[parent_type]
 
     tilde_type_name = 'tilde' + re.sub('\W', '_', tilde_word)
-    type = NamedType_etc(tilde_type_name)
+    type = HierType_etc(tilde_type_name)
     tnode = TNode(type, parent_tnode)
 
 # ------------------------------------------------------------------------------
@@ -1255,13 +1266,13 @@ def type_for_ERROR_TYPE(error_type):
     assert st.startswith('*')
     assert st.endswith('*')
     error_type_name = st[1:-1]
-    return NamedType(error_type_name)
+    return HierType(error_type_name)
 
 def type_for_TYPE_NAME(type_name):
     assert isinstance(type_name, ANode)
     assert type_name.prod.lhs_s == '{TYPE_NAME}'
     st = type_name.source_text()
-    return NamedType(st)
+    return HierType(st)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1373,7 +1384,7 @@ def union_of_types(types):
         elif mt in [T_Abrupt, T_continue_, T_break_, T_return_, T_throw_] or isinstance(mt, ThrowType):
             abrupt_memtypes.append(mt)
         elif isinstance(mt, ProcType):
-            # There isn't a T_Proc, or a NamedType that resolves to a ProcType.
+            # There isn't a T_Proc, or a HierType that resolves to a ProcType.
             proc_memtypes.append(mt)
         else:
             other_memtypes.append(mt)
@@ -2500,7 +2511,7 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
         # kludge:
         if op_name in ['ToObject', 'RequireObjectCoercible']:
             # not ToBigInt
-            assert isinstance(discriminator, NamedType)
+            assert isinstance(discriminator, HierType)
             # in_env = init_env.with_expr_type_narrowed('_argument_', discriminator)
             in_env = init_env.copy()
             in_env.vars['_argument_'] = discriminator
@@ -6304,7 +6315,7 @@ def type_for_tilded_word(tilded_word):
     assert chars[0] == '~'
     assert chars[-1] == '~'
     uchars = chars[1:-1].replace('-', '_').replace('+', '_')
-    return NamedType(f"tilde_{uchars}_")
+    return HierType(f"tilde_{uchars}_")
 
 # ==============================================================================
 #@ 5.2.7 Identity
@@ -8529,7 +8540,7 @@ class _:
 
         # XXX: Should also ensure that each declared field is specified exactly once.
 
-        return ( NamedType(record_type_name), env2 )
+        return ( HierType(record_type_name), env2 )
 
 #> In specification text and algorithms,
 #> dot notation may be used to refer to a specific field of a Record value.
@@ -8732,7 +8743,7 @@ class _:
 
         elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
             # _foo_.[[Bar]] references a record's field
-            if isinstance(lhs_t, NamedType):
+            if isinstance(lhs_t, HierType):
                 if lhs_t.name == 'Record':
                     add_pass_error(
                         expr,
@@ -8793,7 +8804,7 @@ class _:
 
             # Okay, but then what's the type of the dotting?
             # Properly, this should be re-submitted.
-            assert isinstance(record_part_of_type, NamedType)
+            assert isinstance(record_part_of_type, HierType)
             t = fields_for_record_type_named_[record_part_of_type.name][dsbn_name]
             return (t, env2)
 
@@ -8845,7 +8856,7 @@ class _:
         (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
-        assert isinstance(et, NamedType)
+        assert isinstance(et, HierType)
         fields = fields_for_record_type_named_[et.name]
         whose_type = fields[dsbn_name]
         env1.assert_expr_is_of_type(val_ex, whose_type)
@@ -9342,7 +9353,7 @@ class _:
 #@ 9.1 Environment Records
 
 def type_for_environment_record_kind(kind):
-    return NamedType(kind.source_text() + ' Environment Record')
+    return HierType(kind.source_text() + ' Environment Record')
 
 @P('{VAL_DESC} : an Environment Record')
 class _:
