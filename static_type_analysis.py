@@ -4359,6 +4359,38 @@ class _:
     def s_nv(each_thing, env0):
         [item_nature, loop_var, collection_expr] = each_thing.children
 
+        # There's two approaches:
+        # outside-in: Get the type of {EX}, then ensure that {ITEM_NATURE} is consistent.
+        # inside-out: Convert {ITEM_NATURE} to a type, then ensure {EX} is consistent.
+        # ("ensure it's consistent" = if it isn't consistent, complain and force it to be consistent)
+        #
+        # Most of the time, it doesn't matter which approach you use.
+        #
+        # One typical source of inconsistency is when {EX}'s static type isn't precise enough
+        # (e.g., it's just "a List"), in which case inside-out works better.
+        #
+        # OTOH, when {ITEM_NATURE} is `Record { {DSBN} ... }`,
+        # that doesn't convert to a precise type,
+        # so you need to go outside-in to get the precise type of the loop-variable.
+
+        if item_nature.prod.rhs_s.startswith('Record {'):
+            # outside-in
+            (collection_type, env1) = tc_expr(collection_expr, env0)
+            assert isinstance(collection_type, ListType)
+            item_type = collection_type.element_type
+            assert item_type.is_a_subtype_of_or_equal_to(T_Record)
+            assert isinstance(item_type, HierType)
+            fields = fields_for_record_type_named_[item_type.name]
+
+            assert len(fields) == len(item_nature.children)
+            for dsbn in item_nature.children:
+                assert dsbn.source_text() in fields
+                
+            return env1.plus_new_entry(loop_var, item_type)
+
+        # -----
+        # Otherwise, inside-out...
+
         if item_nature.prod.rhs_s == "code point":
             item_type = T_code_point_
             collection_type = T_Unicode_code_points_
@@ -4375,31 +4407,6 @@ class _:
             [nont] = item_nature.children
             item_type = ptn_type_for(nont)
             collection_type = ListType(T_Parse_Node)
-
-        elif item_nature.prod.rhs_s == "Record { {DSBN}, {DSBN} }":
-            [dsbn1, dsbn2] = item_nature.children
-            dsbns = (dsbn1.source_text(), dsbn2.source_text())
-            if dsbns == ('[[Module]]', '[[ExportName]]'):
-                item_type = T_ExportResolveSet_Record_
-            elif dsbns == ('[[Key]]', '[[Value]]'):
-                # hack:
-                if collection_expr.source_text() == '_importMetaValues_':
-                    item_type = T_ImportMeta_record_ # PR 1892
-                elif collection_expr.source_text() in ['_M_.[[MapData]]', '_M_.[[WeakMapData]]']:
-                    item_type = T_MapData_record_
-                else:
-                    assert 0, collection_expr
-            else:
-                assert 0, dsbns
-            collection_type = ListType(item_type)
-
-        elif item_nature.prod.rhs_s == r"Record { {DSBN}, {DSBN}, {DSBN} }":
-            [dsbn1, dsbn2, dsbn3] = item_nature.children
-            assert dsbn1.source_text() == '[[WeakRefTarget]]'
-            assert dsbn2.source_text() == '[[HeldValue]]'
-            assert dsbn3.source_text() == '[[UnregisterToken]]'
-            item_type = T_FinalizationRegistryCellRecord_
-            collection_type = ListType(item_type)
 
         else:
             item_type = {
