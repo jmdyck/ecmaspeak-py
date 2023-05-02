@@ -796,6 +796,39 @@ def member_is_a_subtype_or_equal(A, B):
         else:
             assert 0, (A, B)
 
+    elif isinstance(A, RecordType):
+        if isinstance(B, RecordType):
+            if A.schema_name == B.schema_name == '':
+                A_field_dict = dict(A.fields_info)
+                B_field_dict = dict(B.fields_info)
+                if set(A_field_dict.keys()) == set(B_field_dict.keys()):
+                    for (field_name, A_field_type) in A_field_dict.items():
+                        B_field_type = B_field_dict[field_name]
+                        if A_field_type.is_a_subtype_of_or_equal_to(B_field_type):
+                            pass
+                        else:
+                            return False
+                    return True
+                else:
+                    assert 0
+            else:
+                assert 0
+
+        elif isinstance(B, HierType):
+            if B == T_Record:
+                return True
+            elif A.schema_name == '':
+                # A schema-less record type is a subtype of
+                # no HierType other than T_Record.
+                return False
+            elif B.is_a_subtype_of_or_equal_to(T_Record):
+                assert 0
+            else:
+                return False
+                
+        else:
+            assert 0, (A, B)
+
     elif isinstance(A, ThrowType):
         if isinstance(B, ThrowType):
             return (A.error_type.is_a_subtype_of_or_equal_to(B.error_type))
@@ -884,6 +917,36 @@ class ListType(Type):
 
     def __str__(self): return "List of %s" % str(self.element_type)
     def unparse(self, _=False): return "List of %s" % self.element_type.unparse(True)
+
+@dataclass(frozen = True)
+class RecordType(Type):
+    schema_name: str
+    fields_info: Tuple[Tuple[str, Type]]
+
+    def __post_init__(self):
+        assert isinstance(self.schema_name, str)
+        assert isinstance(self.fields_info, tuple)
+        for fi in self.fields_info:
+            assert isinstance(fi, tuple)
+            (field_name, field_type) = fi
+            assert isinstance(field_name, str)
+            assert isinstance(field_type, Type)
+
+    def type_of_field_named(self, field_name):
+        for (f_name, f_type) in self.fields_info:
+            if f_name == field_name:
+                return f_type
+        assert 0
+
+    def __str__(self):
+        field_types_str = ', '.join(
+            f"{f_name}: {f_type}"
+            for (f_name, f_type) in self.fields_info
+        )
+        return f"RecordType({self.schema_name!r}, {field_types_str})"
+
+    def unparse(self, _=False):
+        return str(self)
 
 @dataclass(frozen = True)
 class ThrowType(Type):
@@ -1089,23 +1152,7 @@ named_type_hierarchy = {
                 },
                 'Private Name': {},
                 'Record': {
-                    'CharacterClassResultRecord_': {},
-                    'ExportResolveSet_Record_': {},
-                    'FinalizationRegistryCellRecord_': {},
-                    'FindResultRecord_': {},
-                    'ImportMeta_record_': {},
                     'Intrinsics Record': {},
-                    'Job_record_': {},
-                    'LoadedModule_Record_': {},
-                    'MapData_record_': {},
-                    'QuantifierPrefixResultRecord_': {},
-                    'QuantifierResultRecord_': {},
-                    'ResolvingFunctions_record_': {},
-                    'boolean_value_record_': {},
-                    'CodePointAt_record_': {},
-                    'integer_value_record_': {},
-                    'methodDef_record_': {},
-                    'templateMap_entry_': {},
                 },
                 # 'Reference': {}, # 2085
                 'Relation': {},
@@ -1846,7 +1893,7 @@ class Env:
                 old_t == T_Proxy_exotic_object_ | T_bound_function_exotic_object_ | T_other_function_object_ and new_t == T_constructor_object_
                 # MakeConstructor changes _F_ from a non-constructor to a constructor.
                 or
-                old_t == T_Tangible_ and new_t == T_Object | T_Symbol | T_tilde_empty_
+                expr_text == '_cell_' and new_t == T_FinalizationRegistryCellRecord_
                 # FinalizationRegistry.prototype.register, because STA doesn't know that CanBeHeldWeakly is a type-test
             ):
                 # It's unclear whether it's worth posting an error for these.
@@ -1884,6 +1931,8 @@ class Env:
                 '\u211d(_m_) / 12', # MakeDay
                 '\u211d(_number_)', # ToUint8Clamp
                 'NormalCompletion(_v_)', # Await
+                'the Record { [[Key]]: _stringKey_, [[Symbol]]: _newSymbol_ }', # Symbol.for
+                'the Record { [[Site]]: _templateLiteral_, [[Array]]: _template_ }', # GetTemplateObject
             ], expr_text.encode('unicode_escape')
             if 0:
                 add_pass_error(
@@ -3075,8 +3124,7 @@ def get_fields(fields):
 # ------------------------------------------------------------------------------
 
 fields_for_record_type_named_ = {
-    # Initialize this dict with info for unnamed record types.
-    # Then add info for named record types
+    # Add info for named record types
     # by calling process_declared_record_type_info().
 
     #? # 2651: Table 8: Completion Record Fields
@@ -3085,103 +3133,6 @@ fields_for_record_type_named_ = {
     #?     '[[Value]]'  : T_Tangible_ | T_tilde_empty_,
     #?     '[[Target]]' : T_String | T_tilde_empty_,
     #? },
-
-    'LoadedModule_Record_': {
-        '[[Specifier]]' : T_String,
-        '[[Module]]'    : T_Module_Record,
-    },
-
-    # 8.2: NO TABLE
-    'templateMap_entry_': {
-        '[[Site]]'    : T_PTN_Template_Literal,
-        '[[Array]]'   : T_Array_object_,
-    },
-
-    # 11933: NO TABLE, no mention
-    'CodePointAt_record_': {
-        '[[CodePoint]]'          : T_code_point_,
-        '[[CodeUnitCount]]'      : T_MathInteger_,
-        '[[IsUnpairedSurrogate]]': T_Boolean,
-    },
-
-    # PR 1892 (add import.meta):
-    # 14234: no table
-    'ImportMeta_record_': {
-        '[[Key]]'   : T_String | T_Symbol,
-        '[[Value]]' : T_Tangible_,
-    },
-
-    # 21275: NO TABLE, no mention
-    'methodDef_record_': {
-        '[[Closure]]' : T_function_object_,
-        '[[Key]]'     : T_String | T_Symbol,
-    },
-
-    # 24003
-    'ExportResolveSet_Record_': {
-        '[[Module]]'     : T_Module_Record,
-        '[[ExportName]]' : T_String,
-    },
-
-    # 22.2.2.?
-    'QuantifierResultRecord_': {
-        '[[Min]]'   : T_MathNonNegativeInteger_,
-        '[[Max]]'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
-        '[[Greedy]]': T_Boolean,
-    },
-    'QuantifierPrefixResultRecord_': {
-        '[[Min]]'   : T_MathNonNegativeInteger_,
-        '[[Max]]'   : T_MathNonNegativeInteger_ | T_MathPosInfinity_,
-    },
-    'CharacterClassResultRecord_': {
-        '[[CharSet]]': T_CharSet,
-        '[[Invert]]' : T_Boolean,
-    },
-
-    # 23.1.3.9
-    'FindResultRecord_': {
-        '[[Index]]': T_IntegralNumber_,
-        '[[Value]]': T_Tangible_,
-    },
-
-    # 25.2.3.2 FinalizationRegistry.prototype.register
-    'FinalizationRegistryCellRecord_': {
-        '[[WeakRefTarget]]'  : T_Object | T_Symbol | T_tilde_empty_,
-        '[[HeldValue]]'      : T_Tangible_,
-        '[[UnregisterToken]]': T_Object | T_tilde_empty_,
-    },
-
-    # 39099: no table, no mention
-    'MapData_record_': {
-        '[[Key]]'   : T_Tangible_ | T_tilde_empty_,
-        '[[Value]]' : T_Tangible_ | T_tilde_empty_,
-        # but Value is empty only if Key is empty?
-        # So if you establish that _e_.[[Key]] isn't ~empty~,
-        # you know that _e_.[[Value]] isn't ~empty~ ?
-    },
-
-    # 39415: CreateResolvingFunctions NO TABLE, not even mentioned
-    # 29803: `Promise.all` Resolve Element Functions NO TABLE, barely mentioned
-    'boolean_value_record_': {
-        '[[Value]]' : T_Boolean,
-    },
-
-    # 39438: CreateResolvingFunctions NO TABLE, not even mentioned
-    'ResolvingFunctions_record_': {
-        '[[Resolve]]' : T_function_object_ | T_Undefined,
-        '[[Reject]]'  : T_function_object_ | T_Undefined,
-    },
-
-    # 39769: NO TABLE, not even mentioned
-    'Job_record_': {
-        '[[Job]]'  : T_Job,
-        '[[Realm]]': T_Realm_Record | T_Null,
-    },
-
-    # 39784: PerformPromiseAll NO TABLE, not even mentioned
-    'integer_value_record_': {
-        '[[Value]]' : T_MathInteger_,
-    },
 
 }
 
@@ -4379,12 +4330,13 @@ class _:
             assert isinstance(collection_type, ListType)
             item_type = collection_type.element_type
             assert item_type.is_a_subtype_of_or_equal_to(T_Record)
-            assert isinstance(item_type, HierType)
-            fields = fields_for_record_type_named_[item_type.name]
+            assert isinstance(item_type, RecordType)
+            assert item_type.schema_name == ''
+            fields_dict = dict(item_type.fields_info)
 
-            assert len(fields) == len(item_nature.children)
+            assert len(fields_dict) == len(item_nature.children)
             for dsbn in item_nature.children:
-                assert dsbn.source_text() in fields
+                assert dsbn.source_text() in fields_dict
                 
             return env1.plus_new_entry(loop_var, item_type)
 
@@ -8382,9 +8334,8 @@ class _:
         [dsb_word, ex] = cond.children
         dsbn_name = dsb_word.source_text()
         # "That Record" is from prev step's "contains a Record"
-        that_type = T_LoadedModule_Record_
-        fields = fields_for_record_type_named_[that_type.name]
-        field_type = fields[dsbn_name]
+        assert dsbn_name == '[[Module]]'
+        field_type = T_Module_Record
         env0.assert_expr_is_of_type(ex, field_type)
         return (env0, env0)
 
@@ -8393,23 +8344,15 @@ class _:
 @P('{LIST_ELEMENTS_DESCRIPTION} : Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})')
 class _:
     def s_tb(val_desc, env):
-        vd_st = val_desc.source_text()
-        t = {
-            'a Record with fields [[CharSet]] (a CharSet) and [[Invert]] (a Boolean)': T_CharacterClassResultRecord_,
-            'a Record with fields [[CodePoint]] (a code point), [[CodeUnitCount]] (a positive integer), and [[IsUnpairedSurrogate]] (a Boolean)': T_CodePointAt_record_,
-            'a Record with fields [[Index]] (an integral Number) and [[Value]] (an ECMAScript language value)': T_FindResultRecord_,
-            'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record or *null*)': T_Job_record_,
-            'a Record with fields [[Job]] (a Job Abstract Closure) and [[Realm]] (a Realm Record)': T_Job_record_,
-            'a Record with fields [[Key]] (a property key) and [[Closure]] (a function object)': T_methodDef_record_,
-            'a Record with fields [[Min]] (a non-negative integer) and [[Max]] (a non-negative integer or +&infin;)': T_QuantifierPrefixResultRecord_,
-            'a Record with fields [[Min]] (a non-negative integer), [[Max]] (a non-negative integer or +&infin;), and [[Greedy]] (a Boolean)': T_QuantifierResultRecord_,
-            'a Record with fields [[Resolve]] (a function object) and [[Reject]] (a function object)': T_ResolvingFunctions_record_,
-            'Records with fields [[Key]] (a property key) and [[Value]] (an ECMAScript language value)': T_ImportMeta_record_,
-            'Records with fields [[Module]] (a Module Record) and [[ExportName]] (a String)': T_ExportResolveSet_Record_,
-            'Records with fields [[Site]] (a |TemplateLiteral| Parse Node) and [[Array]] (an Array)': T_templateMap_entry_,
-            'Records with fields [[Specifier]] (a String) and [[Module]] (a Module Record)' : T_LoadedModule_Record_,
-        }[vd_st]
-        return t
+        fields_info = []
+        assert len(val_desc.children) % 2 == 0
+        for i in range(0, len(val_desc.children), 2):
+            field_dsb_word = val_desc.children[i]
+            field_val_desc = val_desc.children[i+1]
+            field_name = field_dsb_word.source_text()
+            field_type = convert_nature_node_to_type(field_val_desc)
+            fields_info.append( (field_name, field_type) )
+        return RecordType('', tuple(fields_info))
 
 @P(r"{SETTABLE} : the {DSBN} field of {EXPR}")
 class _:
@@ -8472,44 +8415,13 @@ class _:
                 return (t, env1)
 
         if constructor_prefix == 'Record':
-            field_names = sorted(get_field_names(fields))
-            record_type_names = find_record_types_with_fields(field_names)
-
-            if len(record_type_names) == 0:
-                add_pass_error(
-                    expr,
-                    "Could not infer a record type for fields: " + str(field_names)
-                )
-                record_type_name = 'Record'
-                field_info = None
-
-            else:
-                if len(record_type_names) == 1:
-                    [record_type_name] = record_type_names
-                else:
-                    if field_names == ['[[Key]]', '[[Value]]']:
-                        assert record_type_names == ['ImportMeta_record_', 'MapData_record_']
-                        # In {Map,WeakMap}.prototype.set
-                        record_type_name = 'MapData_record_'
-
-                    elif field_names == ['[[Value]]']:
-                        assert record_type_names == ['boolean_value_record_', 'integer_value_record_']
-                        fst = fields.source_text()
-                        if fst == '[[Value]]: *false*':
-                            record_type_name = 'boolean_value_record_'
-                        elif fst == '[[Value]]: 1':
-                            record_type_name = 'integer_value_record_'
-                        else:
-                            assert 0, fst
-
-                    else:
-                        assert 0, field_names
-
-                add_pass_error(
-                    expr,
-                    "Inferred record type `%s`: be explicit!" % record_type_name
-                )
-                field_info = fields_for_record_type_named_[record_type_name]
+            env = env0
+            fields_info = []
+            for (field_name, field_ex) in get_field_items(fields):
+                (field_type, env) = tc_expr(field_ex, env)
+                fields_info.append( (field_name, field_type) )
+            rt = RecordType('', tuple(fields_info))
+            return (rt, env)
 
         else:
             if constructor_prefix in [
@@ -8534,14 +8446,9 @@ class _:
 
         envs = []
         for (dsbn_name, ex) in get_field_items(fields):
-            if field_info is None:
-                # (because it's just a Record, not a particular (named) kind of Record)
-                # We can't really assert anything.
-                (t, env1) = tc_expr(ex, env0); assert env1 is env0
-            else:
-                declared_field_type = field_info[dsbn_name]
-                # If the constructor referred to an undeclared field, that would raise a KeyError
-                env1 = env0.ensure_expr_is_of_type(ex, declared_field_type)
+            declared_field_type = field_info[dsbn_name]
+            # If the constructor referred to an undeclared field, that would raise a KeyError
+            env1 = env0.ensure_expr_is_of_type(ex, declared_field_type)
             envs.append(env1)
         env2 = envs_or(envs)
 
@@ -8575,15 +8482,13 @@ class _:
                 # We can't be dealing with a Completion Record
                 break
             if lhs_t in [
-                T_ImportMeta_record_,
-                T_MapData_record_,
                 T_PromiseReaction_Record,
                 T_Property_Descriptor,
-                T_boolean_value_record_,
-                T_boolean_value_record_ | T_Boolean,
-                T_integer_value_record_,
             ]:
                 # We know we're not dealing with a Completion Record
+                break
+            if isinstance(lhs_t, RecordType) and lhs_t.schema_name == '':
+                # ditto
                 break
 
             assert lhs_text not in [
@@ -8633,8 +8538,8 @@ class _:
                         result_memtype = T_TBD
                     elif memtype == T_PrivateElement:
                         result_memtype = T_Tangible_
-                    elif memtype == T_FindResultRecord_:
-                        result_memtype = T_Tangible_
+                    elif isinstance(memtype, RecordType):
+                        result_memtype = memtype.type_of_field_named(dsbn_name)
                     else:
                         assert 0, memtype
 
@@ -8691,10 +8596,6 @@ class _:
         elif lhs_t == T_Object | T_Null:
             # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
             lhs_t = T_Object
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_boolean_value_record_ | T_Boolean:
-            lhs_t = T_boolean_value_record_
             env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
 
         elif lhs_t == T_Realm_Record | T_Undefined:
@@ -8782,6 +8683,10 @@ class _:
 
                 return (field_type, env2)
 
+            elif isinstance(lhs_t, RecordType):
+                field_type = lhs_t.type_of_field_named(dsbn_name)
+                return (field_type, env2)
+
             elif isinstance(lhs_t, UnionType):
                 types_for_field = set()
                 for mt in lhs_t.member_types:
@@ -8849,8 +8754,9 @@ class _:
         (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
-        fields = fields_for_record_type_named_[et.name]
-        field_type = fields[dsbn_name]
+        assert isinstance(et, RecordType)
+        assert et.schema_name == ''
+        field_type = et.type_of_field_named(dsbn_name)
         env1.assert_expr_is_of_type(var, field_type)
         return (env0, env0)
 
@@ -8877,8 +8783,9 @@ class _:
         (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
         assert isinstance(list_type, ListType)
         et = list_type.element_type
-        fields = fields_for_record_type_named_[et.name]
-        whose_type = fields[dsbn_name]
+        assert isinstance(et, RecordType)
+        assert et.schema_name == ''
+        whose_type = et.type_of_field_named(dsbn_name)
         env1.assert_expr_is_of_type(var, whose_type)
         return (et, env0)
 
@@ -10396,7 +10303,12 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
-        return (T_LoadedModule_Record_, env0)
+        rt = RecordType('', (
+                ('[[Specifier]]', T_String),
+                ('[[Module]]'   , T_Module_Record),
+            )
+        )
+        return (rt, env0)
 
     #@ 16.2.1.5.3.1 InnerModuleEvaluation
 @P(r"{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
@@ -11373,6 +11285,12 @@ class _:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 24 Keyed Collections
 
+T_MapData_record_ = RecordType( '', (
+        ('[[Key]]',   T_Tangible_ | T_tilde_empty_),
+        ('[[Value]]', T_Tangible_ | T_tilde_empty_),
+    )
+)
+
 # 24.1 Map Objects
 set_up_internal_thing('slot', '[[MapData]]', ListType(T_MapData_record_))
 
@@ -11642,6 +11560,13 @@ set_up_internal_thing('slot', '[[WeakRefTarget]]', T_Object | T_Symbol | T_tilde
 class _:
     s_tb = T_FinalizationRegistry_object_
 
+T_FinalizationRegistryCellRecord_ = RecordType('', (
+        ('[[WeakRefTarget]]'  , T_Object | T_Symbol | T_tilde_empty_),
+        ('[[HeldValue]]'      , T_Tangible_),
+        ('[[UnregisterToken]]', T_Object | T_tilde_empty_),
+    )
+)
+
 set_up_internal_thing('slot', '[[CleanupCallback]]', T_JobCallback_Record)
 set_up_internal_thing('slot', '[[Cells]]',           ListType(T_FinalizationRegistryCellRecord_))
 
@@ -11703,6 +11628,8 @@ class _:
 
 #@ 27.2.1.3 CreateResolvingFunctions
 
+T_boolean_value_record_ = RecordType('', (('[[Value]]', T_Boolean),))
+
 set_up_internal_thing('slot', '[[Promise]]',         T_Object)
 set_up_internal_thing('slot', '[[AlreadyResolved]]', T_boolean_value_record_)
 
@@ -11711,7 +11638,7 @@ set_up_internal_thing('slot', '[[AlreadyResolved]]', T_boolean_value_record_)
 set_up_internal_thing('slot', '[[AlreadyCalled]]',     T_boolean_value_record_ | T_Boolean)
 set_up_internal_thing('slot', '[[Index]]',             T_MathInteger_)
 set_up_internal_thing('slot', '[[Capability]]',        T_PromiseCapability_Record)
-set_up_internal_thing('slot', '[[RemainingElements]]', T_integer_value_record_)
+set_up_internal_thing('slot', '[[RemainingElements]]', RecordType('', (('[[Value]]', T_MathInteger_),)))
 set_up_internal_thing('slot', '[[Values]]',            ListType(T_Tangible_))
 set_up_internal_thing('slot', '[[Errors]]',            ListType(T_Tangible_))
 
