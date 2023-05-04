@@ -893,6 +893,7 @@ class HierType(Type):
     # to prevent spurious diffs.
     # Eventually, STA may be smart enough that those complaints go away,
     # and we won't need order=True any more.)
+    # (Also in the semantics for {DOTTING}.)
 
     def __post_init__(self):
         assert isinstance(self.name, str)
@@ -1895,6 +1896,12 @@ class Env:
                 or
                 expr_text == '_cell_' and new_t == T_FinalizationRegistryCellRecord_
                 # FinalizationRegistry.prototype.register, because STA doesn't know that CanBeHeldWeakly is a type-test
+                or
+                expr_text == '_starResolution_' and old_t == T_0 and new_t == T_ResolvedBinding_Record
+                # ResolveExport
+                or
+                expr_text == '_element_' and old_t == T_0 and new_t == T_PrivateElement
+                # ClassDefinitionEvaluation
             ):
                 # It's unclear whether it's worth posting an error for these.
                 if 0:
@@ -6293,18 +6300,18 @@ class _:
     def s_cond(cond, env0, asserting):
         [exa, exb] = cond.children
         (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
-        (exb_type, exb_env) = tc_expr(exb, env0); assert exb_env is env0
+        (exb_type, exb_env) = tc_expr(exb, env0)
         if exa_type == exb_type:
             # good
-            env1 = env0
+            env1 = exb_env
         elif exa_type == T_TBD:
-            env1 = env0.with_expr_type_replaced(exa, exb_type)
+            env1 = exb_env.with_expr_type_replaced(exa, exb_type)
         elif exb_type == T_TBD:
-            env1 = env0.with_expr_type_replaced(exb, exa_type)
+            env1 = exb_env.with_expr_type_replaced(exb, exa_type)
         else:
             (common_t, _) = exa_type.split_by(exb_type)
             assert common_t != T_0
-            env1 = ( env0
+            env1 = ( exb_env
                 .with_expr_type_narrowed(exa, common_t)
                 .with_expr_type_narrowed(exb, common_t)
             )
@@ -8563,9 +8570,13 @@ class _:
         # Finished with "Completion Records"
         # ----------------------------------
 
-        # In some cases, we first need to change the type of lhs_var...
+        # There are various things that can take a dot.
 
-        if lhs_t == T_0:
+        (dottable_part_of_lhs_t, nondottable_part_of_lhs_t) = lhs_t.split_by(T_Record | T_Object | T_Symbol | T_Private_Name)
+
+        msg_lines = []
+
+        if dottable_part_of_lhs_t == T_0:
             if lhs_text == '_starResolution_':
                 # ResolveExport _starResolution_
                 # The first time through the For loop,
@@ -8576,149 +8587,119 @@ class _:
                 # then we would re-STA the loop-body
                 # with a wider type for _starResolution_.
                 # But I'm hoping to avoid the need to re-STA loop-bodies.
-                lhs_t = T_ResolvedBinding_Record
+                dottable_part_of_lhs_t = T_ResolvedBinding_Record
             elif lhs_text == '_element_':
-                lhs_t = T_PrivateElement
+                dottable_part_of_lhs_t = T_PrivateElement
             else:
                 assert 0, expr.source_text()
-            add_pass_error(
-                expr,
-                "`%s` has type T_0, changing to %s" % (lhs_text, lhs_t)
-            )
-            env2 = env1
 
-        elif lhs_t == T_Property_Descriptor | T_Undefined:
-            # CreateGlobalFunctionBinding:
-            # If _existingProp_ is *undefined* or _existingProp_.[[Configurable]] is *true*
-            lhs_t = T_Property_Descriptor
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
+            msg_lines.append(f"which cannot take a dot")
+            msg_lines.append(f"so changing its type to {dottable_part_of_lhs_t}")
 
-        elif lhs_t == T_Object | T_Null:
-            # GetValue. (Fix by replacing T_Reference_Record with ReferenceType(base_type)?)
-            lhs_t = T_Object
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Realm_Record | T_Undefined:
-            lhs_t = T_Realm_Record
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Cyclic_Module_Record | T_tilde_empty_:
-            assert lhs_text in ['_m_.[[CycleRoot]]', '_module_', '_requiredModule_']
-            lhs_t = T_Cyclic_Module_Record
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        elif lhs_t == T_Tangible_:
-            # 3 times
-
-            assert dsbn_name == '[[AsyncGeneratorState]]'
-
-            # After:
-            #   Let _result_ be Completion(AsyncGeneratorValidate(_generator_, ~empty~)).
-            #   IfAbruptRejectPromise(_result_, _promiseCapability_).
-            # it's guaranteed that _generator_ is a AsyncGenerator object,
-            # but STA isn't smart enough to know that.
-            lhs_t = T_AsyncGenerator_object_
-
-            env2 = env1.with_expr_type_replaced(lhs_var, lhs_t)
-
-        else:
-            env2 = env1
+        elif nondottable_part_of_lhs_t != T_0:
+            msg_lines.append(f"of which {nondottable_part_of_lhs_t} cannot take a dot")
+            msg_lines.append(f"so narrowing type to {dottable_part_of_lhs_t}")
 
         # --------------------------------------------
 
-        if lhs_t.is_a_subtype_of_or_equal_to(T_Object):
-            # _foo_.[[Bar]] references an object's internal method or internal slot.
+        final_lhs_t = T_0
+        final_dotting_t = T_0
 
-            it_type = type_of_internal_thing_[dsbn_name]
+        for part_of_lhs_t in sorted(dottable_part_of_lhs_t.set_of_types()):
 
-            # XXX We should require that lhs_t is allowed to have this internal thing.
-
-            # But for some subtypes of Object, we can give a narrower type for the slot
-            if lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == '[[ArrayBufferData]]':
-                narrower_type = T_Shared_Data_Block
-                assert narrower_type.is_a_subtype_of_or_equal_to(it_type)
-                assert narrower_type != it_type
-                it_type = narrower_type
-            return (it_type, env2)
-
-        elif lhs_t == T_Symbol:
-            assert dsbn_name == '[[Description]]'
-            return (T_String | T_Undefined, env2)
-
-        elif lhs_t == T_Private_Name:
-            assert dsbn_name == '[[Description]]'
-            return (T_String, env2)
-
-        elif lhs_t.is_a_subtype_of_or_equal_to(T_Record):
-            # _foo_.[[Bar]] references a record's field
-            if isinstance(lhs_t, HierType):
-                if lhs_t.name == 'Record':
-                    add_pass_error(
-                        expr,
-                        "type of `%s` is only 'Record', so don't know about a %s field"
-                        % (lhs_text, dsbn_name)
-                    )
-                    field_type = T_TBD
-                elif lhs_t.name == 'Intrinsics Record':
-                    field_type = {
-                        '[[%Array%]]'               : T_constructor_object_,
-                        '[[%Function.prototype%]]'  : T_Object,
-                        '[[%Object.prototype%]]'    : T_Object,
-                        '[[%ThrowTypeError%]]'      : T_function_object_,
-                    }[dsbn_name]
+            if part_of_lhs_t == T_Symbol:
+                if dsbn_name == '[[Description]]':
+                    part_of_dotting_t = T_String | T_Undefined
                 else:
-                    assert lhs_t.name in fields_for_record_type_named_, lhs_t.name
-                    fields_info = fields_for_record_type_named_[lhs_t.name]
-                    if dsbn_name in fields_info:
-                        field_type = fields_info[dsbn_name]
-                    else:
-                        add_pass_error(
-                            expr,
-                            f"`{lhs_text}` has type {lhs_t}, which doesn't have a {dsbn_name} field"
-                        )
-                        # Probably you need to add something to
-                        # fields_for_record_type_named_
+                    part_of_dotting_t = None
 
+            elif part_of_lhs_t == T_Private_Name:
+                if dsbn_name == '[[Description]]':
+                    part_of_dotting_t = T_String
+                else:
+                    part_of_dotting_t = None
+
+            elif part_of_lhs_t.is_a_subtype_of_or_equal_to(T_Object):
+                # _foo_.[[Bar]] references an object's internal method or internal slot.
+
+                if dsbn_name in type_of_internal_thing_:
+                    part_of_dotting_t = type_of_internal_thing_[dsbn_name]
+
+                    # XXX We should require that part_of_lhs_t is allowed to have this internal thing.
+
+                    # But for some subtypes of Object, we can give a narrower type for the slot
+                    if part_of_lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == '[[ArrayBufferData]]':
+                        narrower_type = T_Shared_Data_Block
+                        assert narrower_type.is_a_subtype_of_or_equal_to(part_of_dotting_t)
+                        assert narrower_type != part_of_dotting_t
+                        part_of_dotting_t = narrower_type
+
+                    # or the the slot-name can give us a narrower type for the LHS
+                    if part_of_lhs_t == T_Object and dsbn_name == '[[AsyncGeneratorState]]':
+                        part_of_lhs_t = T_AsyncGenerator_object_
+                        msg_lines.append(f"Within Object, only {part_of_lhs_t} supports .{dsbn_name}")
+
+                else:
+                    part_of_dotting_t = None
+
+            elif part_of_lhs_t.is_a_subtype_of_or_equal_to(T_Record):
+                # _foo_.[[Bar]] references a record's field
+                if isinstance(part_of_lhs_t, HierType):
+                    if part_of_lhs_t.name == 'Record':
+                        msg_lines.append("so don't know about a {dsbn_name} field")
                         field_type = T_TBD
 
-                return (field_type, env2)
+                    elif part_of_lhs_t.name == 'Intrinsics Record':
+                        field_type = {
+                            '[[%Array%]]'               : T_constructor_object_,
+                            '[[%Function.prototype%]]'  : T_Object,
+                            '[[%Object.prototype%]]'    : T_Object,
+                            '[[%ThrowTypeError%]]'      : T_function_object_,
+                        }[dsbn_name]
 
-            elif isinstance(lhs_t, RecordType):
-                field_type = lhs_t.type_of_field_named(dsbn_name)
-                return (field_type, env2)
+                    else:
+                        assert part_of_lhs_t.name in fields_for_record_type_named_, part_of_lhs_t.name
+                        fields_info = fields_for_record_type_named_[part_of_lhs_t.name]
+                        if dsbn_name in fields_info:
+                            field_type = fields_info[dsbn_name]
+                        else:
+                            msg_lines.append(f"{part_of_lhs_t} doesn't have a {dsbn_name} field")
+                            # Probably you need to add something to
+                            # fields_for_record_type_named_
 
-            elif isinstance(lhs_t, UnionType):
-                types_for_field = set()
-                for mt in lhs_t.member_types:
-                    fields_info = fields_for_record_type_named_[mt.name]
-                    assert dsbn_name in fields_info
-                    field_type = fields_info[dsbn_name]
-                    types_for_field.add(field_type)
-                field_type = union_of_types(types_for_field)
-                return (field_type, env2)
+                            field_type = T_TBD
+
+                    part_of_dotting_t = field_type
+
+                elif isinstance(part_of_lhs_t, RecordType):
+                    field_type = part_of_lhs_t.type_of_field_named(dsbn_name)
+                    part_of_dotting_t = field_type
+
+                else:
+                    assert 0, (expr.source_text(), part_of_lhs_t)
 
             else:
-                assert 0, (expr.source_text(), lhs_t)
+                assert 0, part_of_lhs_t
 
+            if part_of_dotting_t is None:
+                msg_lines.append(f"Dropping {part_of_lhs_t} from the lhs-type, because it doesn't support .{dsbn_name}")
+            else:
+                final_dotting_t |= part_of_dotting_t
+                final_lhs_t |= part_of_lhs_t
+
+        if final_lhs_t != lhs_t:
+            env2 = env1.with_expr_type_replaced(lhs_var, final_lhs_t)
+            if final_lhs_t != dottable_part_of_lhs_t:
+                msg_lines.append(f"So final lhs-type is {final_lhs_t}")
         else:
-            # lhs_t is presumably a union of types, only one/some of which supports dot-operator
-            # In practice, this is a Record type.
-            # (In fact, in practice, it's a T_Reference_Record, but I don't need to be that specific.)
+            env2 = env1
 
-            (record_part_of_type, nonrecord_part_of_type) = lhs_t.split_by(T_Record)
-            assert record_part_of_type != T_0
-            assert nonrecord_part_of_type != T_0
+        if msg_lines:
+            msg_lines.insert(0, f"`{lhs_text}` has type {lhs_t},")
+            msg = '\n    '.join(msg_lines)
+            add_pass_error(lhs_var, msg)
 
-            add_pass_error(
-                lhs_var,
-                f"Narrowing type {lhs_t} to {record_part_of_type} to support a dot-operator"
-            )
-
-            # Okay, but then what's the type of the dotting?
-            # Properly, this should be re-submitted.
-            assert isinstance(record_part_of_type, HierType)
-            t = fields_for_record_type_named_[record_part_of_type.name][dsbn_name]
-            return (t, env2)
+        return (final_dotting_t, env2)
 
 # ------------------------------------------------------------------------------
 # List of Records
