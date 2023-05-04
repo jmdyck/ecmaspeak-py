@@ -6954,7 +6954,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
 
-@P(r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35")
+@P(r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b> through <b>Z</b> and <b>a</b> through <b>z</b> for digits with values 10 through 35")
 class _:
     def s_expr(expr, env0, _):
         [zvar, rvar] = expr.children

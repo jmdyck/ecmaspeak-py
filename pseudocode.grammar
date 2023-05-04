@@ -838,7 +838,7 @@
     the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})
     the index into {var} of the character that was obtained from element {EX} of {var}
     the index within {var} of the first such code unit
-    the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b>-<b>Z</b> and <b>a</b>-<b>z</b> for digits with values 10 through 35
+    the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b> through <b>Z</b> and <b>a</b> through <b>z</b> for digits with values 10 through 35
     the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
     the intrinsic function {percent_word}
