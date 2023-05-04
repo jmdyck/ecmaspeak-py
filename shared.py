@@ -201,7 +201,8 @@ def write_spec_with_extras(mode, show_targeted_msgs, f):
             for (sc,ec,msg) in sorted(line_info.targeted_msgs, key=lambda t: t[1]):
                 caret_line = '-' * (sc-1) + '^' * (ec-sc)
                 print(caret_line, file=f)
-                print('>>> ' + msg, file=f)
+                for line in msg.split('\n'):
+                    print('>>> ' + line, file=f)
                 print(file=f)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
