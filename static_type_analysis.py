@@ -5611,6 +5611,15 @@ class _:
         for a_mt in a_t.set_of_types():
             for b_mt in b_t.set_of_types():
                 result_t = result_t | type_arithmetic(a_mt, op_st, b_mt, a, b)
+
+        if expr.source_text() in ['(_x_ - _xDigit_) / 2', '(_y_ - _yDigit_) / 2']:
+            # BigIntBitwiseOp
+            assert result_t == T_MathReal_
+            # However, _xDigit_ is _x_ mod 2,
+            # so _x_ - _xDigit_ is even,
+            # so (_x_ - _xDigit_) / 2 is actually MathInteger.
+            result_t = T_MathInteger_
+
         return (result_t, env2)
 
 @P(r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}")
