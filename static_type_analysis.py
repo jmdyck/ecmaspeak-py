@@ -1902,6 +1902,15 @@ class Env:
                 or
                 expr_text == '_element_' and old_t == T_0 and new_t == T_PrivateElement
                 # ClassDefinitionEvaluation
+                or
+                expr_text == '_thisEnv_' and old_t == T_Declarative_Environment_Record | T_Global_Environment_Record | T_Null and new_t == T_Environment_Record
+                # EvalDeclarationInstantiation
+                or
+                expr_text == '_value_' and old_t == T_Tangible_ and new_t == T_Tangible_ | T_tilde_empty_
+                # Evaluation of YieldExpression
+                or
+                expr_text == '_captures_' and old_t == ListType(T_String | T_Undefined) and new_t == ListType(T_String | T_IntegralNumber_)
+                # RegExp.prototype [ @@replace ]
             ):
                 # It's unclear whether it's worth posting an error for these.
                 if 0:
@@ -4222,37 +4231,33 @@ class _:
     def s_nv(anode, env0):
         [commands] = anode.children
 
-        env_at_bottom = tc_nonvalue(commands, env0)
+        def check_before_body(env):
+            return (env, None)
+            # The only way to leave a condition-less Repeat
+            # is via a Return command,
+            # so there can't be anything (except maybe a NOTE) after the loop.
 
-        # The only way to leave a condition-less Repeat
-        # is via a Return command,
-        # so there can't be anything (except maybe a NOTE) after the loop.
-        return None
-
-        # XXX Should repeat the analysis, feeding the bottom env to the top,
-        # XXX until no change.
-        # XXX (and likewise with other loops)
-
+        return tc_loop(env0, check_before_body, commands)
 
 @P(r'{COMMAND} : Repeat, while {CONDITION},{IND_COMMANDS}')
 @P(r"{COMMAND} : Repeat, until {CONDITION},{IND_COMMANDS}")
 class _:
     def s_nv(anode, env0):
         [cond, commands] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0)
 
-        p = str(anode.prod)
-        if 'while' in p:
-            (stay_env, exit_env) = (t_env, f_env)
-        elif 'until' in p:
-            (stay_env, exit_env) = (f_env, t_env)
-        else:
-            assert 0
+        def check_before_body(env):
+            (t_env, f_env) = tc_cond(cond, env)
+            p = str(anode.prod)
+            if 'while' in p:
+                # proceed to commands iff condition is True; exit iff it's False
+                return (t_env, f_env)
+            elif 'until' in p:
+                # proceed to commands iff condition is False; exit iff it's True
+                return (f_env, t_env)
+            else:
+                assert 0
 
-        bottom_env = tc_nonvalue(commands, stay_env)
-        reduced_bottom_env = bottom_env.reduce(stay_env.vars.keys())
-        # assert reduced_bottom_env.equals(stay_env)
-        result = exit_env
+        result = tc_loop(env0, check_before_body, commands)
 
         # hack!:
         if cond.source_text() == '_matchSucceeded_ is *false*': # in RegExpBuiltinExec
@@ -4268,10 +4273,12 @@ class _:
 class _:
     def s_nv(anode, env0):
         [cond, commands] = anode.children
-        (t_env, f_env) = tc_cond(cond, env0)
-        bottom_env = tc_nonvalue(commands, t_env)
-        reduced_bottom_env = bottom_env.reduce(t_env.vars.keys())
-        return f_env
+
+        def check_before_body(env):
+            (t_env, f_env) = tc_cond(cond, env)
+            return (t_env, f_env)
+
+        return tc_loop(env0, check_before_body, commands)
 
 @P(r'{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}')
 @P(r'{COMMAND} : For each {EACH_THING}, {SMALL_COMMAND}.')
@@ -4279,20 +4286,66 @@ class _:
     def s_nv(anode, env0):
         [each_thing, commands] = anode.children
 
-        env_for_commands  = tc_nonvalue(each_thing, env0)
+        def check_before_body(env):
+            env_for_commands  = tc_nonvalue(each_thing, env)
+            return (env_for_commands, env)
 
-        env_after_commands = tc_nonvalue(commands, env_for_commands)
-        # XXX do I need to feed this back somehow?
+        return tc_loop(env0, check_before_body, commands)
 
-        # Assume the loop-var doesn't survive the loop
-        # if loop_var:
-        #     result = env_after_commands.with_var_removed(loop_var)
-        # else:
-        #     result = env_after_commands
+def tc_loop(preloop_env, check_before_body, commands):
+    preloop_keys = preloop_env.vars.keys()
 
-        # The only variables that 'exit' the loop are those that existed beforehand.
-        names = env0.vars.keys()
-        return env_after_commands.reduce(names)
+    traceme = False and ('_thisEnv_' in preloop_keys)
+
+    global pass_errors
+    mark = len(pass_errors)
+
+    prev_bottom_env = None
+
+    top_env = preloop_env
+    for passi in range(1, 6):
+        if traceme:
+            print()
+            print('--------------')
+            print(passi)
+            print()
+            print("top_env:")
+            pprint(top_env.vars)
+
+        (stay_env, exit_env) = check_before_body(top_env)
+        # "stay" means "stay in the loop", i.e. proceed to execute the commands
+
+        if traceme:
+            print()
+            print("stay_env:")
+            pprint(stay_env.vars)
+
+        bottom_env = tc_nonvalue(commands, stay_env)
+
+        if traceme:
+            print()
+            print("bottom_env:")
+            pprint(bottom_env.vars)
+
+        if prev_bottom_env is None:
+            prev_bottom_env = bottom_env
+        elif bottom_env.equals(prev_bottom_env):
+            # We have achieved a fixed-point
+            # (Accept the errors from the latest time through the loop.)
+            assert 2 <= passi <= 3, passi
+            if traceme: pdb.set_trace()
+            return exit_env
+
+        # We're going around again,
+        # so discard the errors from the latest time.
+        del pass_errors[mark:]
+
+        # At the bottom of the loop,
+        # all the bindings introduced by the loop are wiped out.
+        top_env = bottom_env.reduce(preloop_keys)
+
+    # failed to achieve a fixed-point in a reasonable number of attempts
+    assert 0
 
 @P(r"{EACH_THING} : {ITEM_NATURE} {DEFVAR} such that {CONDITION}")
 @P(r"{EACH_THING} : {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order")
@@ -7986,7 +8039,6 @@ class _:
         env0.assert_expr_is_of_type(avar, T_String | T_Symbol)
         env0.assert_expr_is_of_type(bvar, T_Property_Descriptor)
         (list_type, env1) = tc_expr(list_var, env0); assert env1 is env0
-        assert list_type == T_List
         return env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
 
 @P(r"{COMMAND} : Append to {var} the elements of {var}.")
