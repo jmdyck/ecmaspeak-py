@@ -6308,24 +6308,44 @@ def type_for_tilded_word(tilded_word):
 class _:
     def s_cond(cond, env0, asserting):
         [exa, exb] = cond.children
-        (exa_type, exa_env) = tc_expr(exa, env0); assert exa_env is env0
-        (exb_type, exb_env) = tc_expr(exb, env0)
+        (exa_type, env1) = tc_expr(exa, env0)
+        (exb_type, env2) = tc_expr(exb, env1)
         if exa_type == exb_type:
             # good
-            env1 = exb_env
+            return (env2, env2)
+
+        # If one side has type TBD,
+        # give it the same type as the other side.
+        # Its actual type might be wider,
+        # but this is presumably a good start.
         elif exa_type == T_TBD:
-            env1 = exb_env.with_expr_type_replaced(exa, exb_type)
+            env3 = env2.with_expr_type_replaced(exa, exb_type)
+            return (env3, env3)
         elif exb_type == T_TBD:
-            env1 = exb_env.with_expr_type_replaced(exb, exa_type)
+            env3 = env2.with_expr_type_replaced(exb, exa_type)
+            return (env3, env3)
+
         else:
             (common_t, _) = exa_type.split_by(exb_type)
             assert common_t != T_0
-            env1 = ( exb_env
+            # In the world where the two sides are equal,
+            # they must both have a type that's the intersection of the two
+            is_env = ( env2
                 .with_expr_type_narrowed(exa, common_t)
                 .with_expr_type_narrowed(exb, common_t)
             )
-        # but the true and false envs should be differently constrained
-        return (env1, env1)
+            # In the world where the two sides are different,
+            # they keep their old types.
+
+            if 'not' in cond.prod.rhs_s:
+                # X is not Y
+                t_env = env2
+                f_env = is_env
+            else:
+                # X is T
+                t_env = is_env
+                f_env = env2
+            return (t_env, f_env)
 
 @P(r"{CONDITION_1} : {EX} and {EX} are distinct values")
 class _:
