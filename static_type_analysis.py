@@ -4712,15 +4712,13 @@ class _:
         [base_var, dsbn] = dotting.children
 
         (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
-        if curr_base_t == T_Object:
+        if curr_base_t == implied_base_t:
+            return env1
+        elif curr_base_t == T_Object:
             return env1.with_expr_type_narrowed(base_var, implied_base_t)
-        elif curr_base_t == T_bound_function_exotic_object_ | T_Proxy_exotic_object_ | T_other_function_object_ and implied_base_t == T_constructor_object_:
+        else:
             add_pass_error_re_wrong_type(base_var, curr_base_t, implied_base_t)
             return env1.with_expr_type_replaced(base_var, implied_base_t)
-        elif curr_base_t == implied_base_t:
-            return env1
-        else:
-            assert 0
 
 # ------------------------------------------------------------------------------
 # (This section is where "Return" steps should be mentioned?)
