@@ -1778,7 +1778,7 @@ class Env:
         # ----------------------------------------
         # cases where we change the ST of list_ex:
 
-        elif list_type == T_List or list_type == ListType(T_TBD) or list_type == T_TBD:
+        elif list_type == T_List or list_type == ListType(T_TBD) or list_type == T_TBD or list_type == ListType(T_0):
             result = item_env.with_expr_type_replaced( list_ex, ListType(item_type))
 
         elif list_type == ListType(T_String) and item_type == T_Symbol:
@@ -5714,6 +5714,9 @@ class _:
         (b_t, env2) = tc_expr(b, env1);
         op_st = op.source_text()
 
+        assert a_t != T_0
+        assert b_t != T_0
+
         t_envs = []
         f_envs = []
 
@@ -7785,7 +7788,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
-        return (T_List, env0)
+        return (ListType(T_0), env0)
 
 @P(r"{EX} : « {EXLIST} »")
 class _:
@@ -7803,7 +7806,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
-        return (T_List, env0) # (ListType(T_0), env0)
+        return (ListType(T_0), env0)
 
 @P(r"{EXPR} : a List whose sole element is {EX}")
 class _:
@@ -8107,7 +8110,7 @@ class _:
         assert list_t.is_a_subtype_of_or_equal_to(T_List)
 
         (sub_t, sup_t) = type_bracket_for(val_desc, env0)
-        if list_t == T_List:
+        if list_t == T_List or list_t == ListType(T_0):
             pass
         else:
             assert sup_t.is_a_subtype_of_or_equal_to(list_t.element_type)
