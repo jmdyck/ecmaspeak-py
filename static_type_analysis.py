@@ -1757,11 +1757,7 @@ class Env:
 
         else:
             expr_text = expr.source_text()
-            add_pass_error(
-                expr,
-                "%s has type %s, but this context expects that it be of type %s"
-                % (expr_text, expr_type, expected_t)
-            )
+            add_pass_error_re_wrong_type(expr, expr_type, expected_t)
             if expr_text == '*null*':
                 # Don't try to change the type of *null*!
                 result_env = expr_env
@@ -1786,13 +1782,17 @@ class Env:
             result = item_env.with_expr_type_replaced( list_ex, ListType(item_type))
 
         elif list_type == ListType(T_String) and item_type == T_Symbol:
-            result = item_env.with_expr_type_replaced( list_ex, ListType(T_String | T_Symbol))
+            expected_list_type = ListType(T_String | T_Symbol)
+            add_pass_error_re_wrong_type(list_ex, list_type, expected_list_type)
+            result = item_env.with_expr_type_replaced( list_ex, expected_list_type)
 
         elif list_type == ListType(T_PromiseReaction_Record) | T_Undefined and item_type == T_PromiseReaction_Record:
             result = item_env.with_expr_type_narrowed(list_ex, ListType(T_PromiseReaction_Record))
 
         elif list_type == ListType(T_Match_Record) and item_type == T_Undefined and list_ex.source_text() == '_indices_':
-            result = item_env.with_expr_type_replaced(list_ex, ListType(T_Match_Record | T_Undefined))
+            expected_list_type = ListType(T_Match_Record | T_Undefined)
+            add_pass_error_re_wrong_type(list_ex, list_type, expected_list_type)
+            result = item_env.with_expr_type_replaced(list_ex, expected_list_type)
 
         # ----------------------------------------
         # cases where we change the ST of item_ex:
@@ -1802,6 +1802,7 @@ class Env:
 
         elif list_type == ListType(T_String) and item_type == T_String | T_Null:
             # ParseModule
+            add_pass_error_re_wrong_type(item_ex, item_type, T_String)
             result = item_env.with_expr_type_replaced(item_ex, T_String)
 
         # ----------------------------------------
@@ -2358,6 +2359,12 @@ def do_static_type_analysis(levels):
 
 g_level_prefix = '[-] '
 pass_errors = []
+
+def add_pass_error_re_wrong_type(expr, expr_t, expected_t):
+    add_pass_error(
+        expr,
+        f"{expr.source_text()} has type {expr_t}, but this context expects that it be of type {expected_t}"
+    )
 
 def add_pass_error(anode, msg):
     global pass_errors
@@ -4708,6 +4715,7 @@ class _:
         if curr_base_t == T_Object:
             return env1.with_expr_type_narrowed(base_var, implied_base_t)
         elif curr_base_t == T_bound_function_exotic_object_ | T_Proxy_exotic_object_ | T_other_function_object_ and implied_base_t == T_constructor_object_:
+            add_pass_error_re_wrong_type(base_var, curr_base_t, implied_base_t)
             return env1.with_expr_type_replaced(base_var, implied_base_t)
         elif curr_base_t == implied_base_t:
             return env1
