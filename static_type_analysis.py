@@ -4219,6 +4219,20 @@ def tc_loop(preloop_env, check_before_body, commands):
         # all the bindings introduced by the loop are wiped out.
         top_env = bottom_env.reduce(preloop_keys)
 
+        # And then we merge that with the preloop_env.
+        # E.g., consider
+        #     1. Let _x_ be *undefined*.
+        #     2. Repeat,
+        #       a. refer to _x_
+        #       b. Let _x_ be *"foo"*.
+        #       c. refer to _x_.
+        # On the first pass, _x_ will have type T_Undefined.
+        # But then at 2b, its type is changes to T_String,
+        # which then persists (because _x_ is defined before the loop).
+        # So on the second pass, its type at 2a should be T_Undefined|T_String,
+        # which means we have to combine the bottom-of-first-pass env with the preloop env.
+        top_env = env_or(top_env, preloop_env)
+
     # failed to achieve a fixed-point in a reasonable number of attempts
     assert 0
 
