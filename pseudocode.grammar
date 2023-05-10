@@ -153,7 +153,6 @@
     ? OperationName().
     ? {var}.OperationName().
     Add {var} to {var}.
-    Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.
     Append to {var} the elements of {var}.
     Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
@@ -882,7 +881,6 @@
     the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
-    the second element of {var}
     the second to top element of the execution context stack
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the smallest (closest to -∞) integral Number value that is not less than {var}

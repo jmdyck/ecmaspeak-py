@@ -7920,15 +7920,6 @@ class _:
         [value_ex, list_ex] = anode.children
         return env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
 
-@P(r"{COMMAND} : Append the pair (a two element List) consisting of {var} and {var} to the end of {var}.")
-class _:
-    def s_nv(anode, env0):
-        [avar, bvar, list_var] = anode.children
-        env0.assert_expr_is_of_type(avar, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(bvar, T_Property_Descriptor)
-        (list_type, env1) = tc_expr(list_var, env0); assert env1 is env0
-        return env0.with_expr_type_narrowed(list_var, ListType(ListType(T_TBD)))
-
 @P(r"{COMMAND} : Append to {var} the elements of {var}.")
 class _:
     def s_nv(anode, env0):
@@ -8165,11 +8156,9 @@ class _:
         return (env1, env1)
 
 @P(r"{EXPR} : the first element of {SETTABLE}")
-@P(r"{EXPR} : the second element of {var}")
 @P(r"{EXPR} : the last element of {var}")
 class _:
     def s_expr(expr, env0, _):
-        # todo: replace with ad hoc record
         [var] = expr.children
         list_type = env0.assert_expr_is_of_type(var, T_List)
         return (list_type.element_type, env0)
