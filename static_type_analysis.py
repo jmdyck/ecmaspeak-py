@@ -9168,7 +9168,7 @@ class _:
     s_tb = T_Iterator_Record
 
 # ==============================================================================
-#@ 7.4.8 IfAbruptCloseIterator
+#@ 7.4.9 IfAbruptCloseIterator
 
 @P(r"{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
 class _:
@@ -10644,7 +10644,7 @@ class _:
 
 set_up_internal_thing('slot', '[[StringData]]', T_String)
 
-#@ 22.1.3.27 String.prototype.toLowerCase
+#@ 22.1.3.28 String.prototype.toLowerCase
 @P(r"{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
 class _:
     def s_expr(expr, env0, _):
