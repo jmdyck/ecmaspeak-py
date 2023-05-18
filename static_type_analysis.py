@@ -4817,31 +4817,32 @@ class _:
                 'op: discriminated by type: module rec',
             ]
 
-            # XXX If PR #955 is accepted, that will change things around here.
+            base_schema_name = {
+                'op: discriminated by type: env rec'   : 'Environment Record',
+                'op: discriminated by type: module rec': 'Module Record'
+            }[callee_op.species]
 
-            # When there's a type hierarchy (under Environment Record or Module Record),
-            # and sub-types augment the set of types defined at the root,
-            # then the use of one of those added methods
-            # implies a tighter constraint on the type of the LHS.
+            base_record_schema = spec.RecordSchema_for_name_[base_schema_name]
 
-            assert len(callee_op.headers) > 0
+            def each_record_schema_that_declares_op(rs):
+                if callee_op_name in rs.addl_method_decls:
+                    yield rs
+                    # And don't go any deeper.
+                    # (In practice, going deeper wouldn't yield any more results,
+                    # because there's no point re-declaring a method at a deeper level.
+                    # So this is just an optimization.)
+                else:
+                    # callee_op_name is not declared for {rs},
+                    # but it might be declared for one or more sub-schemas.
+                    for child_rs in rs.sub_schemas:
+                        yield from each_record_schema_that_declares_op(child_rs)
+
             forp_types = [
-                header.tah.for_param_type
-                for header in callee_op.headers
+                HierType(rs.tc_schema_name)
+                for rs in each_record_schema_that_declares_op(base_record_schema)
             ]
-            if callee_op_name in ['Link', 'Evaluate']:
-                # These are abstract methods of all Module Records,
-                # but the spec only has definitions for Cyclic Module Records.
-                forp_types.append(T_other_Module_Record)
-            elif callee_op_name in ['GetExportedNames', 'ResolveExport']:
-                # These are abstract methods of all Module Records,
-                # but the spec only has definitions for Source Text Module Records.
-                forp_types.append(T_other_Module_Record)
-                forp_types.append(T_other_Cyclic_Module_Record)
-            elif callee_op_name in ['InitializeEnvironment', 'ExecuteModule']:
-                # These are abstract methods of all Cyclic Module Records,
-                # but the spec only has definitions for Source Text Module Records.
-                forp_types.append(T_other_Cyclic_Module_Record)
+            assert forp_types
+            # TODO: This could be pre-computed, put in callee_op.
 
             union_of_forp_types = union_of_types(forp_types)
 
