@@ -9648,7 +9648,7 @@ class _:
         [_, ctx_var, _, resa_ex, resb_var] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
-        return env1.plus_new_entry(resb_var, T_Tangible_)
+        return env1.plus_new_entry(resb_var, T_Tangible_ | T_throw_)
 
 @P(r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
 class _:
@@ -9663,7 +9663,7 @@ class _:
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
         env0.assert_expr_is_of_type(varc, T_execution_context)
-        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_)
+        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_ | T_throw_)
 
 @P(r"{COMMAND} : Suspend {var} and remove it from the execution context stack.")
 class _:
