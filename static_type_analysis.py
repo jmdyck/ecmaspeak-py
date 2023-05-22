@@ -5198,28 +5198,8 @@ class _:
 class _:
     def s_nv(anode, env0):
         [ex] = anode.children
-        (ex_t, env1) = tc_expr(ex, env0); assert env1 is env0
-        if ex_t == T_TBD:
-            # Doesn't make sense to compare_types
-            # And a proc_add_return(..., T_TBD) wouldn't help
-            return env1
-        else:
-            (normal_part_of_ex_t, abnormal_part_of_ex_t) = ex_t.split_by(T_Normal)
-            if normal_part_of_ex_t == T_0:
-                add_pass_error(
-                    anode,
-                    "ST of `%s` is `%s`, so could just Return, rather than ReturnIfAbrupt"
-                    % (ex.source_text(), ex_t)
-                )
-            if abnormal_part_of_ex_t == T_0:
-                add_pass_error(
-                    anode,
-                    "STA indicates that calling RIA is unnecessary, because `%s` can't be abrupt"
-                    % ex.source_text()
-                )
-
-            proc_add_return(env1, abnormal_part_of_ex_t, anode)
-            return env1.with_expr_type_narrowed(ex, normal_part_of_ex_t)
+        (_, env1) = handle_completion_record_shorthand('ReturnIfAbrupt', ex, env0)
+        return env1
 
 # ==============================================================================
 #@ 5.2.3.4 ReturnIfAbrupt Shorthands
@@ -5230,29 +5210,60 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [operand] = expr.children
-        (operand_t, env1) = tc_expr(operand, env0)
+        return handle_completion_record_shorthand('?', operand, env0)
 
-        if operand_t == T_TBD:
-            return (T_TBD, env1)
+@P(r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
+class _:
+    def s_expr(expr, env0, _):
+        [noi] = expr.children
+        return handle_completion_record_shorthand('!', noi, env0)
 
-        (abrupt_part_of_type, normal_part_of_type) = operand_t.split_by(T_Abrupt)
+# --------------------------------------
 
-        if normal_part_of_type == T_0:
-            add_pass_error(
-                expr,
-                "used '?', but STA says operation can't return normal: " + expr.source_text()
-            )
+def handle_completion_record_shorthand(operator, operand, env0):
+    operand_text = operand.source_text()
+    (operand_t, env1) = tc_expr(operand, env0)
 
-        if abrupt_part_of_type == T_0:
-            add_pass_error(
-                expr,
-                "used '?', but STA says operation can't return abrupt: " + expr.source_text()
-            )
+    if operand_t == T_TBD:
+        # No point trying to analyze operand_t.
+        return (T_TBD, env1)
 
-        proc_add_return(env1, abrupt_part_of_type, expr)
+    (abrupt_part_of_type, normal_part_of_type) = operand_t.split_by(T_Abrupt)
 
-        env2 = env1
-        if str(operand.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
+    if abrupt_part_of_type == T_0:
+        if operator == '?':
+            conclusion = "so maybe drop `?` or change it to `!`"
+        elif operator == '!':
+            conclusion = "so maybe drop `!`"
+        else:
+            assert 0
+        add_pass_error(
+            operand,
+            f"The ST of `{operand_text}` is {operand_t}\n    i.e. it can't be abrupt, {conclusion}"
+        )
+
+    if normal_part_of_type == T_0:
+        if operator == '?':
+            conclusion = "so using '?' is a bit odd,\n    and will result in warnings that the '?' expr has an empty type"
+        else:
+            assert 0
+        add_pass_error(
+            operand,
+            f"The ST of `{operand_text}` is {operand_t}\n    i.e. it can't be normal, {conclusion}"
+        )
+
+    result_type = normal_part_of_type
+
+    if operator == '!':
+        return (result_type, env1)
+
+    else:
+        proc_add_return(env1, abrupt_part_of_type, operand)
+
+        if operand.is_a('{var}'):
+            env2 = env1.with_expr_type_replaced(operand, result_type)
+
+        elif str(operand.prod) == '{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}':
             [pp] = operand.children
             assert str(pp.prod).startswith(r'{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
             [opn_before_paren, exlist_opt] = pp.children[0:2]
@@ -5292,36 +5303,13 @@ class _:
                 gen_arg = exes_in_exlist_opt(exlist_opt)[0]
                 env2 = env1.with_expr_type_narrowed(gen_arg, T_Object)
 
-        return (normal_part_of_type, env2)
+            else:
+                env2 = env1
 
-@P(r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
-class _:
-    def s_expr(expr, env0, _):
-        [noi] = expr.children
-        (noi_t, env1) = tc_expr(noi, env0)
-
-        if noi_t == T_TBD:
-            return (T_TBD, env1)
-
-        (abrupt_part_of_type, normal_part_of_type) = noi_t.split_by(T_Abrupt)
-
-        if abrupt_part_of_type == T_0:
-            # add_pass_error(
-            #     noi,
-            #     "The static type of the invocation is `%s`, so shouldn't need a '!'" % str(noi_t)
-            # )
-            # There are a lot of these now, and it's only goig to increase.
-            pass
         else:
-            # add_pass_error(
-            #     expr,
-            #     "STA fails to confirm that `%s` will return a Normal" % noi.source_text()
-            # )
-            # It's unsurprising, perhaps even *expected*,
-            # that STA can't confirm it.
-            pass
+            env2 = env1
 
-        return (normal_part_of_type, env1)
+        return (result_type, env2)
 
 # ==============================================================================
 #@ 5.2.3.5 Implicit Normal Completion
