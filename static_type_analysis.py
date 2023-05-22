@@ -1068,6 +1068,12 @@ def ptn_type_for(nonterminal):
 
 named_type_hierarchy = {
     'Top_': {
+        'Absent': {
+            'not_passed': {},    # for an optional parameter
+            'not_in_node': {},   # for an optional child of a node
+            'not_set': {},       # for a metavariable that might not be initialized
+            'not_returned': {},  # for when control falls off the end of an operation
+        },
         'Abrupt' : {
             'continue_': {},
             'break_': {},
@@ -1075,12 +1081,6 @@ named_type_hierarchy = {
             'throw_': {},
         },
         'Normal': {
-            'Absent': { # not sure this is at the right place in the hierarchy.
-                'not_passed': {},    # for an optional parameter
-                'not_in_node': {},   # for an optional child of a node
-                'not_set': {},       # for a metavariable that might not be initialized
-                'not_returned': {},  # for when control falls off the end of an operation
-            },
             'Tangible_': {
                 'Primitive': {
                     'Undefined': {},
