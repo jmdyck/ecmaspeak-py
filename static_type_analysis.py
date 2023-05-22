@@ -2388,6 +2388,10 @@ def tc_header(tah):
                 # Don't change it.
                 # But maybe convey that STA wants to change it.
 
+                # No, only convey that STA wants to change the type if it's the return-type.
+                # (And even that is questionable.)
+                if pn != '*return*': continue
+
                 # Note that final_env is the env at the end of the algorithm
                 # (i.e., the union of envs at the return points).
                 # But its type for {pn} might legitimately be
