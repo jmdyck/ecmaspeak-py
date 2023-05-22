@@ -1345,10 +1345,6 @@ def convert_nature_node_to_type(nature_node):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 type_tweaks_tuples = [
-    ('AsyncGeneratorEnqueue'                    , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
-    ('AsyncGeneratorUnwrapYieldResumption'      , '_resumptionValue_'      , T_Abrupt | T_Normal   , T_Tangible_ | T_return_ | T_throw_),
-    ('AsyncIteratorClose'                       , '_completion_'           , T_Abrupt | T_Normal   , T_Tangible_ | T_tilde_empty_ | T_throw_),
-    ('IteratorClose'                            , '_completion_'           , T_Normal | T_Abrupt   , T_Tangible_ | T_tilde_empty_ | T_throw_),
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
     ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
