@@ -4186,8 +4186,6 @@ def tc_loop(preloop_env, check_before_body, commands):
     global pass_errors
     mark = len(pass_errors)
 
-    prev_bottom_env = None
-
     top_env = preloop_env
     for passi in range(1, 6):
         if traceme:
@@ -4213,22 +4211,9 @@ def tc_loop(preloop_env, check_before_body, commands):
             print("bottom_env:")
             pprint(bottom_env.vars)
 
-        if prev_bottom_env is None:
-            prev_bottom_env = bottom_env
-        elif bottom_env.equals(prev_bottom_env):
-            # We have achieved a fixed-point
-            # (Accept the errors from the latest time through the loop.)
-            assert 2 <= passi <= 3, passi
-            if traceme: pdb.set_trace()
-            return exit_env
-
-        # We're going around again,
-        # so discard the errors from the latest time.
-        del pass_errors[mark:]
-
         # At the bottom of the loop,
         # all the bindings introduced by the loop are wiped out.
-        top_env = bottom_env.reduce(preloop_keys)
+        reduced_bottom_env = bottom_env.reduce(preloop_keys)
 
         # And then we merge that with the preloop_env.
         # E.g., consider
@@ -4242,7 +4227,25 @@ def tc_loop(preloop_env, check_before_body, commands):
         # which then persists (because _x_ is defined before the loop).
         # So on the second pass, its type at 2a should be T_Undefined|T_String,
         # which means we have to combine the bottom-of-first-pass env with the preloop env.
-        top_env = env_or(top_env, preloop_env)
+        new_top_env = env_or(reduced_bottom_env, preloop_env)
+
+        if new_top_env.equals(top_env):
+            # No point going around again,
+            # we have achieved a fixed-point.
+            # (Accept the errors from the latest time through the loop.)
+            assert 1 <= passi <= 2, passi
+            if traceme: pdb.set_trace()
+            return exit_env
+
+        if traceme:
+            print('DIFF!:')
+            top_env.diff(new_top_env)
+
+        # We're going around again,
+        # so discard the errors from the latest time:
+        del pass_errors[mark:]
+        # and install the new top_env:
+        top_env = new_top_env
 
     # failed to achieve a fixed-point in a reasonable number of attempts
     assert 0
