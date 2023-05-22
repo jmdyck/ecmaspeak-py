@@ -9223,13 +9223,19 @@ class _:
 class _:
     def s_nv(anode, env0):
         [vara, varb] = anode.children
-        env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
+        ta = env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
         env0.assert_expr_is_of_type(varb, T_Iterator_Record)
 
-        proc_add_return(env0, T_Tangible_ | T_tilde_empty_ | T_throw_, anode)
+        (normal_part_of_ta, abrupt_part_of_ta) = ta.split_by(T_Normal)
 
-        (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
-        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
+        if abrupt_part_of_ta == T_0:
+            add_pass_error(
+                vara,
+                f"ST of {vara.source_text()} is {ta}\n    which can't be abrupt, so using 'IfAbruptCloseIterator' is a bit odd"
+            )
+        else:
+            proc_add_return(env0, abrupt_part_of_ta | T_throw_, anode)
+
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
