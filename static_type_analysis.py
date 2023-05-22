@@ -5073,6 +5073,14 @@ class _:
                     (cr_arg_type, _) = tc_expr(cr_arg, env0)
                     return_type = T_throw_ | cr_arg_type
 
+                elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
+                    # The second arg is a list of ES language type names
+                    # that constrains the return type.
+                    assert return_type == ListType(T_Tangible_) | T_throw_
+                    types_arg = args[1]
+                    assert types_arg.source_text() == '« String, Symbol »'
+                    return_type = ListType(T_String | T_Symbol) | T_throw_
+
         else:
             assert 0, opn_before_paren.prod.rhs_s
 
