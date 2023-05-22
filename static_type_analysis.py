@@ -561,7 +561,15 @@ class TypedAlgHeader:
 
         e.vars['*return*'] = self.return_type
 
-        e.parret = ParRet(parameter_names)
+        if self.species.startswith('bif:'):
+            expected_return_type = T_Tangible_ | T_throw_ | T_tilde_empty_
+            # T_tilde_empty_ shouldn't really be allowed,
+            # but if I leave it out,
+            # I get a bunch of complaints that I think are false positives.
+        else:
+            expected_return_type = T_Top_
+
+        e.parret = ParRet(parameter_names, expected_return_type)
 
         return e
 
@@ -2142,6 +2150,7 @@ class ParRet:
     # currently under analysis.
 
     parameter_names: Set[str]
+    expected_return_type: Type
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2340,20 +2349,7 @@ def tc_header(tah):
     if tah.t_defns == []:
         return False
 
-    # Eventually, `tah` will also contain (ahead of time)
-    # an indication of the operation's expected return type.
-    # We should complain about any return-points
-    # that do not conform.
-    # In the meantime, ...
-    if tah.species.startswith('bif:'):
-        expected_return_type = T_Tangible_ | T_throw_ | T_tilde_empty_
-        # T_tilde_empty_ shouldn't really be allowed,
-        # but if I leave it out,
-        # I get a bunch of complaints that I think are false positives.
-    else:
-        expected_return_type = T_Top_
-
-    final_env = tc_proc(tah.name, tah.t_defns, init_env, expected_return_type)
+    final_env = tc_proc(tah.name, tah.t_defns, init_env)
 
     if tah.name == 'Early Errors':
         assert final_env is None
@@ -2434,15 +2430,12 @@ def tc_header(tah):
 
 proc_return_envs_stack = []
 
-def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
+def tc_proc(op_name, defns, init_env):
     assert defns
 
     header_names = sorted(init_env.vars.keys())
 
     proc_return_envs_stack.append(set())
-
-    global proc_expected_return_type
-    proc_expected_return_type = expected_return_type
 
     for (i, (discriminator, body)) in enumerate(defns):
         if op_name is not None:
@@ -2507,6 +2500,8 @@ def tc_proc(op_name, defns, init_env, expected_return_type=T_Top_):
     return final_env
 
 def proc_add_return(env_at_return_point, type_of_returned_value, node):
+    parret = env_at_return_point.parret
+
     if trace_this_op:
         print("Type of returned value:", type_of_returned_value)
         input('hit return to continue ')
@@ -2526,10 +2521,10 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
 #            )
 
     # Check that the return value conforms to the proc's declared return
-    if not type_of_returned_value.is_a_subtype_of_or_equal_to(proc_expected_return_type):
+    if not type_of_returned_value.is_a_subtype_of_or_equal_to(parret.expected_return_type):
         add_pass_error(
             node,
-            f"static type of return value is {type_of_returned_value}, should be (a subtype of) {proc_expected_return_type}"
+            f"static type of return value is {type_of_returned_value}, should be (a subtype of) {parret.expected_return_type}"
         )
 
     if type_of_returned_value in [T_Top_, T_Normal]: # , T_TBD]:
@@ -8959,8 +8954,10 @@ class _:
             clo_param.source_text()
             for clo_param in clo_parameters.children
         ]
+        expected_return_type = T_Top_
+        # It would be nice if an abstract closure declared its return-type.
 
-        env_for_commands.parret = ParRet(parameter_names)
+        env_for_commands.parret = ParRet(parameter_names, expected_return_type)
 
         n_parameters = len(clo_parameters.children)
         # polymorphic
