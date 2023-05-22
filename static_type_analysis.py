@@ -10,7 +10,7 @@ from collections import OrderedDict, defaultdict
 from itertools import zip_longest
 from pprint import pprint
 from dataclasses import dataclass
-from typing import FrozenSet, Tuple
+from typing import FrozenSet, Set, Tuple
 
 import shared, HTML
 from shared import stderr, spec, DL
@@ -547,17 +547,21 @@ class TypedAlgHeader:
     def make_env(self):
         e = Env()
 
+        parameter_names = set()
+
         if self.for_param_name is not None:
             assert self.for_param_type is not None
             e.vars[self.for_param_name] = self.for_param_type
-            e.parameter_names.add(self.for_param_name)
+            parameter_names.add(self.for_param_name)
 
         for (pn, pt) in self.parameter_types.items():
             assert isinstance(pt, Type)
             e.vars[pn] = pt
-            e.parameter_names.add(pn)
+            parameter_names.add(pn)
 
         e.vars['*return*'] = self.return_type
+
+        e.parret = ParRet(parameter_names)
 
         return e
 
@@ -1566,8 +1570,8 @@ def union_of_other_memtypes(memtypes):
 
 class Env:
     def __init__(self, outer=None):
+        self.parret = None
         self.vars = {}
-        self.parameter_names = set()
         self.outer = outer
 
     def __str__(self):
@@ -1575,8 +1579,8 @@ class Env:
 
     def copy(self):
         e = Env(self.outer)
+        e.parret = self.parret
         e.vars = self.vars.copy()
-        e.parameter_names = self.parameter_names.copy()
         return e
 
     def equals(self, other):
@@ -1833,7 +1837,7 @@ class Env:
         (settable_type, env1) = tc_expr(settable, self)
         (expr_type,     env2) = tc_expr(expr,     env1)
 
-        if settable.source_text() in self.parameter_names:
+        if settable.source_text() in self.parret.parameter_names:
             add_pass_error(
                 settable,
                 "Error: setting a parameter"
@@ -2064,11 +2068,10 @@ class Env:
 
     def reduce(self, header_names):
         e = Env(self.outer)
+        e.parret = self.parret
         for (vn, vt) in self.vars.items():
             if vn in header_names:
                 e.vars[vn] = vt
-
-        e.parameter_names = self.parameter_names
         return e
 
 # ------------------------------------------------------------------------------
@@ -2085,6 +2088,7 @@ def envs_and(envs):
     if len(envs) == 2 and envs[0].vars == envs[1].vars: return envs[0]
 
     e = Env(envs[0].outer)
+    e.parret = envs[0].parret
     vars = set.intersection(*[ set(env.vars.keys()) for env in envs ])
     for expr_text in vars:
         ts = [ env.vars[expr_text] for env in envs ]
@@ -2108,6 +2112,11 @@ def envs_or(envs):
     if len(envs) == 1: return envs[0]
 
     e = Env(envs[0].outer)
+    e.parret = envs[0].parret
+
+    for env in envs:
+        assert env.outer is e.outer
+        assert env.parret is e.parret
 
     all_vars = set()
     for env in envs:
@@ -2120,12 +2129,19 @@ def envs_or(envs):
             for env in envs
         ])
 
-    all_param_names = set()
-    for env in envs:
-        all_param_names.update(env.parameter_names)
-    e.parameter_names = all_param_names
-
     return e
+
+# ------------------------------------------------------------------------------
+
+@dataclass
+class ParRet:
+    # 'ParRet' is short for 'Parameters & Return'.
+    # It's a structure (referenced by every Env)
+    # that holds data relating to the parameters & returns
+    # of the algorithm or abstract closure
+    # currently under analysis.
+
+    parameter_names: Set[str]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -8938,6 +8954,13 @@ class _:
         # -----
 
         env_for_commands = Env(env0)
+
+        parameter_names = [
+            clo_param.source_text()
+            for clo_param in clo_parameters.children
+        ]
+
+        env_for_commands.parret = ParRet(parameter_names)
 
         n_parameters = len(clo_parameters.children)
         # polymorphic
