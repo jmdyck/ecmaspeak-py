@@ -1838,8 +1838,13 @@ class Env:
         return e
 
     def set_A_to_B(self, settable, expr):
-        (settable_type, env1) = tc_expr(settable, self)
-        (expr_type,     env2) = tc_expr(expr,     env1)
+        (expr_type,     env1) = tc_expr(expr,     self)
+        (settable_type, env2) = tc_expr(settable, env1)
+
+        # Analyze {expr} before {settable}
+        # because the analysis of {expr}
+        # might tell you something about the type of {settable}
+        # *before* the 'Set' occurs.
 
         if settable.source_text() in self.parret.parameter_names:
             add_pass_error(
