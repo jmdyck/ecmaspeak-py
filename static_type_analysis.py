@@ -5043,6 +5043,36 @@ class _:
 
                 # if callee_op_name == 'ResolveBinding': pdb.set_trace()
 
+                if callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
+                    assert return_type == T_Normal | T_Abrupt
+                    # but we can be more specific.
+                    # And we need to be more specific to avoid some complaints.
+                    #
+                    # E.g., Promise.all has roughly:
+                    #     8. If _result_ is an abrupt completion, then
+                    #       a. ... set _result_ to Completion(IteratorClose(_, _result_)).
+                    #       b. IfAbruptRejectPromise(_result_, _).
+                    #     9. Return ? _result_.
+                    #
+                    # If IteratorClose has a return type of T_Completion_Record,
+                    # then after 8.a, _result_ can be a normal or abrupt completion,
+                    # and a normal completion will survive 8.b's call to IfAbruptRejectPromise,
+                    # and after 8.b, _result_ will be the [[Value]] of that normal completion,
+                    # which will cause 9's `?` to complain that it's being given a non-completion.
+                    #
+                    # Instead, before 8.a, we know that _result_ is abrupt,
+                    # so using a smarter return type for IteratorClose,
+                    # we know that _result_ must be abrupt too,
+                    # so nothing will survive the call to IfAbruptRejectPromise,
+                    # and 9 won't get a non-completion.
+                    # (In fact, it will *only* get a normal completion,
+                    # so the '?' should actually be '!', but that's a separate problem.)
+                    #
+                    assert len(args) == 2
+                    [_, cr_arg] = args
+                    (cr_arg_type, _) = tc_expr(cr_arg, env0)
+                    return_type = T_throw_ | cr_arg_type
+
         else:
             assert 0, opn_before_paren.prod.rhs_s
 
