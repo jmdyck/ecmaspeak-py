@@ -9,7 +9,7 @@ import re, atexit, time, sys, pdb
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest
 from pprint import pprint
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from typing import FrozenSet, Set, Tuple
 
 import shared, HTML
@@ -2151,6 +2151,7 @@ class ParRet:
 
     parameter_names: Set[str]
     expected_return_type: Type
+    return_envs: Set[Env] = dataclass_field(default_factory=set)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2428,14 +2429,10 @@ def tc_header(tah):
 
 # ------------------------------------------------------------------------------
 
-proc_return_envs_stack = []
-
 def tc_proc(op_name, defns, init_env):
     assert defns
 
     header_names = sorted(init_env.vars.keys())
-
-    proc_return_envs_stack.append(set())
 
     for (i, (discriminator, body)) in enumerate(defns):
         if op_name is not None:
@@ -2478,10 +2475,8 @@ def tc_proc(op_name, defns, init_env):
 
         # if trace_this_op: pdb.set_trace()
 
-    proc_return_envs = proc_return_envs_stack.pop()
-
     rr_envs = []
-    for return_env in proc_return_envs:
+    for return_env in init_env.parret.return_envs:
         rr_envs.append(return_env.reduce(header_names))
     final_env = envs_or(rr_envs)
 
@@ -2545,7 +2540,7 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
                     "At exit, ST of `%s` is `%s`" % (pn, ptype)
                 )
 
-    proc_return_envs_stack[-1].add(aug_env)
+    parret.return_envs.add(aug_env)
 
 # ------------------------------------------------------------------------------
 
