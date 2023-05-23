@@ -803,7 +803,7 @@ def member_is_a_subtype_or_equal(A, B):
             return (A.element_type.is_a_subtype_of_or_equal_to(B.element_type))
         elif isinstance(B, HierType):
             return (T_List.is_a_subtype_of_or_equal_to(B))
-        elif isinstance(B, ThrowType):
+        elif isinstance(B, ThrowCompletionType):
             return False
         else:
             assert 0, (A, B)
@@ -841,8 +841,8 @@ def member_is_a_subtype_or_equal(A, B):
         else:
             assert 0, (A, B)
 
-    elif isinstance(A, ThrowType):
-        if isinstance(B, ThrowType):
+    elif isinstance(A, ThrowCompletionType):
+        if isinstance(B, ThrowCompletionType):
             return (A.error_type.is_a_subtype_of_or_equal_to(B.error_type))
         elif isinstance(B, HierType):
             return (T_throw_completion.is_a_subtype_of_or_equal_to(B))
@@ -966,7 +966,7 @@ class RecordType(Type):
         return str(self)
 
 @dataclass(frozen = True)
-class ThrowType(Type):
+class ThrowCompletionType(Type):
     error_type: Type
 
     def __post_init__(self):
@@ -1441,7 +1441,7 @@ def union_of_types(types):
     for mt in memtypes:
         if mt == T_List or isinstance(mt, ListType):
             list_memtypes.append(mt)
-        elif mt in [T_Abrupt, T_continue_completion, T_break_completion, T_return_completion, T_throw_completion] or isinstance(mt, ThrowType):
+        elif mt in [T_Abrupt, T_continue_completion, T_break_completion, T_return_completion, T_throw_completion] or isinstance(mt, ThrowCompletionType):
             abrupt_memtypes.append(mt)
         elif isinstance(mt, ProcType):
             # There isn't a T_Proc, or a HierType that resolves to a ProcType.
@@ -1510,11 +1510,11 @@ def union_of_abrupt_memtypes(abrupt_memtypes):
         elif memtype == T_throw_completion:
             error_types = []
             for mt in abrupt_memtypes:
-                if isinstance(mt, ThrowType):
+                if isinstance(mt, ThrowCompletionType):
                     error_types.append(mt.error_type)
             if error_types:
                 error_type_union = union_of_types(error_types)
-                t = ThrowType(error_type_union)
+                t = ThrowCompletionType(error_type_union)
                 result_types.append(t)
 
     return result_types
@@ -4891,7 +4891,7 @@ class _:
                 (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
                 if arg_type == T_TBD: arg_type = T_Normal
                 assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
-                return_type = ThrowType(arg_type)
+                return_type = ThrowCompletionType(arg_type)
                 return (return_type, env0)
 
             elif callee_op_name == 'Completion':
@@ -5238,7 +5238,7 @@ class _:
 class _:
     def s_nv(anode, env0):
         [error_type] = anode.children
-        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), anode)
+        proc_add_return(env0, ThrowCompletionType(type_for_ERROR_TYPE(error_type)), anode)
         return None
 
 # ==============================================================================
@@ -8421,7 +8421,7 @@ class _:
                 if ct == T_Normal:
                     t = value_type
                 elif ct == T_throw_completion:
-                    t = ThrowType(value_type)
+                    t = ThrowCompletionType(value_type)
                 else:
                     t = ct
 
@@ -9049,7 +9049,7 @@ class _:
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
+        proc_add_return(env0, ThrowCompletionType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Data_Block, env1)
 
 @P(r'{EXPR} : a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception')
@@ -9059,7 +9059,7 @@ class _:
         (t, env1) = tc_expr(var, env0)
         assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_MathInteger_)
-        proc_add_return(env0, ThrowType(type_for_ERROR_TYPE(error_type)), error_type)
+        proc_add_return(env0, ThrowCompletionType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Shared_Data_Block, env1)
 
 @P(r'{COMMAND} : Set all of the bytes of {var} to 0.')
@@ -9211,7 +9211,7 @@ class _:
         [var, xref] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_Primitive)
         assert xref.source_text() == '<emu-xref href="#table-tobigint"></emu-xref>'
-        return (T_BigInt | ThrowType(T_TypeError) | ThrowType(T_SyntaxError), env1)
+        return (T_BigInt | ThrowCompletionType(T_TypeError) | ThrowCompletionType(T_SyntaxError), env1)
 
 # ==============================================================================
 #@ 7.4.1 Iterator Records
@@ -10658,7 +10658,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
-        return (T_Object | ThrowType(T_TypeError), env0)
+        return (T_Object | ThrowCompletionType(T_TypeError), env0)
 
 @P(r"{SETTABLE} : the {DSBN} internal slot of this Date object")
 class _:
