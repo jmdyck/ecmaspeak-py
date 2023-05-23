@@ -562,7 +562,7 @@ class TypedAlgHeader:
         e.vars['*return*'] = self.return_type
 
         if self.species.startswith('bif:'):
-            expected_return_type = T_Tangible_ | T_throw_ | T_tilde_empty_
+            expected_return_type = T_Tangible_ | T_throw_completion | T_tilde_empty_
             # T_tilde_empty_ shouldn't really be allowed,
             # but if I leave it out,
             # I get a bunch of complaints that I think are false positives.
@@ -845,7 +845,7 @@ def member_is_a_subtype_or_equal(A, B):
         if isinstance(B, ThrowType):
             return (A.error_type.is_a_subtype_of_or_equal_to(B.error_type))
         elif isinstance(B, HierType):
-            return (T_throw_.is_a_subtype_of_or_equal_to(B))
+            return (T_throw_completion.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
             return False
         else:
@@ -912,14 +912,18 @@ class HierType(Type):
         assert re.fullmatch(r'[\w -]+', self.name), self.name
         assert not self.name.startswith('a '), self.name
 
-    def __str__(self): return self.name
+    def __str__(self):
+        if self.name.endswith('_completion'):
+            return self.name.removesuffix('completion')
+        return self.name
+
     def unparse(self, parenthesize=False):
         if self.name.startswith('PTN_'):
             x = 'Parse Node for |%s|' % self.name.replace('PTN_','')
             if parenthesize: x = '(%s)' % x
             return x
         else:
-            return self.name
+            return self.__str__()
 
 @dataclass(frozen = True)
 class ListType(Type):
@@ -1075,10 +1079,10 @@ named_type_hierarchy = {
             'not_returned': {},  # for when control falls off the end of an operation
         },
         'Abrupt' : {
-            'continue_': {},
-            'break_': {},
-            'return_': {},
-            'throw_': {},
+            'continue_completion': {},
+            'break_completion': {},
+            'return_completion': {},
+            'throw_completion': {},
         },
         'Normal': {
             'Tangible_': {
@@ -1304,7 +1308,7 @@ T_MathNonNegativeInteger_ = T_MathInteger_ # for now
 T_MatcherContinuation = ProcType((T_MatchState,                      ), T_MatchResult)
 T_Matcher             = ProcType((T_MatchState, T_MatcherContinuation), T_MatchResult)
 T_RegExpMatcher_  = ProcType((ListType(T_character_), T_MathNonNegativeInteger_), T_MatchResult)
-T_Job             = ProcType((                       ), T_Tangible_ | T_tilde_empty_ | T_throw_)
+T_Job             = ProcType((                       ), T_Tangible_ | T_tilde_empty_ | T_throw_completion)
 
 T_ReadModifyWrite_modification_closure = ProcType((ListType(T_MathInteger_), ListType(T_MathInteger_)), ListType(T_MathInteger_))
 
@@ -1437,7 +1441,7 @@ def union_of_types(types):
     for mt in memtypes:
         if mt == T_List or isinstance(mt, ListType):
             list_memtypes.append(mt)
-        elif mt in [T_Abrupt, T_continue_, T_break_, T_return_, T_throw_] or isinstance(mt, ThrowType):
+        elif mt in [T_Abrupt, T_continue_completion, T_break_completion, T_return_completion, T_throw_completion] or isinstance(mt, ThrowType):
             abrupt_memtypes.append(mt)
         elif isinstance(mt, ProcType):
             # There isn't a T_Proc, or a HierType that resolves to a ProcType.
@@ -1500,10 +1504,10 @@ def union_of_abrupt_memtypes(abrupt_memtypes):
 
     result_types = []
 
-    for memtype in [T_break_, T_continue_, T_return_, T_throw_]:
+    for memtype in [T_break_completion, T_continue_completion, T_return_completion, T_throw_completion]:
         if memtype in abrupt_memtypes:
             result_types.append(memtype)
-        elif memtype == T_throw_:
+        elif memtype == T_throw_completion:
             error_types = []
             for mt in abrupt_memtypes:
                 if isinstance(mt, ThrowType):
@@ -2507,7 +2511,7 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
         input('hit return to continue ')
         if T_Abrupt.is_a_subtype_of_or_equal_to(type_of_returned_value):
             input('hit return to continue ')
-        # if T_throw_.is_a_subtype_of_or_equal_to(type_of_returned_value):
+        # if T_throw_completion.is_a_subtype_of_or_equal_to(type_of_returned_value):
         #     input('hit return to continue ')
 
     # (or intersect Absent with type_of_returned_value)
@@ -2866,7 +2870,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
             '|FunctionStatementList|',
         ]:
             # Might return a throw|return completion, but not continue|break
-            (_, narrowed_rt) = rt.split_by(T_continue_ | T_break_)
+            (_, narrowed_rt) = rt.split_by(T_continue_completion | T_break_completion)
             rt = narrowed_rt
 
         elif mast in [
@@ -2878,7 +2882,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
             '|PropertyName|',
         ]:
             # Might return a throw completion, but not return|continue|break
-            (_, narrowed_rt) = rt.split_by(T_continue_ | T_break_ | T_return_)
+            (_, narrowed_rt) = rt.split_by(T_continue_completion | T_break_completion | T_return_completion)
             rt = narrowed_rt
 
     return (rt, env2)
@@ -2893,11 +2897,11 @@ def type_corresponding_to_comptype_literal(comptype_literal):
     assert isinstance(comptype_literal, ANode)
     return {
         '~normal~'  : T_Normal,
-        '~continue~': T_continue_,
-        '~break~'   : T_break_,
-        '~return~'  : T_return_,
-        '~throw~'   : T_throw_,
-        'either ~return~ or ~throw~': T_return_ | T_throw_,
+        '~continue~': T_continue_completion,
+        '~break~'   : T_break_completion,
+        '~return~'  : T_return_completion,
+        '~throw~'   : T_throw_completion,
+        'either ~return~ or ~throw~': T_return_completion | T_throw_completion,
     }[comptype_literal.source_text()]
 
 def tc_args( params, args, env0, context ):
@@ -2955,11 +2959,11 @@ def tc_args( params, args, env0, context ):
                 pass
             else:
                 if (
-                    # This condition, by focusing on T_throw_, is over-specific,
+                    # This condition, by focusing on T_throw_completion, is over-specific,
                     # but I'm guessing it catches the common cases.
-                    T_throw_.is_a_subtype_of_or_equal_to(arg_type)
+                    T_throw_completion.is_a_subtype_of_or_equal_to(arg_type)
                     and
-                    not T_throw_.is_a_subtype_of_or_equal_to(pt)
+                    not T_throw_completion.is_a_subtype_of_or_equal_to(pt)
                 ):
                     extra_msg = f' (arg could be abrupt completion?)'
                 else:
@@ -3069,7 +3073,7 @@ def process_declared_record_type_info():
     tweak_record_schema_field_type(
         'AsyncGeneratorRequest Record', '[[Completion]]',
         T_Abrupt | T_Normal,
-        T_Tangible_ | T_return_ | T_throw_ | T_tilde_empty_
+        T_Tangible_ | T_return_completion | T_throw_completion | T_tilde_empty_
     )
     tweak_record_schema_field_type(
         'JobCallback Record', '[[HostDefined]]',
@@ -3165,7 +3169,7 @@ def handle_internal_thing_declaration(method_or_slot, row):
         #> either a normal completion that wraps
         #> a value of the return type shown in its invocation pattern,
         #> or a throw completion.
-        return_type |= T_throw_
+        return_type |= T_throw_completion
 
         t = ProcType(tuple(param_types), return_type)
 
@@ -5071,15 +5075,15 @@ class _:
                     assert len(args) == 2
                     [_, cr_arg] = args
                     (cr_arg_type, _) = tc_expr(cr_arg, env0)
-                    return_type = T_throw_ | cr_arg_type
+                    return_type = T_throw_completion | cr_arg_type
 
                 elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
                     # The second arg is a list of ES language type names
                     # that constrains the return type.
-                    assert return_type == ListType(T_Tangible_) | T_throw_
+                    assert return_type == ListType(T_Tangible_) | T_throw_completion
                     types_arg = args[1]
                     assert types_arg.source_text() == '« String, Symbol »'
-                    return_type = ListType(T_String | T_Symbol) | T_throw_
+                    return_type = ListType(T_String | T_Symbol) | T_throw_completion
 
         else:
             assert 0, opn_before_paren.prod.rhs_s
@@ -8402,10 +8406,10 @@ class _:
                 # In the context there,
                 # the static type of _completionRecord_ is
                 # (or would be, if STA were smart enough)
-                # T_tilde_empty_ | T_continue_ | T_break_,
+                # T_tilde_empty_ | T_continue_completion | T_break_completion,
                 # and the static type of _value_ is T_Tangible_ | T_tilde_empty_
 
-                return (T_Tangible_ | T_tilde_empty_ | T_continue_ | T_break_, env0)
+                return (T_Tangible_ | T_tilde_empty_ | T_continue_completion | T_break_completion, env0)
 
             else:
                 env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_tilde_empty_)
@@ -8416,7 +8420,7 @@ class _:
                 ct = type_corresponding_to_comptype_literal(type_ex)
                 if ct == T_Normal:
                     t = value_type
-                elif ct == T_throw_:
+                elif ct == T_throw_completion:
                     t = ThrowType(value_type)
                 else:
                     t = ct
@@ -8553,7 +8557,7 @@ class _:
                         assert 0, memtype
 
                 elif dsbn_name == '[[Target]]':
-                    if memtype in [T_continue_, T_break_, T_Abrupt]:
+                    if memtype in [T_continue_completion, T_break_completion, T_Abrupt]:
                         result_memtype = T_String | T_tilde_empty_
                     else:
                         assert 0, memtype
@@ -8848,11 +8852,11 @@ class _:
 
 @P('{VAL_DESC} : a return completion')
 class _:
-    s_tb = T_return_
+    s_tb = T_return_completion
 
 @P('{VAL_DESC} : a throw completion')
 class _:
-    s_tb = T_throw_
+    s_tb = T_throw_completion
 
 @P('{VAL_DESC} : an abrupt completion')
 class _:
@@ -8963,7 +8967,7 @@ class _:
 
 @P('{VAL_DESC} : an Abstract Closure with two parameters')
 class _:
-    s_tb = ProcType((T_Tangible_, T_Tangible_), T_Number | T_throw_)
+    s_tb = ProcType((T_Tangible_, T_Tangible_), T_Number | T_throw_completion)
 
 @P('{VAL_DESC} : an Abstract Closure')
 class _:
@@ -9234,7 +9238,7 @@ class _:
                 f"ST of {vara.source_text()} is {ta}\n    which can't be abrupt, so using 'IfAbruptCloseIterator' is a bit odd"
             )
         else:
-            proc_add_return(env0, abrupt_part_of_ta | T_throw_, anode)
+            proc_add_return(env0, abrupt_part_of_ta | T_throw_completion, anode)
 
         return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
 
@@ -9631,14 +9635,14 @@ class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, b_var] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        return env0.plus_new_entry(b_var, T_Tangible_ | T_return_ | T_throw_)
+        return env0.plus_new_entry(b_var, T_Tangible_ | T_return_completion | T_throw_completion)
 
 @P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
 class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_completion | T_throw_completion)
         return env1
 
 @P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
@@ -9647,8 +9651,8 @@ class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex, resb_var] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_ | T_throw_)
-        return env1.plus_new_entry(resb_var, T_Tangible_ | T_throw_)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_completion | T_throw_completion)
+        return env1.plus_new_entry(resb_var, T_Tangible_ | T_throw_completion)
 
 @P(r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
 class _:
@@ -9663,7 +9667,7 @@ class _:
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
         env0.assert_expr_is_of_type(varc, T_execution_context)
-        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_ | T_throw_)
+        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_ | T_throw_completion)
 
 @P(r"{COMMAND} : Suspend {var} and remove it from the execution context stack.")
 class _:
@@ -9926,7 +9930,7 @@ class _:
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, T_Tangible_)
         env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
-        return (T_Tangible_ | T_throw_, env0)
+        return (T_Tangible_ | T_throw_completion, env0)
 
     # 10.3.2
 @P(r"{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
@@ -9937,7 +9941,7 @@ class _:
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
         env0.assert_expr_is_of_type(dvar, T_Tangible_)
-        return (T_Tangible_ | T_throw_, env0)
+        return (T_Tangible_ | T_throw_completion, env0)
 
     # 10.3.3
 @P(r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
@@ -10173,11 +10177,11 @@ class _:
         table_result_type_str = table_result_type.source_text()
         if table_result_type_str == 'abstract operation':
             # result_type = (
-            #     ProcType([T_Number, T_Number], T_Number | T_throw_)
+            #     ProcType([T_Number, T_Number], T_Number | T_throw_completion)
             #     |
-            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_)
+            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_completion)
             # )
-            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), T_Number|T_BigInt | T_throw_)
+            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), T_Number|T_BigInt | T_throw_completion)
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
