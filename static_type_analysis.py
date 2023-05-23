@@ -615,6 +615,21 @@ class Type():
         # print(A, '|', B, '=', u)
         return u
 
+    def __lt__(A, B):
+        return A.sort_key() < B.sort_key()
+
+        # ... so that we can sort instances of classes derived from Type,
+        # simply by having them define a `sort_key` method.
+        #
+        # There are only a couple places where we do such sorting:
+        # - in the semantics for {NUM_COMPARISON},
+        #   which generates multiple complaints due to STA's lack of smartness,
+        #   and we want those complaints to be in a consistent order,
+        #   to prevent spurious diffs.
+        #   Eventually, STA may be smart enough that those complaints go away.
+        # - in the semantics for {DOTTING},
+        #   where again, we want error messages to appear in a consistent order.
+
     # -----------------------------------------------------
 
     # @memoize()
@@ -882,7 +897,7 @@ class TBDType(Type):
     def __str__(self): return 'TBD'
     def unparse(self, parenthesuze=False): return 'TBD'
 
-@dataclass(frozen = True, order = True)
+@dataclass(frozen = True)
 class HierType(Type):
     name: str
 
@@ -897,20 +912,13 @@ class HierType(Type):
     # (Note that this condition *doesn't* hold for
     # UnionTypes, ProcTypes, etc.)
 
-    # We specify `order = True` so that @dataclass generates __lt__() etc,
-    # so that we can sort instances of this class.
-    # (The only place that we do so is in the semantics for {NUM_COMPARISON},
-    # which generates multiple complaints due to STA's lack of smartness,
-    # and we want those complaints to be in a consistent order,
-    # to prevent spurious diffs.
-    # Eventually, STA may be smart enough that those complaints go away,
-    # and we won't need order=True any more.)
-    # (Also in the semantics for {DOTTING}.)
-
     def __post_init__(self):
         assert isinstance(self.name, str)
         assert re.fullmatch(r'[\w -]+', self.name), self.name
         assert not self.name.startswith('a '), self.name
+
+    def sort_key(self):
+        return ('HierType', self.name)
 
     def __str__(self):
         if self.name.endswith('_completion'):
@@ -932,6 +940,9 @@ class ListType(Type):
     def __post_init__(self):
         assert isinstance(self.element_type, Type)
 
+    def sort_key(self):
+        return ('ListType', self.element_type)
+
     def __str__(self): return "List of %s" % str(self.element_type)
     def unparse(self, _=False): return "List of %s" % self.element_type.unparse(True)
 
@@ -948,6 +959,9 @@ class RecordType(Type):
             (field_name, field_type) = fi
             assert isinstance(field_name, str)
             assert isinstance(field_type, Type)
+
+    def sort_key(self):
+        return ('RecordType', self.schema_name, self.fields_info)
 
     def type_of_field_named(self, field_name):
         for (f_name, f_type) in self.fields_info:
@@ -985,6 +999,9 @@ class ProcType(Type):
         for pt in self.param_types: assert isinstance(pt, Type)
         assert isinstance(self.return_type, Type)
 
+    def sort_key(self):
+        return ('ProcType', self.param_types, self.return_type)
+
     def __str__(self):
         if self == T_MatcherContinuation:
             return "MatcherContinuation"
@@ -1015,6 +1032,9 @@ class UnionType(Type):
         for mt in self.member_types:
             assert isinstance(mt, Type)
             assert not isinstance(mt, UnionType)
+
+    def sort_key(self):
+        return ('UnionType', self.member_types)
 
     def __str__(self): return "(%s)" % ' | '.join(sorted(map(str, self.member_types)))
 
