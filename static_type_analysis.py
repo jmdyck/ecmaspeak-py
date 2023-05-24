@@ -281,6 +281,12 @@ class TypedAlgHeader:
 
         self.initial_return_type = convert_nature_node_to_type(header.return_nature_node)
 
+        # until PR #3063 is merged:
+        if (mo := re.fullmatch(r'this(\w+)Value', self.name)):
+            foo = mo.group(1)
+            return_type = T_IntegralNumber_ | T_NaN_Number_ if foo == 'Time' else HierType(foo)
+            self.initial_return_type = NormalCompletionType(return_type) | ThrowCompletionType(T_TypeError)
+
         self.return_type = self.initial_return_type
 
         # ----
@@ -343,8 +349,8 @@ class TypedAlgHeader:
         elif self.name == 'Evaluation':
             # too weird to handle above
             tpn = '*return*'
-            assert self.return_type in [(T_Normal | T_Abrupt), T_TBD]
-            tnt = T_Tangible_ | T_tilde_empty_ | T_Reference_Record | T_Abrupt
+            assert self.return_type in [T_Completion_Record, T_TBD]
+            tnt = NormalCompletionType(T_Tangible_ | T_tilde_empty_ | T_Reference_Record) | T_abrupt_completion
             self.change_declared_type(tpn, tnt, tweak=True)
 
         # -------------------------
@@ -525,9 +531,14 @@ class TypedAlgHeader:
                 abrupt_part = T_TBD
                 normal_part = T_TBD
             else:
-                (abrupt_part, normal_part) = rt.split_by(T_Abrupt)
+                (abrupt_part, normal_part) = rt.split_by(T_abrupt_completion)
 
-            iput_name_and_type('normal', normal_part)
+            if normal_part.is_a_subtype_of_or_equal_to(T_normal_completion):
+                normal_value_type = s_dot_field(normal_part, '[[Value]]')
+            else:
+                normal_value_type = normal_part
+
+            iput_name_and_type('normal', normal_value_type)
             iput_name_and_type('abrupt', abrupt_part)
 
             if mode == 'messages in algs and dls':
@@ -562,14 +573,37 @@ class TypedAlgHeader:
         e.vars['*return*'] = self.return_type
 
         if self.species.startswith('bif:'):
-            expected_return_type = T_Tangible_ | T_throw_completion | T_tilde_empty_
+            expected_return_type = NormalCompletionType(T_Tangible_) | T_throw_completion
             # T_tilde_empty_ shouldn't really be allowed,
             # but if I leave it out,
             # I get a bunch of complaints that I think are false positives.
         else:
-            expected_return_type = T_Top_
+            expected_return_type = self.return_type
 
-        e.parret = ParRet(parameter_names, expected_return_type)
+        # An algorithm must either *always* return completion records
+        # or *never* return completion records.
+        cr_memtypes = []
+        noncr_memtypes = []
+        for memtype in expected_return_type.set_of_types():
+            if memtype.is_a_subtype_of_or_equal_to(T_Completion_Record):
+                cr_memtypes.append(memtype)
+            else:
+                noncr_memtypes.append(memtype)
+        if cr_memtypes and noncr_memtypes:
+            stderr("")
+            stderr(f"!!! In header for {op_name}, the return type has")
+            stderr(f"both   cr_memtypes: {cr_memtypes}")
+            stderr(f"and noncr_memtypes: {noncr_memtypes}")
+            stderr("")
+            sys.exit(1)
+        elif cr_memtypes:
+            returns_completion_records = True
+        elif noncr_memtypes:
+            returns_completion_records = False
+        else:
+            assert 0
+
+        e.parret = ParRet(parameter_names, expected_return_type, returns_completion_records)
 
         return e
 
@@ -612,6 +646,7 @@ class Type():
         A_members = A.set_of_types()
         B_members = B.set_of_types()
         u = maybe_UnionType(A_members | B_members)
+        # u = union_of_types([A, B])
         # print(A, '|', B, '=', u)
         return u
 
@@ -649,8 +684,12 @@ class Type():
 
         elif A_members <= B_members:
             result = True
-        elif A_members > B_members:
-            result = False
+
+        # elif A_members > B_members:
+        #     result = False
+        # No, that assumes that A is 'reduced'.
+        # But consider A = T_Normal | T_Reference_Record
+        # and B = T_Normal
 
         else:
             # A is a subtype of B iff every A_member is a subtype of B.
@@ -702,13 +741,23 @@ class Type():
             inside_B  = A # or B
             outside_B = T_0
 
-        elif A_memtypes <= B_memtypes:
-            inside_B  = A
-            outside_B = T_0
-
-        elif B_memtypes <= A_memtypes:
-            inside_B  = B
-            outside_B = maybe_UnionType(A_memtypes - B_memtypes)
+        # elif A_memtypes <= B_memtypes:
+        #     inside_B  = A
+        #     outside_B = T_0
+        #
+        # elif B_memtypes <= A_memtypes:
+        #     inside_B  = B
+        #     outside_B = maybe_UnionType(A_memtypes - B_memtypes)
+        #
+        # e.g., if A == T_Completion_Record | T_throw_
+        #      and B == T_Completion_Record
+        # then the above will say
+        #   inside_B == T_Completion_Record
+        #  outside_B == T_throw_
+        #
+        # Now, you'd be right to point out that T_Completion_Record | T_throw_
+        # shouldn't exist (it should just be T_Completion_Record).
+        # TODO.
 
         else:
             # The general case:
@@ -722,7 +771,15 @@ class Type():
                     # Treat T_TBD like Top
                     if a == T_TBD: a = T_Top_ # assert 0
 
-                    if a.is_a_subtype_of_or_equal_to(B):
+                    if a == T_Normal and B == T_Completion_Record:
+                        # A Completion Record is a Record, and Records are 'Normal' values,
+                        # and so this would seem to be asking to split T_Normal
+                        # into T_Completion_Record vs all the 'Normal' stypes other than T_Completion_Record.
+                        # However, in practice, that's not what's wanted.
+                        # Instead, we want to say that T_Normal and T_Completion_Record are completely disjoint.
+                        outside_B.add(a)
+
+                    elif a.is_a_subtype_of_or_equal_to(B):
                         inside_B.add(a)
                     else:
                         # get a list of the B_subtypes that are subtypes of a
@@ -754,6 +811,23 @@ class Type():
                                 elif a == ListType(T_Tangible_) and bs_within_a == [ListType(T_Number)]:
                                     inside_B.add(ListType(T_Number))
                                     outside_B.add(ListType(T_Tangible_)) # XXX T_Tangible_ - T_Number (TypedArrayCreate)
+                                else:
+                                    assert 0
+                            elif isinstance(a, RecordType):
+                                # TODO: be more general
+                                ts_in_CR = [
+                                    T_normal_completion,
+                                    T_break_completion,
+                                    T_continue_completion,
+                                    T_return_completion,
+                                    T_throw_completion
+                                ]
+                                if a == T_Completion_Record and set(bs_within_a) <= set(ts_in_CR):
+                                    for t in ts_in_CR:
+                                        if t in bs_within_a:
+                                            inside_B.add(t)
+                                        else:
+                                            outside_B.add(t)
                                 else:
                                     assert 0
                             else:
@@ -818,7 +892,7 @@ def member_is_a_subtype_or_equal(A, B):
             return (A.element_type.is_a_subtype_of_or_equal_to(B.element_type))
         elif isinstance(B, HierType):
             return (T_List.is_a_subtype_of_or_equal_to(B))
-        elif isinstance(B, ThrowCompletionType):
+        elif isinstance(B, RecordType):
             return False
         else:
             assert 0, (A, B)
@@ -838,30 +912,68 @@ def member_is_a_subtype_or_equal(A, B):
                     return True
                 else:
                     assert 0
+            elif A.schema_name == '' and B.schema_name != '':
+                return False
+            elif A.schema_name != '' and B.schema_name == '':
+                return False
+
+            assert A.schema_name != ''
+            assert B.schema_name != ''
+
+            # TODO: normalize schema names
+            A_record_schema = spec.RecordSchema_for_name_[A.schema_name]
+            B_record_schema = spec.RecordSchema_for_name_[B.schema_name]
+
+            for ars in A_record_schema.self_and_supers():
+                if ars is B_record_schema:
+                    # A_record_schema is the same as B_record_schema,
+                    # or is a descendant schema of it.
+                    break
             else:
-                assert 0
+                # A's schema isn't a descendant of B's
+                return False
+
+            # For any field that B constrains,
+            # A must also constrain it, and constrain it the same or moreso.
+            # (A can also have additional fields, that's fine.)
+
+            # We assume that a RecordType never has a do-nothing field-constraint.
+            # For example, consider a Reference Record's [[Strict]] field, declared to be a Boolean.
+            # If A and B are both RecordTypes representing Reference Records,
+            # and B.fields_info consists of a 'constraint' that [[Strict]] is Boolean
+            # and A.fields_info is empty,
+            # then they denote the same type,
+            # but this code would incorrectly conclude that A isn't a subtype of or equal to B.
+            for (B_field_name, B_field_type) in B.fields_info:
+                # Linear search seems inefficient,
+                # but in practice, the two fields_info are pretty short.
+                for (A_field_name, A_field_type) in A.fields_info:
+                    if A_field_name == B_field_name:
+                        if A_field_type.is_a_subtype_of_or_equal_to(B_field_type):
+                            # good so far
+                            break
+                        else:
+                            return False
+                else:
+                    # Didn't break from the for-loop,
+                    # i.e., didn't find a matching field_name in A.
+                    # i.e., A.fields_info doesn't constrain {B_field_name},
+                    # so A isn't a subtype of B.
+                    # (Does this ever happen in practice?)
+                    return False
+
+            return True
 
         elif isinstance(B, HierType):
-            if B == T_Record:
+            if T_Record.is_a_subtype_of_or_equal_to(B):
                 return True
-            elif A.schema_name == '':
-                # A schema-less record type is a subtype of
-                # no HierType other than T_Record.
-                return False
-            elif B.is_a_subtype_of_or_equal_to(T_Record):
-                assert 0
+            elif A.schema_name == 'Completion Record' and B == T_Completion_Record:
+                return True
             else:
                 return False
-                
-        else:
-            assert 0, (A, B)
-
-    elif isinstance(A, ThrowCompletionType):
-        if isinstance(B, ThrowCompletionType):
-            return (A.error_type.is_a_subtype_of_or_equal_to(B.error_type))
-        elif isinstance(B, HierType):
-            return (T_throw_completion.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
+            return False
+        elif isinstance(B, ProcType):
             return False
         else:
             assert 0, (A, B)
@@ -880,6 +992,8 @@ def member_is_a_subtype_or_equal(A, B):
         elif isinstance(B, HierType):
             return (T_proc_.is_a_subtype_of_or_equal_to(B))
         elif isinstance(B, ListType):
+            return False
+        elif isinstance(B, RecordType):
             return False
         else:
             assert 0, (A, B)
@@ -967,9 +1081,87 @@ class RecordType(Type):
         for (f_name, f_type) in self.fields_info:
             if f_name == field_name:
                 return f_type
+
+        # To get here, we didn't 'return' above, which means that
+        # {field_name} didn't appear in {self.fields_info}
+        # which you might think means that (the type represented by) {self}
+        # only includes records that don't have a field by that name.
+        # On the contrary, it *does* include records with such a field,
+        # it just doesn't constrain the type of such a field
+        # (any more than {self}'s super-schemas might).
+
+        if self.schema_name == 'Completion Record':
+            # For some of the fields,
+            # the 'declared' types aren't as precise as they could be.
+
+            if field_name == '[[Type]]':
+                # In practice, this would have been handled by the for-loop above.
+                # But I suppose it could happen.
+                return T_tilde_break_ | T_tilde_continue_ | T_tilde_normal_ | T_tilde_return_ | T_tilde_throw_
+
+            else:
+                assert field_name in ['[[Value]]', '[[Target]]']
+                if self.fields_info == ():
+                    # {self} is just T_Completion_Record,
+                    # so the types of its fields are the most general
+                    return {
+                        '[[Value]]' : T_Normal,
+                        '[[Target]]': T_String | T_tilde_empty_,
+                    }[field_name]
+                else:
+                    (Type_field_name, Type_field_stype) = self.fields_info[0]
+                    assert Type_field_name == '[[Type]]'
+                    assert isinstance(Type_field_stype, HierType)
+                    if Type_field_stype == T_tilde_normal_:
+                        return {
+                            '[[Value]]' : T_Normal,
+                            '[[Target]]': T_tilde_empty_,
+                        }[field_name]
+
+                    elif Type_field_stype in [T_tilde_return_, T_tilde_throw_]:
+                        return {
+                            '[[Value]]' : T_Tangible_ | T_tilde_empty_,
+                            '[[Target]]': T_tilde_empty_,
+                        }[field_name]
+
+                    elif Type_field_stype in [T_tilde_break_, T_tilde_continue_]:
+                        return {
+                            '[[Value]]' : T_Tangible_ | T_tilde_empty_,
+                            '[[Target]]': T_String | T_tilde_empty_,
+                        }[field_name]
+
+                    else:
+                        assert 0
+
+        # ---------------------------
         assert 0
 
+        # code that we might need in future:
+        record_schema = spec.RecordSchema_for_name_[self.schema_name]
+        for ars in record_schema.self_and_supers():
+            if field_name in ars.addl_field_decls:
+                field_decl = ars.addl_field_decls[field_name]
+                field_decl.value_description
+
+        return T_Normal
+
     def __str__(self):
+
+        if self == T_Completion_Record: return 'Completion Record'
+
+        if self.schema_name == 'Completion Record' and len(self.fields_info) in [1,2]:
+            fields_d = dict(self.fields_info)
+            Type_field_stype = fields_d['[[Type]]']
+            prefix = Type_field_stype.name.replace('tilde_', '')
+
+            if len(self.fields_info) == 1:
+                suffix = ''
+            else:
+                Value_field_stype = fields_d['[[Value]]']
+                suffix = f"({Value_field_stype})"
+
+            return f"{prefix}{suffix}"
+
         field_types_str = ', '.join(
             f"{f_name}: {f_type}"
             for (f_name, f_type) in self.fields_info
@@ -979,15 +1171,17 @@ class RecordType(Type):
     def unparse(self, _=False):
         return str(self)
 
-@dataclass(frozen = True)
-class ThrowCompletionType(Type):
-    error_type: Type
-
-    def __post_init__(self):
-        assert isinstance(self.error_type, Type)
-
-    def __str__(self): return "throw_(%s)" % str(self.error_type)
-    def unparse(self, _=False): return "throw_ *%s*" % self.error_type.unparse(True)
+def s_dot_field(lhs_type, field_name):
+    if isinstance(lhs_type, RecordType):
+        return lhs_type.type_of_field_named(field_name)
+    elif isinstance(lhs_type, UnionType):
+        field_types = []
+        for memtype in lhs_type.set_of_types():
+            assert isinstance(memtype, RecordType)
+            field_types.append(memtype.type_of_field_named(field_name))
+        return union_of_types(field_types)
+    else:
+        assert 0
 
 @dataclass(frozen = True)
 class ProcType(Type):
@@ -1049,6 +1243,8 @@ class UnionType(Type):
             prefix = ''
             member_types = self.member_types
 
+        if self == T_abrupt_completion: return 'Abrupt'
+
         x = ' | '.join(sorted(
             member_type.unparse()
             for member_type in member_types
@@ -1097,12 +1293,6 @@ named_type_hierarchy = {
             'not_in_node': {},   # for an optional child of a node
             'not_set': {},       # for a metavariable that might not be initialized
             'not_returned': {},  # for when control falls off the end of an operation
-        },
-        'Abrupt' : {
-            'continue_completion': {},
-            'break_completion': {},
-            'return_completion': {},
-            'throw_completion': {},
         },
         'Normal': {
             'Tangible_': {
@@ -1279,6 +1469,11 @@ rs = records.RecordSchema('other Cyclic Module Record', 'Cyclic Module Record')
 
 def traverse_record_schema(super_schema, super_tnode):
     for sub_schema in super_schema.sub_schemas:
+        if sub_schema.tc_schema_name == 'Completion Record':
+            # Don't create HierType('Completion Record'),
+            # because that would complicate things.
+            # Instead, we create T_Completion_Record as a RecordType.
+            continue
         sub_type = HierType_etc(sub_schema.tc_schema_name)
         sub_tnode = TNode(sub_type, super_tnode)
         traverse_record_schema(sub_schema, sub_tnode)
@@ -1320,6 +1515,16 @@ for tilde_word in sorted(tilde_words):
 # ------------------------------------------------------------------------------
 
 T_TBD = TBDType()
+
+def CompletionType(Type_field_stype):
+    return RecordType('Completion Record', (('[[Type]]', Type_field_stype),))
+
+T_break_completion    = CompletionType(T_tilde_break_)
+T_continue_completion = CompletionType(T_tilde_continue_)
+T_return_completion   = CompletionType(T_tilde_return_)
+T_throw_completion    = CompletionType(T_tilde_throw_)
+
+T_abrupt_completion = T_continue_completion | T_break_completion | T_return_completion | T_throw_completion
 
 T_character_ = T_code_unit_ | T_code_point_
 
@@ -1455,23 +1660,25 @@ def union_of_types(types):
     assert len(memtypes) > 0
 
     list_memtypes = []
-    abrupt_memtypes = []
+    record_memtypes = []
     proc_memtypes = []
     other_memtypes = []
     for mt in memtypes:
         if mt == T_List or isinstance(mt, ListType):
             list_memtypes.append(mt)
-        elif mt in [T_Abrupt, T_continue_completion, T_break_completion, T_return_completion, T_throw_completion] or isinstance(mt, ThrowCompletionType):
-            abrupt_memtypes.append(mt)
+        elif isinstance(mt, RecordType):
+            record_memtypes.append(mt)
         elif isinstance(mt, ProcType):
             # There isn't a T_Proc, or a HierType that resolves to a ProcType.
             proc_memtypes.append(mt)
-        else:
+        elif isinstance(mt, HierType):
             other_memtypes.append(mt)
+        else:
+            assert 0, mt
 
     result_memtypes = (
         union_of_list_memtypes(list_memtypes)
-        + union_of_abrupt_memtypes(abrupt_memtypes)
+        + union_of_record_memtypes(record_memtypes)
         + union_of_proc_memtypes(proc_memtypes)
         + union_of_other_memtypes(other_memtypes)
     )
@@ -1513,31 +1720,89 @@ def union_of_list_memtypes(list_memtypes):
 
 # ------------------------------------------------------------------------------
 
-def union_of_abrupt_memtypes(abrupt_memtypes):
+def union_of_record_memtypes(record_memtypes):
 
-    if len(abrupt_memtypes) <= 1:
-        return abrupt_memtypes
+    if len(record_memtypes) <= 1:
+        return record_memtypes
 
-    if T_Abrupt in abrupt_memtypes:
-        # That subsumes all other abrupt-types
-        return [T_Abrupt]
+    memtypes_with_schema_name_ = defaultdict(list)
+    for memtype in record_memtypes:
+        assert isinstance(memtype, RecordType)
+        memtypes_with_schema_name_[memtype.schema_name].append(memtype)
 
-    result_types = []
+    result_memtypes = []
 
-    for memtype in [T_break_completion, T_continue_completion, T_return_completion, T_throw_completion]:
-        if memtype in abrupt_memtypes:
-            result_types.append(memtype)
-        elif memtype == T_throw_completion:
-            error_types = []
-            for mt in abrupt_memtypes:
-                if isinstance(mt, ThrowCompletionType):
-                    error_types.append(mt.error_type)
-            if error_types:
-                error_type_union = union_of_types(error_types)
-                t = ThrowCompletionType(error_type_union)
-                result_types.append(t)
+    for (schema_name, memtypes) in memtypes_with_schema_name_.items():
+        assert len(memtypes) > 0
+        if len(memtypes) == 1:
+            result_memtypes.extend(memtypes)
+        else:
+            if schema_name == '':
+                result_memtypes.extend(memtypes)
+                #XXX for now
+            elif schema_name == 'Completion Record':
+                crtypes_with_Type_stype_ = defaultdict(list)
+                for crtype in memtypes:
+                    if crtype.fields_info == ():
+                        # {crtype} is a supertype (or equal to) all others in {memtypes}
+                        result_memtypes.append(crtype)
+                        break
+                    else:
+                        (Type_field_name, Type_field_stype) = crtype.fields_info[0]
+                        assert Type_field_name == '[[Type]]'
+                        if isinstance(Type_field_stype, HierType):
+                            crtypes_with_Type_stype_[Type_field_stype].append(crtype)
+                        elif isinstance(Type_field_stype, UnionType):
+                            for sub_tfs in Type_field_stype.member_types:
+                                assert isinstance(sub_tfs, HierType)
+                                sub_crtype = RecordType(
+                                    crtype.schema_name,
+                                    (('[[Type]]', sub_tfs),)
+                                    +
+                                    crtype.fields_info[1:]
+                                )
+                                crtypes_with_Type_stype_[sub_tfs].append(sub_crtype)
+                        else:
+                            assert 0
+                else:
+                    # no break from above loop,
+                    # i.e. no crtype with this schema_name had an empty fields_info
+                    # i.e. each crtype with this schema_name has a [[Type]] field
+                    # So we consider them separately depending on the value (stype) of the [[Type]] field.
+                    for (Type_field_stype, crtypes) in crtypes_with_Type_stype_.items():
+                        if len(crtypes) == 1:
+                            result_memtypes.extend(crtypes)
+                        else:
+                            # Okay, so we have multiple crtypes,
+                            # all with the same schema_name and the same value for [[Type]] field.
+                            # But they might or might not have a [[Value]] field.
+                            # (e.g., T_throw_completion(TypeError) vs T_throw_completion)
+                            Value_field_stypes = []
+                            for crtype in crtypes:
+                                assert len(crtype.fields_info) >= 1
+                                if len(crtype.fields_info) == 1:
+                                    # {crtype} is a supertype (or equal to) all others in {crtypes}
+                                    result_memtypes.append(crtype)
+                                    break
+                                else:
+                                    (Value_field_name, Value_field_stype) = crtype.fields_info[1]
+                                    assert Value_field_name == '[[Value]]'
+                                    Value_field_stypes.append(Value_field_stype)
+                            else:
+                                # no break from above loop,
+                                # i.e. no crtype in {crtypes} had just a [[Type]] field
+                                # i.e. each crtype in {crtypes} has both [[Type]] and [[Value]] field
+                                result_memtypes.append(
+                                    RecordType(schema_name, (
+                                            ('[[Type]]', Type_field_stype),
+                                            ('[[Value]]', union_of_types(Value_field_stypes)),
+                                        )
+                                    )
+                                )
+            else:
+                assert 0, schema_name
 
-    return result_types
+    return result_memtypes
 
 # ------------------------------------------------------------------------------
 
@@ -1551,6 +1816,9 @@ def union_of_proc_memtypes(proc_memtypes):
 # ------------------------------------------------------------------------------
 
 def union_of_other_memtypes(memtypes):
+
+    for memtype in memtypes:
+        assert isinstance(memtype, HierType)
 
     if len(memtypes) <= 1:
         return memtypes
@@ -1776,15 +2044,21 @@ class Env:
     # --------
 
     def ensure_expr_is_of_type(self, expr, expected_t):
+        (_, result_env) = self.ensure_expr_is_of_type_(expr, expected_t)
+        return result_env
+
+    def ensure_expr_is_of_type_(self, expr, expected_t):
         assert expected_t != T_TBD
 
         (expr_type, expr_env) = tc_expr(expr, self)
 
         if expr_type == T_TBD:
-            result_env = expr_env.with_expr_type_replaced(expr, expected_t)
+            resulting_expr_type = expected_t
+            result_env = expr_env.with_expr_type_replaced(expr, resulting_expr_type)
 
         elif expr_type.is_a_subtype_of_or_equal_to(expected_t):
             # great!
+            resulting_expr_type = expr_type
             result_env = expr_env
 
         else:
@@ -1792,12 +2066,20 @@ class Env:
             add_pass_error_re_wrong_type(expr, expr_type, expected_t)
             if expr_text == '*null*':
                 # Don't try to change the type of *null*!
+                assert 0
+                resulting_expr_type = expr_type
+                result_env = expr_env
+            elif expr_text == '*undefined*':
+                resulting_expr_type = expr_type
                 result_env = expr_env
             elif expr_text == '« »':
+                resulting_expr_type = expr_type
                 result_env = expr_env
             else:
-                result_env = expr_env.with_expr_type_replaced(expr, expected_t)
-        return result_env
+                resulting_expr_type = expected_t
+                # or you could split {expr_type} by {expected_t}
+                result_env = expr_env.with_expr_type_replaced(expr, resulting_expr_type)
+        return (resulting_expr_type, result_env)
 
     def ensure_A_can_be_element_of_list_B(self, item_ex, list_ex):
         (list_type, list_env) = tc_expr(list_ex, self)
@@ -1995,6 +2277,11 @@ class Env:
         # No, e.g. expr_text is '_R_.[[Value]]', where the out-env
         # has a narrower binding for _R_.
 
+        if expr_t == T_0:
+            # As far as {self} is concerned,
+            # execution cannot reach {expr}.
+            return (None, None)
+
         if isinstance(target_t, Type):
             sub_t = target_t
             sup_t = target_t
@@ -2086,6 +2373,8 @@ class Env:
                         expr_text, sup_t)
                 )
                 # Perhaps a parameter-type was too restrictive.
+                # or Evaluation of "YieldExpression : `yield` `*` AssignmentExpression",
+                # the first time through the Repeat loop
 
         is_env   = env1.copy()
         isnt_env = env1.copy()
@@ -2176,6 +2465,7 @@ class ParRet:
 
     parameter_names: Set[str]
     expected_return_type: Type
+    returns_completion_records: bool
     return_envs: Set[Env] = dataclass_field(default_factory=set)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2529,7 +2819,7 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
     if trace_this_op:
         print("Type of returned value:", type_of_returned_value)
         input('hit return to continue ')
-        if T_Abrupt.is_a_subtype_of_or_equal_to(type_of_returned_value):
+        if T_abrupt_completion.is_a_subtype_of_or_equal_to(type_of_returned_value):
             input('hit return to continue ')
         # if T_throw_completion.is_a_subtype_of_or_equal_to(type_of_returned_value):
         #     input('hit return to continue ')
@@ -2543,6 +2833,21 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
 #                ????,
 #                "warning: static type of return value includes `%s`" % str(t)
 #            )
+
+    #> In algorithms within abstract operations which are declared to return a Completion Record,
+    #> and within all built-in functions,
+    #> the returned value is first passed to NormalCompletion,
+    #> and the result is used instead.
+    #> This rule does not apply within the Completion algorithm
+    #> or when the value being returned is clearly marked as a Completion Record in that step;
+    #> these cases are:
+    #>  - when the result of applying Completion, NormalCompletion, or ThrowCompletion is directly returned
+    #>  - when the result of constructing a Completion Record is directly returned
+
+    if parret.returns_completion_records:
+        (cr_part_of_type, noncr_part_of_type) = type_of_returned_value.split_by(T_Completion_Record)
+        if noncr_part_of_type != T_0:
+           type_of_returned_value = NormalCompletionType(noncr_part_of_type) | cr_part_of_type 
 
     # Check that the return value conforms to the proc's declared return
     if not type_of_returned_value.is_a_subtype_of_or_equal_to(parret.expected_return_type):
@@ -2563,7 +2868,7 @@ def proc_add_return(env_at_return_point, type_of_returned_value, node):
             #     print("`%s` : # member_types = %d" % (pn, len(ptype.member_types)))
             #     if len(ptype.member_types) == 41: assert 0
 
-            if pn == '*return*' and T_not_returned.is_a_subtype_of_or_equal_to(ptype) and ptype != T_Abrupt | ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ | T_not_returned:
+            if pn == '*return*' and T_not_returned.is_a_subtype_of_or_equal_to(ptype) and ptype != T_abrupt_completion | ListType(T_code_unit_) | T_Reference_Record | T_Tangible_ | T_tilde_empty_ | T_not_returned:
                 add_pass_error(
                     node,
                     "At exit, ST of `%s` is `%s`" % (pn, ptype)
@@ -2625,7 +2930,7 @@ def tc_cond(cond, env0, asserting=False):
 
     assert isinstance(result, tuple)
     assert len(result) == 2
-    assert isinstance(result[0], Env)
+    assert isinstance(result[0], Env) or result[0] is None
     assert isinstance(result[1], Env) or result[1] is None
 
     if trace_this_op:
@@ -2883,7 +3188,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
     if op_name == 'Evaluation':
         # In some (most?) cases, evaluation can't return the full gamut of abrupt completions.
         # So sometimes, we can provide a narrower return type.
-        assert T_Abrupt.is_a_subtype_of_or_equal_to(rt)
+        assert T_abrupt_completion.is_a_subtype_of_or_equal_to(rt)
         mast = main_arg.source_text()
 
         if mast in [
@@ -2916,7 +3221,7 @@ def with_fake_param_names(param_types):
 def type_corresponding_to_comptype_literal(comptype_literal):
     assert isinstance(comptype_literal, ANode)
     return {
-        '~normal~'  : T_Normal,
+        '~normal~'  : T_normal_completion,
         '~continue~': T_continue_completion,
         '~break~'   : T_break_completion,
         '~return~'  : T_return_completion,
@@ -3075,8 +3380,6 @@ def process_declared_record_type_info():
                     t = convert_nature_node_to_type(field_decl.value_description)
                 d_from_spec[field_decl.name] = t
 
-        if record_schema.tc_schema_name == 'Completion Record': continue
-
         ffrtn_name = record_schema.tc_schema_name
         # At this point, I used to map
         # from the title-case schema name in spec.RecordSchema_for_name_
@@ -3090,11 +3393,6 @@ def process_declared_record_type_info():
         assert fields_dict[field_name] == t_from_spec
         fields_dict[field_name] = t_for_compat
 
-    tweak_record_schema_field_type(
-        'AsyncGeneratorRequest Record', '[[Completion]]',
-        T_Abrupt | T_Normal,
-        T_Tangible_ | T_return_completion | T_throw_completion | T_tilde_empty_
-    )
     tweak_record_schema_field_type(
         'JobCallback Record', '[[HostDefined]]',
         T_host_defined_,
@@ -3189,7 +3487,7 @@ def handle_internal_thing_declaration(method_or_slot, row):
         #> either a normal completion that wraps
         #> a value of the return type shown in its invocation pattern,
         #> or a throw completion.
-        return_type |= T_throw_completion
+        return_type = NormalCompletionType(return_type) | T_throw_completion
 
         t = ProcType(tuple(param_types), return_type)
 
@@ -4076,7 +4374,25 @@ class _:
                 [elseif_part, next_if_tail] = if_tail.children
                 [condition, then_part] = elseif_part.children
                 (t_env, f_env) = tc_cond(condition, f_env)
-                benvs.append( tc_nonvalue(then_part, t_env) )
+
+                # TODO: These tests should apply to the initial `If` condition too:
+                if t_env is None:
+                    add_pass_error(
+                        condition,
+                        "STA says condition cannot be true, so SKIPPING analysis of consequent"
+                    )
+                    # Hopefully this is a transient situation,
+                    # and {condition} can be true in a later pass.
+                else:
+                    benvs.append( tc_nonvalue(then_part, t_env) )
+
+                if f_env is None:
+                    add_pass_error(
+                        condition,
+                        "STA says condition cannot be false, so SKIPPING analysis of rest of If"
+                    )
+                    break
+
                 if_tail = next_if_tail
 
             elif if_tail.prod.rhs_s == '{_NL_N} {ELSE_PART}':
@@ -4797,7 +5113,7 @@ class _:
             # which is used as a sentinel all over.
             return (noi_t, env1)
         else:
-            # (normal_part_of_type, abrupt_part_of_type) = noi_t.split_by(T_Normal)
+            # (normal_part_of_type, abrupt_part_of_type) = noi_t.split_by(T_normal_completion)
             # if abrupt_part_of_type != T_0:
             #     add_pass_error(
             #         expr,
@@ -4901,7 +5217,7 @@ class _:
                 [arg] = args
                 (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
                 assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
-                return_type = arg_type
+                return_type = NormalCompletionType(arg_type)
                 return (return_type, env0)
                 # don't call tc_args etc
 
@@ -4917,8 +5233,7 @@ class _:
             elif callee_op_name == 'Completion':
                 assert len(args) == 1
                 [arg] = args
-                (arg_type, env1) = tc_expr(arg, env0)
-                return_type = arg_type # bleah
+                (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
                 return (return_type, env1)
 
             elif callee_op_name == 'abs':
@@ -5068,7 +5383,7 @@ class _:
                 # if callee_op_name == 'ResolveBinding': pdb.set_trace()
 
                 if callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
-                    assert return_type == T_Normal | T_Abrupt
+                    assert return_type == T_Completion_Record
                     # but we can be more specific.
                     # And we need to be more specific to avoid some complaints.
                     #
@@ -5100,10 +5415,10 @@ class _:
                 elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
                     # The second arg is a list of ES language type names
                     # that constrains the return type.
-                    assert return_type == ListType(T_Tangible_) | T_throw_completion
+                    assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
                     types_arg = args[1]
                     assert types_arg.source_text() == '« String, Symbol »'
-                    return_type = ListType(T_String | T_Symbol) | T_throw_completion
+                    return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
 
         else:
             assert 0, opn_before_paren.prod.rhs_s
@@ -5298,18 +5613,30 @@ def handle_completion_record_shorthand(operator, operand, env0):
         # No point trying to analyze operand_t.
         return (T_TBD, env1)
 
-    (abrupt_part_of_type, normal_part_of_type) = operand_t.split_by(T_Abrupt)
+    (cr_part_of_type, noncr_part_of_type) = operand_t.split_by(T_Completion_Record)
+    if cr_part_of_type == T_0:
+        add_pass_error(
+            operand,
+            f"The ST of the operand is {operand_t}\n    of which no part is a completion record.\n    Maybe the `{operator}` should be removed."
+        )
+        return (noncr_part_of_type, env1)
+
+    elif noncr_part_of_type != T_0:
+        add_pass_error(
+            operand,
+            f"The ST of the operand is {operand_t}\n    which includes {noncr_part_of_type}\n    which is not a completion record, and which is omitted from further analysis."
+        )
+
+    (abrupt_part_of_type, normal_part_of_type) = cr_part_of_type.split_by(T_abrupt_completion)
 
     if abrupt_part_of_type == T_0:
         if operator == '?':
-            conclusion = "so maybe drop `?` or change it to `!`"
-        elif operator == '!':
-            conclusion = "so maybe drop `!`"
+            conclusion = "so maybe change '?' to '!'"
         else:
             assert 0
         add_pass_error(
             operand,
-            f"The ST of `{operand_text}` is {operand_t}\n    i.e. it can't be abrupt, {conclusion}"
+            f"The ST of `{operand_text}` is {cr_part_of_type}\n    i.e. no abrupt completion, {conclusion}"
         )
 
     if normal_part_of_type == T_0:
@@ -5319,10 +5646,11 @@ def handle_completion_record_shorthand(operator, operand, env0):
             assert 0
         add_pass_error(
             operand,
-            f"The ST of `{operand_text}` is {operand_t}\n    i.e. it can't be normal, {conclusion}"
+            f"The ST of `{operand_text}` is {cr_part_of_type}\n    i.e. no normal completion, {conclusion}"
         )
 
-    result_type = normal_part_of_type
+    assert normal_part_of_type.is_a_subtype_of_or_equal_to(T_normal_completion)
+    result_type = s_dot_field(normal_part_of_type, '[[Value]]')
 
     if operator == '!':
         return (result_type, env1)
@@ -6453,6 +6781,8 @@ class _:
             copula = 'is a'
 
         # special handling for Completion Records' [[Type]] field:
+        # (We wouldn't need this if we changed all
+        # `_cr_.[[Type]] is ~foo~` to `_cr_ is a foo completion`.)
         while True: # ONCE
             dotting = ex.is_a('{DOTTING}')
             if dotting is None: break
@@ -8413,47 +8743,14 @@ class _:
         [record_constructor_prefix, fields] = expr.children
         constructor_prefix = record_constructor_prefix.source_text().replace('the ', '')
 
-        if constructor_prefix == 'Completion Record':
-            f_ = dict( get_field_items(fields) )
-            assert sorted(f_.keys()) == ['[[Target]]', '[[Type]]', '[[Value]]']
-            type_ex = f_['[[Type]]']
-            value_ex = f_['[[Value]]']
-            target_ex = f_['[[Target]]']
-
-            if fields.source_text() == '[[Type]]: _completionRecord_.[[Type]], [[Value]]: _value_, [[Target]]: _completionRecord_.[[Target]]':
-                # The specialest of special cases!
-                # Occurs once, in UpdateEmpty.
-                # In the context there,
-                # the static type of _completionRecord_ is
-                # (or would be, if STA were smart enough)
-                # T_tilde_empty_ | T_continue_completion | T_break_completion,
-                # and the static type of _value_ is T_Tangible_ | T_tilde_empty_
-
-                return (T_Tangible_ | T_tilde_empty_ | T_continue_completion | T_break_completion, env0)
-
-            else:
-                env1 = env0.ensure_expr_is_of_type(value_ex, T_Tangible_ | T_tilde_empty_)
-                (value_type, _) = tc_expr(value_ex, env1) # bleah
-
-                env0.assert_expr_is_of_type(target_ex, T_String | T_tilde_empty_)
-
-                ct = type_corresponding_to_comptype_literal(type_ex)
-                if ct == T_Normal:
-                    t = value_type
-                elif ct == T_throw_completion:
-                    t = ThrowCompletionType(value_type)
-                else:
-                    t = ct
-
-                return (t, env1)
-
-        if constructor_prefix == 'Record':
+        if constructor_prefix in ['Record', 'Completion Record']:
+            schema_name = '' if constructor_prefix == 'Record' else constructor_prefix
             env = env0
             fields_info = []
             for (field_name, field_ex) in get_field_items(fields):
                 (field_type, env) = tc_expr(field_ex, env)
                 fields_info.append( (field_name, field_type) )
-            rt = RecordType('', tuple(fields_info))
+            rt = RecordType(schema_name, tuple(fields_info))
             return (rt, env)
 
         else:
@@ -8502,99 +8799,6 @@ class _:
         lhs_text = lhs_var.source_text()
         dsbn_name = dsbn.source_text()
         (lhs_t, env1) = tc_expr(lhs_var, env0)
-
-        # assert dsbn_name != '[[Type]]'
-        # because anything involving [[Type]] has been intercepted at a higher level
-        # Nope, _reaction_.[[Type]]
-
-        # ----------------------------------
-
-        # Handle "Completion Records" specially.
-        while True: # ONCE
-            if dsbn_name not in ['[[Type]]', '[[Target]]', '[[Value]]']:
-                # We can't be dealing with a Completion Record
-                break
-            if lhs_t in [
-                T_PromiseReaction_Record,
-                T_Property_Descriptor,
-            ]:
-                # We know we're not dealing with a Completion Record
-                break
-            if isinstance(lhs_t, RecordType) and lhs_t.schema_name == '':
-                # ditto
-                break
-
-            assert lhs_text not in [
-                '_D_',
-                '_Desc_',
-                '_alreadyResolved_',
-                '_current_',
-                '_desc_',
-                '_like_',
-                '_newLenDesc_',
-                '_oldLenDesc_',
-                '_reaction_',
-                '_remainingElementsCount_',
-            ]
-
-            result_memtypes = set()
-            for memtype in lhs_t.set_of_types():
-                if dsbn_name == '[[Value]]':
-                    # Lots of things have a '[[Value]]' field.
-                    if memtype.is_a_subtype_of_or_equal_to(T_Abrupt):
-                        result_memtype = T_Tangible_ | T_tilde_empty_
-                    elif memtype == T_Normal:
-                        result_memtype = T_Tangible_ | T_tilde_empty_
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Tangible_ | T_tilde_empty_):
-                        result_memtype = memtype
-
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Reference_Record):
-                        # Completion Record's [[Value]] can be a Reference Record, despite the definition of CR?
-                        result_memtype = memtype
-                    elif memtype == T_Realm_Record:
-                        # GetFunctionRealm can supposedly return a Completion Record whose [[Value]] is a Realm Record, despite the definition of CR
-                        result_memtype = memtype
-                    elif memtype in [T_ClassFieldDefinition_Record, T_ClassStaticBlockDefinition_Record]:
-                        # ClassDefinitionEvaluation: `Set _element_ to _element_.[[Value]].`
-                        result_memtype = memtype
-                    elif memtype in [T_tilde_unused_, ListType(T_code_unit_), T_Top_]:
-                        # hm.
-                        result_memtype = memtype
-                    elif memtype == T_Module_Record:
-                        # ContinueDynamicImport
-                        result_memtype = memtype
-
-                    elif memtype.is_a_subtype_of_or_equal_to(T_Private_Name):
-                        result_memtype = T_function_object_
-                    elif memtype == T_Record:
-                        # All we know is that it's a Record with a [[Value]] field.
-                        result_memtype = T_TBD
-                    elif memtype == T_PrivateElement:
-                        result_memtype = T_Tangible_
-                    elif isinstance(memtype, RecordType):
-                        result_memtype = memtype.type_of_field_named(dsbn_name)
-                    else:
-                        assert 0, memtype
-
-                elif dsbn_name == '[[Target]]':
-                    if memtype in [T_continue_completion, T_break_completion, T_Abrupt]:
-                        result_memtype = T_String | T_tilde_empty_
-                    else:
-                        assert 0, memtype
-
-                elif dsbn_name == '[[Type]]':
-                    assert 0
-
-                else:
-                    assert 0
-
-                result_memtypes.add(result_memtype)
-
-            result_type = union_of_types(result_memtypes)
-            return (result_type, env1)
-
-        # Finished with "Completion Records"
-        # ----------------------------------
 
         # There are various things that can take a dot.
 
@@ -8860,19 +9064,45 @@ class _:
 # ==============================================================================
 #@ 6.2.4 The Completion Record Specification Type
 
+T_Completion_Record = RecordType('Completion Record', ())
+# We create this rather than creating HierType('Completion Record')
+# in traverse_record_schema.
+
 #> The following shorthand terms are sometimes used to refer to Completion Records.
 
 @P('{VAL_DESC} : a Completion Record')
 class _:
-    s_tb = T_Abrupt | T_Normal
+    s_tb = T_Completion_Record
+
+#> <dfn>normal completion</dfn> refers to any Completion Record with a [[Type]] value of ~normal~.
+
+T_normal_completion = CompletionType(T_tilde_normal_)
+
+def NormalCompletionType(value_type):
+    return RecordType(
+        'Completion Record',
+        (
+            ('[[Type]]',  T_tilde_normal_),
+            ('[[Value]]', value_type),
+        )
+    )
 
 @P('{VAL_DESC} : a normal completion')
 class _:
-    s_tb = T_Normal
+    s_tb = T_normal_completion
 
 @P('{VAL_DESC} : a return completion')
 class _:
     s_tb = T_return_completion
+
+def ThrowCompletionType(error_type):
+    return RecordType(
+        'Completion Record',
+        (
+            ('[[Type]]', T_tilde_throw_),
+            ('[[Value]]', error_type),
+        )
+    )
 
 @P('{VAL_DESC} : a throw completion')
 class _:
@@ -8880,7 +9110,7 @@ class _:
 
 @P('{VAL_DESC} : an abrupt completion')
 class _:
-    s_tb = T_Abrupt
+    s_tb = T_abrupt_completion
 
 @P('{VAL_DESC} : any value except a Completion Record')
 class _:
@@ -8890,20 +9120,21 @@ class _:
 class _:
     def s_tb(vd, env):
         [child] = vd.children
-        return type_bracket_for(child, env)
+        (sub_t, sup_t) = type_bracket_for(child, env)
+        return (NormalCompletionType(sub_t), NormalCompletionType(sup_t))
 
 @P(r"{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
 class _:
     def s_cond(cond, env0, asserting):
         [var, literal, _] = cond.children
         env0.assert_expr_is_of_type(literal, T_tilde_unused_)
-        return env0.with_type_test(var, 'is a', T_tilde_unused_, asserting)
+        return env0.with_type_test(var, 'is a', NormalCompletionType(T_tilde_unused_), asserting)
 
 @P(r"{EXPR} : a new implementation-defined Completion Record")
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
-        return (T_Abrupt | T_Normal, env0)
+        return (T_Completion_Record, env0)
 
 # ---------
 
@@ -8983,11 +9214,11 @@ class _:
 
 @P('{VAL_DESC} : an Abstract Closure with no parameters')
 class _:
-    s_tb = ProcType((), T_Top_)
+    s_tb = ProcType((), T_Completion_Record)
 
 @P('{VAL_DESC} : an Abstract Closure with two parameters')
 class _:
-    s_tb = ProcType((T_Tangible_, T_Tangible_), T_Number | T_throw_completion)
+    s_tb = ProcType((T_Tangible_, T_Tangible_), NormalCompletionType(T_Number) | T_throw_completion)
 
 @P('{VAL_DESC} : an Abstract Closure')
 class _:
@@ -9009,8 +9240,10 @@ class _:
         ]
         expected_return_type = T_Top_
         # It would be nice if an abstract closure declared its return-type.
+        returns_completion_records = False
+        # TODO: Need to detect whether or not closure returns a completion.
 
-        env_for_commands.parret = ParRet(parameter_names, expected_return_type)
+        env_for_commands.parret = ParRet(parameter_names, expected_return_type, returns_completion_records)
 
         n_parameters = len(clo_parameters.children)
         # polymorphic
@@ -9247,10 +9480,10 @@ class _:
 class _:
     def s_nv(anode, env0):
         [vara, varb] = anode.children
-        ta = env0.assert_expr_is_of_type(vara, T_Normal | T_Abrupt)
+        ta = env0.assert_expr_is_of_type(vara, T_Completion_Record)
         env0.assert_expr_is_of_type(varb, T_Iterator_Record)
 
-        (normal_part_of_ta, abrupt_part_of_ta) = ta.split_by(T_Normal)
+        (normal_part_of_ta, abrupt_part_of_ta) = ta.split_by(T_normal_completion)
 
         if abrupt_part_of_ta == T_0:
             add_pass_error(
@@ -9260,7 +9493,7 @@ class _:
         else:
             proc_add_return(env0, abrupt_part_of_ta | T_throw_completion, anode)
 
-        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+        return env0.with_expr_type_replaced(vara, s_dot_field(normal_part_of_ta, '[[Value]]'))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 8 Syntax-Directed Operations
@@ -9655,14 +9888,14 @@ class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, b_var] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        return env0.plus_new_entry(b_var, T_Tangible_ | T_return_completion | T_throw_completion)
+        return env0.plus_new_entry(b_var, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
 
 @P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
 class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_completion | T_throw_completion)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_throw_completion)
         return env1
 
 @P(r"{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
@@ -9671,8 +9904,8 @@ class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex, resb_var] = anode.children
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, T_Tangible_ | T_tilde_empty_ | T_return_completion | T_throw_completion)
-        return env1.plus_new_entry(resb_var, T_Tangible_ | T_throw_completion)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
+        return env1.plus_new_entry(resb_var, NormalCompletionType(T_Tangible_) | T_throw_completion)
 
 @P(r"{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
 class _:
@@ -9685,9 +9918,9 @@ class _:
     def s_nv(anode, env0):
         [vara, exb, varc, vard] = anode.children
         env0.assert_expr_is_of_type(vara, T_execution_context)
-        env0.assert_expr_is_of_type(exb, T_Tangible_ | T_tilde_empty_)
-        env0.assert_expr_is_of_type(varc, T_execution_context)
-        return env0.plus_new_entry(vard, T_Tangible_ | T_tilde_empty_ | T_throw_completion)
+        env1 = env0.ensure_expr_is_of_type(exb, NormalCompletionType(T_Tangible_) | T_throw_completion)
+        env1.assert_expr_is_of_type(varc, T_execution_context)
+        return env0.plus_new_entry(vard, NormalCompletionType(T_Tangible_ | T_tilde_empty_) | T_throw_completion)
 
 @P(r"{COMMAND} : Suspend {var} and remove it from the execution context stack.")
 class _:
@@ -9950,7 +10183,7 @@ class _:
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, T_Tangible_)
         env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
-        return (T_Tangible_ | T_throw_completion, env0)
+        return (NormalCompletionType(T_Tangible_) | T_throw_completion, env0)
 
     # 10.3.2
 @P(r"{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
@@ -9961,7 +10194,7 @@ class _:
         env0.assert_expr_is_of_type(avar, T_function_object_)
         env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
         env0.assert_expr_is_of_type(dvar, T_Tangible_)
-        return (T_Tangible_ | T_throw_completion, env0)
+        return (NormalCompletionType(T_Tangible_) | T_throw_completion, env0)
 
     # 10.3.3
 @P(r"{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
@@ -10197,11 +10430,11 @@ class _:
         table_result_type_str = table_result_type.source_text()
         if table_result_type_str == 'abstract operation':
             # result_type = (
-            #     ProcType([T_Number, T_Number], T_Number | T_throw_completion)
+            #     ProcType([T_Number, T_Number], NormalCompletionType(T_Number) | T_throw_completion)
             #     |
-            #     ProcType([T_BigInt, T_BigInt], T_BigInt | T_throw_completion)
+            #     ProcType([T_BigInt, T_BigInt], NormalCompletionType(T_BigInt) | T_throw_completion)
             # )
-            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), T_Number|T_BigInt | T_throw_completion)
+            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), NormalCompletionType(T_Number|T_BigInt) | T_throw_completion)
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
@@ -11632,11 +11865,11 @@ class _:
         env0.assert_expr_is_of_type(varb, T_PromiseCapability_Record)
         (ta, tenv) = tc_expr(vara, env0); assert tenv is env0
 
-        env0.assert_expr_is_of_type(vara, T_Top_)
-        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_Normal)
+        env0.assert_expr_is_of_type(vara, T_Completion_Record)
+        (normal_part_of_ta, abnormal_part_of_ta) = ta.split_by(T_normal_completion)
 
         proc_add_return(env0, T_Promise_object_, anode)
-        return env0.with_expr_type_narrowed(vara, normal_part_of_ta)
+        return env0.with_expr_type_replaced(vara, s_dot_field(normal_part_of_ta, '[[Value]]'))
 
 #@ 27.2.1.2 PromiseReaction Records
 
