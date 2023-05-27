@@ -5635,16 +5635,33 @@ def handle_completion_record_shorthand(operator, operand, env0):
 
     (abrupt_part_of_type, normal_part_of_type) = cr_part_of_type.split_by(T_abrupt_completion)
 
-    if abrupt_part_of_type == T_0:
-        if operator == '?':
-            conclusion = "so maybe change '?' to '!'"
-        else:
-            assert 0
-        add_pass_error(
-            operand,
-            f"The ST of `{operand_text}` is {cr_part_of_type}\n    i.e. no abrupt completion, {conclusion}"
-        )
+    if operator == '!':
+        # Dynamically, the value of the operand should always be a normal completion.
+        # So you might think we'd complain if its static type includes an abrupt completion.
+        if False and abrupt_part_of_type != T_0:
+            add_pass_error(
+                operand,
+                f"The ST of `{operand_text}` is {cr_part_of_type}\n    i.e. can be abrupt completion, so maybe change '!' to '?'"
+            )
+        # The thing is, in most of the spots where '!' is used,
+        # it isn't superficially obvious that the value of the operand is always a normal completion,
+        # so it's actually pretty likely that STA will infer that the operand might be abrupt.
+        # Enabling the above message would result in over 500 complaints,
+        # possibly all of which might be false positives.
 
+    else:
+        # The operand's value should be sometimes normal, sometimes abrupt.
+        # Complain if STA infers that it can't be abrupt.
+        if abrupt_part_of_type == T_0:
+            add_pass_error(
+                operand,
+                f"The ST of `{operand_text}` is {cr_part_of_type}\n    i.e. no abrupt completion, so maybe change `{operator}` to `!`"
+            )
+
+    # Regardless of the operator,
+    # there should always be the possibility
+    # that the operand's value is a normal completion.
+    # So complain if STA infers that the operand can't be a normal completion.
     if normal_part_of_type == T_0:
         if operator == '?':
             conclusion = "so using '?' is a bit odd,\n    and will result in warnings that the '?' expr has an empty type"
