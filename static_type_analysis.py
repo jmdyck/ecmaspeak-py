@@ -3097,6 +3097,17 @@ def tc_expr(expr, env0, expr_value_will_be_discarded=False):
                 "warning: expr `%s` has type %s" % (expr_text, expr_type)
             )
 
+        (cr_part_of_type, noncr_part_of_type) = expr_type.split_by(T_Completion_Record)
+        if cr_part_of_type != T_0 and noncr_part_of_type != T_0:
+            if expr_text.endswith('.[[EvaluationError]]'):
+                assert expr_type == T_throw_completion | T_tilde_empty_
+                # It's just declared that way.
+            else:
+                add_pass_error(
+                    expr,
+                    f"warning: expr `{expr_text}` has type {expr_type}, which mixes completions and non-completions"
+                )
+
     if 0 and not expr_value_will_be_discarded:
         if expr_type != T_Top_ and T_not_returned.is_a_subtype_of_or_equal_to(expr_type):
             add_pass_error(
