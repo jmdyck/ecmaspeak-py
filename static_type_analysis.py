@@ -582,23 +582,18 @@ class TypedAlgHeader:
 
         # An algorithm must either *always* return completion records
         # or *never* return completion records.
-        cr_memtypes = []
-        noncr_memtypes = []
-        for memtype in expected_return_type.set_of_types():
-            if memtype.is_a_subtype_of_or_equal_to(T_Completion_Record):
-                cr_memtypes.append(memtype)
-            else:
-                noncr_memtypes.append(memtype)
-        if cr_memtypes and noncr_memtypes:
+
+        (cr_part_of_type, noncr_part_of_type) = expected_return_type.split_by(T_Completion_Record)
+        if cr_part_of_type != T_0 and noncr_part_of_type != T_0:
             stderr("")
             stderr(f"!!! In header for {op_name}, the return type has")
-            stderr(f"both   cr_memtypes: {cr_memtypes}")
-            stderr(f"and noncr_memtypes: {noncr_memtypes}")
+            stderr(f"both   cr_part_of_type: {cr_part_of_type}")
+            stderr(f"and noncr_part_of_type: {noncr_part_of_type}")
             stderr("")
             sys.exit(1)
-        elif cr_memtypes:
+        elif cr_part_of_type != T_0:
             returns_completion_records = True
-        elif noncr_memtypes:
+        elif noncr_part_of_type != T_0:
             returns_completion_records = False
         else:
             assert 0
