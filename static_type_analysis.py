@@ -1657,7 +1657,7 @@ def union_of_types(types):
     list_memtypes = []
     record_memtypes = []
     proc_memtypes = []
-    other_memtypes = []
+    hier_memtypes = []
     for mt in memtypes:
         if mt == T_List or isinstance(mt, ListType):
             list_memtypes.append(mt)
@@ -1667,7 +1667,7 @@ def union_of_types(types):
             # There isn't a T_Proc, or a HierType that resolves to a ProcType.
             proc_memtypes.append(mt)
         elif isinstance(mt, HierType):
-            other_memtypes.append(mt)
+            hier_memtypes.append(mt)
         else:
             assert 0, mt
 
@@ -1675,7 +1675,7 @@ def union_of_types(types):
         union_of_list_memtypes(list_memtypes)
         + union_of_record_memtypes(record_memtypes)
         + union_of_proc_memtypes(proc_memtypes)
-        + union_of_other_memtypes(other_memtypes)
+        + union_of_hier_memtypes(hier_memtypes)
     )
 
     assert result_memtypes
@@ -1810,7 +1810,7 @@ def union_of_proc_memtypes(proc_memtypes):
 
 # ------------------------------------------------------------------------------
 
-def union_of_other_memtypes(memtypes):
+def union_of_hier_memtypes(memtypes):
 
     for memtype in memtypes:
         assert isinstance(memtype, HierType)
