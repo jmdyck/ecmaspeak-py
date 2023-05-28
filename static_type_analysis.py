@@ -8018,9 +8018,9 @@ class _:
 @P(r"{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
 class _:
     def s_nv(anode, env0):
-        var = anode.children[0]
-        env0.assert_expr_is_of_type(var, T_Object)
-        return env0
+        [var, _, _, emu_xref] = anode.children
+        assert emu_xref.source_text() == '<emu-xref href="#sec-proxy-object-internal-methods-and-internal-slots"></emu-xref>'
+        return env0.with_expr_type_narrowed(var, T_Proxy_exotic_object_)
 
     # explicit-exotics:
 @P(r"{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods")
