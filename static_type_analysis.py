@@ -8870,7 +8870,7 @@ class _:
                 # _foo_.[[Bar]] references a record's field
                 if isinstance(part_of_lhs_t, HierType):
                     if part_of_lhs_t.name == 'Record':
-                        msg_lines.append("so don't know about a {dsbn_name} field")
+                        msg_lines.append(f"so don't know about a {dsbn_name} field")
                         field_type = T_TBD
 
                     elif part_of_lhs_t.name == 'Intrinsics Record':
