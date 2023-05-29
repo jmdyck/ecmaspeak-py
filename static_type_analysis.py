@@ -1525,16 +1525,15 @@ def union_of_types(types):
 
     types1 = set(types)
 
-    # Treat T_TBD like T_0,
-    # i.e. the union-type with no member-types.
-    # i.e., It has no effect on a union of types.
+    if len(types1) == 1: return types1.pop()
+
+    types1.discard(T_0)
+
+    if len(types1) == 1: return types1.pop()
+
     types1.discard(T_TBD)
 
-    if len(types1) == 0:
-        # It must be that all types were T_TBD
-        return T_TBD
-    elif len(types1) == 1:
-        return types1.pop()
+    if len(types1) == 1: return types1.pop()
 
     # ----------------------------
 
