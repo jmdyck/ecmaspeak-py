@@ -1601,26 +1601,6 @@ def print_unused_type_tweaks():
         if type_tweaks.n_uses == 0:
             print(op_name, file=f)
 
-# UpdateEmpty: _completionRecord_, *return
-
-# InitializeReferencedBinding: _V_ and _W_ can be Abrupt
-# InitializeBoundName return?
-# ToPrimitive _PreferredType_
-# OrdinaryHasInstance: _C_, _O_
-# IteratorNext: _value_
-# IteratorStep: return
-# LoopContinues: _completion_
-# PerformEval: _x_ + return
-# RegExpInitialize: _pattern_, _flags_
-# RegExpCreate: _P_, _F_
-# IteratorDestructuringAssignmentEvaluation: return
-# KeyedDestructuringAssignmentEvaluation: return
-# LabelledEvaluation: return
-# ForBodyEvaluation: return
-# ForIn/OfBodyEvaluation: return
-# BoundNames: return
-
-
 # ------------------------------------------------------------------------------
 
 # memoize
