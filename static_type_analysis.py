@@ -637,11 +637,7 @@ class Type():
 
     def __or__(A, B):
         if A == B: return A
-        # check subtyping?
-        A_members = A.set_of_types()
-        B_members = B.set_of_types()
-        u = maybe_UnionType(A_members | B_members)
-        # u = union_of_types([A, B])
+        u = union_of_types([A, B])
         # print(A, '|', B, '=', u)
         return u
 
@@ -742,7 +738,7 @@ class Type():
         #
         # elif B_memtypes <= A_memtypes:
         #     inside_B  = B
-        #     outside_B = maybe_UnionType(A_memtypes - B_memtypes)
+        #     outside_B = union_of_types(A_memtypes - B_memtypes)
         #
         # e.g., if A == T_Completion_Record | T_throw_
         #      and B == T_Completion_Record
@@ -836,8 +832,8 @@ class Type():
 
             recurse(A_memtypes, B_memtypes)
 
-            inside_B  = maybe_UnionType(inside_B)
-            outside_B = maybe_UnionType(outside_B)
+            inside_B  = union_of_types(inside_B)
+            outside_B = union_of_types(outside_B)
 
         print("%s :: %s  ===>  %s  ///  %s" %
             (A, B, outside_B, inside_B),
@@ -1247,13 +1243,6 @@ class UnionType(Type):
         if parenthesize: x = '(' + x + ')'
         return prefix + x
 
-def maybe_UnionType(member_types):
-    assert not isinstance(member_types, Type)
-    if len(member_types) == 1:
-        return list(member_types)[0]
-    else:
-        return UnionType(frozenset(member_types))
-
 # ------------------------------------------------------------------------------
 
 def ptn_type_for(nonterminal):
@@ -1587,7 +1576,10 @@ def union_of_types(types):
 
     assert result_memtypes
 
-    result = maybe_UnionType(result_memtypes)
+    if len(result_memtypes) == 1:
+        result = list(result_memtypes)[0]
+    else:
+        result = UnionType(frozenset(result_memtypes))
 
     # print("union of", ', '.join(str(t) for t in types), " = ", result)
 
@@ -1766,7 +1758,7 @@ def union_of_hier_memtypes(memtypes):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-T_0 = maybe_UnionType([])
+T_0 = UnionType(frozenset())
 
 T_TBD = TBDType()
 
