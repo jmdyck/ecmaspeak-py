@@ -1254,8 +1254,6 @@ def maybe_UnionType(member_types):
     else:
         return UnionType(frozenset(member_types))
 
-T_0 = maybe_UnionType([])
-
 # ------------------------------------------------------------------------------
 
 def ptn_type_for(nonterminal):
@@ -1507,42 +1505,6 @@ for tilde_word in sorted(tilde_words):
     type = HierType_etc(tilde_type_name)
     tnode = TNode(type, parent_tnode)
 
-# ------------------------------------------------------------------------------
-
-T_TBD = TBDType()
-
-def CompletionType(Type_field_stype):
-    return RecordType('Completion Record', (('[[Type]]', Type_field_stype),))
-
-T_break_completion    = CompletionType(T_tilde_break_)
-T_continue_completion = CompletionType(T_tilde_continue_)
-T_return_completion   = CompletionType(T_tilde_return_)
-T_throw_completion    = CompletionType(T_tilde_throw_)
-
-T_abrupt_completion = T_continue_completion | T_break_completion | T_return_completion | T_throw_completion
-
-T_character_ = T_code_unit_ | T_code_point_
-
-T_MathNonNegativeInteger_ = T_MathInteger_ # for now
-
-T_MatcherContinuation = ProcType((T_MatchState,                      ), T_MatchResult)
-T_Matcher             = ProcType((T_MatchState, T_MatcherContinuation), T_MatchResult)
-T_RegExpMatcher_  = ProcType((ListType(T_character_), T_MathNonNegativeInteger_), T_MatchResult)
-T_Job             = ProcType((                       ), T_Tangible_ | T_tilde_empty_ | T_throw_completion)
-
-T_ReadModifyWrite_modification_closure = ProcType((ListType(T_MathInteger_), ListType(T_MathInteger_)), ListType(T_MathInteger_))
-
-T_captures_entry_ = T_CaptureRange | T_Undefined
-T_captures_list_  = ListType(T_captures_entry_)
-
-T_Unicode_code_points_ = ListType(T_code_point_)
-
-T_Integer_Indexed_object_ = T_TypedArray_object_
-
-T_Shared_Data_Block_Event = T_ReadSharedMemory_Event | T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
-
-T_Event = T_Shared_Data_Block_Event | T_Synchronize_Event | T_Host_Specific_Event
-
 # ------------------------------------------
 
 def type_for_ERROR_TYPE(error_type):
@@ -1567,41 +1529,6 @@ def convert_nature_node_to_type(nature_node):
     return sup_t
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-type_tweaks_tuples = [
-    ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
-    ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-    ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-]
-class TypeTweaks:
-    def __init__(self):
-        self.tweaks = []
-        self.n_uses = 0
-
-type_tweaks_for_op_ = defaultdict(TypeTweaks)
-for tweak_tuple in type_tweaks_tuples:
-    [op_name, p_name, old_t, new_t] = tweak_tuple
-    type_tweaks_for_op_[op_name].tweaks.append( tweak_tuple )
-
-def print_unused_type_tweaks():
-    f = shared.open_for_output('unused_type_tweaks')
-    for (op_name, type_tweaks) in type_tweaks_for_op_.items():
-        if type_tweaks.n_uses == 0:
-            print(op_name, file=f)
-
-# ------------------------------------------------------------------------------
 
 # memoize
 def union_of_types(types):
@@ -1836,6 +1763,79 @@ def union_of_hier_memtypes(memtypes):
     recurse(troot)
 
     return list(memtypes_set)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+T_0 = maybe_UnionType([])
+
+T_TBD = TBDType()
+
+def CompletionType(Type_field_stype):
+    return RecordType('Completion Record', (('[[Type]]', Type_field_stype),))
+
+T_break_completion    = CompletionType(T_tilde_break_)
+T_continue_completion = CompletionType(T_tilde_continue_)
+T_return_completion   = CompletionType(T_tilde_return_)
+T_throw_completion    = CompletionType(T_tilde_throw_)
+
+T_abrupt_completion = T_continue_completion | T_break_completion | T_return_completion | T_throw_completion
+
+T_character_ = T_code_unit_ | T_code_point_
+
+T_MathNonNegativeInteger_ = T_MathInteger_ # for now
+
+T_MatcherContinuation = ProcType((T_MatchState,                      ), T_MatchResult)
+T_Matcher             = ProcType((T_MatchState, T_MatcherContinuation), T_MatchResult)
+T_RegExpMatcher_  = ProcType((ListType(T_character_), T_MathNonNegativeInteger_), T_MatchResult)
+T_Job             = ProcType((                       ), T_Tangible_ | T_tilde_empty_ | T_throw_completion)
+
+T_ReadModifyWrite_modification_closure = ProcType((ListType(T_MathInteger_), ListType(T_MathInteger_)), ListType(T_MathInteger_))
+
+T_captures_entry_ = T_CaptureRange | T_Undefined
+T_captures_list_  = ListType(T_captures_entry_)
+
+T_Unicode_code_points_ = ListType(T_code_point_)
+
+T_Integer_Indexed_object_ = T_TypedArray_object_
+
+T_Shared_Data_Block_Event = T_ReadSharedMemory_Event | T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
+
+T_Event = T_Shared_Data_Block_Event | T_Synchronize_Event | T_Host_Specific_Event
+
+# ------------------------------------------------------------------------------
+
+type_tweaks_tuples = [
+    ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
+    ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
+    ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+]
+class TypeTweaks:
+    def __init__(self):
+        self.tweaks = []
+        self.n_uses = 0
+
+type_tweaks_for_op_ = defaultdict(TypeTweaks)
+for tweak_tuple in type_tweaks_tuples:
+    [op_name, p_name, old_t, new_t] = tweak_tuple
+    type_tweaks_for_op_[op_name].tweaks.append( tweak_tuple )
+
+def print_unused_type_tweaks():
+    f = shared.open_for_output('unused_type_tweaks')
+    for (op_name, type_tweaks) in type_tweaks_for_op_.items():
+        if type_tweaks.n_uses == 0:
+            print(op_name, file=f)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
