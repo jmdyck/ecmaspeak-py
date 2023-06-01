@@ -6180,6 +6180,7 @@ class _:
                     (T_MathInteger_     , '≠'   , T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '≠'   , T_MathReal_        ): 'TF',
                     (T_MathInteger_     , '='   , T_MathInteger_     ): 'TF',
+                    (T_MathReal_        , '≤'   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '≥'   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '>'   , T_MathInteger_     ): 'TF',
                     (T_MathReal_        , '>'   , T_MathReal_        ): 'TF',
