@@ -5397,6 +5397,33 @@ class _:
                     assert types_arg.source_text() == '« String, Symbol »'
                     return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
 
+                elif callee_op_name == 'ToIntegerOrInfinity':
+                    assert return_type == NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
+                    # but we can be more precise in some cases
+
+                    assert len(args) == 1
+                    [arg] = args
+                    (arg_type, env1) = tc_expr(arg, env0); assert env1 is env0
+
+                    return_type = T_0
+                    for memtype in arg_type.set_of_types():
+                        if memtype in [T_Tangible_, T_Object]:
+                            return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
+                        elif memtype in [T_Number, T_String]:
+                            return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
+                        elif memtype in [T_Boolean, T_Null, T_NaN_Number_, T_FiniteNumber_]:
+                            return_type |= NormalCompletionType(T_MathInteger_)
+                        elif memtype == T_NegInfinityNumber_:
+                            return_type |= NormalCompletionType(T_MathNegInfinity_)
+                        elif memtype == T_PosInfinityNumber_:
+                            return_type |= NormalCompletionType(T_MathPosInfinity_)
+                        elif memtype in [T_Symbol, T_BigInt]:
+                            return_type |= T_throw_completion
+                        elif memtype == T_not_passed:
+                            pass
+                        else:
+                            assert 0, memtype
+
         else:
             assert 0, opn_before_paren.prod.rhs_s
 
