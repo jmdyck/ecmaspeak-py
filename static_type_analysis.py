@@ -1798,19 +1798,19 @@ T_Event = T_Shared_Data_Block_Event | T_Synchronize_Event | T_Host_Specific_Even
 type_tweaks_tuples = [
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-    ('Day'                                      , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
-    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_FiniteNumber_ ),
+    ('Day'                                      , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
+    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
 ]
 class TypeTweaks:
     def __init__(self):
@@ -5329,14 +5329,14 @@ class _:
             ]:
                 assert len(args) == 1
                 [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_FiniteNumber_)
-                return (T_FiniteNumber_, env1)
+                env1 = env0.ensure_expr_is_of_type(arg, T_IntegralNumber_)
+                return (T_IntegralNumber_, env1)
 
             # 30424 Year Number
             elif callee_op_name == 'YearFromTime':
                 assert len(args) == 1
                 [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_Number)
+                env1 = env0.ensure_expr_is_of_type(arg, T_IntegralNumber_)
                 return (T_IntegralNumber_, env1)
 
 
@@ -5919,15 +5919,18 @@ class _:
                 (T_PosInfinityNumber_, '/'      , T_FiniteNumber_     ): T_PosInfinityNumber_, # warn [assuming finite is > 0]
 
                 (T_FiniteNumber_  , '×'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_FiniteNumber_  , '×'      , T_IntegralNumber_): T_FiniteNumber_,
                 (T_FiniteNumber_  , '+'      , T_FiniteNumber_  ): T_FiniteNumber_,
                 (T_FiniteNumber_  , '+'      , T_IntegralNumber_): T_FiniteNumber_,
                 (T_FiniteNumber_  , '-'      , T_FiniteNumber_  ): T_FiniteNumber_,
                 (T_FiniteNumber_  , '-'      , T_IntegralNumber_): T_FiniteNumber_,
                 (T_FiniteNumber_  , '/'      , T_FiniteNumber_  ): T_FiniteNumber_, # assuming that b isn't 0
                 (T_IntegralNumber_, '/'      , T_FiniteNumber_  ): T_FiniteNumber_,
+                (T_IntegralNumber_, '/'      , T_IntegralNumber_): T_FiniteNumber_, # assuming that b isn't 0
 
                 (T_IntegralNumber_, '+', T_IntegralNumber_): T_IntegralNumber_,
                 (T_IntegralNumber_, '-', T_IntegralNumber_): T_IntegralNumber_,
+                (T_IntegralNumber_, '×', T_IntegralNumber_): T_IntegralNumber_,
 
                 # --------
 
@@ -10845,10 +10848,10 @@ class _:
             'HoursPerDay'      : T_MathNonNegativeInteger_,
             'MinutesPerHour'   : T_MathNonNegativeInteger_,
             'SecondsPerMinute' : T_MathNonNegativeInteger_,
-            'msPerDay'         : T_FiniteNumber_,
-            'msPerHour'        : T_FiniteNumber_,
-            'msPerMinute'      : T_FiniteNumber_,
-            'msPerSecond'      : T_FiniteNumber_,
+            'msPerDay'         : T_IntegralNumber_,
+            'msPerHour'        : T_IntegralNumber_,
+            'msPerMinute'      : T_IntegralNumber_,
+            'msPerSecond'      : T_IntegralNumber_,
         }[constant_name_str]
         return (result_type, env0)
 
@@ -10900,7 +10903,7 @@ class _:
         [var, cond, literal] = anode.children
         # once, in MakeDay
         env0.assert_expr_is_of_type(literal, T_Number)
-        env1 = env0.plus_new_entry(var, T_FiniteNumber_)
+        env1 = env0.plus_new_entry(var, T_IntegralNumber_)
         (t_env, f_env) = tc_cond(cond, env1)
         proc_add_return(env1, T_Number, literal)
         return env1
