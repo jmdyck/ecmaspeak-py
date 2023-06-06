@@ -137,14 +137,6 @@ built_in_ops = [
     # defined as shorthands:
     'Completion',
     # 'IfAbruptRejectPromise',
-
-    # not built-in at all,
-    # but defined by <emu-eqn>,
-    # which I don't want to deal with just yet:
-    'DateFromTime',
-    'MonthFromTime',
-    'YearFromTime',
-    'WeekDay',
 ]
 
 def compute_dependency_levels():
@@ -6119,11 +6111,17 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [a, _, b, _, c] = cond.children
-        env0.assert_expr_is_of_type(a, T_MathInteger_)
-        env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
-        env0.assert_expr_is_of_type(c, T_MathInteger_)
-        env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
-        return (env2, env2)
+        if '<sub>𝔽</sub>' in a.source_text(): # kludgey test
+            env0.assert_expr_is_of_type(a, T_IntegralNumber_)
+            env0.assert_expr_is_of_type(b, T_IntegralNumber_)
+            env0.assert_expr_is_of_type(c, T_IntegralNumber_)
+            return (env0, env0)
+        else:
+            env0.assert_expr_is_of_type(a, T_MathInteger_)
+            env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
+            env0.assert_expr_is_of_type(c, T_MathInteger_)
+            env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
+            return (env2, env2)
 
 @P(r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
 class _:
@@ -6261,6 +6259,7 @@ class _:
                     (T_FiniteNumber_           , '>'   , T_IntegralNumber_         ): 'TF',
                     (T_FiniteNumber_           , '&lt;', T_FiniteNumber_           ): 'TF',
                     (T_FiniteNumber_           , '&lt;', T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '≤'   , T_IntegralNumber_         ): 'TF',
                     (T_IntegralNumber_         , '≥'   , T_IntegralNumber_         ): 'TF',
                     (T_IntegralNumber_         , '>'   , T_IntegralNumber_         ): 'TF',
                     (T_IntegralNumber_         , '='   , T_IntegralNumber_         ): 'TF',
@@ -7548,6 +7547,14 @@ class _:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
+
+@P('{EXPR} : the largest integral Number {DEFVAR} (closest to +\u221e) such that {CONDITION_1}')
+class _:
+    def s_expr(expr, env0, _):
+        [defvar, cond] = expr.children
+        env1 = env0.plus_new_entry(defvar, T_IntegralNumber_)
+        (t_env, _) = tc_cond(cond, env1)
+        return (T_IntegralNumber_, t_env)
 
 @P(r"{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}")
 class _:
