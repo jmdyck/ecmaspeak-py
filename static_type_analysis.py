@@ -5299,41 +5299,6 @@ class _:
                 assert 0
                 return (T_ExtendedMathReal_, env1)
 
-            elif callee_op_name in [
-                # 30232 Day Number and Time within Day
-                'Day',
-                'TimeWithinDay',
-
-                # 30264 Month Number
-                'MonthFromTime',
-
-                # 30286 Date Number
-                'DateFromTime',
-
-                # 30305 Week Day
-                'WeekDay',
-
-                # 30376 Hours, Minutes, Second, and Milliseconds
-                'HourFromTime',
-                'MinFromTime',
-                'SecFromTime',
-                'msFromTime',
-
-                # 'DaylightSavingTA',
-            ]:
-                assert len(args) == 1
-                [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_IntegralNumber_)
-                return (T_IntegralNumber_, env1)
-
-            # 30424 Year Number
-            elif callee_op_name == 'YearFromTime':
-                assert len(args) == 1
-                [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_IntegralNumber_)
-                return (T_IntegralNumber_, env1)
-
-
             # ---------------
 
             else:
