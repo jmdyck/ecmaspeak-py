@@ -237,6 +237,7 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
+    Sort {var} into the same order as if an Array of the same values had been sorted using {percent_word} with {LITERAL} as {var}.
     Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
     Suspend the running execution context.
@@ -454,6 +455,8 @@
     the host is a web browser
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
+    the implementation does not include local political rules for any time zones
+    the implementation only supports the UTC time zone
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
     the pairs {PAIR} and {PAIR} are in {EX}
     the pairs {PAIR} and {PAIR} are not in {EX}
@@ -781,6 +784,7 @@
     the List of Unicode code points {var}
     the List of arguments that was passed to this function by {dsb_word} or {dsb_word}
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
+    the List of unique available named time zone identifiers
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the MatchState ({var}, {EX}, {var})
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
@@ -791,6 +795,7 @@
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
     the String representation of {EX}, formatted as an uppercase hexadecimal number
+    the String representing the host environment's current time zone, either a primary time zone identifier or an offset time zone identifier
     the String value consisting of repeated concatenations of {EX} truncated to length {var}
     the String value consisting of the representation of {var} using radix {var}
     the String value consisting of {EX}
@@ -849,6 +854,7 @@
     the longest prefix of {var} that satisfies the syntax of a {nonterminal}, which might be {var} itself. If there is no such prefix, return {NUMBER_LITERAL}
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
+    the primary time zone identifier associated with {var}
     the negative of {EX}
     the number of bytes in {var}
     the number of elements in the List {var}
@@ -1155,6 +1161,7 @@
     the Record
     the Reference Record
     the RegExp Record
+    the Time Zone Identifier Record
 
 {FIELDS} :
     {FIELDS}, {FIELD}
@@ -1353,6 +1360,7 @@
     a String which is the name of a TypedArray constructor in {h_emu_xref}
     a Super Reference Record
     a Symbol
+    a Time Zone Identifier Record
     a TypedArray
     a TypedArray element type
     a UTF-16 code unit
@@ -1393,6 +1401,7 @@
     a non-negative integer
     a non-negative integer that is evenly divisible by 4
     a non-negative integral Number
+    a non-primary time zone identifier in this implementation
     a nonterminal in one of the ECMAScript grammars
     a normal completion
     a normal completion containing {VALUE_DESCRIPTION}
@@ -1496,6 +1505,7 @@
     Records with fields {dsb_word} ({VAL_DESC}) and {dsb_word} ({VAL_DESC})
     Source Text Module Records
     Strings
+    Time Zone Identifier Records
     WriteSharedMemory or ReadModifyWriteSharedMemory events
     agent signifiers
     byte values

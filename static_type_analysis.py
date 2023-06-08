@@ -8188,13 +8188,14 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [exlist] = expr.children
+        env1 = env0
         ex_types = set()
         for ex in exes_in_exlist(exlist):
-            (ex_type, env1) = tc_expr(ex, env0); assert env1 is env0
+            (ex_type, env1) = tc_expr(ex, env1)
             ex_types.add(ex_type)
         element_type = union_of_types(ex_types)
         list_type = ListType(element_type)
-        return (list_type, env0)
+        return (list_type, env1)
 
 @P(r'{EXPR} : a new empty List')
 class _:
@@ -10848,7 +10849,58 @@ class _:
 # I.e., the spec should say "a *finite* time value".
 
 # ==============================================================================
-#@ 21.4.1.12 UTC
+#@ 21.4.1.8 Time Zone Identifiers
+
+@P('{VAL_DESC} : a non-primary time zone identifier in this implementation')
+class _:
+    s_tb = a_subset_of(T_String)
+
+@P('{EXPR} : the primary time zone identifier associated with {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (T_String, env0)
+
+@P('{EXPR} : the List of unique available named time zone identifiers')
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (ListType(T_String), env0)
+
+@P("{EXPR} : the String representing the host environment's current time zone, either a primary time zone identifier or an offset time zone identifier")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_String, env0)
+
+# ==============================================================================
+#@ 21.4.1.11 Time Zone Identifier Record
+
+@P('{VAL_DESC} : a Time Zone Identifier Record')
+@P('{LIST_ELEMENTS_DESCRIPTION} : Time Zone Identifier Records')
+class _:
+    s_tb = T_Time_Zone_Identifier_Record
+
+# ==============================================================================
+#@ 21.4.1.12 AvailableNamedTimeZoneIdentifiers
+
+@P('{CONDITION_1} : the implementation does not include local political rules for any time zones')
+@P('{CONDITION_1} : the implementation only supports the UTC time zone')
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+@P('{COMMAND} : Sort {var} into the same order as if an Array of the same values had been sorted using {percent_word} with {LITERAL} as {var}.')
+class _:
+    def s_nv(anode, env0):
+        [list_var, pc_word, comparefn_lit, comparefn_var] = anode.children
+        env0.assert_expr_is_of_type(list_var, ListType(T_String))
+        return env0
+
+# ==============================================================================
+#@ 21.4.1.15 UTC
 
 @P(r"{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
 class _:
@@ -10859,7 +10911,7 @@ class _:
         return (T_IntegralNumber_, env0)
 
 # ==============================================================================
-#@ 21.4.1.14 MakeTime
+#@ 21.4.1.17 MakeTime
 
 @P(r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)")
 class _:
@@ -10869,7 +10921,7 @@ class _:
         return (T_Number, env0)
 
 # ==============================================================================
-#@ 21.4.1.15 MakeDay
+#@ 21.4.1.18 MakeDay
 
 @P(r"{COMMAND} : Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
 class _:
