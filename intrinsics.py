@@ -314,6 +314,8 @@ def print_intrinsic_info():
         intrinsic.dump(f)
     f.close()
 
+    # ----------------------------------------------------------------
+
     f = shared.open_for_output('intrinsics_anomalies')
     def put(*args): print(*args, file=f)
 
@@ -338,6 +340,32 @@ def print_intrinsic_info():
         for (_, s_prop) in sorted(intrinsic.properties.items()):
             if '[[Value]]' not in s_prop.attrs and '[[Get]]' not in s_prop.attrs:
                 put(f"{intrinsic.name} property {s_prop.key}: neither [[Value]] nor [[Get]] is specified")
+
+    # ----------
+
+    sections_for_id_ = defaultdict(list)
+    for section in spec.root_section.each_descendant_that_is_a_section():
+        for (L, verb, R) in section.intrinsic_facts_raw:
+            for ref in [L, R]:
+                if (
+                    isinstance(ref, str)
+                    and re.fullmatch(r'\w+', ref)
+                    and not re.fullmatch(r'_\w+_', ref) # ecmarkup alias, for _NativeError_ and _TypedArray_
+                ):
+                    # {ref} is an identifier,
+                    # suggests that there is a global property with that name.
+                    sections_for_id_[ref].append(section)
+
+    the_global_object = intrinsic_named_['%(global)%']
+    for (identifier, sections) in sections_for_id_.items():
+        if f'*"{identifier}"*' in the_global_object.properties:
+            # The global object has a property by that name
+            pass
+        else:
+            section_nums = ', '.join( section.section_num for section in sections )
+            put(f"no global property named `{identifier}` but section titles suggest otherwise:")
+            put(f"    {section_nums}")
+
     f.close()
 
     # sys.exit(0)
