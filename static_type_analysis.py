@@ -6066,7 +6066,7 @@ class _:
 
 # comparisons:
 
-@P(r'{CONDITION_1} : {var} is odd')
+@P(r'{CONDITION_1} : {var} is even')
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
@@ -6394,6 +6394,28 @@ class _:
     s_tb = a_subset_of(T_FiniteNumber_)
 
 # ------------------------------------------------------------------------------
+#> Conversions between mathematical values and Numbers or BigInts
+#> are always explicit in this document.
+#> ...
+#> A conversion from a Number or BigInt _x_ to a mathematical value
+#>     is denoted as "the <dfn>mathematical value of</dfn> _x_",
+#>     or <emu-eqn>ℝ(_x_)</emu-eqn>.
+#> The mathematical value of *+0*<sub>𝔽</sub> and *-0*<sub>𝔽</sub>
+#>     is the mathematical value 0.
+#> The mathematical value of non-finite values is not defined.
+#> The <dfn>extended mathematical value of</dfn> _x_
+#>     is the mathematical value of _x_ for finite values,
+#>     and is +∞ and -∞ for *+∞*<sub>𝔽</sub> and *-∞*<sub>𝔽</sub> respectively;
+#>     it is not defined for *NaN*.
+
+@P('{EXPR} : the extended mathematical value of {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_FiniteNumber_ | T_PosInfinityNumber_ | T_NegInfinityNumber_)
+        return (T_ExtendedMathReal_, env0)
+
+# ------------------------------------------------------------------------------
 #> The notation “<emu-eqn>_x_ modulo _y_</emu-eqn>”
 #> (_y_ must be finite and non-zero)
 #> computes a value _k_ of the same sign as _y_ (or zero)
@@ -6413,8 +6435,14 @@ class _:
     def s_expr(expr, env0, _):
         [var, upper_ex] = expr.children
         env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
-        env0.assert_expr_is_of_type(var, T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
-        return (T_MathNonNegativeInteger_, env0)
+        (var_t, env1) = tc_expr(var, env0)
+        if var_t == T_ExtendedMathReal_:
+            result_t = T_MathReal_
+        elif var_t == T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_:
+            result_t = T_MathInteger_
+        else:
+            assert 0, var_t
+        return (result_t, env0)
 
 # ------------------------------------------------------------------------------
 #> An <dfn>interval</dfn> from lower bound _a_ to upper bound _b_
