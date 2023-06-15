@@ -6464,9 +6464,32 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [var, interval] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathInteger_)
-        env1.assert_expr_is_of_type(interval, T_MathInteger_)
-        return (env1, env1)
+        env0.assert_expr_is_of_type(interval, T_MathInteger_)
+        (var_t, env1) = tc_expr(var, env0);
+
+        if var_t == T_MathInteger_:
+            return (env1, env1)
+
+        elif var_t == T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_:
+            # It's well-defined to ask if an Infinity is in an interval:
+            # it never is, because an interval has finite bounds.
+            # (This arises in MakeFullYear, ToIndex, etc.)
+            #
+            # For the cases where the value is in the interval,
+            # we can exclude the possibility that it's an Infinity:
+            in_var = env1.with_expr_type_narrowed(var, T_MathInteger_)
+            # For the cases where the value is *not* in the interval,
+            # its static type still includes the possibility of Infinities.
+            notin_var = env1
+
+            if 'is in' in cond.prod.rhs_s:
+                return (in_var, notin_var)
+            elif 'is not in' in cond.prod.rhs_s:
+                return (notin_var, in_var)
+            else:
+                assert 0
+        else:
+            assert 0, var_t
 
 @P(r"{CONDITION_1} : there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}")
 class _:

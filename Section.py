@@ -990,6 +990,7 @@ def _handle_structured_header(section):
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
                     ("It returns a new promise resolved with _x_.", 'a promise'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
+                    ("It returns the full year .+", 'an integral Number'),
                     ("It returns the global object used by the currently running execution context.", 'an object'),
                     ("It returns the loaded value.", 'unknown'),
                     ("It returns the number of left-capturing parentheses.+", 'a non-negative integer'),
