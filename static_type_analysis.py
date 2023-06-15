@@ -10290,10 +10290,6 @@ class _:
 class _:
     s_tb = T_Proxy_exotic_object_
 
-@P('{VAL_DESC} : a Proxy object')
-class _:
-    s_tb = T_Proxy_exotic_object_
-
 set_up_internal_thing('slot', '[[ProxyHandler]]', T_Object | T_Null)
 set_up_internal_thing('slot', '[[ProxyTarget]]',  T_Object | T_Null)
 

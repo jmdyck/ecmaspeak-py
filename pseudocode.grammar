@@ -1338,7 +1338,6 @@
     a PromiseReaction Record
     a Property Descriptor
     a Proxy exotic object
-    a Proxy object
     a ReadModifyWriteSharedMemory event
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
     a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
