@@ -1365,7 +1365,6 @@ named_type_hierarchy = {
                 'TypedArray_element_type': {
                     # children are filled in via code
                 },
-                'WaiterList' : {},
                 'agent_signifier_' : {},
                 'alg_steps': {},
                 # 'character_': {
@@ -4958,6 +4957,7 @@ class _:
 @P(r'{CONDITION} : {CONDITION_1}')
 @P(r'{CONDITION_1} : {TYPE_TEST}')
 @P(r'{CONDITION_1} : {NUM_COMPARISON}')
+@P(r'{CONDITION_1} : {NUM_COMPARISON} (ignoring potential non-monotonicity of time values)')
 class _:
     def s_cond(cond, env0, asserting):
         [child] = cond.children
@@ -5830,6 +5830,7 @@ class _:
                 (T_MathInteger_     , '+'      , T_ExtendedMathReal_): T_ExtendedMathReal_,
 
                 (T_MathPosInfinity_ , '+'      , T_MathReal_        ): T_MathPosInfinity_,
+                (T_MathInteger_     , '+'      , T_MathPosInfinity_ ): T_MathPosInfinity_,
 
                 (T_MathInteger_    , '+'      , T_MathNegInfinity_): T_MathNegInfinity_,
 
@@ -6161,6 +6162,7 @@ class _:
                     (T_MathPosInfinity_, '='   , T_MathNegInfinity_): 'F',
                     (T_MathInteger_    , '='   , T_MathNegInfinity_): 'F',
                     (T_MathInteger_    , '='   , T_MathPosInfinity_): 'F',
+                    (T_MathInteger_    , '≥'   , T_MathPosInfinity_): 'F',
 
                     # can be true or false:
                     (T_ExtendedMathReal_, '≥'   , T_MathInteger_     ): 'TF',
@@ -6168,6 +6170,7 @@ class _:
                     (T_ExtendedMathReal_, '&lt;', T_ExtendedMathReal_): 'TF',
                     (T_ExtendedMathReal_, '&lt;', T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '≥'   , T_MathInteger_     ): 'TF',
+                    (T_MathInteger_     , '≥'   , T_MathReal_        ): 'TF',
                     (T_MathInteger_     , '>'   , T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '≤'   , T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '&lt;', T_ExtendedMathReal_): 'TF',
@@ -6385,6 +6388,10 @@ class _:
 @P('{VAL_DESC} : a non-negative integral Number')
 class _:
     s_tb = a_subset_of(T_IntegralNumber_)
+
+@P('{VAL_DESC} : a non-negative finite Number')
+class _:
+    s_tb = a_subset_of(T_FiniteNumber_)
 
 # ------------------------------------------------------------------------------
 #> The notation “<emu-eqn>_x_ modulo _y_</emu-eqn>”
@@ -8273,7 +8280,7 @@ class _:
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
 
-@P(r'{EXPR} : a List whose elements are the first {var} elements of {var}')
+@P(r'{EXPR} : a List whose elements are the first {var} elements of {EX}')
 class _:
     def s_expr(expr, env0, _):
         [nvar, listvar] = expr.children
@@ -8342,7 +8349,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_List)
         return env0
 
-@P(r"{COMMAND} : Remove the first {var} elements of {var}.")
+@P(r"{COMMAND} : Remove the first {var} elements of {SETTABLE}.")
 class _:
     def s_nv(anode, env0):
         [nvar, listvar] = anode.children
@@ -8770,6 +8777,8 @@ class _:
                 record_type_name = 'Property Descriptor'
             elif constructor_prefix == 'a new ExportEntry Record':
                 record_type_name = 'ExportEntry Record'
+            elif constructor_prefix == 'a new Waiter Record':
+                record_type_name = 'Waiter Record'
             else:
                 record_type_name = constructor_prefix
             field_info = fields_for_record_type_named_[record_type_name]
@@ -10100,10 +10109,6 @@ class _:
 #> used to identify an Agent.
 
 @P('{VAL_DESC} : an agent signifier')
-class _:
-    s_tb = T_agent_signifier_
-
-@P('{LIST_ELEMENTS_DESCRIPTION} : agent signifiers')
 class _:
     s_tb = T_agent_signifier_
 
@@ -11663,64 +11668,47 @@ class _:
     s_tb = T_SharedArrayBuffer_object_
 
 # ==============================================================================
-#@ 25.4.1 WaiterList Objects
+#@ 25.4.1 Waiter Record
 
-@P('{VAL_DESC} : a WaiterList')
+@P('{VAL_DESC} : a Waiter Record')
+@P('{LIST_ELEMENTS_DESCRIPTION} : Waiter Records')
 class _:
-    s_tb = T_WaiterList
+    s_tb = T_Waiter_Record
 
-#> A <dfn>WaiterList</dfn> is a semantic object
-#> that contains an ordered list of agent signifiers
-#> for those agents that are waiting on a location (_block_, _i_) in shared memory;
+@P(r"{CONDITION_1} : There is no Waiter Record in {DOTTING} whose {dsb_word} field is {EX} and whose {dsb_word} field is {EX}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [list_ex, dsbwa, exa, dsbwb, exb] = cond.children
+        env0.assert_expr_is_of_type(list_ex, ListType(T_Waiter_Record))
+        assert dsbwa.source_text() == '[[PromiseCapability]]'
+        env0.assert_expr_is_of_type(exa, T_PromiseCapability_Record | T_tilde_blocking_)
+        assert dsbwb.source_text() == '[[AgentSignifier]]'
+        env0.assert_expr_is_of_type(exb, T_agent_signifier_)
+        return (env0, env0)
+
+# ==============================================================================
+#@ 25.4.2 WaiterList Records
+
+@P('{VAL_DESC} : a WaiterList Record')
+class _:
+    s_tb = T_WaiterList_Record
+
+#> The agent cluster has a store of WaiterList Records;
+#> the store is indexed by (_block_, _i_), where
 #> _block_ is a Shared Data Block and _i_ a byte offset into the memory of _block_.
+#> WaiterList Records are agent-independent:
+#> a lookup in the store of WaiterList Records by (_block_, _i_)
+#> will result in the same WaiterList object in any agent in the agent cluster.
 
-@P(r"{EXPR} : the WaiterList that is referenced by the pair ({var}, {var})")
+@P(r"{EXPR} : the WaiterList Record that is referenced by the pair ({var}, {var})")
 class _:
     def s_expr(expr, env0, _):
         [sdb, i] = expr.children
         env0.assert_expr_is_of_type(sdb, T_Shared_Data_Block)
         env0.assert_expr_is_of_type(i, T_MathInteger_)
-        return (T_WaiterList, env0)
+        return (T_WaiterList_Record, env0)
 
-@P(r"{EXPR} : a reference to the list of waiters in {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [wl] = expr.children
-        env0.assert_expr_is_of_type(wl, T_WaiterList)
-        return (ListType(T_agent_signifier_), env0)
-
-@P(r"{COMMAND} : Remove {var} from the list of waiters in {var}.")
-class _:
-    def s_nv(anode, env0):
-        [sig, wl] = anode.children
-        env0.assert_expr_is_of_type(sig, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl, T_WaiterList)
-        return env0
-
-@P(r'{CONDITION_1} : {var} is on the list of waiters in {var}')
-class _:
-    def s_cond(cond, env0, asserting):
-        [w_var, wl_var] = cond.children
-        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl_var, T_WaiterList)
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {var} is not on the list of waiters in any WaiterList")
-class _:
-    def s_cond(cond, env0, asserting):
-        [sig_var] = cond.children
-        env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {var} is not on the list of waiters in {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [sig_var, wl_var] = cond.children
-        env0.assert_expr_is_of_type(sig_var, T_agent_signifier_)
-        env0.assert_expr_is_of_type(wl_var, T_WaiterList)
-        return (env0, env0)
-
-# (A WaiterList has a critical section.)
+#> Each WaiterList Record has a <dfn>critical section</dfn> ...
 
 @P(r'{COMMAND} : Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).')
 class _:
@@ -11729,54 +11717,31 @@ class _:
         [var_name1] = var1.children
         [var_name2] = var2.children
         assert var_name1 == var_name2
-        env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList)
+        env1 = env0.ensure_expr_is_of_type(var1, T_WaiterList_Record)
         return env1
 
 @P(r'{COMMAND} : Leave the critical section for {var}.')
 class _:
     def s_nv(anode, env0):
         [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
+        env0.assert_expr_is_of_type(var, T_WaiterList_Record)
         return env0
 
 @P(r'{CONDITION_1} : The surrounding agent is in the critical section for {var}')
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
+        env0.assert_expr_is_of_type(var, T_WaiterList_Record)
         return (env0, env0)
 
-@P(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList')
+@P(r'{CONDITION_1} : The surrounding agent is not in the critical section for any WaiterList Record')
 class _:
     def s_cond(cond, env0, asserting):
         # nothing to check
         return (env0, env0)
 
-#> A WaiterList object also optionally contains a Synchronize event
-#> denoting the previous leaving of its critical section.
-
-@P(r"{CONDITION_1} : {var} has a Synchronize event")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
-        return (env0, env0)
-
-@P(r"{SETTABLE} : the Synchronize event in {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_WaiterList)
-        return (T_Synchronize_Event, env0)
-
-#> Initially a WaiterList object has an empty list and no Synchronize event.
-
-#> The agent cluster has a store of WaiterList objects; the store is indexed by (_block_, _i_).
-#> WaiterLists are agent-independent: a lookup in the store of WaiterLists by (_block_, _i_)
-#> will result in the same WaiterList object in any agent in the agent cluster.
-
 # ==============================================================================
-#@ 25.4.2.9 SuspendAgent
+#@ 25.4.3.9 SuspendThisAgent
 
 @P(r"{EXPR} : an implementation-defined non-negative mathematical value")
 class _:
@@ -11784,26 +11749,18 @@ class _:
         [] = expr.children
         return (T_MathReal_, env0)
 
-@P(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.")
+@P(r"{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION} and suspend the surrounding agent until the time is {DOTTING}, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. The surrounding agent can only wake from suspension due to a timeout or due to another agent calling NotifyWaiter with arguments {var} and {var} (i.e. via a call to `Atomics.notify`).")
 class _:
     def s_nv(anode, env0):
-        [noi, w_var, t_var, *blah] = anode.children
+        [noi, t_var, *blah] = anode.children
         env0.assert_expr_is_of_type(noi, T_tilde_unused_)
-        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
         env0.assert_expr_is_of_type(t_var, T_MathReal_ | T_MathPosInfinity_)
         return env0
 
-@P(r'{CONDITION_1} : {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}')
-class _:
-    def s_cond(cond, env0, asserting):
-        [w_var, *blah] = cond.children
-        env0.assert_expr_is_of_type(w_var, T_agent_signifier_)
-        return (env0, env0)
-
 # ==============================================================================
-#@ 25.4.2.10 NotifyWaiter
+#@ 25.4.3.10 NotifyWaiter
 
-@P(r"{COMMAND} : Notify the agent {var}.")
+@P(r"{COMMAND} : Wake the agent whose signifier is {DOTTING} from suspension.")
 class _:
     def s_nv(anode, env0):
         [var] = anode.children
@@ -12074,6 +12031,10 @@ class _:
     def s_expr(expr, env0, _):
         [] = expr.children
         return (T_Synchronize_Event, env0)
+
+@P('{VAL_DESC} : a Synchronize event')
+class _:
+    s_tb = T_Synchronize_Event
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : pairs of Synchronize events')
 class _:

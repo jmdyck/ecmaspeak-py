@@ -190,14 +190,13 @@
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
-    Notify the agent {var}.
     Optionally, {SMALL_COMMAND}.
     Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Perform an implementation-defined debugging action.
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following steps:{IND_COMMANDS}
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
-    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend {var} for up to {var} milliseconds, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. {var} can wake from suspension either because the timeout expired or because it was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}, and not for any other reasons at all.
+    Perform {PP_NAMED_OPERATION_INVOCATION} and suspend the surrounding agent until the time is {DOTTING}, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. The surrounding agent can only wake from suspension due to a timeout or due to another agent calling NotifyWaiter with arguments {var} and {var} (i.e. via a call to `Atomics.notify`).
     Perform {PP_NAMED_OPERATION_INVOCATION}.
     Perform {PP_NAMED_OPERATION_INVOCATION}. {note}
     Prepend {var} to {var}.
@@ -205,13 +204,12 @@
     Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.
     Remove the binding for {var} from {var}.
     Remove the first element from {SETTABLE}.
-    Remove the first {var} elements of {var}.
+    Remove the first {var} elements of {SETTABLE}.
     Remove the last element of {SETTABLE}.
     Remove the own property with name {var} from {var}.
     Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
     Remove {var} from the execution context stack and restore {var} as the running execution context.
     Remove {var} from the execution context stack.
-    Remove {var} from the list of waiters in {var}.
     Remove {var} from {DOTTING}.
     Remove {var} from {var}.
     Repeat, until {CONDITION},{IND_COMMANDS}
@@ -246,6 +244,7 @@
     The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.
     Throw a {ERROR_TYPE} exception.
     Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).
+    Wake the agent whose signifier is {DOTTING} from suspension.
     When the {nonterminal} {var} is evaluated, perform the following steps in place of the {nonterminal} Evaluation algorithm provided in {h_emu_xref}:{IND_COMMANDS}
     While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}
     {IF_CLOSED}
@@ -410,9 +409,10 @@
     The mathematical value of {var}'s {starred_str} property is {EX}
     The next step never returns an abrupt completion because {CONDITION_1}
     The surrounding agent is in the critical section for {var}
-    The surrounding agent is not in the critical section for any WaiterList
+    The surrounding agent is not in the critical section for any WaiterList Record
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
     There is more than one `*` import that includes the requested name
+    There is no Waiter Record in {DOTTING} whose {dsb_word} field is {EX} and whose {dsb_word} field is {EX}
     This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent
     This is a circular import request
     This is an attempt to change the value of an immutable binding
@@ -526,6 +526,7 @@
     {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is the StringValue of any |ReservedWord| except for `yield` or `await`
     {NUM_COMPARISON}
+    {NUM_COMPARISON} (ignoring potential non-monotonicity of time values)
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
     {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
@@ -581,7 +582,6 @@
     {var} does not have either a {DSBN} or an {DSBN} internal slot
     {var} does not include the element {LITERAL}
     {var} does not provide the direct binding for this export
-    {var} has a Synchronize event
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
     {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
@@ -610,12 +610,9 @@
     {var} is not finite
     {var} is not in {INTERVAL}
     {var} is not in {PREFIX_PAREN}
-    {var} is not on the list of waiters in any WaiterList
-    {var} is not on the list of waiters in {var}
     {var} is now an empty List
     {var} is now the running execution context
     {var} is odd
-    {var} is on the list of waiters in {var}
     {var} is the running execution context again
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} must have an uninitialized binding for {var}
@@ -624,7 +621,6 @@
     {var} provides the direct binding for this export
     {var} starts with {STR_LITERAL}
     {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits
-    {var} was notified explicitly by another agent calling NotifyWaiter with arguments {var} and {var}
     {var}, {var}, and {var} have the same number of elements
 
 {PROPERTY_KIND} :
@@ -718,7 +714,7 @@
     a List whose elements are the elements of {var}
     a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}
     a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}
-    a List whose elements are the first {var} elements of {var}
+    a List whose elements are the first {var} elements of {EX}
     a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order
     a List whose sole element is {EX}
@@ -744,7 +740,6 @@
     a newly created Property Descriptor with no fields
     a newly created object with an internal slot for each name in {var}
     a one-element CharSet containing the character {var}
-    a reference to the list of waiters in {var}
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty Set
     an implementation-approximated Number value representing {EXPR}
@@ -813,7 +808,7 @@
     the String value that is the same as {var} except that each occurrence of {code_unit_lit} in {var} has been replaced with the six code unit sequence {STR_LITERAL}
     the String value whose code units are the elements of the List {var}. If {var} has no elements, the empty String is returned
     the String value {SETTABLE}
-    the WaiterList that is referenced by the pair ({var}, {var})
+    the WaiterList Record that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
     the active function object
     the algorithm steps defined in {h_emu_xref}
@@ -1145,6 +1140,7 @@
     Source Text Module Record
     WriteSharedMemory
     a new ExportEntry Record
+    a new Waiter Record
     the ClassFieldDefinition Record
     the ClassStaticBlockDefinition Record
     the ExportEntry Record
@@ -1174,7 +1170,6 @@
 
 {SETTABLE} :
     The {EXECUTION_CONTEXT_COMPONENT} of {var}
-    the Synchronize event in {var}
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the {DSBN} field of {EXPR}
@@ -1359,6 +1354,7 @@
     a String which is the name of a TypedArray constructor in {h_emu_xref}
     a Super Reference Record
     a Symbol
+    a Synchronize event
     a Time Zone Identifier Record
     a TypedArray
     a TypedArray element type
@@ -1369,7 +1365,8 @@
     a Unicode property value
     a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
     a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}
-    a WaiterList
+    a WaiterList Record
+    a Waiter Record
     a WeakRef
     a WriteSharedMemory event
     a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}
@@ -1397,6 +1394,7 @@
     a module namespace exotic object
     a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
     a non-negative extended mathematical value
+    a non-negative finite Number
     a non-negative integer
     a non-negative integer that is evenly divisible by 4
     a non-negative integral Number
@@ -1505,8 +1503,8 @@
     Source Text Module Records
     Strings
     Time Zone Identifier Records
+    Waiter Records
     WriteSharedMemory or ReadModifyWriteSharedMemory events
-    agent signifiers
     byte values
     characters
     code points
