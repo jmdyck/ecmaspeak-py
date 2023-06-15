@@ -10963,16 +10963,6 @@ class _:
         return (T_IntegralNumber_, env0)
 
 # ==============================================================================
-#@ 21.4.1.17 MakeTime
-
-@P(r"{EXPR} : (({var} `*` msPerHour `+` {var} `*` msPerMinute) `+` {var} `*` msPerSecond) `+` {var}, performing the arithmetic according to IEEE 754-2019 rules (that is, as if using the ECMAScript operators `*` and `+`)")
-class _:
-    def s_expr(expr, env0, _):
-        for var in expr.children:
-            env0.assert_expr_is_of_type(var, T_Number)
-        return (T_Number, env0)
-
-# ==============================================================================
 #@ 21.4.1.18 MakeDay
 
 @P(r"{COMMAND} : Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
