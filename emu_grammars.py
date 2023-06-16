@@ -165,7 +165,7 @@ def parse_emu_grammar(emu_grammar):
                         items.append(optional_guard_n)
                     if rhs_body_n.kind == 'EMPTY':
                         pass
-                    elif rhs_body_n.kind in ['U_RANGE', 'U_PROP', 'U_ANY', 'NT_BUT_NOT']:
+                    elif rhs_body_n.kind in ['U_RANGE', 'U_PROP', 'U_ANY']:
                         items.append(rhs_body_n)
                     elif rhs_body_n.kind == 'RHS_ITEMS':
                         items.extend(rhs_body_n.children)
@@ -200,11 +200,6 @@ def parse_emu_grammar(emu_grammar):
                 # -----
                 r_n._rhs_items = r_n.children
 
-            elif r_n.kind == 'NT_BUT_NOT':
-                rhss.append(r_n)
-                # -----
-                r_n._rhs_items = [r_n]
-
             elif r_n.kind == 'ONELINE_ONE_OF':
                 [backticked_things_n] = r_n.children
                 for backticked_thing_n in backticked_things_n.children:
@@ -231,7 +226,6 @@ def reduce_rhs(rhs_n):
         if r_item.kind in [
             'BACKTICKED_THING',
             'NAMED_CHAR',
-            'NT_BUT_NOT',
             'U_ANY',
             'U_PROP',
             'U_RANGE',
@@ -245,6 +239,7 @@ def reduce_rhs(rhs_n):
 
         elif r_item.kind in [
             'BUT_ONLY',
+            'BUT_NOT',
             'LABEL',
             'LAC_SET',
             'LAC_SINGLE',
@@ -267,18 +262,13 @@ def decorate_misc(node):
         node._is_optional = opt_n.source_text() == '?'
         return 'prune'
 
-    elif node.kind == 'NT_BUT_NOT':
-        (nt_n, exclusion_n) = node.children
-        nt_n._nt_name = nt_n.source_text()
+    elif node.kind == 'BUT_NOT':
+        [exclusion_n] = node.children
         if exclusion_n.kind == 'EXCLUDABLES':
             exclusion_n._excludables = exclusion_n.children
             assert len(exclusion_n._excludables) > 1
         else:
             exclusion_n._excludables = [exclusion_n]
-        # may have to treat `node` like a GNT:
-        node._nt_name = nt_n._nt_name
-        node._params = []
-        node._is_optional = False
 
     elif node.kind == 'NT':
         node._nt_name = node.source_text()
@@ -324,15 +314,10 @@ metagrammar = {
     'RHS_LINE'             : ('_', 'n', 'NLAI', 'OPTIONAL_GUARD', 'RHS_BODY', 'OPTIONAL_LABEL'),
     'OPTIONAL_GUARD'       : ('?', '^', 'PARAMS', ' '),
     'OPTIONAL_LABEL'       : ('?', '^', ' ', 'LABEL'),
-    'RHS_BODY'             : ('|', '^', 'U_RANGE', 'U_PROP', 'U_ANY', 'EMPTY', 'NT_BUT_NOT', 'RHS_ITEMS'),
-
-    'NT_BUT_NOT'           : ('_', 'n', 'NT', ' but not ', 'EXCLUSION'),
-    'EXCLUSION'            : ('|', '^', 'EXCLUDABLES', 'EXCLUDABLE'),
-    'EXCLUDABLES'          : ('+', 'n', 'EXCLUDABLE', ' or | ', 'one of ', ''),
-    'EXCLUDABLE'           : ('|', '^', 'NT', 'BACKTICKED_THING'),
+    'RHS_BODY'             : ('|', '^', 'U_RANGE', 'U_PROP', 'U_ANY', 'EMPTY', 'RHS_ITEMS'),
 
     'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' '),
-    'RHS_ITEM'             : ('|', '^', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY'),
+    'RHS_ITEM'             : ('|', '^', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY', 'BUT_NOT'),
 
     'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS', 'OPTIONAL_OPT'),
     'OPTIONAL_PARAMS'      : ('?', '^', 'PARAMS'),
@@ -350,6 +335,11 @@ metagrammar = {
     'TERMINAL_ITEM'        : ('|', '^', 'BACKTICKED_THING', 'NAMED_CHAR', 'NLTH'),
 
     'BUT_ONLY'             : ('/', 'n', r'\[> but only if ([^][]+)\]'),
+
+    'BUT_NOT'              : ('_', 'n', 'but not ', 'EXCLUSION'),
+    'EXCLUSION'            : ('|', '^', 'EXCLUDABLES', 'EXCLUDABLE'),
+    'EXCLUDABLES'          : ('+', 'n', 'EXCLUDABLE', ' or | ', 'one of ', ''),
+    'EXCLUDABLE'           : ('|', '^', 'NT', 'BACKTICKED_THING'),
 
     'INDENT'           : ('/', ' ', ''),
     'OUTDENT'          : ('/', ' ', ''),
@@ -764,9 +754,8 @@ def check_reachability():
                 rthing_kind = rhs_item_n.kind
                 if rthing_kind in ['GNT', 'NT']:
                     reach(rhs_item_n._nt_name)
-                elif rthing_kind == 'NT_BUT_NOT':
-                    (nt_n, exclusion_n) = rhs_item_n.children
-                    reach(nt_n._nt_name)
+                elif rthing_kind == 'BUT_NOT':
+                    [exclusion_n] = rhs_item_n.children
                     for but_n in exclusion_n._excludables:
                         if but_n.kind == 'NT':
                             reach(but_n._nt_name)
@@ -998,7 +987,7 @@ def check_non_defining_prodns(emu_grammars):
 
                 annotations = []
                 for u_rhs_item_n in u_rhs_n._rhs_items:
-                    if u_rhs_item_n.kind in ['GNT', 'NT_BUT_NOT', 'BACKTICKED_THING', 'NAMED_CHAR']:
+                    if u_rhs_item_n.kind in ['GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'BUT_NOT']:
                         pass
                     elif u_rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET', 'NLTH', 'PARAMS', 'LABEL']:
                         annotations.append(u_rhs_item_n)
@@ -1292,7 +1281,7 @@ def u_item_matches_d_item(u_item_n, d_item_n):
     return note
 
 def d_item_doesnt_require_a_matching_u_item(d_item_n):
-    if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
+    if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'BUT_NOT', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
         return {'annotations suppressed': d_item_n.source_text(), 'L-900': 1}
 
     if d_item_n.kind == 'GNT' and d_item_n._is_optional:
