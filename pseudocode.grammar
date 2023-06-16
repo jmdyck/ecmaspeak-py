@@ -308,7 +308,9 @@
 # ------------------------------------------------------
 
 {EACH_THING} :
+    CharSetElement {DEFVAR} in {var} containing more than 1 character, iterating in descending order of length
     child node {DEFVAR} of this Parse Node
+    code point {DEFVAR} in {var}, iterating backwards from its second-to-last code point
     element {DEFVAR} of {EX}
     element {DEFVAR} of {var}, in reverse List order
     field of {var}
@@ -318,7 +320,10 @@
     own property key {DEFVAR} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {DEFVAR} of {var} such that {CONDITION}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
+    single code point {DEFVAR} in {var}
+    string {DEFVAR} in {var} whose length is greater than 1, iterating in descending order of string length
     {ITEM_NATURE} {DEFVAR} of {EX}
+    {ITEM_NATURE} {DEFVAR} of {EX}, iterating backwards from its second-to-last element
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in descending order
@@ -328,10 +333,12 @@
 
 {ITEM_NATURE} :
     Agent Events Record
+    CharSetElement
     Cyclic Module Record
     ExportEntry Record
     FinalizationRegistry
     ImportEntry Record
+    Matcher
     Parse Node
     Private Name
     PrivateElement
@@ -395,6 +402,7 @@
     A `default` export was not explicitly defined by this module
     All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
     All named exports from {var} are resolvable
+    Every element of {var} consists of a single character
     Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     GlobalSymbolRegistry does not currently contain an entry for {var}
@@ -428,6 +436,8 @@
     control reaches here
     either {DOTTING} or {DOTTING} is {LITERAL}
     it must be in the Object Environment Record
+    every CharSetElement of {var} consists of a single character (including if {var} is empty)
+    every element of {EX} consists of a single character (including if {EX} is empty)
     no such execution context exists
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
@@ -464,8 +474,7 @@
     the source text containing {G_SYM} is eval code that is being processed by a direct eval
     the source text matched by the syntactic production that is being evaluated is contained in strict mode code
     the source text matched by {PROD_REF} is contained in strict mode code
-    the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
-    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}
+    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}, nor a binary property of strings listed in the “Property name” column of {h_emu_xref}
     the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}
     the source text matched by {PROD_REF} is not strict mode code
     the source text matched by {PROD_REF} is strict mode code
@@ -474,8 +483,8 @@
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}
+    there exists a CharSetElement in {var} containing exactly one character {DEFVAR} such that {CONDITION_1}
     there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}
-    there exists a member {DEFVAR} of {var} such that {CONDITION_1}
     there exists an event {DEFVAR} such that {CONDITION}
     there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}
     we return here
@@ -527,6 +536,7 @@
     {NAMED_OPERATION_INVOCATION} is the StringValue of any |ReservedWord| except for `yield` or `await`
     {NUM_COMPARISON}
     {NUM_COMPARISON} (ignoring potential non-monotonicity of time values)
+    {PROD_REF} does not have an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
     {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
@@ -558,12 +568,13 @@
     {var} contains a {nonterminal}
     {var} contains an? {nonterminal} Parse Node
     {var} contains any code point more than once
-    {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}
+    {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}
     {var} contains any code unit more than once
-    {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"*
+    {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, *"v"*, or *"y"*
     {var} contains any duplicate entries
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
+    {var} contains only single code points
     {var} does not already have a binding for {var}
     {var} does not contain Type({TYPE_ARG})
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
@@ -699,6 +710,7 @@
 
 {EXPR} :
     a List consisting of the sequence of code units that are the elements of {var}
+    a List containing one or more {ERROR_TYPE} objects
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
     a List of length {var} whose elements are nondeterministically chosen byte values
     a List of length {var} whose elements are the sequence of {var} bytes starting with {var}[{var}]
@@ -717,7 +729,7 @@
     a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order
     a List whose sole element is {EX}
-    a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
+    a String in the form of a {var} equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {var} must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
     a copy of the List {var}
     a copy of {EX}
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
@@ -730,6 +742,7 @@
     a new Symbol whose {DSBN} is {var}
     a new Synchronize event
     a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot
+    a new empty CharSet
     a new empty List
     a new execution context
     a new implementation-defined Completion Record
@@ -738,9 +751,11 @@
     a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects
     a newly created Property Descriptor with no fields
     a newly created object with an internal slot for each name in {var}
-    a one-element CharSet containing the character {var}
+    a one-element CharSet containing {EX}
     an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
+    an empty List of Matchers
     an empty Set
+    an empty sequence of characters
     an implementation-approximated Number value representing {EXPR}
     an implementation-defined non-negative mathematical value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
@@ -755,20 +770,23 @@
     the Agent Record of the surrounding agent
     the BigInt value that corresponds to {var}
     the BigInt value that represents {EX}
-    the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}
-    the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}
+    the CharSet containing all CharSetElements whose character database definition includes the property {var} with value “True”
     the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}
-    the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
+    the CharSet containing all Unicode code points {DEFVAR} that do not have a {h_a} mapping (that is, scf({var})={var})
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
     the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
-    the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}
     the CharSet containing all characters with a character value in the inclusive interval from {var} to {var}
+    the CharSet containing all code point values
+    the CharSet containing all code unit values
+    the CharSet containing every CharSetElement of {var} which consists of a single character
     the CharSet containing every character in {STR_LITERAL}
+    the CharSet containing every element of {EX} which consists of a single character
     the CharSet containing the character matched by {PROD_REF}
+    the CharSet containing the elements of {var} which are not also elements of {var}
+    the CharSet containing the one string {var}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
-    the CharSet of all characters
     the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
     the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
     the ECMAScript Number value corresponding to {var}
@@ -821,10 +839,10 @@
     the character represented by {PROD_REF}
     the character value of character {var}
     the character whose character value is {var}
-    the character {SETTABLE}
     the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value
     the code point whose numeric value is {EX}
     the code point {var}
+    the concatenation of {var} and {var}
     the element of {EX} whose {DSBN} is {EX}
     the element of {EX} whose {DSBN} field is {var}
     the empty CharSet
@@ -840,9 +858,11 @@
     the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b> through <b>Z</b> and <b>a</b> through <b>z</b> for digits with values 10 through 35
     the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
+    the intersection of CharSets {var} and {var}
     the intrinsic function {percent_word}
     the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
     the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
+    the last Matcher in {var}
     the last element of {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {EX}, {EX}, and {EX}
@@ -883,11 +903,11 @@
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
     the second to top element of the execution context stack
+    the sequence of characters that is the single element of {var}
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the smallest (closest to -∞) integral Number value that is not less than {var}
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
-    the source text matched by {PROD_REF}
     the source text that was recognized as {PROD_REF}
     the square root of the sum of squares of the mathematical values of the elements of {var}
     the string-concatenation of {EX} and {EX}
@@ -941,6 +961,7 @@
     the GlobalSymbolRegistry List
     the Number value for {EX}
     the String {var}
+    the character {SETTABLE}
     the code point matched by {PROD_REF}
     the code unit at index {EX} within {EX}
     the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}
@@ -948,12 +969,14 @@
     the current Realm Record
     the difference {var} minus {var}
     the digits of the decimal representation of {var} (in order, with no leading zeroes)
+    the empty sequence of characters
     the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row
     the first code unit of {var}
     the first {SUM} code units of {var}
     the integer represented by the 32-bit two's complement bit string {var}
     the internal slots listed in {h_emu_xref}
     the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)
+    the last code point of {var}
     the length of {var}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
@@ -964,6 +987,7 @@
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the single code point matched by this production
+    the source text matched by {PROD_REF}
     the substring of {var} from index {dec_int_lit}
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
@@ -1056,6 +1080,7 @@
 {PROD_REF} :
     that {nonterminal}
     the derived {nonterminal}
+    the enclosing {nonterminal}
     the {ORDINAL} {nonterminal}
     the {ORDINAL} {nonterminal} Parse Node contained within {var}
     the {nonterminal}
@@ -1097,6 +1122,7 @@
     max
     min
     msFromTime
+    scf
     thisBigIntValue
     thisBooleanValue
     thisNumberValue
@@ -1364,12 +1390,14 @@
     a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
     a Unicode property value
     a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
+    a Unicode {h_emu_not_ref_property_name} listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
     a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}
     a WaiterList Record
     a Waiter Record
     a WeakRef
     a WriteSharedMemory event
-    a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}
+    a binary Unicode property or binary property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
+    a binary property of strings listed in the “Property name” column of {h_emu_xref}
     a bound function exotic object
     a built-in function object
     a callable Object
@@ -1413,6 +1441,7 @@
     a reads-from Relation
     a return completion
     a sequence of Unicode code points
+    a sequence of characters
     a set of algorithm steps
     a synchronizes-with Relation
     a throw completion

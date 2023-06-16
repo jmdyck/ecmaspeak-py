@@ -1323,6 +1323,7 @@ named_type_hierarchy = {
             'Intangible_': {
                 'CaptureRange': {},
                 'CharSet': {},
+                'CharSetElement': {},
                 'Data Block': {},
                 'event_pair_': {},
                 'IEEE_binary32_': {},
@@ -3700,7 +3701,7 @@ class _:
         word = backticked_word.source_text()[1:-1]
         if word == 'General_Category':
             return (T_Unicode_code_points_, env0)
-        elif word == 'u':
+        elif word in ['u', 'v']:
             return (T_code_point_, env0)
         else:
             assert 0, word
@@ -3712,7 +3713,7 @@ class _:
         return (T_Unicode_code_points_, env0)
 
 @P(r"{CONDITION_1} : {var} contains any code point more than once")
-@P(r"{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
+@P(r"{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, *bw_] = cond.children
@@ -3966,7 +3967,7 @@ class _:
         # with respect to the emu-grammar accompanying this alg/expr.
         return (T_Unicode_code_points_, env0)
 
-@P(r"{EXPR} : the source text matched by {PROD_REF}")
+@P(r"{EX} : the source text matched by {PROD_REF}")
 class _:
     def s_expr(expr, env0, _):
         [nont] = expr.children
@@ -4238,6 +4239,7 @@ class _:
 #@ 5.1.5.4 Grammatical Parameters
 
 @P(r"{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter")
+@P('{CONDITION_1} : {PROD_REF} does not have an? <sub>[{cap_word}]</sub> parameter')
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref, cap_word] = cond.children
@@ -4579,6 +4581,7 @@ class _:
         return tenv
 
 @P("{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}")
+@P('{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}, iterating backwards from its second-to-last element')
 class _:
     def s_nv(each_thing, env0):
         [item_nature, loop_var, collection_expr] = each_thing.children
@@ -4628,6 +4631,10 @@ class _:
             item_type = T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
             collection_type = T_Set
 
+        elif item_nature.prod.rhs_s == 'CharSetElement':
+            item_type = T_CharSetElement
+            collection_type = T_CharSet
+
         elif item_nature.prod.rhs_s == "{nonterminal}":
             [nont] = item_nature.children
             item_type = ptn_type_for(nont)
@@ -4639,6 +4646,7 @@ class _:
                 "Cyclic Module Record": T_Cyclic_Module_Record,
                 "ExportEntry Record"  : T_ExportEntry_Record,
                 "ImportEntry Record"  : T_ImportEntry_Record,
+                "Matcher"             : T_Matcher,
                 "Module Record"       : T_Module_Record,
                 "Parse Node"          : T_Parse_Node,
                 "Private Name"        : T_Private_Name,
@@ -4714,7 +4722,15 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [var_name] = expr.children
-        return (env0.vars[var_name], env0)
+        if var_name in env0.vars:
+            t = env0.vars[var_name]
+        else:
+            add_pass_error(
+                expr,
+                f"{var_name} IS NOT DEFINED"
+            )
+            t = T_TBD
+        return (t, env0)
 
     # Let {DEFVAR} be ...
 
@@ -5298,6 +5314,12 @@ class _:
                         return (math_type, env1)
                 assert 0
                 return (T_ExtendedMathReal_, env1)
+
+            elif callee_op_name == 'scf':
+                assert len(args) == 1
+                [arg] = args
+                env0.assert_expr_is_of_type(arg, T_code_point_)
+                return (T_code_point_, env0)
 
             # ---------------
 
@@ -7083,7 +7105,7 @@ class _:
 # ----
 
 @P(r'{CONDITION_1} : {var} contains any code unit more than once')
-@P(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, or *"y"*')
+@P(r'{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, *"v"*, or *"y"*')
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
@@ -8548,7 +8570,7 @@ class _:
         if container_type.is_a_subtype_of_or_equal_to(T_String):
             env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
         elif container_type.is_a_subtype_of_or_equal_to(T_CharSet):
-            env1 = container_env.ensure_expr_is_of_type(value_var, T_character_)
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_character_ | ListType(T_character_))
         elif container_type.is_a_subtype_of_or_equal_to(T_Relation):
             env1 = container_env.ensure_expr_is_of_type(value_var, T_event_pair_)
         else:
@@ -9089,6 +9111,8 @@ class _:
         (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
         (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
         if item_type.is_a_subtype_of_or_equal_to(T_Event) and collection_type == T_Set:
+            pass
+        elif item_type.is_a_subtype_of_or_equal_to(ListType(T_character_)) and collection_type == T_CharSet:
             pass
         else:
             assert 0
@@ -10390,6 +10414,7 @@ class _:
         return (T_Parse_Node, env0)
 
 @P(r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present")
+@P('{EXPR} : a List containing one or more {ERROR_TYPE} objects')
 class _:
     def s_expr(expr, env0, _):
         [error_type] = expr.children
@@ -11103,7 +11128,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_character_)
         return (T_character_, env1)
 
-@P(r"{EXPR} : the character {SETTABLE}")
+@P(r"{EX} : the character {SETTABLE}")
 class _:
     def s_expr(expr, env0, _):
         [settable] = expr.children
@@ -11117,8 +11142,51 @@ class _:
         env0.assert_expr_is_of_type(var, T_character_)
         return (T_MathInteger_, env0)
 
+@P('{VAL_DESC} : a sequence of characters')
+class _:
+    s_tb = ListType(T_character_)
+
+@P('{EXPR} : an empty sequence of characters')
+@P('{EX} : the empty sequence of characters')
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (ListType(T_character_), env0)
+
+@P('{EXPR} : the concatenation of {var} and {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [vara, varb] = expr.children
+        env0.assert_expr_is_of_type(vara, ListType(T_character_))
+        env0.assert_expr_is_of_type(varb, ListType(T_character_))
+        return (ListType(T_character_), env0)
+
 # ==============================================================================
 #@ 22.2.2.1 Notation
+
+# ------------------------------------------------------------------------------
+# CharSetElement
+
+@P('{EX} : the last code point of {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_CharSetElement)
+        return (T_code_point_, env0)
+
+@P('{EACH_THING} : code point {DEFVAR} in {var}, iterating backwards from its second-to-last code point')
+class _:
+    def s_nv(each_thing, env0):
+        [loop_var, collection_var] = each_thing.children
+        env0.assert_expr_is_of_type(collection_var, T_CharSetElement)
+        return env0.plus_new_entry(loop_var, T_code_point_)
+
+@P('{EACH_THING} : single code point {DEFVAR} in {var}')
+class _:
+    def s_nv(each_thing, env0):
+        [loop_var, collection_var] = each_thing.children
+        env0.assert_expr_is_of_type(collection_var, T_CharSetElement)
+        return env0.plus_new_entry(loop_var, T_code_point_)
 
 # ------------------------------------------------------------------------------
 # CharSet
@@ -11133,11 +11201,34 @@ class _:
         env0.assert_expr_is_of_type(var, T_CharSet)
         return env0
 
+@P('{CONDITION_1} : {var} contains only single code points')
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_CharSet)
+        return (env0, env0)
+
 @P(r'{CONDITION_1} : {var} does not contain exactly one character')
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
+        return (env1, env1)
+
+@P('{CONDITION_1} : Every element of {var} consists of a single character')
+class _:
+    def s_cond(cond, env0, asserting):
+        [ex] = cond.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_CharSet)
+        return (env1, env1)
+
+@P('{CONDITION_1} : every CharSetElement of {var} consists of a single character (including if {var} is empty)')
+@P('{CONDITION_1} : every element of {EX} consists of a single character (including if {EX} is empty)')
+class _:
+    def s_cond(cond, env0, asserting):
+        [exa, exb] = cond.children
+        assert exa.source_text() == exb.source_text()
+        env1 = env0.ensure_expr_is_of_type(exa, T_CharSet)
         return (env1, env1)
 
 @P(r"{CONDITION_1} : {var} and {var} each contain exactly one character")
@@ -11148,15 +11239,15 @@ class _:
         env0.assert_expr_is_of_type(b, T_CharSet)
         return (env0, env0)
 
-@P(r'{CONDITION_1} : there exists a member {DEFVAR} of {var} such that {CONDITION_1}')
+@P('{CONDITION_1} : there exists a CharSetElement in {var} containing exactly one character {DEFVAR} such that {CONDITION_1}')
 class _:
     def s_cond(cond, env0, asserting):
-        [member_var, set_var, stcond] = cond.children
-        env1 = env0.ensure_expr_is_of_type(set_var, T_CharSet)
-        env2 = env1.plus_new_entry(member_var, T_character_)
-        (t_env, f_env) = tc_cond(stcond, env2)
-        assert t_env is f_env
-        return (env1, env1)
+        [set_var, char_var, stcond] = cond.children
+        env0.assert_expr_is_of_type(set_var, T_CharSet)
+        env1 = env0.plus_new_entry(char_var, T_character_)
+        return tc_cond(stcond, env1)
+
+# ----
 
 @P(r'{EXPR} : the one character in CharSet {var}')
 class _:
@@ -11164,6 +11255,26 @@ class _:
         [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (T_character_, env1)
+
+@P('{EXPR} : the sequence of characters that is the single element of {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
+        return (ListType(T_character_), env1)
+
+@P('{EXPR} : a new empty CharSet')
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_CharSet, env0)
+
+@P('{EXPR} : the CharSet containing all code point values')
+@P('{EXPR} : the CharSet containing all code unit values')
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_CharSet, env0)
 
 @P(r'{EXPR} : the CharSet containing all characters with a character value in the inclusive interval from {var} to {var}')
 class _:
@@ -11173,6 +11284,13 @@ class _:
         env2 = env0.ensure_expr_is_of_type(var2, T_MathInteger_)
         assert env1 is env0
         assert env2 is env0
+        return (T_CharSet, env0)
+
+@P('{EXPR} : the CharSet containing the one string {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.ensure_expr_is_of_type(var, ListType(T_character_))
         return (T_CharSet, env0)
 
 @P(r"{EXPR} : the CharSet containing the single character {code_point_lit}")
@@ -11189,11 +11307,19 @@ class _:
         [prod_ref] = expr.children
         return (T_CharSet, env0)
 
-@P(r"{EXPR} : a one-element CharSet containing the character {var}")
+@P(r"{EXPR} : a one-element CharSet containing {EX}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_character_)
+        return (T_CharSet, env0)
+
+@P('{EXPR} : the intersection of CharSets {var} and {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [va, vb] = expr.children
+        env0.assert_expr_is_of_type(va, T_CharSet)
+        env0.assert_expr_is_of_type(vb, T_CharSet)
         return (T_CharSet, env0)
 
 @P(r"{EXPR} : the union of CharSets {var}, {var} and {var}")
@@ -11214,12 +11340,6 @@ class _:
         envb = env0.ensure_expr_is_of_type(vb, T_CharSet)
         return (T_CharSet, env_or(enva, envb))
 
-@P(r"{EXPR} : the CharSet of all characters")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_CharSet, env0)
-
 @P(r"{EXPR} : the ten-element CharSet containing the characters `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, and `9`")
 class _:
     def s_expr(expr, env0, _):
@@ -11232,13 +11352,6 @@ class _:
         [strlit] = expr.children
         return (T_CharSet, env0)
 
-@P(r"{EXPR} : the CharSet containing all characters not in {NAMED_OPERATION_INVOCATION}")
-class _:
-    def s_expr(expr, env0, _):
-        [noi] = expr.children
-        env0.assert_expr_is_of_type(noi, T_CharSet)
-        return (T_CharSet, env0)
-
 @P(r"{EXPR} : the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions")
 class _:
     def s_expr(expr, env0, _):
@@ -11249,6 +11362,13 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
+        return (T_CharSet, env0)
+
+@P('{EXPR} : the CharSet containing all Unicode code points {DEFVAR} that do not have a {h_a} mapping (that is, scf({var})={var})')
+class _:
+    def s_expr(expr, env0, _):
+        [defvar, h_a, var1, var2] = expr.children
+        assert defvar.source_text() == var1.source_text() == var2.source_text()
         return (T_CharSet, env0)
 
 @P(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}")
@@ -11266,19 +11386,11 @@ class _:
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (T_CharSet, env0)
 
-@P(r"{EXPR} : the CharSet containing all Unicode code points whose character database definition includes the property {var} with value “True”")
+@P(r"{EXPR} : the CharSet containing all CharSetElements whose character database definition includes the property {var} with value “True”")
 class _:
     def s_expr(expr, env0, _):
         [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (T_CharSet, env0)
-
-@P(r"{EXPR} : the CharSet containing all Unicode code points included in {NAMED_OPERATION_INVOCATION}")
-@P(r"{EXPR} : the CharSet containing all Unicode code points not included in {NAMED_OPERATION_INVOCATION}")
-class _:
-    def s_expr(expr, env0, _):
-        [noi] = expr.children
-        env0.assert_expr_is_of_type(noi, T_CharSet)
         return (T_CharSet, env0)
 
 @P(r"{EXPR} : the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}")
@@ -11292,11 +11404,37 @@ class _:
         env1.assert_expr_is_of_type(noi, T_character_)
         return (T_CharSet, env0)
 
+@P('{EXPR} : the CharSet containing every CharSetElement of {var} which consists of a single character')
+@P('{EXPR} : the CharSet containing every element of {EX} which consists of a single character')
+class _:
+    def s_expr(expr, env0, _):
+        [ex] = expr.children
+        env0.assert_expr_is_of_type(ex, T_CharSet)
+        return (T_CharSet, env0)
+
+@P('{EXPR} : the CharSet containing the elements of {var} which are not also elements of {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [charset_var_a, charset_var_b] = expr.children
+        env0.assert_expr_is_of_type(charset_var_a, T_CharSet)
+        env0.assert_expr_is_of_type(charset_var_b, T_CharSet)
+        return (T_CharSet, env0)
+
 @P(r"{NAMED_OPERATION_INVOCATION} : the CharSet returned by {h_emu_grammar}")
 class _:
     def s_expr(expr, env0, _):
         [emu_grammar] = expr.children
         return (T_CharSet, env0)
+
+# ---
+
+@P('{EACH_THING} : CharSetElement {DEFVAR} in {var} containing more than 1 character, iterating in descending order of length')
+@P('{EACH_THING} : string {DEFVAR} in {var} whose length is greater than 1, iterating in descending order of string length')
+class _:
+    def s_nv(each_thing, env0):
+        [loop_var, collection_var] = each_thing.children
+        env0.assert_expr_is_of_type(collection_var, T_CharSet)
+        return env0.plus_new_entry(loop_var, T_CharSetElement)
 
 # ------------------------------------------------------------------------------
 # CaptureRange
@@ -11404,6 +11542,22 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
+#@ 22.2.2.7 Runtime Semantics: CompileAtom
+
+@P('{EXPR} : an empty List of Matchers')
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (ListType(T_Matcher), env0)
+
+@P('{EXPR} : the last Matcher in {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, ListType(T_Matcher))
+        return (T_Matcher, env0)
+
+# ==============================================================================
 #@ 22.2.2.7.3 Canonicalize
 
 @P(r'{CONDITION_1} : the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}')
@@ -11422,10 +11576,11 @@ class _:
         return (T_Unicode_code_points_, env0)
 
 # ==============================================================================
-# 22.2.2.9.3 UnicodeMatchProperty
+#@ 22.2.2.9.7 UnicodeMatchProperty
 
 # Unicode property {name, alias, value, value alias}
 @P('{VAL_DESC} : a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}')
+@P('{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} listed in the \u201c{h_emu_not_ref_Property_name}\u201d column of {h_emu_xref}')
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
@@ -11445,7 +11600,8 @@ class _:
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P('{VAL_DESC} : a binary Unicode property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}')
+@P('{VAL_DESC} : a binary Unicode property or binary property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}')
+@P('{VAL_DESC} : a binary property of strings listed in the “Property name” column of {h_emu_xref}')
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
@@ -11467,16 +11623,10 @@ class _:
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-@P(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
+@P(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}, nor a binary property of strings listed in the “Property name” column of {h_emu_xref}")
 class _:
     def s_cond(cond, env0, asserting):
-        [prod_ref, h_emu_xref] = cond.children
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [prod_ref, h_a, h_emu_xref] = cond.children
+        [prod_ref, h_a, h_emu_xref1, h_emu_xref2] = cond.children
         return (env0, env0)
 
 @P(r"{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}")
@@ -11486,7 +11636,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 22.2.2.9.4 UnicodeMatchPropertyValue
+#@ 22.2.2.9.8 UnicodeMatchPropertyValue
 
 @P(r"{EXPR} : the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row")
 class _:
@@ -11506,7 +11656,7 @@ set_up_internal_thing('slot', '[[RegExpMatcher]]',  T_RegExpMatcher_)
 # ==============================================================================
 #@ 22.2.6.13.1 EscapeRegExpPattern
 
-@P('''{EXPR} : a String in the form of a {nonterminal} ({nonterminal} if {var} contains *"u"*) equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {nonterminal} ({nonterminal} if {var} contains *"u"*) must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
+@P('''{EXPR} : a String in the form of a {var} equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {var} must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results''')
 class _:
     def s_expr(expr, env0, _):
         # XXX

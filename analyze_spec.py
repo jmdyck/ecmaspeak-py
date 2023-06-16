@@ -485,6 +485,7 @@ def check_ids():
                 if refid in [
                     'table-binary-unicode-properties',
                     'table-nonbinary-unicode-properties',
+                    'table-binary-unicode-properties-of-strings',
                     'table-unicode-general-category-values',
                     'table-unicode-script-values',
                 ]:

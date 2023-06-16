@@ -1220,6 +1220,7 @@ def analyze_sdo_coverage_info():
                     if u_rhs in [
                         "that {nonterminal}",
                         'this {nonterminal}',
+                        'the {nonterminal}',
                         'the {nonterminal} containing {LOCAL_REF}',
                         'the {nonterminal} of {LOCAL_REF}',
                         'the {nonterminal} that is that single code point',

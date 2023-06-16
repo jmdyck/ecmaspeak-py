@@ -776,6 +776,9 @@ def _handle_other_op_section(section):
 
     # -----------------------------------------
 
+    if section.section_id == 'sec-maybesimplecasefolding':
+        Pseudocode.ensure_alg('op: singular', 'scf')
+
     return True
 
 # ------------------------------------------------------------------------------
@@ -1648,7 +1651,7 @@ def _handle_changes_section(section):
         scan_section(section, patterns)
 
     # --------------------------------------------------------------------------
-    elif section.section_num.startswith('B.') and section.section_title == 'Static Semantics: ParsePattern ( _patternText_, _u_ )':
+    elif section.section_num.startswith('B.') and section.section_title == 'Static Semantics: ParsePattern ( _patternText_, _u_, _v_ )':
         # B.1.2.9
         # This defines an extended version of an abstract operation.
         # It seems like it should be converted to have a structured header,
