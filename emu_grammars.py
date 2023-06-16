@@ -22,10 +22,18 @@ def do_stuff_with_emu_grammars():
         'example'   : [],
         'reference' : [],
     }
+    n_invalid = 0
     for emu_grammar in spec.doc_node.each_descendant_named('emu-grammar'):
-        parse_emu_grammar(emu_grammar)
+        valid = parse_emu_grammar(emu_grammar)
+        if not valid:
+            n_invalid += 1
+
         t = get_grammar_type(emu_grammar)
         emu_grammars_of_type_[t].append(emu_grammar)
+
+    if n_invalid:
+        stderr(f"GIVING UP ON FURTHER GRAMMAR PROCESSING due to {n_invalid} emu-grammars that didn't parse")
+        return False
 
     stderr('<emu-grammar> counts:')
     for (t, emu_grammars) in sorted(emu_grammars_of_type_.items()):
@@ -45,6 +53,8 @@ def do_stuff_with_emu_grammars():
 
     make_grammars()
     do_grammar_left_right_stuff()
+
+    return True
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -88,8 +98,8 @@ def parse_emu_grammar(emu_grammar):
     emu_grammar._gnode = gnode
 
     if gnode is None:
-        stderr(f"    parse_emu_grammar is returning None for {emu_grammar.source_text()}")
-        return None
+        stderr(f"    parse_emu_grammar is returning False for {emu_grammar.source_text()}")
+        return False
 
     # --------------------------------------------
     # Perform some checks that could have been expressed in the meta-grammar,
@@ -212,6 +222,8 @@ def parse_emu_grammar(emu_grammar):
             rhs._reduced = reduce_rhs(rhs)
 
         production_n._rhss = rhss
+
+    return True
 
 def reduce_rhs(rhs_n):
     pieces = []

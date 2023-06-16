@@ -55,9 +55,9 @@ def main():
     records.print_schema_hierarchies()
     process_intrinsics_facts()
     check_references_to_intrinsics()
-    emu_grammars.do_stuff_with_emu_grammars()
-    
-    Pseudocode.do_stuff_with_pseudocode()
+    grammar_success = emu_grammars.do_stuff_with_emu_grammars()
+    if grammar_success:
+        Pseudocode.do_stuff_with_pseudocode()
 
     check_globals()
 
