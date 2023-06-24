@@ -747,6 +747,7 @@ def check_reachability():
     reach('InputElementRegExp')
     reach('InputElementRegExpOrTemplateTail')
     reach('InputElementTemplateTail')
+    reach('InputElementHashbangOrRegExp')
 
     # For lexical invocations of ParseText()...
     reach('StringNumericLiteral') # in StringToNumber()
