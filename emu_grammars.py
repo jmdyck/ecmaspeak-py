@@ -769,6 +769,10 @@ def check_reachability():
                     for but_n in exclusion_n._excludables:
                         if but_n.kind == 'NT':
                             reach(but_n._nt_name)
+                elif rthing_kind == 'LAC_SET':
+                    [lac_set_op, lac_set_operand] = rhs_item_n.children
+                    if lac_set_operand.kind == 'NT':
+                        reach(lac_set_operand._nt_name)
 
     for (nt, nt_info) in sorted(info_for_nt_.items()):
         if 'A' in nt_info.def_occs and nt_info.num_colons != 1 and nt not in lexical_symbols:
