@@ -750,6 +750,7 @@ def check_reachability():
 
     # For lexical invocations of ParseText()...
     reach('StringNumericLiteral') # in StringToNumber()
+    reach('StringIntegerLiteral') # in StringToBigInt()
     reach('Pattern') # in ParsePattern
 
     while queue:
