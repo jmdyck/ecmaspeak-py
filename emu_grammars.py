@@ -17,6 +17,9 @@ from shared import stderr, msg_at_node, msg_at_posn, spec, SpecNode, decode_enti
 def do_stuff_with_emu_grammars():
     stderr('do_stuff_with_emu_grammars...')
 
+    global egm_f
+    egm_f = shared.open_for_output('emu_grammars_misc')
+
     emu_grammars_of_type_ = {
         'definition': [],
         'example'   : [],
@@ -35,9 +38,9 @@ def do_stuff_with_emu_grammars():
         stderr(f"GIVING UP ON FURTHER GRAMMAR PROCESSING due to {n_invalid} emu-grammars that didn't parse")
         return False
 
-    stderr('<emu-grammar> counts:')
+    egm_log('<emu-grammar> counts:')
     for (t, emu_grammars) in sorted(emu_grammars_of_type_.items()):
-        stderr('    ', len(emu_grammars), t)
+        egm_log('    ', len(emu_grammars), t)
 
     process_defining_emu_grammars(emu_grammars_of_type_['definition'])
     check_reachability() # not that useful?
@@ -53,6 +56,8 @@ def do_stuff_with_emu_grammars():
 
     make_grammars()
     do_grammar_left_right_stuff()
+
+    egm_f.close()
 
     return True
 
@@ -98,7 +103,7 @@ def parse_emu_grammar(emu_grammar):
     emu_grammar._gnode = gnode
 
     if gnode is None:
-        stderr(f"    parse_emu_grammar is returning False for {emu_grammar.source_text()}")
+        egm_log(f"    parse_emu_grammar is returning False for {emu_grammar.source_text()}")
         return False
 
     # --------------------------------------------
@@ -602,7 +607,7 @@ class GNode(SpecNode):
 info_for_nt_ = None
 
 def process_defining_emu_grammars(emu_grammars):
-    stderr('process_defining_emu_grammars...')
+    egm_log('process_defining_emu_grammars...')
 
     global info_for_nt_
     grammar_f = shared.open_for_output('def_prodns')
@@ -642,7 +647,7 @@ def process_defining_emu_grammars(emu_grammars):
             defining_production_check_right(production_n)
 
             if production_n._augments:
-                stderr(f"    augmenting {production_n._lhs_symbol}")
+                egm_log(f"    augmenting {production_n._lhs_symbol}")
                 nt_info = info_for_nt_[production_n._lhs_symbol]
                 base_production_n = nt_info.get_appropriate_def_occ('A')
                 production_n._rhss = base_production_n._rhss + production_n._rhss
@@ -723,7 +728,7 @@ class NonterminalInfo:
         return self.def_occs[a]
 
 def check_reachability():
-    stderr("check_reachability...")
+    egm_log("check_reachability...")
     queue = []
     lexical_symbols = set()
 
@@ -762,7 +767,7 @@ def check_reachability():
 
     for (nt, nt_info) in sorted(info_for_nt_.items()):
         if 'A' in nt_info.def_occs and nt_info.num_colons != 1 and nt not in lexical_symbols:
-            stderr('    lexical symbol not reached:', nt)
+            egm_log('    lexical symbol not reached:', nt)
 
 # ------------------------------------------------------------------------------
 
@@ -873,7 +878,7 @@ def get_grammar_arena_for_section(section):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_non_defining_prodns(emu_grammars):
-    stderr("check_non_defining_prodns...")
+    egm_log("check_non_defining_prodns...")
 
     for emu_grammar in emu_grammars:
         emu_grammar.puk_set = set()
@@ -1158,7 +1163,7 @@ def check_non_defining_prodns(emu_grammars):
                     )
 
         if not emu_grammar.puk_set:
-            stderr(f"    no puk_set for {emu_grammar.source_text()}")
+            egm_log(f"    no puk_set for {emu_grammar.source_text()}")
 
 def u_rhs_matches_d_rhs_(u_rhs_n, d_rhs_n):
     notes = defaultdict(list)
@@ -1292,7 +1297,7 @@ def d_item_doesnt_require_a_matching_u_item(d_item_n):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_order_of_RHSs_within_each_SDO_clause():
-    stderr("check_order_of_RHSs_within_each_SDO_clause ...")
+    egm_log("check_order_of_RHSs_within_each_SDO_clause ...")
 
     for section in spec.root_section.each_descendant_that_is_a_section():
         if section.section_kind != 'syntax_directed_operation': continue
@@ -1331,7 +1336,7 @@ def check_order_of_RHSs_within_each_SDO_clause():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_emu_prodrefs(doc_node):
-    stderr("check_emu_prodrefs...")
+    egm_log("check_emu_prodrefs...")
 
     referenced_names = []
 
@@ -1374,7 +1379,7 @@ def check_emu_prodrefs(doc_node):
             for (_, nt_name) in arena_A_names_with_posn
         ]
 
-        stderr("comparing Annex A order to main-body order:")
+        egm_log("comparing Annex A order to main-body order:")
         import difflib
         for line in difflib.context_diff(referenced_names, arena_A_names, lineterm=''):
             print(line, file=shared.g_errors_f)
@@ -1382,7 +1387,7 @@ def check_emu_prodrefs(doc_node):
 # ------------------------------------------------------------------------------
 
 def approximate_annex_A():
-    stderr("approximate_annex_A...")
+    egm_log("approximate_annex_A...")
 
     marked_lines = []
 
@@ -1592,7 +1597,7 @@ def approximate_annex_A():
 
 def check_nonterminal_refs(doc_node):
     # Check references to nonterminals outside of <emu-grammar> elements
-    stderr("check_nonterminal_refs...")
+    egm_log("check_nonterminal_refs...")
 
     # kludge:
     B_start = shared.spec_text.find('namespace="annexB"')
@@ -1663,7 +1668,7 @@ def make_grammars():
             'NullLiteral',
             'BooleanLiteral',
         ]:
-            stderr('    Changing from lexical to syntactic:', lhs_symbol)
+            egm_log('    Changing from lexical to syntactic:', lhs_symbol)
             grammar_level = 'syntactic'
 
         for arena in ['A', 'B']:
@@ -1761,6 +1766,11 @@ def trim_newlines(subject):
     r = re.sub(r'^\n+', '', r)
     r = re.sub(r'\n+\s*$', '', r)
     return r
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def egm_log(*args):
+    print(*args, file=egm_f)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
