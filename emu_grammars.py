@@ -752,6 +752,7 @@ def check_reachability():
     # For lexical invocations of ParseText()...
     reach('StringNumericLiteral') # in StringToNumber()
     reach('StringIntegerLiteral') # in StringToBigInt()
+    reach('UTCOffset') # in IsTimeZoneOffsetString() + ParseTimeZoneOffsetString()
     reach('Pattern') # in ParsePattern
 
     while queue:
