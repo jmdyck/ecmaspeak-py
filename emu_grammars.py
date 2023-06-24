@@ -747,8 +747,10 @@ def check_reachability():
     reach('InputElementRegExp')
     reach('InputElementRegExpOrTemplateTail')
     reach('InputElementTemplateTail')
-    reach('StringNumericLiteral')
-    reach('Pattern')
+
+    # For lexical invocations of ParseText()...
+    reach('StringNumericLiteral') # in StringToNumber()
+    reach('Pattern') # in ParsePattern
 
     while queue:
         symbol = queue.pop(0)
