@@ -152,7 +152,6 @@ def test_one(file_relpath):
     if 'flags' in d:
         flags = d['flags']
         assert isinstance(flags, list)
-        assert len(flags) > 0
         flagset = set(flags)
         assert len(flagset) == len(flags) # no duplicates
         valid_flags = {
@@ -306,7 +305,11 @@ def parse_frontmatter(frontmatter):
                     elif rest.startswith(' ['):
                         assert rest.endswith(']')
                         # if re.search(',[^ ]', rest): print(rest)
-                        value = re.split(', *', rest[2:-1])
+                        between_brackets = rest[2:-1]
+                        if re.fullmatch(r' *', between_brackets):
+                            value = []
+                        else:
+                            value = re.split(', *', between_brackets)
                     elif rest.startswith(' '):
                         value = rest[1:]
                     else:
