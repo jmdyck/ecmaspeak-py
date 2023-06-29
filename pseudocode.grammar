@@ -769,7 +769,6 @@
     the Agent Events Record of {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
     the BigInt value that corresponds to {var}
-    the BigInt value that represents {EX}
     the CharSet containing all CharSetElements whose character database definition includes the property {var} with value “True”
     the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
@@ -967,7 +966,6 @@
     the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}
     the code unit whose numeric value is {EX}
     the current Realm Record
-    the difference {var} minus {var}
     the digits of the decimal representation of {var} (in order, with no leading zeroes)
     the empty sequence of characters
     the escape sequence for {var} as specified in the “Escape Sequence” column of the corresponding row
@@ -982,7 +980,6 @@
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the number of elements in {EX}
     the numeric value of {EX}
-    the product of {var} and {var}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
@@ -991,12 +988,10 @@
     the substring of {var} from index {dec_int_lit}
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
-    the sum of {var} and {var}
     the value of {SETTABLE}
     {CONSTANT_NAME}
     {DSBN}
     {EX} occurrences of {code_unit_lit}
-    {EX}, rounding down to the nearest integer, including for negative numbers
     {LITERAL}
     {LOCAL_REF}
     {NUM_EXPR}
@@ -1258,7 +1253,6 @@
     {PRODUCT}
 
 {PRODUCT} :
-    the negation of {EX}
     the quotient {FACTOR} / {FACTOR}
     {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
     {UNARY_OPERATOR}{FACTOR}
@@ -1283,9 +1277,10 @@
     {SETTABLE}
 
 {BASE} :
-    {var}
     10
     2
+    {BIGINT_LITERAL}
+    {var}
 
 {CONSTANT_NAME} :
     HoursPerDay

@@ -5918,8 +5918,9 @@ class _:
 
                 # BigInts:
 
-                (T_BigInt, '×'      , T_BigInt): T_BigInt,
+                (T_BigInt, '+'      , T_BigInt): T_BigInt,
                 (T_BigInt, '-'      , T_BigInt): T_BigInt,
+                (T_BigInt, '×'      , T_BigInt): T_BigInt,
 
                 # --------
 
@@ -5986,13 +5987,6 @@ class _:
         assert ex_t == T_TBD or ex_t == T_MathInteger_
         return (ex_t, env0)
 
-@P(r"{PRODUCT} : the negation of {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_)
-        return (T_MathReal_, env0)
-
 @P(r"{EX} : the remainder of dividing {EX} by {EX}")
 @P(r"{EX} : The remainder of dividing {EX} by {EX}")
 class _:
@@ -6010,31 +6004,21 @@ class _:
         env2 = env1.ensure_expr_is_of_type(varb, T_MathReal_)
         return (T_MathReal_, env2)
 
-@P(r"{EX} : {EX}, rounding down to the nearest integer, including for negative numbers")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_)
-        return (T_MathInteger_, env0)
-
 @P(r"{FACTOR} : {BASE}<sup>{EX}</sup>")
-class _:
-    def s_expr(expr, env0, _):
-        [base, exponent] = expr.children
-        (base_t, env1) = tc_expr(base, env0); assert env1 is env0
-        if base_t == T_MathInteger_:
-            env1 = env0.ensure_expr_is_of_type(exponent, T_MathReal_ | T_BigInt)
-        else:
-            assert 0, base_t
-        return (base_t, env1) # XXX unless exponent is negative
-
 @P(r"{NUM_EXPR} : {EX} raised to the power {EX}")
 class _:
     def s_expr(expr, env0, _):
         [a, b] = expr.children
-        env0.assert_expr_is_of_type(a, T_MathInteger_)
-        env0.assert_expr_is_of_type(b, T_MathInteger_)
-        return (T_MathInteger_, env0) # unless exponent is negative
+        (a_t, env1) = tc_expr(a, env0); assert env1 is env0
+        if a_t.is_a_subtype_of_or_equal_to(T_MathInteger_):
+            env0.assert_expr_is_of_type(b, T_MathInteger_)
+            result_t = T_MathInteger_
+        elif a_t.is_a_subtype_of_or_equal_to(T_BigInt):
+            env0.assert_expr_is_of_type(b, T_BigInt)
+            result_t = T_BigInt
+        else:
+            assert 0, a_t
+        return (result_t, env0) # unless exponent is negative
 
 @P(r"{EXPR} : the result of raising {EX} to the {EX} power")
 class _:
@@ -7685,19 +7669,16 @@ class _:
     s_tb = a_subset_of(T_BigInt)
     s_expr = s_expr_pass_down
 
+@P('{BASE} : {BIGINT_LITERAL}')
+class _:
+    s_expr = s_expr_pass_down
+
 # ----
 
 @P(r"{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}")
 class _:
     def s_expr(expr, env0, _):
         [_, _] = expr.children
-        return (T_BigInt, env0)
-
-@P(r"{EXPR} : the BigInt value that represents {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env0.assert_expr_is_of_type(ex, T_MathReal_|T_BigInt)
         return (T_BigInt, env0)
 
 @P(r"{EXPR} : the BigInt value that corresponds to {var}")
@@ -7712,16 +7693,6 @@ class _:
     def s_expr(expr, env0, _):
         [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_MathInteger_)
-        return (T_BigInt, env0)
-
-@P(r"{EX} : the sum of {var} and {var}")
-@P(r"{EX} : the product of {var} and {var}")
-@P(r"{EX} : the difference {var} minus {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [x, y] = expr.children
-        env0.assert_expr_is_of_type(x, T_BigInt)
-        env0.assert_expr_is_of_type(y, T_BigInt)
         return (T_BigInt, env0)
 
 @P(r"{EXPR} : the String value consisting of the representation of {var} using radix {var}")
