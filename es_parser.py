@@ -259,7 +259,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
             exp_rhs.append(T_u_p(rhs_item_n.groups[0]))
 
         elif rhs_item_n.kind == 'U_RANGE':
-            exp_rhs.append(T_u_r(int(rhs_item_n.groups[0],16), int(rhs_item_n.groups[1],16)))
+            exp_rhs.append(T_u_r(int(rhs_item_n.groups[0][2:],16), int(rhs_item_n.groups[1][2:],16)))
 
         elif rhs_item_n.kind == 'U_ANY':
             exp_rhs.append(T_u_r(0x0000,0x10FFFF))
@@ -320,7 +320,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
         elif rhs_item_n.kind == 'NLTH':
             exp_rhs.append(C_no_LT_here())
 
-        elif rhs_item_n.kind == 'NT_BUT_NOT':
+        elif rhs_item_n.kind == 'BUT_NOT':
 
             def convert_nt(nt_n):
                 nt_name = nt_n._nt_name
@@ -341,10 +341,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                     assert 0, nk
                 return exp_thing
 
-            (nt_n, exclusion_n) = rhs_item_n.children
-
-            rsymbol = convert_nt(nt_n)
-            exp_rhs.append(rsymbol)
+            [exclusion_n] = rhs_item_n.children
 
             b = []
             for excludable_n in exclusion_n._excludables:
@@ -1830,18 +1827,24 @@ class LexicalTIP:
                 Hex4Digits_text = prec_node.text()
                 # XXX Properly, we should invoke the MV SDO here.
                 Hex4Digits_MV = int(Hex4Digits_text, 16)
-                if constraint.c == 'the MV of |Hex4Digits| is in the inclusive range 0xD800 to 0xDBFF':
+                if constraint.c == 'the MV of |Hex4Digits| is in the inclusive interval from 0xD800 to 0xDBFF':
                     return (0xD800 <= Hex4Digits_MV <= 0xDBFF)
-                elif constraint.c == 'the MV of |Hex4Digits| is in the inclusive range 0xDC00 to 0xDFFF':
+                elif constraint.c == 'the MV of |Hex4Digits| is in the inclusive interval from 0xDC00 to 0xDFFF':
                     return (0xDC00 <= Hex4Digits_MV <= 0xDFFF)
-                elif constraint.c == 'the MV of |Hex4Digits| is not in the inclusive range 0xD800 to 0xDFFF':
+                elif constraint.c == 'the MV of |Hex4Digits| is not in the inclusive interval from 0xD800 to 0xDFFF':
                     return not (0xD800 <= Hex4Digits_MV <= 0xDFFF)
                 else:
                     assert 0, constraint.c
 
-            elif constraint.c == 'the CapturingGroupNumber of |DecimalEscape| is &le; _NcapturingParens_':
-                # We don't know what _NcapturingParens_ is yet,
-                # so we can't enforce this constraint yet.
+            elif constraint.c == 'the CapturingGroupNumber of |DecimalEscape| is &le; CountLeftCapturingParensWithin(the |Pattern| containing |DecimalEscape|)':
+                # The problem is, we're in the middle of parsing
+                # the |Pattern| containing |DecimalEscape|.
+                # In a bottom-up parser, the ParseNode for that |Pattern|
+                # doesn't even exist yet.
+                # In a top-down parser, the node would exist,
+                # but we're not done parsing the text for the |Pattern|,
+                # so CountLeftCapturingParensWithin could yield the wrong answer.
+                # So we can't enforce this constraint yet.
                 # Ignore it for now, enforce it later.
                 return True
 

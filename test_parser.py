@@ -7,7 +7,7 @@
 
 # example use:
 # test_parser.py --all && car _test_parser/{fail,early,pass,pass-explicit}_output
-# ^ takes about 3 minutes
+# ^ takes about 7 minutes
 # test_parser.py --all-dir=fail && car _test_parser/fail_output
 
 # You may need to `export PYTHONIOENCODING=utf-8` before running this script.
