@@ -2144,8 +2144,6 @@ def extract_intrinsic_info_from_p_ul_section(section):
             section.put_fact(subject, 'has-prop', S_Property(mo.group(1), {'[[Value]]': mo.group(3), **attr_string_to_dict(mo.group(4))}))
         elif mo := re.fullmatch(r'has a (\*"\w+"\*) property whose( initial)? value is (.+)\.', li_ist):
             section.put_fact(subject, 'has-prop', S_Property(mo.group(1), {'[[Value]]': mo.group(3)}))
-        elif mo := re.fullmatch(r'has a (\*"\w+"\*) property\.', li_ist):
-            section.put_fact(subject, 'has-prop', S_Property(mo.group(1), {}))
 
         elif mo := re.fullmatch(r'has properties that are indirectly inherited by all \w+ instances\.', li_ist):
             pass
@@ -2639,7 +2637,6 @@ def _(section, mo, emu_alg):
 @for_patterns(
     (r"The( initial)? value of {THIS} is {VALUE} \({H_EMU_XREF}\)\. Each _NativeError_ constructor has a distinct prototype object\."),
     (r"The( initial)? value of {THIS} is {VALUE} \(see {H_EMU_XREF}\)\. This property has the attributes {ATTRS}\."),
-    (r"This is a data property with a value of {VALUE}. This property has the attributes {ATTRS}\."),
 
     (r"The( initial)? value of the {THIS} property is {VALUE}, defined in {H_EMU_XREF}\."),
     (r"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
