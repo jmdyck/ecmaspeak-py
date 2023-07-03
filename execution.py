@@ -60,6 +60,7 @@ def detect_early_errors(pnode):
 
     # print(get_parse_tree_depth(pnode)); assert 0
 
+    global de
     de = DynamicEnvironment()
 
     # stderr("de.max_frame_stack_len:", de.max_frame_stack_len)
@@ -103,7 +104,7 @@ class DynamicEnvironment:
             sys.exit(1)
 
         func = eachd[p]
-        (var, iterable) = func(de, *each_thing.children)
+        (var, iterable) = func(*each_thing.children)
 
         assert isinstance(var, ANode)
         assert var.prod.lhs_s == '{DEFVAR}'
@@ -196,7 +197,7 @@ class DynamicEnvironment:
 
         if frame._is_tracing: stderr(frame._tracing_indentation, f"before {p}")
         func = efd[p]
-        result = func(de, *anode.children)
+        result = func(*anode.children)
         if frame._is_tracing: stderr(frame._tracing_indentation, f"after {p}, returned {result}")
 
         if expected_return is None:
@@ -257,7 +258,7 @@ class DynamicEnvironment:
         de.frame_stack.append(frame)
         if len(de.frame_stack) > de.max_frame_stack_len:
             de.max_frame_stack_len = len(de.frame_stack)
-        result = frame.run(de)
+        result = frame.run()
         rframe = de.frame_stack.pop()
         assert rframe is frame
 
@@ -286,9 +287,7 @@ class DynamicEnvironment:
             sys.exit(1)
 
         func = descd[p]
-        result = func(description, value, de)
-        # Usually, {func} doesn't involve the dynamic environment at all.
-        # But rarely, it does.
+        result = func(description, value)
         assert result in [True, False]
         return result
 
@@ -366,7 +365,7 @@ class Frame:
             assert ref_name not in frame.focus_map # otherwise it's weird
             frame.focus_map[ref_name].append(pchild)
 
-    def run(frame, de):
+    def run(frame):
         anode = frame._alg_defn.anode
         # stderr('   ', anode.source_text())
 
@@ -787,39 +786,39 @@ class ES_Value(E_Value): pass # ECMAScript specification value
 @efd.put('{COMMAND} : {IF_OTHER}')
 @efd.put('{COMMAND} : {IF_CLOSED}')
 @efd.put('{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}')
-def _(de, comm):
+def _(comm):
     de.exec(comm, None)
 
 @efd.put('{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}')
-def _(de, commands, command):
+def _(commands, command):
     de.exec(commands, None)
     if de.curr_frame().is_returning(): return
     de.exec(command, None)
 
 @efd.put('{COMMAND} : Return {EXPR}.')
 @efd.put('{SMALL_COMMAND} : return {EXPR}')
-def _(de, expr):
+def _(expr):
     de.curr_frame().start_returning(de.exec(expr, E_Value))
 
 # ==============================================================================
 
 @efd.put('{CONDITION} : {CONDITION_1}')
 @efd.put('{CONDITION_1} : {NUM_COMPARISON}')
-def _(de, subcond):
+def _(subcond):
     return de.exec(subcond, bool)
 
 @efd.put('{CONDITION} : {CONDITION_1} unless {CONDITION_1}')
 @efd.put('{CONDITION} : {CONDITION_1}, unless {CONDITION_1}')
-def _(de, conda, condb):
+def _(conda, condb):
     return de.exec(conda, bool) and not de.exec(condb, bool)
 
 @efd.put('{CONDITION} : {CONDITION_1} and {CONDITION_1}')
-def _(de, conda, condb):
+def _(conda, condb):
     return de.exec(conda, bool) and de.exec(condb, bool)
 
 @efd.put('{CONDITION} : {CONDITION_1}, or if {CONDITION_1}')
 @efd.put('{CONDITION} : {CONDITION_1} or {CONDITION_1}')
-def _(de, conda, condb):
+def _(conda, condb):
     return de.exec(conda, bool) or de.exec(condb, bool)
 
 # ==============================================================================
@@ -835,11 +834,11 @@ def _(de, conda, condb):
 @efd.put('{NUM_COMPARAND} : {FACTOR}')
 @efd.put('{NUM_COMPARAND} : {SUM}')
 @efd.put('{SETTABLE} : {var}')
-def _(de, child):
+def _(child):
     return de.exec(child, E_Value)
 
 @descd.put('{VAL_DESC} : {LITERAL}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [literal] = val_desc.children
     literal_value = de.exec(literal, E_Value)
     return same_value(value, literal_value)
@@ -904,18 +903,18 @@ class ES_NonterminalSymbol(ES_GrammarSymbol):
     name: str
 
 @efd.put('{G_SYM} : {TERMINAL}')
-def _(de, terminal):
+def _(terminal):
     return ES_TerminalSymbol.from_TERMINAL_anode(terminal)
 
 @efd.put('{G_SYM} : {nonterminal}')
-def _(de, nonterminal):
+def _(nonterminal):
     [nont_str] = nonterminal.children
     assert nont_str.startswith('|')
     assert nont_str.endswith('|')
     return ES_NonterminalSymbol(nont_str[1:-1])
 
 @descd.put('{VAL_DESC} : {nonterminal}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [nonterminal] = val_desc.children
     nt_name = nt_name_from_nonterminal_node(nonterminal)
 
@@ -927,11 +926,11 @@ def _(val_desc, value, de):
     )
 
 @efd.put('{nonterminal} : \\| [A-Za-z][A-Za-z0-9]* \\?? (\\[ .+? \\])? \\|')
-def _(de, chars):
+def _(chars):
     return ES_NonterminalSymbol(chars[1:-1])
 
 @descd.put('{VAL_DESC} : {backticked_word}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [backticked_word] = val_desc.children
     word_sans_backticks = backticked_word.source_text()[1:-1]
     assert isinstance(value, ES_GrammarSymbol)
@@ -962,7 +961,7 @@ def nt_name_from_nonterminal_node(nonterminal_node):
 class AbsentParseNode(ES_Value): pass
 
 @descd.put('{VAL_DESC} : a Parse Node')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [] = val_desc.children
     return isinstance(value, ParseNode)
 
@@ -970,7 +969,7 @@ def _(val_desc, value, de):
 # explicitly use "an instance of":
 
 @descd.put('{VAL_DESC} : an instance of {var}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [var] = val_desc.children
     gsym = de.exec(var, ES_GrammarSymbol)
 
@@ -987,14 +986,14 @@ def _(val_desc, value, de):
     return value.symbol == desired_node_symbol
 
 @descd.put('{VAL_DESC} : an instance of a nonterminal')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [] = val_desc.children
 
     assert isinstance(value, ParseNode) # or that might be part of the test
     return not value.is_terminal
 
 @descd.put('{VAL_DESC} : an instance of a production in {h_emu_xref}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [emu_xref] = val_desc.children
     emu_clause = dereference_emu_xref(emu_xref)
     assert emu_clause.element_name == 'emu-clause'
@@ -1011,7 +1010,7 @@ def _(val_desc, value, de):
 # implicitly use "an instance of": (should the spec make it explicit?)
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}')  # early_error
-def _(de, local_ref, h_emu_grammar):
+def _(local_ref, h_emu_grammar):
     pnode = de.exec(local_ref, ParseNode)
     result = (pnode.puk in h_emu_grammar._hnode.puk_set)
 
@@ -1025,7 +1024,7 @@ def _(de, local_ref, h_emu_grammar):
     return result
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}')
-def _(de, local_ref, *h_emu_grammar_):
+def _(local_ref, *h_emu_grammar_):
     pnode = de.exec(local_ref, ParseNode)
     result = any(
         pnode_unit_derives_a_node_with_puk(pnode, h_emu_grammar._hnode.puk_set)
@@ -1034,7 +1033,7 @@ def _(de, local_ref, *h_emu_grammar_):
     return result
 
 @efd.put('{CONDITION_1} : {PROD_REF} is `export` {nonterminal}')
-def _(de, prod_ref, nont):
+def _(prod_ref, nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     pnode = de.exec(prod_ref, ParseNode)
     return (
@@ -1046,7 +1045,7 @@ def _(de, prod_ref, nont):
     )
 
 @descd.put('{VAL_DESC} : the {nonterminal} {TERMINAL}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [nont, terminal] = val_desc.children
     assert nont.source_text() == '|ReservedWord|'
     terminal_gsym = ES_TerminalSymbol.from_TERMINAL_anode(terminal)
@@ -1057,12 +1056,12 @@ def _(val_desc, value, de):
 #> it represents a span of the source text that can be derived from that symbol.
 
 @efd.put('{EXPR} : the source text that was recognized as {PROD_REF}')
-def _(de, prod_ref):
+def _(prod_ref):
     node = de.exec(prod_ref, ParseNode)
     return ES_UnicodeCodePoints(node.text())
 
 @descd.put('{VAL_DESC} : an? {nonterminal}')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [nonterminal] = val_desc.children
     nt_name = nt_name_from_nonterminal_node(nonterminal)
     if nt_name == 'ReservedWord':
@@ -1100,7 +1099,7 @@ def _(val_desc, value, de):
 #> each child is a Parse Node that is an instance of the corresponding symbol.
 
 @eachd.put('{EACH_THING} : child node {DEFVAR} of this Parse Node')
-def _(de, var):
+def _(var):
     pnode = de.curr_frame()._focus_node
     # return (var, pnode.children)
     #
@@ -1125,13 +1124,13 @@ def _(de, var):
 # we can ...
 
 @efd.put('{CONDITION_1} : {var} contains a {nonterminal}')
-def _(de, var, nont):
+def _(var, nont):
     pnode = de.exec(var, ParseNode)
     nt_name = nt_name_from_nonterminal_node(nont)
     return pnode.contains_a(nt_name)
 
 @efd.put('{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}')
-def _(de, emu_grammar, pnode_var):
+def _(emu_grammar, pnode_var):
     puk_set = emu_grammar._hnode.puk_set
     pnode = de.exec(pnode_var, ParseNode)
     count = 0
@@ -1141,7 +1140,7 @@ def _(de, emu_grammar, pnode_var):
     return ES_Mathnum(count)
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same')
-def _(de, local_ref, nont, noi):
+def _(local_ref, nont, noi):
     pnode = de.exec(local_ref, ParseNode)
     nt_name = nt_name_from_nonterminal_node(nont)
     vals = set()
@@ -1153,13 +1152,13 @@ def _(de, local_ref, nont, noi):
     return False
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}')
-def _(de, local_ref, nont):
+def _(local_ref, nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     pnode = de.exec(local_ref, ParseNode)
     return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name])
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}')
-def _(de, local_ref, nonta, nontb):
+def _(local_ref, nonta, nontb):
     nt_name_a = nt_name_from_nonterminal_node(nonta)
     nt_name_b = nt_name_from_nonterminal_node(nontb)
     pnode = de.exec(local_ref, ParseNode)
@@ -1221,7 +1220,7 @@ def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_s
 #>  -- Otherwise (if the parse fails), it is an early Syntax Error.
 
 @efd.put('{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.')
-def _(de, local_ref, nont):
+def _(local_ref, nont):
     pnode = de.exec(local_ref, ParseNode)
     covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
     if covered_thing:
@@ -1231,7 +1230,7 @@ def _(de, local_ref, nont):
     return None
 
 @efd.put('{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}')
-def _(de, nont, local_ref):
+def _(nont, local_ref):
     pnode = de.exec(local_ref, ParseNode)
     covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
     if covered_thing is None:
@@ -1304,24 +1303,24 @@ class ReferenceToNonexistentThing(BaseException):
 
 #> A step that begins with "Assert:" asserts an invariant condition of its algorithm.
 @efd.put('{COMMAND} : Assert: {CONDITION}.')
-def _(de, condition):
+def _(condition):
     cond_value = de.exec(condition, bool)
     assert cond_value is True
 
 #> Algorithm steps may declare named aliases for any value ...
 @efd.put('{var} : \\b _ [A-Za-z][A-Za-z0-9]* _ \\b')
-def _(de, varname):
+def _(varname):
     return de.curr_frame().get_value_referenced_by_var(varname)
 
 #> ... using the form "Let x be someValue".
 @efd.put('{COMMAND} : Let {DEFVAR} be {EXPR}.')
 @efd.put('{SMALL_COMMAND} : let {DEFVAR} be {EXPR}')
-def _(de, var, expr):
+def _(var, expr):
     value = de.exec(expr, E_Value)
     de.curr_frame().let_var_be_value(var, value)
 
 @efd.put('{EXPR} : {EX}, where {DEFVAR} is {EX}')
-def _(de, exa, var, exb):
+def _(exa, var, exb):
     value = de.exec(exb, E_Value)
     de.curr_frame().start_contour()
     de.curr_frame().let_var_be_value(var, value)
@@ -1331,7 +1330,7 @@ def _(de, exa, var, exb):
 
 #> Aliases may be modified using the form "Set x to someOtherValue".
 @efd.put('{COMMAND} : Set {SETTABLE} to {EXPR}.')
-def _(de, settable, expr):
+def _(settable, expr):
     value = de.exec(expr, E_Value)
     de.curr_frame().set_settable_to_value(settable, value)
 
@@ -1339,7 +1338,7 @@ def _(de, settable, expr):
 
 @efd.put('{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.')
 @efd.put('{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
-def _(de, cond, cmdt, cmdf):
+def _(cond, cmdt, cmdf):
     if de.exec(cond, bool):
         de.exec(cmdt, None)
     else:
@@ -1347,7 +1346,7 @@ def _(de, cond, cmdt, cmdf):
 
 @efd.put('{IF_OTHER} : {IF_OPEN}{IF_TAIL}')
 @efd.put('{IF_TAIL} : {_NL_N} {ELSEIF_PART}{IF_TAIL}')
-def _(de, condition_and_commands, if_tail):
+def _(condition_and_commands, if_tail):
     [condition, commands] = condition_and_commands.children
     cond_value = de.exec(condition, bool)
     if cond_value:
@@ -1356,25 +1355,25 @@ def _(de, condition_and_commands, if_tail):
         de.exec(if_tail, None)
 
 @efd.put('{IF_TAIL} : {EPSILON}')
-def _(de):
+def _():
     pass
 
 @efd.put('{IF_TAIL} : {_NL_N} {ELSE_PART}')
 @efd.put('{ELSE_PART} : Otherwise, {SMALL_COMMAND}.')
 @efd.put('{ELSE_PART} : Else, {SMALL_COMMAND}.')
 @efd.put('{ELSE_PART} : Else,{IND_COMMANDS}')
-def _(de, child):
+def _(child):
     de.exec(child, None)
 
 @efd.put('{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}')
-def _(de, exa, cond, exb):
+def _(exa, cond, exb):
     ex = exa if de.exec(cond, bool) else exb
     return de.exec(ex, E_Value)
 
 # Loops aren't defined, but this is presumably where they would be.
 
 @efd.put('{COMMAND} : For each {EACH_THING}, do{IND_COMMANDS}')
-def _(de, each_thing, commands):
+def _(each_thing, commands):
     (loop_var, iterable) = de.each(each_thing)
     for value in iterable:
         de.curr_frame().start_contour()
@@ -1384,7 +1383,7 @@ def _(de, each_thing, commands):
         if de.curr_frame().is_returning(): return
 
 @eachd.put('{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}')
-def _(de, item_nature, var, ex):
+def _(item_nature, var, ex):
     item_nature_s = item_nature.source_text()
     collection = de.exec(ex, E_Value)
     return (var, collection.each(item_nature_s))
@@ -1396,11 +1395,11 @@ def _(de, item_nature, var, ex):
 @efd.put('{EX} : {PP_NAMED_OPERATION_INVOCATION}')
 @efd.put('{PP_NAMED_OPERATION_INVOCATION} : {NAMED_OPERATION_INVOCATION}')
 @efd.put('{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}')
-def _(de, child):
+def _(child):
     return de.exec(child, E_Value)
 
 @efd.put('{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})')
-def _(de, opn_before_paren, exlist_opt):
+def _(opn_before_paren, exlist_opt):
     opr = opn_before_paren.prod.rhs_s
     if opr == '{SIMPLE_OPERATION_NAME}':
         op_name = opn_before_paren.source_text()
@@ -1409,29 +1408,29 @@ def _(de, opn_before_paren, exlist_opt):
         assert NYI
     #
     arg_values = de.exec(exlist_opt, list)
-    return apply_op_to_arg_values(de, op_name, arg_values)
+    return apply_op_to_arg_values(op_name, arg_values)
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}') # looks like an SDO invocation, but it isn't
-def _(de, cap_word, arg):
+def _(cap_word, arg):
     [op_name] = cap_word.children
     arg_value = de.exec(arg, E_Value)
-    return apply_op_to_arg_values(de, op_name, [arg_value])
+    return apply_op_to_arg_values(op_name, [arg_value])
 
 @efd.put('{EXLIST_OPT} : {EXLIST}')
-def _(de, exlist):
+def _(exlist):
     return de.exec(exlist, list)
 
 @efd.put('{EXLIST} : {EX}')
-def _(de, ex):
+def _(ex):
     return [ de.exec(ex, E_Value) ]
 
 @efd.put('{EXLIST} : {EXLIST}, {EX}')
-def _(de, exlist, ex):
+def _(exlist, ex):
     return de.exec(exlist, list) + [de.exec(ex, E_Value)]
 
 # ----------
 
-def apply_op_to_arg_values(de, op_name, arg_values):
+def apply_op_to_arg_values(op_name, arg_values):
     if isinstance(op_name, str):
 
         alg_info = spec.alg_info_['op'][op_name]
@@ -1443,7 +1442,7 @@ def apply_op_to_arg_values(de, op_name, arg_values):
             # ensure_alg('op: singular', 'floor')
             # but no definition(s), so we arrive here.
             func = predefined_operations[op_name]
-            return func(de, *arg_values)
+            return func(*arg_values)
 
         elif len(alg_defns) == 1:
             [alg_defn] = alg_defns
@@ -1480,12 +1479,12 @@ def value_matches_discriminator(value, discriminator):
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}')
 @efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}')
-def _(de, cap_word, local_ref):
-    return execute_sdo_invocation(de, cap_word, local_ref, [])
+def _(cap_word, local_ref):
+    return execute_sdo_invocation(cap_word, local_ref, [])
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}')
-def _(de, cap_word, local_ref, with_args):
-    return execute_sdo_invocation(de, cap_word, local_ref, flatten_with_args(with_args))
+def _(cap_word, local_ref, with_args):
+    return execute_sdo_invocation(cap_word, local_ref, flatten_with_args(with_args))
 
 def flatten_with_args(with_args):
     p = str(with_args.prod)
@@ -1502,7 +1501,7 @@ def flatten_with_args(with_args):
     else:
         assert NYI, p
 
-def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
+def execute_sdo_invocation(sdo_name_arg, focus_expr, arg_exprs):
     if isinstance(focus_expr, ParseNode):
         focus_node = focus_expr
     else:
@@ -1595,17 +1594,17 @@ def execute_sdo_invocation(de, sdo_name_arg, focus_expr, arg_exprs):
 
 @efd.put('{PROD_REF} : this production')
 @efd.put('{PROD_REF} : this phrase')
-def _(de):
+def _():
     return de.curr_frame()._focus_node
 
 @efd.put('{PROD_REF} : this {nonterminal}')
-def _(de, nont):
+def _(nont):
     fn = de.curr_frame()._focus_node
     assert fn.symbol == nt_name_from_nonterminal_node(nont)
     return fn
 
 @efd.put('{PROD_REF} : the {nonterminal} containing {LOCAL_REF}')
-def _(de, container_nont, local_ref):
+def _(container_nont, local_ref):
     container_nt = nt_name_from_nonterminal_node(container_nont)
     pnode = de.exec(local_ref, ParseNode)
     containers = [
@@ -1617,7 +1616,7 @@ def _(de, container_nont, local_ref):
     return containers[0]
 
 @efd.put('{PROD_REF} : {nonterminal}')
-def _(de, nont):
+def _(nont):
     if de.curr_frame().has_a_focus_node():
         nt_name = nt_name_from_nonterminal_node(nont)
         node = de.curr_frame().resolve_focus_reference(None, nt_name)
@@ -1628,12 +1627,12 @@ def _(de, nont):
         return de.exec(nont, ES_NonterminalSymbol)
 
 @efd.put('{PROD_REF} : the {nonterminal}')
-def _(de, nont):
+def _(nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     return de.curr_frame().resolve_focus_reference(None, nt_name)
 
 @efd.put('{PROD_REF} : the {ORDINAL} {nonterminal}')
-def _(de, ordinal, nont):
+def _(ordinal, nont):
     ordinal_str = ordinal.source_text()
     ordinal_num = {
         'first' : 1,
@@ -1645,34 +1644,34 @@ def _(de, ordinal, nont):
     return de.curr_frame().resolve_focus_reference(ordinal_num, nt_name)
 
 @efd.put('{PROD_REF} : the derived {nonterminal}')
-def _(de, nont):
+def _(nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     return de.curr_frame().resolve_focus_reference('derived', nt_name)
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is present')
-def _(de, prod_ref):
+def _(prod_ref):
     pnode = de.exec(prod_ref, 'ParseNodeOrAbsent')
     return isinstance(pnode, ParseNode)
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not present')
-def _(de, prod_ref):
+def _(prod_ref):
     pnode = de.exec(prod_ref, 'ParseNodeOrAbsent')
     return isinstance(pnode, AbsentParseNode)
 
 @efd.put('{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter')
-def _(de, prod_ref, cap_word):
+def _(prod_ref, cap_word):
     [cap_word_str] = cap_word.children
     pnode = de.exec(prod_ref, ParseNode)
     return (f"+{cap_word_str}" in pnode.production.og_params_setting)
 
 @efd.put('{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set')
-def _(de):
+def _():
     cap_word_str = 'Tagged'
     pnode = de.curr_frame()._focus_node
     return (f"~{cap_word_str}" in pnode.production.og_params_setting)
 
 @efd.put('{CONDITION_1} : the goal symbol of the syntactic grammar is {nonterminal}')
-def _(de, nont):
+def _(nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     assert nt_name in ['Script', 'Module']
 
@@ -1690,7 +1689,7 @@ def _(de, nont):
     return (pnode.symbol == nt_name)
 
 @efd.put('{CONDITION_1} : any source text is matched by this production')
-def _(de):
+def _():
     return True
 
 # ------------------------------------------------------------------------------
@@ -1708,22 +1707,22 @@ class EarlyError:
 @efd.put('{EE_RULE} : It is a Syntax Error if {CONDITION}.')
 @efd.put('{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.')
 @efd.put('{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.')
-def _(de, cond, *_):
+def _(cond, *_):
     if de.exec(cond, bool):
         de.it_is_a_syntax_error(cond.parent)
 
 @efd.put('{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.')
-def _(de, cond1, cond2):
+def _(cond1, cond2):
     if de.exec(cond1, bool) and de.exec(cond2, bool):
         de.it_is_a_syntax_error(cond2.parent)
 
 @efd.put('{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.')
-def _(de, conda, condb):
+def _(conda, condb):
     if not de.exec(condb, bool) and de.exec(conda, bool):
         de.it_is_a_syntax_error(conda.parent)
 
 @efd.put('{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}')
-def _(de, cond, bool_lit, h_emu_alg):
+def _(cond, bool_lit, h_emu_alg):
     if de.exec(cond, bool):
         bool_val = de.exec(bool_lit, EL_Boolean)
         emu_alg_body = h_emu_alg._hnode._syntax_tree
@@ -1737,7 +1736,7 @@ def _(de, cond, bool_lit, h_emu_alg):
             de.it_is_a_syntax_error(cond.parent)
 
 @efd.put('{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.')
-def _(de, cond, emu_grammar):
+def _(cond, emu_grammar):
     # PR:
     # This is weird.
     # It's saying that I need to take the EE rules for production A
@@ -1761,7 +1760,7 @@ def _(de, cond, emu_grammar):
             de.execute_alg_defn(ee_rule, focus_node=de.curr_frame()._focus_node)
 
 @efd.put('{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>')
-def _(de, local_ref1, h_emu_grammar, local_ref2, local_ref3):
+def _(local_ref1, h_emu_grammar, local_ref2, local_ref3):
     assert len(h_emu_grammar._hnode.puk_set) == 1
     [puk] = list(h_emu_grammar._hnode.puk_set)
     pnode = de.exec(local_ref1, ParseNode)
@@ -1773,7 +1772,7 @@ def _(de, local_ref1, h_emu_grammar, local_ref2, local_ref3):
     # "these rules"?
 
 @efd.put('{EE_RULE} : For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.')
-def _(de, nont, var, noi, cond):
+def _(nont, var, noi, cond):
     nt_name = nt_name_from_nonterminal_node(nont)
     L = de.exec(noi, ES_List)
     for pnode in L.elements():
@@ -1841,21 +1840,21 @@ class ES_Mathnum(ES_Value):
         return ES_Mathnum(self.val % other.val)
 
 @efd.put('{dec_int_lit} : \\b [0-9]+ (?![0-9A-Za-z])')
-def _(de, chars):
+def _(chars):
     return ES_Mathnum(int(chars, 10))
 
 @efd.put('{hex_int_lit} : \\b 0x [0-9A-F]{2,6} \\b')
-def _(de, chars):
+def _(chars):
     return ES_Mathnum(int(chars, 16))
 
 @efd.put('{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}')
-def _(de, randA, ratorAB, randB):
+def _(randA, ratorAB, randB):
     a = de.exec(randA, ES_Mathnum)
     b = de.exec(randB, ES_Mathnum)
     return ES_Mathnum.compare(a, ratorAB, b)
 
 @efd.put('{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}')
-def _(de, randA, ratorAB, randB, ratorBC, randC):
+def _(randA, ratorAB, randB, ratorBC, randC):
     a = de.exec(randA, ES_Mathnum)
     b = de.exec(randB, ES_Mathnum)
     c = de.exec(randC, ES_Mathnum)
@@ -1864,7 +1863,7 @@ def _(de, randA, ratorAB, randB, ratorBC, randC):
 @efd.put('{SUM} : {SUM} {SUM_OPERATOR} {TERM}')
 @efd.put('{SUM} : {TERM} {SUM_OPERATOR} {TERM}')
 @efd.put('{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}')
-def _(de, randA, rator, randB):
+def _(randA, rator, randB):
     op = rator.source_text()
     a = de.exec(randA, ES_Mathnum)
     b = de.exec(randB, ES_Mathnum)
@@ -1887,7 +1886,7 @@ def _(de, randA, rator, randB):
 #> and is defined in <emu-xref href="#sec-ecmascript-language-types-number-type"></emu-xref>.
 
 @predefined_operations.put('\U0001d53d')
-def _(de, mathnum):
+def _(mathnum):
     return the_Number_value_for(mathnum)
 
 #> A conversion from an integer _x_ to a BigInt
@@ -1910,7 +1909,7 @@ def _(de, mathnum):
 #> The mathematical function floor(_x_) produces the largest integer
 #> (closest to +&infin;) that is not larger than _x_.
 @predefined_operations.put('floor')
-def _(de, mathnum):
+def _(mathnum):
     assert isinstance(mathnum, ES_Mathnum)
     return ES_Mathnum(math.floor(mathnum.val))
 
@@ -1920,17 +1919,17 @@ def _(de, mathnum):
 #> would be an editorial error in this specification.
 
 @efd.put('{FACTOR} : {BASE}<sup>{EX}</sup>')
-def _(de, base_expr, exponent_expr):
+def _(base_expr, exponent_expr):
     base_val = de.exec(base_expr, ES_Mathnum)
     exponent_val = de.exec(exponent_expr, ES_Mathnum)
     return ES_Mathnum(base_val.val ** exponent_val.val)
 
 @efd.put('{BASE} : 2')
-def _(de):
+def _():
     return ES_Mathnum(2)
 
 @efd.put('{BASE} : 10')
-def _(de):
+def _():
     return ES_Mathnum(10)
 
 @efd.put('{EX} : {NUM_EXPR}')
@@ -1941,20 +1940,20 @@ def _(de):
 @efd.put('{NUM_EXPR} : {SUM}')
 @efd.put('{TERM} : {FACTOR}')
 @efd.put('{TERM} : {PRODUCT}')
-def _(de, child):
+def _(child):
     return de.exec(child, (ES_Mathnum, EL_Number)) # , EL_BigInt))
 
 @efd.put('{LITERAL} : {MATH_LITERAL}')
 @efd.put('{FACTOR} : {MATH_LITERAL}')
 @efd.put('{MATH_LITERAL} : {dec_int_lit}')
 @efd.put('{MATH_LITERAL} : {hex_int_lit}')
-def _(de, child):
+def _(child):
     return de.exec(child, ES_Mathnum)
 
 # decimal representation
 
 @efd.put('{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits')
-def _(de, var):
+def _(var):
     mathnum = de.exec(var, ES_Mathnum)
     return number_of_significant_digits_in_decimal_representation_of(mathnum) <= 20
 
@@ -1975,7 +1974,7 @@ class ES_Adhoc(ES_Value):
     chars: str
 
 @efd.put('{tilded_word} : ~ [-A-Za-z0-9+]+ ~')
-def _(de, chars):
+def _(chars):
     return ES_Adhoc(chars)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1990,17 +1989,17 @@ def same_value(a, b):
         return False
 
 @efd.put('{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}')
-def _(de, ex, value_description):
+def _(ex, value_description):
     ex_val = de.exec(ex, E_Value)
     return de.value_matches_description(ex_val, value_description)
 
 @efd.put('{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}')
-def _(de, ex, value_description):
+def _(ex, value_description):
     ex_val = de.exec(ex, E_Value)
     return not de.value_matches_description(ex_val, value_description)
 
 @descd.put('{VALUE_DESCRIPTION} : {VAL_DESC}')
-def _(value_description, value, de):
+def _(value_description, value):
     [val_desc] = value_description.children
     return de.value_matches_description(value, val_desc)
 
@@ -2008,7 +2007,7 @@ def _(value_description, value, de):
 @descd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @descd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
 @descd.put('{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}')
-def _(value_description, value, de):
+def _(value_description, value):
     val_descs = value_description.children
     return any(
         de.value_matches_description(value, val_desc)
@@ -2026,7 +2025,7 @@ class EL_Undefined(EL_Value):
     pass
 
 @efd.put('{LITERAL} : *undefined*')
-def _(de):
+def _():
     return EL_Undefined()
 
 # ------------------------------------------------------------------------------
@@ -2037,7 +2036,7 @@ class EL_Null(EL_Value):
     pass
 
 @efd.put('{LITERAL} : *null*')
-def _(de):
+def _():
     return EL_Null()
 
 # ------------------------------------------------------------------------------
@@ -2048,11 +2047,11 @@ class EL_Boolean(EL_Value):
     b: bool
 
 @efd.put('{BOOL_LITERAL} : *true*')
-def _(de):
+def _():
     return EL_Boolean(True)
 
 @efd.put('{BOOL_LITERAL} : *false*')
-def _(de):
+def _():
     return EL_Boolean(False)
 
 # ------------------------------------------------------------------------------
@@ -2067,16 +2066,16 @@ class ES_CodeUnit(E_Value):
         object.__setattr__(self, 'numeric_value', numeric_value)
 
 @efd.put('{EX} : the code unit whose numeric value is {EX}')
-def _(de, ex):
+def _(ex):
     m = de.exec(ex, ES_Mathnum)
     return ES_CodeUnit(m.val)
 
 @efd.put('{LITERAL} : {code_unit_lit}')
-def _(de, code_unit_lit):
+def _(code_unit_lit):
     return de.exec(code_unit_lit, ES_CodeUnit)
 
 @efd.put('{code_unit_lit} : the \\x20 code \\x20 unit \\x20 0x [0-9A-F]{4} \\x20 \\( [A-Z -]+ \\)')
-def _(de, chars):
+def _(chars):
     mo = re.fullmatch(r'the code unit 0x([0-9A-F]{4}) \([A-Z -]+\)', chars)
     assert mo
     cu_hex = mo.group(1)
@@ -2084,7 +2083,7 @@ def _(de, chars):
     return ES_CodeUnit(cu_int)
 
 @efd.put('{EX} : the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}')
-def _(de, prod_ref, emu_xref):
+def _(prod_ref, emu_xref):
     pnode = de.exec(prod_ref, ParseNode)
     assert pnode.symbol == 'SingleEscapeCharacter'
     pnode_text = pnode.text()
@@ -2138,16 +2137,16 @@ class EL_String(EL_Value):
         return f"EL_String({chars!r})"
 
 @descd.put('{VAL_DESC} : a String')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [] = val_desc.children
     return isinstance(value, EL_String)
 
 @efd.put('{STR_LITERAL} : the empty String')
-def _(de):
+def _():
     return EL_String([])
 
 @efd.put('{EXPR} : the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements')
-def _(de, var):
+def _(var):
     string = de.exec(var, EL_String)
     # This breaks encapsulation on EL_String *and* ES_UnicodeCodePoints:
     text = ''.join(
@@ -2162,7 +2161,7 @@ def _(de, var):
 #> is the concatenation of the code units (in order)
 #> of each of the arguments (in order).
 @efd.put('{EXPR} : the string-concatenation of {EX} and {EX}')
-def _(de, ex1, ex2):
+def _(ex1, ex2):
     val1 = de.exec(ex1, (EL_String, ES_CodeUnit))
     val2 = de.exec(ex2, (EL_String, ES_CodeUnit))
     code_units1 = [val1] if isinstance(val1, ES_CodeUnit) else val1.code_units
@@ -2170,18 +2169,18 @@ def _(de, ex1, ex2):
     return EL_String(code_units1 + code_units2)
 
 @efd.put('{EXPR} : the String value consisting of {EX}')
-def _(de, ex):
+def _(ex):
     val = de.exec(ex, ES_CodeUnit)
     return EL_String([val])
 
 @efd.put('{starred_str} : \\* " ( [^"*] | \\\\ \\* )* " \\*')
-def _(de, chars):
+def _(chars):
     inner_chars = chars[2:-2]
     true_chars = inner_chars.replace('\\*', '*')
     return EL_String.from_Python_string(true_chars)
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is the StringValue of any |ReservedWord| except for `yield` or `await`')
-def _(de, noi):
+def _(noi):
     st = de.exec(noi, EL_String)
 
     reserved_word_set = set()
@@ -2200,7 +2199,7 @@ def _(de, noi):
 
 @efd.put('{LITERAL} : {STR_LITERAL}')
 @efd.put('{STR_LITERAL} : {starred_str}')
-def _(de, child):
+def _(child):
     return de.exec(child, EL_String)
 
 # ------------------------------------------------------------------------------
@@ -2211,7 +2210,7 @@ class EL_Symbol(EL_Value):
     description: EL_Undefined | EL_String
 
 @descd.put('{VAL_DESC} : a Symbol')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [] = val_desc.children
     return isinstance(value, EL_Symbol)
 
@@ -2242,21 +2241,21 @@ class EL_Number(EL_Value):
         object.__setattr__(self, 'val', val)
 
 @descd.put('{VAL_DESC} : a Number')
-def _(val_desc, value, de):
+def _(val_desc, value):
     [] = val_desc.children
     return isinstance(value, EL_Number)
 
 @efd.put('{starred_nan_lit} : \\* NaN \\*')
-def _(de, chars):
+def _(chars):
     return EL_Number('not a number')
 
 @efd.put('{NUMBER_LITERAL} : {starred_nan_lit}')
-def _(de, child):
+def _(child):
     return de.exec(child, EL_Number)
 
 @efd.put('{LITERAL} : {NUMBER_LITERAL}')
 @efd.put('{FACTOR} : {NUMBER_LITERAL}')
-def _(de, child):
+def _(child):
     return de.exec(child, EL_Number)
 
 #> In this specification, the phrase "the Number value for _x_"
@@ -2383,34 +2382,34 @@ class ES_List(ES_Value):
 
 @efd.put('{EXPR} : a new empty List')
 @efd.put('{EX} : « »')
-def _(de):
+def _():
     return ES_List([])
 
 @efd.put('{EX} : « {EXLIST} »')
-def _(de, exlist):
+def _(exlist):
     values = de.exec(exlist, list)
     return ES_List(values)
 
 @efd.put('{EXPR} : a List whose sole element is {EX}')
-def _(de, ex):
+def _(ex):
     value = de.exec(ex, E_Value)
     return ES_List([value])
 
 @efd.put('{EXPR} : a copy of {EX}')
-def _(de, var):
+def _(var):
     # It could, of course, be something other than a List,
     # but in practice, Lists are the only things we copy?
     L = de.exec(var, ES_List)
     return L.copy()
 
 @efd.put('{EXPR} : the list-concatenation of {EX} and {EX}')
-def _(de, vara, varb):
+def _(vara, varb):
     lista = de.exec(vara, ES_List)
     listb = de.exec(varb, ES_List)
     return ES_List.concat(lista, listb)
 
 @efd.put('{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}')
-def _(de, vara, varb, varc):
+def _(vara, varb, varc):
     lista = de.exec(vara, ES_List)
     listb = de.exec(varb, ES_List)
     listc = de.exec(varc, ES_List)
@@ -2419,7 +2418,7 @@ def _(de, vara, varb, varc):
 # modify a List:
 
 @efd.put('{SMALL_COMMAND} : append {EX} to {SETTABLE}')
-def _(de, item_ex, list_var):
+def _(item_ex, list_var):
     v = de.exec(item_ex, E_Value)
     L = de.exec(list_var, ES_List)
     L.append_one(v)
@@ -2427,19 +2426,19 @@ def _(de, item_ex, list_var):
 # ask questions about a List (or Lists):
 
 @efd.put('{CONDITION_1} : {EX} is not empty')
-def _(de, ex):
+def _(ex):
     L = de.exec(ex, ES_List)
     return not L.is_empty()
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries')
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements')
-def _(de, noi):
+def _(noi):
     L = de.exec(noi, ES_List)
     return L.contains_any_duplicates()
 
 @efd.put('{CONDITION_1} : {EX} contains {EX}')
 @efd.put('{CONDITION_1} : {EX} does not contain {EX}')
-def _(de, container_ex, element_ex):
+def _(container_ex, element_ex):
     container = de.exec(container_ex, (ES_List, ES_UnicodeCodePoints))
     e = de.exec(element_ex, E_Value)
     if isinstance(container, ES_List):
@@ -2457,7 +2456,7 @@ def _(de, container_ex, element_ex):
         return contains_it
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s')
-def _(de, noi, nont):
+def _(noi, nont):
     L = de.exec(noi, ES_List)
     nt_name = nt_name_from_nonterminal_node(nont)
     return L.contains_an_element_satisfying(
@@ -2465,25 +2464,25 @@ def _(de, noi, nont):
     )
 
 @efd.put('{CONDITION_1} : {var} does not include the element {LITERAL}')
-def _(de, var, lit):
+def _(var, lit):
     L = de.exec(var, ES_List)
     v = de.exec(lit, E_Value)
     return not L.contains(v)
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}')
-def _(de, noi, ss):
+def _(noi, ss):
     L = de.exec(noi, ES_List)
     v = de.exec(ss, E_Value)
     return L.number_of_occurrences_of(v) > 1
 
 @efd.put('{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}')
-def _(de, noi1, noi2):
+def _(noi1, noi2):
     L1 = de.exec(noi1, ES_List)
     L2 = de.exec(noi2, ES_List)
     return L1.has_any_element_in_common_with(L2)
 
 @efd.put('{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}')
-def _(de, noi1, noi2, noi3):
+def _(noi1, noi2, noi3):
     L1 = de.exec(noi1, ES_List)
     L2 = de.exec(noi2, ES_List)
     L3 = de.exec(noi3, ES_List)
@@ -2493,7 +2492,7 @@ def _(de, noi1, noi2, noi3):
     )
 
 @efd.put('{NUM_COMPARAND} : the number of elements in the result of {NAMED_OPERATION_INVOCATION}')
-def _(de, noi):
+def _(noi):
     noi_val = de.exec(noi, ES_List)
     return noi_val.number_of_elements()
 
@@ -2510,7 +2509,7 @@ class ES_CompletionRecord(ES_Record):
     pass
 
 @efd.put('{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
-def _(de, noi):
+def _(noi):
     value = de.exec(noi, E_Value)
     if isinstance(value, ES_CompletionRecord):
         assert not value.is_abrupt()
@@ -2529,19 +2528,19 @@ class ES_UnicodeCodePoint(ES_Value):
         object.__setattr__(self, 'scalar', scalar)
 
 @efd.put('{EX} : the code point matched by {PROD_REF}')
-def _(de, prod_ref):
+def _(prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     t = pnode.text()
     assert len(t) == 1
     return ES_UnicodeCodePoint(ord(t))
 
 @efd.put('{EXPR} : the code point whose numeric value is {EX}')
-def _(de, noi):
+def _(noi):
     mathnum = de.exec(noi, ES_Mathnum)
     return ES_UnicodeCodePoint(mathnum.val)
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production')
-def _(de, noi, nont):
+def _(noi, nont):
     code_point = de.exec(noi, ES_UnicodeCodePoint)
     nt_name = nt_name_from_nonterminal_node(nont)
     return not pychar_matches_lexical_nonterminal(chr(code_point.scalar), nt_name)
@@ -2711,27 +2710,27 @@ class ES_UnicodeCodePoints(ES_Value):
         return (len(set(list(self.text))) < len(self.text))
 
 @efd.put('{EX} : {backticked_word}')
-def _(de, backticked_word):
+def _(backticked_word):
     return de.exec(backticked_word, ES_UnicodeCodePoints)
 
 @efd.put('{backticked_word} : ` \\w+ `')
-def _(de, chars):
+def _(chars):
     word_chars = chars[1:-1]
     return ES_UnicodeCodePoints(word_chars)
 
 @efd.put('{EX} : the number of code points in {PROD_REF}') # SPEC BUG: the number of code points in the source text matched by {PROD_REF}
-def _(de, prod_ref):
+def _(prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     return ES_Mathnum(len(pnode.text()))
 
 @efd.put('{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}')
-def _(de, prod_ref, nont):
+def _(prod_ref, nont):
     pnode = de.exec(prod_ref, ParseNode)
     assert nont.source_text() == '|NumericLiteralSeparator|'
     return ES_Mathnum(len(pnode.text().replace('_', '')))
 
 @efd.put('{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}')
-def _(de, var, *backticked_words):
+def _(var, *backticked_words):
     code_points = de.exec(var, ES_UnicodeCodePoints)
     allowed_code_points = []
     for btw in backticked_words:
@@ -2742,7 +2741,7 @@ def _(de, var, *backticked_words):
     return code_points.contains_any_code_points_other_than(allowed_code_points)
 
 @efd.put('{CONDITION_1} : {var} contains any code point more than once')
-def _(de, var):
+def _(var):
     code_points = de.exec(var, ES_UnicodeCodePoints)
     return code_points.contains_the_same_code_point_more_than_once()
 
@@ -2751,22 +2750,22 @@ def _(de, var):
 # 8.4.1 Static Semantics: Contains
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}') # spec bug: should say "is *true*"
-def _(de, local_ref, g_sym):
-    boolean_value = execute_sdo_invocation(de, 'Contains', local_ref, [g_sym])
+def _(local_ref, g_sym):
+    boolean_value = execute_sdo_invocation('Contains', local_ref, [g_sym])
     assert isinstance(boolean_value, EL_Boolean)
     return boolean_value.b
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}')
 @efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}')
-def _(de, local_ref, sym):
-    return execute_sdo_invocation(de, 'Contains', local_ref, [sym])
+def _(local_ref, sym):
+    return execute_sdo_invocation('Contains', local_ref, [sym])
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
 
 @efd.put('{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.')
-def _(de, subject_var, goal_var):
+def _(subject_var, goal_var):
     subject = de.exec(subject_var, ES_UnicodeCodePoints)
     goal_sym = de.exec(goal_var, ES_NonterminalSymbol)
     frame = de.curr_frame()
@@ -2779,7 +2778,7 @@ def _(de, subject_var, goal_var):
     frame.kludge_errors = de.get_early_errors_in(frame.kludge_node)
 
 @efd.put('{CONDITION_1} : the parse succeeded and no early errors were found')
-def _(de):
+def _():
     frame = de.curr_frame()
     return (
         frame.kludge_node is not None
@@ -2788,7 +2787,7 @@ def _(de):
     )
 
 @efd.put('{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse')
-def _(de, var):
+def _(var):
     gsym = de.exec(var, ES_GrammarSymbol)
     frame = de.curr_frame()
     assert (
@@ -2799,7 +2798,7 @@ def _(de, var):
     return frame.kludge_node
 
 @efd.put('{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present')
-def _(de, error_type):
+def _(error_type):
     assert error_type.source_text() == '*SyntaxError*'
     frame = de.curr_frame()
     assert frame.kludge_errors
@@ -2815,7 +2814,7 @@ def _(de, error_type):
 # 11.2 Types of Source Code
 
 @efd.put('{CONDITION_1} : the source text containing {G_SYM} is eval code that is being processed by a direct eval')
-def _(de, gsym):
+def _(gsym):
     return False # BUG
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2825,12 +2824,12 @@ def _(de, gsym):
 @efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code')
 @efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code')
 @efd.put('{CONDITION_1} : {LOCAL_REF} is contained in strict mode code')
-def _(de, local_ref):
+def _(local_ref):
     pnode = de.exec(local_ref, ParseNode)
     return is_strict(pnode)
 
 @efd.put('{CONDITION_1} : the Directive Prologue of {PROD_REF} contains a Use Strict Directive')
-def _(de, prod_ref):
+def _(prod_ref):
     pnode = de.exec(prod_ref, ParseNode)
     return begins_with_a_DP_that_contains_a_USD(pnode)
 
@@ -3020,7 +3019,7 @@ def each_item_in_left_recursive_list(list_node):
 # 13.2.5.1 Static Semantics: Early Errors
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}')
-def _(de, noi, ss, h_emu_grammar):
+def _(noi, ss, h_emu_grammar):
     L = de.exec(noi, ES_List)
     v = de.exec(ss, E_Value)
     if L.number_of_occurrences_of(v) <= 1: return False
@@ -3052,7 +3051,7 @@ def _(de, noi, ss, h_emu_grammar):
     n = 0
     for PD in each_PD_in_PDL(PDL):
         assert PD.symbol == 'PropertyDefinition'
-        propName = execute_sdo_invocation(de, 'PropName', PD, [])
+        propName = execute_sdo_invocation('PropName', PD, [])
         if same_value(propName, v):
             # This is one of the duplicate entries.
             # Was it obtained from a production of the given form?
@@ -3072,7 +3071,7 @@ def _(de, noi, ss, h_emu_grammar):
 # 25.5.1 JSON.parse
 
 @efd.put('{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})')
-def _(de, prod_ref, nont, step_xref, alg_xref):
+def _(prod_ref, nont, step_xref, alg_xref):
     node = de.exec(prod_ref, ParseNode)
     container_nt = nt_name_from_nonterminal_node(nont)
     assert container_nt == 'Script'
