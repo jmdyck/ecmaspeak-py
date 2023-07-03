@@ -17,6 +17,7 @@ import shared
 from shared import spec, stderr, print_tree
 from HTML import HNode
 from Pseudocode_Parser import ANode
+from E_Value import E_Value, EL_Value, ES_Value
 from es_parser import ParseNode, ParseError, T_lit, parse
 from DecoratedFuncDict import DecoratedFuncDict
 import unicode_contributory_properties as ucp
@@ -774,11 +775,6 @@ def report_unused_things():
     dfd_report_unused_entries('descd', descd)
     dfd_report_unused_entries('eachd', eachd)
     dfd_report_unused_entries('predefined_operations', predefined_operations)
-
-# Have to declare these up here, otherwise there would be forward references.
-class E_Value: pass # ECMAScript value
-class EL_Value(E_Value): pass # ECMAScript language value
-class ES_Value(E_Value): pass # ECMAScript specification value
 
 # ==============================================================================
 
