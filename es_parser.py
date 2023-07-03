@@ -15,6 +15,7 @@ from mynamedtuple import mynamedtuple
 import shared
 from shared import spec, decode_entities, print_tree, stderr
 from emu_grammars import GNode
+from E_Value import ES_Value
 
 character_named_ = {
     # table-31:
@@ -1903,7 +1904,7 @@ class LexicalTIP:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class ParseNode:
+class ParseNode(ES_Value):
 
     def __init__(self, shape, extent, tip):
 

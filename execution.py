@@ -205,9 +205,6 @@ def EE(anode, expected_return):
         expectation_met = (result is None)
     elif expected_return == 'ParseNodeOrAbsent':
         expectation_met = isinstance(result, (ParseNode, AbsentParseNode))
-    elif expected_return in [E_Value, ES_Value]:
-        expectation_met = isinstance(result, expected_return) or isinstance(result, ParseNode)
-        # ParseNode should be derived from ES_Value, but that's not convenient.
     else:
         expectation_met = isinstance(result, expected_return)
 
@@ -275,7 +272,7 @@ def it_is_a_syntax_error(rule):
 # ------------------------------------------------------
 
 def value_matches_description(value, description):
-    assert isinstance(value, (E_Value, ParseNode))
+    assert isinstance(value, E_Value)
     assert isinstance(description, ANode)
     assert description.prod.lhs_s in ['{VALUE_DESCRIPTION}', '{VAL_DESC}']
     p = str(description.prod)
@@ -1979,8 +1976,8 @@ def _(chars):
 # 6 ECMAScript Data Types and Values
 
 def same_value(a, b):
-    assert isinstance(a, (E_Value, ParseNode))
-    assert isinstance(b, (E_Value, ParseNode))
+    assert isinstance(a, E_Value)
+    assert isinstance(b, E_Value)
     if type(a) == type(b):
         return a == b
     else:
