@@ -260,7 +260,7 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
             exp_rhs.append(T_u_p(rhs_item_n.groups[0]))
 
         elif rhs_item_n.kind == 'U_RANGE':
-            exp_rhs.append(T_u_r(int(rhs_item_n.groups[0][2:],16), int(rhs_item_n.groups[1][2:],16)))
+            exp_rhs.append(T_u_r(int(rhs_item_n.groups[0],16), int(rhs_item_n.groups[1],16)))
 
         elif rhs_item_n.kind == 'U_ANY':
             exp_rhs.append(T_u_r(0x0000,0x10FFFF))
