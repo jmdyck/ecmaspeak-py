@@ -204,13 +204,13 @@ def EE(anode, expected_return):
     if expected_return is None:
         expectation_met = (result is None)
     elif expected_return == 'ParseNodeOrAbsent':
-        expectation_met = isinstance(result, (ES_ParseNode, ES_AbsentParseNode))
+        expectation_met = result.isan((ES_ParseNode, ES_AbsentParseNode))
     else:
         expectation_met = isinstance(result, expected_return)
 
     if not expectation_met:
         # Maybe we can do an implicit conversion
-        if expected_return in [ES_Mathnum, (ES_Mathnum,EL_Number)] and isinstance(result, ES_UnicodeCodePoint):
+        if expected_return in [ES_Mathnum, (ES_Mathnum,EL_Number)] and result.isan(ES_UnicodeCodePoint):
             if verbosity >= 1: stderr("Implicitly converting ES_UnicodeCodePoint to ES_Mathnum")
             result = ES_Mathnum(result.scalar)
             expectation_met = True
@@ -272,7 +272,7 @@ def it_is_a_syntax_error(rule):
 # ------------------------------------------------------
 
 def value_matches_description(value, description):
-    assert isinstance(value, E_Value)
+    assert value.isan(E_Value)
     assert isinstance(description, ANode)
     assert description.prod.lhs_s in ['{VALUE_DESCRIPTION}', '{VAL_DESC}']
     p = str(description.prod)
@@ -306,7 +306,7 @@ class Frame:
         frame._focus_node = focus_node
         if frame._alg.species.startswith('op: discriminated by syntax'):
             assert frame._focus_node is not None
-            assert isinstance(frame._focus_node, ES_ParseNode)
+            assert frame._focus_node.isan(ES_ParseNode)
             frame._make_focus_map(frame._focus_node)
         else:
             assert frame._focus_node is None
@@ -733,9 +733,9 @@ class Frame:
                 assert 1 <= ordinal <= nr
                 referent = referents[ordinal-1]
 
-        if isinstance(referent, ES_ParseNode):
+        if referent.isan(ES_ParseNode):
             assert referent.symbol == nt_name
-        elif isinstance(referent, ES_AbsentParseNode):
+        elif referent.isan(ES_AbsentParseNode):
             pass
         else:
             assert 0
@@ -913,9 +913,9 @@ def _(val_desc, value):
     [nonterminal] = val_desc.children
     nt_name = nt_name_from_nonterminal_node(nonterminal)
 
-    assert isinstance(value, ES_GrammarSymbol)
+    assert value.isan(ES_GrammarSymbol)
     return (
-        isinstance(value, ES_NonterminalSymbol)
+        value.isan(ES_NonterminalSymbol)
         and
         value.name == nt_name
     )
@@ -928,9 +928,9 @@ def _(chars):
 def _(val_desc, value):
     [backticked_word] = val_desc.children
     word_sans_backticks = backticked_word.source_text()[1:-1]
-    assert isinstance(value, ES_GrammarSymbol)
+    assert value.isan(ES_GrammarSymbol)
     return (
-        isinstance(value, ES_TerminalSymbol)
+        value.isan(ES_TerminalSymbol)
         and
         value.chars == word_sans_backticks
     )
@@ -958,7 +958,7 @@ class ES_AbsentParseNode(ES_Value): pass
 @descd.put('{VAL_DESC} : a Parse Node')
 def _(val_desc, value):
     [] = val_desc.children
-    return isinstance(value, ES_ParseNode)
+    return value.isan(ES_ParseNode)
 
 # -----
 # explicitly use "an instance of":
@@ -968,13 +968,13 @@ def _(val_desc, value):
     [var] = val_desc.children
     gsym = EE(var, ES_GrammarSymbol)
 
-    assert isinstance(value, ES_ParseNode) # or that might be part of the test
+    assert value.isan(ES_ParseNode) # or that might be part of the test
 
-    if isinstance(gsym, ES_TerminalSymbol):
+    if gsym.isan(ES_TerminalSymbol):
         desired_node_symbol = T_lit(gsym.chars)
         # Theoretically, it could be a different kind of T_foo,
         # but so far, the only case of this is `super`.
-    elif isinstance(gsym, ES_NonterminalSymbol):
+    elif gsym.isan(ES_NonterminalSymbol):
         desired_node_symbol = gsym.name
     else:
         assert 0
@@ -984,7 +984,7 @@ def _(val_desc, value):
 def _(val_desc, value):
     [] = val_desc.children
 
-    assert isinstance(value, ES_ParseNode) # or that might be part of the test
+    assert value.isan(ES_ParseNode) # or that might be part of the test
     return not value.is_terminal
 
 @descd.put('{VAL_DESC} : an instance of a production in {h_emu_xref}')
@@ -998,7 +998,7 @@ def _(val_desc, value):
             for production_n in emu_grammar._gnode._productions:
                 lhs_symbols.add(production_n._lhs_symbol)
 
-    assert isinstance(value, ES_ParseNode)
+    assert value.isan(ES_ParseNode)
     return value.symbol in lhs_symbols
 
 # -----
@@ -1044,7 +1044,7 @@ def _(val_desc, value):
     [nont, terminal] = val_desc.children
     assert nont.source_text() == '|ReservedWord|'
     terminal_gsym = ES_TerminalSymbol.from_TERMINAL_anode(terminal)
-    assert isinstance(value, ES_GrammarSymbol)
+    assert value.isan(ES_GrammarSymbol)
     return value == terminal_gsym
 
 # -----
@@ -1070,7 +1070,7 @@ def _(val_desc, value):
         # However, |ReservedWord| only involves Latin letters,
         # so ...
 
-        assert isinstance(value, EL_String)
+        assert value.isan(EL_String)
     
         # kludge
     
@@ -1083,7 +1083,7 @@ def _(val_desc, value):
         assert NYI
 
     else:
-        assert isinstance(value, ES_ParseNode)
+        assert value.isan(ES_ParseNode)
         return (value.symbol == nt_name)
         # TODO? value.unit_derives_a(nt_name)
 
@@ -1463,7 +1463,7 @@ def apply_op_to_arg_values(op_name, arg_values):
         assert NYI, op_name
 
 def value_matches_discriminator(value, discriminator):
-    assert isinstance(value, E_Value)
+    assert value.isan(E_Value)
     assert isinstance(discriminator, str)
     value_type_name = type(value).__name__
     assert value_type_name.startswith('EL_')
@@ -1646,12 +1646,12 @@ def _(nont):
 @efd.put('{CONDITION_1} : {LOCAL_REF} is present')
 def _(prod_ref):
     pnode = EE(prod_ref, 'ParseNodeOrAbsent')
-    return isinstance(pnode, ES_ParseNode)
+    return pnode.isan(ES_ParseNode)
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not present')
 def _(prod_ref):
     pnode = EE(prod_ref, 'ParseNodeOrAbsent')
-    return isinstance(pnode, ES_AbsentParseNode)
+    return pnode.isan(ES_AbsentParseNode)
 
 @efd.put('{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter')
 def _(prod_ref, cap_word):
@@ -1905,7 +1905,7 @@ def _(mathnum):
 #> (closest to +&infin;) that is not larger than _x_.
 @predefined_operations.put('floor')
 def _(mathnum):
-    assert isinstance(mathnum, ES_Mathnum)
+    assert mathnum.isan(ES_Mathnum)
     return ES_Mathnum(math.floor(mathnum.val))
 
 #> Mathematical functions min, max, abs, and floor
@@ -1976,8 +1976,8 @@ def _(chars):
 # 6 ECMAScript Data Types and Values
 
 def same_value(a, b):
-    assert isinstance(a, E_Value)
-    assert isinstance(b, E_Value)
+    assert a.isan(E_Value)
+    assert b.isan(E_Value)
     if type(a) == type(b):
         return a == b
     else:
@@ -2102,7 +2102,7 @@ class EL_String(EL_Value):
     def __init__(self, code_units):
         assert isinstance(code_units, list)
         for code_unit in code_units:
-            assert isinstance(code_unit, ES_CodeUnit)
+            assert code_unit.isan(ES_CodeUnit)
         self.code_units = code_units
 
     @staticmethod
@@ -2134,7 +2134,7 @@ class EL_String(EL_Value):
 @descd.put('{VAL_DESC} : a String')
 def _(val_desc, value):
     [] = val_desc.children
-    return isinstance(value, EL_String)
+    return value.isan(EL_String)
 
 @efd.put('{STR_LITERAL} : the empty String')
 def _():
@@ -2159,8 +2159,8 @@ def _(var):
 def _(ex1, ex2):
     val1 = EE(ex1, (EL_String, ES_CodeUnit))
     val2 = EE(ex2, (EL_String, ES_CodeUnit))
-    code_units1 = [val1] if isinstance(val1, ES_CodeUnit) else val1.code_units
-    code_units2 = [val2] if isinstance(val2, ES_CodeUnit) else val2.code_units
+    code_units1 = [val1] if val1.isan(ES_CodeUnit) else val1.code_units
+    code_units2 = [val2] if val2.isan(ES_CodeUnit) else val2.code_units
     return EL_String(code_units1 + code_units2)
 
 @efd.put('{EXPR} : the String value consisting of {EX}')
@@ -2207,7 +2207,7 @@ class EL_Symbol(EL_Value):
 @descd.put('{VAL_DESC} : a Symbol')
 def _(val_desc, value):
     [] = val_desc.children
-    return isinstance(value, EL_Symbol)
+    return value.isan(EL_Symbol)
 
 # ------------------------------------------------------------------------------
 # 6.1.6.1 The Number Type
@@ -2238,7 +2238,7 @@ class EL_Number(EL_Value):
 @descd.put('{VAL_DESC} : a Number')
 def _(val_desc, value):
     [] = val_desc.children
-    return isinstance(value, EL_Number)
+    return value.isan(EL_Number)
 
 @efd.put('{starred_nan_lit} : \\* NaN \\*')
 def _(chars):
@@ -2306,18 +2306,18 @@ class ES_List(ES_Value):
     def concat(*lists):
         all_elements = []
         for alist in lists:
-            assert isinstance(alist, ES_List)
+            assert alist.isan(ES_List)
             all_elements.extend(alist._elements)
         return ES_List(all_elements)
 
     # modify:
 
     def append_one(self, element):
-        assert isinstance(element, E_Value)
+        assert element.isan(E_Value)
         self._elements.append(element)
 
     def append_many(self, other):
-        assert isinstance(other, ES_List)
+        assert other.isan(ES_List)
         self._elements.extend(other._elements)
 
     # iterate:
@@ -2436,10 +2436,10 @@ def _(noi):
 def _(container_ex, element_ex):
     container = EE(container_ex, (ES_List, ES_UnicodeCodePoints))
     e = EE(element_ex, E_Value)
-    if isinstance(container, ES_List):
+    if container.isan(ES_List):
         contains_it = container.contains(e)
-    elif isinstance(container, ES_UnicodeCodePoints):
-        if isinstance(e, ES_UnicodeCodePoints):
+    elif container.isan(ES_UnicodeCodePoints):
+        if e.isan(ES_UnicodeCodePoints):
             assert e.number_of_code_points() == 1
             [e] = e.code_points()
         contains_it = container.contains_code_point(e)
@@ -2506,7 +2506,7 @@ class ES_CompletionRecord(ES_Record):
 @efd.put('{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
 def _(noi):
     value = EE(noi, E_Value)
-    if isinstance(value, ES_CompletionRecord):
+    if value.isan(ES_CompletionRecord):
         assert not value.is_abrupt()
         return value.get_value_of_field_named('[[Value]]')
     else:
@@ -2692,7 +2692,7 @@ class ES_UnicodeCodePoints(ES_Value):
             return self
 
     def contains_code_point(self, code_point):
-        assert isinstance(code_point, ES_UnicodeCodePoint)
+        assert code_point.isan(ES_UnicodeCodePoint)
         return chr(code_point.scalar) in self.text
 
     def contains_any_code_points_other_than(self, allowed_code_points):
@@ -2747,7 +2747,7 @@ def _(var):
 @efd.put('{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}') # spec bug: should say "is *true*"
 def _(local_ref, g_sym):
     boolean_value = execute_sdo_invocation('Contains', local_ref, [g_sym])
-    assert isinstance(boolean_value, EL_Boolean)
+    assert boolean_value.isan(EL_Boolean)
     return boolean_value.b
 
 @efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}')
@@ -2982,7 +2982,7 @@ def begins_with_a_DP_that_contains_a_USD(pnode):
     return False
 
 def each_item_in_left_recursive_list(list_node):
-    assert isinstance(list_node, ES_ParseNode)
+    assert list_node.isan(ES_ParseNode)
     assert list_node.symbol.endswith('List')
     n_children = len(list_node.children)
     if n_children == 1:
