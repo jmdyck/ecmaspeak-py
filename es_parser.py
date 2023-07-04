@@ -431,7 +431,7 @@ class _Earley:
         tip,
         start_ti_pos,
     ):
-        # Either returns a single ParseNode, or raises a ParseError.
+        # Either returns a single ES_ParseNode, or raises a ParseError.
 
         def trace_at(trace_level_of_this_msg, *args):
             if trace_level_of_this_msg <= _trace_level:
@@ -616,7 +616,7 @@ class _Earley:
                     option_bits = ''
                     extent = (eset_ti_pos, eset_ti_pos)
 
-                parent_node = ParseNode((prod, option_bits), extent, tip)
+                parent_node = ES_ParseNode((prod, option_bits), extent, tip)
 
                 lhs_symbol = prod.ex_lhs
                 back_items = back_set.get_items_expecting_symbol(NT(lhs_symbol))
@@ -1024,7 +1024,7 @@ def parse(subject, goal_symname, trace_level=0, trace_f=sys.stdout):
             lex_tip = LexicalTIP(subject)
             syn_tip = SyntacticTIP(subject, lex_tip)
 
-        elif isinstance(subject, ParseNode):
+        elif isinstance(subject, ES_ParseNode):
             stderr('REPARSE!!')
             assert isinstance(subject.tip, SyntacticTIP)
             syn_tip = subject.tip
@@ -1181,8 +1181,8 @@ class SyntacticTIP:
                 match_token = token
 
             elif type(expected_symbol) == T_lit and expected_symbol.c == token_text:
-                #! match_token = ParseNode(T_lit(token_text), (token_i, token_i+1), syn_tip)
-                match_token = ParseNode(T_lit(token_text), (token.start_posn, token.end_posn), syn_tip)
+                #! match_token = ES_ParseNode(T_lit(token_text), (token_i, token_i+1), syn_tip)
+                match_token = ES_ParseNode(T_lit(token_text), (token.start_posn, token.end_posn), syn_tip)
 
             elif type(expected_symbol) == T_named and expected_symbol.n == token_name:
                 match_token = named_token
@@ -1294,7 +1294,7 @@ class SyntacticTIP:
             # (i.e., ASI *is* allowed to insert the semicolon that ends a LexicalDeclaration
             # if it's not the child of a for-loop.)
 
-            node = ParseNode(T_lit(';'), (text_posn, text_posn), syn_tip)
+            node = ES_ParseNode(T_lit(';'), (text_posn, text_posn), syn_tip)
 
             syn_tip.insert_before_current_token(node)
             return ([(semicolon_symbol, node)], text_posn) # NOT next_text_posn
@@ -1302,7 +1302,7 @@ class SyntacticTIP:
     # --------------------------------------------------------------------------
 
     def get_named_token(syn_tip, token):
-        # {token} is an InputElement* ParseNode.
+        # {token} is an InputElement* ES_ParseNode.
         # But the syntactic grammar makes no reference
         # to InputElement or CommonToken or Punctuator etc,
         # and the syntactic parser won't know what to do
@@ -1482,7 +1482,7 @@ class SyntacticTIP:
         if syn_tip._current_token_i == syn_tip._end_token_i:
             token = syn_tip._tokens[syn_tip._current_token_i]
             text_posn = token.start_posn
-            input_element = ParseNode(END_OF_INPUT, (text_posn, text_posn), syn_tip.lexical_tip)
+            input_element = ES_ParseNode(END_OF_INPUT, (text_posn, text_posn), syn_tip.lexical_tip)
             return input_element
 
         assert syn_tip._current_token_i <= len(syn_tip._tokens)
@@ -1527,7 +1527,7 @@ class SyntacticTIP:
 
         if syn_tip._scouting_text_posn == len(syn_tip.source_text):
             syn_tip._lexing_is_done = True
-            input_element = ParseNode(END_OF_INPUT, (syn_tip._scouting_text_posn, syn_tip._scouting_text_posn), syn_tip.lexical_tip)
+            input_element = ES_ParseNode(END_OF_INPUT, (syn_tip._scouting_text_posn, syn_tip._scouting_text_posn), syn_tip.lexical_tip)
 
         else:
             input_element = lexical_earley.run(
@@ -1536,7 +1536,7 @@ class SyntacticTIP:
                 syn_tip._scouting_text_posn
             )
 
-            assert isinstance(input_element, ParseNode)
+            assert isinstance(input_element, ES_ParseNode)
 
             assert input_element.start_posn == syn_tip._scouting_text_posn
             assert input_element.start_posn < input_element.end_posn
@@ -1785,7 +1785,7 @@ class LexicalTIP:
         rats = []
         for rthing in expected_terminals:
             if lexical_Rsymbol_matches_char(rthing, c):
-                node = ParseNode(rthing, (text_posn, text_posn+1), lex_tip)
+                node = ES_ParseNode(rthing, (text_posn, text_posn+1), lex_tip)
                 rats.append((rthing, node))
 
         if len(rats) == 0:
@@ -1840,7 +1840,7 @@ class LexicalTIP:
             elif constraint.c == 'the CapturingGroupNumber of |DecimalEscape| is &le; CountLeftCapturingParensWithin(the |Pattern| containing |DecimalEscape|)':
                 # The problem is, we're in the middle of parsing
                 # the |Pattern| containing |DecimalEscape|.
-                # In a bottom-up parser, the ParseNode for that |Pattern|
+                # In a bottom-up parser, the ES_ParseNode for that |Pattern|
                 # doesn't even exist yet.
                 # In a top-down parser, the node would exist,
                 # but we're not done parsing the text for the |Pattern|,
@@ -1904,7 +1904,7 @@ class LexicalTIP:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-class ParseNode(ES_Value):
+class ES_ParseNode(ES_Value):
 
     def __init__(self, shape, extent, tip):
 
@@ -1976,7 +1976,7 @@ class ParseNode(ES_Value):
                 # assert 0 <= self.start_token_k <= self.end_token_k <= len(self.tip._tokens)
 
                 # # XXX
-                # # Problem: the ParseNode that we're in the process of creating
+                # # Problem: the ES_ParseNode that we're in the process of creating
                 # # hasn't been inserted into self.tip yet.
 
                 # self.start_posn = self.tip._tokens[self.start_token_k].start_posn
@@ -2016,7 +2016,7 @@ class ParseNode(ES_Value):
     # ------------------------------------------------------------------
 
     def __repr__(self):
-        return "<ParseNode (%d-%d) symbol=%s, %d children>" % (self.start_posn, self.end_posn, self.symbol, len(self.children))
+        return "<ES_ParseNode (%d-%d) symbol=%s, %d children>" % (self.start_posn, self.end_posn, self.symbol, len(self.children))
 
     def text(self):
         return self.whole_text[self.start_posn:self.end_posn]

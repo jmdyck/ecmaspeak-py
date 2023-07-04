@@ -18,7 +18,7 @@ from shared import spec, stderr, print_tree
 from HTML import HNode
 from Pseudocode_Parser import ANode
 from E_Value import E_Value, EL_Value, ES_Value
-from es_parser import ParseNode, ParseError, T_lit, parse
+from es_parser import ES_ParseNode, ParseError, T_lit, parse
 from DecoratedFuncDict import DecoratedFuncDict
 import unicode_contributory_properties as ucp
 
@@ -204,7 +204,7 @@ def EE(anode, expected_return):
     if expected_return is None:
         expectation_met = (result is None)
     elif expected_return == 'ParseNodeOrAbsent':
-        expectation_met = isinstance(result, (ParseNode, AbsentParseNode))
+        expectation_met = isinstance(result, (ES_ParseNode, ES_AbsentParseNode))
     else:
         expectation_met = isinstance(result, expected_return)
 
@@ -234,7 +234,7 @@ def execute_alg_defn(alg_defn, **kwargs):
 
     frame._tracing_indentation = indentation
     frame._is_tracing = True and (
-        frame._slug == 'Early Errors on <ParseNode symbol=UnaryExpression, 2 children>'
+        frame._slug == 'Early Errors on <ES_ParseNode symbol=UnaryExpression, 2 children>'
     )
 
     if 0:
@@ -306,7 +306,7 @@ class Frame:
         frame._focus_node = focus_node
         if frame._alg.species.startswith('op: discriminated by syntax'):
             assert frame._focus_node is not None
-            assert isinstance(frame._focus_node, ParseNode)
+            assert isinstance(frame._focus_node, ES_ParseNode)
             frame._make_focus_map(frame._focus_node)
         else:
             assert frame._focus_node is None
@@ -346,7 +346,7 @@ class Frame:
                     assert len(pchild.children) == 1
                     [ref_node] = pchild.children
                 else:
-                    ref_node = AbsentParseNode() # ParseNode(T_named('*OMITTED_OPTIONAL*'), (0,0), tip)
+                    ref_node = ES_AbsentParseNode() # ES_ParseNode(T_named('*OMITTED_OPTIONAL*'), (0,0), tip)
             else:
                 ref_name = pchild.symbol
                 ref_node = pchild
@@ -626,7 +626,7 @@ class Frame:
         assert frame._focus_node
 
         if nt_name not in frame.focus_map:
-            return AbsentParseNode()
+            return ES_AbsentParseNode()
 
         referents = frame.focus_map[nt_name]
         nr = len(referents)
@@ -733,9 +733,9 @@ class Frame:
                 assert 1 <= ordinal <= nr
                 referent = referents[ordinal-1]
 
-        if isinstance(referent, ParseNode):
+        if isinstance(referent, ES_ParseNode):
             assert referent.symbol == nt_name
-        elif isinstance(referent, AbsentParseNode):
+        elif isinstance(referent, ES_AbsentParseNode):
             pass
         else:
             assert 0
@@ -953,12 +953,12 @@ def nt_name_from_nonterminal_node(nonterminal_node):
 #> Each Parse Node is an <em>instance</em> of a symbol in the grammar;
 #> it represents a span of the source text that can be derived from that symbol.
 
-class AbsentParseNode(ES_Value): pass
+class ES_AbsentParseNode(ES_Value): pass
 
 @descd.put('{VAL_DESC} : a Parse Node')
 def _(val_desc, value):
     [] = val_desc.children
-    return isinstance(value, ParseNode)
+    return isinstance(value, ES_ParseNode)
 
 # -----
 # explicitly use "an instance of":
@@ -968,7 +968,7 @@ def _(val_desc, value):
     [var] = val_desc.children
     gsym = EE(var, ES_GrammarSymbol)
 
-    assert isinstance(value, ParseNode) # or that might be part of the test
+    assert isinstance(value, ES_ParseNode) # or that might be part of the test
 
     if isinstance(gsym, ES_TerminalSymbol):
         desired_node_symbol = T_lit(gsym.chars)
@@ -984,7 +984,7 @@ def _(val_desc, value):
 def _(val_desc, value):
     [] = val_desc.children
 
-    assert isinstance(value, ParseNode) # or that might be part of the test
+    assert isinstance(value, ES_ParseNode) # or that might be part of the test
     return not value.is_terminal
 
 @descd.put('{VAL_DESC} : an instance of a production in {h_emu_xref}')
@@ -998,7 +998,7 @@ def _(val_desc, value):
             for production_n in emu_grammar._gnode._productions:
                 lhs_symbols.add(production_n._lhs_symbol)
 
-    assert isinstance(value, ParseNode)
+    assert isinstance(value, ES_ParseNode)
     return value.symbol in lhs_symbols
 
 # -----
@@ -1006,7 +1006,7 @@ def _(val_desc, value):
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}')  # early_error
 def _(local_ref, h_emu_grammar):
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     result = (pnode.puk in h_emu_grammar._hnode.puk_set)
 
     # But this can also augment the current focus_map.
@@ -1020,7 +1020,7 @@ def _(local_ref, h_emu_grammar):
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}')
 def _(local_ref, *h_emu_grammar_):
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     result = any(
         pnode_unit_derives_a_node_with_puk(pnode, h_emu_grammar._hnode.puk_set)
         for h_emu_grammar in h_emu_grammar_
@@ -1030,7 +1030,7 @@ def _(local_ref, *h_emu_grammar_):
 @efd.put('{CONDITION_1} : {PROD_REF} is `export` {nonterminal}')
 def _(prod_ref, nont):
     nt_name = nt_name_from_nonterminal_node(nont)
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     return (
         len(pnode.children) == 2
         and
@@ -1052,7 +1052,7 @@ def _(val_desc, value):
 
 @efd.put('{EXPR} : the source text that was recognized as {PROD_REF}')
 def _(prod_ref):
-    node = EE(prod_ref, ParseNode)
+    node = EE(prod_ref, ES_ParseNode)
     return ES_UnicodeCodePoints(node.text())
 
 @descd.put('{VAL_DESC} : an? {nonterminal}')
@@ -1083,7 +1083,7 @@ def _(val_desc, value):
         assert NYI
 
     else:
-        assert isinstance(value, ParseNode)
+        assert isinstance(value, ES_ParseNode)
         return (value.symbol == nt_name)
         # TODO? value.unit_derives_a(nt_name)
 
@@ -1120,14 +1120,14 @@ def _(var):
 
 @efd.put('{CONDITION_1} : {var} contains a {nonterminal}')
 def _(var, nont):
-    pnode = EE(var, ParseNode)
+    pnode = EE(var, ES_ParseNode)
     nt_name = nt_name_from_nonterminal_node(nont)
     return pnode.contains_a(nt_name)
 
 @efd.put('{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}')
 def _(emu_grammar, pnode_var):
     puk_set = emu_grammar._hnode.puk_set
-    pnode = EE(pnode_var, ParseNode)
+    pnode = EE(pnode_var, ES_ParseNode)
     count = 0
     for descendant in pnode.preorder_traverse():
         if not descendant.is_terminal and descendant.puk in puk_set:
@@ -1136,7 +1136,7 @@ def _(emu_grammar, pnode_var):
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same')
 def _(local_ref, nont, noi):
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     nt_name = nt_name_from_nonterminal_node(nont)
     vals = set()
     for descendant in pnode.preorder_traverse():
@@ -1149,14 +1149,14 @@ def _(local_ref, nont, noi):
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}')
 def _(local_ref, nont):
     nt_name = nt_name_from_nonterminal_node(nont)
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name])
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}')
 def _(local_ref, nonta, nontb):
     nt_name_a = nt_name_from_nonterminal_node(nonta)
     nt_name_b = nt_name_from_nonterminal_node(nontb)
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name_a, nt_name_b])
 
 def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_symbols):
@@ -1216,7 +1216,7 @@ def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_s
 
 @efd.put('{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.')
 def _(local_ref, nont):
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
     if covered_thing:
         traverse_for_early_errors(covered_thing)
@@ -1226,7 +1226,7 @@ def _(local_ref, nont):
 
 @efd.put('{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}')
 def _(nont, local_ref):
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
     if covered_thing is None:
         raise ReferenceToNonexistentThing(nont.parent.source_text())
@@ -1497,10 +1497,10 @@ def flatten_with_args(with_args):
         assert NYI, p
 
 def execute_sdo_invocation(sdo_name_arg, focus_expr, arg_exprs):
-    if isinstance(focus_expr, ParseNode):
+    if isinstance(focus_expr, ES_ParseNode):
         focus_node = focus_expr
     else:
-        focus_node = EE(focus_expr, ParseNode)
+        focus_node = EE(focus_expr, ES_ParseNode)
 
     arg_vals = [
         EE(arg_expr, E_Value)
@@ -1601,7 +1601,7 @@ def _(nont):
 @efd.put('{PROD_REF} : the {nonterminal} containing {LOCAL_REF}')
 def _(container_nont, local_ref):
     container_nt = nt_name_from_nonterminal_node(container_nont)
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     containers = [
         anc
         for anc in pnode.each_ancestor()
@@ -1646,17 +1646,17 @@ def _(nont):
 @efd.put('{CONDITION_1} : {LOCAL_REF} is present')
 def _(prod_ref):
     pnode = EE(prod_ref, 'ParseNodeOrAbsent')
-    return isinstance(pnode, ParseNode)
+    return isinstance(pnode, ES_ParseNode)
 
 @efd.put('{CONDITION_1} : {LOCAL_REF} is not present')
 def _(prod_ref):
     pnode = EE(prod_ref, 'ParseNodeOrAbsent')
-    return isinstance(pnode, AbsentParseNode)
+    return isinstance(pnode, ES_AbsentParseNode)
 
 @efd.put('{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter')
 def _(prod_ref, cap_word):
     [cap_word_str] = cap_word.children
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     return (f"+{cap_word_str}" in pnode.production.og_params_setting)
 
 @efd.put('{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set')
@@ -1693,7 +1693,7 @@ def _():
 @dataclass(frozen=True)
 class EarlyError:
     kind: str
-    location: ParseNode
+    location: ES_ParseNode
     condition: ANode
 
 #> A special kind of static semantic rule is an Early Error Rule.
@@ -1758,7 +1758,7 @@ def _(cond, emu_grammar):
 def _(local_ref1, h_emu_grammar, local_ref2, local_ref3):
     assert len(h_emu_grammar._hnode.puk_set) == 1
     [puk] = list(h_emu_grammar._hnode.puk_set)
-    pnode = EE(local_ref1, ParseNode)
+    pnode = EE(local_ref1, ES_ParseNode)
     inner_pnode = pnode_unit_derives_a_node_with_puk(pnode, puk)
     if inner_pnode is None: return # no Syntax Error
     # BUG:
@@ -1780,7 +1780,7 @@ def _(nont, var, noi, cond):
         curr_frame().end_contour()
 
 def pnode_unit_derives_a_node_with_puk(pnode, puk_arg):
-    # (Make this a ParseNode method?)
+    # (Make this a ES_ParseNode method?)
     if isinstance(puk_arg, set):
         puk_set = puk_arg
     elif isinstance(puk_arg, tuple):
@@ -2079,7 +2079,7 @@ def _(chars):
 
 @efd.put('{EX} : the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}')
 def _(prod_ref, emu_xref):
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     assert pnode.symbol == 'SingleEscapeCharacter'
     pnode_text = pnode.text()
     assert len(pnode_text) == 1
@@ -2524,7 +2524,7 @@ class ES_UnicodeCodePoint(ES_Value):
 
 @efd.put('{EX} : the code point matched by {PROD_REF}')
 def _(prod_ref):
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     t = pnode.text()
     assert len(t) == 1
     return ES_UnicodeCodePoint(ord(t))
@@ -2715,12 +2715,12 @@ def _(chars):
 
 @efd.put('{EX} : the number of code points in {PROD_REF}') # SPEC BUG: the number of code points in the source text matched by {PROD_REF}
 def _(prod_ref):
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     return ES_Mathnum(len(pnode.text()))
 
 @efd.put('{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}')
 def _(prod_ref, nont):
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     assert nont.source_text() == '|NumericLiteralSeparator|'
     return ES_Mathnum(len(pnode.text().replace('_', '')))
 
@@ -2820,12 +2820,12 @@ def _(gsym):
 @efd.put('{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code')
 @efd.put('{CONDITION_1} : {LOCAL_REF} is contained in strict mode code')
 def _(local_ref):
-    pnode = EE(local_ref, ParseNode)
+    pnode = EE(local_ref, ES_ParseNode)
     return is_strict(pnode)
 
 @efd.put('{CONDITION_1} : the Directive Prologue of {PROD_REF} contains a Use Strict Directive')
 def _(prod_ref):
-    pnode = EE(prod_ref, ParseNode)
+    pnode = EE(prod_ref, ES_ParseNode)
     return begins_with_a_DP_that_contains_a_USD(pnode)
 
 def is_strict(pnode):
@@ -2982,7 +2982,7 @@ def begins_with_a_DP_that_contains_a_USD(pnode):
     return False
 
 def each_item_in_left_recursive_list(list_node):
-    assert isinstance(list_node, ParseNode)
+    assert isinstance(list_node, ES_ParseNode)
     assert list_node.symbol.endswith('List')
     n_children = len(list_node.children)
     if n_children == 1:
@@ -3067,7 +3067,7 @@ def _(noi, ss, h_emu_grammar):
 
 @efd.put('{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})')
 def _(prod_ref, nont, step_xref, alg_xref):
-    node = EE(prod_ref, ParseNode)
+    node = EE(prod_ref, ES_ParseNode)
     container_nt = nt_name_from_nonterminal_node(nont)
     assert container_nt == 'Script'
     if node.root().symbol != container_nt: return False
