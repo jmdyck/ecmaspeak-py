@@ -2534,12 +2534,18 @@ class ES_CompletionRecord(ES_Record):
 # ------------------------------------------------------------------------------
 # ES_UnicodeCodePoint
 
+# Unicode code points are used as specification values,
+# but they aren't 'declared' as such.
+
 @dataclass(frozen=True)
 class ES_UnicodeCodePoint(ES_Value):
     scalar: int
     def __init__(self, scalar):
         assert 0 <= scalar <= 0x10ffff
         object.__setattr__(self, 'scalar', scalar)
+
+# ----
+# Expressions that return ES_UnicodeCodePoint:
 
 @efd.put('{EX} : the code point matched by {PROD_REF}')
 def _(prod_ref):
@@ -2552,6 +2558,9 @@ def _(prod_ref):
 def _(noi):
     mathnum = EE(noi, ES_Mathnum)
     return ES_UnicodeCodePoint(mathnum.val)
+
+# ----
+# Conditions that involve ES_UnicodeCodePoint:
 
 @efd.put('{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production')
 def _(noi, nont):
