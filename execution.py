@@ -1993,8 +1993,8 @@ class ES_Adhoc(ES_Value):
 def _(chars):
     return ES_Adhoc(chars)
 
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# 6 ECMAScript Data Types and Values
+# ------------------------------------------------------------------------------
+# 5.2.7 Identity
 
 def same_value(a, b):
     assert a.isan(E_Value)
@@ -2003,6 +2003,10 @@ def same_value(a, b):
         return a == b
     else:
         return False
+
+#> From the perspective of this specification,
+#> the word “is” is used to compare two values for equality,
+#> as in “If _bool_ is *true*, then ...”
 
 @efd.put('{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}')
 def _(ex, value_description):
@@ -2029,6 +2033,9 @@ def _(value_description, value):
         value_matches_description(value, val_desc)
         for val_desc in val_descs
     )
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# 6 ECMAScript Data Types and Values
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # 6.1 ECMAScript Language Types
