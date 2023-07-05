@@ -981,7 +981,6 @@ def _(val_desc, value):
 @descd.put('{VAL_DESC} : an instance of a nonterminal')
 def _(val_desc, value):
     [] = val_desc.children
-
     assert value.isan(ES_ParseNode) # or that might be part of the test
     return not value.is_terminal
 
@@ -1071,13 +1070,13 @@ def _(val_desc, value):
         assert value.isan(EL_String)
     
         # kludge
-    
+
         if value in [
             EL_String.from_Python_string('a'),
             EL_String.from_Python_string('b'),
         ]:
             return False
-    
+
         assert NYI
 
     else:
