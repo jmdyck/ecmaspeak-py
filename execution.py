@@ -1691,6 +1691,24 @@ def _(prod_ref):
     return pnode.isan(ES_AbsentParseNode)
 
 # ------------------------------------------------------------------------------
+# 5.2.3.4 ReturnIfAbrupt Shorthands
+
+#> Similarly, prefix ! is used to indicate that
+#> the following invocation of an abstract or syntax-directed operation
+#> will never return an abrupt completion
+#> and that the resulting Completion Record's [[Value]] field
+#> should be used in place of the return value of the operation.
+
+@efd.put('{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
+def _(noi):
+    value = EE(noi, E_Value)
+    if value.isan(ES_CompletionRecord):
+        assert not value.is_abrupt()
+        return value.get_value_of_field_named('[[Value]]')
+    else:
+        return value
+
+# ------------------------------------------------------------------------------
 # 5.2.4 Static Semantics
 
 @dataclass(frozen=True)
@@ -2505,15 +2523,6 @@ class ES_Record(ES_Value):
 
 class ES_CompletionRecord(ES_Record):
     pass
-
-@efd.put('{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
-def _(noi):
-    value = EE(noi, E_Value)
-    if value.isan(ES_CompletionRecord):
-        assert not value.is_abrupt()
-        return value.get_value_of_field_named('[[Value]]')
-    else:
-        return value
 
 # ------------------------------------------------------------------------------
 # ES_UnicodeCodePoint
