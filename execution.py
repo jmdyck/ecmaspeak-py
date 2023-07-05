@@ -1643,16 +1643,6 @@ def _(nont):
     nt_name = nt_name_from_nonterminal_node(nont)
     return curr_frame().resolve_focus_reference('derived', nt_name)
 
-@efd.put('{CONDITION_1} : {LOCAL_REF} is present')
-def _(prod_ref):
-    pnode = EE(prod_ref, 'ParseNodeOrAbsent')
-    return pnode.isan(ES_ParseNode)
-
-@efd.put('{CONDITION_1} : {LOCAL_REF} is not present')
-def _(prod_ref):
-    pnode = EE(prod_ref, 'ParseNodeOrAbsent')
-    return pnode.isan(ES_AbsentParseNode)
-
 @efd.put('{CONDITION_1} : {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter')
 def _(prod_ref, cap_word):
     [cap_word_str] = cap_word.children
@@ -1686,6 +1676,19 @@ def _(nont):
 @efd.put('{CONDITION_1} : any source text is matched by this production')
 def _():
     return True
+
+# --------------
+# "present"
+
+@efd.put('{CONDITION_1} : {LOCAL_REF} is present')
+def _(prod_ref):
+    pnode = EE(prod_ref, 'ParseNodeOrAbsent')
+    return pnode.isan(ES_ParseNode)
+
+@efd.put('{CONDITION_1} : {LOCAL_REF} is not present')
+def _(prod_ref):
+    pnode = EE(prod_ref, 'ParseNodeOrAbsent')
+    return pnode.isan(ES_AbsentParseNode)
 
 # ------------------------------------------------------------------------------
 # 5.2.4 Static Semantics
