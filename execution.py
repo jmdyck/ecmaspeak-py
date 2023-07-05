@@ -967,9 +967,6 @@ def _(val_desc, value):
 def _(val_desc, value):
     [var] = val_desc.children
     gsym = EE(var, ES_GrammarSymbol)
-
-    assert value.isan(ES_ParseNode) # or that might be part of the test
-
     if gsym.isan(ES_TerminalSymbol):
         desired_node_symbol = T_lit(gsym.chars)
         # Theoretically, it could be a different kind of T_foo,
@@ -978,6 +975,7 @@ def _(val_desc, value):
         desired_node_symbol = gsym.name
     else:
         assert 0
+    assert value.isan(ES_ParseNode) # or that might be part of the test
     return value.symbol == desired_node_symbol
 
 @descd.put('{VAL_DESC} : an instance of a nonterminal')
