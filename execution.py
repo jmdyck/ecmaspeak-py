@@ -2312,7 +2312,7 @@ class EL_Object(EL_Value):
 # 6.2 ECMAScript Specification Types
 
 # ------------------------------------------------------------------------------
-# 6.2.1 The List Specification Type
+# 6.2.2 The List Specification Type
 
 @dataclass
 class ES_List(ES_Value):
@@ -2520,13 +2520,13 @@ def _(noi):
     return noi_val.number_of_elements()
 
 # ------------------------------------------------------------------------------
-# 6.2.1 The Record Specification Type
+# 6.2.2 The Record Specification Type
 
 class ES_Record(ES_Value):
     pass
 
 # ------------------------------------------------------------------------------
-# 6.2.3 The Completion Record Specification Type
+# 6.2.4 The Completion Record Specification Type
 
 class ES_CompletionRecord(ES_Record):
     pass
