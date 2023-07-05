@@ -2794,6 +2794,14 @@ def _(local_ref, sym):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+# 11 ECMAScript Language: Source Code
+
+#> ECMAScript source text is a sequence of code points.
+#> All Unicode code point values from U+0000 to U+10FFFF,
+#> including surrogate code points, may occur in source text ...
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 # 11.1.6 Static Semantics: ParseText ( sourceText, goalSymbol )
 
 @efd.put('{COMMAND} : Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.')
@@ -2835,6 +2843,7 @@ def _(error_type):
     frame = curr_frame()
     assert frame.kludge_errors
     objects = [
+        # TODO: make a SyntaxError object!
         EL_Object([])
         # ee.kind, ee.location, ee.condition
         for ee in frame.kludge_errors
