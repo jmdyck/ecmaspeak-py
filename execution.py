@@ -2732,6 +2732,9 @@ class ES_UnicodeCodePoints(ES_Value):
     def contains_the_same_code_point_more_than_once(self):
         return (len(set(list(self.text))) < len(self.text))
 
+# ----
+# Expressions that return a_sequence_of_Unicode_code_points:
+
 @efd.put('{EX} : {backticked_word}')
 def _(backticked_word):
     return EE(backticked_word, ES_UnicodeCodePoints)
@@ -2741,16 +2744,8 @@ def _(chars):
     word_chars = chars[1:-1]
     return ES_UnicodeCodePoints(word_chars)
 
-@efd.put('{EX} : the number of code points in {PROD_REF}') # SPEC BUG: the number of code points in the source text matched by {PROD_REF}
-def _(prod_ref):
-    pnode = EE(prod_ref, ES_ParseNode)
-    return ES_Mathnum(len(pnode.text()))
-
-@efd.put('{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}')
-def _(prod_ref, nont):
-    pnode = EE(prod_ref, ES_ParseNode)
-    assert nont.source_text() == '|NumericLiteralSeparator|'
-    return ES_Mathnum(len(pnode.text().replace('_', '')))
+# ----
+# Conditions that involve a_sequence_of_Unicode_code_points
 
 @efd.put('{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}')
 def _(var, *backticked_words):
@@ -2767,6 +2762,20 @@ def _(var, *backticked_words):
 def _(var):
     code_points = EE(var, ES_UnicodeCodePoints)
     return code_points.contains_the_same_code_point_more_than_once()
+
+# ----
+# Other expressions involving a_sequence_of_Unicode_code_points
+
+@efd.put('{EX} : the number of code points in {PROD_REF}') # SPEC BUG: the number of code points in the source text matched by {PROD_REF}
+def _(prod_ref):
+    pnode = EE(prod_ref, ES_ParseNode)
+    return ES_Mathnum(len(pnode.text()))
+
+@efd.put('{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}')
+def _(prod_ref, nont):
+    pnode = EE(prod_ref, ES_ParseNode)
+    assert nont.source_text() == '|NumericLiteralSeparator|'
+    return ES_Mathnum(len(pnode.text().replace('_', '')))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
