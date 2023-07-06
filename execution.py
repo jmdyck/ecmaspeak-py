@@ -64,7 +64,7 @@ def detect_early_errors(pnode):
     global de
     de = DynamicEnvironment()
 
-    # stderr("de.max_frame_stack_len:", de.max_frame_stack_len)
+    # stderr("de.agent.max_frame_stack_len:", de.agent.max_frame_stack_len)
 
     early_errors = get_early_errors_in(pnode)
     return early_errors
@@ -82,11 +82,12 @@ def get_parse_tree_depth(pnode):
 
 class DynamicEnvironment:
     def __init__(de):
-        de.frame_stack = []
-        de.max_frame_stack_len = 0
+        de.agent = ES_Agent()
+        # TODO: handle multiple agents + agent clusters
 
 def curr_frame():
-    return de.frame_stack[-1]
+    frame_stack = de.agent.frame_stack
+    return frame_stack[-1]
 
 # ------------------------------------------------------------------------------
 
@@ -114,7 +115,7 @@ def EACH(each_thing):
     return (var, iterable)
 
 def get_early_errors_in(pnode):
-    if hasattr(de, 'early_errors'):
+    if hasattr(de.agent, 'early_errors'):
         # This is a re-entrant call to this method.
         # So far, the only case I know where this happens
         # is when a Script or Module contains a RegularExpressionLiteral.
@@ -135,17 +136,17 @@ def get_early_errors_in(pnode):
         # So save the current list of early errors and restore them later.
         # (I'm pretty sure we only need one level of save;
         # if we need more, the following assertion will fail.)
-        assert not hasattr(de, 'saved_early_errors')
-        de.saved_early_errors = de.early_errors
+        assert not hasattr(de.agent, 'saved_early_errors')
+        de.agent.saved_early_errors = de.agent.early_errors
 
-    de.early_errors = []
+    de.agent.early_errors = []
     traverse_for_early_errors(pnode)
-    resulting_early_errors = de.early_errors
-    del de.early_errors
+    resulting_early_errors = de.agent.early_errors
+    del de.agent.early_errors
 
-    if hasattr(de, 'saved_early_errors'):
-        de.early_errors = de.saved_early_errors
-        del de.saved_early_errors
+    if hasattr(de.agent, 'saved_early_errors'):
+        de.agent.early_errors = de.agent.saved_early_errors
+        del de.agent.saved_early_errors
 
     return resulting_early_errors
 
@@ -228,7 +229,8 @@ def EE(anode, expected_return):
 def execute_alg_defn(alg_defn, **kwargs):
     frame = Frame(alg_defn, **kwargs)
 
-    L = len(de.frame_stack)
+    frame_stack = de.agent.frame_stack
+    L = len(frame_stack)
     indentation = ' ' * (2 + L)
     if verbosity >= 2: stderr(indentation + 'v', frame._slug)
 
@@ -238,7 +240,7 @@ def execute_alg_defn(alg_defn, **kwargs):
     )
 
     if 0:
-        print('len(de.frame_stack):', L)
+        print('len(frame_stack):', L)
         import misc
         py_stack_depth = misc.get_stack_depth()
         print('py stack depth:', py_stack_depth)
@@ -253,11 +255,11 @@ def execute_alg_defn(alg_defn, **kwargs):
                 print(line.rstrip())
         f.close()
 
-    de.frame_stack.append(frame)
-    if len(de.frame_stack) > de.max_frame_stack_len:
-        de.max_frame_stack_len = len(de.frame_stack)
+    frame_stack.append(frame)
+    if len(frame_stack) > de.agent.max_frame_stack_len:
+        de.agent.max_frame_stack_len = len(frame_stack)
     result = frame.run()
-    rframe = de.frame_stack.pop()
+    rframe = frame_stack.pop()
     assert rframe is frame
 
     if verbosity >= 2: stderr(indentation + '^', frame._slug, 'returns', result)
@@ -266,7 +268,7 @@ def execute_alg_defn(alg_defn, **kwargs):
 def it_is_a_syntax_error(rule):
     if isinstance(rule, ANode): rule = rule.source_text()
     error = EarlyError('Syntax Error', curr_frame()._focus_node, rule)
-    de.early_errors.append(error)
+    de.agent.early_errors.append(error)
     if verbosity >= 1: stderr(f"Found early error: {error}")
 
 # ------------------------------------------------------
@@ -2788,6 +2790,15 @@ def _(local_ref, g_sym):
 @efd.put('{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}')
 def _(local_ref, sym):
     return execute_sdo_invocation('Contains', local_ref, [sym])
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# 9.7 Agents
+
+class ES_Agent(ES_Value):
+    def __init__(self):
+        self.frame_stack = []
+        self.max_frame_stack_len = 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
