@@ -321,7 +321,6 @@
     own property key {DEFVAR} of {var} such that {CONDITION}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
     single code point {DEFVAR} in {var}
-    string {DEFVAR} in {var} whose length is greater than 1, iterating in descending order of string length
     {ITEM_NATURE} {DEFVAR} of {EX}
     {ITEM_NATURE} {DEFVAR} of {EX}, iterating backwards from its second-to-last element
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
@@ -402,7 +401,7 @@
     A `default` export was not explicitly defined by this module
     All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
     All named exports from {var} are resolvable
-    Every element of {var} consists of a single character
+    Every CharSetElement of {var} consists of a single character
     Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     GlobalSymbolRegistry does not currently contain an entry for {var}
@@ -437,7 +436,6 @@
     either {DOTTING} or {DOTTING} is {LITERAL}
     it must be in the Object Environment Record
     every CharSetElement of {var} consists of a single character (including if {var} is empty)
-    every element of {EX} consists of a single character (including if {EX} is empty)
     no such execution context exists
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
@@ -778,11 +776,10 @@
     the CharSet containing all characters with a character value in the inclusive interval from {var} to {var}
     the CharSet containing all code point values
     the CharSet containing all code unit values
-    the CharSet containing every CharSetElement of {var} which consists of a single character
+    the CharSet containing every CharSetElement of {var} that consists of a single character
     the CharSet containing every character in {STR_LITERAL}
-    the CharSet containing every element of {EX} which consists of a single character
     the CharSet containing the character matched by {PROD_REF}
-    the CharSet containing the elements of {var} which are not also elements of {var}
+    the CharSet containing the CharSetElements of {var} which are not also CharSetElements of {var}
     the CharSet containing the one string {var}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
@@ -902,7 +899,7 @@
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
     the second to top element of the execution context stack
-    the sequence of characters that is the single element of {var}
+    the sequence of characters that is the single CharSetElement of {var}
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
     the smallest (closest to -∞) integral Number value that is not less than {var}
     the sole element of {PP_NAMED_OPERATION_INVOCATION}

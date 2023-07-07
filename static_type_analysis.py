@@ -11186,7 +11186,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (env1, env1)
 
-@P('{CONDITION_1} : Every element of {var} consists of a single character')
+@P('{CONDITION_1} : Every CharSetElement of {var} consists of a single character')
 class _:
     def s_cond(cond, env0, asserting):
         [ex] = cond.children
@@ -11194,7 +11194,6 @@ class _:
         return (env1, env1)
 
 @P('{CONDITION_1} : every CharSetElement of {var} consists of a single character (including if {var} is empty)')
-@P('{CONDITION_1} : every element of {EX} consists of a single character (including if {EX} is empty)')
 class _:
     def s_cond(cond, env0, asserting):
         [exa, exb] = cond.children
@@ -11227,7 +11226,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_CharSet)
         return (T_character_, env1)
 
-@P('{EXPR} : the sequence of characters that is the single element of {var}')
+@P('{EXPR} : the sequence of characters that is the single CharSetElement of {var}')
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -11375,15 +11374,14 @@ class _:
         env1.assert_expr_is_of_type(noi, T_character_)
         return (T_CharSet, env0)
 
-@P('{EXPR} : the CharSet containing every CharSetElement of {var} which consists of a single character')
-@P('{EXPR} : the CharSet containing every element of {EX} which consists of a single character')
+@P('{EXPR} : the CharSet containing every CharSetElement of {var} that consists of a single character')
 class _:
     def s_expr(expr, env0, _):
         [ex] = expr.children
         env0.assert_expr_is_of_type(ex, T_CharSet)
         return (T_CharSet, env0)
 
-@P('{EXPR} : the CharSet containing the elements of {var} which are not also elements of {var}')
+@P('{EXPR} : the CharSet containing the CharSetElements of {var} which are not also CharSetElements of {var}')
 class _:
     def s_expr(expr, env0, _):
         [charset_var_a, charset_var_b] = expr.children
@@ -11400,7 +11398,6 @@ class _:
 # ---
 
 @P('{EACH_THING} : CharSetElement {DEFVAR} in {var} containing more than 1 character, iterating in descending order of length')
-@P('{EACH_THING} : string {DEFVAR} in {var} whose length is greater than 1, iterating in descending order of string length')
 class _:
     def s_nv(each_thing, env0):
         [loop_var, collection_var] = each_thing.children
