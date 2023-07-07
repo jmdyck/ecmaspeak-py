@@ -794,6 +794,9 @@ class Type():
                                 elif a == ListType(T_Tangible_) and bs_within_a == [ListType(T_Number)]:
                                     inside_B.add(ListType(T_Number))
                                     outside_B.add(ListType(T_Tangible_)) # XXX T_Tangible_ - T_Number (TypedArrayCreate)
+                                elif a == ListType(T_String | T_Undefined) and bs_within_a == [ListType(T_String)]:
+                                    inside_B.add(ListType(T_String))
+                                    outside_B.add(ListType(T_String | T_Undefined))
                                 else:
                                     assert 0
                             elif isinstance(a, RecordType):
