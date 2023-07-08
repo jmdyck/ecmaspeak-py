@@ -81,44 +81,17 @@ def retain_for_sta(header):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def gather_nonterminals():
-    # Find all the Nonterminals that are mentioned in pseudocode,
+    # Find all the Nonterminals,
     # and create a HierType and a TNode for each.
-    #
-    # This is a kludge because grammar info doesn't get passed through pickling yet.
-
-    global nonterminals
-    nonterminals = set()
 
     stderr("gather_nonterminals...")
 
-    def recurse_h(hnode):
-        if hasattr(hnode, '_syntax_tree'):
-            if hnode._syntax_tree is not None:
-                recurse_a(hnode._syntax_tree)
-
-        else:
-            for child in hnode.children:
-                recurse_h(child)
-
-    def recurse_a(anode):
-        if isinstance(anode, str): return
-        assert isinstance(anode, ANode)
-#        if anode.prod.lhs_s == '{CONDITION_1}':
-#            print(anode.source_text())
-        if anode.prod.lhs_s == '{nonterminal}':
-            [nonterminal_name] = anode.children
-            if '[' in nonterminal_name or '?' in nonterminal_name:
-                return
-            nonterminals.add(nonterminal_name)
-        else:
-            for child in anode.children:
-                recurse_a(child)
-
-    recurse_h(spec.doc_node)
-#    sys.exit(1)
+    nonterminals = set()
+    for grammar in spec.grammar_.values():
+        for lhs in grammar.prodn_for_lhs_.keys():
+            nonterminals.add(lhs)
 
     for nonterminal_name in sorted(list(nonterminals)):
-        # print(nonterminal_name)
         t = ptn_type_for(nonterminal_name)
         if t not in tnode_for_type_:
             parent_type = T_Parse_Node
