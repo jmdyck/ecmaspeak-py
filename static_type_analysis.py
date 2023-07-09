@@ -26,10 +26,10 @@ spec.restore()
 
 from static_types import *
 
-def main():
+def do_static_type_analysis():
     prep_for_STA()
     levels = compute_dependency_levels()
-    do_static_type_analysis(levels)
+    do_STA_on_dependency_clusters(levels)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1216,7 +1216,7 @@ class ParRet:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def do_static_type_analysis(levels):
+def do_STA_on_dependency_clusters(levels):
 
     atexit.register(write_modified_spec)
     # This was useful when I was gradually building up the set of STA rules,
@@ -11111,6 +11111,6 @@ class _:
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-main()
+do_static_type_analysis()
 
 # vim: sw=4 ts=4 expandtab
