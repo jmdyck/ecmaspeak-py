@@ -1,7 +1,6 @@
-#!/usr/bin/python3
 
-# ecmaspeak-py/static_type_analysis.py:
-# Perform static type analysis/inference on the spec's pseudocode.
+# ecmaspeak-py/pseudocode_semantics.py:
+# Implement the meta-semantics of the ES spec's pseudocode.
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
@@ -18,13 +17,9 @@ from Pseudocode_Parser import ANode
 from Graph import Graph
 from DecoratedFuncDict import DecoratedFuncDict
 
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-outdir = sys.argv[1]
-shared.register_output_dir(outdir)
-spec.restore()
-
 from static_types import *
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def do_static_type_analysis():
     prep_for_STA()
@@ -11110,7 +11105,5 @@ class _:
         return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-do_static_type_analysis()
 
 # vim: sw=4 ts=4 expandtab
