@@ -18,10 +18,10 @@ import records
 # you must ensure that a 'Spec' is loaded
 # via shared.spec.restore().
 
-split_types_f = shared.open_for_output('split_types')
+_split_types_f = shared.open_for_output('split_types')
 
-subtype_memo = {}
-split_memo = {}
+_subtype_memo = {}
+_split_memo = {}
 
 class Type():
 
@@ -54,8 +54,8 @@ class Type():
     # @memoize()
     def is_a_subtype_of_or_equal_to(A, B):
 
-        if (A,B) in subtype_memo:
-            return subtype_memo[(A,B)]
+        if (A,B) in _subtype_memo:
+            return _subtype_memo[(A,B)]
         # No speed-up?
 
         if B == T_Top_: return True
@@ -96,7 +96,7 @@ class Type():
                 B
             )
 
-        subtype_memo[(A,B)] = result
+        _subtype_memo[(A,B)] = result
 
         return result
 
@@ -114,8 +114,8 @@ class Type():
         A_members = A.set_of_types()
         B_members = B.set_of_types()
 
-        if (A,B) in split_memo:
-            return split_memo[(A,B)]
+        if (A,B) in _split_memo:
+            return _split_memo[(A,B)]
 
         A_memtypes = A.set_of_types()
         B_memtypes = B.set_of_types()
@@ -209,7 +209,7 @@ class Type():
                                 else:
                                     assert 0
                             else:
-                                tnode = tnode_for_type_[a]
+                                tnode = _tnode_for_type_[a]
                                 a_imm_subtypes = [child.type for child in tnode.children]
                                 recurse(a_imm_subtypes, bs_within_a)
                         else:
@@ -224,10 +224,10 @@ class Type():
 
         print("%s :: %s  ===>  %s  ///  %s" %
             (A, B, outside_B, inside_B),
-            file=split_types_f)
+            file=_split_types_f)
 
         result = (inside_B, outside_B)
-        split_memo[(A,B)] = result
+        _split_memo[(A,B)] = result
         return result
 
 
@@ -239,8 +239,8 @@ def member_is_a_subtype_or_equal(A, B):
 
     if isinstance(A, HierType):
         if isinstance(B, HierType):
-            A_tnode = tnode_for_type_[A]
-            B_tnode = tnode_for_type_[B]
+            A_tnode = _tnode_for_type_[A]
+            B_tnode = _tnode_for_type_[B]
             if A_tnode.level < B_tnode.level:
                 # A is higher in the hierarchy than B
                 # (not necessarily an ancestor of B, but at a higher level).
@@ -680,10 +680,10 @@ def union_of_types(types):
             assert 0, mt
 
     result_memtypes = (
-        union_of_list_memtypes(list_memtypes)
-        + union_of_record_memtypes(record_memtypes)
-        + union_of_proc_memtypes(proc_memtypes)
-        + union_of_hier_memtypes(hier_memtypes)
+        _union_of_list_memtypes(list_memtypes)
+        + _union_of_record_memtypes(record_memtypes)
+        + _union_of_proc_memtypes(proc_memtypes)
+        + _union_of_hier_memtypes(hier_memtypes)
     )
 
     assert result_memtypes
@@ -699,7 +699,7 @@ def union_of_types(types):
 
 # ------------------------------------------------------------------------------
 
-def union_of_list_memtypes(list_memtypes):
+def _union_of_list_memtypes(list_memtypes):
 
     if len(list_memtypes) <= 1:
         return list_memtypes
@@ -726,7 +726,7 @@ def union_of_list_memtypes(list_memtypes):
 
 # ------------------------------------------------------------------------------
 
-def union_of_record_memtypes(record_memtypes):
+def _union_of_record_memtypes(record_memtypes):
 
     if len(record_memtypes) <= 1:
         return record_memtypes
@@ -812,7 +812,7 @@ def union_of_record_memtypes(record_memtypes):
 
 # ------------------------------------------------------------------------------
 
-def union_of_proc_memtypes(proc_memtypes):
+def _union_of_proc_memtypes(proc_memtypes):
 
     if len(proc_memtypes) <= 1:
         return proc_memtypes
@@ -821,7 +821,7 @@ def union_of_proc_memtypes(proc_memtypes):
 
 # ------------------------------------------------------------------------------
 
-def union_of_hier_memtypes(memtypes):
+def _union_of_hier_memtypes(memtypes):
 
     for memtype in memtypes:
         assert isinstance(memtype, HierType)
@@ -871,7 +871,7 @@ def union_of_hier_memtypes(memtypes):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # instances of HierType
 
-named_type_hierarchy = {
+_named_type_hierarchy = {
     'Top_': {
         'Absent': {
             'not_passed': {},    # for an optional parameter
@@ -1001,7 +1001,7 @@ named_type_hierarchy = {
     }
 }
 
-tnode_for_type_ = {}
+_tnode_for_type_ = {}
 
 class TNode:
     def __init__(self, type, parent):
@@ -1018,26 +1018,26 @@ class TNode:
             self.level = parent.level + 1
             parent.children.append(self)
 
-        tnode_for_type_[type] = self
+        _tnode_for_type_[type] = self
 
-def HierType_etc(type_name):
+def _HierType_etc(type_name):
     assert isinstance(type_name, str)
     t = HierType(type_name)
     variable_name = 'T_' + type_name.replace(' ', '_').replace('-', '_')
     globals()[variable_name] = t
     return t
 
-def traverse(typesdict, p):
+def _traverse(typesdict, p):
     for (type_name, subtypesdict) in typesdict.items():
     # sorted(typesdict.items(), key=lambda tup: 1 if tup[0] == 'List' else 0):
-        type = HierType_etc(type_name)
+        type = _HierType_etc(type_name)
         tnode = TNode(type, p)
-        traverse(subtypesdict, tnode)
+        _traverse(subtypesdict, tnode)
 
 stderr("initializing the type hierarchy...")
-traverse(named_type_hierarchy, None)
+_traverse(_named_type_hierarchy, None)
 
-troot = tnode_for_type_[T_Top_]
+troot = _tnode_for_type_[T_Top_]
 
 # ------------------------------------------------------------------------------
 # Parse Node types
@@ -1063,7 +1063,7 @@ def ptn_type_for(nonterminal):
     if optionality: type = type | T_not_in_node
     return type
 
-def make_parse_node_types():
+def _make_parse_node_types():
     # Find all the Nonterminals, and create a HierType and a TNode for each.
     nonterminals = set()
     for grammar in spec.grammar_.values():
@@ -1072,12 +1072,12 @@ def make_parse_node_types():
 
     for nonterminal_name in sorted(list(nonterminals)):
         t = ptn_type_for(nonterminal_name)
-        if t not in tnode_for_type_:
+        if t not in _tnode_for_type_:
             parent_type = T_Parse_Node
-            TNode(t, tnode_for_type_[parent_type])
-            # which has the side-effect of adding it to tnode_for_type_
+            TNode(t, _tnode_for_type_[parent_type])
+            # which has the side-effect of adding it to _tnode_for_type_
 
-make_parse_node_types()
+_make_parse_node_types()
 
 # ------------------------------------------------------------------------------
 
@@ -1101,15 +1101,15 @@ def _define_tilde_types():
     for tilde_word in sorted(tilde_words):
         if tilde_word == '~failure~':
             parent_type = T_MatchResult
-            continue # For now, it's clearer if it appears in the named_type_hierarchy
+            continue # For now, it's clearer if it appears in the _named_type_hierarchy
         elif re.fullmatch(r'~\w+(8|8C|16|32|64)~', tilde_word):
             parent_type = T_TypedArray_element_type
         else:
             parent_type = T_tilde_
-        parent_tnode = tnode_for_type_[parent_type]
+        parent_tnode = _tnode_for_type_[parent_type]
 
         tilde_type_name = 'tilde' + re.sub('\W', '_', tilde_word)
-        type = HierType_etc(tilde_type_name)
+        type = _HierType_etc(tilde_type_name)
         tnode = TNode(type, parent_tnode)
 
 _define_tilde_types()
@@ -1140,21 +1140,21 @@ def type_for_TYPE_NAME(type_name):
 # The spec assumes that other specs/implementations can define
 # other sub-schemas of [Cyclic] Module Record,
 # so we create some ad hoc sub-schemas to prevent the union-of-all-subtypes mistake.
-rs = records.RecordSchema('other Module Record', 'Module Record')
-rs = records.RecordSchema('other Cyclic Module Record', 'Cyclic Module Record')
+_rs = records.RecordSchema('other Module Record', 'Module Record')
+_rs = records.RecordSchema('other Cyclic Module Record', 'Cyclic Module Record')
 
-def traverse_record_schema(super_schema, super_tnode):
+def _traverse_record_schema(super_schema, super_tnode):
     for sub_schema in super_schema.sub_schemas:
         if sub_schema.tc_schema_name == 'Completion Record':
             # Don't create HierType('Completion Record'),
             # because that would complicate things.
             # Instead, we create T_Completion_Record as a RecordType.
             continue
-        sub_type = HierType_etc(sub_schema.tc_schema_name)
+        sub_type = _HierType_etc(sub_schema.tc_schema_name)
         sub_tnode = TNode(sub_type, super_tnode)
-        traverse_record_schema(sub_schema, sub_tnode)
+        _traverse_record_schema(sub_schema, sub_tnode)
 
-traverse_record_schema(spec.root_RecordSchema, tnode_for_type_[T_Record])
+_traverse_record_schema(spec.root_RecordSchema, _tnode_for_type_[T_Record])
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # Misc specific types that are referenced above,
@@ -1169,7 +1169,7 @@ T_TBD = TBDType()
 
 T_Completion_Record = RecordType('Completion Record', ())
 # We create this rather than creating HierType('Completion Record')
-# in traverse_record_schema.
+# in _traverse_record_schema.
 
 def CompletionType(Type_field_stype):
     return RecordType('Completion Record', (('[[Type]]', Type_field_stype),))
