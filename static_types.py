@@ -1089,27 +1089,30 @@ make_parse_node_types()
 # but it turns out you can find all the distinct ones
 # by looking for them just in algorithms.
 
-tilde_words = set()
-for bif_or_op in ['bif', 'op']:
-    for alg in spec.alg_info_[bif_or_op].values():
-        for alg_defn in alg.all_definitions():
-            st = alg_defn.anode.source_text()
-            for tilde_word in re.findall(r'~\S+~', st):
-                tilde_words.add(tilde_word)
+def _define_tilde_types():
+    tilde_words = set()
+    for bif_or_op in ['bif', 'op']:
+        for alg in spec.alg_info_[bif_or_op].values():
+            for alg_defn in alg.all_definitions():
+                st = alg_defn.anode.source_text()
+                for tilde_word in re.findall(r'~\S+~', st):
+                    tilde_words.add(tilde_word)
 
-for tilde_word in sorted(tilde_words):
-    if tilde_word == '~failure~':
-        parent_type = T_MatchResult
-        continue # For now, it's clearer if it appears in the named_type_hierarchy
-    elif re.fullmatch(r'~\w+(8|8C|16|32|64)~', tilde_word):
-        parent_type = T_TypedArray_element_type
-    else:
-        parent_type = T_tilde_
-    parent_tnode = tnode_for_type_[parent_type]
+    for tilde_word in sorted(tilde_words):
+        if tilde_word == '~failure~':
+            parent_type = T_MatchResult
+            continue # For now, it's clearer if it appears in the named_type_hierarchy
+        elif re.fullmatch(r'~\w+(8|8C|16|32|64)~', tilde_word):
+            parent_type = T_TypedArray_element_type
+        else:
+            parent_type = T_tilde_
+        parent_tnode = tnode_for_type_[parent_type]
 
-    tilde_type_name = 'tilde' + re.sub('\W', '_', tilde_word)
-    type = HierType_etc(tilde_type_name)
-    tnode = TNode(type, parent_tnode)
+        tilde_type_name = 'tilde' + re.sub('\W', '_', tilde_word)
+        type = HierType_etc(tilde_type_name)
+        tnode = TNode(type, parent_tnode)
+
+_define_tilde_types()
 
 # ------------------------------------------
 
