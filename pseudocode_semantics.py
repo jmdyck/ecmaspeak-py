@@ -2,10 +2,14 @@
 # ecmaspeak-py/pseudocode_semantics.py:
 # Implement the meta-semantics of the ES spec's pseudocode.
 #
-# Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
+# Copyright (C) 2018, 2021  J. Michael Dyck <jmdyck@ibiblio.org>
 
 import re, atexit, time, sys, pdb
+import collections
+import math
+import resource
 import typing
+import unicodedata
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest
 from pprint import pprint
@@ -16,8 +20,22 @@ from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
 from DecoratedFuncDict import DecoratedFuncDict
 
+# static:
 from Graph import Graph
 from static_types import *
+
+# dynamic:
+from E_Value import E_Value, EL_Value, ES_Value
+from es_parser import ES_ParseNode, ParseError, T_lit, parse
+import unicode_contributory_properties as ucp
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+NYI = 0 # Not Yet Implemented
+
+# If an exception is raised (typically via `assert NYI`),
+# only the latest few frame are helpful.
+sys.tracebacklimit = 6
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2270,6 +2288,722 @@ def handle_internal_thing_declaration(method_or_slot, row):
     set_up_internal_thing(method_or_slot, thing_name, t)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class DynamicState:
+    def __init__(ds):
+        ds.verbosity = 0
+        ds.agent = ES_Agent()
+        # TODO: handle multiple agents + agent clusters
+
+def reset_dynamic_state():
+    global ds
+    ds = DynamicState()
+
+    # ---------------------------------------------
+    # Executing the pseudocode gets very recursive.
+
+    # In test262-parser-tests, I think the worst (deepest) case is
+    # pass/dd3c63403db5c06e.js:
+    # ((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))
+    #
+    # That's 50 pairs of parens, each of which produces a chain of 22 Parse Nodes,
+    # so that's 1100 levels of Parse Nodes,
+    # plus another 26 for a total of 1126 levels in the parse tree.
+    #
+    # When executing the 'AllPrivateIdentifiersValid' SDO,
+    # each Parse Node level generates about 39 Python stack frames.
+    # (For 'Contains', it's only about 35.)
+    #
+    # 1126 * 39 = 43914
+
+    sys.setrecursionlimit(44_000)
+
+    # and maybe 467 bytes per Python stack frame
+    resource.setrlimit(resource.RLIMIT_STACK, (44_000 * 467, resource.RLIM_INFINITY))
+
+def curr_frame():
+    frame_stack = ds.agent.frame_stack
+    return frame_stack[-1]
+
+# ------------------------------------------------------------------------------
+
+def get_early_errors_in(pnode):
+    if hasattr(ds.agent, 'early_errors'):
+        # This is a re-entrant call to this method.
+        # So far, the only case I know where this happens
+        # is when a Script or Module contains a RegularExpressionLiteral.
+        # When determining if the Script/Module has any early errors,
+        # you check the rule:
+        #   "It is a Syntax Error if
+        #   IsValidRegularExpressionLiteral(RegularExpressionLiteral) is false."
+        # and IsValidRegularExpressionLiteral calls ParsePattern,
+        # which calls ParseText (to parse the REL as a Pattern),
+        # which, if the parse succeeds,
+        # then has to check the resulting Pattern for early errors.
+        assert pnode.symbol == 'Pattern'
+
+        # Now, in a real implementation, you'd *want* any such errors
+        # to be part of the early errors for the Script/Module.
+        # But that's not how the pseudocode is written.
+        #
+        # So save the current list of early errors and restore them later.
+        # (I'm pretty sure we only need one level of save;
+        # if we need more, the following assertion will fail.)
+        assert not hasattr(ds.agent, 'saved_early_errors')
+        ds.agent.saved_early_errors = ds.agent.early_errors
+
+    ds.agent.early_errors = []
+    traverse_for_early_errors(pnode)
+    resulting_early_errors = ds.agent.early_errors
+    del ds.agent.early_errors
+
+    if hasattr(ds.agent, 'saved_early_errors'):
+        ds.agent.early_errors = ds.agent.saved_early_errors
+        del ds.agent.saved_early_errors
+
+    return resulting_early_errors
+
+def traverse_for_early_errors(pnode):
+    if pnode.is_terminal: return
+
+    if pnode.symbol == 'CoverParenthesizedExpressionAndArrowParameterList':
+        # Don't look for early errors within {pnode},
+        # because we'll be looking for them within either:
+        # - the ParenthesizedExpression that is covered by {pnode}, or
+        # - the ArrowFormalParameters that is covered by {pnode}.
+        #
+        # This is needed to prevent the exponential explosion I was getting with
+        # - pass/6b5e7e125097d439.js
+        # - pass/714be6d28082eaa7.js
+        # - pass/882910de7dd1aef9.js
+        # - pass/dd3c63403db5c06e.js
+        # which involve things like ((((a)))) but with way more parens.
+
+        return
+
+    ee_map = spec.sdo_coverage_map['Early Errors']
+
+    # check pnode
+    if pnode.puk in ee_map:
+        ee_rules = ee_map[pnode.puk]
+        if ds.verbosity >= 1:
+            stderr(f"\nThere are {len(ee_rules)} Early Error rules for {pnode.puk}:")
+        for ee_rule in ee_rules:
+            execute_alg_defn(ee_rule, focus_node=pnode)
+
+    # check pnode's descendants
+    for child in pnode.children:
+        traverse_for_early_errors(child)
+
+# ------------------------------------------------------------------------------
+
+def execute_alg_defn(alg_defn, **kwargs):
+    frame = Frame(alg_defn, **kwargs)
+
+    frame_stack = ds.agent.frame_stack
+    L = len(frame_stack)
+    indentation = ' ' * (2 + L)
+    if ds.verbosity >= 2: stderr(indentation + 'v', frame._slug)
+
+    frame._tracing_indentation = indentation
+    frame._is_tracing = True and (
+        frame._slug == 'Early Errors on <ES_ParseNode symbol=UnaryExpression, 2 children>'
+    )
+
+    if 0:
+        print('len(frame_stack):', L)
+        import misc
+        py_stack_depth = misc.get_stack_depth()
+        print('py stack depth:', py_stack_depth)
+
+        # def tracefunc(*args): print(*args)
+        # if py_stack_depth > 18390: sys.settrace(tracefunc)
+        print('getrlimit (kb):', resource.getrlimit(resource.RLIMIT_STACK)[0] / 1024)
+
+        f = open('/proc/self/status', 'r')
+        for line in f:
+            if line.startswith('VmStk'):
+                print(line.rstrip())
+        f.close()
+
+    frame_stack.append(frame)
+    if len(frame_stack) > ds.agent.max_frame_stack_len:
+        ds.agent.max_frame_stack_len = len(frame_stack)
+    result = frame.run()
+    rframe = frame_stack.pop()
+    assert rframe is frame
+
+    if ds.verbosity >= 2: stderr(indentation + '^', frame._slug, 'returns', result)
+    return result
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+class Frame:
+    def __init__(frame, alg_defn, *, focus_node=None, arg_vals=[]):
+        # -----
+        # alg_defn:
+
+        frame._alg_defn = alg_defn
+        frame._header = alg_defn.header
+        frame._alg = alg_defn.header.parent_alg
+
+        # -----------
+        # focus_node:
+
+        frame._focus_node = focus_node
+        if frame._alg.species.startswith('op: discriminated by syntax'):
+            assert frame._focus_node is not None
+            assert frame._focus_node.isan(ES_ParseNode)
+            frame._make_focus_map(frame._focus_node)
+        else:
+            assert frame._focus_node is None
+
+        # --------
+        # arg_vals:
+
+        frame._arg_vals = arg_vals
+        if frame._alg.species == 'op: discriminated by syntax: early error':
+            assert frame._arg_vals == []
+
+        frame._contours = [{}]
+        if frame._header:
+            assert len(arg_vals) == len(frame._header.params)
+            # XXX Doesn't handle optionals yet.
+            for (param, arg_val) in zip(frame._header.params, arg_vals):
+                frame.let_var_be_value(param.name, arg_val)
+        else:
+            assert NYI, frame._alg.name
+
+        # --------
+
+        frame._slug = (
+            frame._alg.name
+            +
+            (f" on {frame._focus_node}" if frame._focus_node else "")
+            +
+            (f" with args {frame._arg_vals}" if frame._arg_vals else "")
+        )
+
+    def _make_focus_map(frame, focus_node):
+        frame.focus_map = defaultdict(list)
+        for pchild in [focus_node] + focus_node.children:
+            if not pchild.is_terminal and pchild.symbol.endswith('?'):
+                ref_name = pchild.symbol[:-1]
+                if pchild.children:
+                    assert len(pchild.children) == 1
+                    [ref_node] = pchild.children
+                else:
+                    ref_node = ES_AbsentParseNode() # ES_ParseNode(T_named('*OMITTED_OPTIONAL*'), (0,0), tip)
+            else:
+                ref_name = pchild.symbol
+                ref_node = pchild
+
+            frame.focus_map[ref_name].append(ref_node)
+
+    def augment_focus_map(frame, pnode):
+        # pnode itself should already be in the map:
+        assert pnode in frame.focus_map[pnode.symbol]
+
+        # We just need to add its children:
+        for pchild in pnode.children:
+            assert not pchild.is_terminal
+            assert not pchild.symbol.endswith('?')
+            ref_name = pchild.symbol
+            assert ref_name not in frame.focus_map # otherwise it's weird
+            frame.focus_map[ref_name].append(pchild)
+
+    def run(frame):
+        anode = frame._alg_defn.anode
+        # stderr('   ', anode.source_text())
+
+        s = anode.prod.lhs_s
+        if s == '{EE_RULE}':
+            if frame.should_apply_the_rule():
+                try:
+                    EXEC(anode, None)
+                except ReferenceToNonexistentThing:
+                    # The rule just fails to find an early error.
+                    pass
+            assert not frame.is_returning()
+            result = None
+
+        elif s == '{EMU_ALG_BODY}':
+            try:
+                EXEC(anode, None)
+                assert frame.is_returning()
+                result = frame.return_value
+            except ReferenceToNonexistentThing:
+                result = {
+                    'Contains'  : EL_Boolean(False),
+                    'BoundNames': ES_List([]),
+                }[frame._alg.name]
+
+        elif s == '{EXPR}':
+            result = EXEC(anode, E_Value)
+
+        elif s == '{ONE_LINE_ALG}':
+            EXEC(anode, None)
+            assert frame.is_returning()
+            result = frame.return_value
+
+        else:
+            assert 0, s
+
+        return result
+
+    def should_apply_the_rule(frame):
+        if frame._alg_defn.kludgey_p is None: return True
+
+        # kludgey_p hasn't been parsed, so we can't simply run EXEC() on it.
+
+        p_ist = frame._alg_defn.kludgey_p.inner_source_text()
+        if p_ist in [
+            "If |LeftHandSideExpression| is an |ObjectLiteral| or an |ArrayLiteral|, the following Early Error rules are applied:",
+            "If |LeftHandSideExpression| is either an |ObjectLiteral| or an |ArrayLiteral|, the following Early Error rules are applied:",
+        ]:
+            # Here, "is" means "contains via one or more unit rules".
+            lhse_node = frame.resolve_focus_reference(None, 'LeftHandSideExpression')
+            if lhse_node.unit_derives_a('ObjectLiteral') or lhse_node.unit_derives_a('ArrayLiteral'):
+                return True # apply the rules
+            else:
+                return False
+
+        elif p_ist == "If |LeftHandSideExpression| is neither an |ObjectLiteral| nor an |ArrayLiteral|, the following Early Error rule is applied:":
+            lhse_node = frame.resolve_focus_reference(None, 'LeftHandSideExpression')
+            if lhse_node.unit_derives_a('ObjectLiteral') or lhse_node.unit_derives_a('ArrayLiteral'):
+                return False
+            else:
+                return True # apply the rule
+
+        elif p_ist == "In addition to describing an actual object initializer the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.":
+            # This <p> precedes two Early Error units,
+            # one headed by `PropertyDefinition : CoverInitializedName`,
+            # and one headed by the non-empty alternatives for `ObjectLiteral`.
+            focus_node = frame._focus_node
+            assert focus_node.symbol in ['PropertyDefinition', 'ObjectLiteral']
+
+            def ObjectLiteral_appears_in_a_context_where_ObjectAssignmentPattern_is_required():
+                # What is the referent for |ObjectLiteral|?
+                if focus_node.symbol == 'PropertyDefinition':
+                    # The PropertyDefinition's derivation chain must end with:
+                    #     ObjectLiteral -> PropertyDefinitionList+ -> PropertyDefinition.
+                    for anc in focus_node.each_ancestor():
+                        assert anc.symbol in ['PropertyDefinitionList', 'ObjectLiteral']
+                        if anc.symbol == 'ObjectLiteral':
+                            ObjectLiteral = anc
+                            break
+                    else:
+                        assert 0
+                elif focus_node.symbol == 'ObjectLiteral':
+                    # The |ObjectLiteral| in question is just the focus node.
+                    ObjectLiteral = focus_node
+                else:
+                    assert 0
+                assert ObjectLiteral.symbol == 'ObjectLiteral'
+
+                # "When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required ..."
+                #
+                # So when is that?
+                #
+                # Note that, although the preceding sentence says:
+                # "the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern|"
+                # that's not the point where such a covering originates.
+                #
+                # Instead, it originates in Early Error rules for some (but not all) productions
+                # that involve a LeftHandSideExpression:
+                #     AssignmentExpression : LeftHandSideExpression `=` AssignmentExpression
+                #     DestructuringAssignmentTarget : LeftHandSideExpression
+                #     ForInOfStatement : ...
+                # In each case, if the LeftHandSideExpression is an ObjectLiteral,
+                # then the LeftHandSideExpression is required to cover an AssignmentPattern,
+                # which causes the text of the LeftHandSideExpression (and the ObjectLiteral)
+                # to be reparsed as an ObjectAssignmentPattern.
+                # This situation is presumably what the quoted condition refers to.
+                #
+                # So we need to:
+                # (a) detect whether ObjectLiteral 'is' a LeftHandSideExpression, and then
+                # (b) detect whether that LeftHandSideExpression is in one of these productions.
+
+                # (a)
+                # The relevant derivation chain is
+                # LeftHandSideExpression -> NewExpression -> MemberExpression -> PrimaryExpression -> ObjectLiteral
+                four_levels_up = ObjectLiteral.parent.parent.parent.parent
+                if four_levels_up.symbol != 'LeftHandSideExpression':
+                    # The ObjectLiteral doesn't appear in a context where ObjectAssignmentPattern could be required.
+                    return False
+
+                # The ObjectLiteral is unit-derived from a LeftHandSideExpression,
+                # so it *might* appear in a contect etc. 
+                LeftHandSideExpression = four_levels_up
+
+                # (b)
+                parent_production = LeftHandSideExpression.parent.production
+                parent_prod_str = f"{parent_production.og_lhs} -> {parent_production.og_rhs_reduced}"
+                assert parent_prod_str in [
+                    "AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression",
+                    "AssignmentExpression -> LeftHandSideExpression `=` AssignmentExpression",
+                    "DestructuringAssignmentTarget -> LeftHandSideExpression",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `in` Expression `)` Statement",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
+                    "UpdateExpression -> LeftHandSideExpression",
+                ], parent_prod_str
+                if parent_prod_str in [
+                    "AssignmentExpression -> LeftHandSideExpression `=` AssignmentExpression",
+                    "DestructuringAssignmentTarget -> LeftHandSideExpression",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `in` Expression `)` Statement",
+                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
+                    "ForInOfStatement -> `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
+                ]:
+                    # something about LeftHandSideExpression.covered_thing?
+
+                    # The LeftHandSideExpression is in a context that requires it to cover an AssignmentPattern.
+                    return True
+
+                else:
+                    return False
+
+            def initially_parsing_a_CoverParenthesizedExpressionAndArrowParameterList_or_CoverCallExpressionAndAsyncArrowHead():
+                for anc in focus_node.each_ancestor():
+                    if anc.symbol in [
+                        'CoverParenthesizedExpressionAndArrowParameterList',
+                        'CoverCallExpressionAndAsyncArrowHead',
+                    ]:
+                        return True
+                else:
+                    return False
+
+            # ----------------------------------------------
+
+            if ObjectLiteral_appears_in_a_context_where_ObjectAssignmentPattern_is_required():
+                # ... the following Early Error rules are <b>not</b> applied.
+                return False
+
+            if initially_parsing_a_CoverParenthesizedExpressionAndArrowParameterList_or_CoverCallExpressionAndAsyncArrowHead():
+                # In addition, they are not applied.
+                return False
+
+            return True
+
+        else:
+            assert 0
+
+    def is_returning(frame):
+        return hasattr(frame, 'return_value')
+
+    def start_returning(frame, return_value):
+        assert not frame.is_returning()
+        frame.return_value = return_value
+
+    def stop_returning(frame):
+        del frame.return_value
+
+    # ------------------------------------------------------
+
+    def start_contour(frame):
+        frame._contours.insert(0, {})
+
+    def end_contour(frame):
+        frame._contours.pop(0)
+
+    def let_var_be_value(frame, defvar, value):
+        if isinstance(defvar, str):
+            varname = defvar
+        elif isinstance(defvar, ANode):
+            assert defvar.prod.lhs_s == '{DEFVAR}'
+            [var] = defvar.children
+            assert var.prod.lhs_s == '{var}'
+            [varname] = var.children
+        else:
+            assert 0, defvar
+        assert all(
+            varname not in contour
+            for contour in frame._contours
+        )
+        frame._contours[0][varname] = value
+
+    def set_settable_to_value(frame, settable, value):
+        #> Aliases may be modified using the form "Set x to someOtherValue".
+        # The following case-analysis probably doesn't belong here.
+        p = str(settable.prod)
+        if p == '{SETTABLE} : {var}':
+            [var] = settable.children
+            [varname] = var.children
+            assert sum(
+                varname in contour
+                for contour in frame._contours
+            ) == 1
+            for contour in frame._contours:
+                if varname in contour:
+                    contour[varname] = value
+        else:
+            assert NYI, p
+
+    def get_value_referenced_by_var(frame, varname):
+        for contour in frame._contours:
+            if varname in contour:
+                return contour[varname]
+        if varname == '_NcapturingParens_':
+            # not defined by a Let anywhere.
+            #> _NcapturingParens_ is the total number of left-capturing parentheses
+            #> (i.e. the total number of
+            #> <emu-grammar>Atom :: `(` GroupSpecifier Disjunction `)`</emu-grammar>
+            #> Parse Nodes) in the pattern.
+            #> A left-capturing parenthesis is any `(` pattern character
+            #> that is matched by the `(` terminal of the
+            #> <emu-grammar>Atom :: `(` GroupSpecifier Disjunction `)`</emu-grammar>
+            #> production.
+            pattern = frame._focus_node.root()
+            assert pattern.symbol == 'Pattern'
+            n_capturing_parens = 0
+            for node in pattern.preorder_traverse():
+                if node.is_nonterminal() and node.puk == ('Atom', "`(` GroupSpecifier Disjunction `)`", ''):
+                    n_capturing_parens += 1
+                    print('432:', node.production)
+                    assert 0
+            return ES_Mathnum(n_capturing_parens)
+        assert 0, f"varname {varname!r} not in any contour!"
+
+    # ------------------------------------------------------
+
+    def has_a_focus_node(frame):
+        return (frame._focus_node is not None)
+
+    def resolve_focus_reference(frame, ordinal, nt_name):
+        assert frame._alg.species.startswith('op: discriminated by syntax')
+        assert frame._focus_node
+
+        if nt_name not in frame.focus_map:
+            return ES_AbsentParseNode()
+
+        referents = frame.focus_map[nt_name]
+        nr = len(referents)
+        if nr == 0:
+            assert 0, nt_name
+
+        elif nr == 1:
+            assert ordinal is None
+            [referent] = referents
+
+        else:
+            # The production has more than one occurrence of {nt_name}.
+            # Which one are we interested in?
+
+            if nt_name == frame._focus_node.symbol:
+                # {nt_name} occurs on both the LHS and RHS.
+
+                # In this case, it would be a bit weird to ask for
+                # "the first X" or "the second X", etc.
+                # because, does that include the one on the LHS?
+
+                if ordinal == 'derived':
+                    # e.g. "the derived |UnaryExpression|"
+                    assert nr == 2
+                    referent = referents[1]
+
+                elif ordinal is None:
+                    assert nr == 2
+                    # {nt_name} appears twice, once on LHS and once on RHS.
+
+                    # XXX This approach is fairly kludgey.
+                    # The proper approach would involve more static analysis
+                    # of the productions in the emu-grammar and the prod-refs in the emu-alg.
+                    #
+                    # E.g., if <emu-grammar> has
+                    #     IdentifierName ::
+                    #         IdentifierStart
+                    #         IdentifierName IdentifierPart
+                    # then you know that a reference to |IdentifierName| must be a reference to the LHS,
+                    # because not all RHS have an |IdentifierName|.
+                    #
+                    # And if the <emu-alg> has references to
+                    # "the |UnaryExpression|" and "the derived |UnaryExpression|",
+                    # then you can be pretty confident that those are the LHS and the RHS respectively.
+                    # (Whereas if you're just looking at "the |UnaryExpression|" in isolation,
+                    # you don't know.)
+                    #
+                    # And if the production is |ImportsList : ImportsList `,` ImportSpecifier|,
+                    # and the emu-alg has exactly one reference to "the |ImportsList|"
+                    # and exactly one reference to "the |ImportSpecifier|",
+                    # then those are probably both RHS refs. (Esp if they're being passed to the same SDO.)
+                    # 
+                    # And if the production is:
+                    #     BindingElementList : BindingElementList `,` BindingElisionElement
+                    # The defn of ContainsExpression on that production starts with:
+                    #     1. Let _has_ be ContainsExpression of |BindingElementList|.
+                    # We know that the |BindingElementList| in that step
+                    # can't be a reference to the |BindingElementList| that is the LHS,
+                    # because that would lead to infinite recursion.
+                    # So it must be a reference to the |BindingElementList| on the RHS.
+
+                    if frame._focus_node.puk in [
+                        ('IdentifierName', 'IdentifierName IdentifierPart', ''),
+                        ('UnaryExpression', '`delete` UnaryExpression', ''), 
+                    ]:
+                        referent = referents[0]
+
+                    elif frame._focus_node.puk in [
+                        ('BindingPropertyList', 'BindingPropertyList `,` BindingProperty', ''),
+                        ('ClassElementList',    'ClassElementList ClassElement', ''),
+                        ('FormalParameterList', 'FormalParameterList `,` FormalParameter', ''),
+                        ('StatementList',       'StatementList StatementListItem', ''),
+                        ('DoubleStringCharacters', 'DoubleStringCharacter DoubleStringCharacters?', '1'),
+                        ('ImportsList', 'ImportsList `,` ImportSpecifier', ''),
+                        ('ModuleItemList', 'ModuleItemList ModuleItem', ''),
+                        ('BindingList', 'BindingList `,` LexicalBinding', ''),
+                        ('BindingElementList', 'BindingElementList `,` BindingElisionElement', ''),
+                        ('MemberExpression', 'MemberExpression `.` IdentifierName', ''),
+                        ('ExportsList', 'ExportsList `,` ExportSpecifier', ''),
+                        ('HexDigits', 'HexDigits HexDigit', ''),
+                        ('CaseClauses', 'CaseClauses CaseClause', ''),
+                        ('VariableDeclarationList', 'VariableDeclarationList `,` VariableDeclaration', ''),
+                        ('CallExpression', 'CallExpression `.` IdentifierName', ''),
+                        ('TemplateCharacters', 'TemplateCharacter TemplateCharacters?', '1'),
+                        ('SingleStringCharacters', 'SingleStringCharacter SingleStringCharacters?', '1'),
+                        ('TemplateMiddleList', 'TemplateMiddleList TemplateMiddle Expression', ''),
+                        ('PropertyDefinitionList', 'PropertyDefinitionList `,` PropertyDefinition', ''),
+                        ('DecimalDigits', 'DecimalDigits DecimalDigit', ''),
+                        ('LegacyOctalIntegerLiteral', 'LegacyOctalIntegerLiteral OctalDigit', '')
+                    ]:
+                        referent = referents[1]
+
+                    else:
+                        assert 0, frame._focus_node.puk
+
+                else:
+                    assert 0, ordinal
+
+            else:
+                # {nt_name} only occurs on the RHS.
+                # Here, "the first X" etc is well-defined.
+                # I.e., {ordinal} must indicate which we're interested in.
+                assert ordinal is not None
+                assert 1 <= ordinal <= nr
+                referent = referents[ordinal-1]
+
+        if referent.isan(ES_ParseNode):
+            assert referent.symbol == nt_name
+        elif referent.isan(ES_AbsentParseNode):
+            pass
+        else:
+            assert 0
+        return referent
+
+# ------------------------------------------------------------------------------
+
+class ReferenceToNonexistentThing(BaseException):
+    def __init__(self, descr):
+        self.descr = descr
+
+# Problem: 
+# For example, consider fail/0bee7999482c66a0.js, whose text is `(10) => 0`
+#
+# This has a early error due to:
+#>   ArrowParameters : CoverParenthesizedExpressionAndArrowParameterList
+#>     |CoverParenthesizedExpressionAndArrowParameterList| must cover an |ArrowFormalParameters|.
+# (i.e., `(10)` cannot be reparsed as an ArrowFormalParameters)
+# That part is all fine.
+#
+# The problem is that there's also:
+#>   ScriptBody : StatementList
+#>     It is a Syntax Error if |StatementList| Contains `super` ...
+# and in order to evaluate that `Contains`,
+# we recurse down to `ArrowParameters`, for which `Contains` is explicitly defined:
+#>   1. Let _formals_ be the |ArrowFormalParameters| that is covered by
+#>      |CoverParenthesizedExpressionAndArrowParameterList|.
+#>   2. Return _formals_ Contains _symbol_.
+# but "the |ArrowFormalParameters| that is covered by |...|" is nonexistent.
+#
+# Of course, it *would* exist if there weren't any (other) early errors, but
+# (a) we don't yet know that there's the other early error
+#     (because the rules for ScriptBody are checked before those for ArrowParameters), and
+# (b) even if we did somehow know that the ArrowParameters rule had found a syntax error,
+#     how should that affect the checking of the ScriptBody rule?
+#
+# I suppose if you were writing rules to allow for this, you would say
+# (for Contains at |ArrowParameters|):
+#     1. If |CoverParenthesizedExpressionAndArrowParameterList| is not covering an |ArrowFormalParameters|, then
+#        1. Return *false*.
+#     1. Else,
+#        1. [existing rule]
+# So is it possible to rejigger execution to accomplish/simulate this?
+# (And similar modifications of other rules, e.g. BoundNames.)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def EXEC(anode, expected_return):
+    frame = curr_frame()
+    assert not frame.is_returning()
+
+    assert isinstance(anode, ANode)
+
+    p = str(anode.prod)
+    d_exec = lookup_for_prod(p, 'd_exec')
+
+    if frame._is_tracing: stderr(frame._tracing_indentation, f"before {p}")
+    result = d_exec(anode)
+    if frame._is_tracing: stderr(frame._tracing_indentation, f"after {p}, returned {result}")
+
+    if expected_return is None:
+        expectation_met = (result is None)
+    elif expected_return == 'ParseNodeOrAbsent':
+        expectation_met = result.isan((ES_ParseNode, ES_AbsentParseNode))
+    else:
+        expectation_met = isinstance(result, expected_return)
+
+    if not expectation_met:
+        # Maybe we can do an implicit conversion
+        if expected_return in [ES_Mathnum, (ES_Mathnum,EL_Number)] and result.isan(ES_UnicodeCodePoint):
+            if ds.verbosity >= 1: stderr("Implicitly converting ES_UnicodeCodePoint to ES_Mathnum")
+            result = ES_Mathnum(result.scalar)
+            expectation_met = True
+
+    if not expectation_met:
+        stderr()
+        stderr(f"After handling:")
+        stderr(f"    {anode}")
+        stderr(f"result is {result}, but caller expects {expected_return}")
+        assert 0
+        sys.exit(1)
+
+    return result
+
+# ------------------------------------------------------------------------------
+
+def EACH(each_thing):
+    assert not curr_frame().is_returning()
+
+    assert isinstance(each_thing, ANode)
+
+    p = str(each_thing.prod)
+    d_each = lookup_for_prod(p, 'd_each')
+
+    (var, iterable) = d_each(each_thing)
+
+    assert isinstance(var, ANode)
+    assert var.prod.lhs_s == '{DEFVAR}'
+    assert isinstance(iterable, collections.abc.Iterable)
+
+    return (var, iterable)
+
+# ------------------------------------------------------
+
+def value_matches_description(value, description):
+    assert value.isan(E_Value)
+    assert isinstance(description, ANode)
+    assert description.prod.lhs_s in ['{VALUE_DESCRIPTION}', '{VAL_DESC}']
+
+    p = str(description.prod)
+    d_desc = lookup_for_prod(p, 'd_desc')
+
+    result = d_desc(description, value)
+    assert result in [True, False]
+    return result
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+predefined_operations = DecoratedFuncDict()
 
 class_for_prod_str_ = DecoratedFuncDict()
 
@@ -2301,6 +3035,26 @@ def lookup_for_prod(prod_str, attr_name, must_exist=True):
         else:
             return None
 
+def report_unused_entries():
+    def dfd_report_unused_entries(dfd_name, dfd):
+        print(f"unused entries in {dfd_name}:")
+        unused_keys = [
+            key
+            for (key, count) in dfd.access_counts()
+            if count == 0
+        ]
+        if unused_keys == []:
+            print(f"    (none)")
+        else:
+            for key in unused_keys:
+                print(f"    {key}")
+        print()
+
+    dfd_report_unused_entries('class_for_prod_str_',   class_for_prod_str_)
+    dfd_report_unused_entries('predefined_operations', predefined_operations)
+
+# ------------------------------------------------
+
 P = class_for_prod_str_.put
 
 def s_nv_pass_down(anode, env0):
@@ -2314,6 +3068,14 @@ def s_expr_pass_down(expr, env0, expr_value_will_be_discarded):
 def s_tb_pass_down(vd, env):
     [child] = vd.children
     return type_bracket_for(child, env)
+
+def d_exec_pass_down(anode):
+    [child] = anode.children
+    return EXEC(child, E_Value)
+
+def d_exec_pass_down_expecting_None(anode):
+    [child] = anode.children
+    EXEC(child, None)
 
 # Note that, in what follows,
 # the classes declared as "class _"
@@ -2337,10 +3099,15 @@ def s_tb_pass_down(vd, env):
 @P(r"{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}")
 class _:
     s_nv = s_nv_pass_down
+    d_exec = d_exec_pass_down_expecting_None
 
 @P('{VALUE_DESCRIPTION} : {VAL_DESC}')
 class _:
     s_tb = s_tb_pass_down
+
+    def d_desc(value_description, value):
+        [val_desc] = value_description.children
+        return value_matches_description(value, val_desc)
 
 @P(r"{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}")
 @P(r"{EXPR} : {EX}")
@@ -2375,12 +3142,39 @@ class _:
 @P(r"{TYPE_ARG} : {var}")
 class _:
     s_expr = s_expr_pass_down
+    d_exec = d_exec_pass_down
 
 @P('{LITERAL} : {MATH_LITERAL}')
 @P('{LITERAL} : {NUMBER_LITERAL}')
 class _:
     s_tb = s_tb_pass_down
     s_expr = s_expr_pass_down
+    d_exec = d_exec_pass_down
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# functions for dealing with spec markup?
+
+def dereference_emu_xref(emu_xref):
+    assert isinstance(emu_xref, ANode)
+    assert emu_xref.prod.lhs_s == '{h_emu_xref}'
+    st = emu_xref.source_text()
+    mo = re.fullmatch('<emu-xref href="#([^"]+)">[^<>]*</emu-xref>', st)
+    assert mo
+    id = mo.group(1)
+    return spec.node_with_id_[id]
+
+def emu_table_get_unique_row_satisfying(emu_table, predicate):
+    assert isinstance(emu_table, HTML.HNode)
+    assert emu_table.element_name == 'emu-table'
+
+    rows_selected_by_predicate = [
+        row
+        for row in emu_table._data_rows
+        if predicate(row)
+    ]
+    assert len(rows_selected_by_predicate) == 1
+    [row] = rows_selected_by_predicate
+    return row
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # code point & code unit
@@ -2396,6 +3190,15 @@ class _:
 # code point
 
 T_Unicode_code_points_ = ListType(T_code_point_)
+
+@dataclass(frozen=True)
+class ES_UnicodeCodePoint(ES_Value):
+    scalar: int
+    def __init__(self, scalar):
+        assert 0 <= scalar <= 0x10ffff
+        object.__setattr__(self, 'scalar', scalar)
+
+# --------------------------------------
 
 @P('{VAL_DESC} : a Unicode code point')
 class _:
@@ -2434,6 +3237,11 @@ class _:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (T_code_point_, env0)
+
+    def d_exec(expr):
+        [noi] = expr.children
+        mathnum = EXEC(noi, ES_Mathnum)
+        return ES_UnicodeCodePoint(mathnum.val)
 
 @P(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
 class _:
@@ -2480,6 +3288,48 @@ class _:
 # ------------------------------------------------------------------------------
 # a sequence of code points
 
+@dataclass(frozen=True)
+class ES_UnicodeCodePoints(ES_Value):
+    text: str
+
+    def number_of_code_points(self):
+        return len(self.text)
+
+    def code_points(self):
+        return [
+            ES_UnicodeCodePoint(ord(char))
+            for char in self.text
+        ]
+
+    def each(self, item_nature_s):
+        assert item_nature_s == 'code point'
+        return self.code_points()
+
+    def replace_backslashUniEscapeSeqs(self):
+        if '\\' in self.text:
+            def replfunc(mo):
+                hexdigits = mo.group(1) or mo.group(2)
+                return chr(int(hexdigits,16))
+            unescaped_text = re.sub(r'\\u{([\da-fA-F]+)}|\\u([\da-fA-F]{4})', replfunc, self.text)
+            return ES_UnicodeCodePoints(unescaped_text)
+        else:
+            return self
+
+    def contains_code_point(self, code_point):
+        assert code_point.isan(ES_UnicodeCodePoint)
+        return chr(code_point.scalar) in self.text
+
+    def contains_any_code_points_other_than(self, allowed_code_points):
+        return any(
+            ES_UnicodeCodePoint(ord(char)) not in allowed_code_points
+            for char in self.text
+        )
+
+    def contains_the_same_code_point_more_than_once(self):
+        return (len(set(list(self.text))) < len(self.text))
+
+# -----------
+
 @P('{VAL_DESC} : a sequence of Unicode code points')
 class _:
     s_tb = T_Unicode_code_points_
@@ -2493,6 +3343,13 @@ class _:
         [] = expr.children
         return (T_Unicode_code_points_, env0)
 
+@P('{backticked_word} : ` \\w+ `')
+class _:
+    def d_exec(backticked_word):
+        [chars] = backticked_word.children
+        word_chars = chars[1:-1]
+        return ES_UnicodeCodePoints(word_chars)
+
 @P(r"{EX} : {backticked_word}")
 class _:
     def s_expr(expr, env0, _):
@@ -2504,6 +3361,8 @@ class _:
             return (T_code_point_, env0)
         else:
             assert 0, word
+
+    d_exec = d_exec_pass_down
 
 @P(r"{EX} : {backticked_oth}")
 class _:
@@ -2522,6 +3381,17 @@ class _:
 # conditions involving a sequence of Unicode code points
 
 @P(r"{CONDITION_1} : {var} contains any code point more than once")
+class _:
+    def s_cond(cond, env0, asserting):
+        [noi] = cond.children
+        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
+        return (env0, env0)
+
+    def d_exec(cond):
+        [var] = cond.children
+        code_points = EXEC(var, ES_UnicodeCodePoints)
+        return code_points.contains_the_same_code_point_more_than_once()
+
 @P(r"{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -2531,10 +3401,29 @@ class _:
             assert len(bw.source_text()) == 3 # single-character 'words'
         return (env0, env0)
 
+    def d_exec(cond):
+        [var, *backticked_words] = cond.children
+        code_points = EXEC(var, ES_UnicodeCodePoints)
+        allowed_code_points = []
+        for btw in backticked_words:
+            cps = EXEC(btw, ES_UnicodeCodePoints)
+            assert cps.number_of_code_points() == 1
+            [cp] = cps.code_points()
+            allowed_code_points.append(cp)
+        return code_points.contains_any_code_points_other_than(allowed_code_points)
+
 # ==============================================================================
 # code unit
 
 # (We can infer that it means "a UTF-16 code unit value".)
+
+@dataclass(frozen=True)
+class ES_CodeUnit(E_Value):
+    numeric_value: int
+    def __init__(self, numeric_value):
+        assert isinstance(numeric_value, int)
+        assert 0 <= numeric_value < 2 ** 16
+        object.__setattr__(self, 'numeric_value', numeric_value)
 
 @P('{VAL_DESC} : a UTF-16 code unit')
 class _:
@@ -2550,10 +3439,19 @@ class _:
     def s_expr(expr, env0, _):
         return (T_code_unit_, env0)
 
+    def d_exec(code_unit_lit):
+        [chars] = code_unit_lit.children
+        mo = re.fullmatch(r'the code unit 0x([0-9A-F]{4}) \([A-Z -]+\)', chars)
+        assert mo
+        cu_hex = mo.group(1)
+        cu_int = int(cu_hex, 16)
+        return ES_CodeUnit(cu_int)
+
 @P('{LITERAL} : {code_unit_lit}')
 class _:
     s_tb = a_subset_of(T_code_unit_)
     s_expr = s_expr_pass_down
+    d_exec = d_exec_pass_down
 
 @P(r"{EX} : the code unit whose numeric value is {EX}")
 class _:
@@ -2562,11 +3460,32 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (T_code_unit_, env0)
 
+    def d_exec(expr):
+        [ex] = expr.children
+        m = EXEC(ex, ES_Mathnum)
+        return ES_CodeUnit(m.val)
+
 @P(r"{EX} : the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}")
 class _:
     def s_expr(expr, env0, _):
         [nonterminal, emu_xref] = expr.children
         return (T_code_unit_, env0)
+
+    def d_exec(expr):
+        [prod_ref, emu_xref] = expr.children
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        assert pnode.symbol == 'SingleEscapeCharacter'
+        pnode_text = pnode.text()
+        assert len(pnode_text) == 1
+        escape_seq = '\\' + pnode_text
+
+        emu_table = dereference_emu_xref(emu_xref)
+        assert emu_table.element_name == 'emu-table'
+        assert emu_table.attrs['caption'] == 'String Single Character Escape Sequences'
+        row = emu_table_get_unique_row_satisfying(emu_table, lambda row: row.as_dict['Escape Sequence'] == escape_seq)
+        cu_hex = row.as_dict['Code Unit Value']
+        cu_int = int(cu_hex, 16)
+        return ES_CodeUnit(cu_int)
 
 # ==============================================================================
 # code point and/or code unit
@@ -2634,12 +3553,18 @@ class _:
 
 # grammar symbol
 
+class ES_GrammarSymbol(ES_Value): pass
+
 @P('{VAL_DESC} : a grammar symbol')
 class _:
     s_tb = T_grammar_symbol_
 
 # -------------------
 # nonterminal symbols
+
+@dataclass(frozen=True)
+class ES_NonterminalSymbol(ES_GrammarSymbol):
+    name: str
 
 @P(r'{nonterminal} : \| [A-Za-z][A-Za-z0-9]* \?? (\[ .+? \])? \|')
 class _:
@@ -2649,6 +3574,18 @@ class _:
         # rather than a grammar symbol,
         # but we capture those cases before they can get to here.
         return (T_grammar_symbol_, env0)
+
+    def d_exec(nonterminal):
+        [chars] = nonterminal.children
+        return ES_NonterminalSymbol(chars[1:-1])
+
+def nt_name_from_nonterminal_node(nonterminal_node):
+    assert isinstance(nonterminal_node, ANode)
+    nonterminal_node.prod.lhs_s == 'nonterminal'
+    [nonterminal_str] = nonterminal_node.children
+    assert nonterminal_str.startswith('|')
+    assert nonterminal_str.endswith('|')
+    return nonterminal_str[1:-1]
 
 @P(r"{EXPR} : the grammar symbol {nonterminal}")
 class _:
@@ -2661,11 +3598,29 @@ class _:
     def s_expr(expr, env0, _):
         return (T_grammar_symbol_, env0)
 
+    def d_exec(g_sym):
+        [nonterminal] = g_sym.children
+        [nont_str] = nonterminal.children
+        assert nont_str.startswith('|')
+        assert nont_str.endswith('|')
+        return ES_NonterminalSymbol(nont_str[1:-1])
+
 @P('{VAL_DESC} : {nonterminal}')
 class _:
     def s_tb(val_desc, env):
         [nont] = val_desc.children
         return a_subset_of(T_grammar_symbol_)
+
+    def d_desc(val_desc, value):
+        [nonterminal] = val_desc.children
+        nt_name = nt_name_from_nonterminal_node(nonterminal)
+
+        assert value.isan(ES_GrammarSymbol)
+        return (
+            value.isan(ES_NonterminalSymbol)
+            and
+            value.name == nt_name
+        )
 
 @P('{VAL_DESC} : a nonterminal in one of the ECMAScript grammars')
 class _:
@@ -2674,14 +3629,41 @@ class _:
 # ----------------
 # terminal symbols
 
+@dataclass(frozen=True)
+class ES_TerminalSymbol(ES_GrammarSymbol):
+    chars: str
+
+    @staticmethod
+    def from_TERMINAL_anode(terminal):
+        assert isinstance(terminal, ANode)
+        assert terminal.prod.lhs_s == '{TERMINAL}'
+        backticked_str = terminal.source_text()
+        assert backticked_str.startswith('`')
+        assert backticked_str.endswith('`')
+        return ES_TerminalSymbol(backticked_str[1:-1])
+
 @P('{VAL_DESC} : {backticked_word}')
 class _:
     s_tb = a_subset_of(T_grammar_symbol_)
+
+    def d_desc(val_desc, value):
+        [backticked_word] = val_desc.children
+        word_sans_backticks = backticked_word.source_text()[1:-1]
+        assert value.isan(ES_GrammarSymbol)
+        return (
+            value.isan(ES_TerminalSymbol)
+            and
+            value.chars == word_sans_backticks
+        )
 
 @P(r"{G_SYM} : {TERMINAL}")
 class _:
     def s_expr(expr, env0, _):
         return (T_grammar_symbol_, env0)
+
+    def d_exec(g_sym):
+        [terminal] = g_sym.children
+        return ES_TerminalSymbol.from_TERMINAL_anode(terminal)
 
 @P('{VAL_DESC} : the {nonterminal} {TERMINAL}')
 class _:
@@ -2690,6 +3672,13 @@ class _:
         assert nont.source_text() == '|ReservedWord|'
         assert term.source_text() == "`super`"
         return a_subset_of(T_grammar_symbol_)
+
+    def d_desc(val_desc, value):
+        [nont, terminal] = val_desc.children
+        assert nont.source_text() == '|ReservedWord|'
+        terminal_gsym = ES_TerminalSymbol.from_TERMINAL_anode(terminal)
+        assert value.isan(ES_GrammarSymbol)
+        return value == terminal_gsym
 
 # ==============================================================================
 #@ 5.1.4 The Syntactic Grammar
@@ -2703,6 +3692,24 @@ class _:
         [nont] = cond.children
         return (env0, env0)
 
+    def d_exec(cond):
+        [nont] = cond.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        assert nt_name in ['Script', 'Module']
+
+        pnode = curr_frame()._focus_node
+        while True:
+            if pnode.parent:
+                pnode = pnode.parent
+            elif hasattr(pnode, 'covering_thing'):
+                pnode = pnode.covering_thing
+            else:
+                break
+        assert pnode.parent is None
+
+        assert pnode.symbol in ['Script', 'Module']
+        return (pnode.symbol == nt_name)
+
 @P(r"{CONDITION_1} : the syntactic goal symbol is not {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -2712,9 +3719,15 @@ class _:
 #> When a parse is successful, it constructs a parse tree,
 #> a rooted tree structure in which each node is a <dfn>Parse Node</dfn>.
 
+class ES_AbsentParseNode(ES_Value): pass
+
 @P('{VAL_DESC} : a Parse Node')
 class _:
     s_tb = T_Parse_Node
+
+    def d_desc(val_desc, value):
+        [] = val_desc.children
+        return value.isan(ES_ParseNode)
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes')
 class _:
@@ -2729,12 +3742,31 @@ class _:
 class _:
     s_tb = a_subset_of(T_Parse_Node)
 
+    def d_desc(val_desc, value):
+        [] = val_desc.children
+        assert value.isan(ES_ParseNode) # or that might be part of the test
+        return not value.is_terminal
+
 @P('{VAL_DESC} : an instance of {var}')
 class _:
     def s_tb(val_desc, env):
         [var] = val_desc.children
         env.assert_expr_is_of_type(var, T_grammar_symbol_)
         return a_subset_of(T_Parse_Node)
+
+    def d_desc(val_desc, value):
+        [var] = val_desc.children
+        gsym = EXEC(var, ES_GrammarSymbol)
+        if gsym.isan(ES_TerminalSymbol):
+            desired_node_symbol = T_lit(gsym.chars)
+            # Theoretically, it could be a different kind of T_foo,
+            # but so far, the only case of this is `super`.
+        elif gsym.isan(ES_NonterminalSymbol):
+            desired_node_symbol = gsym.name
+        else:
+            assert 0
+        assert value.isan(ES_ParseNode) # or that might be part of the test
+        return value.symbol == desired_node_symbol
 
 # -----
 # implicit "[instance of] symbol": (should the spec make it explicit?)
@@ -2760,6 +3792,37 @@ class _:
         # that isn't itself an instance of {nonterminal},
         # but connects by unit derivations to one that is.
 
+    def d_desc(val_desc, value):
+        [nonterminal] = val_desc.children
+        nt_name = nt_name_from_nonterminal_node(nonterminal)
+        if nt_name == 'ReservedWord':
+            # The wording suggests that it's asking whether
+            # a Parse Node is an instance of some nonterminal,
+            # but it's actually asking
+            # whether a String value conforms to the syntax of |ReservedWord|.
+            # This question is a bit odd,
+            # because |ReservedWord| (like all grammar symbols)
+            # defines a syntax for Unicode text, not strings.
+            # However, |ReservedWord| only involves Latin letters,
+            # so ...
+
+            assert value.isan(EL_String)
+        
+            # kludge
+
+            if value in [
+                EL_String.from_Python_string('a'),
+                EL_String.from_Python_string('b'),
+            ]:
+                return False
+
+            assert NYI
+
+        else:
+            assert value.isan(ES_ParseNode)
+            return (value.symbol == nt_name)
+            # TODO? value.unit_derives_a(nt_name)
+
 @P('{LIST_ELEMENTS_DESCRIPTION} : {nonterminal} Parse Nodes')
 class _:
     def s_tb(led, env):
@@ -2777,6 +3840,11 @@ class _:
         # with respect to the emu-grammar accompanying this alg/expr.
         return (T_Unicode_code_points_, env0)
 
+    def d_exec(expr):
+        [prod_ref] = expr.children
+        node = EXEC(prod_ref, ES_ParseNode)
+        return ES_UnicodeCodePoints(node.text())
+
 @P(r"{EX} : the source text matched by {PROD_REF}")
 class _:
     def s_expr(expr, env0, _):
@@ -2788,6 +3856,13 @@ class _:
     def s_expr(expr, env0, _):
         [nont] = expr.children
         return (T_code_point_, env0)
+
+    def d_exec(expr):
+        [prod_ref] = expr.children
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        t = pnode.text()
+        assert len(t) == 1
+        return ES_UnicodeCodePoint(ord(t))
 
 @P(r"{EX} : the single code point matched by this production")
 class _:
@@ -2803,17 +3878,32 @@ class _:
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_MathNonNegativeInteger_, env0)
 
+    def d_exec(expr):
+        [prod_ref] = expr.children
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        return ES_Mathnum(len(pnode.text()))
+
 @P(r"{EX} : the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
         [prod_ref, nont] = expr.children
         return (T_MathNonNegativeInteger_, env0)
 
+    def d_exec(expr):
+        [prod_ref, nont] = expr.children
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        assert nont.source_text() == '|NumericLiteralSeparator|'
+        return ES_Mathnum(len(pnode.text().replace('_', '')))
+
 @P(r"{CONDITION_1} : any source text is matched by this production")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
+
+    def d_exec(cond):
+        [] = cond.children
+        return True
 
     # 13.2.3.1
 @P(r"{CONDITION_1} : {PROD_REF} is the token `false`")
@@ -2833,6 +3923,19 @@ class _:
 @P('{VAL_DESC} : an instance of a production in {h_emu_xref}')
 class _:
     s_tb = a_subset_of(T_Parse_Node)
+
+    def d_desc(val_desc, value):
+        [emu_xref] = val_desc.children
+        emu_clause = dereference_emu_xref(emu_xref)
+        assert emu_clause.element_name == 'emu-clause'
+        lhs_symbols = set()
+        for emu_grammar in emu_clause.each_descendant_named('emu-grammar'):
+            if emu_grammar.attrs.get('type', 'ref') == 'definition':
+                for production_n in emu_grammar._gnode._productions:
+                    lhs_symbols.add(production_n._lhs_symbol)
+
+        assert value.isan(ES_ParseNode)
+        return value.symbol in lhs_symbols
 
 @P('{VAL_DESC} : an instance of the production {h_emu_grammar}')
 class _:
@@ -2859,6 +3962,20 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
+    def d_exec(cond):
+        [local_ref, h_emu_grammar] = cond.children
+        pnode = EXEC(local_ref, ES_ParseNode)
+        result = (pnode.puk in h_emu_grammar._hnode.puk_set)
+
+        # But this can also augment the current focus_map.
+        # E.g., in TopLevelVarDeclaredNames,
+        #> StatementListItem : Declaration
+        #>    1. If |Declaration| is |Declaration : HoistableDeclaration|, then
+        #>       a. Return the BoundNames of |HoistableDeclaration|.
+        curr_frame().augment_focus_map(pnode)
+
+        return result
+
 @P(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -2866,11 +3983,51 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
+    def d_exec(cond):
+        [local_ref, *h_emu_grammar_] = cond.children
+        pnode = EXEC(local_ref, ES_ParseNode)
+        result = any(
+            pnode_unit_derives_a_node_with_puk(pnode, h_emu_grammar._hnode.puk_set)
+            for h_emu_grammar in h_emu_grammar_
+        )
+        return result
+
+def pnode_unit_derives_a_node_with_puk(pnode, puk_arg):
+    # (Make this a ES_ParseNode method?)
+    if isinstance(puk_arg, set):
+        puk_set = puk_arg
+    elif isinstance(puk_arg, tuple):
+        puk_set = set([puk_arg])
+    else:
+        assert 0, puk_arg
+
+    descendant = pnode
+    while True:
+        if descendant.is_terminal:
+            return None
+        if descendant.puk in puk_set:
+            return descendant
+        if len(descendant.children) != 1:
+            return None
+        [descendant] = descendant.children
+
 @P(r'{CONDITION_1} : {PROD_REF} is `export` {nonterminal}')
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref, nont] = cond.children
         return (env0, env0)
+
+    def d_exec(cond):
+        [prod_ref, nont] = cond.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        return (
+            len(pnode.children) == 2
+            and
+            pnode.children[0].symbol == T_lit('export')
+            and
+            pnode.children[1].symbol == nt_name
+        )
 
 #> Moreover, it has zero or more <em>children</em>,
 #> one for each symbol on the production's right-hand side:
@@ -2883,6 +4040,24 @@ class _:
         env1 = env0.plus_new_entry(loop_var, T_Parse_Node)
         return env1
 
+    def d_each(each_thing):
+        [defvar] = each_thing.children
+        pnode = curr_frame()._focus_node
+        # return (var, pnode.children)
+        #
+        # optimization:
+        # Don't cross the syntactic/lexical boundary.
+        #
+        # (Prompted by pass/0b1fc7208759253b.js,
+        # which caused a segfault, presumably from a too-deep stack.
+        # Could have increased the recursionlimit, but why bother?)
+        same_tip_children = [
+            child_node
+            for child_node in pnode.children
+            if child_node.tip is pnode.tip
+        ]
+        return (defvar, same_tip_children)
+
 # (Each child of _P_ is 'nested' directly within _P_.)
 
 @P(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
@@ -2892,12 +4067,59 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
+    def d_exec(cond):
+        [local_ref, nont] = cond.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        pnode = EXEC(local_ref, ES_ParseNode)
+        return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name])
+
 @P(r"{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
         [local_ref, nonta, nontb] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
+
+    def d_exec(cond):
+        [local_ref, nonta, nontb] = cond.children
+        nt_name_a = nt_name_from_nonterminal_node(nonta)
+        nt_name_b = nt_name_from_nonterminal_node(nontb)
+        pnode = EXEC(local_ref, ES_ParseNode)
+        return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name_a, nt_name_b])
+
+def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_symbols):
+    function_boundary_symbols = [
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'GeneratorDeclaration',
+        'GeneratorExpression',
+        'AsyncFunctionDeclaration',
+        'AsyncFunctionExpression',
+        'AsyncGeneratorDeclaration',
+        'AsyncGeneratorExpression',
+        'MethodDefinition',
+        'ArrowFunction',
+        'AsyncArrowFunction',
+    ]
+    static_initialization_block_boundary_symbols = [
+        'ClassStaticBlock',
+    ]
+    boundary_symbols = function_boundary_symbols + static_initialization_block_boundary_symbols
+
+    assert not any(
+        target_symbol in boundary_symbols
+        for target_symbol in target_symbols
+    )
+    # because that would be weird
+
+    assert pnode.symbol not in target_symbols
+    # because it's unclear whether that would satisfy the wording
+
+    for anc in pnode.each_ancestor():
+        if anc.symbol in target_symbols: return True
+        if anc.symbol in boundary_symbols: return False
+
+    return False
 
 # -----
 
@@ -2913,6 +4135,16 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         env0.assert_expr_is_of_type(nont, T_grammar_symbol_)
         return (env0, env0)
+
+    def d_exec(cond):
+        [var, nont] = cond.children
+        pnode = EXEC(var, ES_ParseNode)
+        nt_name = nt_name_from_nonterminal_node(nont)
+        contains_it = pnode.contains_a(nt_name)
+        if 'does not' in cond.prod.rhs_s:
+            return not contains_it
+        else:
+            return contains_it
 
 @P(r"{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers")
 class _:
@@ -2935,6 +4167,16 @@ class _:
         env0.assert_expr_is_of_type(root_var, T_Parse_Node)
         return (T_MathNonNegativeInteger_, env0)
 
+    def d_exec(expr):
+        [emu_grammar, pnode_var] = expr.children
+        puk_set = emu_grammar._hnode.puk_set
+        pnode = EXEC(pnode_var, ES_ParseNode)
+        count = 0
+        for descendant in pnode.preorder_traverse():
+            if not descendant.is_terminal and descendant.puk in puk_set:
+                count += 1
+        return ES_Mathnum(count)
+
 @P(r"{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}")
 class _:
     def s_expr(expr, env0, _):
@@ -2952,6 +4194,18 @@ class _:
         # XXX noi
         return (env0, env0)
 
+    def d_exec(cond):
+        [local_ref, nont, noi] = cond.children
+        pnode = EXEC(local_ref, ES_ParseNode)
+        nt_name = nt_name_from_nonterminal_node(nont)
+        vals = set()
+        for descendant in pnode.preorder_traverse():
+            if descendant.symbol == nt_name:
+                val = EXEC(noi, E_Value)
+                if val in vals: return True
+                vals.add(val)
+        return False
+
 # (You can ask about nodes that contain _P_)
 
 @P(r"{PROD_REF} : the {nonterminal} containing {LOCAL_REF}")
@@ -2959,6 +4213,18 @@ class _:
     def s_expr(expr, env0, _):
         [nonta, local_ref] = expr.children
         return (T_Parse_Node, env0)
+
+    def d_exec(expr):
+        [container_nont, local_ref] = expr.children
+        container_nt = nt_name_from_nonterminal_node(container_nont)
+        pnode = EXEC(local_ref, ES_ParseNode)
+        containers = [
+            anc
+            for anc in pnode.each_ancestor()
+            if anc.symbol == container_nt
+        ]
+        assert len(containers) == 1
+        return containers[0]
 
 @P(r"{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}")
 class _:
@@ -2982,6 +4248,15 @@ class _:
         [prod_ref, nont, step_xref, alg_xref] = cond.children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
+
+    def d_exec(cond):
+        [prod_ref, nont, step_xref, alg_xref] = cond.children
+        node = EXEC(prod_ref, ES_ParseNode)
+        container_nt = nt_name_from_nonterminal_node(nont)
+        assert container_nt == 'Script'
+        if node.root().symbol != container_nt: return False
+        # TODO: detect whether the Script is being parsed/evaluated for JSON.parse
+        return False
 
 #> Parse Nodes are considered <dfn>the same Parse Node</dfn>
 #> if and only if they represent the same span of source text,
@@ -3022,6 +4297,16 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return None
 
+    def d_exec(rule):
+        [local_ref, nont] = rule.children
+        pnode = EXEC(local_ref, ES_ParseNode)
+        covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
+        if covered_thing:
+            traverse_for_early_errors(covered_thing)
+        else:
+            it_is_a_syntax_error(rule)
+        return None
+
 @P(r"{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}")
 class _:
     def s_expr(expr, env0, _):
@@ -3029,6 +4314,32 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (ptn_type_for(nonterminal), env0)
 
+    def d_exec(expr):
+        [nont, local_ref] = expr.children
+        pnode = EXEC(local_ref, ES_ParseNode)
+        covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
+        if covered_thing is None:
+            raise ReferenceToNonexistentThing(expr.source_text())
+        return covered_thing
+
+def the_nonterminal_that_is_covered_by_pnode(nont, pnode):
+    nt_name = nt_name_from_nonterminal_node(nont)
+    if hasattr(pnode, 'covered_thing'):
+        pass
+        # stderr('covered by:', pnode, "already has")
+    else:
+        ex_nt_name = nt_name + ''.join(pnode.production.og_params_setting)
+        try:
+            pnode.covered_thing = parse(pnode, ex_nt_name)
+            # stderr('covered by:', pnode, "parse succeeded")
+            assert pnode.covered_thing.symbol == nt_name
+            pnode.covered_thing.covering_thing = pnode
+        except ParseError:
+            # stderr('covered by:', pnode, "parse failed")
+            pnode.covered_thing = None
+    return pnode.covered_thing
+
+# ----------------------------------------------------------
 # (this text would be matched by that nonterminal/production
 # if it were source text in an appropriate context)
 
@@ -3038,6 +4349,12 @@ class _:
         [noi, nont] = cond.children
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
+
+    def d_exec(cond):
+        [noi, nont] = cond.children
+        code_point = EXEC(noi, ES_UnicodeCodePoint)
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return not pychar_matches_lexical_nonterminal(chr(code_point.scalar), nt_name)
 
 @P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
 class _:
@@ -3053,6 +4370,125 @@ class _:
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
+# --------------------------------
+
+def pychar_matches_lexical_nonterminal(pychar, nt_name):
+    g = spec.grammar_[('lexical', 'A')]
+    for rhs in g.prodn_for_lhs_[nt_name]._rhss:
+        if pychar_matches_rhs(pychar, rhs):
+            return True
+    return False
+
+def pychar_matches_rhs(pychar, rhs):
+    assert rhs.kind == 'RHS_LINE'
+    assert len(rhs._rhs_items) == 1
+    [r_item] = rhs._rhs_items
+
+    if r_item.kind == 'GNT':
+        assert not r_item._is_optional
+        assert r_item._params == []
+        return pychar_matches_lexical_nonterminal(pychar, r_item._nt_name)
+
+    elif r_item.kind == 'BACKTICKED_THING':
+        return (pychar == r_item._chars)
+
+    elif r_item.kind == 'U_PROP':
+        [unicode_property_name] = r_item.groups
+        return unicode_character_has_property(pychar, unicode_property_name)
+
+    elif r_item.kind == 'NAMED_CHAR':
+        [char_name] = r_item.groups
+        named_pychar = {
+            'ZWNJ'  : '\u200c',
+            'ZWJ'   : '\u200d',
+        }[char_name]
+        return (pychar == named_pychar)
+
+    else:
+        assert NYI, r_item.kind
+
+# ----------------------------------------------------------
+
+def unicode_character_has_property(pychar, property_name):
+    # Does the given character (code point) have the given Unicode property?
+    assert len(pychar) == 1
+
+    # Python has the unicodedata module, but
+    # it doesn't have a method relating to properties.
+
+    # We'll probably need to know pychar's category.
+    cat = unicodedata.category(pychar)
+
+    if property_name == 'ID_Start':
+        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
+        #
+        #" Derived Property: ID_Start
+        #"  Characters that can start an identifier.
+        #"  Generated from:
+        #"      Lu + Ll + Lt + Lm + Lo + Nl
+        #"    + Other_ID_Start
+        #"    - Pattern_Syntax
+        #"    - Pattern_White_Space
+        #"  NOTE: See UAX #31 for more information
+
+        return (
+            (
+                cat in ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl']
+                or
+                pychar in ucp.Other_ID_Start
+            )
+            and
+            not pychar in ucp.Pattern_Syntax
+            and
+            not pychar in ucp.Pattern_White_Space
+        )
+
+    elif property_name == 'ID_Continue':
+        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
+        #
+        #" Derived Property: ID_Continue
+        #"  Characters that can continue an identifier.
+        #"  Generated from:
+        #"      ID_Start
+        #"    + Mn + Mc + Nd + Pc
+        #"    + Other_ID_Continue
+        #"    - Pattern_Syntax
+        #"    - Pattern_White_Space
+        #"  NOTE: See UAX #31 for more information
+
+        return (
+            (
+                unicode_character_has_property(pychar, 'ID_Start')
+                or
+                cat in ['Mn', 'Mc', 'Nd', 'Pc']
+                or
+                pychar in ucp.Other_ID_Continue
+            )
+            and
+            not pychar in ucp.Pattern_Syntax
+            and
+            not pychar in ucp.Pattern_White_Space
+        )
+
+    else:
+        assert 0, property_name
+
+# http://www.unicode.org/reports/tr44/ says:
+#" Implementations should simply use the derived properties,
+#" and should not try to rederive them
+#" from lists of simple properties and collections of rules,
+#" because of the chances for error and divergence when doing so.
+#
+# E.g., Rather than the code above, I should scan
+# https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt
+# to find out all the characters with property ID_Start.
+#
+# However,
+# (a) ID_Start has 131482 code points and ID_Continue has 134434,
+#     so I'd rather not. 
+# (b) The formulae are more likely to be correct wrt future versions of Unicode.
+#     I.e. Python's 'unicodedata' module will be updated.
+
 # ==============================================================================
 #@ 5.1.5.4 Grammatical Parameters
 
@@ -3063,11 +4499,27 @@ class _:
         [prod_ref, cap_word] = cond.children
         return (env0, env0)
 
+    def d_exec(cond):
+        [prod_ref, cap_word] = cond.children
+        [cap_word_str] = cap_word.children
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        has_it = (f"+{cap_word_str}" in pnode.production.og_params_setting)
+        if 'does not have' in cond.prod.rhs_s:
+            return not has_it
+        else:
+            return has_it
+
 @P(r"{CONDITION_1} : the <sub>[Tagged]</sub> parameter was not set")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
+
+    def d_exec(cond):
+        [] = cond.children
+        cap_word_str = 'Tagged'
+        pnode = curr_frame()._focus_node
+        return (f"~{cap_word_str}" in pnode.production.og_params_setting)
 
 # ==============================================================================
 #@ 5.2 Algorithm Conventions
@@ -3102,6 +4554,8 @@ class _:
             # All control paths end with a 'Return'
             return None
 
+    d_exec = d_exec_pass_down_expecting_None
+
 @P(r'{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}')
 class _:
     def s_nv(anode, env0):
@@ -3109,6 +4563,12 @@ class _:
         env1 = tc_nonvalue(commands, env0)
         env2 = tc_nonvalue(command, env1)
         return env2
+
+    def d_exec(anode):
+        [commands, command] = anode.children
+        EXEC(commands, None)
+        if curr_frame().is_returning(): return
+        EXEC(command, None)
 
 # ------------------------------------------------------------------------------
 #> A step or substep may be written as an “if” predicate that conditions its substeps.
@@ -3130,6 +4590,13 @@ class _:
         f_benv = tc_nonvalue(f_command, f_env)
         return env_or(t_benv, f_benv)
 
+    def d_exec(anode):
+        [cond, cmdt, cmdf] = anode.children
+        if EXEC(cond, bool):
+            EXEC(cmdt, None)
+        else:
+            EXEC(cmdf, None)
+
 @P(r'{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.')
 class _:
     def s_nv(anode, env0):
@@ -3142,6 +4609,7 @@ class _:
         return envs_or([a_benv, b_benv, c_benv])
 
 @P(r'{IF_OTHER} : {IF_OPEN}{IF_TAIL}')
+@P('{IF_TAIL} : {_NL_N} {ELSEIF_PART}{IF_TAIL}') # not used for s_nv
 class _:
     def s_nv(anode, env0):
         [if_open, if_tail] = anode.children
@@ -3228,6 +4696,27 @@ class _:
 
         return result
 
+    def d_exec(anode):
+        [condition_and_commands, if_tail] = anode.children
+        [condition, commands] = condition_and_commands.children
+        cond_value = EXEC(condition, bool)
+        if cond_value:
+            EXEC(commands, None)
+        else:
+            EXEC(if_tail, None)
+
+@P('{IF_TAIL} : {_NL_N} {ELSE_PART}')
+class _:
+    def d_exec(if_tail):
+        [child] = if_tail.children
+        EXEC(child, None)
+
+@P('{IF_TAIL} : {EPSILON}')
+class _:
+    def d_exec(if_tail):
+        [] = if_tail.children
+        pass
+
     # -------------------------------------------------
 
 @P(r"{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}")
@@ -3238,6 +4727,11 @@ class _:
         (ta, enva) = tc_expr(exa, t_env)
         (tb, envb) = tc_expr(exb, f_env)
         return (ta | tb, env_or(enva, envb))
+
+    def d_exec(expr):
+        [exa, cond, exb] = expr.children
+        ex = exa if EXEC(cond, bool) else exb
+        return EXEC(ex, E_Value)
 
 # ------------------------------------------------------------------------------
 #> A step may specify the iterative application of its substeps.
@@ -3307,6 +4801,16 @@ class _:
             return (env_for_commands, env)
 
         return tc_loop(env0, check_before_body, commands)
+
+    def d_exec(anode):
+        [each_thing, commands] = anode.children
+        (loop_var, iterable) = EACH(each_thing)
+        for value in iterable:
+            curr_frame().start_contour()
+            curr_frame().let_var_be_value(loop_var, value)
+            EXEC(commands, None)
+            curr_frame().end_contour()
+            if curr_frame().is_returning(): return
 
 def tc_loop(preloop_env, check_before_body, commands):
     preloop_keys = preloop_env.vars.keys()
@@ -3477,6 +4981,14 @@ class _:
         env1 = env0.ensure_expr_is_of_type(collection_expr, collection_type)
         return env1.plus_new_entry(loop_var, item_type)
 
+    def d_each(each_thing):
+        [item_nature, var, ex] = each_thing.children
+        item_nature_s = item_nature.source_text()
+        collection = EXEC(ex, E_Value)
+        if 'backwards' in each_thing.prod.rhs_s:
+            assert NYI
+        return (var, collection.each(item_nature_s))
+
 @P(r"{CONDITION_1} : The following loop will terminate")
 class _:
     def s_cond(cond, env0, asserting):
@@ -3494,6 +5006,11 @@ class _:
         (t_env, f_env) = tc_cond(condition, env0, asserting=True)
         # throw away f_env
         return t_env
+
+    def d_exec(command):
+        [condition] = command.children
+        cond_value = EXEC(condition, bool)
+        assert cond_value is True
 
 @P(r"{COMMAND} : Assert: If {CONDITION}, then {CONDITION}.")
 @P(r"{COMMAND} : Assert: If {CONDITION}, {CONDITION}.")
@@ -3549,6 +5066,10 @@ class _:
             t = T_TBD
         return (t, env0)
 
+    def d_exec(var):
+        [varname] = var.children
+        return curr_frame().get_value_referenced_by_var(varname)
+
 #> ... using the form “Let _x_ be _someValue_”.
 
 @P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)")
@@ -3564,6 +5085,11 @@ class _:
 
         (expr_t, env1) = tc_expr(expr, env0)
         return env1.plus_new_entry(var, expr_t)
+
+    def d_exec(command):
+        [defvar, expr] = command.children
+        value = EXEC(expr, E_Value)
+        curr_frame().let_var_be_value(defvar, value)
 
 @P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (However, if {var} = 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not one of 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)")
 class _:
@@ -3636,6 +5162,13 @@ class _:
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         return (t, env1)
 
+    def d_exec(expr):
+        [var] = expr.children
+        # It could, of course, be something other than a List,
+        # but in practice, Lists are the only things we copy?
+        L = EXEC(var, ES_List)
+        return L.copy()
+
 #> Once declared, an alias may be referenced in any subsequent steps
 #> and must not be referenced from steps prior to the alias's declaration.
 
@@ -3655,6 +5188,8 @@ class _:
             # print("the type of %s is %s" % (var_name, t))
         return (t, env0)
 
+    d_exec = d_exec_pass_down
+
 # ------------------------------------------------------------------------------
 # (there are other ways to declare an alias)
 
@@ -3666,6 +5201,15 @@ class _:
         env2 = env1.plus_new_entry(var, exb_type)
         (exa_type, env3) = tc_expr(exa, env2)
         return (exa_type, env3)
+
+    def d_exec(expr):
+        [exa, var, exb] = expr.children
+        value = EXEC(exb, E_Value)
+        curr_frame().start_contour()
+        curr_frame().let_var_be_value(var, value)
+        result = EXEC(exa, E_Value)
+        curr_frame().end_contour()
+        return result
 
 @P(r'{EXPR} : {EX}, where {DEFVAR} is {EX} and {DEFVAR} is {EX}')
 @P(r'{EXPR} : {EX}, where {DEFVAR} is {EX}, and {DEFVAR} is {EX}')
@@ -3692,6 +5236,11 @@ class _:
     def s_nv(anode, env0):
         [settable, expr] = anode.children
         return env0.set_A_to_B(settable, expr)
+
+    def d_exec(command):
+        [settable, expr] = command.children
+        value = EXEC(expr, E_Value)
+        curr_frame().set_settable_to_value(settable, value)
 
 @P(r'{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.')
 @P(r'{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.')
@@ -3776,6 +5325,10 @@ class _:
         proc_add_return(env1, t1, anode)
         return None
 
+    def d_exec(command):
+        [expr] = command.children
+        curr_frame().start_returning(EXEC(expr, E_Value))
+
 # ------------------------------------------------------------------------------
 # (This section is where "Note" steps should be mentioned?)
 
@@ -3796,6 +5349,10 @@ class _:
         [child] = cond.children
         return tc_cond(child, env0, asserting)
 
+    def d_exec(cond):
+        [child] = cond.children
+        return EXEC(child, bool)
+
 @P(r"{CONDITION} : {CONDITION_1} or {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1}")
 @P(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
@@ -3805,6 +5362,12 @@ class _:
         logical = ('or', cond.children)
         return tc_logical(logical, env0, asserting)
 
+    def d_exec(condition):
+        return any(
+            EXEC(cond, bool)
+            for cond in condition.children
+        )
+
 @P(r'{CONDITION} : {CONDITION_1} and {CONDITION_1}')
 @P(r"{CONDITION} : {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}")
 @P(r'{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}')
@@ -3812,6 +5375,12 @@ class _:
     def s_cond(cond, env0, asserting):
         logical = ('and', cond.children)
         return tc_logical(logical, env0, asserting)
+
+    def d_exec(cond):
+        return all(
+            EXEC(subcond, bool)
+            for subcond in cond.children
+        )
 
 @P(r"{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
 class _:
@@ -3875,6 +5444,10 @@ class _:
         tc_cond(condb, env0)
         return (env0, env0)
 
+    def d_exec(cond):
+        [conda, condb] = cond.children
+        return EXEC(conda, bool) and not EXEC(condb, bool)
+
 @P(r"{CONDITION} : {CONDITION_1} unless {CONDITION_1} and {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -3930,6 +5503,8 @@ class _:
             #     # So I dropped this warning,
             #     # and just rely on Abrupt values being flagged if necessary down the line.
             return (noi_t, env1)
+
+    d_exec = d_exec_pass_down
 
 @P(r"{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}")
 class _:
@@ -4229,6 +5804,17 @@ class _:
         env2 = tc_args(params, args, env0, expr)
         return (return_type, env2)
 
+    def d_exec(expr):
+        [opn_before_paren, exlist_opt] = expr.children
+        opr = opn_before_paren.prod.rhs_s
+        if opr == '{SIMPLE_OPERATION_NAME}':
+            op_name = opn_before_paren.source_text()
+        else:
+            assert NYI
+        #
+        arg_values = EXEC(exlist_opt, list)
+        return apply_op_to_arg_values(op_name, arg_values)
+
 @P(r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}")
 # This has the syntax of an SDO invocation, but it actually invokes an AO.
 class _:
@@ -4237,6 +5823,80 @@ class _:
         callee_op_name = callee.source_text()
         assert callee_op_name == 'UTF16EncodeCodePoint'
         return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
+
+    def d_exec(expr):
+        [cap_word, arg] = expr.children
+        [op_name] = cap_word.children
+        arg_value = EXEC(arg, E_Value)
+        return apply_op_to_arg_values(op_name, [arg_value])
+
+# ----------------------------------------------------------
+
+@P('{EXLIST_OPT} : {EXLIST}')
+class _:
+    def d_exec(exlist_opt):
+        [exlist] = exlist_opt.children
+        return EXEC(exlist, list)
+
+@P('{EXLIST} : {EXLIST}, {EX}')
+class _:
+    def d_exec(anode):
+        [exlist, ex] = anode.children
+        return EXEC(exlist, list) + [EXEC(ex, E_Value)]
+
+@P('{EXLIST} : {EX}')
+class _:
+    def d_exec(exlist):
+        [ex] = exlist.children
+        return [ EXEC(ex, E_Value) ]
+
+# ----------------------------------------------------------
+
+def apply_op_to_arg_values(op_name, arg_values):
+    if isinstance(op_name, str):
+
+        alg_info = spec.alg_info_['op'][op_name]
+        assert alg_info.species in ['op: singular', 'op: singular: numeric method']
+
+        alg_defns = alg_info.all_definitions()
+        if len(alg_defns) == 0:
+            # Pseudocode.py has calls like:
+            # ensure_alg('op: singular', 'floor')
+            # but no definition(s), so we arrive here.
+            func = predefined_operations[op_name]
+            return func(*arg_values)
+
+        elif len(alg_defns) == 1:
+            [alg_defn] = alg_defns
+            return execute_alg_defn(alg_defn, arg_vals=arg_values)
+
+        else:
+            # Operation has multiple definitions, discriminated on the argument type.
+            # (Should this be a different alg_info.species?)
+            assert len(arg_values) == 1
+            [arg_value] = arg_values
+
+            matching_defns = [
+                alg_defn
+                for alg_defn in alg_defns
+                if value_matches_discriminator(arg_value, alg_defn.discriminator)
+            ]
+            assert len(matching_defns) == 1
+            [relevant_alg_defn] = matching_defns
+
+            return execute_alg_defn(relevant_alg_defn, arg_vals=arg_values)
+
+    else:
+        assert NYI, op_name
+
+def value_matches_discriminator(value, discriminator):
+    assert value.isan(E_Value)
+    assert isinstance(discriminator, str)
+    value_type_name = type(value).__name__
+    assert value_type_name.startswith('EL_')
+    return (value_type_name == 'EL_' + discriminator)
+
+# --------------------------------------
 
 #> Some abstract operations are treated as
 #> polymorphically dispatched methods of class-like specification abstractions.
@@ -4267,11 +5927,28 @@ class _:
         # XXX check
         return (ptn_type_for(nonterminal), env0)
 
+    def d_exec(expr):
+        [nont] = expr.children
+        fn = curr_frame()._focus_node
+        assert fn.symbol == nt_name_from_nonterminal_node(nont)
+        return fn
+
 @P(r'{PROD_REF} : {nonterminal}')
 class _:
     def s_expr(expr, env0, _):
         [nonterminal] = expr.children
         return (ptn_type_for(nonterminal), env0)
+
+    def d_exec(prod_ref):
+        [nont] = prod_ref.children
+        if curr_frame().has_a_focus_node():
+            nt_name = nt_name_from_nonterminal_node(nont)
+            pnode = curr_frame().resolve_focus_reference(None, nt_name)
+            return pnode
+        else:
+            # This isn't really a {PROD_REF}, it's a {G_SYM},
+            # but we can't make the metagrammar ambiguous.
+            return EXEC(nont, ES_NonterminalSymbol)
 
 @P(r"{PROD_REF} : {nonterminal} {var}")
 class _:
@@ -4288,11 +5965,28 @@ class _:
         # XXX should check that the 'current' production has such.
         return (ptn_type_for(nonterminal), env0)
 
+    def d_exec(prod_ref):
+        [ordinal, nont] = prod_ref.children
+        ordinal_str = ordinal.source_text()
+        ordinal_num = {
+            'first' : 1,
+            'second': 2,
+            'third' : 3,
+            'fourth': 4,
+        }[ordinal_str]
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return curr_frame().resolve_focus_reference(ordinal_num, nt_name)
+
 @P(r'{PROD_REF} : the {nonterminal}')
 class _:
     def s_expr(expr, env0, _):
         nonterminal = expr.children[-1]
         return (ptn_type_for(nonterminal), env0)
+
+    def d_exec(prod_ref):
+        [nont] = prod_ref.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return curr_frame().resolve_focus_reference(None, nt_name)
 
 @P(r"{PROD_REF} : that {nonterminal}")
 class _:
@@ -4306,11 +6000,20 @@ class _:
     def s_expr(expr, env0, _):
         return (T_Parse_Node, env0)
 
+    def d_exec(prod_ref):
+        [] = prod_ref.children
+        return curr_frame()._focus_node
+
 @P(r"{PROD_REF} : the derived {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
         [nont] = expr.children
         return (T_Parse_Node, env0)
+
+    def d_exec(prod_ref):
+        [nont] = prod_ref.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return curr_frame().resolve_focus_reference('derived', nt_name)
 
 @P('{VAL_DESC} : the {nonterminal} of an? {nonterminal}')
 class _:
@@ -4333,6 +6036,14 @@ class _:
         copula = 'is a' if 'not present' in cond.prod.rhs_s else 'isnt a'
         return env0.with_type_test(ex, copula, t, asserting)
 
+    def d_exec(cond):
+        [prod_ref] = cond.children
+        pnode = EXEC(prod_ref, 'ParseNodeOrAbsent')
+        if 'not present' in cond.prod.rhs_s:
+            return pnode.isan(ES_AbsentParseNode)
+        else:
+            return pnode.isan(ES_ParseNode)
+
 #> The <dfn>source text matched by</dfn> a grammar production
 #> or Parse Node derived from it
 #> is the portion of the source text
@@ -4351,6 +6062,10 @@ class _:
         callee_op_name = callee.source_text()
         return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
+    def d_exec(expr):
+        [cap_word, local_ref] = expr.children
+        return execute_sdo_invocation(cap_word, local_ref, [])
+
 @P(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}")
 @P(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}")
 class _:
@@ -4366,6 +6081,111 @@ class _:
         else:
             assert 0, with_args.prod.rhs_s
         return tc_sdo_invocation(callee_op_name, local_ref, args, expr, env0)
+
+    def d_exec(expr):
+        [cap_word, local_ref, with_args] = expr.children
+        return execute_sdo_invocation(cap_word, local_ref, flatten_with_args(with_args))
+
+def flatten_with_args(with_args):
+    p = str(with_args.prod)
+    if p in [
+        '{WITH_ARGS} : with argument {EX}',
+        '{WITH_ARGS} : {PASSING} argument {EX}',
+    ]:
+        return with_args.children[-1:]
+    elif p in [
+        '{WITH_ARGS} : with arguments {EX} and {EX}',
+        '{WITH_ARGS} : {PASSING} arguments {EX} and {EX}',
+    ]:
+        return with_args.children[-2:]
+    else:
+        assert NYI, p
+
+# ------------------------------------------------------------------------------
+
+def execute_sdo_invocation(sdo_name_arg, focus_expr, arg_exprs):
+    if isinstance(focus_expr, ES_ParseNode):
+        focus_node = focus_expr
+    else:
+        focus_node = EXEC(focus_expr, ES_ParseNode)
+
+    arg_vals = [
+        EXEC(arg_expr, E_Value)
+        for arg_expr in arg_exprs
+    ]
+
+    if isinstance(sdo_name_arg, str):
+        sdo_name = sdo_name_arg
+    elif isinstance(sdo_name_arg, ANode):
+        sdo_name = sdo_name_arg.source_text()
+    else:
+        assert 0
+
+    trace_this = False
+    if trace_this:
+        stderr('-' * 40)
+        stderr(f"Applying {sdo_name} to a {focus_node.puk}")
+
+    sdo_map = spec.sdo_coverage_map[sdo_name]
+
+    if sdo_name == 'Early Errors':
+        assert 0 # handled elsewhere
+
+    elif sdo_name in ['Contains', 'AllPrivateIdentifiersValid', 'ContainsArguments']:
+        if trace_this:
+            stderr(f"{sdo_name} is a default-and-explicits style of SDO,")
+            stderr(f"    so check for an explicit definition that is associated with that production.")
+        if focus_node.puk in sdo_map:
+            if trace_this: stderr("There is one, so we use it.")
+            puk = focus_node.puk
+        else:
+            if trace_this: stderr("There isn't one, so we use the default definition.")
+            puk = ('*default*', '', '')
+
+    else:
+        # The chain rule applies
+        if trace_this:
+            stderr(f"{sdo_name} is an explicits-plus-chaining style of SDO.")
+            stderr(f"Looking for a defn...")
+
+        while True:
+            if trace_this: stderr(f"    key {focus_node.puk}")
+            if focus_node.puk in sdo_map:
+                if trace_this: stderr(f"    has a defn!")
+                puk = focus_node.puk
+                break
+            if trace_this: stderr(f"    no defn")
+            if focus_node.is_instance_of_chain_prod:
+                if trace_this: stderr(f"    but we can chain to {focus_node.direct_chain}")
+                focus_node = focus_node.direct_chain
+            else:
+                if trace_this: stderr(f"    and the chain rule doesn't apply, so ERROR")
+                stderr(f"SPEC BUG: {sdo_name} not defined on {focus_node.puk}")
+                stderr(f"  for {focus_node.text()}")
+
+                if sdo_name == 'PropName' and focus_node.puk == ('CoverInitializedName', 'IdentifierReference Initializer', ''):
+                    # This isn't a spec bug per se, but the spec expresses itself
+                    # in a way that's hard for me to mechanize.
+                    # (Other rules should prevent us getting here.)
+                    return EL_String([])
+
+                if sdo_name == 'SV':
+                    return EL_String([])
+
+                if sdo_name == 'VarDeclaredNames':
+                    return ES_List([])
+
+                if sdo_name.startswith('Contains'):
+                    return EL_Boolean(False)
+
+                # return ES_List([])
+                assert 0
+
+    sdo_defns = sdo_map[puk]
+    assert len(sdo_defns) == 1
+    [sdo_defn] = sdo_defns
+
+    return execute_alg_defn(sdo_defn, focus_node=focus_node, arg_vals=arg_vals)
 
 # ==============================================================================
 #@ 5.2.3 Runtime Semantics
@@ -4403,7 +6223,6 @@ class _:
         [operand] = expr.children
         return handle_completion_record_shorthand('?', operand, env0)
 
-# ---------------------------------------------------
 #> Similarly, prefix ! is used to indicate that
 #> the following invocation of an abstract or syntax-directed operation
 #> will never return an abrupt completion
@@ -4415,6 +6234,15 @@ class _:
     def s_expr(expr, env0, _):
         [noi] = expr.children
         return handle_completion_record_shorthand('!', noi, env0)
+
+    def d_exec(expr):
+        [noi] = expr.children
+        value = EXEC(noi, E_Value)
+        if value.isan(ES_CompletionRecord):
+            assert not value.is_abrupt()
+            return value.get_value_of_field_named('[[Value]]')
+        else:
+            return value
 
 # --------------------------------------
 
@@ -4555,6 +6383,11 @@ class _:
         tc_cond(cond, env0, False)
         return None
 
+    def d_exec(anode):
+        [cond] = anode.children
+        if EXEC(cond, bool):
+            it_is_a_syntax_error(anode)
+
 @P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.")
 @P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.")
 class _:
@@ -4562,6 +6395,11 @@ class _:
         [cond, g_sym, h_emu_xref] = anode.children
         tc_cond(cond, env0)
         return None
+
+    def d_exec(anode):
+        [cond, g_sym, h_emu_xref] = anode.children
+        if EXEC(cond, bool):
+            it_is_a_syntax_error(anode)
 
 @P(r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.")
 class _:
@@ -4571,6 +6409,11 @@ class _:
         tc_cond(condb, tenv, False)
         return None
 
+    def d_exec(rule):
+        [cond1, cond2] = rule.children
+        if EXEC(cond1, bool) and EXEC(cond2, bool):
+            it_is_a_syntax_error(rule)
+
 @P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.")
 class _:
     def s_nv(anode, env0):
@@ -4579,6 +6422,11 @@ class _:
         tc_cond(conda, f_env)
         return None
 
+    def d_exec(rule):
+        [conda, condb] = rule.children
+        if not EXEC(condb, bool) and EXEC(conda, bool):
+            it_is_a_syntax_error(rule)
+
 @P(r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}")
 class _:
     def s_nv(anode, env0):
@@ -4586,6 +6434,20 @@ class _:
         tc_cond(cond, env0)
         # XXX should check h_emu_alg
         return None
+
+    def d_exec(rule):
+        [cond, bool_lit, h_emu_alg] = rule.children
+        if EXEC(cond, bool):
+            bool_val = EXEC(bool_lit, EL_Boolean)
+            emu_alg_body = h_emu_alg._hnode._syntax_tree
+
+            EXEC(emu_alg_body, None)
+            assert curr_frame().is_returning()
+            alg_result = curr_frame().return_value
+            curr_frame().stop_returning()
+
+            if same_value(alg_result, bool_val):
+                it_is_a_syntax_error(rule)
 
 @P(r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>")
 class _:
@@ -4596,12 +6458,48 @@ class _:
         env0.assert_expr_is_of_type(local_ref3, T_Parse_Node)
         return None
 
+    def d_exec(rule):
+        [local_ref1, h_emu_grammar, local_ref2, local_ref3] = rule.children
+        assert len(h_emu_grammar._hnode.puk_set) == 1
+        [puk] = list(h_emu_grammar._hnode.puk_set)
+        pnode = EXEC(local_ref1, ES_ParseNode)
+        inner_pnode = pnode_unit_derives_a_node_with_puk(pnode, puk)
+        if inner_pnode is None: return # no Syntax Error
+        # BUG:
+        # phrase = resolve local_ref2 wrt inner_pnode
+        # "ultimately" derives? 
+        # "these rules"?
+
 @P(r"{EE_RULE} : If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.")
 class _:
     def s_nv(anode, env0):
         [cond, h_emu_grammar] = anode.children
         tc_cond(cond, env0, False)
         return None
+
+    def d_exec(rule):
+        [cond, emu_grammar] = rule.children
+        # PR:
+        # This is weird.
+        # It's saying that I need to take the EE rules for production A
+        # and apply them to a Parse Node that's an instance of a different production B.
+        #
+        # In general, this wouldn't even make sense,
+        # because the EE rules for production A typically refer to symbols on the RHS of the production,
+        # which generally wouldn't have any meaning for an instance of a production B.
+        #
+        # However, in the 4 occurrences of this rule, it does make sense:
+        assert cond.source_text() == "the source text matched by |FormalParameters| is strict mode code"
+        assert emu_grammar.source_text() == "<emu-grammar>UniqueFormalParameters : FormalParameters</emu-grammar>"
+        # `UniqueFormalParameters : FormalParameters` only has 1 Early Error rule,
+        # and it only refers to |FormalParameters|, which *does* have meaning for the focus node.
+
+        if EXEC(cond, bool):
+            ee_map = spec.sdo_coverage_map['Early Errors']
+            puk = ('UniqueFormalParameters', 'FormalParameters', '')
+            ee_rules = ee_map[puk]
+            for ee_rule in ee_rules:
+                execute_alg_defn(ee_rule, focus_node=curr_frame()._focus_node)
 
 @P(r"{EE_RULE} : For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
 class _:
@@ -4613,6 +6511,33 @@ class _:
         tc_cond(cond, env2)
         return None
 
+    def d_exec(rule):
+        [nont, defvar, noi, cond] = rule.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        L = EXEC(noi, ES_List)
+        for pnode in L.elements():
+            assert pnode.symbol == nt_name
+
+            curr_frame().start_contour()
+            curr_frame().let_var_be_value(defvar, pnode)
+            if EXEC(cond, bool):
+                it_is_a_syntax_error(cond)
+            curr_frame().end_contour()
+
+# --------------------------------------
+
+def it_is_a_syntax_error(rule):
+    if isinstance(rule, ANode): rule = rule.source_text()
+    error = EarlyError('Syntax Error', curr_frame()._focus_node, rule)
+    ds.agent.early_errors.append(error)
+    if ds.verbosity >= 1: stderr(f"Found early error: {error}")
+
+@dataclass(frozen=True)
+class EarlyError:
+    kind: str
+    location: ES_ParseNode
+    condition: ANode
+
 # ==============================================================================
 #@ 5.2.5 Mathematical Operations
 
@@ -4621,6 +6546,41 @@ class _:
 #>  -- <dfn>Extended mathematical values</dfn>: Mathematical values together with +∞ and -∞.
 #>  -- <em>Numbers</em>: IEEE 754-2019 double-precision floating point values.
 #>  -- <em>BigInts</em>: ECMAScript language values representing arbitrary integers in a one-to-one correspondence.
+
+@dataclass
+class ES_Mathnum(ES_Value):
+    val: typing.Union[float, int]
+
+    @staticmethod
+    def compare(a, rator, b):
+        if isinstance(rator, ANode):
+            rator_s = rator.source_text()
+        elif isinstance(rator, str):
+            rator_s = rator
+        else:
+            assert NYI
+
+        if rator_s == '\u2264': # "≤" U+2264 Less-Than or Equal To
+            return (a.val <= b.val)
+        elif rator_s in ['\u2265', 'is greater than or equal to']: # "≥" U+2265 Greater-Than or Equal To
+            return (a.val >= b.val)
+        elif rator_s in ['&gt;', 'is strictly greater than']:
+            return (a.val > b.val)
+        else:
+            assert NYI, rator_s
+
+    def __add__(self, other): return ES_Mathnum(self.val + other.val)
+    def __sub__(self, other): return ES_Mathnum(self.val - other.val)
+    def __mul__(self, other): return ES_Mathnum(self.val * other.val)
+    def __truediv__(self, other): return ES_Mathnum(self.val / other.val)
+
+    def __mod__(self, other):
+        assert isinstance(self.val, int)
+        assert isinstance(other.val, int)
+        assert other.val != 0
+        return ES_Mathnum(self.val % other.val)
+
+# ------------------
 
 @P('{VAL_DESC} : a mathematical value')
 class _:
@@ -4791,6 +6751,23 @@ class _:
 
         return (result_t, env2)
 
+    def d_exec(anode):
+        [randA, rator, randB] = anode.children
+        op = rator.source_text()
+        a = EXEC(randA, ES_Mathnum)
+        b = EXEC(randB, ES_Mathnum)
+        if op in ['+', 'plus']: return a + b
+        elif op in ['&times;', 'times', '\xd7']: return a * b
+        elif op == '-': return a - b
+        elif op == '/': return a / b
+        elif op == 'modulo':
+            #> The notation "_x_ modulo _y_" (_y_ must be finite and non-zero)
+            #> computes a value _k_ of the same sign as _y_ (or zero) such that
+            #> abs(_k_) < abs(_y_) and _x_ - _k_ = _q_ * _y_ for some integer _q_.
+            return a % b
+        else:
+            assert NYI, op
+
 @P(r"{PRODUCT} : {UNARY_OPERATOR}{FACTOR}")
 class _:
     def s_expr(expr, env0, _):
@@ -4847,6 +6824,12 @@ class _:
         else:
             assert 0, a_t
         return (result_t, env0) # unless exponent is negative
+
+    def d_exec(expr):
+        [base_expr, exponent_expr] = expr.children
+        base_val = EXEC(base_expr, ES_Mathnum)
+        exponent_val = EXEC(exponent_expr, ES_Mathnum)
+        return ES_Mathnum(base_val.val ** exponent_val.val)
 
 @P(r"{EXPR} : the result of raising {EX} to the {EX} power")
 class _:
@@ -4922,6 +6905,13 @@ class _:
             env0.assert_expr_is_of_type(c, T_MathInteger_)
             env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
             return (env2, env2)
+
+    def d_exec(comparison):
+        [randA, ratorAB, randB, ratorBC, randC] = comparison.children
+        a = EXEC(randA, ES_Mathnum)
+        b = EXEC(randB, ES_Mathnum)
+        c = EXEC(randC, ES_Mathnum)
+        return ES_Mathnum.compare(a, ratorAB, b) and ES_Mathnum.compare(b, ratorBC, c)
 
 @P(r"{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
 class _:
@@ -5122,6 +7112,12 @@ class _:
 
         return (envs_or(t_envs), envs_or(f_envs))
 
+    def d_exec(comparison):
+        [randA, ratorAB, randB] = comparison.children
+        a = EXEC(randA, ES_Mathnum)
+        b = EXEC(randB, ES_Mathnum)
+        return ES_Mathnum.compare(a, ratorAB, b)
+
 @P(r'{CONDITION_1} : {var} is as small as possible')
 class _:
     def s_cond(cond, env0, asserting):
@@ -5140,10 +7136,16 @@ class _:
         [lit] = expr.children
         return (T_MathInteger_, env0)
 
+    d_exec = d_exec_pass_down
+
 @P(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
 class _:
     def s_expr(expr, env0, _):
         return (T_MathNonNegativeInteger_, env0)
+
+    def d_exec(lit):
+        [chars] = lit.children
+        return ES_Mathnum(int(chars, 10))
 
 @P(r"{BASE} : 10")
 @P(r"{BASE} : 2")
@@ -5151,6 +7153,10 @@ class _:
     def s_expr(expr, env0, _):
         [] = expr.children
         return (T_MathInteger_, env0)
+
+    def d_exec(expr):
+        [] = expr.children
+        return ES_Mathnum(int(expr.source_text()))
 
 @P(r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
 class _:
@@ -5171,6 +7177,16 @@ class _:
     def s_expr(expr, env0, _):
         [hex_int_lit] = expr.children
         return (T_MathInteger_, env0)
+
+    d_exec = d_exec_pass_down
+
+@P('{hex_int_lit} : \\b 0x [0-9A-F]{2,6} \\b')
+class _:
+    def d_exec(hex_int_lit):
+        [chars] = hex_int_lit.children
+        return ES_Mathnum(int(chars, 16))
+
+# ---------
 
 @P(r"{MATH_LITERAL} : +&infin;")
 @P(r"{MATH_LITERAL} : +∞")
@@ -5236,7 +7252,18 @@ class _:
 # ------------------------------------------------------------------------------
 #> Conversions between mathematical values and Numbers or BigInts
 #> are always explicit in this document.
-#> ...
+
+#> A conversion from a mathematical value or extended mathematical value _x_
+#> to a Number is denoted as "the Number value for _x_" or {fancy_f}(_x_),
+#> and is defined in <emu-xref href="#sec-ecmascript-language-types-number-type"></emu-xref>.
+
+@predefined_operations.put('\U0001d53d')
+def _(mathnum):
+    return the_Number_value_for(mathnum)
+
+#> A conversion from an integer _x_ to a BigInt
+#>     is denoted as "the BigInt value for _x_" or {fancy_z}(_x_).
+
 #> A conversion from a Number or BigInt _x_ to a mathematical value
 #>     is denoted as "the <dfn>mathematical value of</dfn> _x_",
 #>     or <emu-eqn>ℝ(_x_)</emu-eqn>.
@@ -5254,6 +7281,11 @@ class _:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_FiniteNumber_ | T_PosInfinityNumber_ | T_NegInfinityNumber_)
         return (T_ExtendedMathReal_, env0)
+
+# ------------------------------------------------------------------------------
+#> The mathematical function abs(_x_) ...
+#> The mathematical function min(_x1_, _x2_, &hellip; , _xN_) ...
+#> The mathematical function max(_x1_, _x2_, ..., _xN_) ...
 
 # ------------------------------------------------------------------------------
 #> The notation “<emu-eqn>_x_ modulo _y_</emu-eqn>”
@@ -5283,6 +7315,23 @@ class _:
         else:
             assert 0, var_t
         return (result_t, env0)
+
+# ------------------------------------------------------------------------------
+#> The mathematical function floor(_x_) produces the largest integer
+#> (closest to +&infin;) that is not larger than _x_.
+@predefined_operations.put('floor')
+def _(mathnum):
+    assert mathnum.isan(ES_Mathnum)
+    return ES_Mathnum(math.floor(mathnum.val))
+
+# ------------------------------------------------------------------------------
+#> The mathematical function truncate(_x_) ...
+
+# ------------------------------------------------------------------------------
+#> Mathematical functions min, max, abs, and floor
+#> are not defined for Numbers and BigInts,
+#> and any usage of those methods that have non-mathematical value arguments
+#> would be an editorial error in this specification.
 
 # ------------------------------------------------------------------------------
 #> An <dfn>interval</dfn> from lower bound _a_ to upper bound _b_
@@ -5487,6 +7536,16 @@ class _:
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (env0, env0)
 
+    def d_exec(cond):
+        [var] = cond.children
+        mathnum = EXEC(var, ES_Mathnum)
+        return number_of_significant_digits_in_decimal_representation_of(mathnum) <= 20
+
+def number_of_significant_digits_in_decimal_representation_of(mathnum: ES_Mathnum):
+    s = str(mathnum.val).replace('.', '')
+    assert s.isdigit()
+    return len(s.strip('0'))
+
 @P(r"{EXPR} : the String representation of {EX}, formatted as a decimal number")
 @P(r"{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
 @P(r"{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number")
@@ -5503,6 +7562,16 @@ class _:
 #> and not directly observable from ECMAScript code
 #> are indicated with a ~sans-serif~ typeface.
 
+@dataclass(frozen=True)
+class ES_Adhoc(ES_Value):
+    chars: str
+
+@P('{tilded_word} : ~ [-A-Za-z0-9+]+ ~')
+class _:
+    def d_exec(tilded_word):
+        [chars] = tilded_word.children
+        return ES_Adhoc(chars)
+
 @P(r"{LITERAL} : {tilded_word}")
 class _:
     def s_tb(literal, env):
@@ -5512,6 +7581,8 @@ class _:
     def s_expr(expr, env0, _):
         [tilded_word] = expr.children
         return (type_for_tilded_word(tilded_word), env0)
+
+    d_exec = d_exec_pass_down
 
 def type_for_tilded_word(tilded_word):
     assert tilded_word.prod.lhs_s == '{tilded_word}'
@@ -5523,6 +7594,14 @@ def type_for_tilded_word(tilded_word):
 
 # ==============================================================================
 #@ 5.2.7 Identity
+
+def same_value(a, b):
+    assert a.isan(E_Value)
+    assert b.isan(E_Value)
+    if type(a) == type(b):
+        return a == b
+    else:
+        return False
 
 #> From the perspective of this specification,
 #> the word “is” is used to compare two values for equality,
@@ -5687,6 +7766,15 @@ class _:
         (sub_t, sup_t) = type_bracket_for(vd, env0)
         return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
 
+    def d_exec(cond):
+        [ex, value_description] = cond.children
+        ex_val = EXEC(ex, E_Value)
+        matches = value_matches_description(ex_val, value_description)
+        if 'not' in cond.prod.rhs_s or 'never' in cond.prod.rhs_s:
+            return not matches
+        else:
+            return matches
+
 @P(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}")
 @P(r"{CONDITION_1} : {EX} is neither {VAL_DESC} nor {VAL_DESC}")
 class _:
@@ -5733,6 +7821,12 @@ class _:
             result_sub_t |= sub_t
             result_sup_t |= sup_t
         return (result_sub_t, result_sup_t)
+
+    def d_desc(value_description, value):
+        return any(
+            value_matches_description(value, val_desc)
+            for val_desc in value_description.children
+        )
 
 @P('{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}')
 class _:
@@ -5809,6 +7903,11 @@ class _:
 class _:
     s_tb = s_tb_pass_down
 
+    def d_desc(val_desc, value):
+        [literal] = val_desc.children
+        literal_value = EXEC(literal, E_Value)
+        return same_value(value, literal_value)
+
 # ==============================================================================
 #@ 6.1 ECMAScript Language Types
 
@@ -5827,6 +7926,10 @@ class _:
 # ==============================================================================
 #@ 6.1.1 The Undefined Type
 
+@dataclass(frozen=True)
+class EL_Undefined(EL_Value):
+    pass
+
 @P(r'{LITERAL} : *undefined*')
 class _:
     s_tb = T_Undefined
@@ -5834,8 +7937,16 @@ class _:
     def s_expr(expr, env0, _):
         return (T_Undefined, env0)
 
+    def d_exec(expr):
+        [] = expr.children
+        return EL_Undefined()
+
 # ==============================================================================
 #@ 6.1.2 The Null Type
+
+@dataclass(frozen=True)
+class EL_Null(EL_Value):
+    pass
 
 @P(r'{LITERAL} : *null*')
 class _:
@@ -5844,8 +7955,16 @@ class _:
     def s_expr(expr, env0, _):
         return (T_Null, env0)
 
+    def d_exec(expr):
+        [] = expr.children
+        return EL_Null()
+
 # ==============================================================================
 #@ 6.1.3 The Boolean Type
+
+@dataclass(frozen=True)
+class EL_Boolean(EL_Value):
+    b: bool
 
 @P('{VAL_DESC} : a Boolean')
 class _:
@@ -5858,6 +7977,20 @@ class _:
     def s_expr(expr, env0, _):
         return (T_Boolean, env0)
 
+    d_exec = d_exec_pass_down
+
+@P('{BOOL_LITERAL} : *true*')
+class _:
+    def d_exec(bool_literal):
+        [] = bool_literal.children
+        return EL_Boolean(True)
+
+@P('{BOOL_LITERAL} : *false*')
+class _:
+    def d_exec(bool_literal):
+        [] = bool_literal.children
+        return EL_Boolean(False)
+
 # ==============================================================================
 #@ 6.1.4 The String Type
 
@@ -5867,9 +8000,51 @@ class _:
 #> The String type is generally used to represent textual data in a running ECMAScript program,
 #> in which case each element in the String is treated as a UTF-16 code unit value.
 
+@dataclass
+class EL_String(EL_Value):
+    code_units: typing.List[ES_CodeUnit]
+
+    def __init__(self, code_units):
+        assert isinstance(code_units, list)
+        for code_unit in code_units:
+            assert code_unit.isan(ES_CodeUnit)
+        self.code_units = code_units
+
+    @staticmethod
+    def from_Python_string(string):
+        assert isinstance(string, str)
+        assert string.isascii() # So I don't have to care about encoding
+        return EL_String([
+            ES_CodeUnit(ord(char))
+            for char in string
+        ])
+
+    @staticmethod
+    def from_integers(ints):
+        return EL_String([
+            ES_CodeUnit(i)
+            for i in ints
+        ])
+
+    def to_Python_String(self):
+        return ''.join(
+            chr(code_unit.numeric_value) #XXX wrong
+            for code_unit in self.code_units
+        )
+
+    def __repr__(self):
+        chars = self.to_Python_String()
+        return f"EL_String({chars!r})"
+
+# ------------------------------------------------
+
 @P('{VAL_DESC} : a String')
 class _:
     s_tb = T_String
+
+    def d_desc(val_desc, value):
+        [] = val_desc.children
+        return value.isan(EL_String)
 
 @P('{LIST_ELEMENTS_DESCRIPTION} : Strings')
 class _:
@@ -5892,6 +8067,7 @@ def s_expr_String(expr, env0, _):
 class _:
     s_tb = a_subset_of(T_String)
     s_expr = s_expr_String
+    d_exec = d_exec_pass_down
 
 @P(r'{STR_LITERAL} : *","* (a comma)')
 class _:
@@ -5901,13 +8077,26 @@ class _:
 class _:
     s_expr = s_expr_String
 
+    def d_exec(str_literal):
+        [] = str_literal.children
+        return EL_String([])
+
 @P(r'{STR_LITERAL} : {starred_str}')
 class _:
     s_expr = s_expr_String
+    d_exec = d_exec_pass_down
 
 @P(r'{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})')
 class _:
     s_expr = s_expr_String
+
+@P('{starred_str} : \\* " ( [^"*] | \\\\ \\* )* " \\*')
+class _:
+    def d_exec(starred_str):
+        [chars] = starred_str.children
+        inner_chars = chars[2:-2]
+        true_chars = inner_chars.replace('\\*', '*')
+        return EL_String.from_Python_string(true_chars)
 
 @P(r"{EX} : the String {var}")
 @P(r"{EXPR} : the String value {SETTABLE}")
@@ -6051,6 +8240,16 @@ class _:
             env1 = env1.ensure_expr_is_of_type(ex, T_String | T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
 
+    def d_exec(expr):
+        code_units = []
+        for ex in expr.children:
+            val = EXEC(ex, (EL_String, ES_CodeUnit))
+            if val.isan(ES_CodeUnit):
+                code_units.append(val)
+            else:
+                code_units.extend(val.code_units)
+        return EL_String(code_units)
+
 # ------------------------------------------------------------------------------
 #> The phrase "the <dfn>substring</dfn> of _S_ from _inclusiveStart_ to _exclusiveEnd_"
 #> (where _S_ is a String value or a sequence of code units and _inclusiveStart_ and _exclusiveEnd_ are integers)
@@ -6124,6 +8323,11 @@ class _:
         [ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_code_unit_ | ListType(T_code_unit_))
         return (T_String, env1)
+
+    def d_exec(expr):
+        [ex] = expr.children
+        val = EXEC(ex, ES_CodeUnit)
+        return EL_String([val])
 
 @P(r"{EXPR} : the String value that is a copy of {var} with both leading and trailing white space removed")
 @P(r"{EXPR} : the String value that is a copy of {var} with leading white space removed")
@@ -6228,6 +8432,16 @@ class _:
         env0.assert_expr_is_of_type(var, T_String)
         return (T_Unicode_code_points_, env0)
 
+    def d_exec(expr):
+        [var] = expr.children
+        string = EXEC(var, EL_String)
+        # This breaks encapsulation on EL_String *and* ES_UnicodeCodePoints:
+        text = ''.join(
+            chr(code_unit.numeric_value)
+            for code_unit in string.code_units
+        )
+        return ES_UnicodeCodePoints(text)
+
 @P(r"{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b> through <b>Z</b> and <b>a</b> through <b>z</b> for digits with values 10 through 35")
 class _:
     def s_expr(expr, env0, _):
@@ -6252,9 +8466,17 @@ class _:
 # ==============================================================================
 #@ 6.1.5 The Symbol Type
 
+@dataclass
+class EL_Symbol(EL_Value):
+    description: EL_Undefined | EL_String
+
 @P('{VAL_DESC} : a Symbol')
 class _:
     s_tb = T_Symbol
+
+    def d_desc(val_desc, value):
+        [] = val_desc.children
+        return value.isan(EL_Symbol)
 
 # ----
 
@@ -6289,9 +8511,38 @@ class _:
 # ==============================================================================
 #@ 6.1.6.1 The Number Type
 
+@dataclass(frozen=True)
+class EL_Number(EL_Value):
+    def __init__(self, val):
+        if val in [
+            'not a number',
+            'negative infinity',
+            'positive infinity',
+        ]:
+            pass
+
+        elif (
+            isinstance(val, tuple)
+            and len(val) == 2
+            and val[0] in ['-', '+']
+            and val[1] >= 0
+        ):
+            pass
+
+        else:
+            assert 0, val
+
+        object.__setattr__(self, 'val', val)
+
+# --------------
+
 @P('{VAL_DESC} : a Number')
 class _:
     s_tb = T_Number
+
+    def d_desc(val_desc, value):
+        [] = val_desc.children
+        return value.isan(EL_Number)
 
 # --------------
 # make a Number:
@@ -6317,6 +8568,9 @@ class _:
 
     def s_expr(expr, env0, _):
         return (T_NaN_Number_, env0)
+
+    def d_exec(expr):
+        return EL_Number('not a number')
 
 @P(r"{NUMBER_LITERAL} : *0.5*{h_sub_fancy_f}")
 @P(r"{NUMBER_LITERAL} : *-0.5*{h_sub_fancy_f}")
@@ -6466,6 +8720,25 @@ class _:
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
         return (env1, env1)
 
+# ----------------------------------------------
+#> In this specification, the phrase "the Number value for _x_"
+#> where _x_ represents an exact real mathematical quantity
+#> (which might even be an irrational number such as &pi;)
+#> means a Number value chosen in the following manner. ...
+
+def the_Number_value_for(mathnum: ES_Mathnum):
+    max_safe_integer = 2**53 - 1
+    if isinstance(mathnum.val, int):
+        if 0 <= mathnum.val < max_safe_integer:
+            return EL_Number(('+', mathnum.val))
+        
+    if mathnum.val >= 2**1024:
+        return EL_Number('positive infinity')
+
+    assert NYI, mathnum
+
+# -----------------------------
+
 @P(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
 @P(r'{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
 class _:
@@ -6577,6 +8850,16 @@ class _:
 #> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
 #> All String and Symbol values, including the empty String, are valid as property keys.
 #> A <dfn>property name</dfn> is a property key that is a String value.
+
+@dataclass # not frozen
+class Property: # ES_Property(ES_Value) ?
+    pass
+
+@dataclass # not frozen
+class EL_Object(EL_Value):
+    properties: typing.List[Property]
+
+# --------------------------------
 
 @P('{VAL_DESC} : an Object')
 class _:
@@ -7052,6 +9335,95 @@ class _:
 # ------------------------------------------------------------------------------
 # List:
 
+@dataclass
+class ES_List(ES_Value):
+    _elements: typing.List
+
+    def __repr__(self):
+        x = ', '.join(
+            repr(el)
+            for el in self._elements
+        )
+        return f"ES_List({x})"
+
+    # make:
+
+    def copy(self):
+        return ES_List(self._elements[:])
+
+    @staticmethod
+    def concat(*lists):
+        all_elements = []
+        for alist in lists:
+            assert alist.isan(ES_List)
+            all_elements.extend(alist._elements)
+        return ES_List(all_elements)
+
+    # modify:
+
+    def append_one(self, element):
+        assert element.isan(E_Value)
+        self._elements.append(element)
+
+    def append_many(self, other):
+        assert other.isan(ES_List)
+        self._elements.extend(other._elements)
+
+    # iterate:
+    
+    def each(self, item_nature_s):
+        for element in self._elements:
+            # assert element is_blah item_nature_s
+            yield element
+
+    # query:
+
+    def is_empty(self):
+        return (len(self._elements) == 0)
+
+    def number_of_elements(self):
+        return ES_Mathnum(len(self._elements))
+
+    def elements(self):
+        return iter(self._elements)
+
+    def contains(self, value):
+        return any(
+            same_value(element, value)
+            for element in self._elements
+        )
+
+    def contains_an_element_satisfying(self, predicate):
+        return any(
+            predicate(element)
+            for element in self._elements
+        )
+
+    def number_of_occurrences_of(self, value):
+        return len([
+            element
+            for element in self._elements
+            if same_value(element, value)
+        ])
+
+    def contains_any_duplicates(self):
+        for i in range(0, len(self._elements)):
+            ei = self._elements[i]
+            for j in range(0, i):
+                ej = self._elements[j]
+                if same_value(ei, ej):
+                    return True
+        return False
+
+    def has_any_element_in_common_with(self, other):
+        for se in self._elements:
+            for oe in other._elements:
+                if same_value(se, oe):
+                    return True
+        return False
+
+# ------------------------------------------------------------------------------
+
 @P('{VAL_DESC} : a possibly empty List')
 class _:
     s_tb = T_List
@@ -7094,6 +9466,10 @@ class _:
         [] = expr.children
         return (ListType(T_0), env0)
 
+    def d_exec(expr):
+        [] = expr.children
+        return ES_List([])
+
 @P(r"{EX} : « {EXLIST} »")
 class _:
     def s_expr(expr, env0, _):
@@ -7107,12 +9483,22 @@ class _:
         list_type = ListType(element_type)
         return (list_type, env1)
 
+    def d_exec(expr):
+        [exlist] = expr.children
+        values = EXEC(exlist, list)
+        return ES_List(values)
+
 @P(r"{EXPR} : a List whose sole element is {EX}")
 class _:
     def s_expr(expr, env0, _):
         [element_expr] = expr.children
         (element_type, env1) = tc_expr(element_expr, env0); assert env1.equals(env0)
         return (ListType(element_type), env0)
+
+    def d_exec(expr):
+        [element_ex] = expr.children
+        element_value = EXEC(element_ex, E_Value)
+        return ES_List([element_value])
 
 @P(r"{EXPR} : a copy of the List {var}")
 @P(r"{EXPR} : a List whose elements are the elements of {var}")
@@ -7150,6 +9536,12 @@ class _:
             # assert t1.element_type == t2.element_type
         return (list_type, env0)
 
+    def d_exec(expr):
+        [vara, varb] = expr.children
+        lista = EXEC(vara, ES_List)
+        listb = EXEC(varb, ES_List)
+        return ES_List.concat(lista, listb)
+
 @P(r"{EXPR} : the list-concatenation of {EX}, {EX}, and {EX}")
 class _:
     def s_expr(expr, env0, _):
@@ -7168,6 +9560,13 @@ class _:
         env2 = env1.ensure_expr_is_of_type(exb, lt)
         env3 = env2.ensure_expr_is_of_type(exc, lt)
         return (lt, env3)
+
+    def d_exec(expr):
+        [vara, varb, varc] = expr.children
+        lista = EXEC(vara, ES_List)
+        listb = EXEC(varb, ES_List)
+        listc = EXEC(varc, ES_List)
+        return ES_List.concat(lista, listb, listc)
 
 @P(r'{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}')
 class _:
@@ -7221,6 +9620,16 @@ class _:
     def s_nv(anode, env0):
         [value_ex, list_ex] = anode.children
         return env0.ensure_A_can_be_element_of_list_B(value_ex, list_ex)
+
+    def d_exec(command):
+        [item_ex, list_var] = command.children
+        v = EXEC(item_ex, E_Value)
+        L = EXEC(list_var, ES_List)
+        rhs = command.prod.rhs_s
+        if 'Append' in rhs or 'append' in rhs:
+            L.append_one(v)
+        else:
+            assert NYI
 
 @P(r"{COMMAND} : Append to {var} the elements of {var}.")
 class _:
@@ -7317,6 +9726,14 @@ class _:
         # XXX For String, change spec to "is [not] the empty String" ?
         return (env0, env0)
 
+    def d_exec(cond):
+        [ex] = cond.children
+        L = EXEC(ex, ES_List)
+        if 'is not' in cond.prod.rhs_s:
+            return not L.is_empty()
+        else:
+            return L.is_empty()
+
 @P(r"{CONDITION_1} : {var} is now an empty List")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7357,6 +9774,11 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_List)
         return (T_MathNonNegativeInteger_, env1)
 
+    def d_exec(expr):
+        [list_ex] = expr.children
+        list_val = EXEC(list_ex, ES_List)
+        return list_val.number_of_elements()
+
 @P(r"{CONDITION_1} : {var} has {EX} elements")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7376,6 +9798,14 @@ class _:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
+
+    def d_exec(cond):
+        [container_ex] = cond.children
+        L = EXEC(container_ex, ES_List)
+        if 'no duplicate' in cond.prod.rhs_s:
+            return not L.contains_any_duplicates()
+        else:
+            return L.contains_any_duplicates()
 
 @P(r"{CONDITION_1} : {var} contains a single {nonterminal}")
 class _:
@@ -7401,6 +9831,24 @@ class _:
             env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
         return (env1, env1)
 
+    def d_exec(cond):
+        [container_ex, element_ex] = cond.children
+        container = EXEC(container_ex, (ES_List, ES_UnicodeCodePoints))
+        e = EXEC(element_ex, E_Value)
+        if container.isan(ES_List):
+            contains_it = container.contains(e)
+        elif container.isan(ES_UnicodeCodePoints):
+            if e.isan(ES_UnicodeCodePoints):
+                assert e.number_of_code_points() == 1
+                [e] = e.code_points()
+            contains_it = container.contains_code_point(e)
+        else:
+            assert 0, container
+        if 'does not contain' in cond.prod.rhs_s:
+            return not contains_it
+        else:
+            return contains_it
+
 @P(r"{CONDITION_1} : {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7425,6 +9873,12 @@ class _:
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
+    def d_exec(cond):
+        [noi, ss] = cond.children
+        L = EXEC(noi, ES_List)
+        v = EXEC(ss, E_Value)
+        return L.number_of_occurrences_of(v) > 1
+
 # (13.2.5.1 Static Semantics: Early Errors)
 @P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
 class _:
@@ -7432,6 +9886,50 @@ class _:
         [noi, ss, emu_grammar] = cond.children
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
+
+    def d_exec(cond):
+        [noi, ss, h_emu_grammar] = cond.children
+        L = EXEC(noi, ES_List)
+        v = EXEC(ss, E_Value)
+        if L.number_of_occurrences_of(v) <= 1: return False
+
+        # Okay, so we know that {L} contains duplicate entries for {v}.
+        # But the second part of the condition is weird,
+        # because it's asking *after the fact*
+        # about how the entries in {L} were obtained.
+        # (The 'proper' way to do this would be to modify the rules involved,
+        # or make a new SDO, to compute the quantity of interest.)
+
+        assert noi.source_text() == 'PropertyNameList of |PropertyDefinitionList|'
+
+        PDL = curr_frame().resolve_focus_reference(None, 'PropertyDefinitionList')
+
+        def each_PD_in_PDL(PDL):
+            assert PDL.symbol == 'PropertyDefinitionList'
+            r = PDL.production.og_rhs_reduced
+            if r == 'PropertyDefinition':
+                [PD] = PDL.children
+                yield PD
+            elif r == 'PropertyDefinitionList `,` PropertyDefinition':
+                [PDL, _, PD] = PDL.children
+                yield from each_PD_in_PDL(PDL)
+                yield PD
+            else:
+                assert 0
+
+        n = 0
+        for PD in each_PD_in_PDL(PDL):
+            assert PD.symbol == 'PropertyDefinition'
+            propName = execute_sdo_invocation('PropName', PD, [])
+            if same_value(propName, v):
+                # This is one of the duplicate entries.
+                # Was it obtained from a production of the given form?
+                # SPEC BUG: s/production/Parse Node/
+                if PD.puk in h_emu_grammar._hnode.puk_set:
+                    # Yes, it was.
+                    n += 1
+
+        return (n >= 2)
 
 @P(r"{CONDITION_1} : {var} does not include the element {LITERAL}")
 class _:
@@ -7441,12 +9939,26 @@ class _:
         env0.assert_expr_is_of_type(item_lit, T_String)
         return (env1, env1)
 
+    def d_exec(cond):
+        [var, lit] = cond.children
+        L = EXEC(var, ES_List)
+        v = EXEC(lit, E_Value)
+        return not L.contains(v)
+
 @P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, nont] = cond.children
         env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
         return (env0, env0)
+
+    def d_exec(cond):
+        [noi, nont] = cond.children
+        L = EXEC(noi, ES_List)
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return L.contains_an_element_satisfying(
+            lambda e: e.symbol == nt_name
+        )
 
 @P(r"{CONDITION_1} : there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}")
 class _:
@@ -7541,6 +10053,12 @@ class _:
         env0.assert_expr_is_of_type(noi2, T_List)
         return (env0, env0)
 
+    def d_exec(cond):
+        [noi1, noi2] = cond.children
+        L1 = EXEC(noi1, ES_List)
+        L2 = EXEC(noi2, ES_List)
+        return L1.has_any_element_in_common_with(L2)
+
 @P(r"{CONDITION_1} : any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7550,12 +10068,25 @@ class _:
         env0.assert_expr_is_of_type(noic, T_List)
         return (env0, env0)
 
+    def d_exec(cond):
+        [noi1, noi2, noi3] = cond.children
+        L1 = EXEC(noi1, ES_List)
+        L2 = EXEC(noi2, ES_List)
+        L3 = EXEC(noi3, ES_List)
+        return any(
+            not (L2.contains(element) or L3.contains(element))
+            for element in L1.elements()
+        )
+
 # ------------------------------------------------------------------------------
 # Record:
 
 #> The <dfn>Record</dfn> type
 #> is used to describe data aggregations
 #> within the algorithms of this specification.
+
+class ES_Record(ES_Value):
+    pass
 
 @P(r"{EXPR} : a new Record")
 class _:
@@ -7971,6 +10502,9 @@ class _:
 
 # ==============================================================================
 #@ 6.2.4 The Completion Record Specification Type
+
+class ES_CompletionRecord(ES_Record):
+    pass
 
 #> The following shorthand terms are sometimes used to refer to Completion Records.
 
@@ -8406,12 +10940,22 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
+    def d_exec(cond):
+        [local_ref, g_sym] = cond.children
+        boolean_value = execute_sdo_invocation('Contains', local_ref, [g_sym])
+        assert boolean_value.isan(EL_Boolean)
+        return boolean_value.b
+
 @P(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {var}")
 @P(r"{NAMED_OPERATION_INVOCATION} : {LOCAL_REF} Contains {G_SYM}")
 class _:
     def s_expr(expr, env0, _):
         [lhs, rhs] = expr.children
         return tc_sdo_invocation('Contains', lhs, [rhs], expr, env0)
+
+    def d_exec(expr):
+        [local_ref, sym] = expr.children
+        return execute_sdo_invocation('Contains', local_ref, [sym])
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 9 Executable Code and Execution Contexts
@@ -8977,6 +11521,11 @@ class _:
 # ==============================================================================
 #@ 9.7 Agents
 
+class ES_Agent(ES_Value):
+    def __init__(self):
+        self.frame_stack = []
+        self.max_frame_stack_len = 0
+
 #> While an agent's executing thread executes jobs,
 #> the agent is the <dfn>surrounding agent</dfn>
 #> for the code in those jobs.
@@ -9218,11 +11767,33 @@ class _:
         env0.assert_expr_is_of_type(goal_var, T_grammar_symbol_)
         return env0
 
+    def d_exec(command):
+        [subject_var, goal_var] = command.children
+        subject = EXEC(subject_var, ES_UnicodeCodePoints)
+        goal_sym = EXEC(goal_var, ES_NonterminalSymbol)
+        frame = curr_frame()
+        try:
+            frame.kludge_node = parse(subject.text, goal_sym.name)
+        except ParseError as e:
+            frame.kludge_node = None
+            frame.kludge_errors = [e]
+            return
+        frame.kludge_errors = get_early_errors_in(frame.kludge_node)
+
 @P(r"{CONDITION_1} : the parse succeeded and no early errors were found")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
+
+    def d_exec(cond):
+        [] = cond.children
+        frame = curr_frame()
+        return (
+            frame.kludge_node is not None
+            and
+            frame.kludge_errors == []
+        )
 
 @P(r"{EXPR} : the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse")
 class _:
@@ -9231,12 +11802,36 @@ class _:
         env0.assert_expr_is_of_type(var, T_grammar_symbol_)
         return (T_Parse_Node, env0)
 
+    def d_exec(expr):
+        [var] = expr.children
+        gsym = EXEC(var, ES_GrammarSymbol)
+        frame = curr_frame()
+        assert (
+            frame.kludge_node is not None
+            and
+            frame.kludge_errors == []
+        )
+        return frame.kludge_node
+
 @P(r"{EXPR} : a List of one or more {ERROR_TYPE} objects representing the parsing errors and/or early errors. If more than one parsing error or early error is present, the number and ordering of error objects in the list is implementation-defined, but at least one must be present")
 @P('{EXPR} : a List containing one or more {ERROR_TYPE} objects')
 class _:
     def s_expr(expr, env0, _):
         [error_type] = expr.children
         return (ListType(type_for_ERROR_TYPE(error_type)), env0)
+
+    def d_exec(expr):
+        [error_type] = expr.children
+        assert error_type.source_text() == '*SyntaxError*'
+        frame = curr_frame()
+        assert frame.kludge_errors
+        objects = [
+            # TODO: make a SyntaxError object!
+            EL_Object([])
+            # ee.kind, ee.location, ee.condition
+            for ee in frame.kludge_errors
+        ]
+        return ES_List(objects)
 
 # ==============================================================================
 #@ 11.2.1 Directive Prologues and the Use Strict Directive
@@ -9247,6 +11842,11 @@ class _:
         [prod_ref] = cond.children
         # XXX check that prod_ref makes sense
         return (env0, env0)
+
+    def d_exec(cond):
+        [prod_ref] = cond.children
+        pnode = EXEC(prod_ref, ES_ParseNode)
+        return begins_with_a_DP_that_contains_a_USD(pnode)
 
 # ==============================================================================
 #@ 11.2.2 Strict Mode Code
@@ -9262,11 +11862,188 @@ class _:
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
+    def d_exec(cond):
+        [local_ref] = cond.children
+        pnode = EXEC(local_ref, ES_ParseNode)
+        return is_strict(pnode)
+
 @P(r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
+
+# ------------------------------------------------
+
+def is_strict(pnode):
+    # {pnode} matches code that is contained in strict mode code iff:
+    # - {pnode} is inherently strict, or
+    # - {pnode} explicitly declares that it is strict (via a Use Strict Directive), or
+    # - {pnode} inherits strictness from "outside".
+    # But these are somewhat blended in the spec's definition of strictness.
+
+    # print('is_strict:', pnode.text(), f"<{pnode.symbol}>")
+
+    #> Module code is always strict mode code.
+    #> All parts of a ClassDeclaration or a ClassExpression are strict mode code.
+    if pnode.symbol in [
+        'ModuleBody',
+        'ClassDeclaration',
+        'ClassExpression',
+    ]:
+        return True
+
+    #> Global code is strict mode code if
+    #> it begins with a Directive Prologue that contains a Use Strict Directive. 
+    #>
+    #> Eval code is strict mode code if
+    #> it begins with a Directive Prologue that contains a Use Strict Directive
+    #> or if
+    #> the call to eval is a direct eval that is contained in strict mode code. 
+    elif pnode.symbol == 'Script':
+        if begins_with_a_DP_that_contains_a_USD(pnode):
+            return True
+
+        # XXX eval:
+        # if pnode.is_the_result_of_parsing_source_text_supplied_to_the_built_in_eval
+        # and
+        # the_call_to_eval_is_a_direct_eval_that_is_contained_in_strict_mode_code:
+        #     return True
+
+    #> Function code is strict mode code if
+    #> the associated [definition] is contained in strict mode code or if
+    #> the code that produces the value of the function's [[ECMAScriptCode]] internal slot
+    #> begins with a Directive Prologue that contains a Use Strict Directive. 
+    elif pnode.symbol in [
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'GeneratorDeclaration',
+        'GeneratorExpression',
+        'AsyncFunctionDeclaration',
+        'AsyncFunctionExpression',
+        'AsyncGeneratorDeclaration',
+        'AsyncGeneratorExpression',
+        'MethodDefinition',
+        'ArrowFunction',
+        'AsyncArrowFunction',
+    ]:
+        # the code that produces the value of the function's [[ECMAScriptCode]] internal slot:
+        if pnode.symbol in ['ArrowFunction', 'AsyncArrowFunction']:
+            body = pnode.children[-1]
+            assert body.symbol in ['ConciseBody', 'AsyncConciseBody']
+        elif pnode.symbol == 'MethodDefinition':
+            if len(pnode.children) == 1:
+                [cnode] = pnode.children
+                assert cnode.symbol in ['GeneratorMethod', 'AsyncMethod', 'AsynGeneratorMethod']
+                body = cnode.children[-2]
+                assert body.symbol in ['GeneratorBody', 'AsyncFunctionBody', 'AsyncGeneratorBody']
+            else:
+                body = pnode.children[-2]
+                assert body.symbol == 'FunctionBody'
+        else:
+            body = pnode.children[-2]
+            assert body.symbol in ['FunctionBody', 'GeneratorBody']
+
+        if begins_with_a_DP_that_contains_a_USD(body):
+            return True
+
+    #> Function code that is supplied as the arguments to the built-in
+    #> Function, Generator, AsyncFunction, and AsyncGenerator constructors
+    #> is strict mode code if
+    #> the last argument is a String that when processed is a FunctionBody
+    #> that begins with a Directive Prologue that contains a Use Strict Directive.
+
+    # i.e., code supplied to the _args_ parameter of CreateDynamicFunction
+    # Step 20.e detects the condition
+
+    if pnode.parent is None:
+        # {pnode} is the root of its parse tree.
+
+        if pnode.symbol in ['FormalParameters', 'UniqueFormalParameters']:
+            assert NYI
+
+        if hasattr(pnode, 'covering_thing'):
+            if is_strict(pnode.covering_thing): return True
+
+    else:
+        if is_strict(pnode.parent): return True
+
+    return False
+
+def begins_with_a_DP_that_contains_a_USD(pnode):
+    #> A `Directive Prologue` is the longest sequence of |ExpressionStatement|s
+    #> occurring as the initial |StatementListItem|s or |ModuleItem|s
+    #> of a |FunctionBody|, a |ScriptBody|, or a |ModuleBody|
+    #> and where each |ExpressionStatement| in the sequence consists entirely of
+    #> a |StringLiteral| token followed by a semicolon.
+    #> The semicolon may appear explicitly or may be inserted by automatic semicolon insertion.
+    #> A Directive Prologue may be an empty sequence.
+
+    def has_the_shape_of_a_Directive_Prologue_item(item_node):
+        assert item_node.symbol in ['StatementListItem', 'ModuleItem']
+        if ExpressionStatement := item_node.unit_derives_a('ExpressionStatement'):
+            [Expression, semicolon] = ExpressionStatement.children
+            if StringLiteral := Expression.unit_derives_a('StringLiteral'):
+                return StringLiteral
+
+        return None
+
+    assert pnode.symbol in ['Script', 'ModuleBody', 'FunctionBody', 'GeneratorBody', 'ConciseBody', 'AsyncConciseBody']
+
+    if pnode.symbol == 'ModuleBody':
+        assert NYI
+        return False
+
+    if pnode.symbol in ['ConciseBody', 'AsyncConciseBody']:
+        if len(pnode.children) == 1:
+            assert pnode.children[0].symbol == 'ExpressionBody'
+            # An ExpressionBody can't have a Directive Prologue.
+            return False
+
+        elif len(pnode.children) == 3:
+            fnbody = pnode.children[1]
+            assert fnbody.symbol in ['FunctionBody', 'AsyncFunctionBody']
+            pnode = fnbody
+
+        else:
+            assert 0
+
+    assert pnode.symbol in ['Script', 'FunctionBody', 'GeneratorBody']
+
+    StatementList = pnode.unit_derives_a('StatementList')
+    if StatementList is None: return False
+
+    for item_node in each_item_in_left_recursive_list(StatementList):
+        assert item_node.symbol == 'StatementListItem'
+        if StringLiteral := has_the_shape_of_a_Directive_Prologue_item(item_node):
+            #> A `Use Strict Directive` is an |ExpressionStatement| in a Directive Prologue
+            #> whose |StringLiteral| is either of the exact code point sequences `"use strict"` or `'use strict'`.
+            #> A Use Strict Directive may not contain an |EscapeSequence| or |LineContinuation|.
+            if StringLiteral.text() in ['"use strict"', "'use strict'"]:
+                return True
+        else:
+            # We are past the end of the Directive Prologue,
+            # so stop looking for a USD.
+            break
+
+    return False
+
+def each_item_in_left_recursive_list(list_node):
+    assert list_node.isan(ES_ParseNode)
+    assert list_node.symbol.endswith('List')
+    n_children = len(list_node.children)
+    if n_children == 1:
+        [item_node] = list_node.children
+        assert item_node.symbol.endswith('Item')
+        yield item_node
+    elif n_children == 2:
+        [sublist_node, item_node] = list_node.children
+        assert sublist_node.symbol.endswith('List')
+        assert item_node.symbol.endswith('Item')
+        yield from each_item_in_left_recursive_list(sublist_node)
+        yield item_node
+    else:
+        assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 13 ECMAScript Language: Expressions
@@ -9281,6 +12058,24 @@ class _:
         env0.assert_expr_is_of_type(noi, T_String)
         return (env0, env0)
 
+    def d_exec(cond):
+        [noi] = cond.children
+        st = EXEC(noi, EL_String)
+
+        reserved_word_set = set()
+        g = spec.grammar_[('syntactic', 'A')]
+        for rhs in g.prodn_for_lhs_['ReservedWord']._rhss:
+            assert rhs.kind == 'BACKTICKED_THING'
+            # Theoretically, I should apply StringValue,
+            # except that's a bit slippery.
+            # StringValue is defined on ParseNodes
+            # (specifically, instances of |Identifier| and similar)
+            # whereas "any |ReservedWord|" is just looking at symbols in the grammar.
+            reserved_word_set.add(rhs._chars)
+        target_set = reserved_word_set - {'yield', 'await'}
+
+        return (st.to_Python_String() in target_set)
+
 # ==============================================================================
 #@ 13.3.6.1 Runtime Semantics: Evaluation [of Function Calls]
 
@@ -9293,6 +12088,10 @@ class _:
     def s_cond(cond, env0, asserting):
         [g_sym] = cond.children
         return (env0, env0)
+
+    def d_exec(cond):
+        [gsym] = cond.children
+        return False # TODO
 
 # ==============================================================================
 #@ 13.15.2 Runtime Semantics: Evaluation [of Assignment Operators]

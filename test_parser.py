@@ -16,7 +16,7 @@ import sys, os, re, contextlib
 
 import es_parser
 import misc
-import execution
+import pseudocode_semantics
 
 root_test_dirpath = "../test262-parser-tests"
 
@@ -39,7 +39,7 @@ def test_all():
     test_all_in_dir('early')
     test_all_in_dir('pass')
     test_all_in_dir('pass-explicit')
-    execution.report_unused_things()
+    # pseudocode_semantics.report_unused_entries()
 
 def test_all_in_dir(test_dirname):
     print(test_dirname, file=sys.stderr)
@@ -141,7 +141,8 @@ def test_one(test_file_arg, f=sys.stdout):
         # investigate later
         return False
 
-    early_errors = execution.detect_early_errors(node)
+    pseudocode_semantics.reset_dynamic_state()
+    early_errors = pseudocode_semantics.get_early_errors_in(node)
     if early_errors:
         print('Early Errors:', file=f)
         for ee in early_errors:
