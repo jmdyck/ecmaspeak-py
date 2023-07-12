@@ -5,18 +5,18 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 import re, atexit, time, sys, pdb
+import typing
 from collections import OrderedDict, defaultdict
 from itertools import zip_longest
 from pprint import pprint
 from dataclasses import dataclass, field as dataclass_field
-from typing import Set
 
 import shared, HTML
 from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
-from Graph import Graph
 from DecoratedFuncDict import DecoratedFuncDict
 
+from Graph import Graph
 from static_types import *
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1079,7 +1079,6 @@ class Env:
                     # but because the Assert will only propagate the 'true' env,
                     # this error will probably disappear in a later pass.
 
-
             elif copula == 'isnt a':
                 # We are asserting that the value of `expr` is NOT in the target set of values.
                 # For that to be possible, expr_t must have no intersection with sub_t.
@@ -1204,10 +1203,10 @@ class ParRet:
     # of the algorithm or abstract closure
     # currently under analysis.
 
-    parameter_names: Set[str]
+    parameter_names: typing.Set[str]
     expected_return_type: Type
     returns_completion_records: bool
-    return_envs: Set[Env] = dataclass_field(default_factory=set)
+    return_envs: typing.Set[Env] = dataclass_field(default_factory=set)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2340,7 +2339,6 @@ class _:
     s_nv = s_nv_pass_down
 
 @P('{VALUE_DESCRIPTION} : {VAL_DESC}')
-@P('{VAL_DESC} : {LITERAL}')
 class _:
     s_tb = s_tb_pass_down
 
@@ -2419,11 +2417,33 @@ class _:
 class _:
     s_tb = T_code_point_
 
+# --------------------------------------
+# expressions that return a code point:
+
 @P(r'{code_point_lit} : ` [^`]+ ` \x20 U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
 @P(r'{code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)')
 class _:
     def s_expr(expr, env0, _):
         return (T_code_point_, env0)
+
+@P(r"{EXPR} : the code point {var}")
+        # This means "the code point whose numeric value is {var}"
+@P(r"{EXPR} : the code point whose numeric value is {EX}")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        return (T_code_point_, env0)
+
+@P(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_code_point_, env0)
+
+# -----------------------
+# conditions that involve a code point:
 
 @P(r'{CONDITION_1} : {var} has a numeric value less than {code_unit_lit}')
 class _:
@@ -2440,15 +2460,6 @@ class _:
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (env0, env0)
 
-@P(r"{EXPR} : the code point {var}")
-        # This means "the code point whose numeric value is {var}"
-@P(r"{EXPR} : the code point whose numeric value is {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathInteger_)
-        return (T_code_point_, env0)
-
 @P(r"{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -2456,12 +2467,8 @@ class _:
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (env0, env0)
 
-@P(r"{EXPR} : the code point obtained by applying the UTF-8 transformation to {var}, that is, from a List of octets into a 21-bit value")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
-        return (T_code_point_, env0)
+# ----------------------------
+# other
 
 @P(r"{EXPR} : the List of octets resulting by applying the UTF-8 transformation to {DOTTING}")
 class _:
@@ -2470,11 +2477,15 @@ class _:
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
         return (ListType(T_MathInteger_), env1)
 
-# ----------
+# ------------------------------------------------------------------------------
+# a sequence of code points
 
 @P('{VAL_DESC} : a sequence of Unicode code points')
 class _:
     s_tb = T_Unicode_code_points_
+
+# -----------
+# expressions that return a sequence of Unicode code points:
 
 @P(r"{EXPR} : the empty sequence of Unicode code points")
 class _:
@@ -2500,6 +2511,16 @@ class _:
         [_] = expr.children
         return (T_Unicode_code_points_, env0)
 
+@P(r"{EXPR} : the List of Unicode code points {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [v] = expr.children
+        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
+        return (ListType(T_code_point_), env0)
+
+# -------------
+# conditions involving a sequence of Unicode code points
+
 @P(r"{CONDITION_1} : {var} contains any code point more than once")
 @P(r"{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
 class _:
@@ -2509,13 +2530,6 @@ class _:
         for bw in bw_:
             assert len(bw.source_text()) == 3 # single-character 'words'
         return (env0, env0)
-
-@P(r"{EXPR} : the List of Unicode code points {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [v] = expr.children
-        env0.assert_expr_is_of_type(v, ListType(T_code_point_))
-        return (ListType(T_code_point_), env0)
 
 # ==============================================================================
 # code unit
@@ -2618,14 +2632,14 @@ class _:
 #> as its <em>right-hand side</em>.
 #> For each grammar, the terminal symbols are drawn from a specified alphabet.
 
-    # grammar symbol
+# grammar symbol
 
 @P('{VAL_DESC} : a grammar symbol')
 class _:
     s_tb = T_grammar_symbol_
 
-    # -------------------
-    # nonterminal symbols
+# -------------------
+# nonterminal symbols
 
 @P(r'{nonterminal} : \| [A-Za-z][A-Za-z0-9]* \?? (\[ .+? \])? \|')
 class _:
@@ -2657,8 +2671,8 @@ class _:
 class _:
     s_tb = a_subset_of(T_grammar_symbol_)
 
-    # ----------------
-    # terminal symbols
+# ----------------
+# terminal symbols
 
 @P('{VAL_DESC} : {backticked_word}')
 class _:
@@ -2707,7 +2721,9 @@ class _:
     s_tb = T_Parse_Node
 
 #> Each Parse Node is an <em>instance</em> of a symbol in the grammar;
-#> it represents a span of the source text that can be derived from that symbol.
+
+# -----
+# explicit "instance of symbol":
 
 @P('{VAL_DESC} : an instance of a nonterminal')
 class _:
@@ -2719,6 +2735,9 @@ class _:
         [var] = val_desc.children
         env.assert_expr_is_of_type(var, T_grammar_symbol_)
         return a_subset_of(T_Parse_Node)
+
+# -----
+# implicit "[instance of] symbol": (should the spec make it explicit?)
 
 @P('{VAL_DESC} : an? {nonterminal}')
 @P('{VAL_DESC} : an? {nonterminal} Parse Node')
@@ -2747,6 +2766,9 @@ class _:
         [nonterminal] = led.children
         return ptn_type_for(nonterminal)
 
+#> [Each Parse Node, an instance of a symbol,]
+#> represents a span of the source text that can be derived from that symbol.
+
 @P(r'{EXPR} : the source text that was recognized as {PROD_REF}')
 class _:
     def s_expr(expr, env0, _):
@@ -2774,6 +2796,7 @@ class _:
         return (T_code_point_, env0)
 
 @P(r'{EX} : the number of code points in {PROD_REF}')
+# SPEC BUG: should be "the number of code points in *the source text matched by* {PROD_REF}
 class _:
     def s_expr(expr, env0, _):
         [prod_ref] = expr.children
@@ -2805,6 +2828,8 @@ class _:
 #> it is also an instance of some production
 #> that has that nonterminal as its left-hand side.
 
+# explicit "instance of production":
+
 @P('{VAL_DESC} : an instance of a production in {h_emu_xref}')
 class _:
     s_tb = a_subset_of(T_Parse_Node)
@@ -2824,6 +2849,8 @@ class _:
         [emu_grammar] = expr.children
         assert emu_grammar.source_text() == '<emu-grammar>FormalParameters : [empty]</emu-grammar>'
         return (ptn_type_for('FormalParameters'), env0)
+
+# implicit "[instance of] production": (should the spec make it explicit?)
 
 @P(r"{CONDITION_1} : {LOCAL_REF} is {h_emu_grammar}")
 class _:
@@ -2871,6 +2898,8 @@ class _:
         [local_ref, nonta, nontb] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
+
+# -----
 
 # (_P_ 'contains' its children and their children, and so on)
 
@@ -2945,6 +2974,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
+# 25.5.1 JSON.parse
 @P(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
 @P(r"{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
 class _:
@@ -3210,7 +3240,7 @@ class _:
         return (ta | tb, env_or(enva, envb))
 
 # ------------------------------------------------------------------------------
-#> A step may specify the iterative application of its substeps.</p>
+#> A step may specify the iterative application of its substeps.
 
 @P(r'{COMMAND} : Repeat,{IND_COMMANDS}')
 class _:
@@ -3503,8 +3533,7 @@ class _:
         return env_and(ta_env, tb_env)
 
 # ------------------------------------------------------------------------------
-#> Algorithm steps may declare named aliases for any value
-#> using the form “Let _x_ be _someValue_”.
+#> Algorithm steps may declare named aliases for any value ...
 
 @P(r'{var} : \b _ [A-Za-z][A-Za-z0-9]* _ \b')
 class _:
@@ -3520,7 +3549,7 @@ class _:
             t = T_TBD
         return (t, env0)
 
-    # Let {DEFVAR} be ...
+#> ... using the form “Let _x_ be _someValue_”.
 
 @P(r"{COMMAND} : Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)")
 @P(r"{COMMAND} : Let {DEFVAR} be {EXPR}.")
@@ -3654,7 +3683,7 @@ class _:
         return (ex3_type, ex3_env)
 
 # ------------------------------------------------------------------------------
-#> Aliases may be modified using the form “Set _x_ to _someOtherValue_”.</p>
+#> Aliases may be modified using the form “Set _x_ to _someOtherValue_”.
 
 @P(r'{COMMAND} : Set {SETTABLE} to {EXPR}.')
 @P(r'{COMMAND} : Set {SETTABLE} to {MULTILINE_EXPR}')
@@ -4200,6 +4229,15 @@ class _:
         env2 = tc_args(params, args, env0, expr)
         return (return_type, env2)
 
+@P(r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}")
+# This has the syntax of an SDO invocation, but it actually invokes an AO.
+class _:
+    def s_expr(expr, env0, _):
+        [callee, local_ref] = expr.children[0:2]
+        callee_op_name = callee.source_text()
+        assert callee_op_name == 'UTF16EncodeCodePoint'
+        return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
+
 #> Some abstract operations are treated as
 #> polymorphically dispatched methods of class-like specification abstractions.
 #> Such method-like abstract operations are typically referenced
@@ -4307,16 +4345,11 @@ class _:
 @P(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} (see {h_emu_xref})")
 @P(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} as defined in {h_emu_xref}")
 @P(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}")
-@P(r"{NAMED_OPERATION_INVOCATION} : the result of performing {cap_word} on {EX}")
 class _:
     def s_expr(expr, env0, _):
         [callee, local_ref] = expr.children[0:2]
         callee_op_name = callee.source_text()
-        if callee_op_name in ['UTF16EncodeCodePoint', 'UTF16SurrogatePairToCodePoint']:
-            # An abstract operation that uses SDO-style invocation.
-            return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
-        else:
-            return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
+        return tc_sdo_invocation(callee_op_name, local_ref, [], expr, env0)
 
 @P(r"{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF} {WITH_ARGS}")
 @P(r"{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}")
@@ -4369,6 +4402,13 @@ class _:
     def s_expr(expr, env0, _):
         [operand] = expr.children
         return handle_completion_record_shorthand('?', operand, env0)
+
+# ---------------------------------------------------
+#> Similarly, prefix ! is used to indicate that
+#> the following invocation of an abstract or syntax-directed operation
+#> will never return an abrupt completion
+#> and that the resulting Completion Record's [[Value]] field
+#> should be used in place of the return value of the operation.
 
 @P(r'{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}')
 class _:
@@ -4515,6 +4555,38 @@ class _:
         tc_cond(cond, env0, False)
         return None
 
+@P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.")
+@P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.")
+class _:
+    def s_nv(anode, env0):
+        [cond, g_sym, h_emu_xref] = anode.children
+        tc_cond(cond, env0)
+        return None
+
+@P(r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.")
+class _:
+    def s_nv(anode, env0):
+        [conda, condb] = anode.children
+        (tenv, fenv) = tc_cond(conda, env0, False)
+        tc_cond(condb, tenv, False)
+        return None
+
+@P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.")
+class _:
+    def s_nv(anode, env0):
+        [conda, condb] = anode.children
+        (t_env, f_env) = tc_cond(condb, env0)
+        tc_cond(conda, f_env)
+        return None
+
+@P(r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}")
+class _:
+    def s_nv(anode, env0):
+        [cond, bool_lit, h_emu_alg] = anode.children
+        tc_cond(cond, env0)
+        # XXX should check h_emu_alg
+        return None
+
 @P(r"{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>")
 class _:
     def s_nv(anode, env0):
@@ -4529,38 +4601,6 @@ class _:
     def s_nv(anode, env0):
         [cond, h_emu_grammar] = anode.children
         tc_cond(cond, env0, False)
-        return None
-
-@P(r"{EE_RULE} : If {CONDITION}, it is a Syntax Error if {CONDITION}.")
-class _:
-    def s_nv(anode, env0):
-        [conda, condb] = anode.children
-        (tenv, fenv) = tc_cond(conda, env0, False)
-        tc_cond(condb, tenv, False)
-        return None
-
-@P(r"{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}")
-class _:
-    def s_nv(anode, env0):
-        [cond, bool_lit, h_emu_alg] = anode.children
-        tc_cond(cond, env0)
-        # XXX should check h_emu_alg
-        return None
-
-@P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.")
-@P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.")
-class _:
-    def s_nv(anode, env0):
-        [cond, g_sym, h_emu_xref] = anode.children
-        tc_cond(cond, env0)
-        return None
-
-@P(r"{EE_RULE} : It is a Syntax Error if {CONDITION}. This rule is not applied if {CONDITION}.")
-class _:
-    def s_nv(anode, env0):
-        [conda, condb] = anode.children
-        (t_env, f_env) = tc_cond(condb, env0)
-        tc_cond(conda, f_env)
         return None
 
 @P(r"{EE_RULE} : For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.")
@@ -5091,12 +5131,6 @@ class _:
 
 # ------------------------------------------------------------------------------
 #> This specification denotes most numeric values in base 10;
-#> it also uses numeric values of the form 0x followed by digits 0-9 or A-F as base-16 values.
-
-@P(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
-class _:
-    def s_expr(expr, env0, _):
-        return (T_MathNonNegativeInteger_, env0)
 
 @P('{MATH_LITERAL} : {dec_int_lit}')
 class _:
@@ -5106,12 +5140,16 @@ class _:
         [lit] = expr.children
         return (T_MathInteger_, env0)
 
-@P(r"{MATH_LITERAL} : {hex_int_lit}")
+@P(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
+class _:
+    def s_expr(expr, env0, _):
+        return (T_MathNonNegativeInteger_, env0)
+
 @P(r"{BASE} : 10")
 @P(r"{BASE} : 2")
 class _:
     def s_expr(expr, env0, _):
-        # [] = expr.children
+        [] = expr.children
         return (T_MathInteger_, env0)
 
 @P(r"{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
@@ -5125,6 +5163,14 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         return (T_MathReal_, env0)
+
+#> it also uses numeric values of the form 0x followed by digits 0-9 or A-F as base-16 values.
+
+@P(r"{MATH_LITERAL} : {hex_int_lit}")
+class _:
+    def s_expr(expr, env0, _):
+        [hex_int_lit] = expr.children
+        return (T_MathInteger_, env0)
 
 @P(r"{MATH_LITERAL} : +&infin;")
 @P(r"{MATH_LITERAL} : +∞")
@@ -5431,6 +5477,9 @@ class _:
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathReal_, env0)
 
+# -----------------------------------
+# decimal/hexadecimal representation:
+
 @P(r"{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits")
 class _:
     def s_cond(cond, env0, asserting):
@@ -5475,11 +5524,11 @@ def type_for_tilded_word(tilded_word):
 # ==============================================================================
 #@ 5.2.7 Identity
 
-#> In this specification,
-#> the word “is” is used to compare two values through equality,
-#> as in “If _bool_ is *true*, then”.
+#> From the perspective of this specification,
+#> the word “is” is used to compare two values for equality,
+#> as in “If _bool_ is *true*, then ...”
 
-# (So I'm putting all the "X is Y" forms here.)
+# (So I'm putting most the "X is Y" forms here.)
 
 @P(r"{CONDITION_1} : {EX} is not {PREFIX_PAREN}")
 @P(r"{CONDITION_1} : {EX} is not {SETTABLE}")
@@ -5756,6 +5805,10 @@ class _:
 class _:
     s_tb = T_host_defined_
 
+@P('{VAL_DESC} : {LITERAL}')
+class _:
+    s_tb = s_tb_pass_down
+
 # ==============================================================================
 #@ 6.1 ECMAScript Language Types
 
@@ -5808,7 +5861,6 @@ class _:
 # ==============================================================================
 #@ 6.1.4 The String Type
 
-# ------------------------------------------------------------------------------
 #> The <dfn>String type</dfn> is the set of all ordered sequences
 #> of zero or more 16-bit unsigned integer values (“elements”)
 #> up to a maximum length of 2<sup>53</sup> - 1 elements.
@@ -5831,20 +5883,31 @@ class _:
 class _:
     s_tb = T_String | T_Undefined
 
+# -----
+
+def s_expr_String(expr, env0, _):
+    return (T_String, env0)
+
 @P(r'{LITERAL} : {STR_LITERAL}')
 class _:
     s_tb = a_subset_of(T_String)
-
-    def s_expr(expr, env0, _):
-        return (T_String, env0)
+    s_expr = s_expr_String
 
 @P(r'{STR_LITERAL} : *","* (a comma)')
+class _:
+    s_expr = s_expr_String
+
 @P(r'{STR_LITERAL} : the empty String')
+class _:
+    s_expr = s_expr_String
+
 @P(r'{STR_LITERAL} : {starred_str}')
+class _:
+    s_expr = s_expr_String
+
 @P(r'{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})')
 class _:
-    def s_expr(expr, env0, _):
-        return (T_String, env0)
+    s_expr = s_expr_String
 
 @P(r"{EX} : the String {var}")
 @P(r"{EXPR} : the String value {SETTABLE}")
@@ -6230,62 +6293,8 @@ class _:
 class _:
     s_tb = T_Number
 
-@P(r"{CONDITION_1} : {var} is finite")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t.is_a_subtype_of_or_equal_to(T_Number):
-            return env1.with_type_test(var, 'is a', T_FiniteNumber_, asserting)
-        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            return env1.with_type_test(var, 'is a', T_MathReal_, asserting)
-        else:
-            assert 0
-
-@P(r"{CONDITION_1} : {var} and {var} are both finite")
-class _:
-    def s_cond(cond, env0, asserting):
-        [a, b] = cond.children
-        (a_t_env, a_f_env) = env0.with_type_test(a, 'is a', T_FiniteNumber_, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(b, 'is a', T_FiniteNumber_, asserting)
-        return (
-            env_and(a_t_env, b_t_env),
-            env_or(a_f_env, b_f_env)
-        )
-
-@P(r"{CONDITION_1} : {var} and {var} are finite and non-zero")
-class _:
-    def s_cond(cond, env0, asserting):
-        [avar, bvar] = cond.children
-        env0.assert_expr_is_of_type(avar, T_Number)
-        env0.assert_expr_is_of_type(bvar, T_Number)
-        return (
-            env0
-                .with_expr_type_narrowed(avar, T_FiniteNumber_)
-                .with_expr_type_narrowed(bvar, T_FiniteNumber_),
-            env0
-        )
-
-@P(r"{CONDITION_1} : {var} is not finite")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
-            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
-        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
-        else:
-            assert 0
-
-@P(r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, lita, litb] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
-        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
-        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
-        return (env1, env1)
+# --------------
+# make a Number:
 
 @P(r"{NUMBER_LITERAL} : {starred_neg_infinity_lit}{h_sub_fancy_f}")
 class _:
@@ -6397,6 +6406,66 @@ class _:
         # XXX The intermediates are not really T_Number
         return (T_Number, env0)
 
+# ---------------------
+# conditions on Number:
+
+@P(r"{CONDITION_1} : {var} is finite")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number):
+            return env1.with_type_test(var, 'is a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'is a', T_MathReal_, asserting)
+        else:
+            assert 0
+
+@P(r"{CONDITION_1} : {var} and {var} are both finite")
+class _:
+    def s_cond(cond, env0, asserting):
+        [a, b] = cond.children
+        (a_t_env, a_f_env) = env0.with_type_test(a, 'is a', T_FiniteNumber_, asserting)
+        (b_t_env, b_f_env) = env0.with_type_test(b, 'is a', T_FiniteNumber_, asserting)
+        return (
+            env_and(a_t_env, b_t_env),
+            env_or(a_f_env, b_f_env)
+        )
+
+@P(r"{CONDITION_1} : {var} and {var} are finite and non-zero")
+class _:
+    def s_cond(cond, env0, asserting):
+        [avar, bvar] = cond.children
+        env0.assert_expr_is_of_type(avar, T_Number)
+        env0.assert_expr_is_of_type(bvar, T_Number)
+        return (
+            env0
+                .with_expr_type_narrowed(avar, T_FiniteNumber_)
+                .with_expr_type_narrowed(bvar, T_FiniteNumber_),
+            env0
+        )
+
+@P(r"{CONDITION_1} : {var} is not finite")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
+            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
+        else:
+            assert 0
+
+@P(r"{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, lita, litb] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
+        return (env1, env1)
+
 @P(r'{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
 @P(r'{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value')
 class _:
@@ -6405,6 +6474,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_Number)
         return (ListType(T_MathInteger_), env1)
 
+# ----------------------------------------------
 # Treating an integral Number like a bit-string:
 
 @P(r"{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
@@ -7017,6 +7087,7 @@ class _:
 # ------------------------------------------------------------------------------
 # make a List:
 
+@P(r'{EXPR} : a new empty List')
 @P(r"{EX} : « »")
 class _:
     def s_expr(expr, env0, _):
@@ -7035,12 +7106,6 @@ class _:
         element_type = union_of_types(ex_types)
         list_type = ListType(element_type)
         return (list_type, env1)
-
-@P(r'{EXPR} : a new empty List')
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (ListType(T_0), env0)
 
 @P(r"{EXPR} : a List whose sole element is {EX}")
 class _:
@@ -7353,7 +7418,6 @@ class _:
         (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
         return (cond_t_env, env0)
 
-
 @P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7361,6 +7425,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
         return (env1, env1)
 
+# (13.2.5.1 Static Semantics: Early Errors)
 @P(r"{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -9131,6 +9196,8 @@ set_up_internal_thing('slot', '[[ProxyTarget]]',  T_Object | T_Null)
 #@ 11.1 Source Text
 
 #> <dfn>ECMAScript source text</dfn> is a sequence of Unicode code points.
+#> All Unicode code point values from U+0000 to U+10FFFF,
+#> including surrogate code points, may occur in source text ...
 
 @P('{VAL_DESC} : ECMAScript source text')
 class _:
@@ -9188,23 +9255,17 @@ class _:
 @P(r"{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code")
 @P(r"{CONDITION_1} : the source text matched by {var} is strict mode code")
 @P(r"{CONDITION_1} : the source text matched by {var} is non-strict code")
+@P(r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
 class _:
     def s_cond(cond, env0, asserting):
-        [prod_ref] = cond.children
-        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        [local_ref] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
 @P(r"{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
-        return (env0, env0)
-
-@P(r"{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
-class _:
-    def s_cond(cond, env0, asserting):
-        [local_ref] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
