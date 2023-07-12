@@ -1080,6 +1080,15 @@ def add_parent_links(node):
         child.parent = node
         add_parent_links(child)
 
+# The above function exceeds Python's default recursion limit
+# when you parse certain files in test262-parser-tests.
+# The worst case is pass/dd3c63403db5c06e.js,
+# which I think has a total of 1126 levels in the parse tree.
+# (And then add 12 for stack frames above/below the main recursion.)
+_min = 1138
+if sys.getrecursionlimit() < _min:
+    sys.setrecursionlimit(_min)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # TIP = Terminal Instance Provider
