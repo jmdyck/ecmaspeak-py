@@ -982,16 +982,15 @@ def gather_ReservedWords(productions_with_lhs_):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-g_outdir = '../ecma262/_main' # XXX Should be able to set this dynamically.
-shared.register_output_dir(g_outdir)
-spec.restore()
+def initialize():
+    # This requires that a Spec has been restored via shared.spec.restore()
+    global lexical_earley, syntactic_earley
+    lexical_earley = _Earley('lexical', 'as much as possible', '| ')
+    syntactic_earley = _Earley('syntactic', 'all', '')
 
-lexical_earley = _Earley('lexical', 'as much as possible', '| ')
-syntactic_earley = _Earley('syntactic', 'all', '')
+    gather_char_sets(lexical_earley.productions_with_lhs_)
 
-gather_char_sets(lexical_earley.productions_with_lhs_)
-
-gather_ReservedWords(syntactic_earley.productions_with_lhs_) # for "but not ReservedWord"
+    gather_ReservedWords(syntactic_earley.productions_with_lhs_) # for "but not ReservedWord"
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -2213,6 +2212,12 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
 if __name__ == '__main__':
     # test
 
+    g_outdir = '../ecma262/_main'
+    shared.register_output_dir(g_outdir)
+    spec.restore()
+
+    initialize()
+
     script_text = '`\\07`'
 
     tree = parse(script_text, 'Script', trace_level=9, trace_f=open('/home/michael/tmp/trace.new', 'w'))
@@ -2221,5 +2226,8 @@ if __name__ == '__main__':
     print()
     tree.dump()
     print('----------')
+
+else:
+    initialize()
 
 # vim: sw=4 ts=4 expandtab
