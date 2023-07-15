@@ -12,7 +12,7 @@
 
 # You may need to `export PYTHONIOENCODING=utf-8` before running this script.
 
-import sys, os, re, contextlib
+import sys, os, re, contextlib, time
 
 import shared
 
@@ -31,6 +31,7 @@ def main():
         print(f"usage: {sys.argv[0]} [ --all | --all-dir=<dir> | <filepath> ... ]")
     elif sys.argv[1] == '--all':
         test_all()
+        show_times()
     else:
         mo = re.fullmatch(r'--all-dir=([\w-]+)', sys.argv[1])
         if mo:
@@ -39,6 +40,19 @@ def main():
         else:
             for test_file_arg in sys.argv[1:]:
                 test_one(test_file_arg)
+        show_times()
+
+n_parse_calls = 0
+total_parse_time = 0.0
+n_ee_calls = 0
+total_ee_time = 0.0
+
+def show_times():
+    print()
+    if n_parse_calls:
+        print(f"parse: {n_parse_calls} calls in {total_parse_time:.3} sec (avg {total_parse_time / n_parse_calls:.3} sec)")
+    if n_ee_calls:
+        print(f"early: {n_ee_calls} calls in {total_ee_time:.3} sec (avg {total_ee_time / n_ee_calls:.3} sec)")
 
 def test_all():
     test_all_in_dir('fail')
@@ -119,8 +133,11 @@ def test_one(test_file_arg, f=sys.stdout):
     trace_level = (9 if test_filepath.endswith(file_of_interest) else 0)
     goal_symbol = 'Module' if test_filepath.endswith('.module.js') else 'Script'
     try:
+        t_before = time.process_time()
         node = es_parser.parse(source_text, goal_symbol, trace_level=trace_level, trace_f=f)
+        t_after = time.process_time()
     except es_parser.ParseError as pe:
+        t_after = time.process_time()
         print(file=f)
         print('ParseError:', file=f)
         print(misc.display_position_in_text(source_text, pe.posn), end='', file=f)
@@ -135,6 +152,10 @@ def test_one(test_file_arg, f=sys.stdout):
             print(f"TEST {test_file_arg} FAILED: expected {expectation}, but got {outcome}", file=f)
             return False
 
+    global n_parse_calls, total_parse_time
+    n_parse_calls += 1
+    total_parse_time += (t_after - t_before)
+
     if trace_level > 0: node.dump()
 
     if test_file_arg in [
@@ -148,7 +169,9 @@ def test_one(test_file_arg, f=sys.stdout):
         return False
 
     pseudocode_semantics.reset_dynamic_state()
+    t_before = time.process_time()
     early_errors = pseudocode_semantics.get_early_errors_in(node)
+    t_after = time.process_time()
     if early_errors:
         print('Early Errors:', file=f)
         for ee in early_errors:
@@ -159,6 +182,10 @@ def test_one(test_file_arg, f=sys.stdout):
         outcome = 'early error'
     else:
         outcome = 'no error'
+
+    global n_ee_calls, total_ee_time
+    n_ee_calls += 1
+    total_ee_time += (t_after - t_before)
 
     if expectation is None:
         print(f"outcome: {outcome}")
