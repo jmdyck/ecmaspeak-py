@@ -14,6 +14,12 @@
 
 import sys, os, re, contextlib
 
+import shared
+
+g_outdir = '../ecma262/_main'
+shared.register_output_dir(g_outdir)
+shared.spec.restore()
+
 import es_parser
 import misc
 import pseudocode_semantics
