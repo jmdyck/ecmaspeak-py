@@ -2021,6 +2021,7 @@ def extract_intrinsic_info_from_p_ul_section(section):
             'creates a new ordinary object when called as a constructor.',
             'is a constructor function object that all of the _TypedArray_ constructor objects inherit from.',
             'will throw an error when invoked, because it is an abstract class constructor. The _TypedArray_ constructors do not perform a `super` call to it.',
+            'when called as a function rather than as a constructor, returns either a new RegExp object, or the argument itself if the only argument is a RegExp object.',
         ]:
             section.put_fact(subject, 'is', 'a constructor')
         elif (
