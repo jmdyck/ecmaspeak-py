@@ -3681,6 +3681,12 @@ class _:
         return value == terminal_gsym
 
 # ==============================================================================
+#@ 5.1.2 The Lexical and RegExp Grammars
+
+# ==============================================================================
+#@ 5.1.3 The Numeric String Grammar
+
+# ==============================================================================
 #@ 5.1.4 The Syntactic Grammar
 
 #> It defines a set of productions,
@@ -4488,6 +4494,9 @@ def unicode_character_has_property(pychar, property_name):
 #     so I'd rather not. 
 # (b) The formulae are more likely to be correct wrt future versions of Unicode.
 #     I.e. Python's 'unicodedata' module will be updated.
+
+# ==============================================================================
+#@ 5.1.5 Grammar Notation
 
 # ==============================================================================
 #@ 5.1.5.4 Grammatical Parameters
@@ -10899,6 +10908,9 @@ class _:
         return (T_BigInt | ThrowCompletionType(T_TypeError) | ThrowCompletionType(T_SyntaxError), env1)
 
 # ==============================================================================
+#@ 7.3.1 MakeBasicObject
+
+# ==============================================================================
 #@ 7.4.1 Iterator Records
 
 @P("{VAL_DESC} : an Iterator Record")
@@ -11099,6 +11111,9 @@ class _:
         env0.assert_expr_is_of_type(n_var, T_String)
         return (env0, env0)
 
+# ==============================================================================
+#@ 9.1.1.5.5 CreateImportBinding
+
 @P("{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11145,7 +11160,9 @@ class _:
 class _:
     s_tb = T_Intrinsics_Record
 
-    # 9.3.2 CreateIntrinsics
+# ==============================================================================
+#@ 9.3.2 CreateIntrinsics
+
 @P("{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}")
 class _:
     def s_nv(anode, env0):
@@ -11617,7 +11634,9 @@ class _:
         [] = expr.children
         return (T_constructor_object_ | T_Undefined, env0)
 
-    # 10.3.1
+# ==============================================================================
+#@ 10.3.1 [[Call]]
+
 @P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
 class _:
     def s_expr(expr, env0, _):
@@ -11639,7 +11658,9 @@ class _:
         env0.assert_expr_is_of_type(dvar, T_Tangible_)
         return (NormalCompletionType(T_Tangible_) | T_throw_completion, env0)
 
-    # 10.3.3
+# ==============================================================================
+#@ 10.3.3 CreateBuiltinFunction:
+
 @P("{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
 class _:
     def s_expr(expr, env0, _):
@@ -11704,6 +11725,9 @@ class _:
         env0.assert_expr_is_of_type(avar, T_Object)
         env0.assert_expr_is_of_type(bvar, T_String | T_Symbol)
         return (env0, env0)
+
+# ==============================================================================
+#@ 10.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
 
 # ==============================================================================
 #@ 10.4.5 Integer-Indexed Exotic Objects
@@ -12046,6 +12070,9 @@ def each_item_in_left_recursive_list(list_node):
         assert 0
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 12 ECMAScript Language: Lexical Grammar
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 13 ECMAScript Language: Expressions
 
 # ==============================================================================
@@ -12075,6 +12102,9 @@ class _:
         target_set = reserved_word_set - {'yield', 'await'}
 
         return (st.to_Python_String() in target_set)
+
+# ==============================================================================
+#@ 13.2.5.1 Static Semantics: Early Errors
 
 # ==============================================================================
 #@ 13.3.6.1 Runtime Semantics: Evaluation [of Function Calls]
@@ -12241,7 +12271,9 @@ class _:
 class _:
     s_tb = T_GraphLoadingState_Record
 
-    #@ 16.2.1.5.1.1 InnerModuleLoading
+# ==============================================================================
+#@ 16.2.1.5.1.1 InnerModuleLoading
+
 @P("{EXPR} : that Record")
 class _:
     def s_expr(expr, env0, _):
@@ -12253,7 +12285,9 @@ class _:
         )
         return (rt, env0)
 
-    #@ 16.2.1.5.3.1 InnerModuleEvaluation
+# ==============================================================================
+#@ 16.2.1.5.3.1 InnerModuleEvaluation
+
 @P("{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -12263,7 +12297,9 @@ class _:
         env0.assert_expr_is_of_type(dotting, T_Boolean)
         return (env0, env0)
 
-    #@ 16.2.1.5.3.4 AsyncModuleExecutionFulfilled
+# ==============================================================================
+#@ 16.2.1.5.3.4 AsyncModuleExecutionFulfilled
+
 @P("{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
 class _:
     def s_expr(expr, env0, _):
@@ -12312,28 +12348,27 @@ class _:
         [] = cond.children
         return (env0, env0)
 
-    #@ 16.2.1.6.3 ResolveExport
+# ==============================================================================
+#@ 16.2.1.6.3 ResolveExport
+
 @P("{CONDITION_1} : This is a circular import request")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
-    #@ 16.2.1.6.3 ResolveExport
 @P("{CONDITION_1} : A `default` export was not explicitly defined by this module")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
-    #@ 16.2.1.6.3 ResolveExport
 @P("{CONDITION_1} : There is more than one `*` import that includes the requested name")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
-    #@ 16.2.1.6.3 ResolveExport
 @P("{CONDITION_1} : {var} does not provide the direct binding for this export")
 class _:
     def s_cond(cond, env0, asserting):
@@ -12341,7 +12376,9 @@ class _:
         env0.assert_expr_is_of_type(var, T_Module_Record)
         return (env0, env0)
 
-    #@ 16.2.1.6.4 InitializeEnvironment
+# ==============================================================================
+#@ 16.2.1.6.4 InitializeEnvironment
+
 @P("{CONDITION_1} : All named exports from {var} are resolvable")
 class _:
     def s_cond(cond, env0, asserting):
@@ -12349,7 +12386,9 @@ class _:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-    #@ 16.2.1.6.5 ExecuteModule
+# ==============================================================================
+#@ 16.2.1.6.5 ExecuteModule
+
 @P("{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated")
 class _:
     def s_cond(cond, env0, asserting):
@@ -12366,6 +12405,12 @@ class _:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
         return (env0, env0)
+
+# ==============================================================================
+#@ 16.2.1.8 HostLoadImportedModule
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ 17 Error Handling and Language Extensions
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 18 ECMAScript Standard Built-in Objects
@@ -12468,10 +12513,12 @@ class _:
 
 # ==============================================================================
 #@ 21.1 Number Objects
+
 set_up_internal_thing('slot', '[[NumberData]]', T_Number)
 
 # ==============================================================================
 #@ 21.2 BigInt Objects
+
 set_up_internal_thing('slot', '[[BigIntData]]', T_BigInt)
 
 # ==============================================================================
@@ -12692,6 +12739,9 @@ class _:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return (T_Unicode_code_points_, env0)
+
+# ==============================================================================
+#@ 22.2 RegExp (Regular Expression) Objects
 
 # ==============================================================================
 #@ 22.2.1.6 Static Semantics: CharacterValue
@@ -13640,6 +13690,12 @@ set_up_internal_thing('slot', '[[Cells]]',           ListType(T_FinalizationRegi
 @P("{VAL_DESC} : an Iterator")
 class _:
     s_tb = T_Iterator_object_
+
+# ==============================================================================
+#@ 27.1.1 Common Iteration Interfaces
+
+# ==============================================================================
+#@ 27.1.1.5 The <i>IteratorResult</i> Interface
 
 @P("{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface")
 class _:
