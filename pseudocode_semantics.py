@@ -3085,14 +3085,6 @@ class _:
     s_nv = s_nv_pass_down
     d_exec = d_exec_pass_down_expecting_None
 
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}")
-class _:
-    s_tb = s_tb_pass_down
-
-    def d_desc(value_description, value):
-        [val_desc] = value_description.children
-        return value_matches_description(value, val_desc)
-
 @P("{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}")
 @P("{EXPR} : {EX}")
 @P("{EX} : ({EX})")
@@ -3192,10 +3184,6 @@ class _:
     s_tb = T_code_point_
 
 @P("{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}")
-class _:
-    s_tb = a_subset_of(T_Unicode_code_points_)
-
-@P("{VAL_DESC} : {backticked_oth}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
@@ -3317,6 +3305,10 @@ class ES_UnicodeCodePoints(ES_Value):
 class _:
     s_tb = T_Unicode_code_points_
 
+@P("{VAL_DESC} : {backticked_oth}")
+class _:
+    s_tb = a_subset_of(T_Unicode_code_points_)
+
 # -----------
 # expressions that return a sequence of Unicode code points:
 
@@ -3325,13 +3317,6 @@ class _:
     def s_expr(expr, env0, _):
         [] = expr.children
         return (T_Unicode_code_points_, env0)
-
-@P(r"{backticked_word} : ` \w+ `")
-class _:
-    def d_exec(backticked_word):
-        [chars] = backticked_word.children
-        word_chars = chars[1:-1]
-        return ES_UnicodeCodePoints(word_chars)
 
 @P("{EX} : {backticked_word}")
 class _:
@@ -3347,11 +3332,12 @@ class _:
 
     d_exec = d_exec_pass_down
 
-@P("{EX} : {backticked_oth}")
+@P(r"{backticked_word} : ` \w+ `")
 class _:
-    def s_expr(expr, env0, _):
-        [_] = expr.children
-        return (T_Unicode_code_points_, env0)
+    def d_exec(backticked_word):
+        [chars] = backticked_word.children
+        word_chars = chars[1:-1]
+        return ES_UnicodeCodePoints(word_chars)
 
 @P("{EXPR} : the List of Unicode code points {var}")
 class _:
@@ -3482,31 +3468,6 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_code_unit_ | T_code_point_)
         return (T_MathInteger_, env1)
 
-@P("{CONDITION_1} : {var} occurs exactly once in {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [item_var, container_var] = cond.children
-        (container_t, env1) = tc_expr(container_var, env0); assert env1 is env0
-        # polymorphic
-        if container_t == T_String:
-            env0.assert_expr_is_of_type(item_var, T_code_unit_)
-        elif container_t == T_CharSet:
-            env0.assert_expr_is_of_type(item_var, T_character_)
-        elif container_t == T_Relation:
-            env0.assert_expr_is_of_type(item_var, T_event_pair_)
-        elif isinstance(container_t, ListType):
-            el_type = container_t.element_type
-            if el_type == T_Cyclic_Module_Record:
-                # The stack only contains CMRs,
-                # but _requiredModule_ might be a non-C MR:
-                env0.assert_expr_is_of_type(item_var, T_Module_Record)
-                # It's still reasonable to ask if _requiredModule_ is in the stack.
-            else:
-                assert 0, container_t
-        else:
-            assert 0, container_t
-        return (env0, env0)
-
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 4 Overview
 
@@ -3624,6 +3585,12 @@ class ES_TerminalSymbol(ES_GrammarSymbol):
         assert backticked_str.startswith('`')
         assert backticked_str.endswith('`')
         return ES_TerminalSymbol(backticked_str[1:-1])
+
+@P("{EX} : {backticked_oth}")
+class _:
+    def s_expr(expr, env0, _):
+        [_] = expr.children
+        return (T_Unicode_code_points_, env0)
 
 @P("{VAL_DESC} : {backticked_word}")
 class _:
@@ -4047,69 +4014,6 @@ class _:
         ]
         return (defvar, same_tip_children)
 
-# (Each child of _P_ is 'nested' directly within _P_.)
-
-@P("{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [local_ref, nont] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    def d_exec(cond):
-        [local_ref, nont] = cond.children
-        nt_name = nt_name_from_nonterminal_node(nont)
-        pnode = EXEC(local_ref, ES_ParseNode)
-        return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name])
-
-@P("{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [local_ref, nonta, nontb] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
-
-    def d_exec(cond):
-        [local_ref, nonta, nontb] = cond.children
-        nt_name_a = nt_name_from_nonterminal_node(nonta)
-        nt_name_b = nt_name_from_nonterminal_node(nontb)
-        pnode = EXEC(local_ref, ES_ParseNode)
-        return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name_a, nt_name_b])
-
-def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_symbols):
-    function_boundary_symbols = [
-        'FunctionDeclaration',
-        'FunctionExpression',
-        'GeneratorDeclaration',
-        'GeneratorExpression',
-        'AsyncFunctionDeclaration',
-        'AsyncFunctionExpression',
-        'AsyncGeneratorDeclaration',
-        'AsyncGeneratorExpression',
-        'MethodDefinition',
-        'ArrowFunction',
-        'AsyncArrowFunction',
-    ]
-    static_initialization_block_boundary_symbols = [
-        'ClassStaticBlock',
-    ]
-    boundary_symbols = function_boundary_symbols + static_initialization_block_boundary_symbols
-
-    assert not any(
-        target_symbol in boundary_symbols
-        for target_symbol in target_symbols
-    )
-    # because that would be weird
-
-    assert pnode.symbol not in target_symbols
-    # because it's unclear whether that would satisfy the wording
-
-    for anc in pnode.each_ancestor():
-        if anc.symbol in target_symbols: return True
-        if anc.symbol in boundary_symbols: return False
-
-    return False
-
 # -----
 
 # (_P_ 'contains' its children and their children, and so on)
@@ -4134,13 +4038,6 @@ class _:
             return not contains_it
         else:
             return contains_it
-
-@P("{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        return (env0, env0)
 
 @P("{EACH_THING} : {nonterminal} {DEFVAR} that {var} contains")
 class _:
@@ -4229,23 +4126,68 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-# 25.5.1 JSON.parse
-@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
-@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+# (Each child of _P_ is 'nested' directly within _P_.)
+
+@P("{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
-        [prod_ref, nont, step_xref, alg_xref] = cond.children
-        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        [local_ref, nont] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (env0, env0)
 
     def d_exec(cond):
-        [prod_ref, nont, step_xref, alg_xref] = cond.children
-        node = EXEC(prod_ref, ES_ParseNode)
-        container_nt = nt_name_from_nonterminal_node(nont)
-        assert container_nt == 'Script'
-        if node.root().symbol != container_nt: return False
-        # TODO: detect whether the Script is being parsed/evaluated for JSON.parse
-        return False
+        [local_ref, nont] = cond.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        pnode = EXEC(local_ref, ES_ParseNode)
+        return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name])
+
+@P("{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [local_ref, nonta, nontb] = cond.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return (env0, env0)
+
+    def d_exec(cond):
+        [local_ref, nonta, nontb] = cond.children
+        nt_name_a = nt_name_from_nonterminal_node(nonta)
+        nt_name_b = nt_name_from_nonterminal_node(nontb)
+        pnode = EXEC(local_ref, ES_ParseNode)
+        return not node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, [nt_name_a, nt_name_b])
+
+def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_symbols):
+    function_boundary_symbols = [
+        'FunctionDeclaration',
+        'FunctionExpression',
+        'GeneratorDeclaration',
+        'GeneratorExpression',
+        'AsyncFunctionDeclaration',
+        'AsyncFunctionExpression',
+        'AsyncGeneratorDeclaration',
+        'AsyncGeneratorExpression',
+        'MethodDefinition',
+        'ArrowFunction',
+        'AsyncArrowFunction',
+    ]
+    static_initialization_block_boundary_symbols = [
+        'ClassStaticBlock',
+    ]
+    boundary_symbols = function_boundary_symbols + static_initialization_block_boundary_symbols
+
+    assert not any(
+        target_symbol in boundary_symbols
+        for target_symbol in target_symbols
+    )
+    # because that would be weird
+
+    assert pnode.symbol not in target_symbols
+    # because it's unclear whether that would satisfy the wording
+
+    for anc in pnode.each_ancestor():
+        if anc.symbol in target_symbols: return True
+        if anc.symbol in boundary_symbols: return False
+
+    return False
 
 #> Parse Nodes are considered <dfn>the same Parse Node</dfn>
 #> if and only if they represent the same span of source text,
@@ -4516,13 +4458,6 @@ class _:
 # ==============================================================================
 #@ 5.2 Algorithm Conventions
 
-@P("{CONDITION_1} : control reaches here")
-class _:
-    def s_cond(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-# ------------------------------------------------------------------------------
 #> The specification often uses a numbered list to specify steps in an algorithm.
 #> Algorithm steps may be subdivided into sequential substeps.
 #> Substeps are indented
@@ -5234,72 +5169,6 @@ class _:
         value = EXEC(expr, E_Value)
         curr_frame().set_settable_to_value(settable, value)
 
-@P("{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.")
-@P("{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.")
-@P("{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.")
-class _:
-    def s_nv(anode, env0):
-        [dotting, emu_xref] = anode.children
-
-        # (t, env1) = tc_expr(settable, env0); assert env1 is env0
-        # XXX: could check that emu_xref is sensible for t, but not really worth it?
-
-        mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
-        sec_id = mo.group(1)
-        implied_base_t = {
-            # 10.2.*
-            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
-            'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
-
-            # 10.3.2
-            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_function_object_,
-
-            # 10.4.1.*
-            'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
-            'sec-bound-function-exotic-objects-construct-argumentslist-newtarget'                    : T_bound_function_exotic_object_,
-
-            # 10.4.2.*
-            'sec-array-exotic-objects-defineownproperty-p-desc'                                      : T_Array_object_,
-
-            # 10.4.3.*
-            'sec-string-exotic-objects-getownproperty-p'                                             : T_String_exotic_object_,
-            'sec-string-exotic-objects-defineownproperty-p-desc'                                     : T_String_exotic_object_,
-            'sec-string-exotic-objects-ownpropertykeys'                                              : T_String_exotic_object_,
-
-            # 10.4.4.*
-            'sec-arguments-exotic-objects-getownproperty-p'                                          : T_Object,
-            'sec-arguments-exotic-objects-defineownproperty-p-desc'                                  : T_Object,
-            'sec-arguments-exotic-objects-get-p-receiver'                                            : T_Object,
-            'sec-arguments-exotic-objects-set-p-v-receiver'                                          : T_Object,
-            'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
-
-            # 10.4.5.*
-            'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
-
-            # 10.5.*
-            'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
-            'sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget' : T_Proxy_exotic_object_,
-
-        }[sec_id]
-
-        assert dotting.prod.rhs_s == '{var}.{DSBN}'
-        [base_var, dsbn] = dotting.children
-
-        (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
-        if curr_base_t == implied_base_t:
-            return env1
-        elif curr_base_t == T_Object:
-            return env1.with_expr_type_narrowed(base_var, implied_base_t)
-        else:
-            add_pass_error_re_wrong_type(base_var, curr_base_t, implied_base_t)
-            return env1.with_expr_type_replaced(base_var, implied_base_t)
-
 # ------------------------------------------------------------------------------
 # (This section is where "Return" steps should be mentioned?)
 
@@ -5942,33 +5811,6 @@ class _:
             # but we can't make the metagrammar ambiguous.
             return EXEC(nont, ES_NonterminalSymbol)
 
-@P("{PROD_REF} : {nonterminal} {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [nonterminal, var] = expr.children
-        t = ptn_type_for(nonterminal)
-        env0.assert_expr_is_of_type(var, t)
-        return (t, env0)
-
-@P("{PROD_REF} : the {ORDINAL} {nonterminal}")
-class _:
-    def s_expr(expr, env0, _):
-        [ordinal, nonterminal] = expr.children
-        # XXX should check that the 'current' production has such.
-        return (ptn_type_for(nonterminal), env0)
-
-    def d_exec(prod_ref):
-        [ordinal, nont] = prod_ref.children
-        ordinal_str = ordinal.source_text()
-        ordinal_num = {
-            'first' : 1,
-            'second': 2,
-            'third' : 3,
-            'fourth': 4,
-        }[ordinal_str]
-        nt_name = nt_name_from_nonterminal_node(nont)
-        return curr_frame().resolve_focus_reference(ordinal_num, nt_name)
-
 @P("{PROD_REF} : the {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
@@ -5996,6 +5838,25 @@ class _:
         [] = prod_ref.children
         return curr_frame()._focus_node
 
+@P("{PROD_REF} : the {ORDINAL} {nonterminal}")
+class _:
+    def s_expr(expr, env0, _):
+        [ordinal, nonterminal] = expr.children
+        # XXX should check that the 'current' production has such.
+        return (ptn_type_for(nonterminal), env0)
+
+    def d_exec(prod_ref):
+        [ordinal, nont] = prod_ref.children
+        ordinal_str = ordinal.source_text()
+        ordinal_num = {
+            'first' : 1,
+            'second': 2,
+            'third' : 3,
+            'fourth': 4,
+        }[ordinal_str]
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return curr_frame().resolve_focus_reference(ordinal_num, nt_name)
+
 @P("{PROD_REF} : the derived {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
@@ -6012,6 +5873,14 @@ class _:
     def s_tb(val_desc, env):
         [nont1, nont2] = val_desc.children
         return a_subset_of(ptn_type_for(nont1))
+
+@P("{PROD_REF} : {nonterminal} {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [nonterminal, var] = expr.children
+        t = ptn_type_for(nonterminal)
+        env0.assert_expr_is_of_type(var, t)
+        return (t, env0)
 
 @P("{CONDITION_1} : {LOCAL_REF} is present")
 @P("{CONDITION_1} : {LOCAL_REF} is not present")
@@ -6882,29 +6751,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
 
-@P("{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [a, _, b, _, c] = cond.children
-        if '<sub>𝔽</sub>' in a.source_text(): # kludgey test
-            env0.assert_expr_is_of_type(a, T_IntegralNumber_)
-            env0.assert_expr_is_of_type(b, T_IntegralNumber_)
-            env0.assert_expr_is_of_type(c, T_IntegralNumber_)
-            return (env0, env0)
-        else:
-            env0.assert_expr_is_of_type(a, T_MathInteger_)
-            env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
-            env0.assert_expr_is_of_type(c, T_MathInteger_)
-            env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
-            return (env2, env2)
-
-    def d_exec(comparison):
-        [randA, ratorAB, randB, ratorBC, randC] = comparison.children
-        a = EXEC(randA, ES_Mathnum)
-        b = EXEC(randB, ES_Mathnum)
-        c = EXEC(randC, ES_Mathnum)
-        return ES_Mathnum.compare(a, ratorAB, b) and ES_Mathnum.compare(b, ratorBC, c)
-
 @P("{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7110,6 +6956,29 @@ class _:
         a = EXEC(randA, ES_Mathnum)
         b = EXEC(randB, ES_Mathnum)
         return ES_Mathnum.compare(a, ratorAB, b)
+
+@P("{NUM_COMPARISON} : {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [a, _, b, _, c] = cond.children
+        if '<sub>𝔽</sub>' in a.source_text(): # kludgey test
+            env0.assert_expr_is_of_type(a, T_IntegralNumber_)
+            env0.assert_expr_is_of_type(b, T_IntegralNumber_)
+            env0.assert_expr_is_of_type(c, T_IntegralNumber_)
+            return (env0, env0)
+        else:
+            env0.assert_expr_is_of_type(a, T_MathInteger_)
+            env1 = env0.ensure_expr_is_of_type(b, T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_)
+            env0.assert_expr_is_of_type(c, T_MathInteger_)
+            env2 = env1.with_expr_type_narrowed(b, T_MathInteger_)
+            return (env2, env2)
+
+    def d_exec(comparison):
+        [randA, ratorAB, randB, ratorBC, randC] = comparison.children
+        a = EXEC(randA, ES_Mathnum)
+        b = EXEC(randB, ES_Mathnum)
+        c = EXEC(randC, ES_Mathnum)
+        return ES_Mathnum.compare(a, ratorAB, b) and ES_Mathnum.compare(b, ratorBC, c)
 
 @P("{CONDITION_1} : {var} is as small as possible")
 class _:
@@ -7530,17 +7399,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (ListType(T_code_unit_), env0)
 
-@P("{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit")
-@P("{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MathReal_)
-        return (T_MathReal_, env0)
-
-# -----------------------------------
-# decimal/hexadecimal representation:
-
 @P("{CONDITION_1} : the decimal representation of {var} has 20 or fewer significant digits")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7557,6 +7415,14 @@ def number_of_significant_digits_in_decimal_representation_of(mathnum: ES_Mathnu
     s = str(mathnum.val).replace('.', '')
     assert s.isdigit()
     return len(s.strip('0'))
+
+@P("{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit")
+@P("{EXPR} : the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathReal_)
+        return (T_MathReal_, env0)
 
 @P("{EXPR} : the String representation of {EX}, formatted as a decimal number")
 @P("{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
@@ -7803,6 +7669,14 @@ class _:
         return env0.with_type_test(ex, 'isnt a', [sub_t, sup_t], asserting)
 
     # -------
+
+@P("{VALUE_DESCRIPTION} : {VAL_DESC}")
+class _:
+    s_tb = s_tb_pass_down
+
+    def d_desc(value_description, value):
+        [val_desc] = value_description.children
+        return value_matches_description(value, val_desc)
 
 @P("{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}")
 @P("{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}")
@@ -8070,125 +7944,6 @@ class _:
 class _:
     s_tb = T_String | T_Undefined
 
-# -----
-
-def s_expr_String(expr, env0, _):
-    return (T_String, env0)
-
-@P("{LITERAL} : {STR_LITERAL}")
-class _:
-    s_tb = a_subset_of(T_String)
-    s_expr = s_expr_String
-    d_exec = d_exec_pass_down
-
-@P('{STR_LITERAL} : *","* (a comma)')
-class _:
-    s_expr = s_expr_String
-
-@P("{STR_LITERAL} : the empty String")
-class _:
-    s_expr = s_expr_String
-
-    def d_exec(str_literal):
-        [] = str_literal.children
-        return EL_String([])
-
-@P("{STR_LITERAL} : {starred_str}")
-class _:
-    s_expr = s_expr_String
-    d_exec = d_exec_pass_down
-
-@P("{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})")
-class _:
-    s_expr = s_expr_String
-
-@P(r'{starred_str} : \* " ( [^"*] | \\ \* )* " \*')
-class _:
-    def d_exec(starred_str):
-        [chars] = starred_str.children
-        inner_chars = chars[2:-2]
-        true_chars = inner_chars.replace(r'\*', '*')
-        return EL_String.from_Python_string(true_chars)
-
-@P("{EX} : the String {var}")
-@P("{EXPR} : the String value {SETTABLE}")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env0.ensure_expr_is_of_type(ex, T_String)
-        return (T_String, env0)
-
-@P("{EX} : {h_code_quote}")
-class _:
-    def s_expr(expr, env0, _):
-        [h_code_quote] = expr.children
-        return (T_String, env0)
-
-@P("{EXPR} : {var}'s single code unit element") # todo: element of String
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_code_unit_, env1)
-
-@P("{EX} : the first code unit of {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
-        return (T_code_unit_, env1)
-
-# ----
-
-@P("{CONDITION_1} : {var} contains any code unit more than once")
-@P('{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, *"v"*, or *"y"*')
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-@P("{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit")
-class _:
-    def s_cond(cond, env0, asserting):
-        [svar, rvar] = cond.children
-        env0.assert_expr_is_of_type(svar, T_String)
-        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
-        return (env0, env0)
-
-@P("{CONDITION_1} : {var} starts with {STR_LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, str_literal] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        return (env0, env0)
-
-@P("{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, str_literal, ex] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-@P("{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, lita, litb] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(lita, T_String)
-        env0.assert_expr_is_of_type(litb, T_String)
-        return (env0, env0)
-
-@P("{CONDITION_1} : {var} and {var} have the same length and the same code units in the same positions")
-class _:
-    def s_cond(cond, env0, asserting):
-        # occurs once, in SameValueNonNumber
-        [vara, varb] = cond.children
-        enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
-        envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
-        return (envb, envb)
-
 # ------------------------------------------------------------------------------
 #> Each element is regarded as occupying a position within the sequence.
 #> These positions are indexed with non-negative integers.
@@ -8208,6 +7963,20 @@ class _:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_String)
         return (T_MathNonNegativeInteger_, env0)
+
+@P("{EXPR} : {var}'s single code unit element") # todo: element of String
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_code_unit_, env1)
+
+@P("{EX} : the first code unit of {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        return (T_code_unit_, env1)
 
 # ------------------------------------------------------------------------------
 #> The length of a String is the number of elements (i.e., 16-bit values) within it.
@@ -8303,7 +8072,59 @@ class _:
         return (T_String, env0)
 
 # ------------------------------------------------------------------------------
-# Other ways to specify a String value:
+# expressions that return a String value:
+
+def s_expr_String(expr, env0, _):
+    return (T_String, env0)
+
+@P("{LITERAL} : {STR_LITERAL}")
+class _:
+    s_tb = a_subset_of(T_String)
+    s_expr = s_expr_String
+    d_exec = d_exec_pass_down
+
+@P("{STR_LITERAL} : the empty String")
+class _:
+    s_expr = s_expr_String
+
+    def d_exec(str_literal):
+        [] = str_literal.children
+        return EL_String([])
+
+@P("{STR_LITERAL} : {starred_str}")
+class _:
+    s_expr = s_expr_String
+    d_exec = d_exec_pass_down
+
+@P('{STR_LITERAL} : *","* (a comma)')
+class _:
+    s_expr = s_expr_String
+
+@P("{STR_LITERAL} : {starred_str} ({code_unit_lit} followed by {code_unit_lit})")
+class _:
+    s_expr = s_expr_String
+
+@P(r'{starred_str} : \* " ( [^"*] | \\ \* )* " \*')
+class _:
+    def d_exec(starred_str):
+        [chars] = starred_str.children
+        inner_chars = chars[2:-2]
+        true_chars = inner_chars.replace(r'\*', '*')
+        return EL_String.from_Python_string(true_chars)
+
+@P("{EX} : the String {var}")
+@P("{EXPR} : the String value {SETTABLE}")
+class _:
+    def s_expr(expr, env0, _):
+        [ex] = expr.children
+        env0.ensure_expr_is_of_type(ex, T_String)
+        return (T_String, env0)
+
+@P("{EX} : {h_code_quote}")
+class _:
+    def s_expr(expr, env0, _):
+        [h_code_quote] = expr.children
+        return (T_String, env0)
 
 @P("{EX} : the first {SUM} code units of {var}")
 class _:
@@ -8418,6 +8239,58 @@ class _:
     def s_expr(expr, env0, _):
         [str_lit] = expr.children
         return (T_String, env0)
+
+# -----------------------------------------
+# conditions about the content of a String:
+
+@P("{CONDITION_1} : {var} contains any code unit more than once")
+@P('{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, *"v"*, or *"y"*')
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+@P("{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit")
+class _:
+    def s_cond(cond, env0, asserting):
+        [svar, rvar] = cond.children
+        env0.assert_expr_is_of_type(svar, T_String)
+        env0.assert_expr_is_of_type(rvar, T_MathInteger_)
+        return (env0, env0)
+
+@P("{CONDITION_1} : {var} starts with {STR_LITERAL}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, str_literal] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
+@P("{CONDITION_1} : {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, str_literal, ex] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+@P("{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, lita, litb] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        env0.assert_expr_is_of_type(lita, T_String)
+        env0.assert_expr_is_of_type(litb, T_String)
+        return (env0, env0)
+
+@P("{CONDITION_1} : {var} and {var} have the same length and the same code units in the same positions")
+class _:
+    def s_cond(cond, env0, asserting):
+        # occurs once, in SameValueNonNumber
+        [vara, varb] = cond.children
+        enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
+        envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
+        return (envb, envb)
 
 # ------------------------------------------------------------------------------
 # Going from a String value to some other type of value:
@@ -8858,11 +8731,6 @@ class _:
 #>     The accessor functions are used to store or retrieve
 #>     an ECMAScript language value that is associated with the property.
 
-#> Properties are identified using key values.
-#> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
-#> All String and Symbol values, including the empty String, are valid as property keys.
-#> A <dfn>property name</dfn> is a property key that is a String value.
-
 @dataclass # not frozen
 class Property: # ES_Property(ES_Value) ?
     pass
@@ -8877,13 +8745,10 @@ class EL_Object(EL_Value):
 class _:
     s_tb = T_Object
 
-@P("{VAL_DESC} : an Object that is defined by either an {nonterminal} or an {nonterminal}")
-class _:
-    s_tb = a_subset_of(T_Object)
-
-@P("{VAL_DESC} : an extensible object that does not have a {starred_str} own property")
-class _:
-    s_tb = a_subset_of(T_Object)
+#> Properties are identified using key values.
+#> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
+#> All String and Symbol values, including the empty String, are valid as property keys.
+#> A <dfn>property name</dfn> is a property key that is a String value.
 
 @P("{VAL_DESC} : a property key")
 class _:
@@ -8910,6 +8775,13 @@ class _:
             'data'    : T_data_property_,
         }[kind.source_text()]
         return t
+
+# ------------------------------------------------------------------------------
+# (other forms involving the properties of an object)
+
+@P("{VAL_DESC} : an extensible object that does not have a {starred_str} own property")
+class _:
+    s_tb = a_subset_of(T_Object)
 
 @P("{CONDITION_1} : {var} does not have an own property with key {var}")
 @P("{CONDITION_1} : {var} does not currently have a property {var}")
@@ -8939,13 +8811,6 @@ class _:
         (tenv, fenv) = tc_cond(condition, env1)
         return tenv
 
-@P("{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.")
-class _:
-    def s_nv(anode, env0):
-        [var, emu_xref] = anode.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        return env0
-
 @P("{COMMAND} : Remove the own property with name {var} from {var}.")
 class _:
     def s_nv(anode, env0):
@@ -8969,12 +8834,6 @@ class _:
         # todo: make that explicit
         [] = expr.children
         return (T_String, env0)
-
-@P("{EXPR} : such an object created in a host-defined manner")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_Object, env0)
 
 #> An <dfn>integer index</dfn>
 #> is a String-valued property key
@@ -9000,24 +8859,6 @@ class _:
 class _:
     def s_nv(anode, env0):
         [kind, name_var, obj_var, *dsbw_, desc_var, desc_var2, emu_xref] = anode.children
-        assert desc_var.source_text() == desc_var2.source_text()
-        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-        return env0
-
-@P("{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field")
-class _:
-    def s_nv(anode, env0):
-        [name_var, obj_var] = anode.children
-        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        return env0
-
-@P("{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
-class _:
-    def s_nv(anode, env0):
-        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = anode.children
         assert desc_var.source_text() == desc_var2.source_text()
         env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
@@ -9195,21 +9036,78 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         return env1
 
+@P("{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.")
+@P("{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.")
+@P("{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.")
+class _:
+    def s_nv(anode, env0):
+        [dotting, emu_xref] = anode.children
+
+        # (t, env1) = tc_expr(settable, env0); assert env1 is env0
+        # XXX: could check that emu_xref is sensible for t, but not really worth it?
+
+        mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
+        sec_id = mo.group(1)
+        implied_base_t = {
+            # 10.2.*
+            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
+            'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
+
+            # 10.3.2
+            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_function_object_,
+
+            # 10.4.1.*
+            'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
+            'sec-bound-function-exotic-objects-construct-argumentslist-newtarget'                    : T_bound_function_exotic_object_,
+
+            # 10.4.2.*
+            'sec-array-exotic-objects-defineownproperty-p-desc'                                      : T_Array_object_,
+
+            # 10.4.3.*
+            'sec-string-exotic-objects-getownproperty-p'                                             : T_String_exotic_object_,
+            'sec-string-exotic-objects-defineownproperty-p-desc'                                     : T_String_exotic_object_,
+            'sec-string-exotic-objects-ownpropertykeys'                                              : T_String_exotic_object_,
+
+            # 10.4.4.*
+            'sec-arguments-exotic-objects-getownproperty-p'                                          : T_Object,
+            'sec-arguments-exotic-objects-defineownproperty-p-desc'                                  : T_Object,
+            'sec-arguments-exotic-objects-get-p-receiver'                                            : T_Object,
+            'sec-arguments-exotic-objects-set-p-v-receiver'                                          : T_Object,
+            'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
+
+            # 10.4.5.*
+            'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
+            'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
+
+            # 10.5.*
+            'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
+            'sec-proxy-object-internal-methods-and-internal-slots-construct-argumentslist-newtarget' : T_Proxy_exotic_object_,
+
+        }[sec_id]
+
+        assert dotting.prod.rhs_s == '{var}.{DSBN}'
+        [base_var, dsbn] = dotting.children
+
+        (curr_base_t, env1) = tc_expr(base_var, env0); assert env1 is env0
+        if curr_base_t == implied_base_t:
+            return env1
+        elif curr_base_t == T_Object:
+            return env1.with_expr_type_narrowed(base_var, implied_base_t)
+        else:
+            add_pass_error_re_wrong_type(base_var, curr_base_t, implied_base_t)
+            return env1.with_expr_type_replaced(base_var, implied_base_t)
+
 @P("{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
 class _:
     def s_nv(anode, env0):
         [var, _, _, emu_xref] = anode.children
         assert emu_xref.source_text() == '<emu-xref href="#sec-proxy-object-internal-methods-and-internal-slots"></emu-xref>'
         return env0.with_expr_type_narrowed(var, T_Proxy_exotic_object_)
-
-    # explicit-exotics:
-@P("{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods")
-@P("{CONDITION_1} : the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods")
-class _:
-    def s_cond(cond, env0, asserting):
-        var = cond.children[0]
-        env0.assert_expr_is_of_type(var, T_Object)
-        return (env0, env0)
 
 #> An <dfn>ordinary object</dfn> is an object that satisfies all of the following criteria:
 #>  -- For the internal methods listed in <emu-xref href="#table-essential-internal-methods"></emu-xref>,
@@ -9272,14 +9170,6 @@ class _:
         [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_SlotName_))
         return (T_Object, env1)
-
-@P("{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot")
-class _:
-    def s_expr(expr, env0, _):
-        [var1, var2, var3, dsbn] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
-        # env1 = env0.ensure_expr_is_of_type(var2, )
-        return (T_function_object_, env1)
 
 @P("{EXPR} : a new {cap_word} object whose {dsb_word} internal slot is set to {var}. See {h_emu_xref} for a description of {cap_word} objects")
 class _:
@@ -9728,24 +9618,6 @@ class _:
 # ------------------------------------------------------------------------------
 # ask questions about a List:
 
-@P("{CONDITION_1} : {EX} is empty")
-@P("{CONDITION_1} : {EX} is not empty")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        # polymorphic
-        env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
-        # XXX For String, change spec to "is [not] the empty String" ?
-        return (env0, env0)
-
-    def d_exec(cond):
-        [ex] = cond.children
-        L = EXEC(ex, ES_List)
-        if 'is not' in cond.prod.rhs_s:
-            return not L.is_empty()
-        else:
-            return L.is_empty()
-
 @P("{CONDITION_1} : {var} is now an empty List")
 class _:
     def s_cond(cond, env0, asserting):
@@ -9766,6 +9638,9 @@ class _:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
         return (env0, env0)
+
+# ------------------------------------------------------------------------------
+# the number of elements in the List:
 
 @P("{CONDITION_1} : The length of {var} is {var}")
 class _:
@@ -9799,6 +9674,9 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (env0, env0)
 
+# ----------------------------
+# the List contains something:
+
 @P("{CONDITION_1} : {var} contains any duplicate entries")
 @P("{CONDITION_1} : {var} contains no duplicate entries")
 @P("{CONDITION_1} : {var} has any duplicate entries")
@@ -9825,41 +9703,6 @@ class _:
         [var, nonterminal] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
-
-@P("{CONDITION_1} : {EX} contains {EX}")
-@P("{CONDITION_1} : {EX} does not contain {EX}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [container_ex, value_var] = cond.children
-        (container_type, container_env) = tc_expr(container_ex, env0)
-        # polymorphic
-        if container_type.is_a_subtype_of_or_equal_to(T_String):
-            env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
-        elif container_type.is_a_subtype_of_or_equal_to(T_CharSet):
-            env1 = container_env.ensure_expr_is_of_type(value_var, T_character_ | ListType(T_character_))
-        elif container_type.is_a_subtype_of_or_equal_to(T_Relation):
-            env1 = container_env.ensure_expr_is_of_type(value_var, T_event_pair_)
-        else:
-            env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
-        return (env1, env1)
-
-    def d_exec(cond):
-        [container_ex, element_ex] = cond.children
-        container = EXEC(container_ex, (ES_List, ES_UnicodeCodePoints))
-        e = EXEC(element_ex, E_Value)
-        if container.isan(ES_List):
-            contains_it = container.contains(e)
-        elif container.isan(ES_UnicodeCodePoints):
-            if e.isan(ES_UnicodeCodePoints):
-                assert e.number_of_code_points() == 1
-                [e] = e.code_points()
-            contains_it = container.contains_code_point(e)
-        else:
-            assert 0, container
-        if 'does not contain' in cond.prod.rhs_s:
-            return not contains_it
-        else:
-            return contains_it
 
 @P("{CONDITION_1} : {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}")
 class _:
@@ -9891,72 +9734,6 @@ class _:
         v = EXEC(ss, E_Value)
         return L.number_of_occurrences_of(v) > 1
 
-# (13.2.5.1 Static Semantics: Early Errors)
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, ss, emu_grammar] = cond.children
-        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
-        return (env1, env1)
-
-    def d_exec(cond):
-        [noi, ss, h_emu_grammar] = cond.children
-        L = EXEC(noi, ES_List)
-        v = EXEC(ss, E_Value)
-        if L.number_of_occurrences_of(v) <= 1: return False
-
-        # Okay, so we know that {L} contains duplicate entries for {v}.
-        # But the second part of the condition is weird,
-        # because it's asking *after the fact*
-        # about how the entries in {L} were obtained.
-        # (The 'proper' way to do this would be to modify the rules involved,
-        # or make a new SDO, to compute the quantity of interest.)
-
-        assert noi.source_text() == 'PropertyNameList of |PropertyDefinitionList|'
-
-        PDL = curr_frame().resolve_focus_reference(None, 'PropertyDefinitionList')
-
-        def each_PD_in_PDL(PDL):
-            assert PDL.symbol == 'PropertyDefinitionList'
-            r = PDL.production.og_rhs_reduced
-            if r == 'PropertyDefinition':
-                [PD] = PDL.children
-                yield PD
-            elif r == 'PropertyDefinitionList `,` PropertyDefinition':
-                [PDL, _, PD] = PDL.children
-                yield from each_PD_in_PDL(PDL)
-                yield PD
-            else:
-                assert 0
-
-        n = 0
-        for PD in each_PD_in_PDL(PDL):
-            assert PD.symbol == 'PropertyDefinition'
-            propName = execute_sdo_invocation('PropName', PD, [])
-            if same_value(propName, v):
-                # This is one of the duplicate entries.
-                # Was it obtained from a production of the given form?
-                # SPEC BUG: s/production/Parse Node/
-                if PD.puk in h_emu_grammar._hnode.puk_set:
-                    # Yes, it was.
-                    n += 1
-
-        return (n >= 2)
-
-@P("{CONDITION_1} : {var} does not include the element {LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [list_var, item_lit] = cond.children
-        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String))
-        env0.assert_expr_is_of_type(item_lit, T_String)
-        return (env1, env1)
-
-    def d_exec(cond):
-        [var, lit] = cond.children
-        L = EXEC(var, ES_List)
-        v = EXEC(lit, E_Value)
-        return not L.contains(v)
-
 @P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
 class _:
     def s_cond(cond, env0, asserting):
@@ -9980,54 +9757,6 @@ class _:
         env2 = env1.plus_new_entry(member_var, T_String)
         (t_env, f_env) = tc_cond(stcond, env2)
         return (env1, env1)
-
-@P("{EXPR} : the first element of {SETTABLE}")
-@P("{EXPR} : the last element of {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        list_type = env0.assert_expr_is_of_type(var, T_List)
-        return (list_type.element_type, env0)
-
-@P("{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}")
-@P("{EXPR} : the sole element of {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [noi] = expr.children
-        list_type = env0.assert_expr_is_of_type(noi, T_List)
-        return (list_type.element_type, env0)
-
-@P("{EXPR} : {var}<sup>th</sup> element of {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [subscript_var, list_ex] = expr.children
-        env0.assert_expr_is_of_type(subscript_var, T_MathInteger_)
-        list_type = env0.assert_expr_is_of_type(list_ex, T_List)
-        return (list_type.element_type, env0)
-
-@P("{SETTABLE} : {var}[{EX}]")
-@P("{SETTABLE} : {DOTTING}[{EX}]")
-class _:
-    def s_expr(expr, env0, _):
-        [seq_ex, subscript_var] = expr.children
-        (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
-        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
-        if isinstance(seq_type, ListType):
-            item_type = seq_type.element_type
-        elif seq_type == T_List:
-            item_type = T_TBD
-        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block):
-            item_type = T_MathInteger_
-        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block | T_Null):
-            add_pass_error(
-                expr,
-                "STA fails to confirm that %s isnt Null" %
-                (seq_ex.source_text())
-            )
-            item_type = T_MathInteger_
-        else:
-            assert 0, seq_type
-        return (item_type, env0)
 
 # ------------------------------------------------------------------------------
 # questions involving multiple Lists:
@@ -10089,6 +9818,149 @@ class _:
             not (L2.contains(element) or L3.contains(element))
             for element in L1.elements()
         )
+
+@P("{EXPR} : the first element of {SETTABLE}")
+@P("{EXPR} : the last element of {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        list_type = env0.assert_expr_is_of_type(var, T_List)
+        return (list_type.element_type, env0)
+
+@P("{EXPR} : the sole element of {PP_NAMED_OPERATION_INVOCATION}")
+@P("{EXPR} : the sole element of {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [noi] = expr.children
+        list_type = env0.assert_expr_is_of_type(noi, T_List)
+        return (list_type.element_type, env0)
+
+@P("{EXPR} : {var}<sup>th</sup> element of {EX}")
+class _:
+    def s_expr(expr, env0, _):
+        [subscript_var, list_ex] = expr.children
+        env0.assert_expr_is_of_type(subscript_var, T_MathInteger_)
+        list_type = env0.assert_expr_is_of_type(list_ex, T_List)
+        return (list_type.element_type, env0)
+
+# ------------------------------------------------------------------------------
+# forms that are used for various kinds of container:
+
+@P("{CONDITION_1} : {EX} is empty")
+@P("{CONDITION_1} : {EX} is not empty")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        # polymorphic
+        env0.assert_expr_is_of_type(var, T_CharSet | T_List | T_String)
+        # XXX For String, change spec to "is [not] the empty String" ?
+        return (env0, env0)
+
+    def d_exec(cond):
+        [ex] = cond.children
+        L = EXEC(ex, ES_List)
+        if 'is not' in cond.prod.rhs_s:
+            return not L.is_empty()
+        else:
+            return L.is_empty()
+
+@P("{CONDITION_1} : {var} does not include the element {LITERAL}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [list_var, item_lit] = cond.children
+        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String))
+        env0.assert_expr_is_of_type(item_lit, T_String)
+        return (env1, env1)
+
+    def d_exec(cond):
+        [var, lit] = cond.children
+        L = EXEC(var, ES_List)
+        v = EXEC(lit, E_Value)
+        return not L.contains(v)
+
+@P("{CONDITION_1} : {EX} contains {EX}")
+@P("{CONDITION_1} : {EX} does not contain {EX}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [container_ex, value_var] = cond.children
+        (container_type, container_env) = tc_expr(container_ex, env0)
+        # polymorphic
+        if container_type.is_a_subtype_of_or_equal_to(T_String):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_String | T_code_unit_)
+        elif container_type.is_a_subtype_of_or_equal_to(T_CharSet):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_character_ | ListType(T_character_))
+        elif container_type.is_a_subtype_of_or_equal_to(T_Relation):
+            env1 = container_env.ensure_expr_is_of_type(value_var, T_event_pair_)
+        else:
+            env1 = env0.ensure_A_can_be_element_of_list_B(value_var, container_ex)
+        return (env1, env1)
+
+    def d_exec(cond):
+        [container_ex, element_ex] = cond.children
+        container = EXEC(container_ex, (ES_List, ES_UnicodeCodePoints))
+        e = EXEC(element_ex, E_Value)
+        if container.isan(ES_List):
+            contains_it = container.contains(e)
+        elif container.isan(ES_UnicodeCodePoints):
+            if e.isan(ES_UnicodeCodePoints):
+                assert e.number_of_code_points() == 1
+                [e] = e.code_points()
+            contains_it = container.contains_code_point(e)
+        else:
+            assert 0, container
+        if 'does not contain' in cond.prod.rhs_s:
+            return not contains_it
+        else:
+            return contains_it
+
+@P("{CONDITION_1} : {var} occurs exactly once in {var}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [item_var, container_var] = cond.children
+        (container_t, env1) = tc_expr(container_var, env0); assert env1 is env0
+        # polymorphic
+        if container_t == T_String:
+            env0.assert_expr_is_of_type(item_var, T_code_unit_)
+        elif container_t == T_CharSet:
+            env0.assert_expr_is_of_type(item_var, T_character_)
+        elif container_t == T_Relation:
+            env0.assert_expr_is_of_type(item_var, T_event_pair_)
+        elif isinstance(container_t, ListType):
+            el_type = container_t.element_type
+            if el_type == T_Cyclic_Module_Record:
+                # The stack only contains CMRs,
+                # but _requiredModule_ might be a non-C MR:
+                env0.assert_expr_is_of_type(item_var, T_Module_Record)
+                # It's still reasonable to ask if _requiredModule_ is in the stack.
+            else:
+                assert 0, container_t
+        else:
+            assert 0, container_t
+        return (env0, env0)
+
+@P("{SETTABLE} : {var}[{EX}]")
+@P("{SETTABLE} : {DOTTING}[{EX}]")
+class _:
+    def s_expr(expr, env0, _):
+        [seq_ex, subscript_var] = expr.children
+        (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
+        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
+        if isinstance(seq_type, ListType):
+            item_type = seq_type.element_type
+        elif seq_type == T_List:
+            item_type = T_TBD
+        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block):
+            item_type = T_MathInteger_
+        elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block | T_Null):
+            add_pass_error(
+                expr,
+                "STA fails to confirm that %s isnt Null" %
+                (seq_ex.source_text())
+            )
+            item_type = T_MathInteger_
+        else:
+            assert 0, seq_type
+        return (item_type, env0)
 
 # ------------------------------------------------------------------------------
 # Record:
@@ -10644,12 +10516,30 @@ class _:
         assert dsbn2.source_text() == '[[Enumerable]]'
         return (env1, env1)
 
+@P("{COMMAND} : Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.")
+class _:
+    def s_nv(anode, env0):
+        [name_var, obj_var, kind, dsbw1, dsbw2, field_var1, field_var2, dsbw3, dsbw4, desc_var, desc_var2, emu_xref] = anode.children
+        assert desc_var.source_text() == desc_var2.source_text()
+        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
+        return env0
+
 @P("{EACH_THING} : field of {var}")
 class _:
     def s_nv(each_thing, env0):
         [desc_var] = each_thing.children
         loop_var = None # todo: no loop variable!
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
+        return env0
+
+@P("{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field")
+class _:
+    def s_nv(anode, env0):
+        [name_var, obj_var] = anode.children
+        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(obj_var, T_Object)
         return env0
 
 # ==============================================================================
@@ -10913,6 +10803,14 @@ class _:
 # ==============================================================================
 #@ 7.3.1 MakeBasicObject
 
+@P("{CONDITION_1} : the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods")
+@P("{CONDITION_1} : the caller will not be overriding all of {var}'s {DSBN}, {DSBN}, and {DSBN} essential internal methods")
+class _:
+    def s_cond(cond, env0, asserting):
+        var = cond.children[0]
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0)
+
 # ==============================================================================
 #@ 7.4.1 Iterator Records
 
@@ -10991,8 +10889,8 @@ class _:
         [kind] = val_desc.children
         return type_for_environment_record_kind(kind)
 
-@P("{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings")
 @P("{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record")
+@P("{EXPR} : a new {ENVIRONMENT_RECORD_KIND} Environment Record containing no bindings")
 class _:
     def s_expr(expr, env0, _):
         [kind] = expr.children
@@ -11002,8 +10900,8 @@ class _:
 # ==============================================================================
 #@ 9.1.1.1 Declarative Environment Records
 
-@P("{COMMAND} : Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.")
 @P("{COMMAND} : Create a mutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding may be deleted by a subsequent DeleteBinding call.")
+@P("{COMMAND} : Create an immutable binding in {var} for {var} and record that it is uninitialized. If {var} is *true*, record that the newly created binding is a strict binding.")
 class _:
     def s_nv(anode, env0):
         [er_var, n_var, s_var] = anode.children
@@ -11040,10 +10938,10 @@ class _:
         return (env0, env0)
 
 @P("{CONDITION_1} : the binding for {var} in {var} cannot be deleted")
-@P("{CONDITION_1} : the binding for {var} in {var} has not yet been initialized")
 @P("{CONDITION_1} : the binding for {var} in {var} is a mutable binding")
 @P("{CONDITION_1} : the binding for {var} in {var} is a strict binding")
 @P("{CONDITION_1} : the binding for {var} in {var} is an uninitialized binding")
+@P("{CONDITION_1} : the binding for {var} in {var} has not yet been initialized")
 class _:
     def s_cond(cond, env0, asserting):
         [n_var, er_var] = cond.children
@@ -11096,16 +10994,6 @@ class _:
 # ==============================================================================
 #@ 9.1.1.5 Module Environment Records
 
-@P("{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.")
-class _:
-    def s_nv(anode, env0):
-        [er_var, n_var, m_var, n2_var] = anode.children
-        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
-        env0.assert_expr_is_of_type(n_var, T_String)
-        env0.assert_expr_is_of_type(m_var, T_Module_Record)
-        env0.assert_expr_is_of_type(n2_var, T_String)
-        return env0
-
 @P("{CONDITION_1} : the binding for {var} is an indirect binding")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11125,6 +11013,16 @@ class _:
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
+@P("{COMMAND} : Create an immutable indirect binding in {var} for {var} that references {var} and {var} as its target binding and record that the binding is initialized.")
+class _:
+    def s_nv(anode, env0):
+        [er_var, n_var, m_var, n2_var] = anode.children
+        env0.assert_expr_is_of_type(er_var, T_Environment_Record)
+        env0.assert_expr_is_of_type(n_var, T_String)
+        env0.assert_expr_is_of_type(m_var, T_Module_Record)
+        env0.assert_expr_is_of_type(n2_var, T_String)
+        return env0
+
 # ==============================================================================
 #@ 9.2 PrivateEnvironment Records
 
@@ -11140,12 +11038,6 @@ class _:
     s_tb = T_Realm_Record
 
 @P("{EXPR} : a new Realm Record")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_Realm_Record, env0)
-
-@P("{EX} : the current Realm Record")
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
@@ -11222,68 +11114,6 @@ class _:
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
-#> The <dfn>execution context stack</dfn> is used to track execution contexts.
-#> The running execution context is always the top element of this stack.
-
-@P("{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.")
-class _:
-    def s_nv(anode, env0):
-        [var1, var2] = anode.children
-        assert var1.children == var2.children
-        env1 = env0.ensure_expr_is_of_type(var1, T_execution_context)
-        return env1
-
-@P("{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.")
-class _:
-    def s_nv(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return env0
-
-@P("{COMMAND} : Remove {var} from the execution context stack and restore {var} as the running execution context.")
-class _:
-    def s_nv(anode, env0):
-        [avar, bvar] = anode.children
-        env0.assert_expr_is_of_type(avar, T_execution_context)
-        env0.assert_expr_is_of_type(bvar, T_execution_context)
-        return env0
-
-@P("{COMMAND} : Remove {var} from the execution context stack.")
-class _:
-    def s_nv(anode, env0):
-        [avar] = anode.children
-        env0.assert_expr_is_of_type(avar, T_execution_context)
-        return env0
-
-    # 9.4.1
-@P("{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}")
-class _:
-    def s_expr(expr, env0, _):
-        [literal] = expr.children
-        return (T_execution_context, env0)
-
-    # 9.4.1
-@P("{CONDITION_1} : no such execution context exists")
-class _:
-    def s_cond(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-@P("{EXPR} : the second to top element of the execution context stack")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_execution_context, env0)
-
-@P("{CONDITION_1} : The execution context stack has at least two elements")
-@P("{CONDITION_1} : The execution context stack is not empty")
-@P("{CONDITION_1} : the execution context stack is empty")
-class _:
-    def s_cond(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-# ------------------------------------------------------------------------------
 #> Each execution context has at least the state components listed in
 #> <emu-xref href="#table-state-components-for-all-execution-contexts"></emu-xref>.
 
@@ -11342,54 +11172,70 @@ class _:
         return (t, env0)
 
 # ------------------------------------------------------------------------------
-#> Evaluation of code by the running execution context
-#> may be suspended at various points defined within this specification.
+#> The <dfn>execution context stack</dfn> is used to track execution contexts.
+#> The running execution context is always the top element of this stack.
 
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.")
+@P("{CONDITION_1} : the execution context stack is empty")
+@P("{CONDITION_1} : The execution context stack is not empty")
+@P("{CONDITION_1} : The execution context stack has at least two elements")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+    # 9.4.1
+@P("{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}")
+class _:
+    def s_expr(expr, env0, _):
+        [literal] = expr.children
+        return (T_execution_context, env0)
+
+    # 9.4.1
+@P("{CONDITION_1} : no such execution context exists")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+@P("{EXPR} : the second to top element of the execution context stack")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_execution_context, env0)
+
+@P("{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.")
 class _:
     def s_nv(anode, env0):
-        [_, ctx_var, _, b_var] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        return env0.plus_new_entry(b_var, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
-
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
-class _:
-    def s_nv(anode, env0):
-        [_, ctx_var, _, resa_ex] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_throw_completion)
+        [var1, var2] = anode.children
+        assert var1.children == var2.children
+        env1 = env0.ensure_expr_is_of_type(var1, T_execution_context)
         return env1
 
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.")
+@P("{COMMAND} : Remove {var} from the execution context stack.")
 class _:
     def s_nv(anode, env0):
-        [_, ctx_var, _, resa_ex, resb_var] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
-        return env1.plus_new_entry(resb_var, NormalCompletionType(T_Tangible_) | T_throw_completion)
-
-@P("{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
-class _:
-    def s_nv(anode, env0):
-        [] = anode.children
+        [avar] = anode.children
+        env0.assert_expr_is_of_type(avar, T_execution_context)
         return env0
 
-@P("{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {DEFVAR} be the Completion Record with which it is resumed.")
-class _:
-    def s_nv(anode, env0):
-        [vara, exb, varc, vard] = anode.children
-        env0.assert_expr_is_of_type(vara, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(exb, NormalCompletionType(T_Tangible_) | T_throw_completion)
-        env1.assert_expr_is_of_type(varc, T_execution_context)
-        return env0.plus_new_entry(vard, NormalCompletionType(T_Tangible_ | T_tilde_empty_) | T_throw_completion)
-
-@P("{COMMAND} : Suspend {var} and remove it from the execution context stack.")
+@P("{COMMAND} : Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.")
 class _:
     def s_nv(anode, env0):
         [var] = anode.children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return env0
+
+@P("{COMMAND} : Remove {var} from the execution context stack and restore {var} as the running execution context.")
+class _:
+    def s_nv(anode, env0):
+        [avar, bvar] = anode.children
+        env0.assert_expr_is_of_type(avar, T_execution_context)
+        env0.assert_expr_is_of_type(bvar, T_execution_context)
+        return env0
+
+# ------------------------------------------------------------------------------
+#> Evaluation of code by the running execution context
+#> may be suspended at various points defined within this specification.
 
 @P("{COMMAND} : Suspend the running execution context.")
 class _:
@@ -11397,7 +11243,7 @@ class _:
         [] = anode.children
         return env0
 
-@P("{SMALL_COMMAND} : suspend {var}")
+@P("{COMMAND} : Suspend {var} and remove it from the execution context stack.")
 class _:
     def s_nv(anode, env0):
         [var] = anode.children
@@ -11409,6 +11255,13 @@ class _:
     def s_nv(anode, env0):
         [var] = anode.children
         return env0.ensure_expr_is_of_type(var, T_execution_context)
+
+@P("{SMALL_COMMAND} : suspend {var}")
+class _:
+    def s_nv(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return env0
 
 @P("{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context, {var} will be called with no arguments.")
 class _:
@@ -11425,12 +11278,64 @@ class _:
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
+# ------
+# Resume
+
+@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
+@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.")
+class _:
+    def s_nv(anode, env0):
+        [_, ctx_var, _, resa_ex, resb_var] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
+        return env1.plus_new_entry(resb_var, NormalCompletionType(T_Tangible_) | T_throw_completion)
+
+@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
+class _:
+    def s_nv(anode, env0):
+        [_, ctx_var, _, resa_ex] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_throw_completion)
+        return env1
+
+@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.")
+class _:
+    def s_nv(anode, env0):
+        [_, ctx_var, _, b_var] = anode.children
+        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
+        return env0.plus_new_entry(b_var, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
+
+@P("{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
+class _:
+    def s_nv(anode, env0):
+        [] = anode.children
+        return env0
+
+@P("{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {DEFVAR} be the Completion Record with which it is resumed.")
+class _:
+    def s_nv(anode, env0):
+        [vara, exb, varc, vard] = anode.children
+        env0.assert_expr_is_of_type(vara, T_execution_context)
+        env1 = env0.ensure_expr_is_of_type(exb, NormalCompletionType(T_Tangible_) | T_throw_completion)
+        env1.assert_expr_is_of_type(varc, T_execution_context)
+        return env0.plus_new_entry(vard, NormalCompletionType(T_Tangible_ | T_tilde_empty_) | T_throw_completion)
+
+
+# ------
+# other:
+
 @P("{CONDITION_1} : When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
 class _:
     def s_cond(cond, env0, asserting):
         [a_var, b_var] = cond.children
         env0.assert_expr_is_of_type(a_var, T_execution_context)
         env0.assert_expr_is_of_type(b_var, T_execution_context)
+        return (env0, env0)
+
+@P("{CONDITION_1} : control reaches here")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
         return (env0, env0)
 
 @P("{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
@@ -11440,6 +11345,16 @@ class _:
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env0.assert_expr_is_of_type(varb, T_execution_context)
         return (env0, env0)
+
+# ------------------------------------------------------------------------------
+#> The value of the Realm component of the running execution context
+#> is also called <dfn id="current-realm">the current Realm Record</dfn>.
+
+@P("{EX} : the current Realm Record")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_Realm_Record, env0)
 
 # ------------------------------------------------------------------------------
 #> The value of the Function component
@@ -11530,6 +11445,12 @@ class _:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (env0, env0)
+
+@P("{EXPR} : such an object created in a host-defined manner")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_Object, env0)
 
 @P("{COMMAND} : Create any host-defined global object properties on {var}.")
 class _:
@@ -11664,12 +11585,6 @@ class _:
 # ==============================================================================
 #@ 10.3.3 CreateBuiltinFunction
 
-@P("{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
-class _:
-    def s_expr(expr, env0, _):
-        [xref] = expr.children
-        return (ListType(T_SlotName_), env0)
-
     # 10.3.3
 @P("{VAL_DESC} : some other definition of a function's behaviour provided in this specification")
 class _:
@@ -11678,6 +11593,20 @@ class _:
 @P("{VAL_DESC} : a set of algorithm steps")
 class _:
     s_tb = T_alg_steps
+
+@P("{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
+class _:
+    def s_expr(expr, env0, _):
+        [xref] = expr.children
+        return (ListType(T_SlotName_), env0)
+
+@P("{EXPR} : a new built-in function object that, when called, performs the action described by {var} using the provided arguments as the values of the corresponding parameters specified by {var}. The new function object has internal slots whose names are the elements of {var}, and an {DSBN} internal slot")
+class _:
+    def s_expr(expr, env0, _):
+        [var1, var2, var3, dsbn] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
+        # env1 = env0.ensure_expr_is_of_type(var2, )
+        return (T_function_object_, env1)
 
 # ==============================================================================
 #@ 10.4.1 Bound Function Exotic Objects
@@ -11732,6 +11661,13 @@ class _:
 # ==============================================================================
 #@ 10.4.4.7 CreateMappedArgumentsObject
 
+@P("{CONDITION_1} : {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
 # ==============================================================================
 #@ 10.4.5 Integer-Indexed Exotic Objects
 
@@ -11754,6 +11690,14 @@ set_up_internal_thing('slot', '[[ByteLength]]',        T_MathInteger_)
 @P("{VAL_DESC} : a module namespace exotic object")
 class _:
     s_tb = T_Object
+
+#@ 10.4.6.12 ModuleNamespaceCreate
+@P("{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.")
+class _:
+    def s_nv(anode, env0):
+        [var, emu_xref] = anode.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return env0
 
 # ==============================================================================
 # 10.5 Proxy Object Internal Methods and Internal Slots
@@ -12108,6 +12052,57 @@ class _:
 
 # ==============================================================================
 #@ 13.2.5.1 Static Semantics: Early Errors
+
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [noi, ss, emu_grammar] = cond.children
+        env1 = env0.ensure_expr_is_of_type(noi, ListType(T_String))
+        return (env1, env1)
+
+    def d_exec(cond):
+        [noi, ss, h_emu_grammar] = cond.children
+        L = EXEC(noi, ES_List)
+        v = EXEC(ss, E_Value)
+        if L.number_of_occurrences_of(v) <= 1: return False
+
+        # Okay, so we know that {L} contains duplicate entries for {v}.
+        # But the second part of the condition is weird,
+        # because it's asking *after the fact*
+        # about how the entries in {L} were obtained.
+        # (The 'proper' way to do this would be to modify the rules involved,
+        # or make a new SDO, to compute the quantity of interest.)
+
+        assert noi.source_text() == 'PropertyNameList of |PropertyDefinitionList|'
+
+        PDL = curr_frame().resolve_focus_reference(None, 'PropertyDefinitionList')
+
+        def each_PD_in_PDL(PDL):
+            assert PDL.symbol == 'PropertyDefinitionList'
+            r = PDL.production.og_rhs_reduced
+            if r == 'PropertyDefinition':
+                [PD] = PDL.children
+                yield PD
+            elif r == 'PropertyDefinitionList `,` PropertyDefinition':
+                [PDL, _, PD] = PDL.children
+                yield from each_PD_in_PDL(PDL)
+                yield PD
+            else:
+                assert 0
+
+        n = 0
+        for PD in each_PD_in_PDL(PDL):
+            assert PD.symbol == 'PropertyDefinition'
+            propName = execute_sdo_invocation('PropName', PD, [])
+            if same_value(propName, v):
+                # This is one of the duplicate entries.
+                # Was it obtained from a production of the given form?
+                # SPEC BUG: s/production/Parse Node/
+                if PD.puk in h_emu_grammar._hnode.puk_set:
+                    # Yes, it was.
+                    n += 1
+
+        return (n >= 2)
 
 # ==============================================================================
 #@ 13.3.6.1 Runtime Semantics: Evaluation [of Function Calls]
@@ -13614,6 +13609,27 @@ class _:
         [noi, error_type] = anode.children
         env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
         return env0
+
+@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+class _:
+    def s_cond(cond, env0, asserting):
+        [prod_ref, nont, step_xref, alg_xref] = cond.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
+        return (env0, env0)
+
+    def d_exec(cond):
+        [prod_ref, nont, step_xref, alg_xref] = cond.children
+        node = EXEC(prod_ref, ES_ParseNode)
+        container_nt = nt_name_from_nonterminal_node(nont)
+        assert container_nt == 'Script'
+        if node.root().symbol != container_nt: return False
+        # TODO: detect whether the Script is being parsed/evaluated for JSON.parse
+        return False
+
+@P("{VAL_DESC} : an Object that is defined by either an {nonterminal} or an {nonterminal}")
+class _:
+    s_tb = a_subset_of(T_Object)
 
 # ==============================================================================
 #@ 25.5.2.1 JSON Serialization Record
