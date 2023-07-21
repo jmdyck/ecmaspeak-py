@@ -11662,7 +11662,7 @@ class _:
         return (NormalCompletionType(T_Tangible_) | T_throw_completion, env0)
 
 # ==============================================================================
-#@ 10.3.3 CreateBuiltinFunction:
+#@ 10.3.3 CreateBuiltinFunction
 
 @P("{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
 class _:
@@ -11730,7 +11730,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 10.4.4.7 CreateMappedArgumentsObject ( func, formals, argumentsList, env )
+#@ 10.4.4.7 CreateMappedArgumentsObject
 
 # ==============================================================================
 #@ 10.4.5 Integer-Indexed Exotic Objects
