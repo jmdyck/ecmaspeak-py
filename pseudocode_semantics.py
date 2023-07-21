@@ -3256,6 +3256,88 @@ class _:
         env1 = env0.ensure_expr_is_of_type(dotting, T_code_point_)
         return (ListType(T_MathInteger_), env1)
 
+# ----------------------------------------------------------
+
+def unicode_character_has_property(pychar, property_name):
+    # Does the given character (code point) have the given Unicode property?
+    assert len(pychar) == 1
+
+    # Python has the unicodedata module, but
+    # it doesn't have a method relating to properties.
+
+    # We'll probably need to know pychar's category.
+    cat = unicodedata.category(pychar)
+
+    if property_name == 'ID_Start':
+        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
+        #
+        #" Derived Property: ID_Start
+        #"  Characters that can start an identifier.
+        #"  Generated from:
+        #"      Lu + Ll + Lt + Lm + Lo + Nl
+        #"    + Other_ID_Start
+        #"    - Pattern_Syntax
+        #"    - Pattern_White_Space
+        #"  NOTE: See UAX #31 for more information
+
+        return (
+            (
+                cat in ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl']
+                or
+                pychar in ucp.Other_ID_Start
+            )
+            and
+            not pychar in ucp.Pattern_Syntax
+            and
+            not pychar in ucp.Pattern_White_Space
+        )
+
+    elif property_name == 'ID_Continue':
+        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
+        #
+        #" Derived Property: ID_Continue
+        #"  Characters that can continue an identifier.
+        #"  Generated from:
+        #"      ID_Start
+        #"    + Mn + Mc + Nd + Pc
+        #"    + Other_ID_Continue
+        #"    - Pattern_Syntax
+        #"    - Pattern_White_Space
+        #"  NOTE: See UAX #31 for more information
+
+        return (
+            (
+                unicode_character_has_property(pychar, 'ID_Start')
+                or
+                cat in ['Mn', 'Mc', 'Nd', 'Pc']
+                or
+                pychar in ucp.Other_ID_Continue
+            )
+            and
+            not pychar in ucp.Pattern_Syntax
+            and
+            not pychar in ucp.Pattern_White_Space
+        )
+
+    else:
+        assert 0, property_name
+
+# http://www.unicode.org/reports/tr44/ says:
+#" Implementations should simply use the derived properties,
+#" and should not try to rederive them
+#" from lists of simple properties and collections of rules,
+#" because of the chances for error and divergence when doing so.
+#
+# E.g., Rather than the code above, I should scan
+# https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt
+# to find out all the characters with property ID_Start.
+#
+# However,
+# (a) ID_Start has 131482 code points and ID_Continue has 134434,
+#     so I'd rather not. 
+# (b) The formulae are more likely to be correct wrt future versions of Unicode.
+#     I.e. Python's 'unicodedata' module will be updated.
+
 # ------------------------------------------------------------------------------
 # a sequence of code points
 
@@ -3300,6 +3382,14 @@ class ES_UnicodeCodePoints(ES_Value):
         return (len(set(list(self.text))) < len(self.text))
 
 # -----------
+
+@P("{VAL_DESC} : ECMAScript source text")
+class _:
+    s_tb = T_Unicode_code_points_
+
+@P("{VAL_DESC} : source text")
+class _:
+    s_tb = T_Unicode_code_points_
 
 @P("{VAL_DESC} : a sequence of Unicode code points")
 class _:
@@ -3402,6 +3492,12 @@ class _:
 class _:
     s_tb = T_code_unit_
 
+@P("{LITERAL} : {code_unit_lit}")
+class _:
+    s_tb = a_subset_of(T_code_unit_)
+    s_expr = s_expr_pass_down
+    d_exec = d_exec_pass_down
+
 @P(r"{code_unit_lit} : \b 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)")
 @P(r"{code_unit_lit} : the \x20 code \x20 unit \x20 0x [0-9A-F]{4} \x20 \( [A-Z -]+ \)")
 class _:
@@ -3415,12 +3511,6 @@ class _:
         cu_hex = mo.group(1)
         cu_int = int(cu_hex, 16)
         return ES_CodeUnit(cu_int)
-
-@P("{LITERAL} : {code_unit_lit}")
-class _:
-    s_tb = a_subset_of(T_code_unit_)
-    s_expr = s_expr_pass_down
-    d_exec = d_exec_pass_down
 
 @P("{EX} : the code unit whose numeric value is {EX}")
 class _:
@@ -3455,6 +3545,21 @@ class _:
         cu_hex = row.as_dict['Code Unit Value']
         cu_int = int(cu_hex, 16)
         return ES_CodeUnit(cu_int)
+
+@P("{VAL_DESC} : a {h_emu_xref}")
+class _:
+    def s_tb(val_desc, env):
+        [emu_xref] = val_desc.children
+        # polymorphic
+        if emu_xref.source_text() in [
+            '<emu-xref href="#leading-surrogate"></emu-xref>',
+            '<emu-xref href="#trailing-surrogate"></emu-xref>',
+        ]:
+            return a_subset_of(T_code_unit_)
+        elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
+            return a_subset_of(T_function_object_)
+        else:
+            assert 0, emu_xref
 
 # ==============================================================================
 # code point and/or code unit
@@ -3531,6 +3636,10 @@ def nt_name_from_nonterminal_node(nonterminal_node):
     assert nonterminal_str.endswith('|')
     return nonterminal_str[1:-1]
 
+@P("{VAL_DESC} : a nonterminal in one of the ECMAScript grammars")
+class _:
+    s_tb = a_subset_of(T_grammar_symbol_)
+
 @P("{EXPR} : the grammar symbol {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
@@ -3566,10 +3675,6 @@ class _:
             value.name == nt_name
         )
 
-@P("{VAL_DESC} : a nonterminal in one of the ECMAScript grammars")
-class _:
-    s_tb = a_subset_of(T_grammar_symbol_)
-
 # ----------------
 # terminal symbols
 
@@ -3585,6 +3690,15 @@ class ES_TerminalSymbol(ES_GrammarSymbol):
         assert backticked_str.startswith('`')
         assert backticked_str.endswith('`')
         return ES_TerminalSymbol(backticked_str[1:-1])
+
+@P("{G_SYM} : {TERMINAL}")
+class _:
+    def s_expr(expr, env0, _):
+        return (T_grammar_symbol_, env0)
+
+    def d_exec(g_sym):
+        [terminal] = g_sym.children
+        return ES_TerminalSymbol.from_TERMINAL_anode(terminal)
 
 @P("{EX} : {backticked_oth}")
 class _:
@@ -3606,15 +3720,6 @@ class _:
             value.chars == word_sans_backticks
         )
 
-@P("{G_SYM} : {TERMINAL}")
-class _:
-    def s_expr(expr, env0, _):
-        return (T_grammar_symbol_, env0)
-
-    def d_exec(g_sym):
-        [terminal] = g_sym.children
-        return ES_TerminalSymbol.from_TERMINAL_anode(terminal)
-
 @P("{VAL_DESC} : the {nonterminal} {TERMINAL}")
 class _:
     def s_tb(val_desc, env):
@@ -3632,6 +3737,41 @@ class _:
 
 # ==============================================================================
 #@ 5.1.2 The Lexical and RegExp Grammars
+
+def pychar_matches_lexical_nonterminal(pychar, nt_name):
+    g = spec.grammar_[('lexical', 'A')]
+    for rhs in g.prodn_for_lhs_[nt_name]._rhss:
+        if pychar_matches_rhs(pychar, rhs):
+            return True
+    return False
+
+def pychar_matches_rhs(pychar, rhs):
+    assert rhs.kind == 'RHS_LINE'
+    assert len(rhs._rhs_items) == 1
+    [r_item] = rhs._rhs_items
+
+    if r_item.kind == 'GNT':
+        assert not r_item._is_optional
+        assert r_item._params == []
+        return pychar_matches_lexical_nonterminal(pychar, r_item._nt_name)
+
+    elif r_item.kind == 'BACKTICKED_THING':
+        return (pychar == r_item._chars)
+
+    elif r_item.kind == 'U_PROP':
+        [unicode_property_name] = r_item.groups
+        return unicode_character_has_property(pychar, unicode_property_name)
+
+    elif r_item.kind == 'NAMED_CHAR':
+        [char_name] = r_item.groups
+        named_pychar = {
+            'ZWNJ'  : '\u200c',
+            'ZWJ'   : '\u200d',
+        }[char_name]
+        return (pychar == named_pychar)
+
+    else:
+        assert NYI, r_item.kind
 
 # ==============================================================================
 #@ 5.1.3 The Numeric String Grammar
@@ -3785,6 +3925,15 @@ class _:
         [nonterminal] = led.children
         return ptn_type_for(nonterminal)
 
+# 13.2.3.1
+@P("{CONDITION_1} : {PROD_REF} is the token `false`")
+@P("{CONDITION_1} : {PROD_REF} is the token `true`")
+class _:
+    def s_cond(cond, env0, asserting):
+        [prod_ref] = cond.children
+        assert prod_ref.source_text() == '|BooleanLiteral|'
+        return (env0, env0)
+
 #> [Each Parse Node, an instance of a symbol,]
 #> represents a span of the source text that can be derived from that symbol.
 
@@ -3860,15 +4009,6 @@ class _:
     def d_exec(cond):
         [] = cond.children
         return True
-
-    # 13.2.3.1
-@P("{CONDITION_1} : {PROD_REF} is the token `false`")
-@P("{CONDITION_1} : {PROD_REF} is the token `true`")
-class _:
-    def s_cond(cond, env0, asserting):
-        [prod_ref] = cond.children
-        assert prod_ref.source_text() == '|BooleanLiteral|'
-        return (env0, env0)
 
 #> When a Parse Node is an instance of a nonterminal,
 #> it is also an instance of some production
@@ -4013,6 +4153,21 @@ class _:
             if child_node.tip is pnode.tip
         ]
         return (defvar, same_tip_children)
+
+@P("{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
+class _:
+    def s_expr(expr, env0, _):
+        [nonterminal, var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        # XXX could check that t is a nonterminal that actually has a child of that type
+        # but that requires having the whole grammar handy
+        return (ptn_type_for(nonterminal), env0)
+
+@P("{VAL_DESC} : the {nonterminal} of an? {nonterminal}")
+class _:
+    def s_tb(val_desc, env):
+        [nont1, nont2] = val_desc.children
+        return a_subset_of(ptn_type_for(nont1))
 
 # -----
 
@@ -4301,125 +4456,6 @@ class _:
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
-# --------------------------------
-
-def pychar_matches_lexical_nonterminal(pychar, nt_name):
-    g = spec.grammar_[('lexical', 'A')]
-    for rhs in g.prodn_for_lhs_[nt_name]._rhss:
-        if pychar_matches_rhs(pychar, rhs):
-            return True
-    return False
-
-def pychar_matches_rhs(pychar, rhs):
-    assert rhs.kind == 'RHS_LINE'
-    assert len(rhs._rhs_items) == 1
-    [r_item] = rhs._rhs_items
-
-    if r_item.kind == 'GNT':
-        assert not r_item._is_optional
-        assert r_item._params == []
-        return pychar_matches_lexical_nonterminal(pychar, r_item._nt_name)
-
-    elif r_item.kind == 'BACKTICKED_THING':
-        return (pychar == r_item._chars)
-
-    elif r_item.kind == 'U_PROP':
-        [unicode_property_name] = r_item.groups
-        return unicode_character_has_property(pychar, unicode_property_name)
-
-    elif r_item.kind == 'NAMED_CHAR':
-        [char_name] = r_item.groups
-        named_pychar = {
-            'ZWNJ'  : '\u200c',
-            'ZWJ'   : '\u200d',
-        }[char_name]
-        return (pychar == named_pychar)
-
-    else:
-        assert NYI, r_item.kind
-
-# ----------------------------------------------------------
-
-def unicode_character_has_property(pychar, property_name):
-    # Does the given character (code point) have the given Unicode property?
-    assert len(pychar) == 1
-
-    # Python has the unicodedata module, but
-    # it doesn't have a method relating to properties.
-
-    # We'll probably need to know pychar's category.
-    cat = unicodedata.category(pychar)
-
-    if property_name == 'ID_Start':
-        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
-        #
-        #" Derived Property: ID_Start
-        #"  Characters that can start an identifier.
-        #"  Generated from:
-        #"      Lu + Ll + Lt + Lm + Lo + Nl
-        #"    + Other_ID_Start
-        #"    - Pattern_Syntax
-        #"    - Pattern_White_Space
-        #"  NOTE: See UAX #31 for more information
-
-        return (
-            (
-                cat in ['Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl']
-                or
-                pychar in ucp.Other_ID_Start
-            )
-            and
-            not pychar in ucp.Pattern_Syntax
-            and
-            not pychar in ucp.Pattern_White_Space
-        )
-
-    elif property_name == 'ID_Continue':
-        # https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt:
-        #
-        #" Derived Property: ID_Continue
-        #"  Characters that can continue an identifier.
-        #"  Generated from:
-        #"      ID_Start
-        #"    + Mn + Mc + Nd + Pc
-        #"    + Other_ID_Continue
-        #"    - Pattern_Syntax
-        #"    - Pattern_White_Space
-        #"  NOTE: See UAX #31 for more information
-
-        return (
-            (
-                unicode_character_has_property(pychar, 'ID_Start')
-                or
-                cat in ['Mn', 'Mc', 'Nd', 'Pc']
-                or
-                pychar in ucp.Other_ID_Continue
-            )
-            and
-            not pychar in ucp.Pattern_Syntax
-            and
-            not pychar in ucp.Pattern_White_Space
-        )
-
-    else:
-        assert 0, property_name
-
-# http://www.unicode.org/reports/tr44/ says:
-#" Implementations should simply use the derived properties,
-#" and should not try to rederive them
-#" from lists of simple properties and collections of rules,
-#" because of the chances for error and divergence when doing so.
-#
-# E.g., Rather than the code above, I should scan
-# https://www.unicode.org/Public/UCD/latest/ucd/DerivedCoreProperties.txt
-# to find out all the characters with property ID_Start.
-#
-# However,
-# (a) ID_Start has 131482 code points and ID_Continue has 134434,
-#     so I'd rather not. 
-# (b) The formulae are more likely to be correct wrt future versions of Unicode.
-#     I.e. Python's 'unicodedata' module will be updated.
-
 # ==============================================================================
 #@ 5.1.5 Grammar Notation
 
@@ -4496,6 +4532,12 @@ class _:
         EXEC(commands, None)
         if curr_frame().is_returning(): return
         EXEC(command, None)
+
+@P("{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
+class _:
+    def s_expr(expr, env0, _):
+        [xref] = expr.children
+        return (T_MathNonNegativeInteger_, env0)
 
 # ------------------------------------------------------------------------------
 #> A step or substep may be written as an “if” predicate that conditions its substeps.
@@ -5772,14 +5814,15 @@ def value_matches_discriminator(value, discriminator):
 #> of the production alternative
 #> as if they were parameters of the algorithm.
 
-@P("{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
+@P("{PROD_REF} : this phrase")
+@P("{PROD_REF} : this production")
 class _:
     def s_expr(expr, env0, _):
-        [nonterminal, var] = expr.children
-        env0.assert_expr_is_of_type(var, T_Parse_Node)
-        # XXX could check that t is a nonterminal that actually has a child of that type
-        # but that requires having the whole grammar handy
-        return (ptn_type_for(nonterminal), env0)
+        return (T_Parse_Node, env0)
+
+    def d_exec(prod_ref):
+        [] = prod_ref.children
+        return curr_frame()._focus_node
 
 @P("{PROD_REF} : this {nonterminal}")
 class _:
@@ -5828,16 +5871,6 @@ class _:
         [nont] = expr.children
         return (ptn_type_for(nont), env0)
 
-@P("{PROD_REF} : this phrase")
-@P("{PROD_REF} : this production")
-class _:
-    def s_expr(expr, env0, _):
-        return (T_Parse_Node, env0)
-
-    def d_exec(prod_ref):
-        [] = prod_ref.children
-        return curr_frame()._focus_node
-
 @P("{PROD_REF} : the {ORDINAL} {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
@@ -5867,12 +5900,6 @@ class _:
         [nont] = prod_ref.children
         nt_name = nt_name_from_nonterminal_node(nont)
         return curr_frame().resolve_focus_reference('derived', nt_name)
-
-@P("{VAL_DESC} : the {nonterminal} of an? {nonterminal}")
-class _:
-    def s_tb(val_desc, env):
-        [nont1, nont2] = val_desc.children
-        return a_subset_of(ptn_type_for(nont1))
 
 @P("{PROD_REF} : {nonterminal} {var}")
 class _:
@@ -6450,6 +6477,51 @@ class _:
 @P("{VAL_DESC} : a non-negative extended mathematical value")
 class _:
     s_tb = a_subset_of(T_MathReal_ | T_MathPosInfinity_)
+
+# ------------------------------------------------------------------------------
+#> When the term <dfn>integer</dfn> is used in this specification,
+#> it refers to a mathematical value which is in the set of integers,
+#> unless otherwise stated.
+
+@P("{VAL_DESC} : an integer")
+class _:
+    s_tb = T_MathInteger_
+
+@P("{VAL_DESC} : a positive integer")
+class _:
+    s_tb = a_subset_of(T_MathNonNegativeInteger_)
+
+@P("{VAL_DESC} : a non-negative integer")
+class _:
+    s_tb = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
+
+@P("{VAL_DESC} : a non-negative integer that is evenly divisible by 4")
+class _:
+    s_tb = a_subset_of(T_MathNonNegativeInteger_)
+
+@P("{VAL_DESC} : an integer ≥ {dsb_word}")
+class _:
+    s_tb = a_subset_of(T_MathInteger_)
+
+# ------------------------------------------------------------------------------
+#> When the term <dfn>integral Number</dfn> is used in this specification,
+#> it refers to a Number value whose mathematical value is in the set of integers.
+
+@P("{VAL_DESC} : an integral Number")
+class _:
+    s_tb = T_IntegralNumber_
+
+@P("{VAL_DESC} : an odd integral Number")
+class _:
+    s_tb = a_subset_of(T_IntegralNumber_)
+
+@P("{VAL_DESC} : a non-negative integral Number")
+class _:
+    s_tb = a_subset_of(T_IntegralNumber_)
+
+@P("{VAL_DESC} : a non-negative finite Number")
+class _:
+    s_tb = a_subset_of(T_FiniteNumber_)
 
 #> Numeric operators such as +, ×, =, and ≥ refer to those operations
 #> as determined by the type of the operands.
@@ -7067,51 +7139,6 @@ class _:
         return (T_MathNegInfinity_, env0)
 
 # ------------------------------------------------------------------------------
-#> When the term <dfn>integer</dfn> is used in this specification,
-#> it refers to a mathematical value which is in the set of integers,
-#> unless otherwise stated.
-
-@P("{VAL_DESC} : an integer")
-class _:
-    s_tb = T_MathInteger_
-
-@P("{VAL_DESC} : an integer ≥ {dsb_word}")
-class _:
-    s_tb = a_subset_of(T_MathInteger_)
-
-@P("{VAL_DESC} : a non-negative integer that is evenly divisible by 4")
-class _:
-    s_tb = a_subset_of(T_MathNonNegativeInteger_)
-
-@P("{VAL_DESC} : a non-negative integer")
-class _:
-    s_tb = T_MathNonNegativeInteger_ # currently mapped to MathInteger_
-
-@P("{VAL_DESC} : a positive integer")
-class _:
-    s_tb = a_subset_of(T_MathNonNegativeInteger_)
-
-# ------------------------------------------------------------------------------
-#> When the term <dfn>integral Number</dfn> is used in this specification,
-#> it refers to a Number value whose mathematical value is in the set of integers.
-
-@P("{VAL_DESC} : an integral Number")
-class _:
-    s_tb = T_IntegralNumber_
-
-@P("{VAL_DESC} : an odd integral Number")
-class _:
-    s_tb = a_subset_of(T_IntegralNumber_)
-
-@P("{VAL_DESC} : a non-negative integral Number")
-class _:
-    s_tb = a_subset_of(T_IntegralNumber_)
-
-@P("{VAL_DESC} : a non-negative finite Number")
-class _:
-    s_tb = a_subset_of(T_FiniteNumber_)
-
-# ------------------------------------------------------------------------------
 #> Conversions between mathematical values and Numbers or BigInts
 #> are always explicit in this document.
 
@@ -7392,6 +7419,15 @@ class _:
 # the mappings from string-ish to numeric and numeric to String,
 # it also assumes such mappings for simple cases.)
 
+@P("{EXPR} : the String representation of {EX}, formatted as a decimal number")
+@P("{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
+@P("{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number")
+class _:
+    def s_expr(expr, env0, _):
+        [ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
+        return (T_String, env1)
+
 @P("{EX} : the digits of the decimal representation of {var} (in order, with no leading zeroes)")
 class _:
     def s_expr(expr, env0, _):
@@ -7423,15 +7459,6 @@ class _:
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathReal_)
         return (T_MathReal_, env0)
-
-@P("{EXPR} : the String representation of {EX}, formatted as a decimal number")
-@P("{EXPR} : the String representation of {EX}, formatted as a lowercase hexadecimal number")
-@P("{EXPR} : the String representation of {EX}, formatted as an uppercase hexadecimal number")
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathInteger_)
-        return (T_String, env1)
 
 # ==============================================================================
 #@ 5.2.6 Value Notation
@@ -7733,20 +7760,9 @@ class _:
         else:
             assert 0, vd_st
 
-@P("{VAL_DESC} : a {h_emu_xref}")
+@P("{VAL_DESC} : anything")
 class _:
-    def s_tb(val_desc, env):
-        [emu_xref] = val_desc.children
-        # polymorphic
-        if emu_xref.source_text() in [
-            '<emu-xref href="#leading-surrogate"></emu-xref>',
-            '<emu-xref href="#trailing-surrogate"></emu-xref>',
-        ]:
-            return a_subset_of(T_code_unit_)
-        elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
-            return a_subset_of(T_function_object_)
-        else:
-            assert 0, emu_xref
+    s_tb = T_host_defined_
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 6 ECMAScript Data Types and Values
@@ -7780,10 +7796,6 @@ class _:
     def s_expr(expr, env0, _):
         [type_name] = expr.children
         return (T_LangTypeName_, env0)
-
-@P("{VAL_DESC} : anything")
-class _:
-    s_tb = T_host_defined_
 
 @P("{VAL_DESC} : {LITERAL}")
 class _:
@@ -8560,6 +8572,27 @@ class _:
         else:
             assert 0
 
+@P("{CONDITION_1} : {var} is not finite")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        (t, env1) = tc_expr(var, env0); assert env1 is env0
+        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
+            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
+        else:
+            assert 0
+
+@P("{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, lita, litb] = cond.children
+        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
+        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
+        return (env1, env1)
+
 @P("{CONDITION_1} : {var} and {var} are both finite")
 class _:
     def s_cond(cond, env0, asserting):
@@ -8583,27 +8616,6 @@ class _:
                 .with_expr_type_narrowed(bvar, T_FiniteNumber_),
             env0
         )
-
-@P("{CONDITION_1} : {var} is not finite")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        (t, env1) = tc_expr(var, env0); assert env1 is env0
-        if t.is_a_subtype_of_or_equal_to(T_Number | T_BigInt):
-            return env1.with_type_test(var, 'isnt a', T_FiniteNumber_, asserting)
-        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-            return env1.with_type_test(var, 'isnt a', T_MathReal_, asserting)
-        else:
-            assert 0
-
-@P("{CONDITION_1} : {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, lita, litb] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_FiniteNumber_)
-        env1.assert_expr_is_of_type(lita, T_FiniteNumber_)
-        env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
-        return (env1, env1)
 
 # ----------------------------------------------
 #> In this specification, the phrase "the Number value for _x_"
@@ -8722,6 +8734,18 @@ class _:
 # ==============================================================================
 #@ 6.1.7 The Object Type
 
+@P("{VAL_DESC} : an Object")
+class _:
+    s_tb = T_Object
+
+@P("{LIST_ELEMENTS_DESCRIPTION} : Objects")
+class _:
+    s_tb = T_Object
+
+@P("{LIST_ELEMENTS_DESCRIPTION} : either Objects or Symbols")
+class _:
+    s_tb = T_Object | T_Symbol
+
 #> An Object is logically a collection of properties.
 #> Each property is either a data property, or an accessor property:
 #>  -- A <dfn>data property</dfn> associates a key value with
@@ -8739,33 +8763,6 @@ class Property: # ES_Property(ES_Value) ?
 class EL_Object(EL_Value):
     properties: typing.List[Property]
 
-# --------------------------------
-
-@P("{VAL_DESC} : an Object")
-class _:
-    s_tb = T_Object
-
-#> Properties are identified using key values.
-#> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
-#> All String and Symbol values, including the empty String, are valid as property keys.
-#> A <dfn>property name</dfn> is a property key that is a String value.
-
-@P("{VAL_DESC} : a property key")
-class _:
-    s_tb = T_String | T_Symbol
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : Objects")
-class _:
-    s_tb = T_Object
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : either Objects or Symbols")
-class _:
-    s_tb = T_Object | T_Symbol
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : property keys")
-class _:
-    s_tb = T_String | T_Symbol
-
 @P("{VAL_DESC} : an? {PROPERTY_KIND} property")
 class _:
     def s_tb(val_desc, env):
@@ -8775,6 +8772,45 @@ class _:
             'data'    : T_data_property_,
         }[kind.source_text()]
         return t
+
+#> Properties are identified using key values.
+#> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
+#> All String and Symbol values, including the empty String, are valid as property keys.
+
+@P("{VAL_DESC} : a property key")
+class _:
+    s_tb = T_String | T_Symbol
+
+@P("{LIST_ELEMENTS_DESCRIPTION} : property keys")
+class _:
+    s_tb = T_String | T_Symbol
+
+#> A <dfn>property name</dfn> is a property key that is a String value.
+
+@P("{EXPR} : the String value of the property name")
+class _:
+    def s_expr(expr, env0, _):
+        # property of the Global Object
+        # todo: make that explicit
+        [] = expr.children
+        return (T_String, env0)
+
+#> An <dfn>integer index</dfn>
+#> is a String-valued property key
+#> that is a canonical numeric string
+#> and whose numeric value is either *+0*<sub>𝔽</sub> or a positive integral Number ≤ 𝔽(2<sup>53</sup> - 1).
+
+@P("{VAL_DESC} : an integer index")
+class _:
+    s_tb = a_subset_of(T_String)
+
+#> An <dfn>array index</dfn>
+#> is an integer index whose numeric value _i_
+#> is in the range <emu-eqn>*+0*<sub>𝔽</sub> ≤ _i_ &lt; 𝔽(2<sup>32</sup> - 1)</emu-eqn>.
+
+@P("{VAL_DESC} : an array index")
+class _:
+    s_tb = a_subset_of(T_String)
 
 # ------------------------------------------------------------------------------
 # (other forms involving the properties of an object)
@@ -8791,6 +8827,14 @@ class _:
         env0.assert_expr_is_of_type(obj_var, T_Object)
         env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
         return (env0, env0)
+
+@P("{EXPR} : {var}'s own property whose key is {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [obj_var, key_var] = expr.children
+        env0.assert_expr_is_of_type(obj_var, T_Object)
+        env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
+        return (T_property_, env0)
 
 @P("{CONDITION_1} : The mathematical value of {var}'s {starred_str} property is {EX}")
 class _:
@@ -8818,39 +8862,6 @@ class _:
         env0.assert_expr_is_of_type(name_var, T_String | T_Symbol)
         env0.assert_expr_is_of_type(obj_var, T_Object)
         return env0
-
-@P("{EXPR} : {var}'s own property whose key is {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [obj_var, key_var] = expr.children
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        env0.assert_expr_is_of_type(key_var, T_String | T_Symbol)
-        return (T_property_, env0)
-
-@P("{EXPR} : the String value of the property name")
-class _:
-    def s_expr(expr, env0, _):
-        # property of the Global Object
-        # todo: make that explicit
-        [] = expr.children
-        return (T_String, env0)
-
-#> An <dfn>integer index</dfn>
-#> is a String-valued property key
-#> that is a canonical numeric string
-#> and whose numeric value is either *+0*<sub>𝔽</sub> or a positive integral Number ≤ 𝔽(2<sup>53</sup> - 1).
-
-@P("{VAL_DESC} : an integer index")
-class _:
-    s_tb = a_subset_of(T_String)
-
-#> An <dfn>array index</dfn>
-#> is an integer index whose numeric value _i_
-#> is in the range <emu-eqn>*+0*<sub>𝔽</sub> ≤ _i_ &lt; 𝔽(2<sup>32</sup> - 1)</emu-eqn>.
-
-@P("{VAL_DESC} : an array index")
-class _:
-    s_tb = a_subset_of(T_String)
 
 # ==============================================================================
 #@ 6.1.7.1 Property Attributes
@@ -9677,12 +9688,12 @@ class _:
 # ----------------------------
 # the List contains something:
 
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements")
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries")
 @P("{CONDITION_1} : {var} contains any duplicate entries")
 @P("{CONDITION_1} : {var} contains no duplicate entries")
 @P("{CONDITION_1} : {var} has any duplicate entries")
 @P("{CONDITION_1} : {var} has no duplicate entries")
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries")
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements")
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
@@ -9703,6 +9714,21 @@ class _:
         [var, nonterminal] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
+
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
+class _:
+    def s_cond(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
+        return (env0, env0)
+
+    def d_exec(cond):
+        [noi, nont] = cond.children
+        L = EXEC(noi, ES_List)
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return L.contains_an_element_satisfying(
+            lambda e: e.symbol == nt_name
+        )
 
 @P("{CONDITION_1} : {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}")
 class _:
@@ -9733,21 +9759,6 @@ class _:
         L = EXEC(noi, ES_List)
         v = EXEC(ss, E_Value)
         return L.number_of_occurrences_of(v) > 1
-
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, ListType(T_Parse_Node))
-        return (env0, env0)
-
-    def d_exec(cond):
-        [noi, nont] = cond.children
-        L = EXEC(noi, ES_List)
-        nt_name = nt_name_from_nonterminal_node(nont)
-        return L.contains_an_element_satisfying(
-            lambda e: e.symbol == nt_name
-        )
 
 @P("{CONDITION_1} : there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}")
 class _:
@@ -10252,6 +10263,20 @@ class _:
 
         return (final_dotting_t, env2)
 
+# 10.2.4
+@P("{CONDITION_1} : {DOTTING} exists and has been initialized")
+class _:
+    def s_cond(cond, env0, asserting):
+        [dotting] = cond.children
+        return (env0, env0)
+
+@P("{CONDITION_1} : {var} does not have any fields")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Property_Descriptor)
+        return (env0, env0)
+
 # ------------------------------------------------------------------------------
 # List of Records
 
@@ -10396,6 +10421,16 @@ class ES_CompletionRecord(ES_Record):
 class _:
     s_tb = T_Completion_Record
 
+@P("{VAL_DESC} : any value except a Completion Record")
+class _:
+    s_tb = T_Tangible_ | T_Intangible_
+
+@P("{EXPR} : a new implementation-defined Completion Record")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_Completion_Record, env0)
+
 #> <dfn>normal completion</dfn> refers to any Completion Record with a [[Type]] value of ~normal~.
 
 def NormalCompletionType(value_type):
@@ -10410,6 +10445,20 @@ def NormalCompletionType(value_type):
 @P("{VAL_DESC} : a normal completion")
 class _:
     s_tb = T_normal_completion
+
+@P("{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}")
+class _:
+    def s_tb(vd, env):
+        [child] = vd.children
+        (sub_t, sup_t) = type_bracket_for(child, env)
+        return (NormalCompletionType(sub_t), NormalCompletionType(sup_t))
+
+@P("{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, literal, _] = cond.children
+        env0.assert_expr_is_of_type(literal, T_tilde_unused_)
+        return env0.with_type_test(var, 'is a', NormalCompletionType(T_tilde_unused_), asserting)
 
 @P("{VAL_DESC} : a return completion")
 class _:
@@ -10431,30 +10480,6 @@ class _:
 @P("{VAL_DESC} : an abrupt completion")
 class _:
     s_tb = T_abrupt_completion
-
-@P("{VAL_DESC} : any value except a Completion Record")
-class _:
-    s_tb = T_Tangible_ | T_Intangible_
-
-@P("{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}")
-class _:
-    def s_tb(vd, env):
-        [child] = vd.children
-        (sub_t, sup_t) = type_bracket_for(child, env)
-        return (NormalCompletionType(sub_t), NormalCompletionType(sup_t))
-
-@P("{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, literal, _] = cond.children
-        env0.assert_expr_is_of_type(literal, T_tilde_unused_)
-        return env0.with_type_test(var, 'is a', NormalCompletionType(T_tilde_unused_), asserting)
-
-@P("{EXPR} : a new implementation-defined Completion Record")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_Completion_Record, env0)
 
 # ---------
 
@@ -10500,13 +10525,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_Realm_Record)
         return (T_Property_Descriptor, env0)
 
-@P("{CONDITION_1} : {var} does not have any fields")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Property_Descriptor)
-        return (env0, env0)
-
 @P("{CONDITION_1} : {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }")
 class _:
     def s_cond(cond, env0, asserting):
@@ -10550,6 +10568,10 @@ class _:
 # ==============================================================================
 #@ 6.2.8 The Abstract Closure Specification Type
 
+@P("{VAL_DESC} : an Abstract Closure")
+class _:
+    s_tb = T_proc_
+
 @P("{VAL_DESC} : an Abstract Closure with no parameters")
 class _:
     s_tb = ProcType((), T_Completion_Record)
@@ -10557,10 +10579,6 @@ class _:
 @P("{VAL_DESC} : an Abstract Closure with two parameters")
 class _:
     s_tb = ProcType((T_Tangible_, T_Tangible_), NormalCompletionType(T_Number) | T_throw_completion)
-
-@P("{VAL_DESC} : an Abstract Closure")
-class _:
-    s_tb = T_proc_
 
 @P("{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}")
 class _:
@@ -11171,6 +11189,22 @@ class _:
         }[component_name.source_text()]
         return (t, env0)
 
+# 10.3.1
+@P("{COMMAND} : Perform any necessary implementation-defined initialization of {var}.")
+class _:
+    def s_nv(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return env0
+
+@P("{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context, {var} will be called with no arguments.")
+class _:
+    def s_nv(anode, env0):
+        [settable, var] = anode.children
+        env0.assert_expr_is_of_type(settable, T_host_defined_)
+        env0.assert_expr_is_of_type(var, ProcType((), T_Top_))
+        return env0
+
 # ------------------------------------------------------------------------------
 #> The <dfn>execution context stack</dfn> is used to track execution contexts.
 #> The running execution context is always the top element of this stack.
@@ -11263,14 +11297,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_execution_context)
         return env0
 
-@P("{COMMAND} : Set {SETTABLE} such that when evaluation is resumed for that execution context, {var} will be called with no arguments.")
-class _:
-    def s_nv(anode, env0):
-        [settable, var] = anode.children
-        env0.assert_expr_is_of_type(settable, T_host_defined_)
-        env0.assert_expr_is_of_type(var, ProcType((), T_Top_))
-        return env0
-
 @P("{CONDITION_1} : {var} is not already suspended")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11338,6 +11364,12 @@ class _:
         [] = cond.children
         return (env0, env0)
 
+@P("{CONDITION_1} : we return here")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
 @P("{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11387,6 +11419,10 @@ class _:
 #> have the additional state components listed in
 #> <emu-xref href="#table-additional-state-components-for-generator-execution-contexts"></emu-xref>.
 
+@P("{VAL_DESC} : the execution context of a generator")
+class _:
+    s_tb = a_subset_of(T_execution_context)
+
 @P("{CONDITION_1} : {var} does not have a Generator component")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11395,14 +11431,6 @@ class _:
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
-
-    # 10.3.1
-@P("{COMMAND} : Perform any necessary implementation-defined initialization of {var}.")
-class _:
-    def s_nv(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_execution_context)
-        return env0
 
     # 15.10.3
 @P("{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation")
@@ -11530,21 +11558,14 @@ class _:
 class _:
     s_tb = a_subset_of(T_function_object_)
 
-    # 10.2.4
-@P("{CONDITION_1} : {DOTTING} exists and has been initialized")
-class _:
-    def s_cond(cond, env0, asserting):
-        [dotting] = cond.children
-        return (env0, env0)
-
 # ==============================================================================
 #@ 10.3 Built-in Function Objects
+
+set_up_internal_thing('slot', '[[InitialName]]', T_Null | T_String)
 
 @P("{VAL_DESC} : a built-in function object")
 class _:
     s_tb = a_subset_of(T_function_object_)
-
-set_up_internal_thing('slot', '[[InitialName]]', T_Null | T_String)
 
 @P("{EX} : *this* value")
 @P("{EX} : the *this* value")
@@ -11585,12 +11606,17 @@ class _:
 # ==============================================================================
 #@ 10.3.3 CreateBuiltinFunction
 
-    # 10.3.3
-@P("{VAL_DESC} : some other definition of a function's behaviour provided in this specification")
+@P("{VAL_DESC} : a set of algorithm steps")
 class _:
     s_tb = T_alg_steps
 
-@P("{VAL_DESC} : a set of algorithm steps")
+@P("{EXPR} : the algorithm steps defined in {h_emu_xref}")
+class _:
+    def s_expr(expr, env0, _):
+        [emu_xref] = expr.children
+        return (T_alg_steps, env0)
+
+@P("{VAL_DESC} : some other definition of a function's behaviour provided in this specification")
 class _:
     s_tb = T_alg_steps
 
@@ -11718,14 +11744,6 @@ set_up_internal_thing('slot', '[[ProxyTarget]]',  T_Object | T_Null)
 #> <dfn>ECMAScript source text</dfn> is a sequence of Unicode code points.
 #> All Unicode code point values from U+0000 to U+10FFFF,
 #> including surrogate code points, may occur in source text ...
-
-@P("{VAL_DESC} : ECMAScript source text")
-class _:
-    s_tb = T_Unicode_code_points_
-
-@P("{VAL_DESC} : source text")
-class _:
-    s_tb = T_Unicode_code_points_
 
 # ==============================================================================
 #@ 11.1.6 Static Semantics: ParseText
@@ -12413,23 +12431,11 @@ class _:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 18 ECMAScript Standard Built-in Objects
 
-@P("{EXPR} : the algorithm steps defined in {h_emu_xref}")
-class _:
-    def s_expr(expr, env0, _):
-        [emu_xref] = expr.children
-        return (T_alg_steps, env0)
-
 @P("{CONDITION_1} : only one argument was passed")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
-
-@P("{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
-class _:
-    def s_expr(expr, env0, _):
-        [xref] = expr.children
-        return (T_MathNonNegativeInteger_, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 19 The Global Object
@@ -13771,18 +13777,7 @@ set_up_internal_thing('slot', '[[Errors]]',            ListType(T_Tangible_))
 class _:
     s_tb = a_subset_of(T_Iterator_object_)
 
-@P("{VAL_DESC} : the execution context of a generator")
-class _:
-    s_tb = a_subset_of(T_execution_context)
-
 @P("{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
-class _:
-    def s_cond(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
-
-# 27.{5,6,7}
-@P("{CONDITION_1} : we return here")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
