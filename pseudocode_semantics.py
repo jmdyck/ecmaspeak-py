@@ -373,7 +373,6 @@ class TypedAlgHeader:
                 '{ONE_LINE_ALG}',
                 '{EE_RULE}',
                 '{NAMED_OPERATION_INVOCATION}',
-                '{RHSS}',
             ], alg_defn.anode.prod.lhs_s
 
             self.t_defns.append((discriminator,alg_defn.anode))
@@ -589,21 +588,6 @@ class TypedAlgHeader:
 type_tweaks_tuples = [
     ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
     ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-    ('Day'                                      , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('TimeWithinDay'                            , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('DaysInYear'                               , '_y_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('DayFromYear'                              , '_y_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('TimeFromYear'                             , '_y_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('YearFromTime'                             , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('InLeapYear'                               , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('MonthFromTime'                            , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('DayWithinYear'                            , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('DateFromTime'                             , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('WeekDay'                                  , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('HourFromTime'                             , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('MinFromTime'                              , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('SecFromTime'                              , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
-    ('msFromTime'                               , '_t_'                    , T_TBD                 , T_IntegralNumber_ ),
 ]
 class TypeTweaks:
     def __init__(self):
@@ -1541,7 +1525,7 @@ def tc_proc(op_name, defns, init_env):
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
             result = tc_nonvalue(body, in_env)
             assert result is None
-        elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}', '{RHSS}']:
+        elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
             (out_t, out_env) = tc_expr(body, in_env)
             proc_add_return(out_env, out_t, body)
         else:
@@ -3135,7 +3119,6 @@ class _:
 @P("{NUM_COMPARAND} : {PRODUCT}")
 @P("{NUM_EXPR} : {PRODUCT}")
 @P("{NUM_EXPR} : {SUM}")
-@P("{RHSS} : {RHS}")
 @P("{SETTABLE} : {DOTTING}")
 @P("{TERM} : {FACTOR}")
 @P("{TERM} : {PRODUCT}")
@@ -7064,6 +7047,7 @@ class _:
                     (T_IntegralNumber_         , '≥'   , T_IntegralNumber_         ): 'TF',
                     (T_IntegralNumber_         , '>'   , T_IntegralNumber_         ): 'TF',
                     (T_IntegralNumber_         , '='   , T_IntegralNumber_         ): 'TF',
+                    (T_IntegralNumber_         , '&lt;', T_IntegralNumber_         ): 'TF',
                     (T_NonIntegralFiniteNumber_, '≥'   , T_NonIntegralFiniteNumber_): 'TF',
                     (T_NonIntegralFiniteNumber_, '>'   , T_IntegralNumber_         ): 'TF',
                     (T_NonIntegralFiniteNumber_, '&lt;', T_IntegralNumber_         ): 'TF',
@@ -7442,6 +7426,25 @@ class _:
         [interval] = expr.children
         env0.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
         return (ListType(T_MathNonNegativeInteger_), env0)
+
+@P('{VAL_DESC} : an integral Number in {INTERVAL}')
+class _:
+    def s_tb(val_desc, env):
+        [interval] = val_desc.children
+        if env is None:
+            assert interval.source_text() in [
+                "the inclusive interval from *+0*<sub>𝔽</sub> to *6*<sub>𝔽</sub>",
+                "the inclusive interval from *+0*<sub>𝔽</sub> to *11*<sub>𝔽</sub>",
+                "the inclusive interval from *+0*<sub>𝔽</sub> to *23*<sub>𝔽</sub>",
+                "the inclusive interval from *+0*<sub>𝔽</sub> to *59*<sub>𝔽</sub>",
+                "the inclusive interval from *+0*<sub>𝔽</sub> to *365*<sub>𝔽</sub>",
+                "the inclusive interval from *+0*<sub>𝔽</sub> to *999*<sub>𝔽</sub>",
+                "the inclusive interval from *1*<sub>𝔽</sub> to *31*<sub>𝔽</sub>",
+                "the interval from *+0*<sub>𝔽</sub> (inclusive) to msPerDay (exclusive)",
+            ], interval.source_text()
+        else:
+            env.assert_expr_is_of_type(interval, T_IntegralNumber_)
+        return a_subset_of(T_IntegralNumber_)
 
 # ------------------------------------------------------------------------------
 # (The spec should talk about bit strings somewhere.)
@@ -12525,27 +12528,28 @@ set_up_internal_thing('slot', '[[BigIntData]]', T_BigInt)
 #@ 21.4 Date Objects
 
 # ==============================================================================
-#@ 21.4.1 Overview of Date Objects and Definitions of Abstract Operations
+#@ 21.4.1.1 Time Values and Time Range
 
-# All of the uses of <emu-eqn> to define abstract operations and constants
+@P("{VAL_DESC} : a time value")
+class _:
+    s_tb = T_IntegralNumber_
+
+@P("{VAL_DESC} : a finite time value")
+class _:
+    s_tb = T_IntegralNumber_
+
+# Time value is defined to be 'IntegralNumber_ | NaN_Number_',
+# but the only use is for UTC()'s return value,
+# which is the result of a subtraction,
+# so probably shouldn't be NaN.
+# So I've translated it as T_IntegralNumber_.
+# I.e., the spec should say "a *finite* time value".
+
+# ==============================================================================
+#@ 21.4.1.2 Time-related Constants
+
+# All of the uses of <emu-eqn> to define named constants
 # appear within this section.
-# (Well, except for `floor` in 5.2.5.)
-
-@P("{RHSS} : {RHSS}{RHS}")
-class _:
-    def s_expr(expr, env0, _):
-        [rhss, rhs] = expr.children
-        (t1, env1) = tc_expr(rhss, env0)
-        (t2, env2) = tc_expr(rhs, env1)
-        return (t1 | t2, env2)
-
-@P("{RHS} : {nlai}= {EXPR} if {CONDITION}")
-class _:
-    def s_expr(expr, env0, _):
-        [subexpr, cond] = expr.children
-        (t_env, f_env) = tc_cond(cond, env0)
-        (t, env1) = tc_expr(subexpr, t_env)
-        return (t, env1)
 
 @P("{FACTOR} : {CONSTANT_NAME}")
 @P("{EX} : {CONSTANT_NAME}")
@@ -12566,25 +12570,7 @@ class _:
         return (result_type, env0)
 
 # ==============================================================================
-#@ 21.4.1.1 Time Values and Time Range
-
-@P("{VAL_DESC} : a time value")
-class _:
-    s_tb = T_IntegralNumber_
-
-@P("{VAL_DESC} : a finite time value")
-class _:
-    s_tb = T_IntegralNumber_
-
-# Time value is defined to be 'IntegralNumber_ | NaN_Number_',
-# but the only use is for UTC()'s return value,
-# which is the result of a subtraction,
-# so probably shouldn't be NaN.
-# So I've translated it as T_IntegralNumber_.
-# I.e., the spec should say "a *finite* time value".
-
-# ==============================================================================
-#@ 21.4.1.8 Time Zone Identifiers
+#@ 21.4.1.19 Time Zone Identifiers
 
 @P("{VAL_DESC} : a non-primary time zone identifier in this implementation")
 class _:
@@ -12610,7 +12596,7 @@ class _:
         return (T_String, env0)
 
 # ==============================================================================
-#@ 21.4.1.11 Time Zone Identifier Record
+#@ 21.4.1.22 Time Zone Identifier Record
 
 @P("{VAL_DESC} : a Time Zone Identifier Record")
 @P("{LIST_ELEMENTS_DESCRIPTION} : Time Zone Identifier Records")
@@ -12618,7 +12604,7 @@ class _:
     s_tb = T_Time_Zone_Identifier_Record
 
 # ==============================================================================
-#@ 21.4.1.12 AvailableNamedTimeZoneIdentifiers
+#@ 21.4.1.23 AvailableNamedTimeZoneIdentifiers
 
 @P("{CONDITION_1} : the implementation does not include local political rules for any time zones")
 @P("{CONDITION_1} : the implementation only supports the UTC time zone")
@@ -12635,7 +12621,7 @@ class _:
         return env0
 
 # ==============================================================================
-#@ 21.4.1.15 UTC
+#@ 21.4.1.26 UTC
 
 @P("{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
 class _:
@@ -12646,7 +12632,7 @@ class _:
         return (T_IntegralNumber_, env0)
 
 # ==============================================================================
-#@ 21.4.1.18 MakeDay
+#@ 21.4.1.28 MakeDay
 
 @P("{COMMAND} : Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
 class _:

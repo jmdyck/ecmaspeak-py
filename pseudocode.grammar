@@ -57,7 +57,6 @@
 
 {EMU_EQN_DEF} :
     {CONSTANT_DEF}
-    {OPERATION_DEF}
 
 # --------------------------
 
@@ -65,23 +64,6 @@
     {CONSTANT_NAME} = {dec_int_lit}
     {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f}
     {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f} = {EXPR}
-
-# --------------------------
-
-{OPERATION_DEF} :
-    {EMU_EQN_OP_NAME}({var}) = {EXPR}
-    {_indent_}{nlai}{EMU_EQN_OP_NAME}({var}){_indent_}{RHSS}{_outdent_}{_outdent_}{nlai}
-
-{EMU_EQN_OP_NAME} :
-    {cap_word}
-    msFromTime
-
-{RHSS} :
-    {RHSS}{RHS}
-    {RHS}
-
-{RHS} :
-    {nlai}= {EXPR} if {CONDITION}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -111,6 +93,7 @@
 {OP_NAME} :
     ForIn/OfBodyEvaluation
     ForIn/OfHeadEvaluation
+    msFromTime
     {cap_word}
     {cap_word}::{low_word}
     {dsb_word}
@@ -1482,6 +1465,7 @@
     an integer in {INTERVAL}
     an integer index
     an integral Number
+    an integral Number in {INTERVAL}
     an internal slot name
     an odd integral Number
     an ordinary object

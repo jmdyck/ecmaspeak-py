@@ -912,7 +912,7 @@ def _handle_structured_header(section):
     elif section.section_kind == 'internal_method':
         op_name_pattern = r'\[\[[A-Z][a-zA-Z]+\]\]'
     else:
-        op_name_pattern = r'[A-Z][a-zA-Z0-9/]+'
+        op_name_pattern = r'[a-zA-Z][a-zA-Z0-9/]+'
     assert re.fullmatch(op_name_pattern, op_name)
 
     # overwrite section.section_title
@@ -987,21 +987,34 @@ def _handle_structured_header(section):
                 # Maybe if it's a numeric method, we shouldn't bother?
                 for (pattern, nature) in [
                     ("It returns \*true\* if and only if .+", 'a Boolean'), # except...
+                    ("It returns \*1\*<sub>\U0001d53d</sub> if .+ and \*\+0\*<sub>\U0001d53d</sub> otherwise.", 'an integral Number'),
                     ("It returns _argument_ converted to a Number value .+.", 'a Number'),
                     ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
+                    ("It returns a Number identifying the day .+", 'an integral Number'),
+                    ("It returns a Number identifying the month .+", 'an integral Number'),
                     ("It returns a String value representing .+", 'a String'),
                     ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
                     ("It returns a new promise resolved with _x_.", 'a promise'),
                     ("It returns an implementation-approximated value .+", 'a Number'),
+                    ("It returns the day number.+", 'an integral Number'),
+                    ("It returns the day of the month .+", 'an integral Number'),
                     ("It returns the full year .+", 'an integral Number'),
                     ("It returns the global object used by the currently running execution context.", 'an object'),
+                    ("It returns the hour of the day .+", 'an integral Number'),
                     ("It returns the loaded value.", 'unknown'),
+                    ("It returns the millisecond of the second .+", 'an integral Number'),
+                    ("It returns the minute of the hour .+", 'an integral Number'),
+                    ("It returns the number of days .+", 'an integral Number'),
                     ("It returns the number of left-capturing parentheses.+", 'a non-negative integer'),
+                    ("It returns the number of milliseconds .+", 'an integral Number'),
                     ("It returns the one's complement of _x_.+", 'unknown'),
+                    ("It returns the second of the minute .+", 'an integral Number'),
                     ("It returns the sequence of Unicode code points that .+", 'a sequence of Unicode code points'),
+                    ("It returns the time value .+", 'a time value'),
                     ("It returns the value of its associated binding object's property whose name is _N_.", 'an ECMAScript language value'),
                     ("It returns the value of its bound identifier whose name is _N_.", 'an ECMAScript language value'),
                     ("It returns the value of the \*\"length\"\* property of an array-like object.", 'a non-negative integer'),
+                    ("It returns the year .+", 'an integral Number'),
                 ]:
                     if re.fullmatch(pattern, sentence):
                         retn.append(nature)
