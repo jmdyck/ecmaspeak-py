@@ -3176,20 +3176,14 @@ class ES_UnicodeCodePoint(ES_Value):
 # --------------------------------------
 
 @P("{VAL_DESC} : a Unicode code point")
-class _:
-    s_tb = T_code_point_
-
 @P("{VAL_DESC} : a code point")
+@P("{LIST_ELEMENTS_DESCRIPTION} : code points")
 class _:
     s_tb = T_code_point_
 
 @P("{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : code points")
-class _:
-    s_tb = T_code_point_
 
 # --------------------------------------
 # expressions that return a code point:
@@ -3384,13 +3378,7 @@ class ES_UnicodeCodePoints(ES_Value):
 # -----------
 
 @P("{VAL_DESC} : ECMAScript source text")
-class _:
-    s_tb = T_Unicode_code_points_
-
 @P("{VAL_DESC} : source text")
-class _:
-    s_tb = T_Unicode_code_points_
-
 @P("{VAL_DESC} : a sequence of Unicode code points")
 class _:
     s_tb = T_Unicode_code_points_
@@ -3485,9 +3473,6 @@ class ES_CodeUnit(E_Value):
         object.__setattr__(self, 'numeric_value', numeric_value)
 
 @P("{VAL_DESC} : a UTF-16 code unit")
-class _:
-    s_tb = T_code_unit_
-
 @P("{VAL_DESC} : a code unit")
 class _:
     s_tb = T_code_unit_
@@ -3818,16 +3803,13 @@ class _:
 class ES_AbsentParseNode(ES_Value): pass
 
 @P("{VAL_DESC} : a Parse Node")
+@P("{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes")
 class _:
     s_tb = T_Parse_Node
 
     def d_desc(val_desc, value):
         [] = val_desc.children
         return value.isan(ES_ParseNode)
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : Parse Nodes")
-class _:
-    s_tb = T_Parse_Node
 
 #> Each Parse Node is an <em>instance</em> of a symbol in the grammar;
 
@@ -3869,6 +3851,7 @@ class _:
 
 @P("{VAL_DESC} : an? {nonterminal}")
 @P("{VAL_DESC} : an? {nonterminal} Parse Node")
+@P("{LIST_ELEMENTS_DESCRIPTION} : {nonterminal} Parse Nodes")
 class _:
     def s_tb(val_desc, env):
         [nonterminal] = val_desc.children
@@ -3918,12 +3901,6 @@ class _:
             assert value.isan(ES_ParseNode)
             return (value.symbol == nt_name)
             # TODO? value.unit_derives_a(nt_name)
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : {nonterminal} Parse Nodes")
-class _:
-    def s_tb(led, env):
-        [nonterminal] = led.children
-        return ptn_type_for(nonterminal)
 
 # 13.2.3.1
 @P("{CONDITION_1} : {PROD_REF} is the token `false`")
@@ -7810,9 +7787,6 @@ class _:
 #@ 6.1 ECMAScript Language Types
 
 @P("{VAL_DESC} : an ECMAScript language value")
-class _:
-    s_tb = T_Tangible_
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values")
 class _:
     s_tb = T_Tangible_
@@ -7937,16 +7911,13 @@ class EL_String(EL_Value):
 # ------------------------------------------------
 
 @P("{VAL_DESC} : a String")
+@P("{LIST_ELEMENTS_DESCRIPTION} : Strings")
 class _:
     s_tb = T_String
 
     def d_desc(val_desc, value):
         [] = val_desc.children
         return value.isan(EL_String)
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : Strings")
-class _:
-    s_tb = T_String
 
 @P("{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*")
 class _:
@@ -8685,9 +8656,6 @@ class _:
 #@ 6.1.6.2 The BigInt Type
 
 @P("{VAL_DESC} : a BigInt")
-class _:
-    s_tb = T_BigInt
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : BigInts")
 class _:
     s_tb = T_BigInt
@@ -8735,9 +8703,6 @@ class _:
 #@ 6.1.7 The Object Type
 
 @P("{VAL_DESC} : an Object")
-class _:
-    s_tb = T_Object
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : Objects")
 class _:
     s_tb = T_Object
@@ -8778,9 +8743,6 @@ class _:
 #> All String and Symbol values, including the empty String, are valid as property keys.
 
 @P("{VAL_DESC} : a property key")
-class _:
-    s_tb = T_String | T_Symbol
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : property keys")
 class _:
     s_tb = T_String | T_Symbol
@@ -8928,13 +8890,7 @@ class _:
 #> and used by various ECMAScript specification algorithms.
 
 @P("{VAL_DESC} : an internal slot name")
-class _:
-    s_tb = T_SlotName_
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : internal slot names")
-class _:
-    s_tb = T_SlotName_
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : names of internal slots")
 class _:
     s_tb = T_SlotName_
@@ -9160,16 +9116,13 @@ class _:
 #> A <dfn>constructor</dfn> is an object that supports the [[Construct]] internal method.
 
 @P("{VAL_DESC} : a function object")
+@P("{VAL_DESC} : a callable Object")
 class _:
     s_tb = T_function_object_
 
 @P("{VAL_DESC} : a constructor")
 class _:
     s_tb = T_constructor_object_
-
-@P("{VAL_DESC} : a callable Object")
-class _:
-    s_tb = T_function_object_
 
 # ------
 
@@ -10729,9 +10682,6 @@ class _:
 #@ 6.2.10 The PrivateElement Specification Type
 
 @P("{VAL_DESC} : a PrivateElement")
-class _:
-    s_tb = T_PrivateElement
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : PrivateElements")
 class _:
     s_tb = T_PrivateElement
@@ -10740,9 +10690,6 @@ class _:
 #@ 6.2.11 The ClassFieldDefinition Record Specification Type
 
 @P("{VAL_DESC} : a ClassFieldDefinition Record")
-class _:
-    s_tb = T_ClassFieldDefinition_Record
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : ClassFieldDefinition Records")
 class _:
     s_tb = T_ClassFieldDefinition_Record
@@ -10751,9 +10698,6 @@ class _:
 #@ 6.2.12 Private Names
 
 @P("{VAL_DESC} : a Private Name")
-class _:
-    s_tb = T_Private_Name
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : Private Names")
 class _:
     s_tb = T_Private_Name
@@ -11550,11 +11494,8 @@ set_up_internal_thing('slot', '[[Extensible]]', T_Boolean)
 # ==============================================================================
 #@ 10.2 ECMAScript Function Objects
 
-@P("{VAL_DESC} : an ECMAScript function object")
-class _:
-    s_tb = a_subset_of(T_function_object_)
-
 @P("{VAL_DESC} : an ECMAScript function")
+@P("{VAL_DESC} : an ECMAScript function object")
 class _:
     s_tb = a_subset_of(T_function_object_)
 
@@ -11644,11 +11585,8 @@ class _:
 # ==============================================================================
 #@ 10.4.2 Array Exotic Objects
 
-@P("{VAL_DESC} : an Array exotic object")
-class _:
-    s_tb = T_Array_object_
-
 @P("{VAL_DESC} : an Array")
+@P("{VAL_DESC} : an Array exotic object")
 class _:
     s_tb = T_Array_object_
 
@@ -12276,9 +12214,6 @@ class _:
 #@ 16.2.1.5 Cyclic Module Records
 
 @P("{VAL_DESC} : a Cyclic Module Record")
-class _:
-    s_tb = T_Cyclic_Module_Record
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records")
 class _:
     s_tb = T_Cyclic_Module_Record
@@ -12328,9 +12263,6 @@ class _:
 #@ 16.2.1.6 Source Text Module Records
 
 @P("{VAL_DESC} : a Source Text Module Record")
-class _:
-    s_tb = T_Source_Text_Module_Record
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records")
 class _:
     s_tb = T_Source_Text_Module_Record
@@ -12749,9 +12681,6 @@ class _:
 #> In either context, “character value” means the numeric value of the corresponding non-encoded code point.
 
 @P("{VAL_DESC} : a character")
-class _:
-    s_tb = T_code_unit_ | T_code_point_
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : characters")
 class _:
     s_tb = T_character_
@@ -13744,9 +13673,6 @@ class _:
 #@ 27.2.1.2 PromiseReaction Records
 
 @P("{VAL_DESC} : a PromiseReaction Record")
-class _:
-    s_tb = T_PromiseReaction_Record
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records")
 class _:
     s_tb = T_PromiseReaction_Record
@@ -13857,9 +13783,6 @@ class _:
     s_tb = T_Event
 
 @P("{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events")
-class _:
-    s_tb = T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events")
 class _:
     s_tb = T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
@@ -13958,9 +13881,6 @@ class _:
 #@ 29.4 Candidate Executions
 
 @P("{VAL_DESC} : a candidate execution")
-class _:
-    s_tb = T_Candidate_Execution_Record
-
 @P("{VAL_DESC} : a candidate execution Record")
 class _:
     s_tb = T_Candidate_Execution_Record
