@@ -34,7 +34,7 @@ import unicode_contributory_properties as ucp
 NYI = 0 # Not Yet Implemented
 
 # If an exception is raised (typically via `assert NYI`),
-# only the latest few frame are helpful.
+# only the latest few frames are helpful.
 sys.tracebacklimit = 6
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -2879,7 +2879,6 @@ class ReferenceToNonexistentThing(BaseException):
     def __init__(self, descr):
         self.descr = descr
 
-# Problem: 
 # For example, consider fail/0bee7999482c66a0.js, whose text is `(10) => 0`
 #
 # This has a early error due to:
@@ -3037,7 +3036,7 @@ def report_unused_entries():
     dfd_report_unused_entries('class_for_prod_str_',   class_for_prod_str_)
     dfd_report_unused_entries('predefined_operations', predefined_operations)
 
-# ------------------------------------------------
+# ------------------------------------------------------------------------------
 
 P = class_for_prod_str_.put
 
@@ -3424,8 +3423,8 @@ class _:
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-# -------------
-# conditions involving a sequence of Unicode code points
+# -------------------------------------------------------
+# conditions involving a sequence of Unicode code points:
 
 @P("{CONDITION_1} : {var} contains any code point more than once")
 class _:
@@ -3467,6 +3466,9 @@ class _:
 @dataclass(frozen=True)
 class ES_CodeUnit(E_Value):
     numeric_value: int
+    # Note that it's a Python integer rather than an ES_Mathnum.
+    # This might cause problems later.
+
     def __init__(self, numeric_value):
         assert isinstance(numeric_value, int)
         assert 0 <= numeric_value < 2 ** 16
@@ -3476,6 +3478,9 @@ class ES_CodeUnit(E_Value):
 @P("{VAL_DESC} : a code unit")
 class _:
     s_tb = T_code_unit_
+
+# ----
+# Expressions that return a code unit:
 
 @P("{LITERAL} : {code_unit_lit}")
 class _:
@@ -3531,6 +3536,8 @@ class _:
         cu_int = int(cu_hex, 16)
         return ES_CodeUnit(cu_int)
 
+# ----
+
 @P("{VAL_DESC} : a {h_emu_xref}")
 class _:
     def s_tb(val_desc, env):
@@ -3585,6 +3592,7 @@ class _:
 #> as its <em>right-hand side</em>.
 #> For each grammar, the terminal symbols are drawn from a specified alphabet.
 
+# --------------
 # grammar symbol
 
 class ES_GrammarSymbol(ES_Value): pass
@@ -3797,6 +3805,7 @@ class _:
         [nont] = cond.children
         return (env0, env0)
 
+# ------------------------------------------------------------------------------
 #> When a parse is successful, it constructs a parse tree,
 #> a rooted tree structure in which each node is a <dfn>Parse Node</dfn>.
 
@@ -3811,6 +3820,7 @@ class _:
         [] = val_desc.children
         return value.isan(ES_ParseNode)
 
+# ------------------------------------------------------------------------------
 #> Each Parse Node is an <em>instance</em> of a symbol in the grammar;
 
 # -----
@@ -3911,8 +3921,16 @@ class _:
         assert prod_ref.source_text() == '|BooleanLiteral|'
         return (env0, env0)
 
+# ------------------------------------------------------------------------------
 #> [Each Parse Node, an instance of a symbol,]
 #> represents a span of the source text that can be derived from that symbol.
+
+# (from 5.2.2 Syntax-Directed Operations)
+#> The <dfn>source text matched by</dfn> a grammar production
+#> or Parse Node derived from it
+#> is the portion of the source text
+#> that starts at the beginning of the first terminal that participated in the match
+#> and ends at the end of the last terminal that participated in the match.
 
 @P("{EXPR} : the source text that was recognized as {PROD_REF}")
 class _:
@@ -3953,7 +3971,7 @@ class _:
         return (T_code_point_, env0)
 
 @P("{EX} : the number of code points in {PROD_REF}")
-# SPEC BUG: should be "the number of code points in *the source text matched by* {PROD_REF}
+# SPEC BUG: should be "the number of code points in *the source text matched by* {PROD_REF}"
 class _:
     def s_expr(expr, env0, _):
         [prod_ref] = expr.children
@@ -3987,6 +4005,7 @@ class _:
         [] = cond.children
         return True
 
+# ------------------------------------------------------------------------------
 #> When a Parse Node is an instance of a nonterminal,
 #> it is also an instance of some production
 #> that has that nonterminal as its left-hand side.
@@ -4102,6 +4121,7 @@ class _:
             pnode.children[1].symbol == nt_name
         )
 
+# ------------------------------------------------------------------------------
 #> Moreover, it has zero or more <em>children</em>,
 #> one for each symbol on the production's right-hand side:
 #> each child is a Parse Node that is an instance of the corresponding symbol.
@@ -4131,6 +4151,8 @@ class _:
         ]
         return (defvar, same_tip_children)
 
+# (You can refer to a particular child of X by saying "the {nonterminal} of X".)
+
 @P("{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
 class _:
     def s_expr(expr, env0, _):
@@ -4146,9 +4168,8 @@ class _:
         [nont1, nont2] = val_desc.children
         return a_subset_of(ptn_type_for(nont1))
 
-# -----
-
-# (_P_ 'contains' its children and their children, and so on)
+# ------------------------------------------------------------------------------
+# (A Parse Node 'contains' its children and their children, and so on)
 
 @P("{CONDITION_1} : {var} contains a {nonterminal}")
 @P("{CONDITION_1} : {var} contains an? {nonterminal} Parse Node")
@@ -4224,6 +4245,7 @@ class _:
                 vals.add(val)
         return False
 
+# ------------------------------------------------------------------------------
 # (You can ask about nodes that contain _P_)
 
 @P("{PROD_REF} : the {nonterminal} containing {LOCAL_REF}")
@@ -4258,7 +4280,8 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
 
-# (Each child of _P_ is 'nested' directly within _P_.)
+# ------------------------------------------------------------------------------
+# (A Parse Node is 'nested' within its ancestor nodes.)
 
 @P("{CONDITION_1} : {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}")
 class _:
@@ -4321,6 +4344,7 @@ def node_is_nested_but_not_crossing_function_boundaries_within_a(pnode, target_s
 
     return False
 
+# ------------------------------------------------------------------------------
 #> Parse Nodes are considered <dfn>the same Parse Node</dfn>
 #> if and only if they represent the same span of source text,
 #> are instances of the same grammar symbol,
@@ -4334,6 +4358,7 @@ class _:
         env0.assert_expr_is_of_type(exb, T_Parse_Node)
         return (env0, env0)
 
+# ------------------------------------------------------------------------------
 #> ... In such cases a more restrictive supplemental grammar is provided
 #> that further restricts the acceptable token sequences.
 #> Typically, an early error rule will then state that, in certain contexts,
@@ -4510,6 +4535,15 @@ class _:
         if curr_frame().is_returning(): return
         EXEC(command, None)
 
+# ------------------------------------------------------------------------------
+#> Algorithms may be explicitly parameterized
+#> with an ordered, comma-separated sequence of alias names
+#> which may be used within the algorithm steps
+#> to reference the argument passed in that position.
+
+#> Optional parameters are denoted with surrounding brackets ([ , _name_ ])
+#> and are no different from required parameters within algorithm steps.
+# SPEC BUG: That "no different" part is incorrect for operations.
 @P("{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
 class _:
     def s_expr(expr, env0, _):
@@ -4517,7 +4551,8 @@ class _:
         return (T_MathNonNegativeInteger_, env0)
 
 # ------------------------------------------------------------------------------
-#> A step or substep may be written as an “if” predicate that conditions its substeps.
+#> A step or substep may be written as an “if” predicate
+#> that conditions its substeps.
 #> In this case, the substeps are only applied if the predicate is true.
 #> If a step or substep begins with the word “else”,
 #> it is a predicate that is the negation of
@@ -4663,7 +4698,7 @@ class _:
         [] = if_tail.children
         pass
 
-    # -------------------------------------------------
+# -------------------------------------------------
 
 @P("{EXPR} : {EX} if {CONDITION}. Otherwise, it is {EXPR}")
 class _:
@@ -5016,6 +5051,7 @@ class _:
         [varname] = var.children
         return curr_frame().get_value_referenced_by_var(varname)
 
+# ------------------------------------------------------------------------------
 #> ... using the form “Let _x_ be _someValue_”.
 
 @P("{COMMAND} : Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)")
@@ -5058,7 +5094,7 @@ class _:
         new_env.assert_expr_is_of_type(num_expr, T_MathReal_)
         return new_env
 
-    # Let {DEFVAR} and {DEFVAR} ... be ...
+# Let {DEFVAR} and {DEFVAR} ... be ...
 
 @P("{COMMAND} : Let {DEFVAR} and {DEFVAR} be the indirection values provided when this binding for {var} was created.")
 class _:
@@ -5095,6 +5131,7 @@ class _:
         (t_env, f_env) = tc_cond(cond, env_for_cond)
         return env_for_cond
 
+# ------------------------------------------------------------------------------
 #> These aliases are reference-like in that both _x_ and _someValue_ refer to the same underlying data
 #> and modifications to either are visible to both.
 #> Algorithm steps that want to avoid this reference-like behaviour
@@ -5115,6 +5152,7 @@ class _:
         L = EXEC(var, ES_List)
         return L.copy()
 
+# ------------------------------------------------------------------------------
 #> Once declared, an alias may be referenced in any subsequent steps
 #> and must not be referenced from steps prior to the alias's declaration.
 
@@ -5137,7 +5175,7 @@ class _:
     d_exec = d_exec_pass_down
 
 # ------------------------------------------------------------------------------
-# (there are other ways to declare an alias)
+# (declaring an alias for the scope of a single expression)
 
 @P("{EXPR} : {EX}, where {DEFVAR} is {EX}")
 class _:
@@ -5398,6 +5436,7 @@ class _:
         [pp, _] = expr.children
         return tc_expr(pp, env0)
 
+# ------------------------------------------------------------------------------
 #> Abstract operations are typically referenced using a functional application style
 #> such as OperationName(_arg1_, _arg2_).
 
@@ -5886,6 +5925,19 @@ class _:
         env0.assert_expr_is_of_type(var, t)
         return (t, env0)
 
+# --------------
+# "present"
+
+# "X is [not] present" has 2 meanings:
+# 1) X refers to a nonterminal that is optional in a relevant production,
+#    and it is [not] present in the corresponding Parse Node.
+#    (5.1.5.3 Optional Symbols)
+# 2) X is an optional parameter (of an operation or a function),
+#    and an arg value was [not] supplied for the current invocation.
+#    (5.3 Algorithm Conventions)
+# (So there's a potential ambiguity if you pass a Parse Node to an optional parameter,
+# but I don't think that ever happens.
+
 @P("{CONDITION_1} : {LOCAL_REF} is present")
 @P("{CONDITION_1} : {LOCAL_REF} is not present")
 class _:
@@ -5909,12 +5961,7 @@ class _:
         else:
             return pnode.isan(ES_ParseNode)
 
-#> The <dfn>source text matched by</dfn> a grammar production
-#> or Parse Node derived from it
-#> is the portion of the source text
-#> that starts at the beginning of the first terminal that participated in the match
-#> and ends at the end of the last terminal that participated in the match.
-
+# ------------------------------------------------------------------------------
 #> Syntax-directed operations are invoked with a parse node and, optionally, other parameters ...
 
 @P("{NAMED_OPERATION_INVOCATION} : the {cap_word} of {LOCAL_REF}")
@@ -6058,6 +6105,11 @@ def execute_sdo_invocation(sdo_name_arg, focus_expr, arg_exprs):
 # ==============================================================================
 #@ 5.2.3.2 Throw an Exception
 
+#> Algorithms steps that say to throw an exception, such as
+#>   1. Throw a *TypeError* exception.
+#> mean the same things as:
+#>   1. Return ThrowCompletion(a newly created *TypeError* object).
+
 @P("{COMMAND} : Throw a {ERROR_TYPE} exception.")
 @P("{SMALL_COMMAND} : throw a {ERROR_TYPE} exception because the structure is cyclical")
 @P("{SMALL_COMMAND} : throw a {ERROR_TYPE} exception")
@@ -6070,6 +6122,20 @@ class _:
 # ==============================================================================
 #@ 5.2.3.3 ReturnIfAbrupt
 
+#> Algorithms steps that say or are otherwise equivalent to:
+#>     1. ReturnIfAbrupt(_argument_).
+#> mean the same thing as:
+#>     1. If _argument_ is an abrupt completion, return _argument_.
+#>     1. Else if _argument_ is a Completion Record, set _argument_ to _argument_.[[Value]].
+#>
+#> Algorithms steps that say or are otherwise equivalent to:
+#>     1. ReturnIfAbrupt(AbstractOperation()).
+#> mean the same thing as:
+#>     1. Let _hygienicTemp_ be AbstractOperation().
+#>     1. If _hygienicTemp_ is an abrupt completion, return _hygienicTemp_.
+#>     1. Else if _hygienicTemp_ is a Completion Record, set _hygienicTemp_ to _hygienicTemp_.[[Value]].
+#> Where _hygienicTemp_ is ephemeral and visible only in the steps pertaining to ReturnIfAbrupt.
+
 @P("{COMMAND} : ReturnIfAbrupt({EX}).")
 class _:
     def s_nv(anode, env0):
@@ -6080,6 +6146,14 @@ class _:
 # ==============================================================================
 #@ 5.2.3.4 ReturnIfAbrupt Shorthands
 
+#> Invocations of abstract operations and syntax-directed operations
+#> that are prefixed by ? indicate that ReturnIfAbrupt should be applied
+#> to the resulting Completion Record.
+#> For example, the step:
+#>    1. ? OperationName().
+#> is equivalent to the following step:
+#>    1. ReturnIfAbrupt(OperationName())
+
 @P("{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}")
 @P("{EX} : ? {DOTTING}")
 @P("{EX} : ? {var}")
@@ -6088,6 +6162,7 @@ class _:
         [operand] = expr.children
         return handle_completion_record_shorthand('?', operand, env0)
 
+# ------------------------------------------------------------------------------
 #> Similarly, prefix ! is used to indicate that
 #> the following invocation of an abstract or syntax-directed operation
 #> will never return an abrupt completion
@@ -6109,7 +6184,7 @@ class _:
         else:
             return value
 
-# --------------------------------------
+# ------------------------------------------------------------------------------
 
 def handle_completion_record_shorthand(operator, operand, env0):
     operand_text = operand.source_text()
@@ -6389,7 +6464,7 @@ class _:
                 it_is_a_syntax_error(cond)
             curr_frame().end_contour()
 
-# --------------------------------------
+# ------------------------------------------------------------------------------
 
 def it_is_a_syntax_error(rule):
     if isinstance(rule, ANode): rule = rule.source_text()
@@ -6445,7 +6520,12 @@ class ES_Mathnum(ES_Value):
         assert other.val != 0
         return ES_Mathnum(self.val % other.val)
 
-# ------------------
+# ------------------------------------------------------------------------------
+#> This specification makes reference to these kinds of numeric values:
+#> - <dfn>Mathematical values</dfn>
+#> - <dfn>Extended mathematical values</dfn>: Mathematical values together with +∞ and -∞.
+#> - <em>Numbers</em>: IEEE 754-2019 double-precision floating point values.
+#> - <em>BigInts</em>: ECMAScript language values representing arbitrary integers in a one-to-one correspondence.
 
 @P("{VAL_DESC} : a mathematical value")
 class _:
@@ -6500,6 +6580,7 @@ class _:
 class _:
     s_tb = a_subset_of(T_FiniteNumber_)
 
+# ------------------------------------------------------------------------------
 #> Numeric operators such as +, ×, =, and ≥ refer to those operations
 #> as determined by the type of the operands.
 #> When applied to mathematical values,
@@ -7037,6 +7118,13 @@ class _:
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
+#> In general, when this specification refers to a numerical value,
+#> such as in the phrase, "the length of _y_"
+#> or "the integer represented by the four hexadecimal digits ...",
+#> without explicitly specifying a numeric kind,
+#> the phrase refers to a mathematical value.
+
+# ------------------------------------------------------------------------------
 #> This specification denotes most numeric values in base 10;
 
 @P("{MATH_LITERAL} : {dec_int_lit}")
@@ -7081,7 +7169,9 @@ class _:
     def s_expr(expr, env0, _):
         return (T_MathReal_, env0)
 
-#> it also uses numeric values of the form 0x followed by digits 0-9 or A-F as base-16 values.
+# ------------------------------------------------------------------------------
+#> it also uses numeric values of the form
+#> 0x followed by digits 0-9 or A-F as base-16 values.
 
 @P("{MATH_LITERAL} : {hex_int_lit}")
 class _:
@@ -7097,7 +7187,7 @@ class _:
         [chars] = hex_int_lit.children
         return ES_Mathnum(int(chars, 16))
 
-# ---------
+# ------------------------------------------------------------------------------
 
 @P("{MATH_LITERAL} : +&infin;")
 @P("{MATH_LITERAL} : +∞")
@@ -7545,8 +7635,6 @@ class _:
         (exb_type, env2) = tc_expr(exb, env1)
         return (env2, env2)
 
-# ------
-
 @P("{CONDITION_1} : {EX} and {EX} are both {LITERAL}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -7586,7 +7674,7 @@ class _:
         env0.assert_expr_is_of_type(lit, t1)
         return (env0, env0)
 
-# ------
+# ------------------------------------------------------------------------------
 
 @P("{CONDITION_1} : {EX} is also {VAL_DESC}")
 @P("{CONDITION_1} : {EX} is never {VAL_DESC}")
@@ -7672,7 +7760,7 @@ class _:
 
         return env0.with_type_test(ex, 'isnt a', [sub_t, sup_t], asserting)
 
-    # -------
+# ------------------------------------------------------------------------------
 
 @P("{VALUE_DESCRIPTION} : {VAL_DESC}")
 class _:
@@ -7744,9 +7832,10 @@ class _:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 6 ECMAScript Data Types and Values
 
-#> Within this specification,
-#> the notation “Type(_x_)” is used as shorthand for
-#> “the <em>type</em> of _x_”
+#> Within this specification, the notation
+#>     “Type(_x_)”
+#> is used as shorthand for
+#>     “the <em>type</em> of _x_”
 #> where “type” refers to the ECMAScript language and specification types
 #> defined in this clause.
 
@@ -7768,6 +7857,8 @@ class _:
         env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
         return (env0, env0)
 
+# ------------------------------------------------------------------------------
+
 @P("{LITERAL} : {TYPE_NAME}")
 class _:
     def s_expr(expr, env0, _):
@@ -7785,6 +7876,14 @@ class _:
 
 # ==============================================================================
 #@ 6.1 ECMAScript Language Types
+
+#> An <dfn>ECMAScript language type</dfn>
+#> corresponds to values that are directly manipulated by an ECMAScript programmer
+#> using the ECMAScript language.
+#> The ECMAScript language types are
+#> Undefined, Null, Boolean, String, Symbol, Number, BigInt, and Object.
+#> An <dfn>ECMAScript language value</dfn>
+#> is a value that is characterized by an ECMAScript language type.
 
 @P("{VAL_DESC} : an ECMAScript language value")
 @P("{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values")
@@ -7978,7 +8077,8 @@ class _:
 #> the phrase "the <dfn>string-concatenation</dfn> of _A_, _B_, ..."
 #> (where each argument is a String value, a code unit, or a sequence of code units)
 #> denotes the String value whose sequence of code units
-#> is the concatenation of the code units (in order) of each of the arguments (in order).
+#> is the concatenation of the code units (in order)
+#> of each of the arguments (in order).
 
 @P("{MULTILINE_EXPR} : the string-concatenation of:{I_BULLETS}")
 class _:
@@ -8266,6 +8366,9 @@ class _:
         env0.assert_expr_is_of_type(litb, T_String)
         return (env0, env0)
 
+# --------------------------------------------
+# conditions involving multiple String values:
+
 @P("{CONDITION_1} : {var} and {var} have the same length and the same code units in the same positions")
 class _:
     def s_cond(cond, env0, asserting):
@@ -8276,7 +8379,7 @@ class _:
         return (envb, envb)
 
 # ------------------------------------------------------------------------------
-# Going from a String value to some other type of value:
+# going from a String value to some other type of value:
 
 @P("{EXPR} : a List whose elements are the code units that are the elements of {var}")
 @P("{EXPR} : a List consisting of the sequence of code units that are the elements of {var}")
@@ -8319,9 +8422,9 @@ class _:
         return (T_MathInteger_, env0)
 
 # ------------------------------------------------------------------------------
-# Comparing a String value to a nonterminal:
+# comparing a String value to a nonterminal:
 
-    # for 19.2.4 parseFloat
+# for 19.2.4 parseFloat
 @P("{EXPR} : the longest prefix of {var} that satisfies the syntax of a {nonterminal}, which might be {var} itself. If there is no such prefix, return {NUMBER_LITERAL}")
 class _:
     def s_expr(expr, env0, _):
@@ -8345,8 +8448,6 @@ class _:
     def d_desc(val_desc, value):
         [] = val_desc.children
         return value.isan(EL_Symbol)
-
-# ----
 
 @P("{LITERAL} : {atat_word}")
 class _:
@@ -8528,8 +8629,8 @@ class _:
         # XXX The intermediates are not really T_Number
         return (T_Number, env0)
 
-# ---------------------
-# conditions on Number:
+# -------------------------
+# conditions on one Number:
 
 @P("{CONDITION_1} : {var} is finite")
 class _:
@@ -8564,6 +8665,9 @@ class _:
         env1.assert_expr_is_of_type(litb, T_FiniteNumber_)
         return (env1, env1)
 
+# -------------------------------
+# conditions on multiple Numbers:
+
 @P("{CONDITION_1} : {var} and {var} are both finite")
 class _:
     def s_cond(cond, env0, asserting):
@@ -8591,7 +8695,7 @@ class _:
 # ----------------------------------------------
 #> In this specification, the phrase "the Number value for _x_"
 #> where _x_ represents an exact real mathematical quantity
-#> (which might even be an irrational number such as &pi;)
+#> (which might even be an irrational number such as π)
 #> means a Number value chosen in the following manner. ...
 
 def the_Number_value_for(mathnum: ES_Mathnum):
@@ -8669,8 +8773,6 @@ class _:
 class _:
     s_expr = s_expr_pass_down
 
-# ----
-
 @P("{BIGINT_LITERAL} : {starred_int_lit}{h_sub_fancy_z}")
 class _:
     def s_expr(expr, env0, _):
@@ -8702,6 +8804,9 @@ class _:
 # ==============================================================================
 #@ 6.1.7 The Object Type
 
+
+# --------------------------------
+
 @P("{VAL_DESC} : an Object")
 @P("{LIST_ELEMENTS_DESCRIPTION} : Objects")
 class _:
@@ -8711,6 +8816,7 @@ class _:
 class _:
     s_tb = T_Object | T_Symbol
 
+# ------------------------------------------------------------------------------
 #> An Object is logically a collection of properties.
 #> Each property is either a data property, or an accessor property:
 #>  -- A <dfn>data property</dfn> associates a key value with
@@ -8738,6 +8844,7 @@ class _:
         }[kind.source_text()]
         return t
 
+# ------------------------------------------------------------------------------
 #> Properties are identified using key values.
 #> A <dfn>property key</dfn> value is either an ECMAScript String value or a Symbol value.
 #> All String and Symbol values, including the empty String, are valid as property keys.
@@ -8747,6 +8854,7 @@ class _:
 class _:
     s_tb = T_String | T_Symbol
 
+# ------------------------------------------------------------------------------
 #> A <dfn>property name</dfn> is a property key that is a String value.
 
 @P("{EXPR} : the String value of the property name")
@@ -8757,10 +8865,12 @@ class _:
         [] = expr.children
         return (T_String, env0)
 
+# ------------------------------------------------------------------------------
 #> An <dfn>integer index</dfn>
 #> is a String-valued property key
 #> that is a canonical numeric string
-#> and whose numeric value is either *+0*<sub>𝔽</sub> or a positive integral Number ≤ 𝔽(2<sup>53</sup> - 1).
+#> and whose numeric value is either *+0*<sub>𝔽</sub>
+#> or a positive integral Number ≤ 𝔽(2<sup>53</sup> - 1).
 
 @P("{VAL_DESC} : an integer index")
 class _:
@@ -8775,7 +8885,7 @@ class _:
     s_tb = a_subset_of(T_String)
 
 # ------------------------------------------------------------------------------
-# (other forms involving the properties of an object)
+# (forms involving the properties of an object)
 
 @P("{VAL_DESC} : an extensible object that does not have a {starred_str} own property")
 class _:
@@ -8885,6 +8995,7 @@ class _:
         else:
             assert 0, dsbn_name
 
+# ------------------------------------------------------------------------------
 #> Internal slots correspond to internal state
 #> that is associated with objects
 #> and used by various ECMAScript specification algorithms.
@@ -8895,11 +9006,17 @@ class _:
 class _:
     s_tb = T_SlotName_
 
+# ------------------------------------------------------------------------------
+#> Internal methods and internal slots are identified within this specification
+#> using names enclosed in double square brackets [[ ]].
+
 @P("{EX} : {DSBN}")
 class _:
     def s_expr(expr, env0, _):
         [dsbn] = expr.children
         return (T_SlotName_, env0)
+
+# ------------------------------------------------------------------------------
 
 @P("{VAL_DESC} : an Object that has a {dsb_word} internal slot")
 class _:
@@ -8984,9 +9101,6 @@ class _:
 #> Initially, it is an empty List.
 
 set_up_internal_thing('slot', '[[PrivateElements]]', ListType(T_PrivateElement))
-
-#> Internal methods and internal slots are identified within this specification
-#> using names enclosed in double square brackets [[ ]].
 
 #> <emu-xref href="#table-essential-internal-methods"></emu-xref>
 #> summarizes the <em>essential internal methods</em>
@@ -9151,7 +9265,8 @@ class _:
 
 #> Within this specification
 #> a reference such as %name% means
-#> the intrinsic object, associated with the current realm, corresponding to the name.
+#> the intrinsic object, associated with the current realm,
+#> corresponding to the name.
 
 @P("{LITERAL} : {percent_word}")
 class _:
@@ -9580,7 +9695,7 @@ class _:
         return env1.plus_new_entry(loop_var, element_type)
 
 # ------------------------------------------------------------------------------
-# ask questions about a List:
+# whether or not the List is empty:
 
 @P("{CONDITION_1} : {var} is now an empty List")
 class _:
@@ -9783,6 +9898,9 @@ class _:
             for element in L1.elements()
         )
 
+# ------------------------------------------------------------------------------
+# identify an element in a List:
+
 @P("{EXPR} : the first element of {SETTABLE}")
 @P("{EXPR} : the last element of {var}")
 class _:
@@ -9927,7 +10045,7 @@ class _:
         return (item_type, env0)
 
 # ------------------------------------------------------------------------------
-# Record:
+# The Record Specification Type
 
 #> The <dfn>Record</dfn> type
 #> is used to describe data aggregations
@@ -9937,12 +10055,13 @@ class ES_Record(ES_Value):
     pass
 
 @P("{EXPR} : a new Record")
+# Once, in CreateIntrinsics
 class _:
     def s_expr(expr, env0, _):
-        # Once, in CreateIntrinsics
         [] = expr.children
         return (T_Intrinsics_Record, env0)
 
+# ------------------------------------------------------------------------------
 #> A Record type value consists of one or more named fields.
 #> The value of each field is an ECMAScript language value or specification value.
 #> Field names are always enclosed in double brackets, for example [[Value]].
@@ -10017,8 +10136,13 @@ class _:
         else:
             assert 0, expr
 
+# ------------------------------------------------------------------------------
 #> For notational convenience within this specification,
 #> an object literal-like syntax can be used to express a Record value.
+#> ...
+#> Schema for commonly used Record field combinations may be named,
+#> and that name may be used as a prefix to a literal Record value
+#> to identify the specific kind of aggregations that is being described
 
 @P("{RECORD_CONSTRUCTOR} : {RECORD_CONSTRUCTOR_PREFIX} { {FIELDS} }")
 class _:
@@ -10071,8 +10195,10 @@ class _:
 
         return ( HierType(record_type_name), env2 )
 
+# ------------------------------------------------------------------------------
 #> In specification text and algorithms,
-#> dot notation may be used to refer to a specific field of a Record value.
+#> dot notation may be used to refer to
+#> a specific field of a Record value.
 #> For example, if R is the record shown in the previous paragraph then
 #> R.[[Field2]] is shorthand for “the field of R named [[Field2]]”.
 
@@ -10216,7 +10342,7 @@ class _:
 
         return (final_dotting_t, env2)
 
-# 10.2.4
+# for 10.2.4 AddRestrictedFunctionProperties
 @P("{CONDITION_1} : {DOTTING} exists and has been initialized")
 class _:
     def s_cond(cond, env0, asserting):
@@ -10365,10 +10491,11 @@ class _:
 # ==============================================================================
 #@ 6.2.4 The Completion Record Specification Type
 
+#> The <dfn>Completion Record</dfn> specification type
+#> is used to explain the runtime propagation of values and control flow ...
+
 class ES_CompletionRecord(ES_Record):
     pass
-
-#> The following shorthand terms are sometimes used to refer to Completion Records.
 
 @P("{VAL_DESC} : a Completion Record")
 class _:
@@ -10384,6 +10511,9 @@ class _:
         [] = expr.children
         return (T_Completion_Record, env0)
 
+#> The following shorthand terms are sometimes used to refer to Completion Records.
+
+#-------------------------------------------------------------------------------
 #> <dfn>normal completion</dfn> refers to any Completion Record with a [[Type]] value of ~normal~.
 
 def NormalCompletionType(value_type):
@@ -10399,6 +10529,11 @@ def NormalCompletionType(value_type):
 class _:
     s_tb = T_normal_completion
 
+# ------------------------------------------------------------------------------
+#> a <dfn>normal completion containing</dfn> some type of value
+#> refers to a normal completion
+#> that has a value of that type in its [[Value]] field.
+
 @P("{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}")
 class _:
     def s_tb(vd, env):
@@ -10413,9 +10548,21 @@ class _:
         env0.assert_expr_is_of_type(literal, T_tilde_unused_)
         return env0.with_type_test(var, 'is a', NormalCompletionType(T_tilde_unused_), asserting)
 
+#-------------------------------------------------------------------------------
+#> <dfn>break completion</dfn> refers to any Completion Record with a [[Type]] value of ~break~.
+
+#-------------------------------------------------------------------------------
+#> <dfn>continue completion</dfn> refers to any Completion Record with a [[Type]] value of ~continue~.
+
+#-------------------------------------------------------------------------------
+#> <dfn>return completion</dfn> refers to any Completion Record with a [[Type]] value of ~return~.
+
 @P("{VAL_DESC} : a return completion")
 class _:
     s_tb = T_return_completion
+
+#-------------------------------------------------------------------------------
+#> <dfn>throw completion</dfn> refers to any Completion Record with a [[Type]] value of ~throw~.
 
 def ThrowCompletionType(error_type):
     return RecordType(
@@ -10430,11 +10577,12 @@ def ThrowCompletionType(error_type):
 class _:
     s_tb = T_throw_completion
 
+#-------------------------------------------------------------------------------
+#> <dfn>abrupt completion</dfn> refers to any Completion Record with a [[Type]] value other than ~normal~.
+
 @P("{VAL_DESC} : an abrupt completion")
 class _:
     s_tb = T_abrupt_completion
-
-# ---------
 
 @P("{CONDITION_1} : The next step never returns an abrupt completion because {CONDITION_1}")
 class _:
@@ -10471,6 +10619,7 @@ class _:
         [] = expr.children
         return (T_Property_Descriptor, env0)
 
+# for 9.3.4 SetDefaultGlobalBindings
 @P("{EXPR} : the fully populated data Property Descriptor for the property, containing the specified attributes for the property. For properties listed in {h_emu_xref}, {h_emu_xref}, or {h_emu_xref} the value of the {DSBN} attribute is the corresponding intrinsic object from {var}")
 class _:
     def s_expr(expr, env0, _):
@@ -10703,6 +10852,7 @@ class _:
     s_tb = T_Private_Name
 
 @P("{VAL_DESC} : a property key or Private Name")
+# SPEC BUG: should be "or *a* Private Name"
 class _:
     s_tb = T_String | T_Symbol | T_Private_Name
 
@@ -10776,6 +10926,9 @@ class _:
 # ==============================================================================
 #@ 7.4.1 Iterator Records
 
+#> An <dfn>Iterator Record</dfn> is a Record value
+#> used to encapsulate an Iterator or AsyncIterator along with the `next` method.
+
 @P("{VAL_DESC} : an Iterator Record")
 class _:
     s_tb = T_Iterator_Record
@@ -10808,7 +10961,8 @@ class _:
 # ==============================================================================
 #@ 8.5.1 Static Semantics: Contains
 
-@P("{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}") # spec bug: should say "is *true*"
+@P("{CONDITION_1} : {LOCAL_REF} Contains {G_SYM}")
+# SPEC BUG: should say "is *true*"
 class _:
     def s_cond(cond, env0, asserting):
         [local_ref, g_sym] = cond.children
@@ -10837,6 +10991,15 @@ class _:
 
 # ==============================================================================
 #@ 9.1 Environment Records
+
+#> <dfn>Environment Record</dfn> is a specification type
+#> used to define the association of |Identifier|s to specific variables and functions,
+#> based upon the lexical nesting structure of ECMAScript code.
+#> Usually an Environment Record is associated with
+#> some specific syntactic structure of ECMAScript code
+#> such as a |FunctionDeclaration|, a |BlockStatement|, or a |Catch| clause of a |TryStatement|.
+#> Each time such code is evaluated, a new Environment Record is created
+#> to record the identifier bindings that are created by that code.
 
 def type_for_environment_record_kind(kind):
     return HierType(kind.source_text() + ' Environment Record')
@@ -10888,6 +11051,8 @@ class _:
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return env0
 
+# ------------------------------------------------------------------------------
+
 @P("{CONDITION_1} : {var} does not already have a binding for {var}")
 @P("{CONDITION_1} : {var} does not have a binding for {var}")
 @P("{CONDITION_1} : {var} has a binding for {var}")
@@ -10920,7 +11085,7 @@ class _:
         env0.assert_expr_is_of_type(er_var, T_Environment_Record)
         return (T_Tangible_, env0)
 
-    # 9.1.1.1.5 SetMutableBinding
+# for 9.1.1.1.5 SetMutableBinding
 @P("{COMMAND} : Change its bound value to {var}.")
 class _:
     def s_nv(anode, env0):
@@ -10929,7 +11094,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_Tangible_)
         return env0
 
-    # 9.1.1.1.5 SetMutableBinding
+# for 9.1.1.1.5 SetMutableBinding
 @P("{CONDITION_1} : This is an attempt to change the value of an immutable binding")
 class _:
     def s_cond(cond, env0, asserting):
@@ -10968,6 +11133,8 @@ class _:
 #@ 9.1.1.5.5 CreateImportBinding
 
 @P("{CONDITION_1} : When {SETTABLE} is instantiated, it will have a direct binding for {var}")
+# This Assert is making a statement about the future,
+# so should almost certainly be a NOTE.
 class _:
     def s_cond(cond, env0, asserting):
         [settable, var] = cond.children
@@ -11020,6 +11187,15 @@ class _:
 # ==============================================================================
 #@ 9.3.2 CreateIntrinsics
 
+#> Set fields of _intrinsics_ with the values listed in
+#> <emu-xref href="#table-well-known-intrinsic-objects"></emu-xref>.
+#> The field names are the names listed in column one of the table.
+#> The value of each field is a new object value
+#> fully and recursively populated with property values
+#> as defined by the specification of each object
+#> in clauses <emu-xref href="#sec-global-object"></emu-xref>
+#> through <emu-xref href="#sec-reflection"></emu-xref>.
+
 @P("{COMMAND} : Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}")
 class _:
     def s_nv(anode, env0):
@@ -11033,6 +11209,11 @@ class _:
 #> An <dfn>execution context</dfn> is a specification device
 #> that is used to track the runtime evaluation of code
 #> by an ECMAScript implementation.
+
+#> An execution context contains whatever implementation specific state is necessary
+#> to track the execution progress of its associated code.
+#> Each execution context has at least the state components listed in
+#> <emu-xref href="#table-state-components-for-all-execution-contexts"></emu-xref>.
 
 @P("{VAL_DESC} : an execution context")
 class _:
@@ -11151,7 +11332,6 @@ class _:
 
 # ------------------------------------------------------------------------------
 #> The <dfn>execution context stack</dfn> is used to track execution contexts.
-#> The running execution context is always the top element of this stack.
 
 @P("{CONDITION_1} : the execution context stack is empty")
 @P("{CONDITION_1} : The execution context stack is not empty")
@@ -11161,14 +11341,14 @@ class _:
         [] = cond.children
         return (env0, env0)
 
-    # 9.4.1
+# for 9.4.1 GetActiveScriptOrModule
 @P("{EXPR} : the topmost execution context on the execution context stack whose ScriptOrModule component is not {LITERAL}")
 class _:
     def s_expr(expr, env0, _):
         [literal] = expr.children
         return (T_execution_context, env0)
 
-    # 9.4.1
+# for 9.4.1 GetActiveScriptOrModule
 @P("{CONDITION_1} : no such execution context exists")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11180,6 +11360,17 @@ class _:
     def s_expr(expr, env0, _):
         [] = expr.children
         return (T_execution_context, env0)
+
+# ------------------------------------------------------------------------------
+#> The running execution context is always the top element of this stack.
+
+# ------------------------------------------------------------------------------
+#> A new execution context is created
+#> whenever control is transferred
+#> from the executable code associated with the currently running execution context
+#> to executable code that is not associated with that execution context.
+#> The newly created execution context is pushed onto the stack
+#> and becomes the running execution context.
 
 @P("{COMMAND} : Push {var} onto the execution context stack; {var} is now the running execution context.")
 class _:
@@ -11251,6 +11442,9 @@ class _:
 # ------
 # Resume
 
+# -----------------
+# resume-after-push (i.e., resuming an EC that's just been pushed onto the stack):
+
 @P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
 @P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.")
 class _:
@@ -11259,6 +11453,9 @@ class _:
         env0.assert_expr_is_of_type(ctx_var, T_execution_context)
         env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
         return env1.plus_new_entry(resb_var, NormalCompletionType(T_Tangible_) | T_throw_completion)
+
+# ----------------
+# resume-after-pop (i.e., resuming an EC that's just been revealed by a stack-pop):
 
 @P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
 class _:
@@ -11333,8 +11530,7 @@ class _:
         return (T_Realm_Record, env0)
 
 # ------------------------------------------------------------------------------
-#> The value of the Function component
-#> of the running execution context
+#> The value of the Function component of the running execution context
 #> is also called the <dfn>active function object</dfn>.
 
 @P("{VAL_DESC} : the active function object")
@@ -11376,14 +11572,14 @@ class _:
 
 # ------------------------------------------------------------------------------
 
-    # 15.10.3
+# for 15.10.3 PrepareForTailCall
 @P("{CONDITION_1} : The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
-    # 15.10.3
+# for 15.10.3 PrepareForTailCall
 @P("{COMMAND} : Discard all resources associated with the current execution context.")
 class _:
     def s_nv(anode, env0):
@@ -11434,11 +11630,29 @@ class _:
 # ==============================================================================
 #@ 9.7 Agents
 
+#> An <dfn>agent</dfn> comprises
+#> a set of ECMAScript execution contexts,
+#> an execution context stack,
+#> a running execution context,
+#> an <dfn>Agent Record</dfn>, and
+#> an <dfn>executing thread</dfn>.
+#> Except for the executing thread,
+#> the constituents of an agent belong exclusively to that agent.
+
+# Issue #1357 "Define Agent (and Agent Cluster) more concretely":
+#> it'd be good to formally define agent as holding:
+#>  * A set of Realms. The realms in the set are private to the Agent
+#>    and may not be accessible to any other agent.
+#>  * A heap of SharedArrayBuffer objects that whose access may be shared with other Agents
+#>  * A set of well-known symbol values
+#>  * A GlobalSymbolRegistry
+
 class ES_Agent(ES_Value):
     def __init__(self):
         self.frame_stack = []
         self.max_frame_stack_len = 0
 
+# ------------------------------------------------------------------------------
 #> While an agent's executing thread executes jobs,
 #> the agent is the <dfn>surrounding agent</dfn>
 #> for the code in those jobs.
@@ -11450,14 +11664,16 @@ class _:
         [] = expr.children
         return (T_Agent_Record, env0)
 
+# for 16.2.1.5.2 Evaluate
 @P("{CONDITION_1} : This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
-#> An <dfn>agent signifier</dfn> is a globally-unique opaque value
-#> used to identify an Agent.
+# ------------------------------------------------------------------------------
+#> An <dfn>agent signifier</dfn> is
+#> a globally-unique opaque value used to identify an Agent.
 
 @P("{VAL_DESC} : an agent signifier")
 class _:
@@ -11501,6 +11717,36 @@ class _:
 
 # ==============================================================================
 #@ 10.3 Built-in Function Objects
+
+#> The built-in function objects defined in this specification
+#> may be implemented as either
+#>   ECMAScript function objects (<emu-xref href="#sec-ecmascript-function-objects"></emu-xref>)
+#>   whose behaviour is provided using ECMAScript code
+#> or as implementation provided function exotic objects
+#> whose behaviour is provided in some other manner. [...]
+#>
+#> If a built-in function object is implemented as an ECMAScript function object,
+#> it must have
+#> all the internal slots described in
+#>   <emu-xref href="#sec-ecmascript-function-objects"></emu-xref>
+#>     ([[Prototype]], [[Extensible]], and the slots listed in
+#>     <emu-xref href="#table-internal-slots-of-ecmascript-function-objects"></emu-xref>),
+#> plus [[InitialName]].
+#> The value of the [[InitialName]] internal slot
+#> is a String value that is the initial name of the function.
+#> It is used by <emu-xref href="#sec-function.prototype.tostring"></emu-xref>.
+#>
+#> If a built-in function object is implemented as an exotic object,
+#> it must have the ordinary object behaviour specified in
+#> <emu-xref href="#sec-ordinary-object-internal-methods-and-internal-slots"></emu-xref>.
+#> All such function exotic objects have
+#> [[Prototype]], [[Extensible]], [[Realm]], and [[InitialName]] internal slots,
+#> with the same meanings as above.
+
+#> If a built-in function object is not implemented as an ECMAScript function
+#> it must provide [[Call]] and [[Construct]] internal methods that conform to the following definitions:
+#>  - #sec-built-in-function-objects-call-thisargument-argumentslist
+#>  - #sec-built-in-function-objects-construct-argumentslist-newtarget
 
 set_up_internal_thing('slot', '[[InitialName]]', T_Null | T_String)
 
@@ -11557,9 +11803,13 @@ class _:
         [emu_xref] = expr.children
         return (T_alg_steps, env0)
 
+# ------------------------------------------------------------------------------
+
 @P("{VAL_DESC} : some other definition of a function's behaviour provided in this specification")
 class _:
     s_tb = T_alg_steps
+
+# ------------------------------------------------------------------------------
 
 @P("{EXPR} : a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created")
 class _:
@@ -11585,6 +11835,12 @@ class _:
 # ==============================================================================
 #@ 10.4.2 Array Exotic Objects
 
+#> An object is an <dfn>Array exotic object</dfn> (or simply, an Array)
+#> if its [[DefineOwnProperty]] internal method uses the following implementation,
+#> and its other essential internal methods use the definitions found in
+#> <emu-xref href="#sec-ordinary-object-internal-methods-and-internal-slots"></emu-xref>.
+#> These methods are installed in ArrayCreate.
+
 @P("{VAL_DESC} : an Array")
 @P("{VAL_DESC} : an Array exotic object")
 class _:
@@ -11593,6 +11849,16 @@ class _:
 # ==============================================================================
 #@ 10.4.3 String Exotic Objects
 
+#> An object is a <dfn>String exotic object</dfn> (or simply, a String object)
+#> if its [[GetOwnProperty]], [[DefineOwnProperty]], and [[OwnPropertyKeys]] internal methods
+#> use the following implementations,
+#> and its other essential internal methods use the definitions found in
+#> <emu-xref href="#sec-ordinary-object-internal-methods-and-internal-slots"></emu-xref>.
+#> These methods are installed in StringCreate.
+#>
+#> String exotic objects have the same internal slots as ordinary objects.
+#> They also have a [[StringData]] internal slot.
+
 @P("{VAL_DESC} : a String exotic object")
 class _:
     s_tb = T_String_exotic_object_
@@ -11600,20 +11866,26 @@ class _:
 # ==============================================================================
 #@ 10.4.4 Arguments Exotic Objects
 
+#> An object is an <dfn>arguments exotic object</dfn>
+#> if its internal methods use the following implementations,
+#> with the ones not specified here using those found in
+#> <emu-xref href="#sec-ordinary-object-internal-methods-and-internal-slots"></emu-xref>.
+#> These methods are installed in CreateMappedArgumentsObject.
+
 @P("{VAL_DESC} : an arguments exotic object")
 class _:
     s_tb = a_subset_of(T_Object)
 
 set_up_internal_thing('slot', '[[ParameterMap]]', T_Object)
 
-# 10.4.4.{2,4}
+# for 10.4.4.{2,4}
 @P("{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
 
-    # 10.4.4.3
+# for 10.4.4.3
 @P("{CONDITION_1} : {var} contains a formal parameter mapping for {var}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11800,7 +12072,7 @@ class _:
         [] = cond.children
         return (env0, env0)
 
-# ------------------------------------------------
+# ------------------------------------------------------------------------------
 
 def is_strict(pnode):
     # {pnode} matches code that is contained in strict mode code iff:
@@ -11974,6 +12246,13 @@ def each_item_in_left_recursive_list(list_node):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 12 ECMAScript Language: Lexical Grammar
+
+#> The source text of an ECMAScript Script or Module
+#> is first converted into a sequence of input elements,
+#> which are tokens, line terminators, comments, or white space.
+#> The source text is scanned from left to right,
+#> repeatedly taking the longest possible sequence of code points
+#> as the next input element.
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 13 ECMAScript Language: Expressions
@@ -13631,6 +13910,15 @@ class _:
 # ==============================================================================
 #@ 27.1.1 Common Iteration Interfaces
 
+#> An interface is a set of property keys
+#> whose associated values match a specific specification.
+#> Any object that provides all the properties
+#> as described by an interface's specification
+#> <em>conforms</em> to that interface.
+#> An interface is not represented by a distinct object.
+#> There may be many separately implemented objects that conform to any interface.
+#> An individual object may conform to multiple interfaces.
+
 # ==============================================================================
 #@ 27.1.1.5 The <i>IteratorResult</i> Interface
 
@@ -13806,6 +14094,7 @@ class _:
         env_for_cond = env0.plus_new_entry(let_var, T_Shared_Data_Block_Event)
         return tc_cond(stcond, env_for_cond)
 
+# ------------------------------------------------------------------------------
 #> A <dfn>Synchronize event</dfn> has no fields,
 #> and exists purely to directly constrain the permitted orderings of other events.
 
@@ -13823,6 +14112,7 @@ class _:
 class _:
     s_tb = T_event_pair_
 
+# ------------------------------------------------------------------------------
 #> Let the range of
 #> a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
 #> be the Set of contiguous integers
