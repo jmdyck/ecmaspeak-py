@@ -1481,14 +1481,7 @@ def handle_emu_eqn(emu_eqn, section):
     assert emu_eqn.element_name == 'emu-eqn'
 
     aoid = emu_eqn.attrs['aoid']
-    if aoid in ['DateFromTime', 'WeekDay']:
-        assert 'id' not in emu_eqn.attrs
-    else:
-        id = emu_eqn.attrs['id']
-        if aoid == 'DayFromYear':
-            assert id == 'eqn-DaysFromYear' # "Day" vs "Days"
-        else:
-            assert id == 'eqn-' + aoid
+    assert emu_eqn.attrs['id'] == 'eqn-' + aoid
 
     tree = Pseudocode.parse(emu_eqn)
     if tree is None: return
@@ -1500,21 +1493,6 @@ def handle_emu_eqn(emu_eqn, section):
         [constant_name, dec_int_lit] = child.children[0:2]
         assert constant_name.source_text() == aoid
         # TODO: Define a constant named {aoid} defined by {dec_int_lit}
-
-    elif child.prod.lhs_s == '{OPERATION_DEF}':
-        [op_name, parameter, body] = child.children
-        assert op_name.source_text() == aoid
-        parameter_name = parameter.source_text()
-
-        alg_header = AlgHeader_make(
-            section = section,
-            species = 'op: singular',
-            name = aoid,
-            params = [ AlgParam(parameter_name, '', 'unknown') ],
-            node_at_end_of_header = emu_eqn,
-        )
-
-        AlgHeader_add_definition(alg_header, None, body)
 
     else:
         assert 0
@@ -3305,7 +3283,6 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
         assert anode.prod.lhs_s in [
             '{EE_RULE}',
             '{EXPR}',
-            '{RHSS}',
         ]
 
     else:
