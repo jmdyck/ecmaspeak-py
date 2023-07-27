@@ -6278,6 +6278,7 @@ def handle_completion_record_shorthand(operator, operand, env0):
                     '[[AsyncGeneratorState]]'   : T_AsyncGenerator_object_,
                     '[[Cells]]'                 : T_FinalizationRegistry_object_,
                     '[[DataView]]'              : T_Object,
+                    '[[DateValue]]'             : T_Object,
                     '[[GeneratorBrand]]'        : T_Object,
                     '[[GeneratorState]]'        : T_Object,
                     '[[MapData]]'               : T_Object,
@@ -12881,19 +12882,22 @@ class _:
 # ==============================================================================
 #@ 21.4.4 Properties of the Date Prototype Object
 
-@P("{EXPR} : this Date object")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_Object | ThrowCompletionType(T_TypeError), env0)
+# ==============================================================================
+#@ 21.4.4.36 Date.prototype.toISOString
 
-@P("{SETTABLE} : the {DSBN} internal slot of this Date object")
+@P('{CONDITION_1} : {var} corresponds with a year that cannot be represented in the {h_emu_xref}')
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, h_emu_xref] = cond.children
+        env0.assert_expr_is_of_type(var, T_IntegralNumber_ | T_NaN_Number_)
+        return (env0, env0)
+
+@P('{EXPR} : a String representation of {var} in the {h_emu_xref} on the UTC time scale, including all format elements and the UTC offset representation *"Z"*')
 class _:
     def s_expr(expr, env0, _):
-        [dsbn] = expr.children
-        dsbn_name = dsbn.source_text()
-        assert dsbn_name == '[[DateValue]]'
-        return (T_Number, env0)
+        [var, h_emu_xref] = expr.children
+        env0.assert_expr_is_of_type(var, T_IntegralNumber_ | T_NaN_Number_)
+        return (T_String, env0)
 
 # ==============================================================================
 #@ 21.4.4.41.2 DateString

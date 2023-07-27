@@ -556,6 +556,7 @@
     {var} contains any {nonterminal}
     {var} contains no duplicate entries
     {var} contains only single code points
+    {var} corresponds with a year that cannot be represented in the {h_emu_xref}
     {var} does not already have a binding for {var}
     {var} does not contain Type({TYPE_ARG})
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
@@ -711,6 +712,7 @@
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order
     a List whose sole element is {EX}
     a String in the form of a {var} equivalent to {var} interpreted as UTF-16 encoded Unicode code points ({h_emu_xref}), in which certain code points are escaped as described below. {var} may or may not differ from {var}; however, the Abstract Closure that would result from evaluating {var} as a {var} must behave identically to the Abstract Closure given by the constructed object's {DSBN} internal slot. Multiple calls to this abstract operation using the same values for {var} and {var} must produce identical results
+    a String representation of {var} in the {h_emu_xref} on the UTC time scale, including all format elements and the UTC offset representation *"Z"*
     a copy of the List {var}
     a copy of {EX}
     a new Data Block value consisting of {var} bytes. If it is impossible to create such a Data Block, throw a {ERROR_TYPE} exception
@@ -907,7 +909,6 @@
     the value that {var} corresponds to in {h_emu_xref}
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
-    this Date object
     {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {DEFVAR} is {EX}
@@ -1103,7 +1104,6 @@
     thisNumberValue
     thisStringValue
     thisSymbolValue
-    thisTimeValue
     truncate
     {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}
@@ -1174,7 +1174,6 @@
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the {DSBN} field of {EXPR}
-    the {DSBN} internal slot of this Date object
     the {EXECUTION_CONTEXT_COMPONENT} component of {var}
     the {EXECUTION_CONTEXT_COMPONENT} of the running execution context
     the {EXECUTION_CONTEXT_COMPONENT} of {var}
