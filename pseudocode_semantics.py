@@ -51,6 +51,8 @@ def prep_for_STA():
 
     shared.prep_for_line_info()
 
+    set_up_type_tweaks()
+
     for bif_or_op in ['bif', 'op']:
         for alg in spec.alg_info_[bif_or_op].values():
             # Ignore most headers in Annex B
@@ -585,19 +587,22 @@ class TypedAlgHeader:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-type_tweaks_tuples = [
-    ('MV'                                       , '*return*'               , T_TBD                 , T_MathInteger_),
-    ('PromiseResolve'                           , '_C_'                    , T_constructor_object_ , T_Object),
-]
 class TypeTweaks:
     def __init__(self):
         self.tweaks = []
         self.n_uses = 0
 
 type_tweaks_for_op_ = defaultdict(TypeTweaks)
-for tweak_tuple in type_tweaks_tuples:
-    [op_name, p_name, old_t, new_t] = tweak_tuple
-    type_tweaks_for_op_[op_name].tweaks.append( tweak_tuple )
+
+def set_up_type_tweaks():
+    type_tweaks_tuples = [
+        ('MV'                              , '*return*'        , T_TBD                , T_MathInteger_),
+        ('PromiseResolve'                  , '_C_'             , T_constructor_object_, T_Object),
+    ]
+
+    for tweak_tuple in type_tweaks_tuples:
+        [op_name, p_name, old_t, new_t] = tweak_tuple
+        type_tweaks_for_op_[op_name].tweaks.append( tweak_tuple )
 
 def print_unused_type_tweaks():
     f = shared.open_for_output('unused_type_tweaks')
