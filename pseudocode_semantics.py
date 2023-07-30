@@ -2198,84 +2198,87 @@ def set_up_declared_internal_methods_and_slots():
     # that are declared in tables in the spec.
     for emu_table in spec.doc_node.each_descendant_named('emu-table'):
         if 'Internal' in emu_table._caption:
-            if 'Internal Method' in emu_table._caption:
-                method_or_slot = 'method'
-            elif 'Internal Slot' in emu_table._caption:
-                method_or_slot = 'slot'
-            else:
-                assert 0, emu_table._caption
+            process_isom_table(emu_table)
 
-            assert (method_or_slot, emu_table._header_row.cell_texts) in [
-                ('method', ['Internal Method', 'Signature', 'Description']),
-                ('slot',   ['Internal Slot',   'Type',      'Description']),
-            ]
+# "isom" = "internal slot or method"
 
-            for row in emu_table._data_rows:
-                handle_internal_thing_declaration(method_or_slot, row)
-
-def handle_internal_thing_declaration(method_or_slot, row):
-    (thing_name, thing_nature, thing_desc) = row.cell_texts
-
-    if method_or_slot == 'method':
-
-        # The 'declarations' for the essential internal methods
-        # don't use the same "type" phrasing used everywhere else,
-        # so we need an ad hoc conversion function:
-        def internal_method_nature_to_type(nature):
-            return {
-                'Boolean'                        : T_Boolean,
-                'Object'                         : T_Object,
-                'Object | Null'                  : T_Object | T_Null,
-                'Undefined | Property Descriptor': T_Undefined | T_Property_Descriptor,
-                '_PropertyDescriptor_'           : T_Property_Descriptor,
-                '_Receiver_'                     : T_Tangible_,
-                '_propertyKey_'                  : T_String | T_Symbol,
-                '_value_'                        : T_Tangible_,
-                '<em>any</em>'                   : T_Tangible_,
-                'a List of <em>any</em>'         : ListType(T_Tangible_),
-                'List of property keys'          : ListType(T_String | T_Symbol),
-            }[nature]
-
-        (param_natures, return_nature) = re.fullmatch(r'\((.+)\) <b>\u2192</b> (.+)', thing_nature).groups()
-
-        if param_natures == ' ':
-            param_types = []
-        else:
-            param_types = [
-                internal_method_nature_to_type(param_nature)
-                for param_nature in param_natures.split(', ')
-            ]
-
-        return_type = internal_method_nature_to_type(return_nature)
-        #> An internal method implicitly returns a Completion Record,
-        #> either a normal completion that wraps
-        #> a value of the return type shown in its invocation pattern,
-        #> or a throw completion.
-        return_type = NormalCompletionType(return_type) | T_throw_completion
-
-        t = ProcType(tuple(param_types), return_type)
-
-    elif method_or_slot == 'slot':
-        field_value_type = row.cell_nodes[1]._syntax_tree
-        value_description = field_value_type.children[0]
-        t = convert_nature_node_to_type(value_description)
-
-        if thing_name in ['[[PromiseFulfillReactions]]', '[[PromiseRejectReactions]]']:
-            assert row.cell_texts[1] == 'a List of PromiseReaction Records'
-            assert t == ListType(T_PromiseReaction_Record)
-            # But there are steps (in FulfillPromise and RejectPromise)
-            # that explicitly set these slots to *undefined*.
-            t |= T_Undefined
-            # (Might be worth a PR.)
-
-        # Module Namespace Exotic Object's [[Module]] slot:
-        # it's declared as "a Module Record",
-        # but should it be "a Cyclic Module Record"?
-
+def process_isom_table(emu_table):
+    cap = emu_table._caption
+    if 'Internal Method' in cap:
+        method_or_slot = 'method'
+    elif 'Internal Slot' in cap:
+        method_or_slot = 'slot'
     else:
-        assert 0, method_or_slot
+        assert 0, cap
 
-    set_up_internal_thing(method_or_slot, thing_name, t)
+    assert (method_or_slot, emu_table._header_row.cell_texts) in [
+        ('method', ['Internal Method', 'Signature', 'Description']),
+        ('slot',   ['Internal Slot',   'Type',      'Description']),
+    ]
+
+    for row in emu_table._data_rows:
+        (isom_name, isom_nature, isom_desc) = row.cell_texts
+
+        if method_or_slot == 'method':
+
+            # The 'declarations' for the essential internal methods
+            # don't use the same "type" phrasing used everywhere else,
+            # so we need an ad hoc conversion function:
+            def internal_method_nature_to_type(nature):
+                return {
+                    'Boolean'                        : T_Boolean,
+                    'Object'                         : T_Object,
+                    'Object | Null'                  : T_Object | T_Null,
+                    'Undefined | Property Descriptor': T_Undefined | T_Property_Descriptor,
+                    '_PropertyDescriptor_'           : T_Property_Descriptor,
+                    '_Receiver_'                     : T_Tangible_,
+                    '_propertyKey_'                  : T_String | T_Symbol,
+                    '_value_'                        : T_Tangible_,
+                    '<em>any</em>'                   : T_Tangible_,
+                    'a List of <em>any</em>'         : ListType(T_Tangible_),
+                    'List of property keys'          : ListType(T_String | T_Symbol),
+                }[nature]
+
+            (param_natures, return_nature) = re.fullmatch(r'\((.+)\) <b>\u2192</b> (.+)', isom_nature).groups()
+
+            if param_natures == ' ':
+                param_types = []
+            else:
+                param_types = [
+                    internal_method_nature_to_type(param_nature)
+                    for param_nature in param_natures.split(', ')
+                ]
+
+            return_type = internal_method_nature_to_type(return_nature)
+            #> An internal method implicitly returns a Completion Record,
+            #> either a normal completion that wraps
+            #> a value of the return type shown in its invocation pattern,
+            #> or a throw completion.
+            return_type = NormalCompletionType(return_type) | T_throw_completion
+
+            t = ProcType(tuple(param_types), return_type)
+
+        elif method_or_slot == 'slot':
+            field_value_type = row.cell_nodes[1]._syntax_tree
+            value_description = field_value_type.children[0]
+            t = convert_nature_node_to_type(value_description)
+
+            if isom_name in ['[[PromiseFulfillReactions]]', '[[PromiseRejectReactions]]']:
+                assert row.cell_texts[1] == 'a List of PromiseReaction Records'
+                assert t == ListType(T_PromiseReaction_Record)
+                # But there are steps (in FulfillPromise and RejectPromise)
+                # that explicitly set these slots to *undefined*.
+                t |= T_Undefined
+                # (Might be worth a PR.)
+
+            # Module Namespace Exotic Object's [[Module]] slot:
+            # it's declared as "a Module Record",
+            # but should it be "a Cyclic Module Record"?
+
+        else:
+            assert 0, method_or_slot
+
+        set_up_internal_thing(method_or_slot, isom_name, t)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
