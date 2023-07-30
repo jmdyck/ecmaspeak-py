@@ -1764,6 +1764,7 @@ def type_bracket_for(vd, env):
     elif len(result) == 2:
         assert isinstance(result[0], Type)
         assert isinstance(result[1], Type)
+        assert result[0].is_a_subtype_of_or_equal_to(result[1])
         type_bracket = result
     else:
         assert 0, result
