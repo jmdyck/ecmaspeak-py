@@ -5552,6 +5552,16 @@ class _:
 
         elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
+            callee_op = spec.alg_info_['op'][callee_op_name]
+            if callee_op.species == 'op: discriminated by syntax: steps':
+                add_pass_error(
+                    expr,
+                    "Unusual to invoke a SDO via prefix-paren notation: " + expr.source_text()
+                )
+                assert len(args) == 1
+                return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
+
+            assert callee_op.species.startswith('op: singular'), callee_op.species
 
             # NormalCompletion and ThrowCompletion are regular abstract operations now,
             # so you might expect that we'd use their deduced return types.
@@ -5682,16 +5692,6 @@ class _:
             # ---------------
 
             else:
-                callee_op = spec.alg_info_['op'][callee_op_name]
-                if callee_op.species == 'op: discriminated by syntax: steps':
-                    add_pass_error(
-                        expr,
-                        "Unusual to invoke a SDO via prefix-paren notation: " + expr.source_text()
-                    )
-                    assert len(args) == 1
-                    return tc_sdo_invocation(callee_op_name, args[0], [], expr, env0)
-                else:
-                    assert callee_op.species.startswith('op: singular'), callee_op.species
                 params = callee_op.parameters_with_types
                 return_type = callee_op.return_type
                 # fall through to tc_args etc
