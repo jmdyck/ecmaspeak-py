@@ -5495,6 +5495,9 @@ class _:
             params = with_fake_param_names(t.param_types)
             return_type = t.return_type
 
+            env2 = tc_args(params, args, env0, expr)
+            return (return_type, env2)
+
         elif opn_before_paren.prod.rhs_s == r'{var}.{cap_word}':
             [var, cap_word] = opn_before_paren.children
             callee_op_name = cap_word.source_text()
@@ -5538,6 +5541,9 @@ class _:
 
             params = callee_op.parameters_with_types
             return_type = callee_op.return_type
+
+            env2 = tc_args(params, args, env0, expr)
+            return (return_type, env2)
 
         elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
@@ -5752,12 +5758,11 @@ class _:
                         else:
                             assert 0, memtype
 
+            env2 = tc_args(params, args, env0, expr)
+            return (return_type, env2)
+
         else:
             assert 0, opn_before_paren.prod.rhs_s
-
-        # context = 'in call to `%s`' % opn_before_paren.source_text()
-        env2 = tc_args(params, args, env0, expr)
-        return (return_type, env2)
 
     def d_exec(expr):
         [opn_before_paren, exlist_opt] = expr.children
