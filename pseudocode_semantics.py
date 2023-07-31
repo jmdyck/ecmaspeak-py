@@ -1964,55 +1964,47 @@ def tc_ao_invocation(callee_op_name, args, expr, env0):
     return (return_type, env1)
 
 def tc_invocation_of_singular_op(callee_op, args, expr, env0):
-    callee_op_name = callee_op.name
+    params = callee_op.parameters_with_types
+    (arg_types, env1) = tc_args(params, args, env0, expr)
 
-    # NormalCompletion and ThrowCompletion are regular abstract operations now,
-    # so you might expect that we'd use their deduced return types.
-    # However, that would lose information, so we don't.
+    return_type = callee_op.return_type
+
+    # In most cases, the type of this invocation
+    # is simply the operation's declared return-type.
+    # 
+    # However, in some cases, we can infer a more precise type
+    # based on the specifics of an argument.
+
+    callee_op_name = callee_op.name
 
     # 5.2.3.1 Completion
     if callee_op_name == 'Completion':
         assert len(args) == 1
-        [arg] = args
-        (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
-        return (return_type, env1)
+        [arg_type] = arg_types
+        return_type = arg_type
 
     # 6.2.4.1 NormalCompletion
     elif callee_op_name == 'NormalCompletion':
         assert len(args) == 1
-        [arg] = args
-        (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+        [arg_type] = arg_types
         assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
         return_type = NormalCompletionType(arg_type)
-        return (return_type, env0)
-        # don't call tc_args etc
 
     # 6.2.4.2 ThrowCompletion
     elif callee_op_name == 'ThrowCompletion':
         assert len(args) == 1
-        [arg] = args
-        (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+        [arg_type] = arg_types
         if arg_type == T_TBD: arg_type = T_Normal
         assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
         return_type = ThrowCompletionType(arg_type)
-        return (return_type, env0)
-
-    # ---------------
-
-    params = callee_op.parameters_with_types
-    return_type = callee_op.return_type
-    # fall through to tc_args etc
-
-    # if callee_op_name == 'ResolveBinding': pdb.set_trace()
 
     # 7.1.5 ToIntegerOrInfinity
-    if callee_op_name == 'ToIntegerOrInfinity':
+    elif callee_op_name == 'ToIntegerOrInfinity':
         assert return_type == NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
         # but we can be more precise in some cases
 
         assert len(args) == 1
-        [arg] = args
-        (arg_type, env1) = tc_expr(arg, env0); assert env1 is env0
+        [arg_type] = arg_types
 
         return_type = T_0
         for memtype in arg_type.set_of_types():
@@ -2070,12 +2062,14 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         # so the '?' should actually be '!', but that's a separate problem.)
         #
         assert len(args) == 2
-        [_, cr_arg] = args
-        (cr_arg_type, _) = tc_expr(cr_arg, env0)
+        [_, cr_arg_type] = arg_types
         return_type = T_throw_completion | cr_arg_type
 
-    (_, env2) = tc_args(params, args, env0, expr)
-    return (return_type, env2)
+    else:
+        # Just use {return_type}.
+        pass
+
+    return (return_type, env1)
 
 # ------------------------------------------------------------------------------
 
