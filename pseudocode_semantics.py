@@ -1970,7 +1970,15 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
     # so you might expect that we'd use their deduced return types.
     # However, that would lose information, so we don't.
 
-    if callee_op_name == 'NormalCompletion':
+    # 5.2.3.1 Completion
+    if callee_op_name == 'Completion':
+        assert len(args) == 1
+        [arg] = args
+        (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
+        return (return_type, env1)
+
+    # 6.2.4.1 NormalCompletion
+    elif callee_op_name == 'NormalCompletion':
         assert len(args) == 1
         [arg] = args
         (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
@@ -1979,6 +1987,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         return (return_type, env0)
         # don't call tc_args etc
 
+    # 6.2.4.2 ThrowCompletion
     elif callee_op_name == 'ThrowCompletion':
         assert len(args) == 1
         [arg] = args
@@ -1988,12 +1997,6 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         return_type = ThrowCompletionType(arg_type)
         return (return_type, env0)
 
-    elif callee_op_name == 'Completion':
-        assert len(args) == 1
-        [arg] = args
-        (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
-        return (return_type, env1)
-
     # ---------------
 
     params = callee_op.parameters_with_types
@@ -2002,7 +2005,46 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
 
     # if callee_op_name == 'ResolveBinding': pdb.set_trace()
 
-    if callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
+    # 7.1.5 ToIntegerOrInfinity
+    if callee_op_name == 'ToIntegerOrInfinity':
+        assert return_type == NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
+        # but we can be more precise in some cases
+
+        assert len(args) == 1
+        [arg] = args
+        (arg_type, env1) = tc_expr(arg, env0); assert env1 is env0
+
+        return_type = T_0
+        for memtype in arg_type.set_of_types():
+            if memtype in [T_Tangible_, T_Object]:
+                return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
+            elif memtype in [T_Number, T_String]:
+                return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
+            elif memtype in [T_Boolean, T_Null, T_NaN_Number_, T_FiniteNumber_]:
+                return_type |= NormalCompletionType(T_MathInteger_)
+            elif memtype == T_NegInfinityNumber_:
+                return_type |= NormalCompletionType(T_MathNegInfinity_)
+            elif memtype == T_PosInfinityNumber_:
+                return_type |= NormalCompletionType(T_MathPosInfinity_)
+            elif memtype in [T_Symbol, T_BigInt]:
+                return_type |= T_throw_completion
+            elif memtype == T_not_passed:
+                pass
+            else:
+                assert 0, memtype
+
+    # 7.3.20 CreateListFromArrayLike
+    elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
+        # The second arg is a list of ES language type names
+        # that constrains the return type.
+        assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
+        types_arg = args[1]
+        assert types_arg.source_text() == '« String, Symbol »'
+        return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
+
+    # 7.4.8 IteratorClose
+    # 7.4.10 AsyncIteratorClose
+    elif callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
         assert return_type == T_Completion_Record
         # but we can be more specific.
         # And we need to be more specific to avoid some complaints.
@@ -2031,41 +2073,6 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         [_, cr_arg] = args
         (cr_arg_type, _) = tc_expr(cr_arg, env0)
         return_type = T_throw_completion | cr_arg_type
-
-    elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
-        # The second arg is a list of ES language type names
-        # that constrains the return type.
-        assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
-        types_arg = args[1]
-        assert types_arg.source_text() == '« String, Symbol »'
-        return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
-
-    elif callee_op_name == 'ToIntegerOrInfinity':
-        assert return_type == NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
-        # but we can be more precise in some cases
-
-        assert len(args) == 1
-        [arg] = args
-        (arg_type, env1) = tc_expr(arg, env0); assert env1 is env0
-
-        return_type = T_0
-        for memtype in arg_type.set_of_types():
-            if memtype in [T_Tangible_, T_Object]:
-                return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
-            elif memtype in [T_Number, T_String]:
-                return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
-            elif memtype in [T_Boolean, T_Null, T_NaN_Number_, T_FiniteNumber_]:
-                return_type |= NormalCompletionType(T_MathInteger_)
-            elif memtype == T_NegInfinityNumber_:
-                return_type |= NormalCompletionType(T_MathNegInfinity_)
-            elif memtype == T_PosInfinityNumber_:
-                return_type |= NormalCompletionType(T_MathPosInfinity_)
-            elif memtype in [T_Symbol, T_BigInt]:
-                return_type |= T_throw_completion
-            elif memtype == T_not_passed:
-                pass
-            else:
-                assert 0, memtype
 
     (_, env2) = tc_args(params, args, env0, expr)
     return (return_type, env2)
