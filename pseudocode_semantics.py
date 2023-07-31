@@ -1959,7 +1959,7 @@ def tc_ao_invocation(callee_op_name, args, expr, env0):
     callee_op = spec.alg_info_['op'][callee_op_name]
     assert callee_op.species == 'op: singular'
     params = callee_op.parameters_with_types
-    env1 = tc_args(params, args, env0, expr)
+    (_, env1) = tc_args(params, args, env0, expr)
     return_type = callee_op.return_type
     return (return_type, env1)
 
@@ -2068,7 +2068,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
                 else:
                     assert 0, memtype
 
-    env2 = tc_args(params, args, env0, expr)
+    (_, env2) = tc_args(params, args, env0, expr)
     return (return_type, env2)
 
 # ------------------------------------------------------------------------------
@@ -2080,7 +2080,7 @@ def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
     env1 = env0.ensure_expr_is_of_type(main_arg, T_Parse_Node)
     # XXX expectation should be specific to what the callee accepts
 
-    env2 = tc_args(op.parameters_with_types, other_args, env1, context)
+    (_, env2) = tc_args(op.parameters_with_types, other_args, env1, context)
 
     # seed:
     # if op_name == 'Evaluation': return (T_Tangible_, env0)
@@ -2134,6 +2134,8 @@ def type_corresponding_to_comptype_literal(comptype_literal):
 
 def tc_args( params, args, env0, context ):
     assert len(args) <= len(params)
+
+    arg_types = []
     out_env = env0
     for ((param_name, param_type), arg) in zip_longest(params, args):
 
@@ -2157,6 +2159,7 @@ def tc_args( params, args, env0, context ):
                 )
         else:
             (arg_type, env1) = tc_expr(arg, env0)
+            arg_types.append(arg_type)
 
             pt = passed_part_of_param_type
 
@@ -2209,7 +2212,7 @@ def tc_args( params, args, env0, context ):
 
             out_env = env_and(out_env, env2)
 
-    return out_env
+    return (arg_types, out_env)
 
 # ------------------------------------------------------------------------------
 
@@ -2359,7 +2362,7 @@ def tc_invocation_of_record_method(record_var, method_name_capword, args, contex
     params = callee_op.parameters_with_types
     return_type = callee_op.return_type
 
-    env2 = tc_args(params, args, env0, context)
+    (_, env2) = tc_args(params, args, env0, context)
     return (return_type, env2)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -5655,7 +5658,7 @@ class _:
             params = with_fake_param_names(t.param_types)
             return_type = t.return_type
 
-            env2 = tc_args(params, args, env0, expr)
+            (_, env2) = tc_args(params, args, env0, expr)
             return (return_type, env2)
 
         elif opn_before_paren.prod.rhs_s == r'{var}.{cap_word}':
