@@ -2202,6 +2202,54 @@ def find_record_types_with_fields(field_names):
     field_names_str = ', '.join(sorted(field_names))
     return record_type_with_fields_[field_names_str]
 
+# ------------------------------------------------------------------------------
+
+def tc_invocation_of_record_method(record_var, method_name_capword, args, context, env0):
+    method_name = method_name_capword.source_text()
+
+    callee_op = spec.alg_info_['op'][method_name]
+    assert callee_op.species in [
+        'op: discriminated by type: env rec',
+        'op: discriminated by type: module rec',
+    ]
+
+    base_schema_name = {
+        'op: discriminated by type: env rec'   : 'Environment Record',
+        'op: discriminated by type: module rec': 'Module Record'
+    }[callee_op.species]
+
+    base_record_schema = spec.RecordSchema_for_name_[base_schema_name]
+
+    def each_record_schema_that_declares_op(rs):
+        if method_name in rs.addl_method_decls:
+            yield rs
+            # And don't go any deeper.
+            # (In practice, going deeper wouldn't yield any more results,
+            # because there's no point re-declaring a method at a deeper level.
+            # So this is just an optimization.)
+        else:
+            # {method_name} is not declared for {rs},
+            # but it might be declared for one or more sub-schemas.
+            for child_rs in rs.sub_schemas:
+                yield from each_record_schema_that_declares_op(child_rs)
+
+    forp_types = [
+        HierType(rs.tc_schema_name)
+        for rs in each_record_schema_that_declares_op(base_record_schema)
+    ]
+    assert forp_types
+    # TODO: This could be pre-computed, put in callee_op.
+
+    union_of_forp_types = union_of_types(forp_types)
+
+    env0 = env0.ensure_expr_is_of_type(record_var, union_of_forp_types)
+
+    params = callee_op.parameters_with_types
+    return_type = callee_op.return_type
+
+    env2 = tc_args(params, args, env0, context)
+    return (return_type, env2)
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 type_of_internal_thing_ = {}
@@ -5500,50 +5548,7 @@ class _:
 
         elif opn_before_paren.prod.rhs_s == r'{var}.{cap_word}':
             [var, cap_word] = opn_before_paren.children
-            callee_op_name = cap_word.source_text()
-
-            callee_op = spec.alg_info_['op'][callee_op_name]
-            assert callee_op.species in [
-                'op: discriminated by type: env rec',
-                'op: discriminated by type: module rec',
-            ]
-
-            base_schema_name = {
-                'op: discriminated by type: env rec'   : 'Environment Record',
-                'op: discriminated by type: module rec': 'Module Record'
-            }[callee_op.species]
-
-            base_record_schema = spec.RecordSchema_for_name_[base_schema_name]
-
-            def each_record_schema_that_declares_op(rs):
-                if callee_op_name in rs.addl_method_decls:
-                    yield rs
-                    # And don't go any deeper.
-                    # (In practice, going deeper wouldn't yield any more results,
-                    # because there's no point re-declaring a method at a deeper level.
-                    # So this is just an optimization.)
-                else:
-                    # callee_op_name is not declared for {rs},
-                    # but it might be declared for one or more sub-schemas.
-                    for child_rs in rs.sub_schemas:
-                        yield from each_record_schema_that_declares_op(child_rs)
-
-            forp_types = [
-                HierType(rs.tc_schema_name)
-                for rs in each_record_schema_that_declares_op(base_record_schema)
-            ]
-            assert forp_types
-            # TODO: This could be pre-computed, put in callee_op.
-
-            union_of_forp_types = union_of_types(forp_types)
-
-            env0 = env0.ensure_expr_is_of_type(var, union_of_forp_types)
-
-            params = callee_op.parameters_with_types
-            return_type = callee_op.return_type
-
-            env2 = tc_args(params, args, env0, expr)
-            return (return_type, env2)
+            return tc_invocation_of_record_method(var, cap_word, args, expr, env0)
 
         elif opn_before_paren.prod.rhs_s == '{SIMPLE_OPERATION_NAME}':
             callee_op_name = opn_before_paren.source_text()
