@@ -5563,6 +5563,14 @@ class _:
 
             assert callee_op.species.startswith('op: singular'), callee_op.species
 
+            if callee_op.headers == []:
+                # The spec (probably) defines this operation,
+                # but in way that isn't amenable to processing.
+                # In particular, we don't have a structured header
+                # that would give the parameter-type(s) and return-type.
+                # So we basically have to hard-code the analysis for each operation.
+                return tc_invocation_of_ad_hoc_op(callee_op_name, args, env0)
+
             # NormalCompletion and ThrowCompletion are regular abstract operations now,
             # so you might expect that we'd use their deduced return types.
             # However, that would lose information, so we don't.
@@ -5590,104 +5598,6 @@ class _:
                 [arg] = args
                 (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
                 return (return_type, env1)
-
-            elif callee_op_name == 'abs':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                if arg_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
-                    return (T_MathInteger_, env0)
-                elif arg_type.is_a_subtype_of_or_equal_to(T_MathReal_):
-                    return (T_MathReal_, env0)
-                else:
-                    add_pass_error(
-                        arg,
-                        f"expected a MathReal, got {arg_type}"
-                    )
-                    return (T_MathReal_, env0)
-
-            elif callee_op_name in ['floor', 'truncate']:
-                assert len(args) == 1
-                [arg] = args
-                env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
-                return (T_MathInteger_, env1)
-
-            elif callee_op_name == '\u211d': # DOUBLE-STRUCK CAPITAL R (fancy_r)
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0)
-                if arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_IntegralNumber_):
-                    return (T_MathInteger_, arg_env)
-                elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
-                    return (T_MathReal_, env0)
-                else:
-                    add_pass_error(
-                        arg,
-                        f"expected a BigInt or a finite Number, got {arg_type}"
-                    )
-                    return (T_ExtendedMathReal_, env0)
-
-            elif callee_op_name == '\u2124': # DOUBLE-STRUCK CAPITAL Z (fancy_z)
-                assert len(args) == 1
-                [arg] = args
-                env0.assert_expr_is_of_type(arg, T_MathInteger_)
-                return (T_BigInt, env0)
-
-            elif callee_op_name == '\U0001d53d': # MATHEMATICAL DOUBLE-STRUCK CAPITAL F (fancy_f)
-                assert len(args) == 1
-                [arg] = args
-                (t, env1) = tc_expr(arg, env0)
-                if t.is_a_subtype_of_or_equal_to(T_MathInteger_):
-                    result_type = T_IntegralNumber_
-                elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
-                    result_type = T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
-                elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-                    result_type = T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
-                elif t == T_TBD:
-                    result_type = T_IntegralNumber_ # hm
-                else:
-                    add_pass_error(arg,
-                        f"ERROR: arg is of type {t} but fancy_f requires ExtendedMathReal"
-                    )
-                    result_type = T_Number
-                return (result_type, env1)
-
-            elif callee_op_name in ['min', 'max']:
-                assert len(args) == 2
-                env1 = env0
-                argtypes = []
-                for arg in args:
-                    (t, env1) = tc_expr(arg, env1)
-                    if not t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
-                        add_pass_error(arg,
-                            f"arg is of type {t} but param requires ExtendedMathReal"
-                        )
-                        if t == T_MathInteger_ | T_tilde_empty_:
-                            # InnerModuleEvaluation
-                            t = T_MathInteger_
-                    argtypes.append(t)
-
-                if callee_op_name == 'min':
-                    # We allow an arg to be +infinity, but that won't be the result.
-                    # (As long as both args aren't +infinity.)
-                    add_type = T_MathPosInfinity_
-                else:
-                    add_type = T_MathNegInfinity_
-
-                for math_type in [T_MathInteger_, T_MathReal_, T_ExtendedMathReal_]:
-                    if all(
-                        t.is_a_subtype_of_or_equal_to(math_type | add_type)
-                        for t in argtypes
-                    ):
-                        return (math_type, env1)
-                assert 0
-                return (T_ExtendedMathReal_, env1)
-
-            elif callee_op_name == 'scf':
-                assert len(args) == 1
-                [arg] = args
-                env0.assert_expr_is_of_type(arg, T_code_point_)
-                return (T_code_point_, env0)
 
             # ---------------
 
@@ -7335,6 +7245,124 @@ def _(mathnum):
 #> are not defined for Numbers and BigInts,
 #> and any usage of those methods that have non-mathematical value arguments
 #> would be an editorial error in this specification.
+
+# ------------------------------------------------------------------------------
+
+def tc_invocation_of_ad_hoc_op(callee_op_name, args, env0):
+    # These cases should maybe be farmed out to a DecoratedFuncDict,
+    # so that they can be slotted in at the exact right spot.
+    # (Combine it with predefined_operations.)
+    # However, most of them are numeric operations,
+    # so this is close enough for now.
+
+    if callee_op_name == '𝔽': # U+1d53d MATHEMATICAL DOUBLE-STRUCK CAPITAL F (fancy_f)
+        # mathematical to Number
+        assert len(args) == 1
+        [arg] = args
+        (t, env1) = tc_expr(arg, env0)
+        if t.is_a_subtype_of_or_equal_to(T_MathInteger_):
+            result_type = T_IntegralNumber_
+        elif t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_):
+            result_type = T_IntegralNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
+        elif t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+            result_type = T_FiniteNumber_ | T_NegInfinityNumber_ | T_PosInfinityNumber_
+        elif t == T_TBD:
+            result_type = T_IntegralNumber_ # hm
+        else:
+            add_pass_error(arg,
+                f"ERROR: arg is of type {t} but fancy_f requires ExtendedMathReal"
+            )
+            result_type = T_Number
+        return (result_type, env1)
+
+    elif callee_op_name == 'ℤ': # U+2124 DOUBLE-STRUCK CAPITAL Z (fancy_z)
+        # mathematical to BigInt
+        assert len(args) == 1
+        [arg] = args
+        env0.assert_expr_is_of_type(arg, T_MathInteger_)
+        return (T_BigInt, env0)
+
+    elif callee_op_name == 'ℝ': # U+211d DOUBLE-STRUCK CAPITAL R (fancy_r)
+        # Number/BigInt to mathematical
+        assert len(args) == 1
+        [arg] = args
+        (arg_type, arg_env) = tc_expr(arg, env0)
+        if arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_IntegralNumber_):
+            return (T_MathInteger_, arg_env)
+        elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
+            return (T_MathReal_, env0)
+        else:
+            add_pass_error(
+                arg,
+                f"expected a BigInt or a finite Number, got {arg_type}"
+            )
+            return (T_ExtendedMathReal_, env0)
+
+    # ----------------------------------------------------------------
+
+    elif callee_op_name == 'abs':
+        assert len(args) == 1
+        [arg] = args
+        (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+        if arg_type.is_a_subtype_of_or_equal_to(T_MathInteger_):
+            return (T_MathInteger_, env0)
+        elif arg_type.is_a_subtype_of_or_equal_to(T_MathReal_):
+            return (T_MathReal_, env0)
+        else:
+            add_pass_error(
+                arg,
+                f"expected a MathReal, got {arg_type}"
+            )
+            return (T_MathReal_, env0)
+
+    elif callee_op_name in ['min', 'max']:
+        assert len(args) == 2
+        env1 = env0
+        argtypes = []
+        for arg in args:
+            (t, env1) = tc_expr(arg, env1)
+            if not t.is_a_subtype_of_or_equal_to(T_ExtendedMathReal_):
+                add_pass_error(arg,
+                    f"arg is of type {t} but param requires ExtendedMathReal"
+                )
+                if t == T_MathInteger_ | T_tilde_empty_:
+                    # InnerModuleEvaluation
+                    t = T_MathInteger_
+            argtypes.append(t)
+
+        if callee_op_name == 'min':
+            # We allow an arg to be +infinity, but that won't be the result.
+            # (As long as both args aren't +infinity.)
+            add_type = T_MathPosInfinity_
+        else:
+            add_type = T_MathNegInfinity_
+
+        for math_type in [T_MathInteger_, T_MathReal_, T_ExtendedMathReal_]:
+            if all(
+                t.is_a_subtype_of_or_equal_to(math_type | add_type)
+                for t in argtypes
+            ):
+                return (math_type, env1)
+        assert 0
+        return (T_ExtendedMathReal_, env1)
+
+    elif callee_op_name in ['floor', 'truncate']:
+        assert len(args) == 1
+        [arg] = args
+        env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
+        return (T_MathInteger_, env1)
+
+    # ----------------------------------------------------------------
+
+    # defined in 22.2.2.9.5 MaybeSimpleCaseFolding
+    elif callee_op_name == 'scf':
+        assert len(args) == 1
+        [arg] = args
+        env0.assert_expr_is_of_type(arg, T_code_point_)
+        return (T_code_point_, env0)
+
+    else:
+        assert 0, callee_op_name
 
 # ------------------------------------------------------------------------------
 #> An <dfn>interval</dfn> from lower bound _a_ to upper bound _b_
