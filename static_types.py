@@ -925,7 +925,24 @@ _named_type_hierarchy = {
                     'function_object_': {
                         'ECMAScript_function_object_': {},
 
-                        'constructor_object_': {}, # XXX This is actually orthogonal to Proxy/Bound/other
+                        'built_in_function_object_': {},
+                        # The spec allows a built-in function to be implemented
+                        # as an ECMAScript function object or not.
+                        # I.e., you can have an object that is *both*
+                        # an ECMAScript function object and a built-in function object.
+                        #
+                        # However, the spec never focuses on such an object,
+                        # or on an ES function that isn't a built-in function,
+                        # or on a built-in function that isn't an ES function.
+                        #
+                        # So for the purposes of static analysis,
+                        # it works to treat them as mutually exclusive.
+                        #
+                        # (There's editorial desire to eliminate that choice,
+                        # or at least, eliminate the spec's mentioning/stressing that choice,
+                        # at which point I can probably delete this comment.
+
+                        'constructor_object_': {}, # XXX This is actually orthogonal to ECMAScript/built-in/Proxy/Bound/other
                         'Proxy_exotic_object_': {},
                         'bound_function_exotic_object_': {},
                         'other_function_object_': {},

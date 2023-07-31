@@ -599,6 +599,8 @@ def set_up_type_tweaks():
         ('MV'                              , '*return*'        , T_TBD                , T_MathInteger_),
         ('PromiseResolve'                  , '_C_'             , T_constructor_object_, T_Object),
 
+        ('CreateBuiltinFunction'           , '*return*'        , T_function_object_, T_built_in_function_object_),
+
         ('OrdinaryFunctionCreate'          , '*return*'        , T_function_object_, T_ECMAScript_function_object_),
         ('PrepareForOrdinaryCall'          , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
         ('OrdinaryCallBindThis'            , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
@@ -613,6 +615,11 @@ def set_up_type_tweaks():
         ('EvaluateClassStaticBlockBody'    , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
         ('FunctionDeclarationInstantiation', '_func_'          , T_function_object_, T_ECMAScript_function_object_),
 
+        ('ClassDefinitionEvaluation',
+            '*return*',
+            NormalCompletionType(T_function_object_)            | T_abrupt_completion, 
+            NormalCompletionType(T_ECMAScript_function_object_ | T_built_in_function_object_) | T_abrupt_completion
+        ),
         ('DefineMethod',
             '*return*',
             NormalCompletionType(RecordType('', (('[[Key]]', T_String | T_Symbol), ('[[Closure]]', T_function_object_)))) | T_abrupt_completion,
@@ -11782,7 +11789,7 @@ set_up_internal_thing('slot', '[[InitialName]]', T_Null | T_String)
 
 @P("{VAL_DESC} : a built-in function object")
 class _:
-    s_tb = a_subset_of(T_function_object_)
+    s_tb = T_built_in_function_object_
 
 @P("{EX} : *this* value")
 @P("{EX} : the *this* value")
@@ -11853,7 +11860,7 @@ class _:
         [var1, var2, var3, dsbn] = expr.children
         env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
         # env1 = env0.ensure_expr_is_of_type(var2, )
-        return (T_function_object_, env1)
+        return (T_built_in_function_object_, env1)
 
 # ==============================================================================
 #@ 10.4.1 Bound Function Exotic Objects
