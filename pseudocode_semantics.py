@@ -1953,6 +1953,8 @@ def exes_in_exlist(exlist):
             assert 0
     return exes
 
+# ------------------------------------------------------------------------------
+
 def tc_ao_invocation(callee_op_name, args, expr, env0):
     callee_op = spec.alg_info_['op'][callee_op_name]
     assert callee_op.species == 'op: singular'
@@ -1960,6 +1962,116 @@ def tc_ao_invocation(callee_op_name, args, expr, env0):
     env1 = tc_args(params, args, env0, expr)
     return_type = callee_op.return_type
     return (return_type, env1)
+
+def tc_invocation_of_singular_op(callee_op, args, expr, env0):
+    callee_op_name = callee_op.name
+
+    # NormalCompletion and ThrowCompletion are regular abstract operations now,
+    # so you might expect that we'd use their deduced return types.
+    # However, that would lose information, so we don't.
+
+    if callee_op_name == 'NormalCompletion':
+        assert len(args) == 1
+        [arg] = args
+        (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+        assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
+        return_type = NormalCompletionType(arg_type)
+        return (return_type, env0)
+        # don't call tc_args etc
+
+    elif callee_op_name == 'ThrowCompletion':
+        assert len(args) == 1
+        [arg] = args
+        (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
+        if arg_type == T_TBD: arg_type = T_Normal
+        assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
+        return_type = ThrowCompletionType(arg_type)
+        return (return_type, env0)
+
+    elif callee_op_name == 'Completion':
+        assert len(args) == 1
+        [arg] = args
+        (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
+        return (return_type, env1)
+
+    # ---------------
+
+    else:
+        params = callee_op.parameters_with_types
+        return_type = callee_op.return_type
+        # fall through to tc_args etc
+
+        # if callee_op_name == 'ResolveBinding': pdb.set_trace()
+
+        if callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
+            assert return_type == T_Completion_Record
+            # but we can be more specific.
+            # And we need to be more specific to avoid some complaints.
+            #
+            # E.g., Promise.all has roughly:
+            #     8. If _result_ is an abrupt completion, then
+            #       a. ... set _result_ to Completion(IteratorClose(_, _result_)).
+            #       b. IfAbruptRejectPromise(_result_, _).
+            #     9. Return ? _result_.
+            #
+            # If IteratorClose has a return type of T_Completion_Record,
+            # then after 8.a, _result_ can be a normal or abrupt completion,
+            # and a normal completion will survive 8.b's call to IfAbruptRejectPromise,
+            # and after 8.b, _result_ will be the [[Value]] of that normal completion,
+            # which will cause 9's `?` to complain that it's being given a non-completion.
+            #
+            # Instead, before 8.a, we know that _result_ is abrupt,
+            # so using a smarter return type for IteratorClose,
+            # we know that _result_ must be abrupt too,
+            # so nothing will survive the call to IfAbruptRejectPromise,
+            # and 9 won't get a non-completion.
+            # (In fact, it will *only* get a normal completion,
+            # so the '?' should actually be '!', but that's a separate problem.)
+            #
+            assert len(args) == 2
+            [_, cr_arg] = args
+            (cr_arg_type, _) = tc_expr(cr_arg, env0)
+            return_type = T_throw_completion | cr_arg_type
+
+        elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
+            # The second arg is a list of ES language type names
+            # that constrains the return type.
+            assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
+            types_arg = args[1]
+            assert types_arg.source_text() == '« String, Symbol »'
+            return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
+
+        elif callee_op_name == 'ToIntegerOrInfinity':
+            assert return_type == NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
+            # but we can be more precise in some cases
+
+            assert len(args) == 1
+            [arg] = args
+            (arg_type, env1) = tc_expr(arg, env0); assert env1 is env0
+
+            return_type = T_0
+            for memtype in arg_type.set_of_types():
+                if memtype in [T_Tangible_, T_Object]:
+                    return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
+                elif memtype in [T_Number, T_String]:
+                    return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
+                elif memtype in [T_Boolean, T_Null, T_NaN_Number_, T_FiniteNumber_]:
+                    return_type |= NormalCompletionType(T_MathInteger_)
+                elif memtype == T_NegInfinityNumber_:
+                    return_type |= NormalCompletionType(T_MathNegInfinity_)
+                elif memtype == T_PosInfinityNumber_:
+                    return_type |= NormalCompletionType(T_MathPosInfinity_)
+                elif memtype in [T_Symbol, T_BigInt]:
+                    return_type |= T_throw_completion
+                elif memtype == T_not_passed:
+                    pass
+                else:
+                    assert 0, memtype
+
+    env2 = tc_args(params, args, env0, expr)
+    return (return_type, env2)
+
+# ------------------------------------------------------------------------------
 
 def tc_sdo_invocation(op_name, main_arg, other_args, context, env0):
     op = spec.alg_info_['op'][op_name]
@@ -5571,110 +5683,7 @@ class _:
                 # So we basically have to hard-code the analysis for each operation.
                 return tc_invocation_of_ad_hoc_op(callee_op_name, args, env0)
 
-            # NormalCompletion and ThrowCompletion are regular abstract operations now,
-            # so you might expect that we'd use their deduced return types.
-            # However, that would lose information, so we don't.
-
-            if callee_op_name == 'NormalCompletion':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                assert arg_type == T_TBD or arg_type.is_a_subtype_of_or_equal_to(T_Normal)
-                return_type = NormalCompletionType(arg_type)
-                return (return_type, env0)
-                # don't call tc_args etc
-
-            elif callee_op_name == 'ThrowCompletion':
-                assert len(args) == 1
-                [arg] = args
-                (arg_type, arg_env) = tc_expr(arg, env0); assert arg_env is env0
-                if arg_type == T_TBD: arg_type = T_Normal
-                assert arg_type.is_a_subtype_of_or_equal_to(T_Normal)
-                return_type = ThrowCompletionType(arg_type)
-                return (return_type, env0)
-
-            elif callee_op_name == 'Completion':
-                assert len(args) == 1
-                [arg] = args
-                (return_type, env1) = env0.ensure_expr_is_of_type_(arg, T_Completion_Record)
-                return (return_type, env1)
-
-            # ---------------
-
-            else:
-                params = callee_op.parameters_with_types
-                return_type = callee_op.return_type
-                # fall through to tc_args etc
-
-                # if callee_op_name == 'ResolveBinding': pdb.set_trace()
-
-                if callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
-                    assert return_type == T_Completion_Record
-                    # but we can be more specific.
-                    # And we need to be more specific to avoid some complaints.
-                    #
-                    # E.g., Promise.all has roughly:
-                    #     8. If _result_ is an abrupt completion, then
-                    #       a. ... set _result_ to Completion(IteratorClose(_, _result_)).
-                    #       b. IfAbruptRejectPromise(_result_, _).
-                    #     9. Return ? _result_.
-                    #
-                    # If IteratorClose has a return type of T_Completion_Record,
-                    # then after 8.a, _result_ can be a normal or abrupt completion,
-                    # and a normal completion will survive 8.b's call to IfAbruptRejectPromise,
-                    # and after 8.b, _result_ will be the [[Value]] of that normal completion,
-                    # which will cause 9's `?` to complain that it's being given a non-completion.
-                    #
-                    # Instead, before 8.a, we know that _result_ is abrupt,
-                    # so using a smarter return type for IteratorClose,
-                    # we know that _result_ must be abrupt too,
-                    # so nothing will survive the call to IfAbruptRejectPromise,
-                    # and 9 won't get a non-completion.
-                    # (In fact, it will *only* get a normal completion,
-                    # so the '?' should actually be '!', but that's a separate problem.)
-                    #
-                    assert len(args) == 2
-                    [_, cr_arg] = args
-                    (cr_arg_type, _) = tc_expr(cr_arg, env0)
-                    return_type = T_throw_completion | cr_arg_type
-
-                elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
-                    # The second arg is a list of ES language type names
-                    # that constrains the return type.
-                    assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
-                    types_arg = args[1]
-                    assert types_arg.source_text() == '« String, Symbol »'
-                    return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
-
-                elif callee_op_name == 'ToIntegerOrInfinity':
-                    assert return_type == NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
-                    # but we can be more precise in some cases
-
-                    assert len(args) == 1
-                    [arg] = args
-                    (arg_type, env1) = tc_expr(arg, env0); assert env1 is env0
-
-                    return_type = T_0
-                    for memtype in arg_type.set_of_types():
-                        if memtype in [T_Tangible_, T_Object]:
-                            return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_) | T_throw_completion
-                        elif memtype in [T_Number, T_String]:
-                            return_type |= NormalCompletionType(T_MathInteger_ | T_MathPosInfinity_ | T_MathNegInfinity_)
-                        elif memtype in [T_Boolean, T_Null, T_NaN_Number_, T_FiniteNumber_]:
-                            return_type |= NormalCompletionType(T_MathInteger_)
-                        elif memtype == T_NegInfinityNumber_:
-                            return_type |= NormalCompletionType(T_MathNegInfinity_)
-                        elif memtype == T_PosInfinityNumber_:
-                            return_type |= NormalCompletionType(T_MathPosInfinity_)
-                        elif memtype in [T_Symbol, T_BigInt]:
-                            return_type |= T_throw_completion
-                        elif memtype == T_not_passed:
-                            pass
-                        else:
-                            assert 0, memtype
-
-            env2 = tc_args(params, args, env0, expr)
-            return (return_type, env2)
+            return tc_invocation_of_singular_op(callee_op, args, expr, env0)
 
         else:
             assert 0, opn_before_paren.prod.rhs_s
