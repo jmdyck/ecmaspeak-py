@@ -6334,7 +6334,7 @@ def handle_completion_record_shorthand(operator, operand, env0):
 
             elif prefix == 'GeneratorValidate':
                 gen_arg = exes_in_exlist_opt(exlist_opt)[0]
-                env2 = env1.with_expr_type_narrowed(gen_arg, T_Object)
+                env2 = env1.with_expr_type_narrowed(gen_arg, T_Generator_object_)
 
             else:
                 env2 = env1
@@ -11333,7 +11333,7 @@ class _:
             'PrivateEnvironment' : T_PrivateEnvironment_Record,
 
             # 7191: Table 24: Additional State Components for Generator Execution Contexts
-            'Generator' : T_Object,
+            'Generator' : T_Generator_object_ | T_AsyncGenerator_object_,
         }[component_name]
 
         return (result_type, env2)
@@ -14029,7 +14029,7 @@ set_up_internal_thing('slot', '[[Errors]]',            ListType(T_Tangible_))
 
 @P("{VAL_DESC} : a Generator")
 class _:
-    s_tb = a_subset_of(T_Iterator_object_)
+    s_tb = T_Generator_object_
 
 @P("{CONDITION_1} : the generator either threw an exception or performed either an implicit or explicit return")
 class _:

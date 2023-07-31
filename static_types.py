@@ -913,6 +913,7 @@ _named_type_hierarchy = {
                     'Array_object_': {},
                     'AsyncGenerator_object_': {},
                     'FinalizationRegistry_object_': {},
+                    'Generator_object_': {},
                     'Iterator_object_': {},
                     'IteratorResult_object_': {},
                     'Promise_object_': {},
