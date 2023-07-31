@@ -923,6 +923,8 @@ _named_type_hierarchy = {
                     'WeakRef_object_': {},
                     'WeakSet_object_': {},
                     'function_object_': {
+                        'ECMAScript_function_object_': {},
+
                         'constructor_object_': {}, # XXX This is actually orthogonal to Proxy/Bound/other
                         'Proxy_exotic_object_': {},
                         'bound_function_exotic_object_': {},

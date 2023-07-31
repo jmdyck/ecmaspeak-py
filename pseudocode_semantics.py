@@ -598,6 +598,26 @@ def set_up_type_tweaks():
     type_tweaks_tuples = [
         ('MV'                              , '*return*'        , T_TBD                , T_MathInteger_),
         ('PromiseResolve'                  , '_C_'             , T_constructor_object_, T_Object),
+
+        ('OrdinaryFunctionCreate'          , '*return*'        , T_function_object_, T_ECMAScript_function_object_),
+        ('PrepareForOrdinaryCall'          , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
+        ('OrdinaryCallBindThis'            , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
+        ('OrdinaryCallEvaluateBody'        , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateBody'                    , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateFunctionBody'            , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateConciseBody'             , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateGeneratorBody'           , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateAsyncGeneratorBody'      , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateAsyncFunctionBody'       , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateAsyncConciseBody'        , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('EvaluateClassStaticBlockBody'    , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
+        ('FunctionDeclarationInstantiation', '_func_'          , T_function_object_, T_ECMAScript_function_object_),
+
+        ('DefineMethod',
+            '*return*',
+            NormalCompletionType(RecordType('', (('[[Key]]', T_String | T_Symbol), ('[[Closure]]', T_function_object_)))) | T_abrupt_completion,
+            NormalCompletionType(RecordType('', (('[[Key]]', T_String | T_Symbol), ('[[Closure]]', T_ECMAScript_function_object_)))) | T_abrupt_completion,
+        ),
     ]
 
     for tweak_tuple in type_tweaks_tuples:
@@ -9141,7 +9161,7 @@ class _:
         sec_id = mo.group(1)
         implied_base_t = {
             # 10.2.*
-            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_function_object_,
+            'sec-ecmascript-function-objects-call-thisargument-argumentslist'                        : T_ECMAScript_function_object_,
             'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
 
             # 10.3.2
@@ -11723,7 +11743,7 @@ set_up_internal_thing('slot', '[[Extensible]]', T_Boolean)
 @P("{VAL_DESC} : an ECMAScript function")
 @P("{VAL_DESC} : an ECMAScript function object")
 class _:
-    s_tb = a_subset_of(T_function_object_)
+    s_tb = T_ECMAScript_function_object_
 
 # ==============================================================================
 #@ 10.3 Built-in Function Objects
