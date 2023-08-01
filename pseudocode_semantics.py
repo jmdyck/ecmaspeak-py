@@ -2465,15 +2465,10 @@ def tc_invocation_of_record_method(record_var, method_name_capword, args, contex
 
 type_of_internal_thing_ = {}
 
-def set_up_internal_thing(method_or_slot, thing_name, stype):
-    # Ignore `method_or_slot`
+def declare_isom(holder_stype, must_or_might, method_or_slot, thing_name, stype):
+    # Ignore holder_stype, must_or_might, method_or_slot
     if thing_name in type_of_internal_thing_:
-        # [[GeneratorBrand]] is declared for both
-        # Generator Instances and AsyncGenerator Instances.
-        assert thing_name == '[[GeneratorBrand]]', thing_name
-
-        t = type_of_internal_thing_[thing_name]
-        assert t == stype
+        type_of_internal_thing_[thing_name] |= stype
     else:
         type_of_internal_thing_[thing_name] = stype
 
@@ -2564,7 +2559,7 @@ def process_isom_table(emu_table):
         else:
             assert 0, method_or_slot
 
-        set_up_internal_thing(method_or_slot, isom_name, t)
+        declare_isom(T_Object, 'might have', method_or_slot, isom_name, t)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -9284,7 +9279,7 @@ class _:
 #> the private fields, methods, and accessors for the object.
 #> Initially, it is an empty List.
 
-set_up_internal_thing('slot', '[[PrivateElements]]', ListType(T_PrivateElement))
+declare_isom(T_Object, 'must have', 'slot', '[[PrivateElements]]', ListType(T_PrivateElement))
 
 #> <emu-xref href="#table-essential-internal-methods"></emu-xref>
 #> summarizes the <em>essential internal methods</em>
@@ -11897,8 +11892,8 @@ class _:
 # ==============================================================================
 #@ 10.1 Ordinary Object Internal Methods and Internal Slots
 
-set_up_internal_thing('slot', '[[Prototype]]',  T_Object | T_Null)
-set_up_internal_thing('slot', '[[Extensible]]', T_Boolean)
+declare_isom(T_Object, 'might have', 'slot', '[[Prototype]]',  T_Object | T_Null)
+declare_isom(T_Object, 'might have', 'slot', '[[Extensible]]', T_Boolean)
 
 # ==============================================================================
 #@ 10.2 ECMAScript Function Objects
@@ -11936,12 +11931,13 @@ class _:
 #> [[Prototype]], [[Extensible]], [[Realm]], and [[InitialName]] internal slots,
 #> with the same meanings as above.
 
+declare_isom(T_built_in_function_object_, 'must have', 'slot', '[[Realm]]',       T_Realm_Record)
+declare_isom(T_built_in_function_object_, 'must have', 'slot', '[[InitialName]]', T_Null | T_String)
+
 #> If a built-in function object is not implemented as an ECMAScript function
 #> it must provide [[Call]] and [[Construct]] internal methods that conform to the following definitions:
 #>  - #sec-built-in-function-objects-call-thisargument-argumentslist
 #>  - #sec-built-in-function-objects-construct-argumentslist-newtarget
-
-set_up_internal_thing('slot', '[[InitialName]]', T_Null | T_String)
 
 @P("{VAL_DESC} : a built-in function object")
 class _:
@@ -12069,7 +12065,7 @@ class _:
 class _:
     s_tb = a_subset_of(T_Object)
 
-set_up_internal_thing('slot', '[[ParameterMap]]', T_Object)
+declare_isom(T_Object, 'might have', 'slot', '[[ParameterMap]]', T_Object)
 
 # for 10.4.4.{2,4}
 @P("{CONDITION_1} : The following Set will succeed, since formal parameters mapped by arguments objects are always writable")
@@ -12106,12 +12102,12 @@ T_Integer_Indexed_object_ = T_TypedArray_object_
 class _:
     s_tb = T_Integer_Indexed_object_
 
-set_up_internal_thing('slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-set_up_internal_thing('slot', '[[ArrayLength]]',       T_MathInteger_)
-set_up_internal_thing('slot', '[[ByteOffset]]',        T_MathInteger_)
-set_up_internal_thing('slot', '[[ContentType]]',       T_tilde_BigInt_ | T_tilde_Number_)
-set_up_internal_thing('slot', '[[TypedArrayName]]',    T_String)
-set_up_internal_thing('slot', '[[ByteLength]]',        T_MathInteger_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ContentType]]',       T_tilde_BigInt_ | T_tilde_Number_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[TypedArrayName]]',    T_String)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_)
 
 # ==============================================================================
 #@ 10.4.6 Module Namespace Exotic Objects
@@ -12135,8 +12131,8 @@ class _:
 class _:
     s_tb = T_Proxy_exotic_object_
 
-set_up_internal_thing('slot', '[[ProxyHandler]]', T_Object | T_Null)
-set_up_internal_thing('slot', '[[ProxyTarget]]',  T_Object | T_Null)
+declare_isom(T_Proxy_exotic_object_, 'must have', 'slot', '[[ProxyHandler]]', T_Object | T_Null)
+declare_isom(T_Proxy_exotic_object_, 'must have', 'slot', '[[ProxyTarget]]',  T_Object | T_Null)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 11 ECMAScript Language: Source Text
@@ -12875,12 +12871,12 @@ class _:
 # ==============================================================================
 #@ 20.3 Boolean Objects
 
-set_up_internal_thing('slot', '[[BooleanData]]', T_Boolean)
+declare_isom(T_Object, 'might have', 'slot', '[[BooleanData]]', T_Boolean)
 
 # ==============================================================================
 #@ 20.4 Symbol Objects
 
-set_up_internal_thing('slot', '[[SymbolData]]', T_Symbol)
+declare_isom(T_Object, 'might have', 'slot', '[[SymbolData]]', T_Symbol)
 
 # ==============================================================================
 #@ 20.4.2.2 Symbol.for
@@ -12922,12 +12918,12 @@ class _:
 # ==============================================================================
 #@ 21.1 Number Objects
 
-set_up_internal_thing('slot', '[[NumberData]]', T_Number)
+declare_isom(T_Object, 'might have', 'slot', '[[NumberData]]', T_Number)
 
 # ==============================================================================
 #@ 21.2 BigInt Objects
 
-set_up_internal_thing('slot', '[[BigIntData]]', T_BigInt)
+declare_isom(T_Object, 'might have', 'slot', '[[BigIntData]]', T_BigInt)
 
 # ==============================================================================
 #@ 21.4 Date Objects
@@ -13053,7 +13049,7 @@ class _:
 # ==============================================================================
 #@ 21.4.2 The Date Constructor
 
-set_up_internal_thing('slot', '[[DateValue]]', T_IntegralNumber_ | T_NaN_Number_)
+declare_isom(T_Object, 'might have', 'slot', '[[DateValue]]', T_IntegralNumber_ | T_NaN_Number_)
 
 # ==============================================================================
 #@ 21.4.2.1 Date
@@ -13124,7 +13120,7 @@ class _:
 # ==============================================================================
 #@ 22.1 String Objects
 
-set_up_internal_thing('slot', '[[StringData]]', T_String)
+declare_isom(T_String_exotic_object_, 'must have', 'slot', '[[StringData]]', T_String)
 
 #@ 22.1.3.28 String.prototype.toLowerCase
 @P("{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
@@ -13700,10 +13696,10 @@ class _:
 # ==============================================================================
 #@ 22.2.3 Abstract Operations for RegExp Creation
 
-set_up_internal_thing('slot', '[[OriginalSource]]', T_String)
-set_up_internal_thing('slot', '[[OriginalFlags]]',  T_String)
-set_up_internal_thing('slot', '[[RegExpRecord]]',   T_RegExp_Record)
-set_up_internal_thing('slot', '[[RegExpMatcher]]',  T_RegExpMatcher_)
+declare_isom(T_Object, 'might have', 'slot', '[[OriginalSource]]', T_String)
+declare_isom(T_Object, 'might have', 'slot', '[[OriginalFlags]]',  T_String)
+declare_isom(T_Object, 'might have', 'slot', '[[RegExpRecord]]',   T_RegExp_Record)
+declare_isom(T_Object, 'might have', 'slot', '[[RegExpMatcher]]',  T_RegExpMatcher_)
 
 # ==============================================================================
 #@ 22.2.6.13.1 EscapeRegExpPattern
@@ -13842,16 +13838,16 @@ T_MapData_record_ = RecordType( '', (
 )
 
 # 24.1 Map Objects
-set_up_internal_thing('slot', '[[MapData]]', ListType(T_MapData_record_))
+declare_isom(T_Object, 'might have', 'slot', '[[MapData]]', ListType(T_MapData_record_))
 
 # 24.2 Set Objects
-set_up_internal_thing('slot', '[[SetData]]', ListType(T_Tangible_ | T_tilde_empty_))
+declare_isom(T_Object, 'might have', 'slot', '[[SetData]]', ListType(T_Tangible_ | T_tilde_empty_))
 
 # 24.3 WeakMap Objects
-set_up_internal_thing('slot', '[[WeakMapData]]', ListType(T_MapData_record_))
+declare_isom(T_WeakMap_object_, 'must have', 'slot', '[[WeakMapData]]', ListType(T_MapData_record_))
 
 # 24.4 WeakSet Objects
-set_up_internal_thing('slot', '[[WeakSetData]]', ListType(T_Tangible_ | T_tilde_empty_))
+declare_isom(T_WeakSet_object_, 'must have', 'slot', '[[WeakSetData]]', ListType(T_Tangible_ | T_tilde_empty_))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 25 Structured Data
@@ -13871,10 +13867,9 @@ class _:
 class _:
     s_tb = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 
-set_up_internal_thing('slot', '[[ArrayBufferData]]',       T_Data_Block | T_Shared_Data_Block | T_Null)
-    # XXX but IsSharedArrayBuffer() ensures that ArrayBufferData is a Shared Data Block
-set_up_internal_thing('slot', '[[ArrayBufferByteLength]]', T_MathInteger_)
-set_up_internal_thing('slot', '[[ArrayBufferDetachKey]]',  T_host_defined_)
+declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',          T_Data_Block | T_Null)
+declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',    T_MathNonNegativeInteger_)
+declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferDetachKey]]',     T_host_defined_)
 
 # 25.1.2.*
 @P("{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}")
@@ -13910,6 +13905,8 @@ class _:
 class _:
     s_tb = T_SharedArrayBuffer_object_
 
+declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',           T_Shared_Data_Block)
+declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',     T_MathNonNegativeInteger_)
 # ==============================================================================
 #@ 25.4.1 Waiter Record
 
@@ -14074,7 +14071,7 @@ class _:
 class _:
     s_tb = T_WeakRef_object_
 
-set_up_internal_thing('slot', '[[WeakRefTarget]]', T_Object | T_Symbol | T_tilde_empty_)
+declare_isom(T_WeakRef_object_, 'must have', 'slot', '[[WeakRefTarget]]', T_Object | T_Symbol | T_tilde_empty_)
 
 # ==============================================================================
 #@ 26.2 FinalizationRegistry Objects
@@ -14090,8 +14087,9 @@ T_FinalizationRegistryCellRecord_ = RecordType('', (
     )
 )
 
-set_up_internal_thing('slot', '[[CleanupCallback]]', T_JobCallback_Record)
-set_up_internal_thing('slot', '[[Cells]]',           ListType(T_FinalizationRegistryCellRecord_))
+declare_isom(T_FinalizationRegistry_object_, 'must have', 'slot', '[[Realm]]', T_Realm_Record)
+declare_isom(T_FinalizationRegistry_object_, 'must have', 'slot', '[[CleanupCallback]]', T_JobCallback_Record)
+declare_isom(T_FinalizationRegistry_object_, 'must have', 'slot', '[[Cells]]',           ListType(T_FinalizationRegistryCellRecord_))
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 27 Control Abstraction Objects
@@ -14165,17 +14163,17 @@ class _:
 
 T_boolean_value_record_ = RecordType('', (('[[Value]]', T_Boolean),))
 
-set_up_internal_thing('slot', '[[Promise]]',         T_Object)
-set_up_internal_thing('slot', '[[AlreadyResolved]]', T_boolean_value_record_)
+declare_isom(T_function_object_, 'might have', 'slot', '[[Promise]]',         T_Object)
+declare_isom(T_function_object_, 'might have', 'slot', '[[AlreadyResolved]]', T_boolean_value_record_)
 
 #@ 27.2.4 Properties of the Promise Constructor
 
-set_up_internal_thing('slot', '[[AlreadyCalled]]',     T_boolean_value_record_ | T_Boolean)
-set_up_internal_thing('slot', '[[Index]]',             T_MathInteger_)
-set_up_internal_thing('slot', '[[Capability]]',        T_PromiseCapability_Record)
-set_up_internal_thing('slot', '[[RemainingElements]]', RecordType('', (('[[Value]]', T_MathInteger_),)))
-set_up_internal_thing('slot', '[[Values]]',            ListType(T_Tangible_))
-set_up_internal_thing('slot', '[[Errors]]',            ListType(T_Tangible_))
+declare_isom(T_function_object_, 'might have', 'slot', '[[AlreadyCalled]]',     T_boolean_value_record_ | T_Boolean)
+declare_isom(T_function_object_, 'might have', 'slot', '[[Index]]',             T_MathNonNegativeInteger_)
+declare_isom(T_function_object_, 'might have', 'slot', '[[Values]]',            ListType(T_Tangible_))
+declare_isom(T_function_object_, 'might have', 'slot', '[[Errors]]',            ListType(T_Tangible_))
+declare_isom(T_function_object_, 'might have', 'slot', '[[Capability]]',        T_PromiseCapability_Record)
+declare_isom(T_function_object_, 'might have', 'slot', '[[RemainingElements]]', RecordType('', (('[[Value]]', T_MathInteger_),)))
 
 # ==============================================================================
 #@ 27.5 Generator Objects
@@ -14223,7 +14221,7 @@ class _:
 #@ 28 Reflection
 
 #@ 28.2.2.1 Proxy.revocable
-set_up_internal_thing('slot', '[[RevocableProxy]]', T_Proxy_exotic_object_ | T_Null)
+declare_isom(T_function_object_, 'might have', 'slot', '[[RevocableProxy]]', T_Proxy_exotic_object_ | T_Null)
 
 #@ 28.3 Module Namespace Objects
 @P("{VAL_DESC} : a Module Namespace Object")
