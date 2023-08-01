@@ -6404,6 +6404,8 @@ def handle_completion_record_shorthand(operator, operand, env0):
                 (env2, _) = env1.with_type_test(obj_arg, 'is a', tb, False)
 
             elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray']:
+                # In the not-returning-early env,
+                # the first arg is guaranteed to be a TypedArray.
                 obj_arg = exes_in_exlist_opt(exlist_opt)[0]
                 env2 = env1.with_expr_type_narrowed(obj_arg, T_TypedArray_object_)
 
@@ -9291,6 +9293,8 @@ class _:
         env0.assert_expr_is_of_type(var, T_Object)
         assert dsbna.source_text() == '[[StringData]]'
         assert dsbnb.source_text() == '[[NumberData]]'
+        # If/when we represent Number exotic object in type hier, then:
+        # return env0.with_type_test(var, 'is a', T_String_exotic_object_ | T_Number_exotic_object_, asserting)
         return (env0, env0)
 
 @P("{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object")
@@ -12024,6 +12028,11 @@ class _:
 declare_isom(T_Object, 'might have', 'slot', '[[Prototype]]',  T_Object | T_Null)
 declare_isom(T_Object, 'might have', 'slot', '[[Extensible]]', T_Boolean)
 
+# Exotic objects aren't required to have
+# [[Prototype]] and [[Extensible]] internal slots,
+# although most spec-defined ones do.
+# I think the only kind that doesn't is Proxy.
+
 # ==============================================================================
 #@ 10.2 ECMAScript Function Objects
 
@@ -12259,6 +12268,16 @@ T_Integer_Indexed_object_ = T_TypedArray_object_
 class _:
     s_tb = T_Integer_Indexed_object_
 
+#> <emu-xref>Integer-Indexed exotic objects</emu-xref>
+#> have the same internal slots as ordinary objects and additionally
+#> [[ViewedArrayBuffer]],
+#> [[ArrayLength]],
+#> [[ByteOffset]],
+#> [[ContentType]], and
+#> [[TypedArrayName]] internal slots.
+
+# (SPEC BUG: That list is missing [[ByteLength]], see IntegerIndexedObjectCreate.)
+
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
@@ -12284,11 +12303,26 @@ class _:
 # ==============================================================================
 # 10.5 Proxy Object Internal Methods and Internal Slots
 
+#> A Proxy object is an exotic object
+#> whose essential internal methods
+#> are partially implemented using ECMAScript code.
+
 @P("{VAL_DESC} : a Proxy exotic object")
 class _:
     s_tb = T_Proxy_exotic_object_
 
+#> Every Proxy object has an internal slot called [[ProxyHandler]].
+#> The value of [[ProxyHandler]] is an object,
+#> called the proxy's <em>handler object</em>, or *null*.
+#> Methods (see <emu-xref href="#table-proxy-handler-methods"></emu-xref>) of a handler object
+#> may be used to augment the implementation for one or more of the Proxy object's internal methods.
+
 declare_isom(T_Proxy_exotic_object_, 'must have', 'slot', '[[ProxyHandler]]', T_Object | T_Null)
+
+#> Every Proxy object also has an internal slot called [[ProxyTarget]]
+#> whose value is either an object or the *null* value.
+#> This object is called the proxy's <em>target object</em>.<
+
 declare_isom(T_Proxy_exotic_object_, 'must have', 'slot', '[[ProxyTarget]]',  T_Object | T_Null)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -14029,6 +14063,9 @@ class _:
 class _:
     s_tb = T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_
 
+# 25.1.2.1 AllocateArrayBuffer
+# 25.1.6   Properties of ArrayBuffer Instances
+
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',          T_Data_Block | T_Null)
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',    T_MathNonNegativeInteger_)
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferDetachKey]]',     T_host_defined_)
@@ -14066,6 +14103,9 @@ class _:
 @P("{VAL_DESC} : a SharedArrayBuffer")
 class _:
     s_tb = T_SharedArrayBuffer_object_
+
+# 25.2.1.1 AllocateSharedArrayBuffer
+# 25.2.5   Properties of SharedArrayBuffer Instances
 
 declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',           T_Shared_Data_Block)
 declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',     T_MathNonNegativeInteger_)
@@ -14261,6 +14301,8 @@ T_FinalizationRegistryCellRecord_ = RecordType('', (
         ('[[UnregisterToken]]', T_Object | T_tilde_empty_),
     )
 )
+
+# 26.2.1.1 FinalizationRegistry
 
 declare_isom(T_FinalizationRegistry_object_, 'must have', 'slot', '[[Realm]]', T_Realm_Record)
 declare_isom(T_FinalizationRegistry_object_, 'must have', 'slot', '[[CleanupCallback]]', T_JobCallback_Record)
