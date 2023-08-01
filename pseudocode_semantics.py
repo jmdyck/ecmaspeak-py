@@ -9161,6 +9161,13 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_module_namespace_exotic_object_)
         return env1
 
+@P("{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
+class _:
+    def s_nv(anode, env0):
+        [var, _, _, emu_xref] = anode.children
+        assert emu_xref.source_text() == '<emu-xref href="#sec-proxy-object-internal-methods-and-internal-slots"></emu-xref>'
+        return env0.with_expr_type_narrowed(var, T_Proxy_exotic_object_)
+
 @P("{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.")
 @P("{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.")
 @P("{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.")
@@ -9227,13 +9234,7 @@ class _:
             add_pass_error_re_wrong_type(base_var, curr_base_t, implied_base_t)
             return env1.with_expr_type_replaced(base_var, implied_base_t)
 
-@P("{COMMAND} : Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.")
-class _:
-    def s_nv(anode, env0):
-        [var, _, _, emu_xref] = anode.children
-        assert emu_xref.source_text() == '<emu-xref href="#sec-proxy-object-internal-methods-and-internal-slots"></emu-xref>'
-        return env0.with_expr_type_narrowed(var, T_Proxy_exotic_object_)
-
+# ------------------------------------------------------------------------------
 #> An <dfn>ordinary object</dfn> is an object that satisfies all of the following criteria:
 #>  -- For the internal methods listed in <emu-xref href="#table-essential-internal-methods"></emu-xref>,
 #>     the object uses those defined in
