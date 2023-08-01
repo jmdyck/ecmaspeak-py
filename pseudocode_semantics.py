@@ -2485,10 +2485,31 @@ def set_up_declared_internal_methods_and_slots():
 
 def process_isom_table(emu_table):
     cap = emu_table._caption
-    if 'Internal Method' in cap:
+    if cap == 'Essential Internal Methods':
+        holder_stype = T_Object
+        must_or_might = 'must have'
         method_or_slot = 'method'
-    elif 'Internal Slot' in cap:
+
+    elif cap == 'Additional Essential Internal Methods of Function Objects':
+        holder_stype = T_function_object_
+        must_or_might = None # see below
+        method_or_slot = 'method'
+
+    elif mo := re.fullmatch(r'Internal Slots of (.+)', cap):
+        holder_text = mo.group(1)
+        holder_stype = {
+            'ECMAScript Function Objects'        : T_ECMAScript_function_object_,
+            'Bound Function Exotic Objects'      : T_bound_function_exotic_object_,
+            'Module Namespace Exotic Objects'    : T_module_namespace_exotic_object_,
+            'For-In Iterator Instances'          : T_Object,
+            'Async-from-Sync Iterator Instances' : T_Object,
+            'Promise Instances'                  : T_Promise_object_,
+            'Generator Instances'                : T_Generator_object_,
+            'AsyncGenerator Instances'           : T_AsyncGenerator_object_,
+        }[holder_text]
+        must_or_might = 'might have' if holder_stype == T_Object else 'must have'
         method_or_slot = 'slot'
+
     else:
         assert 0, cap
 
@@ -2499,6 +2520,17 @@ def process_isom_table(emu_table):
 
     for row in emu_table._data_rows:
         (isom_name, isom_nature, isom_desc) = row.cell_texts
+
+        if cap == 'Additional Essential Internal Methods of Function Objects':
+            # Usually, must_or_might is the same for every row in the table.
+            # But that's not true in this table,
+            # so we have to set {must_or_might} on a per-row basis.
+            if isom_name == '[[Call]]':
+                must_or_might = 'must have'
+            elif isom_name == '[[Construct]]':
+                must_or_might = 'might have'
+            else:
+                assert 0, isom_name
 
         if method_or_slot == 'method':
 
@@ -2559,7 +2591,7 @@ def process_isom_table(emu_table):
         else:
             assert 0, method_or_slot
 
-        declare_isom(T_Object, 'might have', method_or_slot, isom_name, t)
+        declare_isom(holder_stype, must_or_might, method_or_slot, isom_name, t)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
