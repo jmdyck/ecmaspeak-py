@@ -9175,9 +9175,6 @@ class _:
     def s_nv(anode, env0):
         [dotting, emu_xref] = anode.children
 
-        # (t, env1) = tc_expr(settable, env0); assert env1 is env0
-        # XXX: could check that emu_xref is sensible for t, but not really worth it?
-
         mo = re.fullmatch(r'<emu-xref href="#([^"<>]+)"></emu-xref>', emu_xref.source_text())
         sec_id = mo.group(1)
         implied_base_t = {
@@ -9186,7 +9183,7 @@ class _:
             'sec-ecmascript-function-objects-construct-argumentslist-newtarget'                      : T_constructor_object_,
 
             # 10.3.2
-            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_function_object_,
+            'sec-built-in-function-objects-construct-argumentslist-newtarget'                        : T_constructor_object_,
 
             # 10.4.1.*
             'sec-bound-function-exotic-objects-call-thisargument-argumentslist'                      : T_bound_function_exotic_object_,
@@ -9230,6 +9227,10 @@ class _:
             return env1
         elif curr_base_t == T_Object:
             return env1.with_expr_type_narrowed(base_var, implied_base_t)
+        elif implied_base_t == T_constructor_object_:
+            # T_constructor_object_ is an odd case
+            assert curr_base_t in [T_ECMAScript_function_object_, T_built_in_function_object_]
+            return env1.with_expr_type_replaced(base_var, implied_base_t)
         else:
             add_pass_error_re_wrong_type(base_var, curr_base_t, implied_base_t)
             return env1.with_expr_type_replaced(base_var, implied_base_t)
