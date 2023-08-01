@@ -2025,6 +2025,31 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
             else:
                 assert 0, memtype
 
+    # 7.3.1 MakeBasicObject
+    elif callee_op_name == 'MakeBasicObject':
+        assert return_type == T_Object
+        assert len(args) == 1
+        slotnames_arg = args[0]
+        slotnames_st = slotnames_arg.source_text()
+        if slotnames_st == '« [[Prototype]], [[Extensible]], [[StringData]] »':
+            return_type = T_String_exotic_object_
+        elif slotnames_st == '« [[ProxyHandler]], [[ProxyTarget]] »':
+            return_type = T_Proxy_exotic_object_
+        elif slotnames_st == '_internalSlotsList_':
+            # Go back a step and (maybe) see what _internalSlotsList_ was set to.
+            prev_command = get_previous_command(expr)
+            prev_command_st = prev_command.source_text()
+            if mo := re.fullmatch(r'Let _internalSlotsList_ be (.+)\.', prev_command_st):
+                st = mo.group(1)
+                if st == '« [[Prototype]], [[Extensible]], [[ViewedArrayBuffer]], [[TypedArrayName]], [[ContentType]], [[ByteLength]], [[ByteOffset]], [[ArrayLength]] »':
+                    return_type = T_Integer_Indexed_object_
+                elif st == 'the internal slots listed in <emu-xref href="#table-internal-slots-of-module-namespace-exotic-objects"></emu-xref>':
+                    return_type = T_module_namespace_exotic_object_
+                elif st == 'the list-concatenation of « [[Prototype]], [[Extensible]] » and the internal slots listed in <emu-xref href="#table-internal-slots-of-bound-function-exotic-objects"></emu-xref>':
+                    return_type = T_bound_function_exotic_object_
+                else:
+                    assert 0, st
+
     # 7.3.20 CreateListFromArrayLike
     elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
         # The second arg is a list of ES language type names
@@ -2065,11 +2090,88 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         [_, cr_arg_type] = arg_types
         return_type = T_throw_completion | cr_arg_type
 
+    # 10.1.12 OrdinaryObjectCreate
+    elif callee_op_name == 'OrdinaryObjectCreate':
+        assert return_type == T_Object
+        assert len(args) in [1, 2]
+        proto_arg = args[0]
+        proto_st = proto_arg.source_text()
+        obj_type = {
+            '%AsyncFromSyncIteratorPrototype%'            : T_Object,
+            '%AsyncGeneratorFunction.prototype.prototype%': T_AsyncGenerator_object_,
+            '%ForInIteratorPrototype%'                    : T_Iterator_object_,
+            '%GeneratorFunction.prototype.prototype%'     : T_Generator_object_,
+            '%Object.prototype%'                          : T_Object,
+            '*null*'                                      : T_Object,
+            '_intrinsics_.[[%Object.prototype%]]'         : T_Object,
+        }.get(proto_st, T_Object)
+
+        if obj_type == T_Object and len(args) == 2:
+            slotnames_arg = args[1]
+            slotnames_st = slotnames_arg.source_text()
+            if slotnames_st == '_internalSlotsList_':
+                prev_command = get_previous_command(expr)
+                prev_command_st = prev_command.source_text()
+                if mo := re.fullmatch(r'Let _internalSlotsList_ be (.+)\.', prev_command_st):
+                    st = mo.group(1)
+                    if st == 'the internal slots listed in <emu-xref href="#table-internal-slots-of-ecmascript-function-objects"></emu-xref>':
+                        obj_type = T_ECMAScript_function_object_
+                    elif st == '« [[GeneratorState]], [[GeneratorContext]], [[GeneratorBrand]] »':
+                        obj_type = T_Generator_object_
+                    elif st == '« [[AsyncGeneratorState]], [[AsyncGeneratorContext]], [[AsyncGeneratorQueue]], [[GeneratorBrand]] »':
+                        obj_type = T_AsyncGenerator_object_
+                    else:
+                        assert 0, st
+
+        return_type = obj_type
+
+    # 10.1.13 OrdinaryCreateFromConstructor
+    elif callee_op_name == 'OrdinaryCreateFromConstructor':
+        assert return_type == NormalCompletionType(T_Object) | T_throw_completion
+        assert len(args) in [2,3]
+        proto_arg = args[1]
+        proto_st = proto_arg.source_text()
+        obj_type = {
+            '*"%AggregateError.prototype%"*'                    : T_AggregateError,
+            '*"%ArrayBuffer.prototype%"*'                       : T_ArrayBuffer_object_,
+            '*"%AsyncGeneratorFunction.prototype.prototype%"*'  : T_AsyncGenerator_object_,
+            '*"%Boolean.prototype%"*'                           : T_Object,
+            '*"%DataView.prototype%"*'                          : T_DataView_object_,
+            '*"%Date.prototype%"*'                              : T_Object,
+            '*"%Error.prototype%"*'                             : T_Error,
+            '*"%FinalizationRegistry.prototype%"*'              : T_FinalizationRegistry_object_,
+            '*"%GeneratorFunction.prototype.prototype%"*'       : T_Generator_object_,
+            '*"%Map.prototype%"*'                               : T_Object,
+            '*"%Number.prototype%"*'                            : T_Object,
+            '*"%Object.prototype%"*'                            : T_Object,
+            '*"%Promise.prototype%"*'                           : T_Promise_object_,
+            '*"%RegExp.prototype%"*'                            : T_Object,
+            '*"%Set.prototype%"*'                               : T_Object,
+            '*"%SharedArrayBuffer.prototype%"*'                 : T_SharedArrayBuffer_object_,
+            '*"%WeakMap.prototype%"*'                           : T_WeakMap_object_,
+            '*"%WeakRef.prototype%"*'                           : T_WeakRef_object_,
+            '*"%WeakSet.prototype%"*'                           : T_WeakSet_object_,
+            '<code>"%<var>NativeError</var>.prototype%"</code>' : T_Error,
+        }[proto_st]
+        return_type = NormalCompletionType(obj_type) | T_throw_completion
+
     else:
         # Just use {return_type}.
         pass
 
     return (return_type, env1)
+
+def get_previous_command(expr):
+    this_command = expr.closest_containing('{COMMAND}')
+    p = this_command.parent
+    assert str(p.prod) == "{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}"
+    prev_commands = p.children[0]
+    assert str(prev_commands.prod) in [
+        "{COMMANDS} : {COMMANDS}{_NL_N} {COMMAND}",
+        "{COMMANDS} : {_NL_N} {COMMAND}",
+    ]
+    prev_command = prev_commands.children[-1]
+    return prev_command
 
 # ------------------------------------------------------------------------------
 
