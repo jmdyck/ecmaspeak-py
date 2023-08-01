@@ -948,6 +948,7 @@ _named_type_hierarchy = {
                         'bound_function_exotic_object_': {},
                         'other_function_object_': {},
                     },
+                    'module_namespace_exotic_object_': {},
                     'other_Object_': {},
                 },
             },

@@ -9146,12 +9146,19 @@ set_up_internal_thing('slot', '[[PrivateElements]]', ListType(T_PrivateElement))
 #> Every object must have algorithms for all of the essential internal methods.
 #> However, all objects do not necessarily use the same algorithms for those methods.
 
-@P("{COMMAND} : Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.")
 @P("{COMMAND} : Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.")
 class _:
     def s_nv(anode, env0):
         [var, emu_xref] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
+        return env1
+
+@P("{COMMAND} : Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.")
+class _:
+    def s_nv(anode, env0):
+        [var, emu_xref] = anode.children
+        assert emu_xref.source_text() == '<emu-xref href="#sec-module-namespace-exotic-objects"></emu-xref>'
+        env1 = env0.ensure_expr_is_of_type(var, T_module_namespace_exotic_object_)
         return env1
 
 @P("{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.")
@@ -11962,14 +11969,14 @@ set_up_internal_thing('slot', '[[ByteLength]]',        T_MathInteger_)
 
 @P("{VAL_DESC} : a module namespace exotic object")
 class _:
-    s_tb = T_Object
+    s_tb = T_module_namespace_exotic_object_
 
 #@ 10.4.6.12 ModuleNamespaceCreate
 @P("{COMMAND} : Create own properties of {var} corresponding to the definitions in {h_emu_xref}.")
 class _:
     def s_nv(anode, env0):
         [var, emu_xref] = anode.children
-        env0.assert_expr_is_of_type(var, T_Object)
+        env0.assert_expr_is_of_type(var, T_module_namespace_exotic_object_)
         return env0
 
 # ==============================================================================
@@ -14072,7 +14079,7 @@ set_up_internal_thing('slot', '[[RevocableProxy]]', T_Proxy_exotic_object_ | T_N
 #@ 28.3 Module Namespace Objects
 @P("{VAL_DESC} : a Module Namespace Object")
 class _:
-    s_tb = T_Object
+    s_tb = T_module_namespace_exotic_object_
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 29 Memory Model
