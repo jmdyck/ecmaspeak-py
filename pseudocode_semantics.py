@@ -2585,13 +2585,51 @@ def process_isom_table(emu_table):
 # ------------------------------------------------------------------------------
 
 def declare_isom(holder_stype, must_or_might, method_or_slot, name, stype):
-    # Ignore holder_stype, must_or_might, method_or_slot
-    if name in type_of_internal_thing_:
-        type_of_internal_thing_[name] |= stype
-    else:
-        type_of_internal_thing_[name] = stype
+    decl = IsomDeclaration(holder_stype, must_or_might, method_or_slot, name, stype)
+    decls_for_isom_named_[name].append(decl)
+    # TODO: Establish that same-name isom_decls have disjoint holder_stype
 
-type_of_internal_thing_ = {}
+@dataclass(frozen=True)
+class IsomDeclaration:
+    holder_stype: Type
+    must_or_might: str
+    method_or_slot: str
+    name: str
+    stype: Type
+
+    def __post_init__(self):
+        assert self.holder_stype is None or self.holder_stype.is_a_subtype_of_or_equal_to(T_Object)
+        assert self.must_or_might in ['must have', 'might have']
+        assert self.method_or_slot in ['method', 'slot']
+        assert re.fullmatch(r'\[\[[A-Z][a-zA-Z]+\]\]', self.name)
+        assert isinstance(self.stype, Type)
+
+decls_for_isom_named_ = defaultdict(list)
+
+# ------------------------------------------------------------------------------
+
+def tb_for_object_with_slot(dsbn):
+    dsbn_name = dsbn.source_text()
+    isom_decls = decls_for_isom_named_[dsbn_name]
+    if len(isom_decls) == 0:
+        assert 0, dsbn_name
+    elif len(isom_decls) == 1:
+        [isom_decl] = isom_decls
+        if isom_decl.must_or_might == 'might have':
+            tb = a_subset_of(isom_decl.holder_stype)
+        else:
+            tb = isom_decl.holder_stype
+    else:
+        tb = union_of_types([
+            isom_decl.holder_stype
+            for isom_decl in isom_decls
+        ])
+        if any(
+            isom_decl.must_or_might == 'might have'
+            for isom_decl in isom_decls
+        ):
+            tb = a_subset_of(tb)
+    return tb
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -6362,27 +6400,8 @@ def handle_completion_record_shorthand(operator, operand, env0):
                 # I.e., in the not-returning-early env resulting from this NAMED_OPERATION_INVOCATION,
                 # we can narrow the type of the first arg to RequireInternalSlot.
                 (obj_arg, slotname_arg) = exes_in_exlist_opt(exlist_opt)
-
-                t = {
-                    '[[ArrayBufferData]]'       : T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_,
-                    '[[AsyncGeneratorContext]]' : T_AsyncGenerator_object_,
-                    '[[AsyncGeneratorQueue]]'   : T_AsyncGenerator_object_,
-                    '[[AsyncGeneratorState]]'   : T_AsyncGenerator_object_,
-                    '[[Cells]]'                 : T_FinalizationRegistry_object_,
-                    '[[DataView]]'              : T_Object,
-                    '[[DateValue]]'             : T_Object,
-                    '[[GeneratorBrand]]'        : T_Object,
-                    '[[GeneratorState]]'        : T_Object,
-                    '[[MapData]]'               : T_Object,
-                    '[[RegExpMatcher]]'         : T_Object,
-                    '[[SetData]]'               : T_Object,
-                    '[[TypedArrayName]]'        : T_TypedArray_object_,
-                    '[[WeakMapData]]'           : T_WeakMap_object_,
-                    '[[WeakRefTarget]]'         : T_WeakRef_object_,
-                    '[[WeakSetData]]'           : T_WeakSet_object_,
-                }[slotname_arg.source_text()]
-
-                env2 = env1.with_expr_type_narrowed(obj_arg, t)
+                tb = tb_for_object_with_slot(slotname_arg)
+                (env2, _) = env1.with_type_test(obj_arg, 'is a', tb, False)
 
             elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray']:
                 obj_arg = exes_in_exlist_opt(exlist_opt)[0]
@@ -9231,25 +9250,39 @@ class _:
 
 @P("{VAL_DESC} : an Object that has a {dsb_word} internal slot")
 class _:
-    s_tb = a_subset_of(T_Object)
+    def s_tb(val_desc, env):
+        [dsb_word] = val_desc.children
+        return tb_for_object_with_slot(dsb_word)
 
 @P("{CONDITION_1} : {var} has an? {DSBN} internal slot")
 @P("{CONDITION_1} : {var} also has a {DSBN} internal slot")
 class _:
     def s_cond(cond, env0, asserting):
         [var, dsbn] = cond.children
-        env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        # Whether or not it has that particular slot, it's still an Object.
-        # XXX we could be more specific about the sub-kind of Object
-        return (env1, env1)
+        env0.assert_expr_is_of_type(var, T_Object)
+        tb = tb_for_object_with_slot(dsbn)
+        return env0.with_type_test(var, 'is a', tb, asserting)
 
 @P("{CONDITION_1} : {var} has {DSBN} and {DSBN} internal slots")
 class _:
     def s_cond(cond, env0, asserting):
-        # XXX could be a type-test
-        [var, *dsbn_] = cond.children
+        [var, dsbna, dsbnb] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
-        return (env0, env0)
+        tba = tb_for_object_with_slot(dsbna)
+        tbb = tb_for_object_with_slot(dsbnb)
+        if tba == tbb:
+            tb = tba
+        else:
+            # get %TypedArray%.prototype.length says:
+            # Assert: _O_ has [[ViewedArrayBuffer]] and [[ArrayLength]] internal slots.
+            # [[ViewedArrayBuffer]] implies TypedArray or DataView
+            # [[ArrayLength]] only implies TypeArray
+            assert tba == T_TypedArray_object_ | T_DataView_object_
+            assert tbb == T_TypedArray_object_
+            # In order to satisfy both,
+            tb = T_TypedArray_object_
+            # (Mind you, the Assert is kind of pointless.)
+        return env0.with_type_test(var, 'is a', tb, asserting)
 
 @P("{CONDITION_1} : {var} has an? {DSBN} or {DSBN} internal slot")
 class _:
@@ -9272,9 +9305,8 @@ class _:
     def s_cond(cond, env0, asserting):
         [var, dsbn] = cond.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
-        # Whether or not it has that particular slot, it's still an Object.
-        # XXX The particular DSBN could have a (sub-)type-constraining effect
-        return (env1, env1)
+        tb = tb_for_object_with_slot(dsbn)
+        return env1.with_type_test(var, 'isnt a', tb, asserting)
 
 @P("{CONDITION_1} : {var} does not have an? {var} internal slot")
 class _:
@@ -9289,7 +9321,12 @@ class _:
     def s_cond(cond, env0, asserting):
         [var, dsbna, dsbnb] = cond.children
         env0.assert_expr_is_of_type(var, T_Object)
-        return (env0, env0)
+        tba = tb_for_object_with_slot(dsbna)
+        tbb = tb_for_object_with_slot(dsbnb)
+        assert isinstance(tba, Type)
+        assert isinstance(tbb, Type)
+        tb = tba | tbb
+        return env0.with_type_test(var, 'isnt a', tb, asserting)
 
 @P("{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})")
 class _:
@@ -10483,25 +10520,85 @@ class _:
             elif part_of_lhs_t.is_a_subtype_of_or_equal_to(T_Object):
                 # _foo_.[[Bar]] references an object's internal method or internal slot.
 
-                if dsbn_name in type_of_internal_thing_:
-                    part_of_dotting_t = type_of_internal_thing_[dsbn_name]
-
-                    # XXX We should require that part_of_lhs_t is allowed to have this internal thing.
-
-                    # But for some subtypes of Object, we can give a narrower type for the slot
-                    if part_of_lhs_t == T_SharedArrayBuffer_object_ and dsbn_name == '[[ArrayBufferData]]':
-                        narrower_type = T_Shared_Data_Block
-                        assert narrower_type.is_a_subtype_of_or_equal_to(part_of_dotting_t)
-                        assert narrower_type != part_of_dotting_t
-                        part_of_dotting_t = narrower_type
-
-                    # or the the slot-name can give us a narrower type for the LHS
-                    if part_of_lhs_t == T_Object and dsbn_name == '[[AsyncGeneratorState]]':
-                        part_of_lhs_t = T_AsyncGenerator_object_
-                        msg_lines.append(f"Within Object, only {part_of_lhs_t} supports .{dsbn_name}")
+                isom_decls = decls_for_isom_named_[dsbn_name]
+                if len(isom_decls) == 0:
+                    # This might be a new internal method/slot
+                    # that pseudocode_semantics doesn't know about yet.
+                    # Or, lhs_t might be a union-type including
+                    # both an object-type and a record-type
+                    # (E.g., the result of Evaluation might be an Object or a Reference Record),
+                    # but the dotting is only for the record possibility.
+                    part_of_dotting_t = None
+                
+                elif len(isom_decls) == 1:
+                    [isom_decl] = isom_decls
+                    assert isom_decl.name == dsbn_name
+                    assert isom_decl.holder_stype, dsbn_name
+                    if part_of_lhs_t.is_a_subtype_of_or_equal_to(isom_decl.holder_stype):
+                        # great
+                        part_of_dotting_t = isom_decl.stype
+                    elif isom_decl.holder_stype.is_a_subtype_of_or_equal_to(part_of_lhs_t):
+                        # E.g., `_O_.[[TypedArrayName]]` and we merely know that _O_ is an Object.
+                        # But only a TypedArray has a [[TypedArrayName]] slot,
+                        # so we can narrow the stype of _O_ to TypedArray,
+                        # in addition to knowing the stype of the dotting.
+                        msg_lines.append(f"within {part_of_lhs_t}, {isom_decl.holder_stype} supports .{dsbn_name}")
+                        part_of_lhs_t = isom_decl.holder_stype
+                        part_of_dotting_t = isom_decl.stype
+                    else:
+                        part_of_dotting_t = None
 
                 else:
-                    part_of_dotting_t = None
+                    # The isom_decls whose holder_stype is a supertype/subtype of {part_of_lhs_t}
+                    super_isom_decls = []
+                    sub_isom_decls = []
+                    for isom_decl in isom_decls:
+                        if part_of_lhs_t.is_a_subtype_of_or_equal_to(isom_decl.holder_stype):
+                            super_isom_decls.append(isom_decl)
+                        elif isom_decl.holder_stype.is_a_subtype_of_or_equal_to(part_of_lhs_t):
+                            sub_isom_decls.append(isom_decl)
+                        else:
+                            # That's fine, isom_decl is just about some unrelated object-type
+                            # that happens to also have a slot/method by that name.
+                            pass
+
+                    if len(super_isom_decls) == 0:
+                        # There is no isom_decl whose holder_stype
+                        # is a super-type of (or equal to) {part_of_lhs_t}.
+
+                        # But there should be one or more
+                        # whose holder_stype is a sub-type of it.
+
+                        if len(sub_isom_decls) == 0:
+                            assert 0
+                        else:
+                            union_of_holder_stypes = union_of_types([
+                                isom_decl.holder_stype
+                                for isom_decl in sub_isom_decls
+                            ])
+                            union_of_result_stypes = union_of_types([
+                                isom_decl.stype
+                                for isom_decl in sub_isom_decls
+                            ])
+                            msg_lines.append(f"Within {part_of_lhs_t}, {union_of_holder_stypes} supports .{dsbn_name}")
+                            part_of_lhs_t = union_of_holder_stypes
+                            part_of_dotting_t = union_of_result_stypes
+                    else:
+                        # There's at least one isom_decl whose holder_stype
+                        # is a super-type of {part_of_lhs_t}.
+
+                        # In practice, it would be odd
+                        # (probably a mistake in some call to declare_isom)
+                        # for there to be *more* than one.
+                        assert len(super_isom_decls) == 1
+
+                        # Similarly, it would be odd
+                        # for there to be any isom_decls
+                        # whose holder_stype is a subtype of {part_of_lhs_t}.
+                        assert len(sub_isom_decls) == 0
+
+                        [isom_decl] = super_isom_decls
+                        part_of_dotting_t = isom_decl.stype
 
             elif part_of_lhs_t.is_a_subtype_of_or_equal_to(T_Record):
                 # _foo_.[[Bar]] references a record's field
