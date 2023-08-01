@@ -2463,17 +2463,6 @@ def tc_invocation_of_record_method(record_var, method_name_capword, args, contex
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-type_of_internal_thing_ = {}
-
-def declare_isom(holder_stype, must_or_might, method_or_slot, thing_name, stype):
-    # Ignore holder_stype, must_or_might, method_or_slot
-    if thing_name in type_of_internal_thing_:
-        type_of_internal_thing_[thing_name] |= stype
-    else:
-        type_of_internal_thing_[thing_name] = stype
-
-# ------------------------------------------------------------------------------
-
 def set_up_declared_internal_methods_and_slots():
     # Set up the internal methods and slots
     # that are declared in tables in the spec.
@@ -2592,6 +2581,17 @@ def process_isom_table(emu_table):
             assert 0, method_or_slot
 
         declare_isom(holder_stype, must_or_might, method_or_slot, isom_name, t)
+
+# ------------------------------------------------------------------------------
+
+def declare_isom(holder_stype, must_or_might, method_or_slot, name, stype):
+    # Ignore holder_stype, must_or_might, method_or_slot
+    if name in type_of_internal_thing_:
+        type_of_internal_thing_[name] |= stype
+    else:
+        type_of_internal_thing_[name] = stype
+
+type_of_internal_thing_ = {}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
