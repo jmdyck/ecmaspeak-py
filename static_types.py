@@ -912,6 +912,7 @@ _named_type_hierarchy = {
                     'ArrayBuffer_object_': {},
                     'Array_object_': {},
                     'AsyncGenerator_object_': {},
+                    'DataView_object_': {},
                     'FinalizationRegistry_object_': {},
                     'Generator_object_': {},
                     'Iterator_object_': {},
