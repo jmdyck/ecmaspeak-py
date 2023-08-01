@@ -11987,6 +11987,34 @@ class _:
         [] = expr.children
         return (T_constructor_object_ | T_Undefined, env0)
 
+# SPEC BUG:
+# A class-constructor-function
+# (the _F_ identified in and returned by ClassDefinitionEvaluation)
+# can be
+# - an ECMAScript function object, or
+# - a built-in function that isn't an ECMAScript function object
+#   (if |ClassBody| doesn't have a ConstructorMethod),
+#
+# but a couple places don't handle the latter alternative well:
+#
+# - InitializeInstanceElements asserts that its _constructor_ parameter
+#   is an ECMAScript function object, which is not necessarily true
+#   for the invocation in ClassDefinitionEvaluation.
+#
+# - ClassDefinitionEvaluation sets _F_.[[PrivateMethods]] and _F_.[[Fields]],
+#   but a built-in function doesn't have those internal slots.
+#
+#   The relevant call to CreateBuiltinFunction specifies to create slots
+#   [[ConstructorKind]] and [[SourceText]]:
+declare_isom(T_built_in_function_object_, 'might have', 'slot', '[[ConstructorKind]]', T_tilde_base_ | T_tilde_derived_)
+declare_isom(T_built_in_function_object_, 'might have', 'slot', '[[SourceText]]',      T_Unicode_code_points_)
+
+#   but it should presumably also specify [[PrivateMethods]] and [[Fields]]:
+declare_isom(T_built_in_function_object_, 'might have', 'slot', '[[PrivateMethods]]',  ListType(T_PrivateElement))
+declare_isom(T_built_in_function_object_, 'might have', 'slot', '[[Fields]]',          ListType(T_ClassFieldDefinition_Record))
+
+declare_isom(T_constructor_object_, 'must have', 'slot', '[[ConstructorKind]]', T_tilde_base_ | T_tilde_derived_)
+
 # ==============================================================================
 #@ 10.3.1 [[Call]]
 
@@ -12943,6 +12971,11 @@ class _:
     def s_expr(expr, env0, _):
         [error_type] = expr.children
         return (type_for_ERROR_TYPE(error_type), env0)
+
+# 20.5.1.1 Error
+# 20.5.4   Properties of Error Instances
+
+declare_isom(T_Error, 'must have', 'slot', '[[ErrorData]]', T_Undefined)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 21 Numbers and Dates
@@ -13939,6 +13972,19 @@ class _:
 
 declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',           T_Shared_Data_Block)
 declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',     T_MathNonNegativeInteger_)
+
+# ==============================================================================
+#@ 25.3.5 Properties of DataView Instances
+
+#> DataView instances each have
+#> [[DataView]], [[ViewedArrayBuffer]], [[ByteLength]], and [[ByteOffset]]
+#> internal slots.
+
+declare_isom(T_DataView_object_, 'must have', 'slot', '[[DataView]]',          T_tilde_unused_)
+declare_isom(T_DataView_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+declare_isom(T_DataView_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_)
+declare_isom(T_DataView_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
+
 # ==============================================================================
 #@ 25.4.1 Waiter Record
 
