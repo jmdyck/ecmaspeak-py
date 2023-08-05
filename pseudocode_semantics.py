@@ -1955,15 +1955,9 @@ def exes_in_exlist(exlist):
 
 # ------------------------------------------------------------------------------
 
-def tc_ao_invocation(callee_op_name, args, expr, env0):
-    callee_op = spec.alg_info_['op'][callee_op_name]
-    assert callee_op.species == 'op: singular'
-    params = callee_op.parameters_with_types
-    (_, env1) = tc_args(params, args, env0, expr)
-    return_type = callee_op.return_type
-    return (return_type, env1)
-
 def tc_invocation_of_singular_op(callee_op, args, expr, env0):
+    assert callee_op.species.startswith('op: singular')
+
     params = callee_op.parameters_with_types
     (arg_types, env1) = tc_args(params, args, env0, expr)
 
@@ -5811,7 +5805,8 @@ class _:
         [callee, local_ref] = expr.children[0:2]
         callee_op_name = callee.source_text()
         assert callee_op_name == 'UTF16EncodeCodePoint'
-        return tc_ao_invocation(callee_op_name, [local_ref], expr, env0)
+        callee_op = spec.alg_info_['op'][callee_op_name]
+        return tc_invocation_of_singular_op(callee_op, [local_ref], expr, env0)
 
     def d_exec(expr):
         [cap_word, arg] = expr.children
