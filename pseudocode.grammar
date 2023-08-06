@@ -1099,11 +1099,6 @@
     min
     msFromTime
     scf
-    thisBigIntValue
-    thisBooleanValue
-    thisNumberValue
-    thisStringValue
-    thisSymbolValue
     truncate
     {NUMERIC_TYPE_INDICATOR}::{low_word}
     {cap_word}

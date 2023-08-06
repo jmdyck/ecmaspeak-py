@@ -1423,31 +1423,6 @@ def _handle_other_section(section):
 
             AlgHeader_add_definition(alg_header, None, emu_alg)
 
-        elif section.section_kind == 'intrinsic: info // properties':
-            # In addition to telling you about the intrinsic object,
-            # it also defines an abstract operation that is used
-            # by the object's function properties.
-            mo = re.fullmatch(r'Properties of the (\w+) Prototype Object', section.section_title)
-            which = mo.group(1)
-            op_name = f"this{'Time' if which == 'Date' else which}Value"
-
-            headers.oh_warn()
-            headers.oh_warn(f"In {section.section_num} {section.section_title},")
-            headers.oh_warn(f"    operation {op_name} gets no info from heading")
-
-            preamble = section.block_children[emu_alg_posn-1]
-            assert preamble.source_text() == f'<p>The abstract operation <dfn id="{op_name.lower()}" aoid="{op_name}" oldids="sec-{op_name.lower()}">{op_name}</dfn> takes argument _value_. It performs the following steps when called:</p>'
-
-            alg_header = AlgHeader_make(
-                section = section,
-                species = 'op: singular',
-                name = op_name,
-                params = [ AlgParam('_value_', '', 'unknown') ],
-                node_at_end_of_header = preamble,
-            )
-
-            AlgHeader_add_definition(alg_header, None, emu_alg)
-
         else:
             assert 0, (section.section_num, section.section_title)
 

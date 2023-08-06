@@ -386,12 +386,11 @@ def check_ids():
             if 'aoid' in node.attrs:
                 # TODO: After the merge of #545, most abstract ops don't have an 'aoid' attribute;
                 # instead it's generated at 'render' time.
-                # (But SDOs, emu-eqns, and a few others do, so this code is still being executed,
+                # (But a few things do still have an 'aoid' attribute, so this code is still being executed,
                 # just not as much as we want.)
                 aoid = node.attrs['aoid']
-                assert node.element_name in ['emu-clause', 'emu-annex', 'emu-eqn', 'dfn']
-                if id_prefix_expectation is None:
-                    id_prefix_expectation = '' # for thisFooValue, was 'sec-' until PR 2103
+                assert node.element_name in ['emu-clause', 'emu-eqn']
+                assert id_prefix_expectation is not None
                 possibles = [
                     id_prefix_expectation + aoid.lower().replace(' ', '-').replace('::', '-'),
                     id_prefix_expectation + aoid,

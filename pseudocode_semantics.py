@@ -242,12 +242,6 @@ class TypedAlgHeader:
 
         self.initial_return_type = convert_nature_node_to_type(header.return_nature_node)
 
-        # until PR #3063 is merged:
-        if (mo := re.fullmatch(r'this(\w+)Value', self.name)):
-            foo = mo.group(1)
-            return_type = T_IntegralNumber_ | T_NaN_Number_ if foo == 'Time' else HierType(foo)
-            self.initial_return_type = NormalCompletionType(return_type) | ThrowCompletionType(T_TypeError)
-
         self.return_type = self.initial_return_type
 
         # ----
