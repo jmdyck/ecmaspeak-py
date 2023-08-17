@@ -1425,7 +1425,6 @@
     an ArrayBuffer or SharedArrayBuffer
     an AsyncGenerator
     an ECMAScript code execution context
-    an ECMAScript function
     an ECMAScript function object
     an ECMAScript language value
     an Environment Record

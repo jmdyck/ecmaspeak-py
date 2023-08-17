@@ -596,7 +596,6 @@ def set_up_type_tweaks():
         ('CreateBuiltinFunction'           , '*return*'        , T_function_object_, T_built_in_function_object_),
 
         ('OrdinaryFunctionCreate'          , '*return*'        , T_function_object_, T_ECMAScript_function_object_),
-        ('PrepareForOrdinaryCall'          , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
         ('OrdinaryCallBindThis'            , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
         ('OrdinaryCallEvaluateBody'        , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
         ('EvaluateBody'                    , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
@@ -12030,7 +12029,6 @@ declare_isom(T_Object, 'might have', 'slot', '[[Extensible]]', T_Boolean)
 # ==============================================================================
 #@ 10.2 ECMAScript Function Objects
 
-@P("{VAL_DESC} : an ECMAScript function")
 @P("{VAL_DESC} : an ECMAScript function object")
 class _:
     s_tb = T_ECMAScript_function_object_
