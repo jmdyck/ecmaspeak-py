@@ -12116,31 +12116,21 @@ declare_isom(T_built_in_function_object_, 'might have', 'slot', '[[Fields]]',   
 declare_isom(T_constructor_object_, 'must have', 'slot', '[[ConstructorKind]]', T_tilde_base_ | T_tilde_derived_)
 
 # ==============================================================================
-#@ 10.3.1 [[Call]]
+#@ 10.3.3 BuiltinCallOrConstruct
 
-@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*")
+@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; otherwise, {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value")
 class _:
     def s_expr(expr, env0, _):
-        [_, _, avar, bvar, cvar, dvar] = expr.children
+        [_, _, avar, bvar, cond, cvar, dvar, evar] = expr.children
         assert avar.children == bvar.children
         env0.assert_expr_is_of_type(avar, T_function_object_)
-        env0.assert_expr_is_of_type(cvar, T_Tangible_)
+        env0.assert_expr_is_of_type(cvar, T_Tangible_ | T_tilde_uninitialized_)
         env0.assert_expr_is_of_type(dvar, ListType(T_Tangible_))
-        return (NormalCompletionType(T_Tangible_) | T_throw_completion, env0)
-
-    # 10.3.2
-@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value")
-class _:
-    def s_expr(expr, env0, _):
-        [_, _, avar, bvar, cvar, dvar] = expr.children
-        assert avar.children == bvar.children
-        env0.assert_expr_is_of_type(avar, T_function_object_)
-        env0.assert_expr_is_of_type(cvar, ListType(T_Tangible_))
-        env0.assert_expr_is_of_type(dvar, T_Tangible_)
+        env0.assert_expr_is_of_type(evar, T_constructor_object_ | T_Undefined)
         return (NormalCompletionType(T_Tangible_) | T_throw_completion, env0)
 
 # ==============================================================================
-#@ 10.3.3 CreateBuiltinFunction
+#@ 10.3.4 CreateBuiltinFunction
 
 @P("{VAL_DESC} : a set of algorithm steps")
 class _:

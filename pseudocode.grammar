@@ -768,8 +768,7 @@
     the CharSet containing the one string {var}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
-    the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. The *this* value is uninitialized, {var} provides the named parameters, and {var} provides the NewTarget value
-    the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. {var} is the *this* value, {var} provides the named parameters, and the NewTarget value is *undefined*
+    the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; otherwise, {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value
     the ECMAScript Number value corresponding to {var}
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {EX}
