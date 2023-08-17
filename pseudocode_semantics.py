@@ -595,28 +595,10 @@ def set_up_type_tweaks():
 
         ('CreateBuiltinFunction'           , '*return*'        , T_function_object_, T_built_in_function_object_),
 
-        ('OrdinaryFunctionCreate'          , '*return*'        , T_function_object_, T_ECMAScript_function_object_),
-        ('OrdinaryCallBindThis'            , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
-        ('OrdinaryCallEvaluateBody'        , '_F_'             , T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateBody'                    , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateFunctionBody'            , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateConciseBody'             , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateGeneratorBody'           , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateAsyncGeneratorBody'      , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateAsyncFunctionBody'       , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateAsyncConciseBody'        , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('EvaluateClassStaticBlockBody'    , '_functionObject_', T_function_object_, T_ECMAScript_function_object_),
-        ('FunctionDeclarationInstantiation', '_func_'          , T_function_object_, T_ECMAScript_function_object_),
-
         ('ClassDefinitionEvaluation',
             '*return*',
             NormalCompletionType(T_function_object_)            | T_abrupt_completion, 
             NormalCompletionType(T_ECMAScript_function_object_ | T_built_in_function_object_) | T_abrupt_completion
-        ),
-        ('DefineMethod',
-            '*return*',
-            NormalCompletionType(RecordType('', (('[[Key]]', T_String | T_Symbol), ('[[Closure]]', T_function_object_)))) | T_abrupt_completion,
-            NormalCompletionType(RecordType('', (('[[Key]]', T_String | T_Symbol), ('[[Closure]]', T_ECMAScript_function_object_)))) | T_abrupt_completion,
         ),
     ]
 
