@@ -7135,11 +7135,11 @@ class _:
                     # InitializeTypedArrayFromTypedArray has:
                     #   1. If _srcArray_.[[ContentType]] ≠ _O_.[[ContentType]], ...
 
-                    (T_tilde_BigInt_, '≠', T_tilde_Number_): 'TE',
-                    (T_tilde_Number_, '≠', T_tilde_BigInt_): 'TE',
+                    (T_tilde_bigint_, '≠', T_tilde_number_): 'TE',
+                    (T_tilde_number_, '≠', T_tilde_bigint_): 'TE',
 
-                    (T_tilde_BigInt_, '≠', T_tilde_BigInt_): 'FE',
-                    (T_tilde_Number_, '≠', T_tilde_Number_): 'FE',
+                    (T_tilde_bigint_, '≠', T_tilde_bigint_): 'FE',
+                    (T_tilde_number_, '≠', T_tilde_number_): 'FE',
 
                 }[triple]
 
@@ -7745,7 +7745,7 @@ class _:
 class ES_Adhoc(ES_Value):
     chars: str
 
-@P("{tilded_word} : ~ [-A-Za-z0-9+]+ ~")
+@P("{tilded_word} : ~ [-a-z0-9+]+ ~")
 class _:
     def d_exec(tilded_word):
         [chars] = tilded_word.children
@@ -12245,7 +12245,7 @@ class _:
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ContentType]]',       T_tilde_BigInt_ | T_tilde_Number_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ContentType]]',       T_tilde_bigint_ | T_tilde_number_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[TypedArrayName]]',    T_String)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_)
 

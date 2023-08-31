@@ -1124,7 +1124,7 @@ def _define_tilde_types():
         if tilde_word == '~failure~':
             parent_type = T_MatchResult
             continue # For now, it's clearer if it appears in the _named_type_hierarchy
-        elif re.fullmatch(r'~\w+(8|8C|16|32|64)~', tilde_word):
+        elif re.fullmatch(r'~\w+(8|8clamped|16|32|64)~', tilde_word):
             parent_type = T_TypedArray_element_type
         else:
             parent_type = T_tilde_
