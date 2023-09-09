@@ -63,7 +63,7 @@ def main():
 
     shared.msg_at_posn_finish()
 
-    headers.generate_spec_for_PR_545()
+    headers.write_header_info()
 
     spec.save()
 

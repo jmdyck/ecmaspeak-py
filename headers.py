@@ -16,13 +16,6 @@ import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def generate_spec_for_PR_545():
-    stderr("generate_spec_for_PR_545 ...")
-
-    write_header_info()
-
-# ------------------------------------------------------------------------------
-
 def oh_warn(*args):
     print(*args, file=oh_inc_f)
 
