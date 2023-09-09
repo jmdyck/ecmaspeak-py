@@ -1,18 +1,16 @@
 #!/usr/bin/python3
 
 # ecmaspeak-py/headers.py:
-# This module is primarily concerned with making the version of the spec for PR 545,
-# and will probably mostly disappear if/when that PR is merged.
+# This module is primarily concerned with extracting information from
+# the preambles of built-in functions.
 #
 # Copyright (C) 2021  J. Michael Dyck <jmdyck@ibiblio.org>
 
 import re, pdb
-from collections import OrderedDict, defaultdict
-from dataclasses import dataclass
+from collections import defaultdict
 
-import shared
-from shared import spec, stderr, DL
-import Pseudocode
+from shared import stderr
+from algos import AlgParam, AlgHeader
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -485,146 +483,6 @@ def resolve_oi(hoi, poi):
 
     assert hoi.description_paras == []
     hoi.description_paras = poi.description_paras
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-@dataclass
-class AlgParam:
-    name: str
-    punct: str # '' | '[]' | '...'
-    nature: str
-    decl_node: Pseudocode.ANode = None
-
-# ------------------------------------------------
-
-class AlgHeader:
-    def __init__(self):
-        self.species = None
-        self.name = None
-        self.for_phrase = None
-        self.for_phrase_node = None
-        self.params = None
-        self.return_nature_node = None
-        self.description_paras = []
-        self.u_defns = []
-        self.line_num = None
-
-    # --------------------------------------------------------------------------
-
-    def __str__(self):
-        return f"""
-            AlgHeader:
-                name: {self.name}
-                species: {self.species}
-                for : {self.for_phrase}
-                params: {', '.join(
-                    param.name + ' : ' + param.nature
-                    for param in self.params
-                    )
-                }
-                returns: {self.return_nature_node.source_text() if self.return_nature_node else 'None'}
-                # defns: {len(self.u_defns)}
-        """
-
-    def __repr__(self):
-        return f"AlgHeader(name: {self.name!r})"
-
-    # --------------------------------------------------------------------------
-
-    def param_names(self):
-        return [
-            param.name
-            for param in self.params
-        ]
-
-    # --------------------------------------------------------------------------
-
-    def finish_initialization(self):
-
-        self.name_w_markup = self.name
-        if self.name.startswith('<'):
-            mo = re.fullmatch(r'<dfn [^<>]+>([^<>]+)</dfn>', self.name)
-            assert mo
-            self.name = mo.group(1)
-
-        # ------------------------------------------------------------
-
-        assert self.params is not None
-
-        assert len([
-                param.name
-                for param in self.params
-                if param.punct == '...'
-            ]) in [0,1]
-
-        if self.species.startswith('bif:'):
-            for param in self.params:
-                if param.nature == 'unknown':
-                    if param.punct == '...':
-                        param.nature = 'a List of ECMAScript language values'
-                    else:
-                        param.nature = 'an ECMAScript language value'
-
-        # -------------------------
-
-        assert isinstance(self.description_paras, list)
-        desc = ' '.join(self.description_paras)
-        desc = re.sub(r'^(!OP|!FUNC|!CM) ', '', desc)
-        desc = re.sub(r'^(It|This operation|The job) ', '', desc)
-        desc = (desc
-            .replace('!OP', 'This operation')
-            .replace('!FUNC', 'This function')
-        )
-        self.description = desc
-        # Alternatively: if len(self.description_paras) > 1: make separate <p> elements?
-
-        # -------------------------
-
-        self.parent_alg = Pseudocode.ensure_alg(self.species, self.name)
-        self.parent_alg.headers.append(self)
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def write_header_info():
-    stderr("write_header_info ...")
-
-    f = shared.open_for_output('header_info')
-
-    def put(*args): print(*args, file=f)
-
-    for bif_or_op in ['op', 'bif']:
-        put('X'*40)
-        put(bif_or_op)
-        for (alg_name, alg_info) in sorted(spec.alg_info_[bif_or_op].items()):
-            n_defns_via_headers = 0
-            assert alg_info.name == alg_name
-            assert alg_info.bif_or_op == bif_or_op
-            put()
-            put(f"  {alg_info.name}")
-            put(f"    {alg_info.species}")
-            put(f"    {len(alg_info.headers)} headers:")
-            for alg_header in alg_info.headers:
-                assert alg_header.name == alg_name
-                assert alg_header.species == alg_info.species
-                put(f"      --")
-                section = alg_header.section
-                put(f"      {section.section_num} {section.section_title}")
-                if alg_header.for_phrase: put(f"        for: {alg_header.for_phrase}")
-                # alg_header.params
-                # alg_header.return_nature_{normal,abrupt}
-                # alg_header.description_paras
-                put(f"        {len(alg_header.u_defns)} defns")
-                n_defns_via_headers += len(alg_header.u_defns)
-                for alg_defn in alg_header.u_defns:
-                    assert alg_defn.header is alg_header
-
-            assert n_defns_via_headers == len(alg_info.all_definitions())
-            # alg_info.invocations
-            # alg_info.callees
-            # alg_info.callers
-        put()
-
-    f.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

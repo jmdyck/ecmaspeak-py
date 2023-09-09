@@ -516,58 +516,6 @@ def exes_in_exlist(exlist):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-spec.alg_info_ = { 'bif': {}, 'op': {} }
-# These need to be separate because Set() is both
-# an abstract operation and a built-in function.
-
-class Alg:
-    # An operation (widely construed) or
-    # the algorithmic aspect of a (built-in) function.
-    def __init__(self, name, bif_or_op, species):
-        self.name = name
-        self.bif_or_op = bif_or_op
-        self.species = species
-        self.invocations = []
-        self.callees = set()
-        self.callers = set()
-        self.headers = []
-
-    def __str__(self):
-        return f"{self.bif_or_op}: {self.name}"
-
-    def __lt__(self, other):
-        return (
-            self.bif_or_op < other.bif_or_op
-            or
-            self.bif_or_op == other.bif_or_op
-            and
-            self.name < other.name
-        )
-
-    def all_definitions(self):
-        return [
-            alg_defn
-            for alg_header in self.headers
-            for alg_defn in alg_header.u_defns
-        ]
-
-def ensure_alg(alg_species, alg_name):
-    bif_or_op = 'bif' if alg_species.startswith('bif:') else 'op'
-    iffn = spec.alg_info_[bif_or_op]
-
-    if alg_name in iffn:
-        alg_info = iffn[alg_name]
-        assert alg_info.name == alg_name
-        assert alg_info.species == alg_species
-    else:
-        alg_info = Alg(alg_name, bif_or_op, alg_species)
-        iffn[alg_name] = alg_info
-
-    return alg_info
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 def check_vars():
     stderr('check_vars ...')
 

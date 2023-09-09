@@ -4,9 +4,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import re, string, time, typing, pdb, types
-from collections import OrderedDict
-from dataclasses import dataclass
+import re, string, time, pdb, types
 
 import shared
 from shared import stderr, msg_at_node, msg_at_posn, spec
@@ -15,7 +13,7 @@ import Pseudocode
 import headers
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
-from headers import AlgParam
+from algos import ensure_alg, AlgParam, AlgHeader, AlgDefn
 import records
 from NodeGrammar import NodeGrammar
 
@@ -777,7 +775,7 @@ def _handle_other_op_section(section):
     # -----------------------------------------
 
     if section.section_id == 'sec-maybesimplecasefolding':
-        Pseudocode.ensure_alg('op: singular', 'scf')
+        ensure_alg('op: singular', 'scf')
 
     return True
 
@@ -1384,14 +1382,14 @@ def _handle_other_section(section):
 
     if n_emu_algs == 0:
         if section.section_title == 'Mathematical Operations':
-            Pseudocode.ensure_alg('op: singular', 'abs')
-            Pseudocode.ensure_alg('op: singular', 'min')
-            Pseudocode.ensure_alg('op: singular', 'max')
-            Pseudocode.ensure_alg('op: singular', 'floor')
-            Pseudocode.ensure_alg('op: singular', 'truncate')
-            Pseudocode.ensure_alg('op: singular', '\U0001d53d')
-            Pseudocode.ensure_alg('op: singular', '\u211d')
-            Pseudocode.ensure_alg('op: singular', '\u2124')
+            ensure_alg('op: singular', 'abs')
+            ensure_alg('op: singular', 'min')
+            ensure_alg('op: singular', 'max')
+            ensure_alg('op: singular', 'floor')
+            ensure_alg('op: singular', 'truncate')
+            ensure_alg('op: singular', '\U0001d53d')
+            ensure_alg('op: singular', '\u211d')
+            ensure_alg('op: singular', '\u2124')
 
     elif n_emu_algs == 1:
         emu_alg_posn = section.bcen_list.index('emu-alg')
@@ -1430,14 +1428,14 @@ def _handle_other_section(section):
 
         if section.section_kind == 'shorthand':
             if section.section_title == 'Implicit Completion Values':
-                Pseudocode.ensure_alg('shorthand', 'Completion')
+                ensure_alg('shorthand', 'Completion')
             elif section.section_title in [
                 'ReturnIfAbrupt',
                 'Await',
             ]:
-                Pseudocode.ensure_alg('shorthand', section.section_title)
+                ensure_alg('shorthand', section.section_title)
             elif section.section_title == 'IfAbruptRejectPromise ( _value_, _capability_ )':
-                Pseudocode.ensure_alg('shorthand', 'IfAbruptRejectPromise')
+                ensure_alg('shorthand', 'IfAbruptRejectPromise')
             else:
                 pass
                 # print('>', section.section_num, section.section_title)
@@ -3196,7 +3194,7 @@ def AlgHeader_make(
     return_nature_node   = None,
     preamble_nodes       = None,
 ):
-    alg_header = headers.AlgHeader()
+    alg_header = AlgHeader()
     alg_header.section = section
     alg_header.species = species
     alg_header.name = name
@@ -3260,15 +3258,6 @@ def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
 
     alg_defn = AlgDefn(alg_header, discriminator, kludgey_p, anode)
     alg_header.u_defns.append(alg_defn)
-
-# ------------------------------------------------------------------------------
-
-@dataclass
-class AlgDefn:
-    header: headers.AlgHeader
-    discriminator: typing.Union[HNode, str, None]
-    kludgey_p: typing.Union[HNode, None]
-    anode: Pseudocode.ANode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

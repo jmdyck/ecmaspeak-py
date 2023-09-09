@@ -8,7 +8,7 @@
 import sys, re, pdb
 from collections import defaultdict, OrderedDict
 
-import HTML, Section, emu_grammars, Pseudocode, headers
+import HTML, Section, emu_grammars, Pseudocode, algos
 import shared
 from shared import stderr, msg_at_node, msg_at_posn, spec
 from emu_tables import analyze_table
@@ -63,7 +63,7 @@ def main():
 
     shared.msg_at_posn_finish()
 
-    headers.write_header_info()
+    algos.write_header_info()
 
     spec.save()
 
