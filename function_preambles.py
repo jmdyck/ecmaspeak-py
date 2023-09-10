@@ -389,8 +389,29 @@ class PreambleInfoHolder:
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
             poi.params = None
+
         elif len(pl_values) == 1:
-            get_info_from_parameter_listing_in_preamble(poi, pl_values[0])
+            [parameter_listing] = pl_values
+            # This only happens about 10 times now.
+
+            if parameter_listing == 'no arguments':
+                # 1 case
+                poi.params = []
+
+            elif parameter_listing == 'zero or more arguments':
+                # 2 cases
+                # XXX not sure what to do
+                poi.params = None
+
+            else:
+                # 7 cases
+                mo = re.fullmatch(r'(an )?argument (_\w+_)', parameter_listing)
+                assert mo, parameter_listing
+                param_name = mo.group(2)
+                punct = ''
+                nature = 'unknown'
+                poi.params = [ AlgParam(param_name, punct, nature) ]
+
         else:
             stderr(f"{poi.name} has multi-pl: {pl_values}")
             assert 0
@@ -438,34 +459,6 @@ class PreambleInfoHolder:
         poi.description_paras = self.fields['desc']
         assert hoi.description_paras == []
         hoi.description_paras = poi.description_paras
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
-    # This is only called about 10 times now.
-
-    assert oi.params is None, oi.name
-
-    if parameter_listing == 'no arguments':
-        # 27 cases
-        oi.params = []
-        return
-
-    if parameter_listing in [
-        'zero or more arguments',
-    ]:
-        # 2 cases
-        # XXX not sure what to do
-        return
-
-    mo = re.fullmatch(r'(an )?argument (_\w+_)', parameter_listing)
-    assert mo, parameter_listing
-    param_name = mo.group(2)
-    punct = ''
-    nature = 'unknown'
-    oi.params = [ AlgParam(param_name, punct, nature) ]
-    return
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
