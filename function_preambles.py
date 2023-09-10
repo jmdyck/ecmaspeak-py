@@ -20,13 +20,11 @@ def oh_warn(*args):
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 def check_header_against_prose(hoi, preamble_nodes):
-    if preamble_nodes == []:
-        # No prose to check
-        pass
-    else:
-        info_holder = extract_info_from_preamble(preamble_nodes)
-        poi = info_holder.convert_to_header()
-        resolve_oi(hoi, poi)
+    assert hoi.species.startswith('bif:')
+    assert preamble_nodes
+    info_holder = extract_info_from_preamble(preamble_nodes)
+    poi = info_holder.convert_to_header()
+    resolve_oi(hoi, poi)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
