@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# ecmaspeak-py/headers.py:
+# ecmaspeak-py/function_preambles.py:
 # This module is primarily concerned with extracting information from
 # the preambles of built-in functions.
 #

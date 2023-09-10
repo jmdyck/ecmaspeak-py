@@ -10,7 +10,7 @@ import shared
 from shared import stderr, msg_at_node, msg_at_posn, spec
 from HTML import HNode
 import Pseudocode
-import headers
+import function_preambles as fpr
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
 from algos import ensure_alg, AlgParam, AlgHeader, AlgDefn
@@ -22,7 +22,7 @@ from NodeGrammar import NodeGrammar
 def make_and_check_sections():
     stderr("make_and_check_sections ...")
 
-    headers.oh_inc_f = shared.open_for_output('oh_warnings')
+    fpr.oh_inc_f = shared.open_for_output('oh_warnings')
 
     spec.root_section = _make_section_tree(spec.doc_node)
     _set_section_identification_r(spec.root_section, None)
@@ -49,8 +49,8 @@ def make_and_check_sections():
     Pseudocode.check_emu_eqn_coverage()
     Pseudocode.report_all_parsers()
 
-    headers.oh_inc_f.close()
-    headers.note_unused_rules()
+    fpr.oh_inc_f.close()
+    fpr.note_unused_rules()
 
     _print_section_kinds()
     _print_unused_ispl()
@@ -667,9 +667,9 @@ def _handle_oddball_op_section(section):
 
     section.section_kind = 'abstract_operation'
 
-    headers.oh_warn()
-    headers.oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
-    headers.oh_warn(f"there is a non-standard preamble")
+    fpr.oh_warn()
+    fpr.oh_warn(f"In {section.section_num} {section.section_title} ({section.section_id}),")
+    fpr.oh_warn(f"there is a non-standard preamble")
 
     alg_header = AlgHeader_make(
         section = section,
@@ -3208,7 +3208,7 @@ def AlgHeader_make(
         alg_header.params = params
 
     if preamble_nodes:
-        headers.check_header_against_prose(alg_header, preamble_nodes)
+        fpr.check_header_against_prose(alg_header, preamble_nodes)
 
     alg_header.finish_initialization()
 
