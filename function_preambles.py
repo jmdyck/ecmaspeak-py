@@ -10,7 +10,7 @@ import re, pdb
 from collections import defaultdict
 
 from shared import stderr
-from algos import AlgParam, AlgHeader
+from algos import AlgParam
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -326,8 +326,6 @@ class PreambleInfoHolder:
     def compare_to_header(self, hoi):
         self._dedupe()
 
-        poi = AlgHeader()
-
         def join_field_values(key, joiner = ' & '):
             values = self.fields[key]
             if not values: return None
@@ -339,25 +337,27 @@ class PreambleInfoHolder:
             assert len(values) == 1, values
             return values[0]
 
+        # The prefix 'pr_' means "extracted from the preamble".
+
         # -----
         # kind:
 
         assert hoi.species is not None
 
         vs = join_field_values('kind')
-        poi.species = {
+        pr_species = {
             'anonymous built-in function'               : 'bif: * per realm',
             'accessor property'                         : 'bif: intrinsic: accessor function',
             'method'                                    : 'bif: intrinsic',
             None                                        : None,
         }[vs]
 
-        if poi.species is None:
+        if pr_species is None:
             pass
-        elif poi.species == hoi.species:
+        elif pr_species == hoi.species:
             pass
         else:
-            stderr(f"mismatch of 'species' in heading/preamble for {hoi.name}: {hoi.species!r} != {poi.species!r}")
+            stderr(f"mismatch of 'species' in heading/preamble for {hoi.name}: {hoi.species!r} != {pr_species!r}")
             assert 0
 
         # -----
@@ -365,30 +365,30 @@ class PreambleInfoHolder:
 
         assert hoi.name is not None
 
-        poi.name = at_most_one_value('name')
+        pr_name = at_most_one_value('name')
 
         if (
-            poi.name is None
+            pr_name is None
             or
-            poi.name == hoi.name
+            pr_name == hoi.name
             or
             # heading has spaces around square brackets, but preamble doesn't:
-            poi.name == hoi.name.replace(' [ ', '[').replace(' ]', ']')
+            pr_name == hoi.name.replace(' [ ', '[').replace(' ]', ']')
             or
             # E.g. "Promise Resolve Functions" in heading vs "promise resolve function" in preamble:
-            poi.name.lower() == hoi.name.lower()
+            pr_name.lower() == hoi.name.lower()
         ):
             pass
         else:
             oh_warn()
-            oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({poi.name})')
+            oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({pr_name})')
 
         # ---
         # pl:
 
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
-            poi.params = None
+            pr_params = None
 
         elif len(pl_values) == 1:
             [parameter_listing] = pl_values
@@ -396,12 +396,12 @@ class PreambleInfoHolder:
 
             if parameter_listing == 'no arguments':
                 # 1 case
-                poi.params = []
+                pr_params = []
 
             elif parameter_listing == 'zero or more arguments':
                 # 2 cases
                 # XXX not sure what to do
-                poi.params = None
+                pr_params = None
 
             else:
                 # 7 cases
@@ -410,55 +410,56 @@ class PreambleInfoHolder:
                 param_name = mo.group(2)
                 punct = ''
                 nature = 'unknown'
-                poi.params = [ AlgParam(param_name, punct, nature) ]
+                pr_params = [ AlgParam(param_name, punct, nature) ]
 
         else:
-            stderr(f"{poi.name} has multi-pl: {pl_values}")
+            stderr(f"{pr_name} has multi-pl: {pl_values}")
             assert 0
 
         if hoi.params is None:
-            assert poi.params is not None
-            hoi.params = poi.params
-        elif poi.params is None:
+            assert pr_params is not None
+            hoi.params = pr_params
+        elif pr_params is None:
             pass
         else:
             # neither is None
 
-            if hoi.param_names() != poi.param_names():
+            pr_param_names = [ param.name for param in pr_params ]
+            if hoi.param_names() != pr_param_names:
                 oh_warn()
                 oh_warn(hoi.name, 'has param name mismatch:')
                 oh_warn(hoi.param_names())
-                oh_warn(poi.param_names())
+                oh_warn(pr_param_names())
 
             else:
-                for (hoi_param, poi_param) in zip(hoi.params, poi.params):
-                    assert hoi_param.name == poi_param.name
+                for (hoi_param, pr_param) in zip(hoi.params, pr_params):
+                    assert hoi_param.name == pr_param.name
 
-                    if hoi_param.punct != poi_param.punct:
+                    if hoi_param.punct != pr_param.punct:
                         oh_warn()
                         oh_warn(f"{hoi.name} parameter {hoi_param.name} has param punct mismatch:")
                         oh_warn('h:', hoi_param.punct)
-                        oh_warn('p:', poi_param.punct)
+                        oh_warn('p:', pr_param.punct)
 
-                    if hoi_param.nature != poi_param.nature:
+                    if hoi_param.nature != pr_param.nature:
                         oh_warn()
                         oh_warn(f"{hoi.name} parameter {hoi_param.name} has param nature mismatch:")
                         oh_warn('h:', hoi_param.nature)
-                        oh_warn('p:', poi_param.nature)
+                        oh_warn('p:', pr_param.nature)
 
         # -----------
         # retn + reta:
 
-        poi.return_nature_normal = join_field_values('retn', ' or ')
-        poi.return_nature_abrupt = at_most_one_value('reta')
+        pr_return_nature_normal = join_field_values('retn', ' or ')
+        pr_return_nature_abrupt = at_most_one_value('reta')
         # TODO: compare to hoi.return_nature_node ?
 
         # -----
         # desc:
 
-        poi.description_paras = self.fields['desc']
+        pr_description_paras = self.fields['desc']
         assert hoi.description_paras == []
-        hoi.description_paras = poi.description_paras
+        hoi.description_paras = pr_description_paras
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
