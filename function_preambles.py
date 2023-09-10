@@ -413,8 +413,9 @@ class PreambleInfoHolder:
                 pr_params = [ AlgParam(param_name, punct, nature) ]
 
         else:
-            stderr(f"{pr_name} has multi-pl: {pl_values}")
-            assert 0
+            oh_warn()
+            oh_warn(f"{alg_header.name} has multi-pl: {pl_values}")
+            pr_params = None
 
         if alg_header.params is None:
             assert pr_params is not None
