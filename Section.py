@@ -283,7 +283,6 @@ def _handle_early_errors_section(section):
         section = section,
         species = 'op: discriminated by syntax: early error',
         name = 'Early Errors',
-        for_phrase = 'Parse Node',
         params = [],
         node_at_end_of_header = section.heading_child,
     )
@@ -399,7 +398,6 @@ def _handle_sdo_section(section):
                 species = 'op: discriminated by syntax: steps',
                 name = 'Evaluation',
                 params = [],
-                for_phrase = 'Parse Node',
                 node_at_end_of_header = section.heading_child
             )
         else:
@@ -438,7 +436,6 @@ def _handle_sdo_section(section):
             section = section,
             species = 'op: discriminated by syntax: steps',
             name = sdo_name,
-            for_phrase = 'Parse Node',
             params = params,
             node_at_end_of_header = section.heading_child,
             return_nature_node = return_nature_node,
@@ -936,10 +933,7 @@ def _handle_structured_header(section):
 
     # -----
 
-    if section_type == 'sdo':
-        for_phrase = 'Parse Node'
-    else:
-        for_phrase = None
+    for_phrase = None
     for_phrase_node = None
 
     # --------------------------------------------------------------------------
