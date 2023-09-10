@@ -19,11 +19,11 @@ def oh_warn(*args):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-def check_header_against_prose(hoi, preamble_nodes):
-    assert hoi.species.startswith('bif:')
+def check_header_against_prose(alg_header, preamble_nodes):
+    assert alg_header.species.startswith('bif:')
     assert preamble_nodes
     info_holder = extract_info_from_preamble(preamble_nodes)
-    info_holder.compare_to_header(hoi)
+    info_holder.compare_to_header(alg_header)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -323,7 +323,7 @@ class PreambleInfoHolder:
             ]
             self.fields[key] = deduped_values
 
-    def compare_to_header(self, hoi):
+    def compare_to_header(self, alg_header):
         self._dedupe()
 
         def join_field_values(key, joiner = ' & '):
@@ -342,7 +342,7 @@ class PreambleInfoHolder:
         # -----
         # kind:
 
-        assert hoi.species is not None
+        assert alg_header.species is not None
 
         vs = join_field_values('kind')
         pr_species = {
@@ -354,34 +354,34 @@ class PreambleInfoHolder:
 
         if pr_species is None:
             pass
-        elif pr_species == hoi.species:
+        elif pr_species == alg_header.species:
             pass
         else:
-            stderr(f"mismatch of 'species' in heading/preamble for {hoi.name}: {hoi.species!r} != {pr_species!r}")
+            stderr(f"mismatch of 'species' in heading/preamble for {alg_header.name}: {alg_header.species!r} != {pr_species!r}")
             assert 0
 
         # -----
         # name:
 
-        assert hoi.name is not None
+        assert alg_header.name is not None
 
         pr_name = at_most_one_value('name')
 
         if (
             pr_name is None
             or
-            pr_name == hoi.name
+            pr_name == alg_header.name
             or
             # heading has spaces around square brackets, but preamble doesn't:
-            pr_name == hoi.name.replace(' [ ', '[').replace(' ]', ']')
+            pr_name == alg_header.name.replace(' [ ', '[').replace(' ]', ']')
             or
             # E.g. "Promise Resolve Functions" in heading vs "promise resolve function" in preamble:
-            pr_name.lower() == hoi.name.lower()
+            pr_name.lower() == alg_header.name.lower()
         ):
             pass
         else:
             oh_warn()
-            oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({pr_name})')
+            oh_warn(f'resolve_oi: name in heading ({alg_header.name}) != name in preamble ({pr_name})')
 
         # ---
         # pl:
@@ -416,35 +416,35 @@ class PreambleInfoHolder:
             stderr(f"{pr_name} has multi-pl: {pl_values}")
             assert 0
 
-        if hoi.params is None:
+        if alg_header.params is None:
             assert pr_params is not None
-            hoi.params = pr_params
+            alg_header.params = pr_params
         elif pr_params is None:
             pass
         else:
             # neither is None
 
             pr_param_names = [ param.name for param in pr_params ]
-            if hoi.param_names() != pr_param_names:
+            if alg_header.param_names() != pr_param_names:
                 oh_warn()
-                oh_warn(hoi.name, 'has param name mismatch:')
-                oh_warn(hoi.param_names())
+                oh_warn(alg_header.name, 'has param name mismatch:')
+                oh_warn(alg_header.param_names())
                 oh_warn(pr_param_names())
 
             else:
-                for (hoi_param, pr_param) in zip(hoi.params, pr_params):
-                    assert hoi_param.name == pr_param.name
+                for (alg_param, pr_param) in zip(alg_header.params, pr_params):
+                    assert alg_param.name == pr_param.name
 
-                    if hoi_param.punct != pr_param.punct:
+                    if alg_param.punct != pr_param.punct:
                         oh_warn()
-                        oh_warn(f"{hoi.name} parameter {hoi_param.name} has param punct mismatch:")
-                        oh_warn('h:', hoi_param.punct)
+                        oh_warn(f"{alg_header.name} parameter {alg_param.name} has param punct mismatch:")
+                        oh_warn('h:', alg_param.punct)
                         oh_warn('p:', pr_param.punct)
 
-                    if hoi_param.nature != pr_param.nature:
+                    if alg_param.nature != pr_param.nature:
                         oh_warn()
-                        oh_warn(f"{hoi.name} parameter {hoi_param.name} has param nature mismatch:")
-                        oh_warn('h:', hoi_param.nature)
+                        oh_warn(f"{alg_header.name} parameter {alg_param.name} has param nature mismatch:")
+                        oh_warn('h:', alg_param.nature)
                         oh_warn('p:', pr_param.nature)
 
         # -----------
@@ -452,14 +452,14 @@ class PreambleInfoHolder:
 
         pr_return_nature_normal = join_field_values('retn', ' or ')
         pr_return_nature_abrupt = at_most_one_value('reta')
-        # TODO: compare to hoi.return_nature_node ?
+        # TODO: compare to alg_header.return_nature_node ?
 
         # -----
         # desc:
 
         pr_description_paras = self.fields['desc']
-        assert hoi.description_paras == []
-        hoi.description_paras = pr_description_paras
+        assert alg_header.description_paras == []
+        alg_header.description_paras = pr_description_paras
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
