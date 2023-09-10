@@ -8,7 +8,7 @@
 import sys, re, pdb
 from collections import defaultdict, OrderedDict
 
-import HTML, Section, emu_grammars, Pseudocode, algos
+import HTML, Section, emu_grammars, Pseudocode
 import shared
 from shared import stderr, msg_at_node, msg_at_posn, spec
 from emu_tables import analyze_table
@@ -62,8 +62,6 @@ def main():
     check_globals()
 
     shared.msg_at_posn_finish()
-
-    algos.write_header_info()
 
     spec.save()
 

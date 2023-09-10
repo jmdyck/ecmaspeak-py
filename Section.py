@@ -13,7 +13,7 @@ import Pseudocode
 import function_preambles as fpr
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
-from algos import ensure_alg, AlgParam, AlgHeader, AlgDefn
+from algos import ensure_alg, AlgParam, AlgHeader, AlgDefn, write_header_info
 import records
 from NodeGrammar import NodeGrammar
 
@@ -57,6 +57,8 @@ def make_and_check_sections():
     _print_intrinsic_facts()
     _check_aoids()
     _check_section_order()
+
+    write_header_info()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
