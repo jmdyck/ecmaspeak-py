@@ -23,8 +23,7 @@ def check_header_against_prose(hoi, preamble_nodes):
     assert hoi.species.startswith('bif:')
     assert preamble_nodes
     info_holder = extract_info_from_preamble(preamble_nodes)
-    poi = info_holder.convert_to_header()
-    resolve_oi(hoi, poi)
+    info_holder.compare_to_header(hoi)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -324,7 +323,7 @@ class PreambleInfoHolder:
             ]
             self.fields[key] = deduped_values
 
-    def convert_to_header(self):
+    def compare_to_header(self, hoi):
         self._dedupe()
 
         poi = AlgHeader()
@@ -340,6 +339,11 @@ class PreambleInfoHolder:
             assert len(values) == 1, values
             return values[0]
 
+        # -----
+        # kind:
+
+        assert hoi.species is not None
+
         vs = join_field_values('kind')
         poi.species = {
             'anonymous built-in function'               : 'bif: * per realm',
@@ -348,7 +352,39 @@ class PreambleInfoHolder:
             None                                        : None,
         }[vs]
 
+        if poi.species is None:
+            pass
+        elif poi.species == hoi.species:
+            pass
+        else:
+            stderr(f"mismatch of 'species' in heading/preamble for {hoi.name}: {hoi.species!r} != {poi.species!r}")
+            assert 0
+
+        # -----
+        # name:
+
+        assert hoi.name is not None
+
         poi.name = at_most_one_value('name')
+
+        if (
+            poi.name is None
+            or
+            poi.name == hoi.name
+            or
+            # heading has spaces around square brackets, but preamble doesn't:
+            poi.name == hoi.name.replace(' [ ', '[').replace(' ]', ']')
+            or
+            # E.g. "Promise Resolve Functions" in heading vs "promise resolve function" in preamble:
+            poi.name.lower() == hoi.name.lower()
+        ):
+            pass
+        else:
+            oh_warn()
+            oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({poi.name})')
+
+        # ---
+        # pl:
 
         pl_values = self.fields['pl']
         if len(pl_values) == 0:
@@ -359,13 +395,49 @@ class PreambleInfoHolder:
             stderr(f"{poi.name} has multi-pl: {pl_values}")
             assert 0
 
-        poi.return_nature_normal = join_field_values('retn', ' or ')
+        if hoi.params is None:
+            assert poi.params is not None
+            hoi.params = poi.params
+        elif poi.params is None:
+            pass
+        else:
+            # neither is None
 
+            if hoi.param_names() != poi.param_names():
+                oh_warn()
+                oh_warn(hoi.name, 'has param name mismatch:')
+                oh_warn(hoi.param_names())
+                oh_warn(poi.param_names())
+
+            else:
+                for (hoi_param, poi_param) in zip(hoi.params, poi.params):
+                    assert hoi_param.name == poi_param.name
+
+                    if hoi_param.punct != poi_param.punct:
+                        oh_warn()
+                        oh_warn(f"{hoi.name} parameter {hoi_param.name} has param punct mismatch:")
+                        oh_warn('h:', hoi_param.punct)
+                        oh_warn('p:', poi_param.punct)
+
+                    if hoi_param.nature != poi_param.nature:
+                        oh_warn()
+                        oh_warn(f"{hoi.name} parameter {hoi_param.name} has param nature mismatch:")
+                        oh_warn('h:', hoi_param.nature)
+                        oh_warn('p:', poi_param.nature)
+
+        # -----------
+        # retn + reta:
+
+        poi.return_nature_normal = join_field_values('retn', ' or ')
         poi.return_nature_abrupt = at_most_one_value('reta')
+        # TODO: compare to hoi.return_nature_node ?
+
+        # -----
+        # desc:
 
         poi.description_paras = self.fields['desc']
-
-        return poi
+        assert hoi.description_paras == []
+        hoi.description_paras = poi.description_paras
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -394,93 +466,6 @@ def get_info_from_parameter_listing_in_preamble(oi, parameter_listing):
     nature = 'unknown'
     oi.params = [ AlgParam(param_name, punct, nature) ]
     return
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def resolve_oi(hoi, poi):
-    # Rather than creating a new AlgHeader,
-    # modifies {hoi} if appropriate.
-
-    if poi is None:
-        # no preamble, so just use info from heading
-        return
-
-    # kind
-    assert hoi.species is not None
-    if poi.species is None:
-        pass
-    else:
-        if hoi.species == poi.species:
-            pass
-        else:
-            stderr(f"mismatch of 'species' in heading/preamble for {hoi.name}: {hoi.species!r} != {poi.species!r}")
-            assert 0
-
-    # name
-    assert hoi.name is not None
-    if True:
-        # We prefer to use the heading-name,
-        # ... but we also check that it's consistent with the preamble-name, if any:
-        if (
-            poi.name is None
-            or
-            hoi.name == poi.name
-            or
-            hoi.name.endswith('.' + poi.name)
-            or
-            hoi.name.endswith(f'.prototype [ {poi.name} ]')
-            or
-            hoi.name.lower() == poi.name.lower()
-            or
-            hoi.name.replace(' [ ', '[').replace(' ]', ']') == poi.name
-        ):
-            pass
-        else:
-            oh_warn()
-            oh_warn(f'resolve_oi: name in heading ({hoi.name}) != name in preamble ({poi.name})')
-
-    # for_phrase
-    assert poi.for_phrase is None
-    # so just leave hoi.for_phrase as is
-
-    # param_names
-    if hoi.params is None:
-        # assert poi.params is not None
-        hoi.params = poi.params
-    elif poi.params is None:
-        assert hoi.params is not None
-    else:
-        # neither is None
-
-        # When the heading contains a signature,
-        # it's deemed authoritative.
-
-        if hoi.param_names() != poi.param_names():
-            oh_warn()
-            oh_warn(hoi.name, 'has param name mismatch:')
-            oh_warn(hoi.param_names())
-            oh_warn(poi.param_names())
-        else:
-
-            for (hoi_param, poi_param) in zip(hoi.params, poi.params):
-                assert hoi_param.name == poi_param.name
-
-                if hoi_param.punct != poi_param.punct:
-                    oh_warn()
-                    oh_warn(f"{hoi.name} parameter {hoi_param.name} has param punct mismatch:")
-                    oh_warn('h:', hoi_param.punct)
-                    oh_warn('p:', poi_param.punct)
-
-                if hoi_param.nature == 'unknown':
-                    hoi_param.nature = poi_param.nature
-                else:
-                    assert hoi_param.nature == poi_param.nature
-
-    assert hoi.return_nature_node is None
-    hoi.return_nature_node = poi.return_nature_node
-
-    assert hoi.description_paras == []
-    hoi.description_paras = poi.description_paras
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
