@@ -278,6 +278,170 @@ def write_header_info():
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def check_alg_consistency():
+    stderr("check_alg_consistency ...")
+
+    # (Some of these checks could be performed as each alg_header is created,
+    # and maybe should be.)
+
+    f = shared.open_for_output('alg_anomalies')
+
+    def put(*args): print(*args, file=f)
+
+    for bif_or_op in ['op', 'bif']:
+        for (_, alg) in sorted(spec.alg_info_[bif_or_op].items()):
+
+            # --------------
+            # name, species:
+
+            for alg_header in alg.headers:
+                assert alg_header.name == alg.name
+                assert alg_header.species == alg.species
+
+            # -----------
+            # for_phrase:
+
+            if alg.species == 'shorthand':
+                assert len(alg.headers) == 0
+
+            elif alg.species.startswith('op: discriminated by type:'):
+
+                for alg_header in alg.headers:
+                    sect = alg_header.section
+                    expected_for_phrase = {
+                        'Declarative Environment Records'                     : 'a Declarative Environment Record _envRec_',
+                        'Object Environment Records'                          : 'an Object Environment Record _envRec_',
+                        'Function Environment Records'                        : 'a Function Environment Record _envRec_',
+                        'Global Environment Records'                          : 'a Global Environment Record _envRec_',
+                        'Module Environment Records'                          : 'a Module Environment Record _envRec_',
+
+                        'Cyclic Module Records'                               : 'a Cyclic Module Record _module_',
+                        'Source Text Module Records'                          : 'a Source Text Module Record _module_',
+
+                        'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _O_',
+                        'ECMAScript Function Objects'                         : 'an ECMAScript function object _F_',
+                        'Built-in Function Objects'                           : 'a built-in function object _F_',
+                        'Bound Function Exotic Objects'                       : 'a bound function exotic object _F_',
+                        'Array Exotic Objects'                                : 'an Array exotic object _A_',
+                        'String Exotic Objects'                               : 'a String exotic object _S_',
+                        'Arguments Exotic Objects'                            : 'an arguments exotic object _args_',
+                        'Integer-Indexed Exotic Objects'                      : 'an Integer-Indexed exotic object _O_',
+                        'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _O_',
+                        'Immutable Prototype Exotic Objects'                  : 'an immutable prototype exotic object _O_',
+                        'Proxy Object Internal Methods and Internal Slots'    : 'a Proxy exotic object _O_',
+                    }[sect.parent.section_title]
+                    if alg_header.for_phrase != expected_for_phrase:
+                        put()
+                        put(f"{sect.section_num} {sect.section_title}")
+                        put(f"  unexpected for_phrase")
+                        put(f"  expected: {expected_for_phrase}")
+                        put(f"       got: {alg_header.for_phrase}")
+
+                assert elements_are_distinct([
+                    alg_header.for_phrase
+                    for alg_header in alg.headers
+                ])
+                # TODO: 
+                # We should also check that they're mutually exclusive type-wise.
+                # (Though I think it's pretty unlikely that they wouldn't be.)
+
+            elif (
+                alg.species.startswith('op: discriminated by syntax:') 
+                or
+                alg.species.startswith('op: singular')
+                or
+                alg.species.startswith('bif:')
+            ):
+                # All the for_phrases must be None.
+                assert all(
+                    alg_header.for_phrase is None
+                    for alg_header in alg.headers
+                )
+
+            else:
+                assert 0, alg.species
+
+            # -------
+            # params:
+
+            if len(alg.headers) == 0:
+                # Nowhere to get params from
+                pass
+
+            else:
+                # Copy the params from the first header:
+                alg_header = alg.headers[0]
+                alg.params = [
+                    AlgParam(param.name, param.punct, param.nature)
+                    for param in alg_header.params
+                ]
+
+                # Check that the params in subsequent headers (if any) are consistent:
+                for alg_header in alg.headers[1:]:
+                    assert len(alg_header.params) == len(alg.params)
+                    for (header_param, alg_param) in zip(alg_header.params, alg.params):
+                        assert header_param.name   == alg_param.name
+                        assert header_param.punct  == alg_param.punct
+                        assert header_param.nature == alg_param.nature
+
+            # -------------------
+            # return_nature_node:
+
+            if (
+                alg.species.startswith('bif:')
+                or
+                alg.species == 'op: discriminated by syntax: early error'
+            ):
+                assert all(
+                    alg_header.return_nature_node is None
+                    for alg_header in alg.headers
+                )
+
+            elif alg.species == 'op: discriminated by syntax: steps' and len(alg.headers) > 1:
+                # The first header has a non-None return_nature_node,
+                # the rest have None?
+
+                for (i, alg_header) in enumerate(alg.headers):
+                    sect = alg_header.section
+                    if i == 0:
+                        if alg_header.return_nature_node is None:
+                            put()
+                            put(f"{sect.section_num} {sect.section_title}")
+                            put(f"  first header for the alg doesn't have a return_nature_node")
+                    else:
+                        if alg_header.return_nature_node is not None:
+                            put()
+                            put(f"{sect.section_num} {sect.section_title}")
+                            put(f"  return_nature_node is not None")
+
+            elif alg.species.startswith('op: discriminated by type:'):
+                pass
+                # TODO:
+                # Each alg_header.return_nature_node should denote a type that
+                # is a sub-type of (or is equal to)
+                # the return-type of the 'abstract' declaration of the alg.
+
+            else:
+                for alg_header in alg.headers:
+                    if alg_header.return_nature_node is None:
+                        sect = alg_header.section
+                        put()
+                        put(f"{sect.section_num} {sect.section_title}")
+                        put(f"  For {alg.name}, return_nature_node is None")
+
+            # -----------
+            # TODO:
+            # alg.all_definitions()
+            # should have mutually exclusive discriminators
+            # (bumps up against SDO coverage?)
+
+    f.close()
+
+def elements_are_distinct(L):
+    return len(set(L)) == len(L)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 @dataclass
 class AlgDefn:
     header: AlgHeader
