@@ -3115,10 +3115,6 @@ def _check_aoids():
             if section.section_kind == 'catchall':
                 assert (
                     op_name is None
-                    or
-                    section.parent.section_id == 'sec-overview-of-date-objects-and-definitions-of-abstract-operations'
-                    # {section} defines one or more ops via <emu-eqn>,
-                    # and doesn't have an aoid.
                 )
 
                 if section.parent.section_title == 'Relations of Candidate Executions':
