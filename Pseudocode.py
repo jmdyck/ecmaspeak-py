@@ -24,6 +24,7 @@ def do_stuff_with_pseudocode():
     check_for_unbalanced_ifs()
 
     analyze_static_dependencies()
+    check_optional_parameters()
     check_sdo_coverage()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1035,6 +1036,78 @@ def analyze_static_dependencies():
     # ===================================================================
 
     f_deps.close()
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_optional_parameters():
+    stderr("check_optional_parameters ...")
+
+    f_opa = shared.open_for_output('optional_param_anomalies')
+    def put(*args): print(*args, file=f_opa)
+
+    # Built-in functions can have 'optional' parameters too, but:
+    # (a) they have a different meaning from optional parameters in operations, and
+    # (b) we're not free to make them non-optional or eliminate them.
+    # So we only look at optional parameters in operations.
+
+    for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
+        if not hasattr(op_info, 'params'): continue
+
+        for (param_i, param) in enumerate(op_info.params, start=1):
+            assert param.punct in ['', '[]']
+            if param.punct == '[]':
+                # optional parameter
+
+                context_line = f"{op_name}'s parameter #{param_i} ({param.name}) is optional"
+                n_invocations = len(op_info.invocations)
+
+                if n_invocations == 0:
+                    put()
+                    put(context_line)
+                    put(f"  but {op_name} has no invocations!")
+                    continue
+
+                n_invs_that_supply_an_arg = 0
+                n_invs_that_dont_supply_an_arg = 0
+                for inv in op_info.invocations:
+                    p = str(inv.prod)
+                    if p == '{PREFIX_PAREN} : {OPN_BEFORE_PAREN}({EXLIST_OPT})':
+                        (opn_before_paren, exlist_opt) = inv.children
+                        # assert opn_before_paren.source_text() == op_name
+                        # Not necessarily, e.g. _module_.LoadRequestedModules
+                        args = exes_in_exlist_opt(exlist_opt)
+
+                    elif p == '{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF}':
+                        args = []
+
+                    elif p == '{NAMED_OPERATION_INVOCATION} : {cap_word} of {LOCAL_REF} {WITH_ARGS}':
+                        (cap_word, local_ref, with_args) = inv.children
+                        assert cap_word.source_text() == op_name
+                        # ignore local_ref
+                        args = with_args.children
+
+                    else:
+                        assert 0, p
+
+                    if len(args) >= param_i:
+                        # this invocation supplies an arg for the parameter
+                        n_invs_that_supply_an_arg += 1
+                    else:
+                        # this invocation doesn't supply an arg for the parameter
+                        n_invs_that_dont_supply_an_arg += 1
+
+                assert n_invs_that_supply_an_arg + n_invs_that_dont_supply_an_arg == n_invocations
+                if n_invs_that_dont_supply_an_arg == 0:
+                    put()
+                    put(context_line)
+                    put(f"  Of {n_invocations} invocations, all supply an arg for that parameter, so make it non-optional?")
+                if n_invs_that_supply_an_arg == 0:
+                    put()
+                    put(context_line)
+                    put(f"  Of {n_invocations} invocations, none supplies an arg for that parameter, so eliminate it?")
+
+    f_opa.close()
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
