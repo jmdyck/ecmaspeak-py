@@ -7054,7 +7054,7 @@ class _:
                     (T_MathInteger_     , '≥'   , T_MathReal_        ): 'TF',
                     (T_MathInteger_     , '>'   , T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '≤'   , T_MathInteger_     ): 'TF',
-                    (T_MathInteger_     , '&lt;', T_ExtendedMathReal_): 'TF',
+                    (T_MathInteger_     , '&lt;', T_MathReal_        ): 'TF',
                     (T_MathInteger_     , '&lt;', T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '≠'   , T_MathInteger_     ): 'TF',
                     (T_MathInteger_     , '≠'   , T_MathReal_        ): 'TF',
@@ -7428,7 +7428,7 @@ def tc_invocation_of_ad_hoc_op(callee_op_name, args, env0):
                 arg,
                 f"expected a BigInt or a finite Number, got {arg_type}"
             )
-            return (T_ExtendedMathReal_, env0)
+            return (T_MathReal_, env0)
 
     # ----------------------------------------------------------------
 
