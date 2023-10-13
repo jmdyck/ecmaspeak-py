@@ -469,12 +469,20 @@ def check_ids():
                     deftext = defnode.inner_source_text()
                     reftext = refnode.inner_source_text()
                     assert deftext != ''
-                    if reftext != '' and reftext.lower() != deftext.lower():
-                        # Auto-linking would fail to make `reftext` into a link?
-                        # So we have to use an emu-xref?
-                        pass
+                    if reftext == '':
+                        # <emu-xref href="#{refid}"></emu-xref>
+                        msg_at_node(
+                            refnode,
+                            f"Unnecessary emu-xref element: replace it with '{deftext}' and that will auto-link to '{refid}'"
+                        )
                     else:
-                        msg_at_node(refnode, f"emu-xref used when auto-linking would work: '{refid}'")
+                        # <emu-xref href="#{refid}">{reftext}</emu-xref>
+                        variants = defnode.attrs.get('variants', '').split(',')
+                        if reftext == deftext or reftext in variants:
+                            msg_at_node(
+                                refnode,
+                                f"Unnecessary emu-xref element: delete tags and '{reftext}' will auto-link to '{refid}'"
+                            )
                 else:
                     msg_at_node(defnode, f"unexpected defnode element-name <{defnode.element_name}>")
 
