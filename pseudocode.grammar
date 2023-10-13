@@ -137,6 +137,7 @@
     ? {var}.OperationName().
     Add {var} to {var}.
     Append to {var} the elements of {var}.
+    Append {EX} and {EX} to {EX}.
     Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
@@ -417,6 +418,8 @@
     any source text is matched by this production
     control reaches here
     either {DOTTING} or {DOTTING} is {LITERAL}
+    it is impossible to create a new Shared Data Block value consisting of {var} bytes
+    it is not possible to create a Data Block {var} consisting of {var} bytes
     it must be in the Object Environment Record
     every CharSetElement of {var} consists of a single character (including if {var} is empty)
     no such execution context exists
@@ -1138,9 +1141,11 @@
     a new Waiter Record
     the ClassFieldDefinition Record
     the ClassStaticBlockDefinition Record
+    the DataView With Buffer Witness Record
     the ExportEntry Record
     the GraphLoadingState Record
     the ImportEntry Record
+    the Integer-Indexed Object With Buffer Witness Record
     the Iterator Record
     the JSON Serialization Record
     the JobCallback Record
@@ -1300,6 +1305,8 @@
     a Completion Record
     a Cyclic Module Record
     a Data Block
+    a DataView
+    a DataView With Buffer Witness Record
     a FinalizationRegistry
     a For-In Iterator
     a Generator
@@ -1430,6 +1437,7 @@
     an Environment Record
     an IEEE 754-2019 binary32 NaN value
     an IEEE 754-2019 binary64 NaN value
+    an Integer-Indexed Object With Buffer Witness Record
     an Integer-Indexed exotic object
     an Iterator
     an Iterator Record

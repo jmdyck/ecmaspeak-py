@@ -2124,6 +2124,15 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         }[proto_st]
         return_type = NormalCompletionType(obj_type) | T_throw_completion
 
+    # 25.1.2.9 RawBytesToNumeric
+    elif callee_op_name == 'RawBytesToNumeric':
+        assert return_type == T_Number | T_BigInt
+        assert len(args) == 3
+        type_arg = args[0]
+        if type_arg.source_text() == '~biguint64~':
+            # in SharedArrayBuffer.prototype.grow
+            return_type = T_BigInt
+
     else:
         # Just use {return_type}.
         pass
@@ -6378,7 +6387,7 @@ def handle_completion_record_shorthand(operator, operand, env0):
                 tb = tb_for_object_with_slot(slotname_arg)
                 (env2, _) = env1.with_type_test(obj_arg, 'is a', tb, False)
 
-            elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray']:
+            elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray', 'ValidateAtomicAccessOnIntegerTypedArray']:
                 # In the not-returning-early env,
                 # the first arg is guaranteed to be a TypedArray.
                 obj_arg = exes_in_exlist_opt(exlist_opt)[0]
@@ -6797,10 +6806,15 @@ class _:
                 (T_not_set     , '×'      , T_MathInteger_): 'A is non-numeric',
                 (T_tilde_empty_, '-'      , T_MathInteger_): 'A is non-numeric',
 
+                (T_MathInteger_        , '+', T_tilde_auto_     ): 'B is non-numeric',
+
             }[triple]
 
             if result_t == 'A is non-numeric':
                 add_pass_error(a, f"ST of operand is {a_t}, which includes {a_mt}, which is non-numeric")
+                result_t = T_MathInteger_ # XXX
+            elif result_t == 'B is non-numeric':
+                add_pass_error(b, f"ST of operand is {b_t}, which includes {b_mt}, which is non-numeric")
                 result_t = T_MathInteger_ # XXX
             elif result_t == 'A could be NaN':
                 add_pass_error(a, f"ST of operand is {a_t}, which includes *NaN*, which you can't do arithmetic on")
@@ -7003,6 +7017,10 @@ class _:
                     (T_FiniteNumber_     , '>'   , T_BigInt            ): 'E',
                     (T_FiniteNumber_     , '&lt;', T_BigInt            ): 'E',
                     (T_IntegralNumber_   , '≠'   , T_BigInt            ): 'E',
+                    (T_MathInteger_      , '>'   , T_not_passed        ): 'E',
+                    (T_MathInteger_      , '>'   , T_tilde_empty_      ): 'E',
+                    (T_MathInteger_      , '≤'   , T_not_passed        ): 'E',
+                    (T_MathInteger_      , '≤'   , T_tilde_empty_      ): 'E',
                     (T_NegInfinityNumber_, '>'   , T_BigInt            ): 'E',
                     (T_NegInfinityNumber_, '&lt;', T_BigInt            ): 'E',
                     (T_PosInfinityNumber_, '&lt;', T_BigInt            ): 'E',
@@ -7460,6 +7478,8 @@ def tc_invocation_of_ad_hoc_op(callee_op_name, args, env0):
                 if t == T_MathInteger_ | T_tilde_empty_:
                     # InnerModuleEvaluation
                     t = T_MathInteger_
+                else:
+                    assert 0, t
             argtypes.append(t)
 
         if callee_op_name == 'min':
@@ -9848,6 +9868,14 @@ class _:
         else:
             assert NYI
 
+@P("{COMMAND} : Append {EX} and {EX} to {EX}.")
+class _:
+    def s_nv(command, env0):
+        [itema_ex, itemb_ex, list_ex] = command.children
+        env1 = env0.ensure_A_can_be_element_of_list_B(itema_ex, list_ex)
+        env2 = env1.ensure_A_can_be_element_of_list_B(itemb_ex, list_ex)
+        return env2
+
 @P("{COMMAND} : Append to {var} the elements of {var}.")
 class _:
     def s_nv(anode, env0):
@@ -11065,6 +11093,21 @@ class _:
         proc_add_return(env0, ThrowCompletionType(type_for_ERROR_TYPE(error_type)), error_type)
         return (T_Shared_Data_Block, env1)
 
+@P("{CONDITION_1} : it is impossible to create a new Shared Data Block value consisting of {var} bytes")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_MathNonNegativeInteger_)
+        return (env0, env0)
+
+@P("{CONDITION_1} : it is not possible to create a Data Block {var} consisting of {var} bytes")
+class _:
+    def s_cond(cond, env0, asserting):
+        [db_var, nbytes_var] = cond.children
+        env0.assert_expr_is_of_type(db_var, T_Data_Block)
+        env1 = env0.ensure_expr_is_of_type(nbytes_var, T_MathNonNegativeInteger_)
+        return (env1, env1)
+
 @P("{COMMAND} : Set all of the bytes of {var} to 0.")
 class _:
     def s_nv(anode, env0):
@@ -12243,11 +12286,18 @@ class _:
 # (SPEC BUG: That list is missing [[ByteLength]], see IntegerIndexedObjectCreate.)
 
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_ | T_tilde_auto_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ContentType]]',       T_tilde_bigint_ | T_tilde_number_)
 declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[TypedArrayName]]',    T_String)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_)
+declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_ | T_tilde_auto_)
+
+# ==============================================================================
+#@ 10.4.5.8 Integer-Indexed Object With Buffer Witness Records
+
+@P("{VAL_DESC} : an Integer-Indexed Object With Buffer Witness Record")
+class _:
+    s_tb = T_Integer_Indexed_Object_With_Buffer_Witness_Record
 
 # ==============================================================================
 #@ 10.4.6 Module Namespace Exotic Objects
@@ -14033,6 +14083,7 @@ class _:
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',          T_Data_Block | T_Null)
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',    T_MathNonNegativeInteger_)
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferDetachKey]]',     T_host_defined_)
+declare_isom(T_ArrayBuffer_object_, 'might have', 'slot', '[[ArrayBufferMaxByteLength]]', T_MathNonNegativeInteger_)
 
 # 25.1.2.*
 @P("{CONDITION_1} : There are sufficient bytes in {var} starting at {var} to represent a value of {var}")
@@ -14072,7 +14123,23 @@ class _:
 # 25.2.5   Properties of SharedArrayBuffer Instances
 
 declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',           T_Shared_Data_Block)
-declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',     T_MathNonNegativeInteger_)
+declare_isom(T_SharedArrayBuffer_object_, 'might have', 'slot', '[[ArrayBufferByteLength]]',     T_MathNonNegativeInteger_)
+declare_isom(T_SharedArrayBuffer_object_, 'might have', 'slot', '[[ArrayBufferByteLengthData]]', T_Shared_Data_Block)
+declare_isom(T_SharedArrayBuffer_object_, 'might have', 'slot', '[[ArrayBufferMaxByteLength]]',  T_MathNonNegativeInteger_)
+
+# ==============================================================================
+#@ 25.3 DataView Objects
+
+@P("{VAL_DESC} : a DataView")
+class _:
+    s_tb = T_DataView_object_
+
+# ==============================================================================
+#@ 25.3.1.1 DataView With Buffer Witness Records
+
+@P("{VAL_DESC} : a DataView With Buffer Witness Record")
+class _:
+    s_tb = T_DataView_With_Buffer_Witness_Record
 
 # ==============================================================================
 #@ 25.3.5 Properties of DataView Instances
@@ -14083,7 +14150,7 @@ declare_isom(T_SharedArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferBy
 
 declare_isom(T_DataView_object_, 'must have', 'slot', '[[DataView]]',          T_tilde_unused_)
 declare_isom(T_DataView_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-declare_isom(T_DataView_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_)
+declare_isom(T_DataView_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_ | T_tilde_auto_)
 declare_isom(T_DataView_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
 
 # ==============================================================================
@@ -14160,7 +14227,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 25.4.3.9 SuspendThisAgent
+#@ 25.4.3.11 SuspendThisAgent
 
 @P("{EXPR} : an implementation-defined non-negative mathematical value")
 class _:
@@ -14177,7 +14244,7 @@ class _:
         return env0
 
 # ==============================================================================
-#@ 25.4.3.10 NotifyWaiter
+#@ 25.4.3.12 NotifyWaiter
 
 @P("{COMMAND} : Wake the agent whose signifier is {DOTTING} from suspension.")
 class _:

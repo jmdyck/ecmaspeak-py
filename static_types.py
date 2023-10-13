@@ -1109,16 +1109,27 @@ _make_parse_node_types()
 # so all you can do is look for uses of them.
 # There are various places that tilde-words appear,
 # but it turns out you can find all the distinct ones
-# by looking for them just in algorithms.
+# by looking for them just in algorithms
+# and algorithm-headings.
 
 def _define_tilde_types():
     tilde_words = set()
+
+    def scan_text_for_tilde_words(text):
+        # This is a bit kludgey,
+        # but unlikely to give a false positive.
+        for tilde_word in re.findall(r'~\S+~', text):
+            tilde_words.add(tilde_word)
+
     for bif_or_op in ['bif', 'op']:
         for alg in spec.alg_info_[bif_or_op].values():
+            for alg_header in alg.headers:
+                for param in alg_header.params:
+                    scan_text_for_tilde_words(param.nature)
+                if rnn := alg_header.return_nature_node:
+                    scan_text_for_tilde_words(rnn.source_text())
             for alg_defn in alg.all_definitions():
-                st = alg_defn.anode.source_text()
-                for tilde_word in re.findall(r'~\S+~', st):
-                    tilde_words.add(tilde_word)
+                scan_text_for_tilde_words(alg_defn.anode.source_text())
 
     for tilde_word in sorted(tilde_words):
         if tilde_word == '~failure~':
