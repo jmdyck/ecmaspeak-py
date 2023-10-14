@@ -1040,6 +1040,7 @@ class TNode:
             self.level = parent.level + 1
             parent.children.append(self)
 
+        assert type not in _tnode_for_type_
         _tnode_for_type_[type] = self
 
 def _HierType_etc(type_name):
