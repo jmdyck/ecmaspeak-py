@@ -10527,8 +10527,6 @@ class _:
             ]:
                 record_type_name = constructor_prefix + ' Event'
             elif constructor_prefix in [
-                'PromiseReaction',
-                'PromiseCapability',
                 'AsyncGeneratorRequest',
             ]:
                 record_type_name = constructor_prefix + ' Record'
