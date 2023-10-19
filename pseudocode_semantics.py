@@ -3581,10 +3581,10 @@ class _:
         env0.assert_expr_is_of_type(var, ListType(T_MathInteger_))
         return (env0, env0)
 
-@P("{CONDITION_1} : {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}")
+@P("{CONDITION_1} : {var} has the same numeric value as a leading surrogate or trailing surrogate")
 class _:
     def s_cond(cond, env0, asserting):
-        [var, emu_xref1, emu_xref2] = cond.children
+        [var] = cond.children
         env0.assert_expr_is_of_type(var, T_code_point_)
         return (env0, env0)
 
@@ -3828,6 +3828,12 @@ class ES_CodeUnit(E_Value):
 class _:
     s_tb = T_code_unit_
 
+@P('{VAL_DESC} : a leading surrogate')
+@P('{VAL_DESC} : a trailing surrogate')
+class _:
+    def s_tb(val_desc, env):
+        return a_subset_of(T_code_unit_)
+
 # ----
 # Expressions that return a code unit:
 
@@ -3884,23 +3890,6 @@ class _:
         cu_hex = row.as_dict['Code Unit Value']
         cu_int = int(cu_hex, 16)
         return ES_CodeUnit(cu_int)
-
-# ----
-
-@P("{VAL_DESC} : a {h_emu_xref}")
-class _:
-    def s_tb(val_desc, env):
-        [emu_xref] = val_desc.children
-        # polymorphic
-        if emu_xref.source_text() in [
-            '<emu-xref href="#leading-surrogate"></emu-xref>',
-            '<emu-xref href="#trailing-surrogate"></emu-xref>',
-        ]:
-            return a_subset_of(T_code_unit_)
-        elif emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
-            return a_subset_of(T_function_object_)
-        else:
-            assert 0, emu_xref
 
 # ==============================================================================
 # code point and/or code unit
@@ -9588,6 +9577,15 @@ class _:
 @P("{VAL_DESC} : a constructor")
 class _:
     s_tb = T_constructor_object_
+
+@P("{VAL_DESC} : a {h_emu_xref}")
+class _:
+    def s_tb(val_desc, env):
+        [emu_xref] = val_desc.children
+        if emu_xref.source_text() == '<emu-xref href="#sec-built-in-function-objects">built-in function object</emu-xref>':
+            return a_subset_of(T_function_object_)
+        else:
+            assert 0, emu_xref
 
 # ------
 

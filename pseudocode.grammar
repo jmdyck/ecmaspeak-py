@@ -591,7 +591,7 @@
     {var} has been linked and declarations in its module environment have been instantiated
     {var} has no duplicate entries
     {var} has no elements
-    {var} has the same numeric value as a {h_emu_xref} or {h_emu_xref}
+    {var} has the same numeric value as a leading surrogate or trailing surrogate
     {var} has {DSBN} and {DSBN} internal slots
     {var} has {EX} elements
     {var} has {var} in its range
@@ -1393,6 +1393,7 @@
     a grammar symbol
     a happens-before Relation
     a host-synchronizes-with Relation
+    a leading surrogate
     a mathematical value
     a module namespace exotic object
     a non-empty List of {LIST_ELEMENTS_DESCRIPTION}
@@ -1421,6 +1422,7 @@
     a synchronizes-with Relation
     a throw completion
     a time value
+    a trailing surrogate
     a {h_emu_xref}
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}
