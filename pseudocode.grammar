@@ -642,7 +642,6 @@
     {FACTOR}
     {PRODUCT}
     {SUM}
-    {var}'s _endIndex_
 
 {NUM_COMPARATOR} :
     ≥
@@ -781,7 +780,6 @@
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of unique available named time zone identifiers
     the List of {nonterminal} items in {PROD_REF}, in source text order
-    the MatchState ({var}, {EX}, {var})
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
@@ -916,7 +914,6 @@
     {EX}, where {DEFVAR} is {EX}
     {EX}, where {DEFVAR} is {EX} and {DEFVAR} is {EX}
     {EX}, where {DEFVAR} is {EX}, and {DEFVAR} is {EX}
-    {var}'s MatchState
     {var}'s intrinsic object named {var}
     {var}'s own property whose key is {var}
     {var}'s single code unit element
@@ -939,7 +936,6 @@
     an implementation-defined timezone name
     the *this* value
     the BigInt value for {EX}
-    the CaptureRange {PAIR}
     the GlobalSymbolRegistry List
     the Number value for {EX}
     the String {var}
@@ -985,11 +981,6 @@
     {backticked_word}
     {code_point_lit}
     {h_code_quote}
-    {var}'s _captures_ List
-    {var}'s _endIndex_
-    {var}'s _endIndex_ value
-    {var}'s _input_
-    {var}'s _startIndex_
 
 {MATH_FUNC} :
     base 10 logarithm
@@ -1139,6 +1130,7 @@
     WriteSharedMemory
     a new ExportEntry Record
     a new Waiter Record
+    the CaptureRange
     the ClassFieldDefinition Record
     the ClassStaticBlockDefinition Record
     the DataView With Buffer Witness Record
@@ -1149,6 +1141,7 @@
     the Iterator Record
     the JSON Serialization Record
     the JobCallback Record
+    the MatchState
     the Match Record
     the PrivateEnvironment Record
     the PromiseCapability Record

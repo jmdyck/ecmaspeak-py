@@ -954,7 +954,6 @@ _named_type_hierarchy = {
                 },
             },
             'Intangible_': {
-                'CaptureRange': {},
                 'CharSet': {},
                 'CharSetElement': {},
                 'Data Block': {},
@@ -963,10 +962,6 @@ _named_type_hierarchy = {
                 'IEEE_binary64_': {},
                 'LangTypeName_': {},
                 'List': {},
-                'MatchResult': {
-                    'MatchState': {},
-                    'tilde_failure_': {},
-                },
                 'ExtendedMathReal_': {
                     'MathReal_': {
                         'MathInteger_': {
@@ -1133,10 +1128,7 @@ def _define_tilde_types():
                 scan_text_for_tilde_words(alg_defn.anode.source_text())
 
     for tilde_word in sorted(tilde_words):
-        if tilde_word == '~failure~':
-            parent_type = T_MatchResult
-            continue # For now, it's clearer if it appears in the _named_type_hierarchy
-        elif re.fullmatch(r'~\w+(8|8clamped|16|32|64)~', tilde_word):
+        if re.fullmatch(r'~\w+(8|8clamped|16|32|64)~', tilde_word):
             parent_type = T_TypedArray_element_type
         else:
             parent_type = T_tilde_
@@ -1220,6 +1212,8 @@ T_abrupt_completion = T_continue_completion | T_break_completion | T_return_comp
 # Proc types, only because we special-case ProcType.__str__ for them
 
 T_Job = ProcType((), T_Tangible_ | T_tilde_empty_ | T_throw_completion)
+
+T_MatchResult = T_MatchState | T_tilde_failure_
 
 T_MatcherContinuation = ProcType((T_MatchState,                      ), T_MatchResult)
 T_Matcher             = ProcType((T_MatchState, T_MatcherContinuation), T_MatchResult)

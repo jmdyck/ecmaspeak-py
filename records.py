@@ -117,6 +117,19 @@ def extract_record_schemas():
 
     # --------------------------------------------------------------------------
 
+    # 22.2.2.1 Notation
+
+    record_schema = ensure_RecordSchema('CaptureRange')
+    record_schema.add_field_decl(FieldDecl('[[StartIndex]]', 'a non-negative integer', ''))
+    record_schema.add_field_decl(FieldDecl('[[EndIndex]]',   'a non-negative integer', ''))
+
+    record_schema = ensure_RecordSchema('MatchState')
+    record_schema.add_field_decl(FieldDecl('[[Input]]',    'a List of characters', ''))
+    record_schema.add_field_decl(FieldDecl('[[EndIndex]]', 'a non-negative integer', ''))
+    record_schema.add_field_decl(FieldDecl('[[Captures]]', 'a List of either CaptureRange or *undefined*', ''))
+
+    # --------------------------------------------------------------------------
+
     # 29.1 "Memory Model Fundamentals":
     #> A <dfn>Shared Data Block event</dfn> is either
     #> a <dfn>ReadSharedMemory</dfn>, <dfn>WriteSharedMemory</dfn>, or <dfn>ReadModifyWriteSharedMemory</dfn> Record.

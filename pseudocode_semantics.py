@@ -1820,6 +1820,9 @@ def convert_nature_to_type(nature):
             'an Object or *undefined*': T_Object | T_Undefined,
             'a String or ~namespace~': T_String | T_tilde_namespace_,
 
+            'a List of characters': ListType(T_character_),
+            'a List of either CaptureRange or *undefined*': ListType(T_CaptureRange | T_Undefined),
+
         }[nature]
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -13783,71 +13786,11 @@ class _:
         return env0.plus_new_entry(loop_var, T_CharSetElement)
 
 # ------------------------------------------------------------------------------
-# CaptureRange
-
-@P("{EX} : the CaptureRange {PAIR}")
-class _:
-    def s_expr(expr, env0, _):
-        [pair] = expr.children
-        # XXX
-        return (T_CaptureRange, env0)
-
-@P("{EX} : {var}'s _startIndex_")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_CaptureRange)
-        return (T_MathInteger_, env1)
-
-# ------------------------------------------------------------------------------
 # MatchState
-
-T_captures_entry_ = T_CaptureRange | T_Undefined
-T_captures_list_  = ListType(T_captures_entry_)
 
 @P("{VAL_DESC} : a MatchState")
 class _:
     s_tb = T_MatchState
-
-@P("{EXPR} : the MatchState ({var}, {EX}, {var})")
-class _:
-    def s_expr(expr, env0, _):
-        [input_var, ex, var] = expr.children
-        env0.assert_expr_is_of_type(input_var, ListType(T_character_))
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathInteger_); assert env1 is env0
-        env2 = env0.ensure_expr_is_of_type(var, T_captures_list_); assert env2 is env0
-        return (T_MatchState, env0)
-
-@P("{EXPR} : {var}'s MatchState")
-class _:
-    def s_expr(expr, env0, _):
-        # todo?: change to Assert: _r_ is a MatchState
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_MatchState)
-        return (T_MatchState, env0)
-
-@P("{EX} : {var}'s _input_")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
-        return (ListType(T_character_), env1)
-
-@P("{EX} : {var}'s _endIndex_")
-@P("{EX} : {var}'s _endIndex_ value")
-@P("{NUM_COMPARAND} : {var}'s _endIndex_")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState | T_CaptureRange)
-        return (T_MathInteger_, env1)
-
-@P("{EX} : {var}'s _captures_ List")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MatchState)
-        return (T_captures_list_, env1)
 
 # ------------------------------------------------------------------------------
 
