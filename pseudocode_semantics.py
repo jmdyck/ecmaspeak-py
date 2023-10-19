@@ -1936,6 +1936,11 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
     params = callee_op.parameters_with_types
     (arg_types, env1) = tc_args(params, args, env0, expr)
 
+    if callee_op.name == 'SameValue':
+        assert len(arg_types) == 2
+        [ta, tb] = arg_types
+        check_comparison(expr, 'SameValue', ta, tb)
+
     return_type = callee_op.return_type
 
     # In most cases, the type of this invocation
@@ -7833,6 +7838,8 @@ class _:
             return (env3, env3)
 
         else:
+            check_comparison(cond, 'is', exa_type, exb_type)
+
             (common_t, _) = exa_type.split_by(exb_type)
             assert common_t != T_0
             # In the world where the two sides are equal,
@@ -7853,6 +7860,94 @@ class _:
                 t_env = is_env
                 f_env = env2
             return (t_env, f_env)
+
+def check_comparison(comparison, comparator, ta, tb):
+    assert comparator in ['is', 'SameValue']
+    pref_comparator = preferred_comparator(ta, tb)
+    assert pref_comparator in ['is', 'SameValue']
+    if comparator != pref_comparator:
+        add_pass_error(
+            comparison,
+            f"Should use `{pref_comparator}` to compare {ta} and {tb}"
+        )
+
+def preferred_comparator(ta, tb):
+    # Given the static types of two operands in a comparison,
+    # return 'is' or 'SameValue',
+    # indicating the preferred way to compare them.
+
+    # SameValue only accepts ECMAScript language values,
+    # so if either operand might not be an ECMAScript language value,
+    # you can't use SameValue.
+    if not ta.is_a_subtype_of_or_equal_to(T_Tangible_): return 'is'
+    if not tb.is_a_subtype_of_or_equal_to(T_Tangible_): return 'is'
+
+    # So at this point, we're guaranteed that both operands are ES language values.
+        
+    # From #2877:
+    # - use `is`, `is not`, ... for number comparisons
+    #
+    # - use SameValue(..., ...) is *true* for equality comparison of
+    #   symbols (except well-known) / objects / unknown ECMAScript language values
+    #
+    # - use `is` and `is not` for equality comparison of
+    #   all other values, including
+    #      booleans,
+    #      strings,
+    #      well-known symbols,
+    #      null,
+    #      undefined,
+    #      enums,
+    #      etc;
+    #   avoid "is different from" or "is the same as"
+
+    if ta is T_Tangible_ or tb is T_Tangible_:
+        # At least one arg is arbitrary enough that you have to use SameValue.
+        return 'SameValue'
+
+    if (
+        ta.is_a_subtype_of_or_equal_to(T_Object)
+        and
+        tb.is_a_subtype_of_or_equal_to(T_Object)
+    ):
+        return 'SameValue'
+
+    if (
+        T_Object.is_a_subtype_of_or_equal_to(ta)
+        or
+        T_Object.is_a_subtype_of_or_equal_to(tb)
+    ):
+        return 'SameValue'
+
+    if ta == tb:
+        if ta == T_Boolean or ta == T_String:
+            return 'is'
+        elif ta == T_Symbol or ta == T_Symbol | T_String:
+            # Should use `is` if the symbols are well-known,
+            # but they probably aren't.
+            return 'SameValue'
+        else:
+            assert 0, ta
+
+    if (
+        ta == T_String and tb == T_Null | T_String
+        or
+        ta == T_Null | T_String and tb == T_String
+    ):
+        return 'is'
+
+    if (
+        ta.is_a_subtype_of_or_equal_to(T_Number)
+        and
+        tb.is_a_subtype_of_or_equal_to(T_Number)
+    ):
+        return 'is'
+
+    # print(ta, tb, file=sta_misc_f)
+    # return 'is'
+    assert 0, (ta, tb)
+
+# -------------------
 
 @P("{CONDITION_1} : {EX} and {EX} are distinct values")
 class _:
