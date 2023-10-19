@@ -7018,6 +7018,7 @@ class _:
                     (T_MathInteger_      , '>'   , T_tilde_empty_      ): 'E',
                     (T_MathInteger_      , '≤'   , T_not_passed        ): 'E',
                     (T_MathInteger_      , '≤'   , T_tilde_empty_      ): 'E',
+                    (T_MathInteger_      , '≥'   , T_tilde_detached_   ): 'E',
                     (T_NegInfinityNumber_, '>'   , T_BigInt            ): 'E',
                     (T_NegInfinityNumber_, '&lt;', T_BigInt            ): 'E',
                     (T_PosInfinityNumber_, '&lt;', T_BigInt            ): 'E',
