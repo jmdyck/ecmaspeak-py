@@ -228,7 +228,34 @@ class TypedAlgHeader:
                 pt = convert_nature_to_type(param.nature)
 
             if param.punct == '[]':
-                pt = pt | T_not_passed
+                if header.species.startswith('op:'):
+                    # In an abstract operation,
+                    # marking a parameter as optional
+                    # affects what you can do with it,
+                    # and how you can invoke the operation.
+                    pt = pt | T_not_passed
+
+                elif header.species.startswith('bif:'):
+                    # In a built-in function,
+                    # marking a parameter as optional
+                    # only affects the default value for the 'length' property.
+                    # I.e., the algorithm for a built-in
+                    # is not obliged to check whether an optional param is 'present',
+                    # it can just use it regardless.
+                    # The algorithm *can* do that check on optional params,
+                    # but it can also do it on params that aren't marked as optional. E.g.:
+                    # - Function's _bodyArg_
+                    # - Number's _value_
+                    # - String's _value_
+                    # - Array.prototype.splice's _start_ & _deleteCount_
+                    # - Array.prototype.toSpliced's _start_ & _skipCount_
+                    # - GeneratorFunction's _bodyArg_
+                    # - AsyncGeneratorFunction's _bodyArg_
+                    # - AsyncFunction's _bodyArg_
+                    pass
+
+                else:
+                    assert 0
 
             self.initial_parameter_types[param.name] = pt
 
@@ -508,6 +535,8 @@ class TypedAlgHeader:
     def make_env(self):
         e = Env()
 
+        e.alg_species = self.species # rarely comes up
+
         parameter_names = set()
 
         if self.for_param_name is not None:
@@ -612,6 +641,7 @@ def print_unused_type_tweaks():
 
 class Env:
     def __init__(self, outer=None):
+        self.alg_species = None
         self.parret = None
         self.vars = {}
         self.outer = outer
@@ -621,6 +651,7 @@ class Env:
 
     def copy(self):
         e = Env(self.outer)
+        e.alg_species = self.alg_species
         e.parret = self.parret
         e.vars = self.vars.copy()
         return e
@@ -1135,6 +1166,7 @@ class Env:
 
     def reduce(self, header_names):
         e = Env(self.outer)
+        e.alg_species = self.alg_species
         e.parret = self.parret
         for (vn, vt) in self.vars.items():
             if vn in header_names:
@@ -1155,6 +1187,7 @@ def envs_and(envs):
     if len(envs) == 2 and envs[0].vars == envs[1].vars: return envs[0]
 
     e = Env(envs[0].outer)
+    e.alg_species = envs[0].alg_species
     e.parret = envs[0].parret
     vars = set.intersection(*[ set(env.vars.keys()) for env in envs ])
     for expr_text in vars:
@@ -1179,10 +1212,12 @@ def envs_or(envs):
     if len(envs) == 1: return envs[0]
 
     e = Env(envs[0].outer)
+    e.alg_species = envs[0].alg_species
     e.parret = envs[0].parret
 
     for env in envs:
         assert env.outer is e.outer
+        assert env.alg_species == e.alg_species
         assert env.parret is e.parret
 
     all_vars = set()
@@ -6042,6 +6077,7 @@ class _:
 # 2) X is an optional parameter (of an operation or a function),
 #    and an arg value was [not] supplied for the current invocation.
 #    (5.3 Algorithm Conventions)
+#    TODO: get rid of this usage. (roll eyes at PR #953)
 # (So there's a potential ambiguity if you pass a Parse Node to an optional parameter,
 # but I don't think that ever happens.
 
@@ -6053,8 +6089,23 @@ class _:
         if ex.is_a('{PROD_REF}'):
             t = T_not_in_node
         elif ex.is_a('{var}'):
-            # todo: get rid of this usage. (roll eyes at PR #953)
-            t = T_not_passed # assuming it's a parameter
+            # It should be the name of a parameter
+            assert ex.source_text() in env0.parret.parameter_names
+            if env0.alg_species.startswith('op:'):
+                t = T_not_passed
+            elif env0.alg_species.startswith('bif:'):
+                # In a built-in function,
+                # we can ask if *any* of the parameters is present,
+                # regardless of whether they're marked optional or not.
+                # So this form puts no pre-condition on the parameter's stype.
+                # As for post-condition, in the resulting env where the parameter is not present,
+                # we could restrict the parameter's stype to T_not_passed,
+                # but it's probably not worth it.
+                # E.g., a typical use is:
+                #     If _param_ is not present, set _param_ to <default>.
+                return (env0, env0)
+            else:
+                assert 0
         else:
             assert 0, ex.source_text()
         copula = 'is a' if 'not present' in cond.prod.rhs_s else 'isnt a'
@@ -11104,6 +11155,7 @@ class _:
         # -----
 
         env_for_commands = Env(env0)
+        env_for_commands.alg_species = 'op: closure'
 
         parameter_names = [
             clo_param.source_text()
