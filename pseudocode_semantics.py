@@ -218,10 +218,6 @@ class TypedAlgHeader:
                 #   except when it's a spread parameter,
                 #   when it's a List of ECMAScript language values.
                 #
-                # - Algorithms defined by <emu-eqn> (e.g., Day, TimeWithinDay)
-                #   don't have structured headers
-                #   because it wouldn't really fit the format?
-                #
                 # - In the memory model, algorithms that aren't abstract ops
                 #   have parameters (sort of), but don't have a header that lists them.
                 #
