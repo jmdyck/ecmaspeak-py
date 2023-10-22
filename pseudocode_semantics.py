@@ -1796,8 +1796,8 @@ def convert_nature_to_type(nature):
             # built-ins:
             'a List of ECMAScript language values': ListType(T_Tangible_),
 
-            # emu-eqn:
-            'unknown': T_TBD,
+            # Weakref emptying thing, 
+            'a List of Objects and/or Symbols': ListType(T_Object | T_Symbol),
 
             # memory model:
             'an event in SharedDataBlockEventSet(_execution_)': T_Shared_Data_Block_Event,
@@ -10047,8 +10047,6 @@ class _:
         if list_type == T_List:
             # want to assert that this doesn't happen,
             # but _kept_ in %TypedArray%.prototype.filter
-            element_type = T_TBD
-        elif list_type == T_TBD:
             element_type = T_TBD
         else:
             assert isinstance(list_type, ListType), list_type

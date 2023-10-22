@@ -631,7 +631,7 @@ def _handle_oddball_op_section(section):
         assert section.block_children[0].source_text().startswith(
             "<p>At any time, if a set of objects and/or symbols _S_ is not live,"
         )
-        params = [ AlgParam('_S_', '', 'unknown') ]
+        params = [ AlgParam('_S_', '', 'a List of Objects and/or Symbols') ]
 
     elif section.section_title in [
         'Valid Chosen Reads',
