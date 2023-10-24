@@ -1165,9 +1165,8 @@ class Env:
             assert 0, copula
 
     def reduce(self, header_names):
-        e = Env(self.outer)
-        e.alg_species = self.alg_species
-        e.parret = self.parret
+        e = self.copy()
+        e.vars = {}
         for (vn, vt) in self.vars.items():
             if vn in header_names:
                 e.vars[vn] = vt
@@ -1186,9 +1185,8 @@ def envs_and(envs):
     # optimization:
     if len(envs) == 2 and envs[0].vars == envs[1].vars: return envs[0]
 
-    e = Env(envs[0].outer)
-    e.alg_species = envs[0].alg_species
-    e.parret = envs[0].parret
+    e = envs[0].copy()
+    e.vars = {}
     vars = set.intersection(*[ set(env.vars.keys()) for env in envs ])
     for expr_text in vars:
         ts = [ env.vars[expr_text] for env in envs ]
@@ -1211,9 +1209,8 @@ def envs_or(envs):
     if len(envs) == 0: return None
     if len(envs) == 1: return envs[0]
 
-    e = Env(envs[0].outer)
-    e.alg_species = envs[0].alg_species
-    e.parret = envs[0].parret
+    e = envs[0].copy()
+    e.vars = {}
 
     for env in envs:
         assert env.outer is e.outer
