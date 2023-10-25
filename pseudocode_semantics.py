@@ -643,6 +643,7 @@ class Env:
     def __init__(self, outer=None):
         self.alg_species = None
         self.parret = None
+        self.assoc_productions = None
         self.vars = {}
         self.outer = outer
 
@@ -653,6 +654,7 @@ class Env:
         e = Env(self.outer)
         e.alg_species = self.alg_species
         e.parret = self.parret
+        e.assoc_productions = self.assoc_productions
         e.vars = self.vars.copy()
         return e
 
@@ -1539,7 +1541,7 @@ def tc_proc(op_name, defns, init_env):
         if discriminator:
             if isinstance(discriminator, Type):
                 print(discriminator)
-            elif hasattr(discriminator, 'source_text'):
+            elif isinstance(discriminator, HTML.HNode):
                 print(discriminator.source_text())
             else:
                 assert 0
@@ -1554,6 +1556,10 @@ def tc_proc(op_name, defns, init_env):
             # in_env = init_env.with_expr_type_narrowed('_argument_', discriminator)
             in_env = init_env.copy()
             in_env.vars['_argument_'] = discriminator
+        elif discriminator and isinstance(discriminator, HTML.HNode):
+            assert discriminator.element_name == 'emu-grammar'
+            in_env = init_env.copy()
+            in_env.assoc_productions = discriminator._gnode._productions
         else:
             in_env = init_env
 
@@ -3994,9 +4000,8 @@ def nt_name_from_nonterminal_node(nonterminal_node):
     assert isinstance(nonterminal_node, ANode)
     nonterminal_node.prod.lhs_s == 'nonterminal'
     [nonterminal_str] = nonterminal_node.children
-    assert nonterminal_str.startswith('|')
-    assert nonterminal_str.endswith('|')
-    return nonterminal_str[1:-1]
+    mo = re.fullmatch(r'\|(\w+)(\[[+~\w, ]+\])?(\?)?\|', nonterminal_str)
+    return mo.group(1)
 
 @P("{VAL_DESC} : a nonterminal in one of the ECMAScript grammars")
 class _:
@@ -4421,7 +4426,9 @@ class _:
     def s_cond(cond, env0, asserting):
         [local_ref, h_emu_grammar] = cond.children
         env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        return (env0, env0)
+        env1 = env0.copy()
+        env1.assoc_productions = h_emu_grammar._hnode._gnode._productions
+        return (env1, env0)
 
     def d_exec(cond):
         [local_ref, h_emu_grammar] = cond.children
@@ -5973,6 +5980,7 @@ def value_matches_discriminator(value, discriminator):
 @P("{PROD_REF} : this production")
 class _:
     def s_expr(expr, env0, _):
+        assert env0.assoc_productions
         return (T_Parse_Node, env0)
 
     def d_exec(prod_ref):
@@ -5983,8 +5991,8 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [nonterminal] = expr.children
-        # XXX check
-        return (ptn_type_for(nonterminal), env0)
+        return_t = s_resolve_focus_reference('this', nonterminal, expr, env0)
+        return (return_t, env0)
 
     def d_exec(expr):
         [nont] = expr.children
@@ -5996,7 +6004,15 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [nonterminal] = expr.children
-        return (ptn_type_for(nonterminal), env0)
+
+        if env0.assoc_productions is None:
+            # Since there are no associated productions (no focus node),
+            # this is probably a reference to the *symbol*, not a Parse Node.
+            # (This is almost always the second argument to ParseText.)
+            return (T_grammar_symbol_, env0)
+
+        return_t = s_resolve_focus_reference('', nonterminal, expr, env0)
+        return (return_t, env0)
 
     def d_exec(prod_ref):
         [nont] = prod_ref.children
@@ -6013,7 +6029,8 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         nonterminal = expr.children[-1]
-        return (ptn_type_for(nonterminal), env0)
+        return_t = s_resolve_focus_reference('the', nonterminal, expr, env0)
+        return (return_t, env0)
 
     def d_exec(prod_ref):
         [nont] = prod_ref.children
@@ -6024,7 +6041,8 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [nont] = expr.children
-        return (T_Parse_Node, env0)
+        return_t = s_resolve_focus_reference('the derived', nont, expr, env0)
+        return (return_t, env0)
 
     def d_exec(prod_ref):
         [nont] = prod_ref.children
@@ -6035,8 +6053,16 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [ordinal, nonterminal] = expr.children
-        # XXX should check that the 'current' production has such.
-        return (ptn_type_for(nonterminal), env0)
+        ordinal_str = ordinal.source_text()
+        ordinal_num = {
+            'first' : 1,
+            'second': 2,
+            'third' : 3,
+            'fourth': 4,
+        }[ordinal_str]
+
+        return_t = s_resolve_focus_reference(ordinal_num, nonterminal, expr, env0)
+        return (return_t, env0)
 
     def d_exec(prod_ref):
         [ordinal, nont] = prod_ref.children
@@ -6050,12 +6076,105 @@ class _:
         nt_name = nt_name_from_nonterminal_node(nont)
         return curr_frame().resolve_focus_reference(ordinal_num, nt_name)
 
+def s_resolve_focus_reference(prefix, nonterminal, expr, env0):
+    nt_name = nt_name_from_nonterminal_node(nonterminal)
+
+    # Count the total number of RHSs
+    total_n_rhss = 0
+    for production in env0.assoc_productions:
+        total_n_rhss += len(production._rhss)
+
+    extra_t = T_0
+    for (p_i, production) in enumerate(env0.assoc_productions, start=1):
+        # We go to each production,
+        # and count the number of occurrences of {nt_name}
+        # on the LHS and RHS.
+        lhs_count = (production._lhs_symbol == nt_name)
+        for (r_i, rhs) in enumerate(production._rhss, start=1):
+            named_r_items = [
+                r_item
+                for r_item in rhs._rhs_items
+                if r_item.kind == 'GNT' and r_item._nt_name == nt_name
+            ]
+            rhs_count = len(named_r_items)
+            r_items_to_check_for_optionality = []
+
+            if total_n_rhss == 1:
+                locator = 'the associated production'
+            else:
+                locator = f"production #{p_i}'s rhs #{r_i}"
+
+            # TODO: Convert the following asserts into check-and-complain.
+
+            if prefix == 'this':
+                # {PROD_REF} : this {nonterminal}
+                #
+                # {nonterminal} must be the LHS of every associated production.
+                # Doesn't matter how many occurrences on the RHS.
+                assert lhs_count == 1
+
+            elif prefix in ['', 'the']:
+                # {PROD_REF} : {nonterminal}
+                # {PROD_REF} : the {nonterminal}
+                #
+                # Each associated production
+                # should have exactly 1 occurrence of {nt_name}
+                # (including both LHS and RHS).
+                total_count = lhs_count + rhs_count
+                if total_count == 0:
+                    # This seems like it should be an error, but there are 4 cases of
+                    #    `If |BindingIdentifier| is present ...`
+                    # where, in the associated productions, some have a BindingIdentifier and some don't.
+                    # TODO: Check that some productions have {nt_name} and some don't.
+                    # TODO: Only allow this within an 'is [not] present' test.
+                    extra_t = T_not_in_node
+                elif total_count != 1:
+                    add_pass_error(
+                        expr,
+                        f"node-ref is ambiguous because {locator} has {total_count} occurrences of {nt_name}"
+                    )
+                r_items_to_check_for_optionality = named_r_items
+
+            elif prefix == 'the derived':
+                # {PROD_REF} : the derived {nonterminal}
+                #
+                # Each associated production
+                # should have exactly 1 RHS occurrence of {nt_name}.
+                # Moreover, it should also have {nt_name} as the LHS,
+                # otherwise there's no reason to specify 'derived'.
+
+                assert lhs_count == 1
+                assert rhs_count == 1
+                r_items_to_check_for_optionality = named_r_items
+
+            elif isinstance(prefix, int):
+                # {PROD_REF} : the {ORDINAL} {nonterminal}
+                #
+                N = prefix
+                # Each associated production
+                # should have at least {N} RHS occurrences of {nt_name},
+                # and zero LHS occurrences
+                # (otherwise it's ambiguous whether to start counting at the LHS).
+
+                assert lhs_count == 0
+                assert rhs_count >= N
+                r_items_to_check_for_optionality = [ named_r_items[N-1] ]
+
+            else:
+                assert 0, prefix
+
+            for r_item in r_items_to_check_for_optionality:
+                if r_item._is_optional:
+                    extra_t = T_not_in_node
+
+    return ptn_type_for(nonterminal) | extra_t
+
 # --------------
 # "present"
 
 # "X is [not] present" has 2 meanings:
-# 1) X refers to a nonterminal that is optional in a relevant production,
-#    and it is [not] present in the corresponding Parse Node.
+# 1) X is a nonterminal that is optional in a relevant production,
+#    and the corresponding child is [not] present in the relevant Parse Node.
 #    (5.1.5.3 Optional Symbols)
 # 2) X is an optional parameter (of an operation or a function),
 #    and an arg value was [not] supplied for the current invocation.
@@ -6071,6 +6190,7 @@ class _:
         [ex] = cond.children
         if ex.is_a('{PROD_REF}'):
             t = T_not_in_node
+            # TODO: change the associated_productions in the resulting envs?
         elif ex.is_a('{var}'):
             # It should be the name of a parameter
             assert ex.source_text() in env0.parret.parameter_names
@@ -6519,7 +6639,9 @@ class _:
     def s_nv(anode, env0):
         [local_ref1, h_emu_grammar, local_ref2, local_ref3] = anode.children
         env0.assert_expr_is_of_type(local_ref1, T_Parse_Node)
-        env0.assert_expr_is_of_type(local_ref2, T_Parse_Node)
+        env1 = env0.copy()
+        env1.assoc_productions = h_emu_grammar._hnode._gnode._productions
+        env1.assert_expr_is_of_type(local_ref2, T_Parse_Node)
         env0.assert_expr_is_of_type(local_ref3, T_Parse_Node)
         return None
 
