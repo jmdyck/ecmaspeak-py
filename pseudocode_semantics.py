@@ -9146,6 +9146,7 @@ class _:
             env_or(a_f_env, b_f_env)
         )
 
+@P("{CONDITION_1} : {var} and {var} are finite")
 @P("{CONDITION_1} : {var} and {var} are finite and non-zero")
 class _:
     def s_cond(cond, env0, asserting):

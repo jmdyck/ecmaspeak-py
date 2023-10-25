@@ -535,6 +535,7 @@
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
     {var} and {var} have the same length and the same code units in the same positions
+    {var} and {var} are finite
     {var} and {var} are finite and non-zero
     {var} and {var} are in a race in {var}
     {var} and {var} are not the same Realm Record
