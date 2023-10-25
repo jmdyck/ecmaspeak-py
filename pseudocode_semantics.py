@@ -6020,11 +6020,16 @@ class _:
         nt_name = nt_name_from_nonterminal_node(nont)
         return curr_frame().resolve_focus_reference(None, nt_name)
 
-@P("{PROD_REF} : that {nonterminal}")
+@P("{PROD_REF} : the derived {nonterminal}")
 class _:
     def s_expr(expr, env0, _):
         [nont] = expr.children
-        return (ptn_type_for(nont), env0)
+        return (T_Parse_Node, env0)
+
+    def d_exec(prod_ref):
+        [nont] = prod_ref.children
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return curr_frame().resolve_focus_reference('derived', nt_name)
 
 @P("{PROD_REF} : the {ORDINAL} {nonterminal}")
 class _:
@@ -6044,25 +6049,6 @@ class _:
         }[ordinal_str]
         nt_name = nt_name_from_nonterminal_node(nont)
         return curr_frame().resolve_focus_reference(ordinal_num, nt_name)
-
-@P("{PROD_REF} : the derived {nonterminal}")
-class _:
-    def s_expr(expr, env0, _):
-        [nont] = expr.children
-        return (T_Parse_Node, env0)
-
-    def d_exec(prod_ref):
-        [nont] = prod_ref.children
-        nt_name = nt_name_from_nonterminal_node(nont)
-        return curr_frame().resolve_focus_reference('derived', nt_name)
-
-@P("{PROD_REF} : {nonterminal} {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [nonterminal, var] = expr.children
-        t = ptn_type_for(nonterminal)
-        env0.assert_expr_is_of_type(var, t)
-        return (t, env0)
 
 # --------------
 # "present"
@@ -12943,6 +12929,17 @@ class _:
     s_tb = T_Iterator_object_
 
 # ==============================================================================
+#@ 14.12.2 Runtime Semantics: CaseBlockEvaluation
+
+@P("{PROD_REF} : {nonterminal} {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [nonterminal, var] = expr.children
+        t = ptn_type_for(nonterminal)
+        env0.assert_expr_is_of_type(var, t)
+        return (t, env0)
+
+# ==============================================================================
 #@ 14.16 The `debugger` Statement
 
 @P("{CONDITION_1} : an implementation-defined debugging facility is available and enabled")
@@ -14034,6 +14031,12 @@ class _:
         env0.assert_expr_is_of_type(ivar, T_MathInteger_)
         env0.assert_expr_is_of_type(rvar, T_Object)
         return (env0, env0)
+
+@P("{PROD_REF} : that {nonterminal}")
+class _:
+    def s_expr(expr, env0, _):
+        [nont] = expr.children
+        return (ptn_type_for(nont), env0)
 
 # ==============================================================================
 #@ 22.2.7.5 Match Records
