@@ -2689,8 +2689,13 @@ def reset_dynamic_state():
 
     sys.setrecursionlimit(44_000)
 
-    # and maybe 467 bytes per Python stack frame
-    resource.setrlimit(resource.RLIMIT_STACK, (44_000 * 467, resource.RLIM_INFINITY))
+    # and maybe 480 bytes per Python stack frame
+    resource.setrlimit(resource.RLIMIT_STACK, (44_000 * 480, resource.RLIM_INFINITY))
+
+    # If you get a Segmentation Fault on this test,
+    # enable the tracing block in execute_alg_defn,
+    # run `test_parser.py pass/dd3c63403db5c06e.js`
+    # and look at the output.
 
 def curr_frame():
     frame_stack = ds.agent.frame_stack
