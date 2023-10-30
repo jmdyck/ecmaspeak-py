@@ -16,7 +16,7 @@ import sys, os, re, contextlib, time
 
 import shared
 
-g_outdir = '../ecma262/_main'
+g_outdir = sys.argv[1]
 shared.register_output_dir(g_outdir)
 shared.spec.restore()
 
@@ -28,17 +28,17 @@ root_test_dirpath = "../test262-parser-tests"
 
 def main():
     if len(sys.argv) == 1:
-        print(f"usage: {sys.argv[0]} [ --all | --all-dir=<dir> | <filepath> ... ]")
-    elif sys.argv[1] == '--all':
+        print(f"usage: {sys.argv[0]} <pickle-dir> [ --all | --all-dir=<dir> | <filepath> ... ]")
+    elif sys.argv[2] == '--all':
         test_all()
         show_times()
     else:
-        mo = re.fullmatch(r'--all-dir=([\w-]+)', sys.argv[1])
+        mo = re.fullmatch(r'--all-dir=([\w-]+)', sys.argv[2])
         if mo:
             test_dirname = mo.group(1)
             test_all_in_dir(test_dirname)
         else:
-            for test_file_arg in sys.argv[1:]:
+            for test_file_arg in sys.argv[2:]:
                 test_one(test_file_arg)
         show_times()
 
