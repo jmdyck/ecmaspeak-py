@@ -3914,7 +3914,8 @@ class _:
 @P("{EX} : the code unit whose numeric value is determined by {PROD_REF} according to {h_emu_xref}")
 class _:
     def s_expr(expr, env0, _):
-        [nonterminal, emu_xref] = expr.children
+        [prod_ref, emu_xref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_code_unit_, env0)
 
     def d_exec(expr):
@@ -4298,6 +4299,7 @@ class _:
     def s_cond(cond, env0, asserting):
         [prod_ref] = cond.children
         assert prod_ref.source_text() == '|BooleanLiteral|'
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
@@ -4314,9 +4316,8 @@ class _:
 @P("{EXPR} : the source text that was recognized as {PROD_REF}")
 class _:
     def s_expr(expr, env0, _):
-        [nonterminal] = expr.children
-        # XXX Should check whether nonterminal makes sense
-        # with respect to the emu-grammar accompanying this alg/expr.
+        [prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_Unicode_code_points_, env0)
 
     def d_exec(expr):
@@ -4327,13 +4328,15 @@ class _:
 @P("{EX} : the source text matched by {PROD_REF}")
 class _:
     def s_expr(expr, env0, _):
-        [nont] = expr.children
+        [prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
 @P("{EX} : the code point matched by {PROD_REF}")
 class _:
     def s_expr(expr, env0, _):
-        [nont] = expr.children
+        [prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_code_point_, env0)
 
     def d_exec(expr):
@@ -4366,6 +4369,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [prod_ref, nont] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_MathNonNegativeInteger_, env0)
 
     def d_exec(expr):
@@ -4488,6 +4492,7 @@ def pnode_unit_derives_a_node_with_puk(pnode, puk_arg):
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref, nont] = cond.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
     def d_exec(cond):
@@ -4539,8 +4544,7 @@ class _:
     def s_expr(expr, env0, _):
         [nonterminal, var] = expr.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
-        # XXX could check that t is a nonterminal that actually has a child of that type
-        # but that requires having the whole grammar handy
+        # XXX should get more precise type for {var} and check that it could have a child of that kind
         return (ptn_type_for(nonterminal), env0)
 
 @P("{VAL_DESC} : the {nonterminal} of an? {nonterminal}")
@@ -4572,6 +4576,23 @@ class _:
             return not contains_it
         else:
             return contains_it
+
+@P('{PROD_REF} : the {nonterminal} Parse Node contained within {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [nonterminal, var] = expr.children
+        env0.assert_expr_is_of_type(nonterminal, T_grammar_symbol_)
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (ptn_type_for(nonterminal), env0)
+
+@P('{PROD_REF} : the {ORDINAL} {nonterminal} Parse Node contained within {var}')
+class _:
+    def s_expr(expr, env0, _):
+        [ordinal, nonterminal, var] = expr.children
+        # ignore ordinal?
+        env0.assert_expr_is_of_type(nonterminal, T_grammar_symbol_)
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (ptn_type_for(nonterminal), env0)
 
 @P("{EACH_THING} : {nonterminal} {DEFVAR} that {var} contains")
 class _:
@@ -4633,6 +4654,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [nonta, local_ref] = expr.children
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
         return (T_Parse_Node, env0)
 
     def d_exec(expr):
@@ -4850,6 +4872,7 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref, cap_word] = cond.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
     def d_exec(cond):
@@ -6080,6 +6103,15 @@ class _:
         }[ordinal_str]
         nt_name = nt_name_from_nonterminal_node(nont)
         return curr_frame().resolve_focus_reference(ordinal_num, nt_name)
+
+@P('{PROD_REF} : the enclosing {nonterminal}')
+class _:
+    def s_expr(expr, env0, _):
+        [nonterminal] = expr.children
+        # We could look at env.assoc_productions
+        # and check that there must be an enclosing {nonterminal},
+        # but that's probably more bother than it's worth.
+        return (ptn_type_for(nonterminal), env0)
 
 def s_resolve_focus_reference(prefix, nonterminal, expr, env0):
     nt_name = nt_name_from_nonterminal_node(nonterminal)
@@ -10089,6 +10121,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [nont, prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (ListType(T_Parse_Node), env0)
 
 @P("{EXPR} : a List of {EX} {LITERAL} values, indexed 1 through {EX}")
@@ -12685,7 +12718,7 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref] = cond.children
-        # XXX check that prod_ref makes sense
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
     def d_exec(cond):
@@ -13633,6 +13666,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_character_, env0)
 
 @P("{EXPR} : the character whose character value is {var}")
@@ -13825,6 +13859,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [prod_ref] = expr.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_CharSet, env0)
 
 @P("{EXPR} : a one-element CharSet containing {EX}")
@@ -14088,12 +14123,15 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref, h_a, h_emu_xref1, h_emu_xref2] = cond.children
+        env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
 @P("{CONDITION_1} : the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}")
 class _:
     def s_cond(cond, env0, asserting):
         [prod_refa, prod_refb, h_a] = cond.children
+        env0.assert_expr_is_of_type(prod_refa, T_Parse_Node)
+        env0.assert_expr_is_of_type(prod_refb, T_Parse_Node)
         return (env0, env0)
 
 # ==============================================================================
