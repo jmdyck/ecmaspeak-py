@@ -3817,7 +3817,7 @@ class _:
 # -------------------------------------------------------
 # conditions involving a sequence of Unicode code points:
 
-@P("{CONDITION_1} : {var} contains any code point more than once")
+@P("{CONDITION_1} : {EX} contains any code point more than once")
 class _:
     def s_cond(cond, env0, asserting):
         [noi] = cond.children
@@ -3829,7 +3829,7 @@ class _:
         code_points = EXEC(var, ES_UnicodeCodePoints)
         return code_points.contains_the_same_code_point_more_than_once()
 
-@P("{CONDITION_1} : {var} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
+@P("{CONDITION_1} : {EX} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, *bw_] = cond.children
@@ -4556,8 +4556,8 @@ class _:
 # ------------------------------------------------------------------------------
 # (A Parse Node 'contains' its children and their children, and so on)
 
-@P("{CONDITION_1} : {var} contains a {nonterminal}")
-@P("{CONDITION_1} : {var} contains an? {nonterminal} Parse Node")
+@P("{CONDITION_1} : {EX} contains a {nonterminal}")
+@P("{CONDITION_1} : {EX} contains an? {nonterminal} Parse Node")
 @P("{CONDITION_1} : {var} does not contain an? {nonterminal} Parse Node")
 @P("{CONDITION_1} : {var} does not contain two {nonterminal} Parse Nodes")
 class _:
@@ -4627,11 +4627,11 @@ class _:
         assert x_var.source_text() == x_var2.source_text()
         return (T_MathNonNegativeInteger_, env0)
 
-@P("{CONDITION_1} : {LOCAL_REF} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same")
+@P("{CONDITION_1} : {EX} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same")
 class _:
     def s_cond(cond, env0, asserting):
-        [local_ref, nonta, noi] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        [ex, nonta, noi] = cond.children
+        env0.assert_expr_is_of_type(ex, T_Parse_Node)
         # XXX noi
         return (env0, env0)
 
@@ -8830,15 +8830,15 @@ class _:
 # -----------------------------------------
 # conditions about the content of a String:
 
-@P("{CONDITION_1} : {var} contains any code unit more than once")
-@P('{CONDITION_1} : {var} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, *"v"*, or *"y"*')
+@P("{CONDITION_1} : {EX} contains any code unit more than once")
+@P('{CONDITION_1} : {EX} contains any code unit other than *"d"*, *"g"*, *"i"*, *"m"*, *"s"*, *"u"*, *"v"*, or *"y"*')
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         return (env0, env0)
 
-@P("{CONDITION_1} : {var} contains a code unit that is not a radix-{var} digit")
+@P("{CONDITION_1} : {EX} contains a code unit that is not a radix-{var} digit")
 class _:
     def s_cond(cond, env0, asserting):
         [svar, rvar] = cond.children
@@ -10306,10 +10306,9 @@ class _:
 # ----------------------------
 # the List contains something:
 
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate elements")
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries")
-@P("{CONDITION_1} : {var} contains any duplicate entries")
-@P("{CONDITION_1} : {var} contains no duplicate entries")
+@P("{CONDITION_1} : {EX} contains any duplicate elements")
+@P("{CONDITION_1} : {EX} contains any duplicate entries")
+@P("{CONDITION_1} : {EX} contains no duplicate entries")
 @P("{CONDITION_1} : {var} has any duplicate entries")
 @P("{CONDITION_1} : {var} has no duplicate entries")
 class _:
@@ -10326,14 +10325,14 @@ class _:
         else:
             return L.contains_any_duplicates()
 
-@P("{CONDITION_1} : {var} contains a single {nonterminal}")
+@P("{CONDITION_1} : {EX} contains a single {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
         [var, nonterminal] = cond.children
         env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
         return (env0, env0)
 
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any {nonterminal}s")
+@P("{CONDITION_1} : {EX} contains any {nonterminal}s")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, nont] = cond.children
@@ -10365,7 +10364,7 @@ class _:
         (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
         return (cond_t_env, env0)
 
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains more than one occurrence of {starred_str}")
+@P("{CONDITION_1} : {EX} contains more than one occurrence of {starred_str}")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, ss] = cond.children
@@ -10978,7 +10977,7 @@ class _:
         env0.assert_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (env0, env0)
 
-@P("{CONDITION_1} : {DOTTING} contains a Record {DEFVAR} such that {CONDITION_1}")
+@P("{CONDITION_1} : {EX} contains a Record {DEFVAR} such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [ex, var, stcond] = cond.children
@@ -12533,7 +12532,7 @@ class _:
         return (env0, env0)
 
 # for 10.4.4.3
-@P("{CONDITION_1} : {var} contains a formal parameter mapping for {var}")
+@P("{CONDITION_1} : {EX} contains a formal parameter mapping for {var}")
 class _:
     def s_cond(cond, env0, asserting):
         [avar, bvar] = cond.children
@@ -12967,7 +12966,7 @@ class _:
 # ==============================================================================
 #@ 13.2.5.1 Static Semantics: Early Errors
 
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
+@P("{CONDITION_1} : {EX} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}")
 class _:
     def s_cond(cond, env0, asserting):
         [noi, ss, emu_grammar] = cond.children
@@ -13756,7 +13755,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_CharSet)
         return env0
 
-@P("{CONDITION_1} : {var} contains only single code points")
+@P("{CONDITION_1} : {EX} contains only single code points")
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
@@ -14183,7 +14182,7 @@ class _:
         env0.assert_expr_is_of_type(str_var, T_String) # todo: element of String
         return (T_MathInteger_, env0)
 
-@P("{CONDITION_1} : {var} contains any {nonterminal}")
+@P("{CONDITION_1} : {EX} contains any {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
         [rvar, nonterminal] = cond.children
