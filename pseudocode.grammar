@@ -1510,7 +1510,6 @@
     code points
     either Match Records or *undefined*
     either Objects or Symbols
-    either Strings or *null*
     either Strings or *undefined*
     either WriteSharedMemory or ReadModifyWriteSharedMemory events
     errors

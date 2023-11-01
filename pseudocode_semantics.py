@@ -8522,10 +8522,6 @@ class _:
         [] = val_desc.children
         return value.isan(EL_String)
 
-@P("{LIST_ELEMENTS_DESCRIPTION} : either Strings or *null*")
-class _:
-    s_tb = T_String | T_Null
-
 @P("{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*")
 class _:
     s_tb = T_String | T_Undefined
