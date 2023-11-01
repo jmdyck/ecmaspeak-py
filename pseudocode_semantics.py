@@ -8046,7 +8046,7 @@ class _:
 def check_comparison(comparison, comparator, ta, tb):
     assert comparator in ['is', 'SameValue']
     pref_comparator = preferred_comparator(ta, tb)
-    assert pref_comparator in ['is', 'SameValue']
+    assert pref_comparator in ['is', 'SameValue', 'are the same X Record', 'are the same List']
     if comparator != pref_comparator:
         add_pass_error(
             comparison,
@@ -8055,8 +8055,21 @@ def check_comparison(comparison, comparator, ta, tb):
 
 def preferred_comparator(ta, tb):
     # Given the static types of two operands in a comparison,
-    # return 'is' or 'SameValue',
-    # indicating the preferred way to compare them.
+    # return a string that indicates the preferred way to compare them.
+
+    if (
+        ta.is_a_subtype_of_or_equal_to(T_Record)
+        or
+        tb.is_a_subtype_of_or_equal_to(T_Record)
+    ):
+        return 'are the same X Record'
+
+    if (
+        ta.is_a_subtype_of_or_equal_to(T_List)
+        or
+        tb.is_a_subtype_of_or_equal_to(T_List)
+    ):
+        return 'are the same List'
 
     # SameValue only accepts ECMAScript language values,
     # so if either operand might not be an ECMAScript language value,
