@@ -3773,9 +3773,13 @@ class ES_UnicodeCodePoints(ES_Value):
 class _:
     s_tb = T_Unicode_code_points_
 
-@P("{VAL_DESC} : {backticked_oth}")
+@P("{LITERAL} : {backticked_oth}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
+
+    def s_expr(expr, env0, _):
+        [_] = expr.children
+        return (T_Unicode_code_points_, env0)
 
 # -----------
 # expressions that return a sequence of Unicode code points:
@@ -3786,8 +3790,14 @@ class _:
         [] = expr.children
         return (T_Unicode_code_points_, env0)
 
-@P("{EX} : {backticked_word}")
+@P("{LITERAL} : {backticked_word}")
 class _:
+    def s_tb(expr, env):
+        [backticked_word] = expr.children
+        word = backticked_word.source_text()[1:-1]
+        assert word in ['super', 'this']
+        return a_subset_of(T_grammar_symbol_)
+
     def s_expr(expr, env0, _):
         [backticked_word] = expr.children
         word = backticked_word.source_text()[1:-1]
@@ -4072,26 +4082,6 @@ class _:
     def d_exec(g_sym):
         [terminal] = g_sym.children
         return ES_TerminalSymbol.from_TERMINAL_anode(terminal)
-
-@P("{EX} : {backticked_oth}")
-class _:
-    def s_expr(expr, env0, _):
-        [_] = expr.children
-        return (T_Unicode_code_points_, env0)
-
-@P("{VAL_DESC} : {backticked_word}")
-class _:
-    s_tb = a_subset_of(T_grammar_symbol_)
-
-    def d_desc(val_desc, value):
-        [backticked_word] = val_desc.children
-        word_sans_backticks = backticked_word.source_text()[1:-1]
-        assert value.isan(ES_GrammarSymbol)
-        return (
-            value.isan(ES_TerminalSymbol)
-            and
-            value.chars == word_sans_backticks
-        )
 
 @P("{VAL_DESC} : the {nonterminal} {TERMINAL}")
 class _:

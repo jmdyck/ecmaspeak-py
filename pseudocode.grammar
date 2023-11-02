@@ -977,8 +977,6 @@
     {PAIR}
     {PP_NAMED_OPERATION_INVOCATION}
     {RECORD_CONSTRUCTOR}
-    {backticked_oth}
-    {backticked_word}
     {code_point_lit}
     {h_code_quote}
 
@@ -1480,8 +1478,6 @@
     the {nonterminal} of an? {nonterminal}
     the {nonterminal} {TERMINAL}
     {LITERAL}
-    {backticked_oth}
-    {backticked_word}
     {nonterminal}
 
 {LIST_ELEMENTS_DESCRIPTION} :
@@ -1549,6 +1545,8 @@
     {STR_LITERAL}
     {TYPE_NAME}
     {atat_word}
+    {backticked_oth}
+    {backticked_word}
     {code_unit_lit}
     {percent_word}
     {tilded_word}
