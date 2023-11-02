@@ -3480,7 +3480,6 @@ class _:
 @P("{EX} : ({EX})")
 @P("{EX} : The value of {SETTABLE}")
 @P("{EX} : the value of {SETTABLE}")
-@P("{EX} : {code_point_lit}")
 @P("{EX} : {LITERAL}")
 @P("{EX} : {LOCAL_REF}")
 @P("{EX} : {NUM_EXPR}")
@@ -3493,6 +3492,7 @@ class _:
 @P("{FACTOR} : {NUMBER_LITERAL}")
 @P("{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}")
 @P("{FACTOR} : {SETTABLE}")
+@P("{LITERAL} : {code_point_lit}")
 @P("{LOCAL_REF} : {PROD_REF}")
 @P("{LOCAL_REF} : {SETTABLE}")
 @P("{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}")
@@ -4083,20 +4083,19 @@ class _:
         [terminal] = g_sym.children
         return ES_TerminalSymbol.from_TERMINAL_anode(terminal)
 
-@P("{VAL_DESC} : the {nonterminal} {TERMINAL}")
+@P("{LITERAL} : the {nonterminal} {TERMINAL}")
 class _:
-    def s_tb(val_desc, env):
-        [nont, term] = val_desc.children
+    def s_tb(literal, env):
+        [nont, term] = literal.children
         assert nont.source_text() == '|ReservedWord|'
         assert term.source_text() == "`super`"
         return a_subset_of(T_grammar_symbol_)
 
-    def d_desc(val_desc, value):
-        [nont, terminal] = val_desc.children
+    def d_exec(literal):
+        [nont, term] = literal.children
         assert nont.source_text() == '|ReservedWord|'
-        terminal_gsym = ES_TerminalSymbol.from_TERMINAL_anode(terminal)
-        assert value.isan(ES_GrammarSymbol)
-        return value == terminal_gsym
+        assert term.source_text() == "`super`"
+        return ES_TerminalSymbol.from_TERMINAL_anode(term)
 
 # ==============================================================================
 #@ 5.1.2 The Lexical and RegExp Grammars

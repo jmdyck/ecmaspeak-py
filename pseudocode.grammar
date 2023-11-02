@@ -977,7 +977,6 @@
     {PAIR}
     {PP_NAMED_OPERATION_INVOCATION}
     {RECORD_CONSTRUCTOR}
-    {code_point_lit}
     {h_code_quote}
 
 {MATH_FUNC} :
@@ -1476,7 +1475,6 @@
     the execution context of a generator
     the single code point {code_point_lit} or {code_point_lit}
     the {nonterminal} of an? {nonterminal}
-    the {nonterminal} {TERMINAL}
     {LITERAL}
     {nonterminal}
 
@@ -1538,6 +1536,7 @@
 {LITERAL} :
     *null*
     *undefined*
+    the {nonterminal} {TERMINAL}
     {BIGINT_LITERAL}
     {BOOL_LITERAL}
     {MATH_LITERAL}
@@ -1547,6 +1546,7 @@
     {atat_word}
     {backticked_oth}
     {backticked_word}
+    {code_point_lit}
     {code_unit_lit}
     {percent_word}
     {tilded_word}
