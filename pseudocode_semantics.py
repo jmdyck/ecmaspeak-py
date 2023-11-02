@@ -1776,6 +1776,7 @@ def type_bracket_for(vd, env):
     assert vd.prod.lhs_s in [
         '{VALUE_DESCRIPTION}',
         '{VAL_DESC}',
+        '{LITERAL_ISH}',
         '{LITERAL}',
         '{NUMBER_LITERAL}',
         '{MATH_LITERAL}',
@@ -3480,6 +3481,7 @@ class _:
 @P("{EX} : ({EX})")
 @P("{EX} : The value of {SETTABLE}")
 @P("{EX} : the value of {SETTABLE}")
+@P("{EX} : {LITERAL_ISH}")
 @P("{EX} : {LITERAL}")
 @P("{EX} : {LOCAL_REF}")
 @P("{EX} : {NUM_EXPR}")
@@ -8371,6 +8373,7 @@ class _:
         [type_name] = expr.children
         return (T_LangTypeName_, env0)
 
+@P("{VAL_DESC} : {LITERAL_ISH}")
 @P("{VAL_DESC} : {LITERAL}")
 class _:
     s_tb = s_tb_pass_down
@@ -9809,7 +9812,7 @@ class _:
 #> the intrinsic object, associated with the current realm,
 #> corresponding to the name.
 
-@P("{LITERAL} : {percent_word}")
+@P("{LITERAL_ISH} : {percent_word}")
 class _:
     def s_expr(expr, env0, _):
         [percent_word] = expr.children
@@ -12154,12 +12157,10 @@ class _:
 #> The value of the Function component of the running execution context
 #> is also called the <dfn>active function object</dfn>.
 
-@P("{VAL_DESC} : the active function object")
+@P("{LITERAL_ISH} : the active function object")
 class _:
     s_tb = a_subset_of(T_function_object_)
 
-@P("{EXPR} : the active function object")
-class _:
     def s_expr(expr, env0, _):
         [] = expr.children
         return (T_function_object_, env0)

@@ -808,7 +808,6 @@
     the String value {SETTABLE}
     the WaiterList Record that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
-    the active function object
     the algorithm steps defined in {h_emu_xref}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
@@ -971,6 +970,7 @@
     {CONSTANT_NAME}
     {DSBN}
     {EX} occurrences of {code_unit_lit}
+    {LITERAL_ISH}
     {LITERAL}
     {LOCAL_REF}
     {NUM_EXPR}
@@ -1471,10 +1471,10 @@
     some other definition of a function's behaviour provided in this specification
     source text
     the Environment Record for a |Catch| clause
-    the active function object
     the execution context of a generator
     the single code point {code_point_lit} or {code_point_lit}
     the {nonterminal} of an? {nonterminal}
+    {LITERAL_ISH}
     {LITERAL}
     {nonterminal}
 
@@ -1533,6 +1533,10 @@
 {TERMINAL} :
     {backticked_word}
 
+{LITERAL_ISH} :
+    the active function object
+    {percent_word}
+
 {LITERAL} :
     *null*
     *undefined*
@@ -1548,7 +1552,6 @@
     {backticked_word}
     {code_point_lit}
     {code_unit_lit}
-    {percent_word}
     {tilded_word}
 
 {BOOL_LITERAL} :
