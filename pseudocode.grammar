@@ -1262,27 +1262,22 @@
 # --------------------------------
 
 {VALUE_DESCRIPTION} :
-    either {VAL_DESC} or {VAL_DESC}
-    either {VAL_DESC}, or {VAL_DESC}
-    either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
-    one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    either {VAL_DESC_DISJUNCTION}
+    one of {VAL_DESC_DISJUNCTION}
+    {VAL_DESC_DISJUNCTION}
     {VAL_DESC}
-    {VAL_DESC} or {VAL_DESC}
     {VAL_DESC}, but not {VALUE_DESCRIPTION}
+
+{VAL_DESC_DISJUNCTION} :
+    {VAL_DESC} or {VAL_DESC}
+    {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
+    {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :

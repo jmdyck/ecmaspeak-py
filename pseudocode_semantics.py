@@ -1775,6 +1775,7 @@ def convert_nature_node_to_type(nature_node):
 def type_bracket_for(vd, env):
     assert vd.prod.lhs_s in [
         '{VALUE_DESCRIPTION}',
+        '{VAL_DESC_DISJUNCTION}',
         '{VAL_DESC}',
         '{LITERAL_ISH}',
         '{LITERAL}',
@@ -8271,33 +8272,26 @@ class _:
 # ------------------------------------------------------------------------------
 
 @P("{VALUE_DESCRIPTION} : {VAL_DESC}")
+@P("{VALUE_DESCRIPTION} : either {VAL_DESC_DISJUNCTION}")
+@P("{VALUE_DESCRIPTION} : one of {VAL_DESC_DISJUNCTION}")
+@P("{VALUE_DESCRIPTION} : {VAL_DESC_DISJUNCTION}")
 class _:
     s_tb = s_tb_pass_down
 
     def d_desc(value_description, value):
-        [val_desc] = value_description.children
-        return value_matches_description(value, val_desc)
+        [child] = value_description.children
+        return value_matches_description(child, val_desc)
 
-@P("{VALUE_DESCRIPTION} : either {VAL_DESC} or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : either {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : either {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC} or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : one of {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC} or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
-@P("{VALUE_DESCRIPTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC} or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
+@P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}")
 class _:
     def s_tb(value_description, env):
         result_sub_t = T_0
