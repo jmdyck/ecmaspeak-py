@@ -23,6 +23,8 @@ def do_stuff_with_pseudocode():
 
     check_for_unbalanced_ifs()
 
+    check_value_descriptions()
+
     analyze_static_dependencies()
     check_optional_parameters()
     check_sdo_coverage()
@@ -690,6 +692,130 @@ def each_if_arm(anode):
         yield commands
     else:
         assert 0, anode.prod_lhs_s
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_value_descriptions():
+    stderr('check_value_descriptions ...')
+
+    def visit(n):
+        if hasattr(n, '_syntax_tree'):
+            stree = n._syntax_tree
+            if stree is not None:
+                for anode in stree.each_descendant_or_self():
+                    if anode.prod.lhs_s == '{VAL_DESC_DISJUNCTION}':
+                        check_val_desc_disjunction(anode)
+
+    spec.doc_node.preorder_traversal(visit)
+
+def check_val_desc_disjunction(val_desc_disjunction):
+    # Enforce on the rules set out in
+    # https://github.com/tc39/ecma262/pull/2972#issuecomment-1379579896
+    # and following.
+
+    assert val_desc_disjunction.prod.lhs_s == '{VAL_DESC_DISJUNCTION}'
+
+    sm_string = ''.join(
+        single_or_multi(val_desc)
+        for val_desc in val_desc_disjunction.children
+    )
+
+    # If a disjunction combines multi-valued terms (types)
+    # with single-valued terms (constants/literals),
+    # all the multis should come before all the singles.
+    if re.fullmatch(r'(M*)(S*)', sm_string):
+        pass
+    else:
+        msg_at_node(
+            val_desc_disjunction,
+            f"In a VAL_DESC_DISJUNCTION, the multi-valued terms should come before the single-valued terms, but here the terms are '{sm_string}'"
+        )
+
+    # -----------------
+    # And then there are rules about whether the disjunction
+    # should be preceded by 'either', 'one of', or nothing.
+
+    value_description = val_desc_disjunction.parent
+    assert value_description.prod.lhs_s == '{VALUE_DESCRIPTION}'
+    assert value_description.prod.rhs_s.endswith('{VAL_DESC_DISJUNCTION}')
+    prefix = value_description.prod.rhs_s.removesuffix('{VAL_DESC_DISJUNCTION}').rstrip()
+
+    # See https://github.com/tc39/ecma262/pull/2972#issuecomment-1372894434
+
+    gparent_prod = value_description.parent.prod
+    if str(gparent_prod) in [
+        '{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}',
+        '{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}',
+        '{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}',
+    ]:
+        # This is a 'prose' context.
+        # The prefix should be "one of" only in the case where
+        # there are 3+ disjuncts and all are single-valued.
+        # Otherwise, it should be "either".
+        preferred_prefix = 'one of' if re.fullmatch(r'SSS+', sm_string) else 'either'
+
+    elif (
+        gparent_prod.lhs_s in ['{H1_BODY}', '{PARAMETER_DECL}', '{FIELD_VALUE_TYPE}']
+        or
+        str(gparent_prod).startswith('{VAL_DESC} : a Record with fields')
+        or
+        str(gparent_prod) == '{VALUE_DESCRIPTION} : {VAL_DESC}, but not {VALUE_DESCRIPTION}'
+    ):
+        # This is a 'declaration' context.
+        # It doesn't need a prefix, unless the result would be ambiguous.
+        vd0 = val_desc_disjunction.children[0]
+        if vd0.prod.rhs_s == 'a normal completion containing {VALUE_DESCRIPTION}':
+            # would be ambiguous without a prefix
+            preferred_prefix = 'either'
+        else:
+            preferred_prefix = ''
+
+    else:
+        assert 0, str(gparent_prod)
+
+    if prefix != preferred_prefix:
+        msg_at_node(
+            val_desc_disjunction,
+            f"this VAL_DESC_DISJUNCTION should be preceded by '{preferred_prefix}' rather than '{prefix}'"
+        )
+
+    # The other way to accomplish the discrimination
+    # between 'prose' contexts and 'declaration' contexts
+    # would be to change pseudocode.grammar, splitting {VALUE_DESCRIPTION}
+    # (into, say, {PROSE_VALUE_DESCRIPTION} and {DECL_VALUE_DESCRIPTION}),
+    # and changing each occurrence of {VALUE_DESCRIPTION} to one of those
+    # as appropriate.
+    # Then here, just look at val_desc_disjunction.parent.prod.lhs_s.
+
+def single_or_multi(val_desc):
+    assert val_desc.prod.lhs_s == '{VAL_DESC}'
+    # Return 'M' if {val_desc} is a multi-valued description (type),
+    # or 'S' if it is a single-valued description (constant/literal).
+
+    r = val_desc.prod.rhs_s
+
+    if r.startswith(('a ', 'an ', 'an? ', 'any', 'some ')):
+        return 'M'
+
+    if r in [
+        'ECMAScript source text',
+        'source text',
+        'the Environment Record for a |Catch| clause',
+        'the execution context of a generator',
+        'the single code point {code_point_lit} or {code_point_lit}',
+        'the {nonterminal} of an? {nonterminal}',
+    ]:
+        return 'M'
+
+    if r in [
+        '{LITERAL_ISH}',
+        '{LITERAL}',
+        '{nonterminal}',
+    ]:
+        return 'S'
+
+    assert 0, r
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
