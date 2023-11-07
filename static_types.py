@@ -964,11 +964,7 @@ _named_type_hierarchy = {
                 'List': {},
                 'ExtendedMathReal_': {
                     'MathReal_': {
-                        'MathInteger_': {
-                            'code_unit_' : {},
-                            'code_point_': {},
-                            'MathIntegerOther_' : {},
-                        },
+                        'MathInteger_': {},
                         'MathOther_': {},
                     },
                     'MathPosInfinity_': {},
@@ -996,10 +992,8 @@ _named_type_hierarchy = {
                 },
                 'agent_signifier_' : {},
                 'alg_steps': {},
-                # 'character_': {
-                #     # 'code_unit_': {},
-                #     'code_point_': {},
-                # },
+                'code_point_': {},
+                'code_unit_' : {},
                 'completion_kind_': {},
                 'execution context': {},
                 'grammar_symbol_': {},
