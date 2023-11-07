@@ -11790,7 +11790,7 @@ class _:
         [] = expr.children
         return (T_Realm_Record, env0)
 
-@P("{CONDITION_1} : {var} and {var} are not the same Realm Record")
+@P("{CONDITION_1} : {SETTABLE} and {SETTABLE} are not the same Realm Record")
 class _:
     def s_cond(cond, env0, asserting):
         [avar, bvar] = cond.children
@@ -13157,9 +13157,8 @@ class _:
 class _:
     s_tb = T_Module_Record
 
-@P("{CONDITION_1} : {var} and {var} are the same Module Record")
-@P("{CONDITION_1} : {var} and {DOTTING} are the same Module Record")
-@P("{CONDITION_1} : {DOTTING} and {DOTTING} are not the same Module Record")
+@P("{CONDITION_1} : {SETTABLE} and {SETTABLE} are the same Module Record")
+@P("{CONDITION_1} : {SETTABLE} and {SETTABLE} are not the same Module Record")
 class _:
     def s_cond(cond, env0, asserting):
         [ex1, ex2] = cond.children

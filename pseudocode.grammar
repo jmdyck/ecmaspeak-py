@@ -472,7 +472,6 @@
     there exists an event {DEFVAR} such that {CONDITION}
     there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}
     we return here
-    {DOTTING} and {DOTTING} are not the same Module Record
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {DOTTING} is {LITERAL} and was never previously set to {LITERAL}
@@ -540,18 +539,18 @@
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
+    {SETTABLE} and {SETTABLE} are not the same Module Record
+    {SETTABLE} and {SETTABLE} are not the same Realm Record
+    {SETTABLE} and {SETTABLE} are the same Module Record
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
     {var} also has a {DSBN} internal slot
-    {var} and {DOTTING} are the same Module Record
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
     {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} are finite
     {var} and {var} are finite and non-zero
     {var} and {var} are in a race in {var}
-    {var} and {var} are not the same Realm Record
-    {var} and {var} are the same Module Record
     {var} and {var} do not have disjoint ranges
     {var} and {var} do not have the same number of elements
     {var} and {var} each contain exactly one character
