@@ -2055,7 +2055,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
             if mo := re.fullmatch(r'Let _internalSlotsList_ be (.+)\.', prev_command_st):
                 st = mo.group(1)
                 if st == '« [[Prototype]], [[Extensible]], [[ViewedArrayBuffer]], [[TypedArrayName]], [[ContentType]], [[ByteLength]], [[ByteOffset]], [[ArrayLength]] »':
-                    return_type = T_Integer_Indexed_object_
+                    return_type = T_TypedArray_object_
                 elif st == 'the internal slots listed in <emu-xref href="#table-internal-slots-of-module-namespace-exotic-objects"></emu-xref>':
                     return_type = T_module_namespace_exotic_object_
                 elif st == 'the list-concatenation of « [[Prototype]], [[Extensible]] » and the internal slots listed in <emu-xref href="#table-internal-slots-of-bound-function-exotic-objects"></emu-xref>':
@@ -9688,13 +9688,13 @@ class _:
             'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
 
             # 10.4.5.*
-            'sec-integer-indexed-exotic-objects-getownproperty-p'                                    : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-hasproperty-p'                                       : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-defineownproperty-p-desc'                            : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-get-p-receiver'                                      : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-set-p-v-receiver'                                    : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-delete-p'                                            : T_Integer_Indexed_object_,
-            'sec-integer-indexed-exotic-objects-ownpropertykeys'                                     : T_Integer_Indexed_object_,
+            'sec-typedarray-getownproperty'                                                          : T_TypedArray_object_,
+            'sec-typedarray-hasproperty'                                                             : T_TypedArray_object_,
+            'sec-typedarray-defineownproperty'                                                       : T_TypedArray_object_,
+            'sec-typedarray-get'                                                                     : T_TypedArray_object_,
+            'sec-typedarray-set'                                                                     : T_TypedArray_object_,
+            'sec-typedarray-delete'                                                                  : T_TypedArray_object_,
+            'sec-typedarray-ownpropertykeys'                                                         : T_TypedArray_object_,
 
             # 10.5.*
             'sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist'   : T_Proxy_exotic_object_,
@@ -12544,15 +12544,9 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 10.4.5 Integer-Indexed Exotic Objects
+#@ 10.4.5 TypedArray Exotic Objects
 
-T_Integer_Indexed_object_ = T_TypedArray_object_
-
-@P("{VAL_DESC} : an Integer-Indexed exotic object")
-class _:
-    s_tb = T_Integer_Indexed_object_
-
-#> <emu-xref>Integer-Indexed exotic objects</emu-xref>
+#> <emu-xref>TypedArray exotic objects</emu-xref>
 #> have the same internal slots as ordinary objects and additionally
 #> [[ViewedArrayBuffer]],
 #> [[ArrayLength]],
@@ -12560,21 +12554,21 @@ class _:
 #> [[ContentType]], and
 #> [[TypedArrayName]] internal slots.
 
-# (SPEC BUG: That list is missing [[ByteLength]], see IntegerIndexedObjectCreate.)
+# (SPEC BUG: That list is missing [[ByteLength]], see TypedArrayCreate.)
 
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_ | T_tilde_auto_)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ContentType]]',       T_tilde_bigint_ | T_tilde_number_)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[TypedArrayName]]',    T_String)
-declare_isom(T_Integer_Indexed_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_ | T_tilde_auto_)
+declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[ViewedArrayBuffer]]', T_ArrayBuffer_object_ | T_SharedArrayBuffer_object_)
+declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[ArrayLength]]',       T_MathNonNegativeInteger_ | T_tilde_auto_)
+declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[ByteOffset]]',        T_MathNonNegativeInteger_)
+declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[ContentType]]',       T_tilde_bigint_ | T_tilde_number_)
+declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[TypedArrayName]]',    T_String)
+declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_ | T_tilde_auto_)
 
 # ==============================================================================
-#@ 10.4.5.8 Integer-Indexed Object With Buffer Witness Records
+#@ 10.4.5.8 TypedArray With Buffer Witness Records
 
-@P("{VAL_DESC} : an Integer-Indexed Object With Buffer Witness Record")
+@P("{VAL_DESC} : a TypedArray With Buffer Witness Record")
 class _:
-    s_tb = T_Integer_Indexed_Object_With_Buffer_Witness_Record
+    s_tb = T_TypedArray_With_Buffer_Witness_Record
 
 # ==============================================================================
 #@ 10.4.6 Module Namespace Exotic Objects

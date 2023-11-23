@@ -325,7 +325,7 @@ def check_alg_consistency():
                         'Array Exotic Objects'                                : 'an Array exotic object _A_',
                         'String Exotic Objects'                               : 'a String exotic object _S_',
                         'Arguments Exotic Objects'                            : 'an arguments exotic object _args_',
-                        'Integer-Indexed Exotic Objects'                      : 'an Integer-Indexed exotic object _O_',
+                        'TypedArray Exotic Objects'                           : 'a TypedArray _O_',
                         'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _O_',
                         'Immutable Prototype Exotic Objects'                  : 'an immutable prototype exotic object _O_',
                         'Proxy Object Internal Methods and Internal Slots'    : 'a Proxy exotic object _O_',

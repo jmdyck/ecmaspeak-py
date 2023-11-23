@@ -1133,7 +1133,6 @@
     the ExportEntry Record
     the GraphLoadingState Record
     the ImportEntry Record
-    the Integer-Indexed Object With Buffer Witness Record
     the Iterator Record
     the JSON Serialization Record
     the JobCallback Record
@@ -1147,6 +1146,7 @@
     the Reference Record
     the RegExp Record
     the Time Zone Identifier Record
+    the TypedArray With Buffer Witness Record
 
 {FIELDS} :
     {FIELDS}, {FIELD}
@@ -1342,6 +1342,7 @@
     a Synchronize event
     a Time Zone Identifier Record
     a TypedArray
+    a TypedArray With Buffer Witness Record
     a TypedArray element type
     a UTF-16 code unit
     a Unicode code point
@@ -1423,8 +1424,6 @@
     an Environment Record
     an IEEE 754-2019 binary32 NaN value
     an IEEE 754-2019 binary64 NaN value
-    an Integer-Indexed Object With Buffer Witness Record
-    an Integer-Indexed exotic object
     an Iterator
     an Iterator Record
     an Object
