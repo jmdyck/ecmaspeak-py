@@ -3367,7 +3367,7 @@ def EACH(each_thing):
 def value_matches_description(value, description):
     assert value.isan(E_Value)
     assert isinstance(description, ANode)
-    assert description.prod.lhs_s in ['{VALUE_DESCRIPTION}', '{VAL_DESC}']
+    assert description.prod.lhs_s in ['{VALUE_DESCRIPTION}', '{VAL_DESC_DISJUNCTION}', '{VAL_DESC}']
 
     p = str(description.prod)
     d_desc = lookup_for_prod(p, 'd_desc')
@@ -8280,7 +8280,7 @@ class _:
 
     def d_desc(value_description, value):
         [child] = value_description.children
-        return value_matches_description(child, val_desc)
+        return value_matches_description(value, child)
 
 @P("{VAL_DESC_DISJUNCTION} : {VAL_DESC} or {VAL_DESC}")
 @P("{VAL_DESC_DISJUNCTION} : {VAL_DESC}, or {VAL_DESC}")
