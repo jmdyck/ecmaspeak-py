@@ -388,6 +388,7 @@
     Every CharSetElement of {var} consists of a single character
     Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
+    Exactly one element of {var} meets this criterion
     GlobalSymbolRegistry does not currently contain an entry for {var}
     LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation
     That Record's {dsb_word} is {EX}

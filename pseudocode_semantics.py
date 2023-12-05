@@ -10381,6 +10381,13 @@ class _:
         (t_env, f_env) = tc_cond(stcond, env2)
         return (env1, env1)
 
+@P('{CONDITION_1} : Exactly one element of {var} meets this criterion')
+class _:
+    def s_cond(cond, env0, _):
+        [list_var] = cond.children
+        env0.ensure_expr_is_of_type(list_var, T_List)
+        return (env0, env0)
+
 # ------------------------------------------------------------------------------
 # questions involving multiple Lists:
 
