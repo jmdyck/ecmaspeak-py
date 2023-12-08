@@ -2602,7 +2602,6 @@ def _(section, mo, emu_alg):
     (r"The( initial)? value of the {THIS} property is {VALUE}, defined in {H_EMU_XREF}\."),
     (r"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
     (r"The( initial)? value of {THIS} is {VALUE}\."),
-    (r"The( initial)? value of {THIS} is {VALUE}"), # SPEC BUG
 
     (r"The( initial)? value of a {THIS} is {VALUE}\."),
     (r"The initial value of the {THIS} property of the prototype for a given _NativeError_ constructor is {VALUE}\."),
