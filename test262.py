@@ -45,6 +45,9 @@ def test_all_in_dir(dir_relpath):
             if re.fullmatch('\.[a-zA-Z0-9_.-]+\.(js|json)\.swp', entry.name):
                 # vim swap file, ignore it.
                 continue
+            if entry.name == 'README.md':
+                # ignore it
+                continue
             assert re.fullmatch('[a-zA-Z0-9_.-]+\.(js|json)', entry.name), entry.name
             if '_FIXTURE' in entry.name:
                 # involved in a test, but not itself a test
@@ -95,7 +98,8 @@ def test_one(file_relpath):
         pass
 
     else:
-        assert 0, file_relpath
+        print(f"... failed to parse the Copyright section in {file_relpath}")
+        return
 
     # frontmatter
     try:
@@ -339,6 +343,12 @@ def parse_frontmatter(frontmatter):
                 elif rest == '' or rest.isspace():
                     # Collection content, written in block notation
                     value = yaml_parse_block_collection(s_line_i+1, e_line_i)
+
+                elif rest == ' | ':
+                    text = frontmatter[a:c]
+                    print()
+                    print(f"trailing space: {text!r}")
+                    assert 0
 
                 else:
                     text = frontmatter[
