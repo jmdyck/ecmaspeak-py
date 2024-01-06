@@ -6,9 +6,9 @@
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
 # example use:
-# test_parser.py --all && car _test_parser/{fail,early,pass,pass-explicit}_output
+# test_parser.py ../ecma262/_main --all && car _test_parser/{fail,early,pass,pass-explicit}_output
 # ^ takes about 7 minutes
-# test_parser.py --all-dir=fail && car _test_parser/fail_output
+# test_parser.py ../ecma262/_main --all-dir=fail && car _test_parser/fail_output
 
 # You may need to `export PYTHONIOENCODING=utf-8` before running this script.
 
