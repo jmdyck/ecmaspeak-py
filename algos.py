@@ -266,7 +266,7 @@ def write_header_info():
                 put(f"        {len(alg_header.u_defns)} defns")
                 n_defns_via_headers += len(alg_header.u_defns)
                 for alg_defn in alg_header.u_defns:
-                    assert alg_defn.header is alg_header
+                    assert alg_defn.parent_header is alg_header
 
             assert n_defns_via_headers == len(alg_info.all_definitions())
             # alg_info.invocations
@@ -444,7 +444,7 @@ def elements_are_distinct(L):
 
 @dataclass
 class AlgDefn:
-    header: AlgHeader
+    parent_header: AlgHeader
     discriminator: typing.Union[HNode, str, None]
     kludgey_p: typing.Union[HNode, None]
     anode: Pseudocode.ANode

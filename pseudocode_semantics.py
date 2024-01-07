@@ -2822,8 +2822,8 @@ class Frame:
         # alg_defn:
 
         frame._alg_defn = alg_defn
-        frame._header = alg_defn.header
-        frame._alg = alg_defn.header.parent_alg
+        frame._header = alg_defn.parent_header
+        frame._alg = alg_defn.parent_header.parent_alg
 
         # -----------
         # focus_node:

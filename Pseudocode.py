@@ -575,23 +575,23 @@ def check_vars_in_alg_defn(alg_defn):
 
     things = defaultdict(Thing)
 
-    for param in alg_defn.header.params:
+    for param in alg_defn.parent_header.params:
         if param.decl_node:
             d = param.decl_node.children[0]
         else:
             d = None
         d_thing = things[param.name]
         d_thing.defs.append(d)
-        d_thing.okay_if_unused = alg_defn.header.species.startswith('op: discriminated by')
+        d_thing.okay_if_unused = alg_defn.parent_header.species.startswith('op: discriminated by')
         # It's okay if some of the defns in a discriminated union
         # don't use all the parameters
 
-    fp = alg_defn.header.for_phrase_node
+    fp = alg_defn.parent_header.for_phrase_node
     if fp and '{var}' in fp.prod.rhs_s:
         d = fp.children[1]
         d_thing = things[d.source_text()]
         d_thing.defs.append(d)
-        d_thing.okay_if_unused = alg_defn.header.species.startswith('op: discriminated by')
+        d_thing.okay_if_unused = alg_defn.parent_header.species.startswith('op: discriminated by')
 
     for d in alg_defn.anode.each_descendant_or_self():
         if d.prod.lhs_s == '{var}':
@@ -856,7 +856,7 @@ def analyze_static_dependencies():
                             if callee_name in spec.alg_info_['op']:
                                 spec.alg_info_['op'][callee_name].invocations.append(d)
                             else:
-                                stderr(f"spec.alg_info_['op'] has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.header.section.section_num})")
+                                stderr(f"spec.alg_info_['op'] has no entry for {callee_name!r} ({alg_name} calls it in {alg_defn.parent_header.section.section_num})")
                     elif hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         assert alg_name == 'Early Errors'
                         # "... and the following algorithm evaluates to *true*: ..."
@@ -1253,7 +1253,7 @@ def check_sdo_coverage():
 
             for alg_defn in op_info.all_definitions():
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
-                if alg_defn.header.section.section_num.startswith('B'): continue
+                if alg_defn.parent_header.section.section_num.startswith('B'): continue
 
                 discriminator = alg_defn.discriminator
 
