@@ -19,6 +19,7 @@ import shared, HTML
 from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
 from DecoratedFuncDict import DecoratedFuncDict
+from algos import AlgDefn
 
 # static:
 from Graph import Graph
@@ -344,57 +345,7 @@ class TypedAlgHeader:
 
         # -------------------------
 
-        self.t_defns = []
-
-        for alg_defn in header.u_defns:
-            if self.species.startswith('op: discriminated by syntax'):
-                discriminator = alg_defn.discriminator
-            elif self.for_param_type:
-                discriminator = self.for_param_type
-            elif alg_defn.discriminator:
-                discriminator = HierType(alg_defn.discriminator)
-            else:
-                discriminator = None
-
-            if self.species.startswith('op: discriminated by syntax'):
-                assert (
-                    discriminator is None
-                    or
-                    isinstance(discriminator, HTML.HNode)
-                        and discriminator.element_name in ['emu-grammar', 'p']
-                    or
-                    isinstance(discriminator, ANode)
-                        and discriminator.prod.lhs_s in ['{h_emu_grammar}', '{nonterminal}']
-                )
-            elif self.species == 'op: singular: numeric method':
-                assert discriminator is None
-            elif self.species.startswith('op: discriminated by type'):
-                assert isinstance(discriminator, Type)
-            elif self.species == 'op: singular':
-                assert discriminator is None or isinstance(discriminator, Type)
-            elif (
-                self.species.startswith('bif:')
-                or
-                self.species == 'op: singular: host-defined'
-                    # because HostMakeJobCallback has a default implementation
-                or
-                self.species == 'op: singular: implementation-defined'
-                    # because PR #2781 introduced 3 with default implementations
-            ):
-                assert discriminator is None
-            else:
-                assert 0, self.species
-
-            assert isinstance(alg_defn.anode, ANode)
-            assert alg_defn.anode.prod.lhs_s in [
-                '{EMU_ALG_BODY}',
-                '{EXPR}',
-                '{ONE_LINE_ALG}',
-                '{EE_RULE}',
-                '{NAMED_OPERATION_INVOCATION}',
-            ], alg_defn.anode.prod.lhs_s
-
-            self.t_defns.append((discriminator,alg_defn.anode))
+        self.u_defns = header.u_defns
 
         (ln, _) = shared.convert_posn_to_linecol(header.node_at_end_of_header.end_posn)
         spec.info_for_line_[ln].afters.append(self)
@@ -411,7 +362,7 @@ class TypedAlgHeader:
                     pn + ' : ' + str(pt)
                     for (pn, pt) in self.parameter_types.items())}
                 returns: {self.return_type}
-                # defns: {len(self.t_defns)}
+                # defns: {len(self.u_defns)}
         """
 
     # ------------------------------------------------------
@@ -1438,10 +1389,10 @@ def tc_header(tah):
 
     init_env = tah.make_env()
 
-    if tah.t_defns == []:
+    if tah.u_defns == []:
         return False
 
-    final_env = tc_proc(tah.name, tah.t_defns, init_env)
+    final_env = tc_proc(tah.name, tah.u_defns, init_env)
 
     if tah.name == 'Early Errors':
         assert final_env is None
@@ -1529,7 +1480,7 @@ def tc_proc(op_name, defns, init_env):
 
     header_names = sorted(init_env.vars.keys())
 
-    for (i, (discriminator, body)) in enumerate(defns):
+    for (i, alg_defn) in enumerate(defns):
         if op_name is not None:
             print()
             print('-' * 20)
@@ -1538,24 +1489,21 @@ def tc_proc(op_name, defns, init_env):
         # global trace_this_op
         # trace_this_op = (op_name == 'SV' and i == 27)
 
-        if discriminator:
-            if isinstance(discriminator, Type):
-                print(discriminator)
-            elif isinstance(discriminator, HTML.HNode):
-                print(discriminator.source_text())
-            else:
-                assert 0
-        else:
+        discriminator = alg_defn.discriminator
+        if discriminator is None:
             print('(no discriminator)')
+        elif isinstance(discriminator, HTML.HNode):
+            print(discriminator.source_text())
+        else:
+            print(discriminator)
         print()
 
         # kludge:
         if op_name in ['ToObject', 'RequireObjectCoercible']:
             # not ToBigInt
-            assert isinstance(discriminator, HierType)
-            # in_env = init_env.with_expr_type_narrowed('_argument_', discriminator)
+            assert isinstance(discriminator, str)
             in_env = init_env.copy()
-            in_env.vars['_argument_'] = discriminator
+            in_env.vars['_argument_'] = HierType(discriminator)
         elif discriminator and isinstance(discriminator, HTML.HNode):
             assert discriminator.element_name == 'emu-grammar'
             in_env = init_env.copy()
@@ -1563,6 +1511,8 @@ def tc_proc(op_name, defns, init_env):
         else:
             in_env = init_env
 
+        body = alg_defn.anode
+        assert isinstance(body, ANode)
         if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
             result = tc_nonvalue(body, in_env)
             assert result is None
@@ -11343,7 +11293,8 @@ class _:
 
         # -----
 
-        defns = [(None, commands)]
+        alg_defn = AlgDefn(None, None, None, commands)
+        defns = [alg_defn]
         env_after_commands = tc_proc(None, defns, env_for_commands)
         t = ProcType(tuple(clo_param_types), env_after_commands.vars['*return*'])
         return (t, env0)
