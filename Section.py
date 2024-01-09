@@ -809,27 +809,23 @@ def handle_op_table(emu_table, alg_header):
 
         x = ' '.join(c.element_name for c in b.children)
 
-        if x in [
+        if x == '#LITERAL p #LITERAL emu-alg #LITERAL':
+            (_, p, _, emu_alg, _) = b.children
+            assert p.source_text() == '<p>Apply the following steps:</p>'
+            AlgHeader_add_definition(alg_header, discriminator, emu_alg)
+
+        elif x in [
             '#LITERAL',
             '#LITERAL emu-xref #LITERAL',
             '#LITERAL sub #LITERAL',
             '#LITERAL sub #LITERAL sub #LITERAL',
+
+            '#LITERAL emu-note #LITERAL',
+            # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
+
+            '#LITERAL p #LITERAL p #LITERAL',
         ]:
             AlgHeader_add_definition(alg_header, discriminator, b)
-
-        elif x == '#LITERAL emu-note #LITERAL':
-            # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
-            AlgHeader_add_definition(alg_header, discriminator, b)
-
-        elif x == '#LITERAL p #LITERAL p #LITERAL':
-            (_, p1, _, p2, _) = b.children
-            AlgHeader_add_definition(alg_header, discriminator, b)
-            pass
-
-        elif x == '#LITERAL p #LITERAL emu-alg #LITERAL':
-            (_, p, _, emu_alg, _) = b.children
-            assert p.source_text() == '<p>Apply the following steps:</p>'
-            AlgHeader_add_definition(alg_header, discriminator, emu_alg)
 
         else:
             assert 0, x
