@@ -536,9 +536,10 @@ def check_vars():
         sorted(spec.alg_info_['bif'].items())
     ):
         for alg_defn in alg_info.all_definitions():
-            check_vars_in_alg_defn(alg_defn)
+            for anode in alg_defn.anodes:
+                check_vars_in_anode(anode, alg_defn.parent_header)
 
-def check_vars_in_alg_defn(alg_defn):
+def check_vars_in_anode(anode, alg_header):
 
     # If an algorithm is incomplete in some way,
     # it's pointless to check the vars in an algorithm.
@@ -546,9 +547,9 @@ def check_vars_in_alg_defn(alg_defn):
     #
     # (This way of checking is fairly kludgey.)
 
-    if alg_defn.anode is None: return
+    if anode is None: return
 
-    s = alg_defn.anode.start_posn
+    s = anode.start_posn
     preceding_text = shared.spec_text[s-100:s].replace('\n', r'\n')
 
     if ' replaces-step=' in preceding_text:
@@ -575,25 +576,25 @@ def check_vars_in_alg_defn(alg_defn):
 
     things = defaultdict(Thing)
 
-    for param in alg_defn.parent_header.params:
+    for param in alg_header.params:
         if param.decl_node:
             d = param.decl_node.children[0]
         else:
             d = None
         d_thing = things[param.name]
         d_thing.defs.append(d)
-        d_thing.okay_if_unused = alg_defn.parent_header.species.startswith('op: discriminated by')
+        d_thing.okay_if_unused = alg_header.species.startswith('op: discriminated by')
         # It's okay if some of the defns in a discriminated union
         # don't use all the parameters
 
-    fp = alg_defn.parent_header.for_phrase_node
+    fp = alg_header.for_phrase_node
     if fp and '{var}' in fp.prod.rhs_s:
         d = fp.children[1]
         d_thing = things[d.source_text()]
         d_thing.defs.append(d)
-        d_thing.okay_if_unused = alg_defn.parent_header.species.startswith('op: discriminated by')
+        d_thing.okay_if_unused = alg_header.species.startswith('op: discriminated by')
 
-    for d in alg_defn.anode.each_descendant_or_self():
+    for d in anode.each_descendant_or_self():
         if d.prod.lhs_s == '{var}':
             d_thing = things[d.source_text()]
             p = d.parent
@@ -619,7 +620,7 @@ def check_vars_in_alg_defn(alg_defn):
             else:
                 msg_node = thing.defs[0]
                 if msg_node is None:
-                    msg_node = alg_defn.anode
+                    msg_node = anode
                 msg_at_node(
                     msg_node,
                     f"{varname} is not used in this algorithm"
@@ -647,22 +648,23 @@ def check_for_unbalanced_ifs():
         sorted(spec.alg_info_['bif'].items())
     ):
         for alg_defn in alg_info.all_definitions():
-            if alg_defn.anode is None: continue
-            for d in alg_defn.anode.each_descendant_or_self():
-                if d.prod.lhs_s == '{IF_OTHER}':
-                    arms = [* each_if_arm(d)]
-                    assert len(arms) > 0
+            for anode in alg_defn.anodes:
+                if anode is None: continue
+                for d in anode.each_descendant_or_self():
+                    if d.prod.lhs_s == '{IF_OTHER}':
+                        arms = [* each_if_arm(d)]
+                        assert len(arms) > 0
 
-                    arm_nts = set(
-                        str(arm.prod.lhs_s)
-                        for arm in arms
-                    )
-                    if len(arm_nts) == 1: continue
-                    arm_nts_str = ' '.join(
-                        str(arm.prod.lhs_s)
-                        for arm in arms
-                    )
-                    msg_at_node(d, f"If-command has 'unbalanced' arms: {arm_nts_str}")
+                        arm_nts = set(
+                            str(arm.prod.lhs_s)
+                            for arm in arms
+                        )
+                        if len(arm_nts) == 1: continue
+                        arm_nts_str = ' '.join(
+                            str(arm.prod.lhs_s)
+                            for arm in arms
+                        )
+                        msg_at_node(d, f"If-command has 'unbalanced' arms: {arm_nts_str}")
 
 def each_if_arm(anode):
     if anode.prod.lhs_s == '{IF_OTHER}':
@@ -862,7 +864,8 @@ def analyze_static_dependencies():
                         # "... and the following algorithm evaluates to *true*: ..."
                         recurse(d._hnode._syntax_tree)
 
-            if alg_defn.anode: recurse(alg_defn.anode)
+            for anode in alg_defn.anodes:
+                if anode: recurse(anode)
             alg_info.callees.update(alg_defn.callees)
 
         if alg_name == 'HostLoadImportedModule':
@@ -1125,7 +1128,8 @@ def analyze_static_dependencies():
                     if hasattr(d, '_hnode') and hasattr(d._hnode, '_syntax_tree'):
                         assert op_name == 'Early Errors'
                         recurse(d._hnode._syntax_tree)
-            if op_defn.anode: recurse(op_defn.anode)
+            for anode in op_defn.anodes:
+                if anode: recurse(anode)
 
     # Then propagate to callers.
     while True:

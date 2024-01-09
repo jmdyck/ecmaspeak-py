@@ -1119,7 +1119,8 @@ def _define_tilde_types():
                 if rnn := alg_header.return_nature_node:
                     scan_text_for_tilde_words(rnn.source_text())
             for alg_defn in alg.all_definitions():
-                scan_text_for_tilde_words(alg_defn.anode.source_text())
+                for anode in alg_defn.anodes:
+                    scan_text_for_tilde_words(anode.source_text())
 
     for tilde_word in sorted(tilde_words):
         if re.fullmatch(r'~\w+(8|8clamped|16|32|64)~', tilde_word):

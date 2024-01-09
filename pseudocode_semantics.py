@@ -1498,29 +1498,30 @@ def tc_proc(op_name, defns, init_env):
             print(discriminator)
         print()
 
-        # kludge:
-        if op_name in ['ToObject', 'RequireObjectCoercible']:
-            # not ToBigInt
-            assert isinstance(discriminator, str)
-            in_env = init_env.copy()
-            in_env.vars['_argument_'] = HierType(discriminator)
-        elif discriminator and isinstance(discriminator, HTML.HNode):
-            assert discriminator.element_name == 'emu-grammar'
-            in_env = init_env.copy()
-            in_env.assoc_productions = discriminator._gnode._productions
-        else:
-            in_env = init_env
+        for anode in alg_defn.anodes:
 
-        body = alg_defn.anode
-        assert isinstance(body, ANode)
-        if body.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
-            result = tc_nonvalue(body, in_env)
-            assert result is None
-        elif body.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
-            (out_t, out_env) = tc_expr(body, in_env)
-            proc_add_return(out_env, out_t, body)
-        else:
-            assert 0, body.prod.lhs_s
+            # kludge:
+            if op_name in ['ToObject', 'RequireObjectCoercible']:
+                # not ToBigInt
+                assert isinstance(discriminator, str)
+                in_env = init_env.copy()
+                in_env.vars['_argument_'] = HierType(discriminator)
+            elif discriminator and isinstance(discriminator, HTML.HNode):
+                assert discriminator.element_name == 'emu-grammar'
+                in_env = init_env.copy()
+                in_env.assoc_productions = discriminator._gnode._productions
+            else:
+                in_env = init_env
+
+            assert isinstance(anode, ANode)
+            if anode.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
+                result = tc_nonvalue(anode, in_env)
+                assert result is None
+            elif anode.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
+                (out_t, out_env) = tc_expr(anode, in_env)
+                proc_add_return(out_env, out_t, anode)
+            else:
+                assert 0, anode.prod.lhs_s
 
         # if trace_this_op: pdb.set_trace()
 
@@ -2841,41 +2842,48 @@ class Frame:
             frame.focus_map[ref_name].append(pchild)
 
     def run(frame):
-        anode = frame._alg_defn.anode
-        # stderr('   ', anode.source_text())
+        anodes = frame._alg_defn.anodes
+        # for anode in anodes: stderr('   ', anode.source_text())
 
-        s = anode.prod.lhs_s
-        if s == '{EE_RULE}':
-            if frame.should_apply_the_rule():
+        # An alg_defn is allowed to have multiple anodes,
+        # but currently, there's always just one.
+        #
+        assert len(anodes) == 1
+
+        for anode in anodes:
+            s = anode.prod.lhs_s
+
+            if s == '{EE_RULE}':
+                if frame.should_apply_the_rule():
+                    try:
+                        EXEC(anode, None)
+                    except ReferenceToNonexistentThing:
+                        # The rule just fails to find an early error.
+                        pass
+                assert not frame.is_returning()
+                result = None
+
+            elif s == '{EMU_ALG_BODY}':
                 try:
                     EXEC(anode, None)
+                    assert frame.is_returning()
+                    result = frame.return_value
                 except ReferenceToNonexistentThing:
-                    # The rule just fails to find an early error.
-                    pass
-            assert not frame.is_returning()
-            result = None
+                    result = {
+                        'Contains'  : EL_Boolean(False),
+                        'BoundNames': ES_List([]),
+                    }[frame._alg.name]
 
-        elif s == '{EMU_ALG_BODY}':
-            try:
+            elif s == '{EXPR}':
+                result = EXEC(anode, E_Value)
+
+            elif s == '{ONE_LINE_ALG}':
                 EXEC(anode, None)
                 assert frame.is_returning()
                 result = frame.return_value
-            except ReferenceToNonexistentThing:
-                result = {
-                    'Contains'  : EL_Boolean(False),
-                    'BoundNames': ES_List([]),
-                }[frame._alg.name]
 
-        elif s == '{EXPR}':
-            result = EXEC(anode, E_Value)
-
-        elif s == '{ONE_LINE_ALG}':
-            EXEC(anode, None)
-            assert frame.is_returning()
-            result = frame.return_value
-
-        else:
-            assert 0, s
+            else:
+                assert 0, s
 
         return result
 

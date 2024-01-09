@@ -449,6 +449,9 @@ class AlgDefn:
     kludgey_p: typing.Union[HNode, None]
     anode: Pseudocode.ANode
 
+    def __post_init__(self):
+        self.anodes = [self.anode]
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # vim: sw=4 ts=4 expandtab
