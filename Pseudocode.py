@@ -1259,17 +1259,9 @@ def check_sdo_coverage():
                 # XXX Exclude Annex B definitions from sdo_coverage analysis:
                 if alg_defn.parent_header.section.section_num.startswith('B'): continue
 
-                discriminator = alg_defn.discriminator
-
-                if discriminator is None:
-                    assert op_name in ops_with_implicit_defns
-                    puk = ('*default*', '', '')
-                    puk_set = set([puk])
-                else:
-                    puk_set = discriminator.puk_set
-                    if not puk_set:
-                        stderr(f"! sdo_coverage may be broken because no puk_set for {discriminator.source_text()}")
-
+                puk_set = alg_defn.get_puk_set()
+                if not puk_set:
+                    stderr(f"! sdo_coverage may be broken because puk_set is empty")
                 for puk in puk_set:
                     if puk not in spec.sdo_coverage_map[op_name]:
                         spec.sdo_coverage_map[op_name][puk] = []

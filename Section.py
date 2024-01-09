@@ -13,7 +13,7 @@ import Pseudocode
 import function_preambles as fpr
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
-from algos import ensure_alg, AlgParam, AlgHeader, AlgDefn, write_header_info, check_alg_consistency
+from algos import ensure_alg, AlgParam, AlgHeader, write_header_info, check_alg_consistency
 import records
 from NodeGrammar import NodeGrammar
 
@@ -353,35 +353,78 @@ def _handle_early_errors_section(section):
         assert isinstance(body, tuple)
         (emu_grammar, p, ul) = body
 
-        handle_early_error_block(emu_grammar, p, ul, alg_header)
+        EarlyErrorAlgDefn(alg_header, emu_grammar, ul, p)
 
     return True
 
 # ------------------------------------------------------------------------------
 
-def handle_early_error_block(emu_grammar, p, ul, alg_header):
+class EarlyErrorAlgDefn:
     # An early error block consists of:
     # - an <emu-grammar> element (containing 1 or more productions),
     # - a <ul> element (containing 1 or more "It is a Syntax Error" items), and
     # - rarely, a <p> element that constrains the applicability of the rules.
 
-    assert emu_grammar.element_name == 'emu-grammar'
-    assert p is None or p.element_name == 'p'
-    assert ul.element_name == 'ul'
+    def __init__(self, alg_header, emu_grammar, ul, kludgey_p):
+        assert (
+            alg_header is None
+            # only for Annex B, because we want to syntax-check the rules,
+            # but not add them to the alg_header
+            or
+            isinstance(alg_header, AlgHeader)
+        )
+        assert (
+            isinstance(emu_grammar, HNode)
+            and
+            emu_grammar.element_name == 'emu-grammar'
+        )
+        assert (
+            isinstance(ul, HNode)
+            and
+            ul.element_name == 'ul'
+        )
+        assert kludgey_p is None or (
+            isinstance(kludgey_p, HNode)
+            and
+            kludgey_p.element_name == 'p'
+        )
 
-    for li in ul.children:
-        if li.element_name == '#LITERAL':
-            assert li.source_text().isspace()
-        elif li.element_name == 'li':
-            tree = Pseudocode.parse(li, 'early_error')
-            if tree is None: continue
-            assert tree.prod.lhs_s == '{EARLY_ERROR_RULE}'
-            [ee_rule] = tree.children
-            assert ee_rule.prod.lhs_s == '{EE_RULE}'
-            if alg_header:
-                AlgHeader_add_definition(alg_header, emu_grammar, (p, ee_rule))
-        else:
-            assert 0, li.element_name
+        self.parent_header = alg_header
+        self.emu_grammar = emu_grammar
+        self.ul = ul
+        self.kludgey_p = kludgey_p
+
+        # ----
+
+        self.emu_grammars = [emu_grammar]
+
+        self.lis = []
+        self.anodes = []
+
+        for li in ul.children:
+            if li.element_name == '#LITERAL':
+                assert li.source_text().isspace()
+            elif li.element_name == 'li':
+                self.lis.append(li)
+
+                tree = Pseudocode.parse(li, 'early_error')
+                if tree is None:
+                    ee_rule = None
+                else:
+                    assert tree.prod.lhs_s == '{EARLY_ERROR_RULE}'
+                    [ee_rule] = tree.children
+                    assert ee_rule.prod.lhs_s == '{EE_RULE}'
+                self.anodes.append(ee_rule)
+
+            else:
+                assert 0, li.element_name
+
+        # ----
+
+        if alg_header: alg_header.u_defns.append(self)
+
+    def get_puk_set(self):
+        return self.emu_grammar.puk_set
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -504,22 +547,56 @@ def _handle_sdo_section(section):
 
         for body in bodies:
             (emu_grammar, emu_alg) = body
-            AlgHeader_add_definition(alg_header, emu_grammar, emu_alg)
+            UsualSdoAlgDefn(alg_header, emu_grammar, emu_alg)
 
     return True
+
+class UsualSdoAlgDefn:
+    def __init__(self, alg_header, emu_grammar, emu_alg):
+        assert isinstance(alg_header, AlgHeader)
+        assert (
+            emu_grammar is None
+                # and self.parent_header.name in ops_with_implicit_defns
+            or
+            isinstance(emu_grammar, HNode) and emu_grammar.element_name == 'emu-grammar'
+        )
+        assert isinstance(emu_alg, HNode) and emu_alg.element_name == 'emu-alg'
+
+        self.parent_header = alg_header
+        self.emu_grammar = emu_grammar
+        self.emu_alg = emu_alg
+
+        anode = Pseudocode.parse(emu_alg)
+        assert anode is None or anode.prod.lhs_s == '{EMU_ALG_BODY}'
+
+        self.emu_grammars = [emu_grammar]
+        self.anodes = [anode]
+
+        alg_header.u_defns.append(self)
+
+    def get_puk_set(self):
+        if self.emu_grammar is None:
+            puk = ('*default*', '', '')
+            puk_set = set([puk])
+        else:
+            puk_set = self.emu_grammar.puk_set
+            if not puk_set:
+                stderr(f"! sdo_coverage may be broken because no puk_set for {self.emu_grammar.source_text()}")
+
+        return puk_set
 
 # ------------------------------------------------------------------------------
 
 def handle_inline_sdo_section_body(section, alg_header):
 
-    lis = []
     for bc in section.block_children:
         if bc.element_name == 'ul':
             # Each <li> in the <ul> is an "inline SDO".
             for ul_child in bc.children:
                 if ul_child.is_whitespace(): continue
                 assert ul_child.element_name == 'li'
-                lis.append(ul_child)
+                InlineSdoAlgDefn(alg_header, ul_child)
+
         elif bc.element_name == 'emu-table':
             # "String Single Character Escape Sequences" in 12.8.4.1 "Static Semantics: SV"
             # This table has info that is necessary for executing one of the SV rules,
@@ -531,32 +608,48 @@ def handle_inline_sdo_section_body(section, alg_header):
         else:
             assert 0, bc.element_name
 
-    for li in lis:
-        assert li.element_name == 'li'
+class InlineSdoAlgDefn:
+    def __init__(self, alg_header, li):
+        assert isinstance(alg_header, AlgHeader)
+        assert isinstance(li, HNode) and li.element_name == 'li'
+
+        self.parent_header = alg_header
+        self.li = li
+
+        self.emu_grammars = [* li.each_child_named('emu-grammar')]
+        assert len(self.emu_grammars) > 0
 
         INLINE_SDO_RULE = Pseudocode.parse(li, 'inline_sdo')
-        if INLINE_SDO_RULE is None: continue
+        if INLINE_SDO_RULE is None:
+            rule_expr_anode = None
 
-        assert INLINE_SDO_RULE.prod.lhs_s == '{INLINE_SDO_RULE}'
-        [ISDO_RULE] = INLINE_SDO_RULE.children
-        assert str(ISDO_RULE.prod) == '{ISDO_RULE} : The {cap_word} {OF_PRODUCTIONS} is {EXPR}.'
+        else:
+            assert INLINE_SDO_RULE.prod.lhs_s == '{INLINE_SDO_RULE}'
+            [ISDO_RULE] = INLINE_SDO_RULE.children
+            assert str(ISDO_RULE.prod) == '{ISDO_RULE} : The {cap_word} {OF_PRODUCTIONS} is {EXPR}.'
 
-        [cap_word, of_productions, rule_expr] = ISDO_RULE.children
+            [cap_word, of_productions, rule_expr_anode] = ISDO_RULE.children
 
-        [rule_sdo_name] = cap_word.children
-        assert rule_sdo_name == alg_header.name
+            [rule_sdo_name] = cap_word.children
+            assert rule_sdo_name == alg_header.name
 
-        emu_grammar_anodes = of_productions.children
-        emu_grammar_hnodes = [* li.each_child_named('emu-grammar')]
+            emu_grammar_anodes = of_productions.children
 
-        assert len(emu_grammar_hnodes) == len(emu_grammar_anodes)
-        for (emu_grammar_hnode, emu_grammar_anode) in zip(emu_grammar_hnodes, emu_grammar_anodes):
-            emu_grammar_anode._hnode = emu_grammar_hnode
+            assert len(self.emu_grammars) == len(emu_grammar_anodes)
+            for (emu_grammar_hnode, emu_grammar_anode) in zip(self.emu_grammars, emu_grammar_anodes):
+                emu_grammar_anode._hnode = emu_grammar_hnode
 
-        assert len(emu_grammar_hnodes) > 0
+            assert rule_expr_anode.prod.lhs_s == '{EXPR}'
 
-        for emu_grammar_hnode in emu_grammar_hnodes:
-            AlgHeader_add_definition(alg_header, emu_grammar_hnode, rule_expr)
+        self.anodes = [rule_expr_anode]
+
+        alg_header.u_defns.append(self)
+
+    def get_puk_set(self):
+        result = set()
+        for emu_grammar in self.emu_grammars:
+            result |= emu_grammar.puk_set
+        return result
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -681,7 +774,7 @@ def _handle_oddball_op_section(section):
 
     emu_alg = section.block_children[1]
     assert emu_alg.element_name == 'emu-alg'
-    AlgHeader_add_definition(alg_header, None, emu_alg)
+    SimpleAlgDefn(alg_header, emu_alg)
 
     return True
 
@@ -748,7 +841,7 @@ def _handle_other_op_section(section):
             # that defines the job to be scheduled.
             #
             # TODO: Handle these better.
-            AlgHeader_add_definition(alg_header, None, emu_alg)
+            SimpleAlgDefn(alg_header, emu_alg)
 
     elif emu_alg is None:
         assert 0, (section.section_num, section.section_title)
@@ -757,20 +850,20 @@ def _handle_other_op_section(section):
         # The emu-alg is the 'body' of
         # (this definition of) the operation named by the section_title.
 
-        if alg_header.for_phrase:
+        if alg_header.for_phrase is None:
+            SimpleAlgDefn(alg_header, emu_alg)
+
+        else:
             # type-discriminated operation
             mo = re.fullmatch(r'an? (.+?)( _\w+_)?', alg_header.for_phrase)
-            discriminator = mo.group(1)
-        else:
-            discriminator = None
+            type_str = mo.group(1)
+            TypeDirectedAlgDefn(alg_header, type_str, emu_alg)
 
-        AlgHeader_add_definition(alg_header, discriminator, emu_alg)
-
-        if section.section_kind.endswith('_rec_method'):
-            assert len(alg_header.u_defns) == 1
-            [alg_defn] = alg_header.u_defns
-            rs = spec.RecordSchema_for_name_[discriminator.title()]
-            rs.add_method_defn(records.MethodDefn(alg_header, alg_defn))
+            if section.section_kind.endswith('_rec_method'):
+                assert len(alg_header.u_defns) == 1
+                [alg_defn] = alg_header.u_defns
+                rs = spec.RecordSchema_for_name_[type_str.title()]
+                rs.add_method_defn(records.MethodDefn(alg_header, alg_defn))
 
     # -----------------------------------------
 
@@ -778,6 +871,36 @@ def _handle_other_op_section(section):
         ensure_alg('op: singular', 'scf')
 
     return True
+
+class SimpleAlgDefn:
+    def __init__(self, alg_header, emu_alg):
+        assert isinstance(alg_header, AlgHeader)
+        assert isinstance(emu_alg, HNode) and emu_alg.element_name == 'emu-alg'
+
+        self.parent_header = alg_header
+        self.emu_alg = emu_alg
+
+        anode = Pseudocode.parse(emu_alg, None)
+        assert anode is None or anode.prod.lhs_s == '{EMU_ALG_BODY}'
+        self.anodes = [anode]
+
+        alg_header.u_defns.append(self)
+
+class TypeDirectedAlgDefn:
+    def __init__(self, alg_header, type_str, emu_alg):
+        assert isinstance(alg_header, AlgHeader)
+        assert isinstance(type_str, str)
+        assert isinstance(emu_alg, HNode) and emu_alg.element_name == 'emu-alg'
+
+        self.parent_header = alg_header
+        self.type_str = type_str
+        self.emu_alg = emu_alg
+
+        anode = Pseudocode.parse(emu_alg)
+        assert anode is None or anode.prod.lhs_s == '{EMU_ALG_BODY}'
+        self.anodes = [anode]
+
+        alg_header.u_defns.append(self)
 
 # ------------------------------------------------------------------------------
 
@@ -799,20 +922,30 @@ def handle_op_table(emu_table, alg_header):
             assert b.inner_source_text().strip() == 'Result'
             continue
 
-        assert a.element_name == 'td'
-        assert b.element_name == 'td'
+        TabularAlgDefn(alg_header, tr)
 
-        at = a.inner_source_text().strip()
-        bt = b.inner_source_text().strip()
+class TabularAlgDefn:
+    def __init__(self, alg_header, tr):
+        assert isinstance(alg_header, AlgHeader)
+        assert isinstance(tr, HNode) and tr.element_name == 'tr'
 
-        discriminator = at
+        self.parent_header = alg_header
+        self.tr = tr
 
-        x = ' '.join(c.element_name for c in b.children)
+        (_, type_td, _, result_td, _) = tr.children 
+
+        assert type_td.element_name == 'td'
+        assert result_td.element_name == 'td'
+
+        self.type_str = type_td.inner_source_text().strip()
+
+        x = ' '.join(c.element_name for c in result_td.children)
 
         if x == '#LITERAL p #LITERAL emu-alg #LITERAL':
-            (_, p, _, emu_alg, _) = b.children
+            (_, p, _, emu_alg, _) = result_td.children
             assert p.source_text() == '<p>Apply the following steps:</p>'
-            AlgHeader_add_definition(alg_header, discriminator, emu_alg)
+            anode = Pseudocode.parse(emu_alg)
+            assert anode is None or anode.prod.lhs_s == '{EMU_ALG_BODY}'
 
         elif x in [
             '#LITERAL',
@@ -825,10 +958,15 @@ def handle_op_table(emu_table, alg_header):
 
             '#LITERAL p #LITERAL p #LITERAL',
         ]:
-            AlgHeader_add_definition(alg_header, discriminator, b)
+            anode = Pseudocode.parse(result_td, 'one_line_alg')
+            assert anode is None or anode.prod.lhs_s == '{ONE_LINE_ALG}'
 
         else:
             assert 0, x
+
+        self.anodes = [anode]
+
+        alg_header.u_defns.append(self)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1290,7 +1428,7 @@ def _handle_function_section(section):
     )
 
     if emu_alg_a:
-        AlgHeader_add_definition(alg_header, None, emu_alg_a)
+        SimpleAlgDefn(alg_header, emu_alg_a)
 
     return True
 
@@ -1412,7 +1550,7 @@ def _handle_other_section(section):
                 node_at_end_of_header = section.block_children[emu_alg_posn-1],
             )
 
-            AlgHeader_add_definition(alg_header, None, emu_alg)
+            SimpleAlgDefn(alg_header, emu_alg)
 
         else:
             assert 0, (section.section_num, section.section_title)
@@ -1512,7 +1650,7 @@ def _handle_changes_section(section):
         Pseudocode.parse(emu_alg)
 
     def blah_early_error_block(emu_grammar, ul):
-        handle_early_error_block(emu_grammar, None, ul, None)
+        EarlyErrorAlgDefn(None, emu_grammar, ul, None)
 
     # For calls to scan_section, we're going to assume this holds,
     # but be sure to undo it if we ultimately return False.
@@ -3207,49 +3345,6 @@ def AlgHeader_make(
     section.alg_headers.append(alg_header)
 
     return alg_header
-
-# ------------------------------------------------------------------------------
-
-def AlgHeader_add_definition(alg_header, discriminator, hnode_or_anode):
-
-    assert (
-        discriminator is None
-        or
-        isinstance(discriminator, HNode) and discriminator.element_name == 'emu-grammar'
-        or
-        isinstance(discriminator, str) # type name
-    )
-
-    if isinstance(hnode_or_anode, tuple):
-        (kludgey_p, hnode_or_anode) = hnode_or_anode
-    else:
-        kludgey_p = None
-
-    if isinstance(hnode_or_anode, HNode):
-        hnode = hnode_or_anode
-        assert hnode.element_name in ['emu-alg', 'td']
-        what = 'one_line_alg' if hnode.element_name == 'td' else None
-        anode = Pseudocode.parse(hnode, what)
-        if anode is None:
-            pass
-        else:
-            assert anode.prod.lhs_s in [
-                '{EMU_ALG_BODY}',
-                '{ONE_LINE_ALG}',
-            ]
-
-    elif isinstance(hnode_or_anode, Pseudocode.ANode):
-        anode = hnode_or_anode
-        assert anode.prod.lhs_s in [
-            '{EE_RULE}',
-            '{EXPR}',
-        ]
-
-    else:
-        assert 0
-
-    alg_defn = AlgDefn(alg_header, discriminator, kludgey_p, anode)
-    alg_header.u_defns.append(alg_defn)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 

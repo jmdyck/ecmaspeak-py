@@ -442,16 +442,4 @@ def elements_are_distinct(L):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-@dataclass
-class AlgDefn:
-    parent_header: AlgHeader
-    discriminator: typing.Union[HNode, str, None]
-    kludgey_p: typing.Union[HNode, None]
-    anode: Pseudocode.ANode
-
-    def __post_init__(self):
-        self.anodes = [self.anode]
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
 # vim: sw=4 ts=4 expandtab

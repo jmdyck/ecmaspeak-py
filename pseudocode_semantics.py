@@ -19,7 +19,6 @@ import shared, HTML
 from shared import stderr, spec, DL
 from Pseudocode_Parser import ANode
 from DecoratedFuncDict import DecoratedFuncDict
-from algos import AlgDefn
 
 # static:
 from Graph import Graph
@@ -1489,13 +1488,16 @@ def tc_proc(op_name, defns, init_env):
         # global trace_this_op
         # trace_this_op = (op_name == 'SV' and i == 27)
 
-        discriminator = alg_defn.discriminator
-        if discriminator is None:
-            print('(no discriminator)')
-        elif isinstance(discriminator, HTML.HNode):
-            print(discriminator.source_text())
+        if hasattr(alg_defn, 'emu_grammars'):
+            for emu_grammar in alg_defn.emu_grammars:
+                if emu_grammar is None:
+                    print("(default)")
+                else:
+                    print(emu_grammar.source_text())
+        elif hasattr(alg_defn, 'type_str'):
+            print(alg_defn.type_str)
         else:
-            print(discriminator)
+            print('(no discriminator)')
         print()
 
         for anode in alg_defn.anodes:
@@ -1503,13 +1505,22 @@ def tc_proc(op_name, defns, init_env):
             # kludge:
             if op_name in ['ToObject', 'RequireObjectCoercible']:
                 # not ToBigInt
-                assert isinstance(discriminator, str)
+                assert hasattr(alg_defn, 'type_str')
+                arg_type = HierType(alg_defn.type_str)
+                assert isinstance(arg_type, HierType)
+                # in_env = init_env.with_expr_type_narrowed('_argument_', arg_type)
                 in_env = init_env.copy()
-                in_env.vars['_argument_'] = HierType(discriminator)
-            elif discriminator and isinstance(discriminator, HTML.HNode):
-                assert discriminator.element_name == 'emu-grammar'
+                in_env.vars['_argument_'] = arg_type
+
+            elif hasattr(alg_defn, 'emu_grammars'):
+                productions = []
+                for emu_grammar in alg_defn.emu_grammars:
+                    if emu_grammar:
+                        productions.extend(emu_grammar._gnode._productions)
+
                 in_env = init_env.copy()
-                in_env.assoc_productions = discriminator._gnode._productions
+                in_env.assoc_productions = productions
+
             else:
                 in_env = init_env
 
@@ -2846,9 +2857,18 @@ class Frame:
         # for anode in anodes: stderr('   ', anode.source_text())
 
         # An alg_defn is allowed to have multiple anodes,
-        # but currently, there's always just one.
+        # but in most cases below, executing multiple anodes
+        # would cause the `result` of one anode
+        # to be overwritten by the `result` of the next,
+        # which is unlikely to be semantically sensible.
+        # However, executing multiple {EE_RULE} anodes is fine,
+        # because each sets `result` to None, so nothing is lost.
         #
-        assert len(anodes) == 1
+        if len(anodes) > 1:
+            assert all(
+                anode.prod.lhs_s == '{EE_RULE}'
+                for anode in anodes
+            )
 
         for anode in anodes:
             s = anode.prod.lhs_s
@@ -11301,7 +11321,11 @@ class _:
 
         # -----
 
-        alg_defn = AlgDefn(None, None, None, commands)
+        class AbstractClosureAlgDefn: pass
+        alg_defn = AbstractClosureAlgDefn()
+        alg_defn.parent_header = None
+        alg_defn.anodes = [commands]
+
         defns = [alg_defn]
         env_after_commands = tc_proc(None, defns, env_for_commands)
         t = ProcType(tuple(clo_param_types), env_after_commands.vars['*return*'])
