@@ -9949,10 +9949,6 @@ class _:
         return a_subset_of(ListType(led_sup_t))
         # inexact because of 'non-empty'
 
-@P("{VAL_DESC} : a possibly empty List, each of whose elements is a String or *undefined*")
-class _:
-    s_tb = ListType(T_String | T_Undefined)
-
 # ------------------------------------------------------------------------------
 # make a List:
 

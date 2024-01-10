@@ -1396,7 +1396,6 @@
     a normal completion containing {VALUE_DESCRIPTION}
     a positive integer
     a possibly empty List
-    a possibly empty List, each of whose elements is a String or *undefined*
     a property key
     a property key or Private Name
     a property value or property value alias for the Unicode property {var} listed in {h_a}
