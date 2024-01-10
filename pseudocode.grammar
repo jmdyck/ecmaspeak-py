@@ -1360,6 +1360,7 @@
     a binary Unicode property or binary property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
     a binary property of strings listed in the “Property name” column of {h_emu_xref}
     a bound function exotic object
+    a break completion
     a built-in function object
     a callable Object
     a candidate execution
@@ -1369,6 +1370,7 @@
     a code point
     a code unit
     a constructor
+    a continue completion
     a finite time value
     a fully populated Property Descriptor
     a function object

@@ -11138,8 +11138,16 @@ class _:
 #-------------------------------------------------------------------------------
 #> <dfn>break completion</dfn> refers to any Completion Record with a [[Type]] value of ~break~.
 
+@P("{VAL_DESC} : a break completion")
+class _:
+    s_tb = T_break_completion
+
 #-------------------------------------------------------------------------------
 #> <dfn>continue completion</dfn> refers to any Completion Record with a [[Type]] value of ~continue~.
+
+@P("{VAL_DESC} : a continue completion")
+class _:
+    s_tb = T_continue_completion
 
 #-------------------------------------------------------------------------------
 #> <dfn>return completion</dfn> refers to any Completion Record with a [[Type]] value of ~return~.
