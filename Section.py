@@ -2737,8 +2737,8 @@ def _(section, mo, emu_alg):
     (r"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
     (r"The( initial)? value of {THIS} is {VALUE}\."),
 
-    (r"The( initial)? value of a {THIS} is {VALUE}\."),
     (r"The initial value of the {THIS} property of the prototype for a given _NativeError_ constructor is {VALUE}\."),
+    (r"The initial value of the {THIS} property of the prototype for a given _TypedArray_ constructor is {VALUE}\."),
 
 )
 def _(section, mo):
@@ -3079,8 +3079,7 @@ def section_put_fact(section, L, verb, R):
                 def expand_str(s):
                     return (s
                         .replace(f'the corresponding {uvar} prototype intrinsic object (<emu-xref href="#sec-properties-of-typedarray-prototype-objects"></emu-xref>)', f'the {expansion} prototype object') # SPEC: drop "intrinsic"?
-                        .replace(f'the corresponding %TypedArray% intrinsic object', f"the {expansion} constructor")
-                        .replace(f'the corresponding intrinsic object %_NativeError_% (<emu-xref href="#sec-nativeerror-constructors"></emu-xref>)', expansion)
+                        .replace(f'the constructor itself', f'the {expansion} constructor')
                         .replace(f'the String value consisting of the name of the constructor (the name used instead of _NativeError_)', f'*"{expansion}"*')
 
                         .replace(f"each {uvar}", f"the {expansion}")
