@@ -13,7 +13,7 @@ import Pseudocode
 import function_preambles as fpr
 import intrinsics
 from intrinsics import get_pdn, S_Property, S_InternalSlot
-from algos import ensure_alg, AlgParam, AlgHeader, write_header_info, check_alg_consistency
+from algos import ensure_alg, AlgParam, AlgHeader, AlgDefn, write_header_info, check_alg_consistency
 import records
 from NodeGrammar import NodeGrammar
 
@@ -359,7 +359,7 @@ def _handle_early_errors_section(section):
 
 # ------------------------------------------------------------------------------
 
-class EarlyErrorAlgDefn:
+class EarlyErrorAlgDefn(AlgDefn):
     # An early error block consists of:
     # - an <emu-grammar> element (containing 1 or more productions),
     # - a <ul> element (containing 1 or more "It is a Syntax Error" items), and
@@ -551,7 +551,7 @@ def _handle_sdo_section(section):
 
     return True
 
-class UsualSdoAlgDefn:
+class UsualSdoAlgDefn(AlgDefn):
     def __init__(self, alg_header, emu_grammar, emu_alg):
         assert isinstance(alg_header, AlgHeader)
         assert (
@@ -608,7 +608,7 @@ def handle_inline_sdo_section_body(section, alg_header):
         else:
             assert 0, bc.element_name
 
-class InlineSdoAlgDefn:
+class InlineSdoAlgDefn(AlgDefn):
     def __init__(self, alg_header, li):
         assert isinstance(alg_header, AlgHeader)
         assert isinstance(li, HNode) and li.element_name == 'li'
@@ -872,7 +872,7 @@ def _handle_other_op_section(section):
 
     return True
 
-class SimpleAlgDefn:
+class SimpleAlgDefn(AlgDefn):
     def __init__(self, alg_header, emu_alg):
         assert isinstance(alg_header, AlgHeader)
         assert isinstance(emu_alg, HNode) and emu_alg.element_name == 'emu-alg'
@@ -886,7 +886,7 @@ class SimpleAlgDefn:
 
         alg_header.u_defns.append(self)
 
-class TypeDirectedAlgDefn:
+class TypeDirectedAlgDefn(AlgDefn):
     def __init__(self, alg_header, type_str, emu_alg):
         assert isinstance(alg_header, AlgHeader)
         assert isinstance(type_str, str)
@@ -924,7 +924,7 @@ def handle_op_table(emu_table, alg_header):
 
         TabularAlgDefn(alg_header, tr)
 
-class TabularAlgDefn:
+class TabularAlgDefn(AlgDefn):
     def __init__(self, alg_header, tr):
         assert isinstance(alg_header, AlgHeader)
         assert isinstance(tr, HNode) and tr.element_name == 'tr'
