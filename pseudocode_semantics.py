@@ -6438,6 +6438,7 @@ class _:
 #> should be used in place of the return value of the operation.
 
 @P("{PP_NAMED_OPERATION_INVOCATION} : ! {NAMED_OPERATION_INVOCATION}")
+@P('{EX} : ! {var}')
 class _:
     def s_expr(expr, env0, _):
         [noi] = expr.children
@@ -11546,7 +11547,7 @@ class _:
     s_tb = T_Iterator_Record
 
 # ==============================================================================
-#@ 7.4.9 IfAbruptCloseIterator
+#@ 7.4.10 IfAbruptCloseIterator
 
 @P("{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
 class _:

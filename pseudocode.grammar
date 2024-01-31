@@ -920,6 +920,7 @@
     {var}<sup>th</sup> element of {EX}
 
 {EX} :
+    ! {var}
     « »
     « {EXLIST} »
     ({EX})
