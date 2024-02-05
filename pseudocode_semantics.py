@@ -6856,7 +6856,7 @@ class _:
 
 @P("{SUM} : {TERM} {SUM_OPERATOR} {TERM}")
 @P("{SUM} : {SUM} {SUM_OPERATOR} {TERM}")
-@P("{PRODUCT} : {FACTOR} {PRODUCT_OPERATOR} {FACTOR}")
+@P("{PRODUCT} : {TERM} {PRODUCT_OPERATOR} {FACTOR}")
 class _:
     def s_expr(expr, env0, _):
         [a, op, b] = expr.children
@@ -7052,14 +7052,6 @@ class _:
         env0.assert_expr_is_of_type(bex, T_MathInteger_)
         return (T_MathInteger_, env0)
 
-@P("{PRODUCT} : the quotient {FACTOR} / {FACTOR}")
-class _:
-    def s_expr(expr, env0, _):
-        [vara, varb] = expr.children
-        env1 = env0.ensure_expr_is_of_type(vara, T_MathReal_)
-        env2 = env1.ensure_expr_is_of_type(varb, T_MathReal_)
-        return (T_MathReal_, env2)
-
 @P("{FACTOR} : {BASE}<sup>{EX}</sup>")
 @P("{NUM_EXPR} : {EX} raised to the power {EX}")
 class _:
@@ -7090,24 +7082,18 @@ class _:
         env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
         return (T_MathReal_, env2)
 
-@P("{NUM_EXPR} : π / 2")
-@P("{NUM_EXPR} : π / 4")
-@P("{NUM_EXPR} : π")
-@P("{NUM_EXPR} : 3π / 4")
-@P("{NUM_EXPR} : -π / 2")
-@P("{NUM_EXPR} : -π / 4")
-@P("{NUM_EXPR} : -π")
-@P("{NUM_EXPR} : -3π / 4")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_MathReal_, env0)
-
 @P("{EXPR} : the result of the {MATH_FUNC} of {EX}")
 class _:
     def s_expr(expr, env0, _):
         [math_func, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
+        return (T_MathReal_, env1)
+
+@P('{EXPR} : the inverse tangent of {EX}')
+class _:
+    def s_expr(expr, env0, _):
+        [ex] = expr.children
+        env1 = env0.ensure_expr_is_of_type(ex, T_MathReal_)
         return (T_MathReal_, env1)
 
 @P("{EXPR} : the result of subtracting 1 from the exponential function of {EX}")
@@ -7428,10 +7414,13 @@ class _:
         [] = expr.children
         return (T_MathInteger_, env0)
 
-@P("{MATH_LITERAL} : 8.64")
 @P("{MATH_LITERAL} : 0.5")
+@P("{MATH_LITERAL} : 3π")
+@P("{MATH_LITERAL} : 8.64")
+@P("{MATH_LITERAL} : π")
 class _:
     def s_expr(expr, env0, _):
+        [] = expr.children
         return (T_MathReal_, env0)
 
 # ------------------------------------------------------------------------------

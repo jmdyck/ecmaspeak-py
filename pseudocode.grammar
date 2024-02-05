@@ -841,6 +841,7 @@
     the intersection of CharSets {var} and {var}
     the intrinsic function {percent_word}
     the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
+    the inverse tangent of {EX}
     the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last Matcher in {var}
     the last element of {var}
@@ -1187,14 +1188,6 @@
 # --------------------------------
 
 {NUM_EXPR} :
-    π
-    π / 2
-    π / 4
-    -π
-    -π / 2
-    -π / 4
-    -3π / 4
-    3π / 4
     {EX} raised to the power {EX}
     {PRODUCT}
     {SUM}
@@ -1222,8 +1215,7 @@
     {PRODUCT}
 
 {PRODUCT} :
-    the quotient {FACTOR} / {FACTOR}
-    {FACTOR} {PRODUCT_OPERATOR} {FACTOR}
+    {TERM} {PRODUCT_OPERATOR} {FACTOR}
     {UNARY_OPERATOR}{FACTOR}
 
 {UNARY_OPERATOR} :
@@ -1570,10 +1562,12 @@
     -&infin;
     -∞
     0.5
+    3π
     64 (that is, 8<sup>2</sup>)
     8.64
     {dec_int_lit}
     {hex_int_lit}
+    π
 
 {NUMBER_LITERAL} :
     *-0.5*{h_sub_fancy_f}
