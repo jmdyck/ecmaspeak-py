@@ -3997,7 +3997,7 @@ def nt_name_from_nonterminal_node(nonterminal_node):
     assert isinstance(nonterminal_node, ANode)
     nonterminal_node.prod.lhs_s == 'nonterminal'
     [nonterminal_str] = nonterminal_node.children
-    mo = re.fullmatch(r'\|(\w+)(\[[+~\w, ]+\])?(\?)?\|', nonterminal_str)
+    mo = re.fullmatch(r'\|(\w+)(\[[+~\w, ]+\])?\|', nonterminal_str)
     return mo.group(1)
 
 @P("{VAL_DESC} : a nonterminal in one of the ECMAScript grammars")
