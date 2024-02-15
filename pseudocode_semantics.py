@@ -13098,6 +13098,13 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
+#@ 15.7.11 Runtime Semantics: ClassStaticBlockDefinitionEvaluation
+
+@P('{VAL_DESC} : a synthetic function created by ClassStaticBlockDefinitionEvaluation step {h_emu_xref}')
+class _:
+    s_tb = a_subset_of(T_function_object_)
+
+# ==============================================================================
 #@ 15.7.14 Runtime Semantics: ClassDefinitionEvaluation
 
 @P("{CONDITION_1} : This is only possible for getter/setter pairs")

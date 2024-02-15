@@ -1400,6 +1400,7 @@
     a sequence of characters
     a set of algorithm steps
     a synchronizes-with Relation
+    a synthetic function created by ClassStaticBlockDefinitionEvaluation step {h_emu_xref}
     a throw completion
     a time value
     a trailing surrogate
