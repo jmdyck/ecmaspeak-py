@@ -14305,7 +14305,7 @@ class _:
 
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferData]]',          T_Data_Block | T_Null)
 declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferByteLength]]',    T_MathNonNegativeInteger_)
-declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferDetachKey]]',     T_host_defined_)
+declare_isom(T_ArrayBuffer_object_, 'must have',  'slot', '[[ArrayBufferDetachKey]]',     T_Undefined | T_host_defined_)
 declare_isom(T_ArrayBuffer_object_, 'might have', 'slot', '[[ArrayBufferMaxByteLength]]', T_MathNonNegativeInteger_)
 
 # 25.1.2.*
