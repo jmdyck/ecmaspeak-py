@@ -1450,6 +1450,7 @@
     an internal slot name
     an odd integral Number
     an ordinary object
+    an ordinary, extensible object
     an ordinary, extensible object with no non-configurable properties
     an? {ENVIRONMENT_RECORD_KIND} Environment Record
     an? {PROPERTY_KIND} property

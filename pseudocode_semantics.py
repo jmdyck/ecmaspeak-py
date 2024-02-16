@@ -9706,6 +9706,7 @@ class _:
 class _:
     s_tb = a_subset_of(T_Object)
 
+@P("{VAL_DESC} : an ordinary, extensible object")
 @P("{VAL_DESC} : an ordinary, extensible object with no non-configurable properties")
 class _:
     s_tb = a_subset_of(T_Object)
