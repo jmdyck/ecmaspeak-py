@@ -224,6 +224,8 @@ def _set_section_kind(section):
     )
     assert r
 
+    check_id(section)
+
     extract_intrinsic_info(section)
 
     ensure_every_emu_alg_in_section_is_parsed(section)
@@ -1962,6 +1964,558 @@ def _set_bcen_attributes(section):
     ]
     section.bcen_str = ' '.join(section.bcen_list)
     section.bcen_set = set(section.bcen_list)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+def check_id(section):
+    remove_param_list = lambda s: re.sub(r' \(.+', '', s)
+    remove_initial_The = lambda s: re.sub(r'^The ', '', s)
+    trim_underscores_from_aliases = lambda s: re.sub(r'\b_([A-Za-z]+)_\b', r'\1', s)
+    prepend_parent_section_title = lambda s: section.parent.section_title + ' ' + s
+    remove_backticks = lambda s: s.replace('`', '')
+    convert_to_lowercase = lambda s: s.lower()
+    change_space_to_hyphen = lambda s: s.replace(' ', '-')
+    prepend_sec = lambda s: 'sec-' + s
+
+    # ----------------------------------------------------------------
+    if (
+        '_property' in section.section_kind
+        or
+        section.section_kind in ['CallConstruct']
+    ):
+        pipeline = [
+            # If the title is a single word (possibly followed by a parameter list),
+            # then maybe prepend the parent section's title (47 cases).
+            [
+                None,
+                lambda s: (
+                    (section.parent.section_title + ' ' + s)
+                    if
+                    re.fullmatch(r'\w+( \(.*\))?', s)
+                    else
+                    s
+                )
+            ],
+            # but remove initial 'The' (3 cases):
+            lambda s: re.sub('The ', '', s),
+            # and maybe change "Instances" to "Instance" for some reason (3 cases).
+            [ None, lambda s: s.replace(' Instances ', ' Instance ') ],
+
+            # If there's a parameter list,
+            # either remove it, or extract its parameter names.
+            [ remove_param_list, extract_param_names ],
+            # but drop a final '_options_' parameter (because it's optional?) (3 cases)
+            lambda s: re.sub(r' _options_$', '', s),
+
+            # Remove the underscores from any alias names.
+            # (This handles the parameter names extracted above,
+            # but also things like _NativeError_ and _TypedArray_.)
+            trim_underscores_from_aliases,
+
+            # If the final property key is a symbol, drop the square brackets:
+            lambda s: re.sub(r' \[ (@@\w+) \]$', r' \1', s),
+            # and maybe drop the '@@' (4 cases):
+            [ None, lambda s: s.replace('@@', '') ],
+
+            # If it's an accessor property, maybe drop the initial 'get' (2 cases)
+            [ None, lambda s: re.sub(r'^get ', '', s) ],
+
+            # Maybe split certain compound words (19 cases).
+            [ None, split_certain_words ],
+
+            # Lower-case everything, except maybe the last property-name (8 cases)
+            [ convert_to_lowercase, lower_except_last_propname ],
+
+            # Change spaces to hyphens
+            change_space_to_hyphen,
+            # and maybe change dots to hyphens too (11 cases)
+            [ None, lambda s: s.replace('.', '-') ],
+
+            # And prepend 'sec-'
+            prepend_sec,
+        ]
+        failures = [
+            'sec-constructor-properties-of-the-global-object-finnalization-registry', # 'finnal'
+            'sec-function-p1-p2-pn-body',                           # parameter-list changed
+            'sec-bigint-constructor-number-value',                  # 'number'
+            'sec-finalization-registry-cleanup-callback',           # split param name
+            'sec-async-function-constructor-arguments',             # 'constructor' + 'arguments'
+            'sec-async-function-constructor-prototype',             # 'constructor'
+            'sec-async-function-prototype-properties-constructor',  # 'properties'
+            'sec-async-function-prototype-properties-toStringTag',  # 'properties'
+            'String.prototype.trimleft',                            # missing 'sec-'
+            'String.prototype.trimright',                           # missing 'sec-'
+            'sec-asynciteratorprototype-asynciterator',             # missing '%'            
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind in [
+        'intrinsic: info // CallConstruct',
+        'intrinsic: info // properties',
+        'intrinsic: - // properties',
+    ]:
+        pipeline = [
+            remove_initial_The,
+            [ None, lambda s: re.sub(r' the (.+) Object$', r' \1', s) ], # 3 cases
+            trim_underscores_from_aliases, # 6 cases
+            split_certain_words, # 12 cases
+            convert_to_lowercase,
+            change_space_to_hyphen,
+            prepend_sec,
+        ]
+        failures = [
+            'sec-properties-of-the-aggregate-error-constructors',      # plural
+            'sec-properties-of-the-aggregate-error-prototype-objects', # plural
+            'sec-properties-of-the-%typedarrayprototype%-object',      # misplaced %
+            'sec-properties-of-typedarray-prototype-objects',          # dropped 'the'
+            'sec-asynciteratorprototype',                              # dropped 'object'
+            'sec-properties-of-asyncgeneratorfunction',                # dropped 'the constructor'
+            'sec-async-function-constructor-properties',               # "Properties of ..."
+            'sec-async-function-prototype-properties',                 # "Properties of ...
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind in [
+        'shorthand',
+        '- // properties',
+        'instances: info // properties',
+        'anonymous_built_in_function',
+        'loop',
+    ]:
+        pipeline = [
+            remove_param_list,
+            trim_underscores_from_aliases, # 2 cases
+            split_certain_words, # 4 cases
+            remove_backticks,
+            convert_to_lowercase,
+            change_space_to_hyphen,
+            prepend_sec,
+        ]
+        failures = [
+            'sec-properties-of-the-arraybuffer-instances',       # inserted 'the'
+            'sec-properties-of-the-sharedarraybuffer-instances', # inserted 'the'
+            'sec-properties-of-asyncgenerator-intances',         # 'intances'
+            'sec-object.prototype-legacy-accessor-methods',      # word order
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind == 'abstract_operation':
+        pipeline = [
+            lambda s: re.sub(r'^(Static|Runtime) Semantics: ', '', s),
+
+            # but some sections that *don't* have "Runtime Semantics" in the title
+            # *do* have "runtime-semantics" in the id, go figure.
+            (
+                (lambda s: 'Runtime Semantics ' + s)
+                if
+                section.section_title.startswith((
+                    'ForIn/OfHeadEvaluation',
+                    'ForIn/OfBodyEvaluation',
+                    'CaseClauseIsSelected',
+                    'ScriptEvaluation',
+                    'RepeatMatcher',
+                    'IsWordChar',
+                    'CharacterSetMatcher',
+                    'Canonicalize',
+                    'CharacterRange',
+                    'HasEitherUnicodeFlag',
+                    'UnicodeMatchProperty',
+                    'UnicodeMatchPropertyValue',
+                    'CharacterRangeOrUnion',
+                ))
+                else
+                None
+            ),
+
+            (
+                extract_param_names
+                if
+                section.section_title.startswith((
+                    'IsExtensible',
+                    'Get ',
+                    'Set ',
+                    'UTC ',
+                    'Canonicalize ',
+                    'UnicodeMatchProperty ',
+                    'UnicodeMatchPropertyValue '
+                ))
+                else
+                remove_param_list
+            ),
+            # but drop _rer_ because that was added later
+            lambda s: re.sub(r' _rer_\b', '', s),
+
+            trim_underscores_from_aliases,
+
+            # Maybe tack 'abstract-operation' on the end
+            (
+                (lambda s: s + ' Abstract Operation')
+                if
+                section.section_title.startswith((
+                    'RepeatMatcher',
+                    'IsWordChar',
+                    'CharacterSetMatcher',
+                    'CharacterRange',
+                    'HasEitherUnicodeFlag',
+                    'CharacterRangeOrUnion',
+                ))
+                else
+                (lambda s: s + ' AO')
+                if
+                section.section_title.startswith('Completion ')
+                else
+                None
+            ),
+
+            # Maybe split words
+            [ None, split_words ],
+            # but rejoin 'Typed Array'
+            lambda s: re.sub(r'\bTyped Array\b', 'TypedArray', s),
+
+            lambda s: s.replace('/', ''),
+
+            (
+                None
+                if 
+                section.section_title.startswith((
+                    'ContinueDynamicImport',
+                    'InnerModuleLoading',
+                    'ContinueModuleLoading',
+                    'InnerModuleLinking',
+                    'GetImportedModule',
+                    'FinishLoadingImportedModule',
+                ))
+                else
+                convert_to_lowercase
+            ),
+
+            change_space_to_hyphen,
+
+            (
+                None
+                if
+                section.section_title.startswith((
+                    'TypedArraySpeciesCreate',
+                    'Await ',
+                ))
+                else
+                prepend_sec
+            ),
+        ]
+        failures = [
+            'sec-createlistiteratorRecord',
+            'sec-weakref-execution',
+            'sec-utf16decodesurrogatepair',
+            'sec-runtime-semantics-forin-div-ofbodyevaluation-lhs-stmt-iterator-lhskind-labelset',
+            'sec-timezoneestring',
+            'sec-async-functions-abstract-operations-async-function-start',
+            'sec-sharedatablockeventset',
+            'sec-tear-free-aligned-reads',
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind in [
+        'host-defined_abstract_operation',
+        'implementation-defined_abstract_operation',
+    ]:
+        pipeline = [
+            remove_param_list,
+            convert_to_lowercase,
+            prepend_sec,
+        ]
+        failures = [
+            'sec-host-cleanup-finalization-registry',
+            'sec-HostLoadImportedModule',
+            'sec-host-promise-rejection-tracker',
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind == 'syntax_directed_operation':
+        pipeline = (
+            [
+                [
+                    lambda s: s.replace(':', ''),
+                    lambda s: re.sub(r'^(Static|Runtime) Semantics: ', '', s)
+                ],
+            ]
+            +
+            (
+                [
+                    prepend_parent_section_title,
+                    remove_initial_The,
+                    lambda s: s.replace('( `+` )', 'plus'),
+                    lambda s: s.replace('( `-` )', 'minus'),
+                    lambda s: re.sub(r' \( `[^`()]+` \) ', ' ', s),
+                    remove_backticks,
+                    lambda s: s.replace(',', ''),
+                    lambda s: s.replace(' + ', ' plus ').replace(' - ', ' minus '),
+                    lambda s: s.replace('Exponentiation', 'Exp'),
+                ]
+                if
+                (
+                    section.section_title == 'Runtime Semantics: Evaluation'
+                    and
+                    section.parent.section_title != 'Syntax-Directed Operations'
+                )
+
+                else
+                [
+                    prepend_parent_section_title,
+                ]
+                if
+                re.match(r'Runtime Semantics: (Property|Rest)BindingInitialization', section.section_title)
+
+                else
+                [
+                    lambda s: 'Patterns ' + s,
+                    split_words,
+                    (lambda s: s + ' AnnexB') if section.element_name == 'emu-annex' else None
+                ]
+                if
+                section.section_title.endswith((
+                    'CapturingGroupNumber',
+                    'IsCharacterClass',
+                    'CharacterValue'
+                ))
+
+                else
+                [
+                ]
+            )
+            +
+            [
+                convert_to_lowercase,
+                change_space_to_hyphen,
+                prepend_sec,
+            ]
+        )
+        failures = [
+            'sec-runtime-semantics-mv-for-stringintegerliteral',
+            'sec-string-literals-static-semantics-mv',
+            'sec-optional-chaining-evaluation',
+            'sec-optional-chaining-chain-evaluation',
+            'sec-import-call-runtime-semantics-evaluation',
+            'sec-for-in-and-for-of-statements-runtime-semantics-evaluation',
+            'sec-asyncgenerator-definitions-evaluation',
+            'sec-static-semantics-classelementevaluation',
+            'sec-script-semantics-runtime-semantics-evaluation',
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind == 'numeric_method':
+        pipeline = [
+            remove_param_list,
+            lambda s: re.sub(r'^(\w+)::(\w+)$', lambda mo: (mo.group(1).lower() + '-' + mo.group(2)), s),
+            lambda s: 'numeric-types-' + s,
+            prepend_sec,
+        ]
+        failures = [
+            'sec-numeric-types-number-tostring',
+            'sec-numeric-types-bigint-tostring',
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind in [
+        'env_rec_method',
+        'env_rec_method_unused',
+    ]:
+        exceptional = section.section_title.startswith((
+            'BindThisValue ',
+            'GetSuperBase ',
+            'HasVarDeclaration ',
+            'HasLexicalDeclaration ',
+            'HasRestrictedGlobalProperty ',
+            'CanDeclareGlobalVar ',
+            'CanDeclareGlobalFunction ',
+            'CreateGlobalVarBinding ',
+            'CreateGlobalFunctionBinding ',
+            'CreateImportBinding ',
+        ))
+
+        pipeline = (
+            (
+                [
+                    remove_param_list,
+                ]
+                if
+                exceptional
+                else
+                [
+                    prepend_parent_section_title,
+                    extract_param_names,
+                    trim_underscores_from_aliases,
+                ]
+            )
+            +
+            [
+                convert_to_lowercase,
+                change_space_to_hyphen,
+                prepend_sec,
+            ]
+        )
+        failures = [
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind == 'internal_method':
+        pipeline = (
+            [
+                lambda s: re.sub(r'^\[\[(\w+)\]\]', r'\1', s),
+            ]
+            +
+            (
+                [
+                    remove_param_list,
+                    lambda s: 'TypedArray ' + s,
+                ]
+                if
+                'TypedArray' in section.parent.section_title
+                else
+                [
+                    extract_param_names,
+                    trim_underscores_from_aliases,
+                    prepend_parent_section_title,
+                ]
+            )
+            +
+            [
+                convert_to_lowercase,
+                change_space_to_hyphen,
+                prepend_sec,
+            ]
+        )
+        failures = [
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind == 'early_errors':
+        pipeline = [
+            [ lambda s: re.sub('^Static Semantics: ', '', s), lambda s: s.replace(':', '') ],
+            prepend_parent_section_title,
+            remove_initial_The,
+            remove_backticks,
+            convert_to_lowercase,
+            change_space_to_hyphen,
+            prepend_sec,
+        ]
+        failures = [
+            'sec-primary-expression-regular-expression-literals-static-semantics-early-errors',
+            'sec-static-semantics-template-early-errors',
+            'sec-left-hand-side-expressions-static-semantics-early-errors',
+            'sec-for-in-and-for-of-statements-static-semantics-early-errors',
+            'sec-patterns-static-semantics-early-errors-annexb',
+        ]
+
+    # ----------------------------------------------------------------
+    elif section.section_kind in ['catchall', 'changes', 'module_rec_method']:
+        return
+        # The pipeline below would be a start,
+        # but it still leaves tons of false positives.
+
+        pipeline = [
+            remove_initial_The,
+            lambda s: s.replace('( `+` )', 'plus'),
+            lambda s: s.replace('( `-` )', 'minus'),
+            lambda s: re.sub(r' \( `[^`()]+` \)', '', s),
+            remove_backticks,
+            (
+                [ None, prepend_parent_section_title ]
+                if
+                section.parent.section_title in ['Terms and Definitions', 'Literals']
+
+                else
+                prepend_parent_section_title
+                if
+                section.parent.section_title in ['ECMAScript Language Types']
+
+                else
+                None
+            ),
+            convert_to_lowercase,
+            change_space_to_hyphen,
+            prepend_sec,
+        ]
+
+    # ----------------------------------------------------------------
+    else:
+        assert 0, section.section_kind
+
+    # ----------------------------------------------------------------
+
+    possibles = apply_pipeline(section.section_title, pipeline)
+    if section.section_id not in possibles and section.section_id not in failures:
+        # print()
+        # print(section.section_kind)
+        # print(section.section_title)
+        # for poss in sorted(possibles): print(poss)
+        # print('-' * len(section.section_id))
+        # print(section.section_id)
+
+        msg = f"Based on the section's kind ({section.section_kind}) and title, the value of its `id` attribute should be one of:"
+        for poss in sorted(possibles):
+            msg += '\n--    ' + poss
+
+        msg_at_node(section, msg)
+
+def extract_param_names(s):
+    mo = re.fullmatch(r'(.+) \((.*)\)', s)
+    if mo:
+        (pre, param_list) = mo.groups()
+        param_names = re.findall(r'\w+', param_list)
+        if param_names:
+            return pre + ' ' + ' '.join(param_names)
+        else:
+            return pre
+    else:
+        return s
+
+def lower_except_last_propname(s):
+    mo = re.fullmatch(r'(.*)(\.\w+)([^\.]*)', s)
+    if mo:
+        (a, b, c) = mo.groups()
+        return a.lower() + b + c.lower()
+    else:
+        return s.lower()
+
+def split_words(s):
+    return re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
+
+def split_certain_words(s):
+    return ( s
+        .replace('AggregateError', 'Aggregate Error')
+        .replace('AsyncFunction', 'Async Function')
+        .replace('FinalizationRegistry', 'Finalization Registry')
+        .replace('WeakRef', 'Weak Ref')
+    )
+
+def apply_pipeline(starter, pipeline):
+    currents = {starter}
+    for transformer in pipeline:
+        if transformer is None:
+            # leave currents unchanged
+            pass
+        elif callable(transformer):
+            currents = {
+                transformer(current)
+                for current in currents
+            }
+
+        elif type(transformer) == type([]):
+            nexts = set()
+            for current in currents:
+                for alt in transformer:
+                    if alt is None:
+                        nexts.add(current)
+                    elif callable(alt):
+                        nexts.add(alt(current))
+                    else:
+                        assert 0, alt
+            currents = nexts
+
+        else:
+            assert 0, transformer
+
+    return currents
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
