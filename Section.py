@@ -3716,7 +3716,6 @@ def section_put_fact(section, L, verb, R):
                 'the empty String',
                 'the String value',
                 'the well-known symbol',
-                'the well known symbol',
                 '1', # SPEC BUG
             )):
                 # It denotes a primitive value

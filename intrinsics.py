@@ -749,8 +749,7 @@ def check_s_value(v):
         r'\*"[^"]*"\*',
 
         # Symbol:
-        r'the well[- ]known symbol @@\w+ \(<emu-xref href="#table-well-known-symbols"></emu-xref>\)',
-        # space is a SPEC BUG
+        r'the well-known symbol @@\w+ \(<emu-xref href="#table-well-known-symbols"></emu-xref>\)',
 
         # Object:
 
