@@ -297,25 +297,6 @@ def _handle_early_errors_section(section):
             lambda emu_grammar, ul: (emu_grammar, None, ul)
         ),
         (
-            # 3 cases:
-            #   13.15.1   sec-assignment-operators-static-semantics-early-errors
-            #   13.15.5.1 sec-destructuring-assignment-static-semantics-early-errors
-            #   14.7.5.1  sec-for-in-and-for-of-statements-static-semantics-early-errors
-            # Extra <p> constrains aplication of immediately following <ul>.
-            # (See old bug 4378: https://tc39.github.io/archives/bugzilla/4378/)
-            [
-                'emu-grammar',
-                ('p', 'If .+, the following Early Error rules are applied:'),
-                'ul',
-                ('p', 'If .+, the following Early Error rule is applied:'),
-                'ul'
-            ],
-            lambda emu_grammar, p1, ul1, p2, ul2: [
-                (emu_grammar, p1, ul1),
-                (emu_grammar, p2, ul2),
-            ]
-        ),
-        (
             # 1 case (13.2.5.1 Static Semantics: Early Errors)
             # sec-object-initializer-static-semantics-early-errors
             # Extra <p> constrains application of subsequent 2 emu-grammar+ul pairs.

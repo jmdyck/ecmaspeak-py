@@ -2913,25 +2913,7 @@ class Frame:
         # kludgey_p hasn't been parsed, so we can't simply run EXEC() on it.
 
         p_ist = frame._alg_defn.kludgey_p.inner_source_text()
-        if p_ist in [
-            "If |LeftHandSideExpression| is an |ObjectLiteral| or an |ArrayLiteral|, the following Early Error rules are applied:",
-            "If |LeftHandSideExpression| is either an |ObjectLiteral| or an |ArrayLiteral|, the following Early Error rules are applied:",
-        ]:
-            # Here, "is" means "contains via one or more unit rules".
-            lhse_node = frame.resolve_focus_reference(None, 'LeftHandSideExpression')
-            if lhse_node.unit_derives_a('ObjectLiteral') or lhse_node.unit_derives_a('ArrayLiteral'):
-                return True # apply the rules
-            else:
-                return False
-
-        elif p_ist == "If |LeftHandSideExpression| is neither an |ObjectLiteral| nor an |ArrayLiteral|, the following Early Error rule is applied:":
-            lhse_node = frame.resolve_focus_reference(None, 'LeftHandSideExpression')
-            if lhse_node.unit_derives_a('ObjectLiteral') or lhse_node.unit_derives_a('ArrayLiteral'):
-                return False
-            else:
-                return True # apply the rule
-
-        elif p_ist == "In addition to describing an actual object initializer the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.":
+        if p_ist == "In addition to describing an actual object initializer the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.":
             # This <p> precedes two Early Error units,
             # one headed by `PropertyDefinition : CoverInitializedName`,
             # and one headed by the non-empty alternatives for `ObjectLiteral`.
@@ -4261,9 +4243,64 @@ class _:
             assert NYI
 
         else:
+            # Here, {value} is a Parse Node,
+            # and we're asking if it's an instance of the given nonterminal.
+            # Or sometimes, we're asking if it *contains* such a node via one or more unit rules.
+
+            # As an example of the latter, consider:
+            # `If |LeftHandSideExpression| is an |ObjectLiteral| or an |ArrayLiteral|, ...`
+            # A |LeftHandSideExpression| Parse Node can't literally be
+            # an |ObjectLiteral| Parse Node or an |ArrayLiteral| Parse Node.
+            # Rather, the question is whether the |LeftHandSideExpression|
+            # can unit-derive an |ObjectLiteral| Parse Node or an |ArrayLiteral| Parse Node.
+
             assert value.isan(ES_ParseNode)
-            return (value.symbol == nt_name)
-            # TODO? value.unit_derives_a(nt_name)
+            d = value.unit_derives_a(nt_name)
+            # via *zero* or more unit rules, so covers both meanings.
+
+            if d is None:
+                return False
+            else:
+                if d is not value:
+                    # {value} itself is not an {nt_name},
+                    # but a descendant of it, {d}, is.
+                    # I.e. the test is true only under the "contains" interpretation.
+                    # So we assume that that's what was intended. 
+                    vdst = val_desc.source_text()
+                    assert vdst in [
+                        'an |ArrayLiteral|',
+                        'an |ObjectLiteral|',
+                        # in numerous scattered occurrences of
+                        # `is either an |ObjectLiteral| or an |ArrayLiteral|` and
+                        # `is neither an |ObjectLiteral| nor an |ArrayLiteral|`
+
+                        'a |LabelledStatement|', # in IsLabelledFunction
+                    ]
+
+                    # kludge for IsLabelledFunction:
+                    if vdst == 'a |LabelledStatement|':
+                        cc_cond = val_desc.closest_containing('{CONDITION_1}')
+                        assert cc_cond.source_text() == "_stmt_ is not a |LabelledStatement|"
+
+                        varname = '_stmt_'
+                        contour = curr_frame()._contours[0]
+                        assert varname in contour
+
+                        stmt = contour[varname]
+                        assert stmt.symbol == 'Statement'
+
+                        # I.e., _stmt_ is actually a |Statement| Parse Node
+                        # (as IsLabelledFunction's parameter list states),
+                        # but the condition has just said that it's a |LabelledStatement|,
+                        # which really means that it unit-derives {d} which is a |LabelledStatement|.
+
+                        # The thing is, the next step in IsLabelledFunction says:
+                        #     1. Let _item_ be the |LabelledItem| of _stmt_.
+                        # which assumes that _stmt_ now refers to the |LabelledStatement| {d}.
+                        # So we accomplish that here:
+                        contour[varname] = d
+
+                return True
 
 # 13.2.3.1
 @P("{CONDITION_1} : {PROD_REF} is the token `false`")
@@ -4418,11 +4455,18 @@ class _:
         result = (pnode.puk in h_emu_grammar._hnode.puk_set)
 
         # But this can also augment the current focus_map.
-        # E.g., in TopLevelVarDeclaredNames,
-        #> StatementListItem : Declaration
-        #>    1. If |Declaration| is |Declaration : HoistableDeclaration|, then
-        #>       a. Return the BoundNames of |HoistableDeclaration|.
-        curr_frame().augment_focus_map(pnode)
+        if hasattr(curr_frame(), 'focus_map'):
+            # E.g., in TopLevelVarDeclaredNames,
+            #> StatementListItem : Declaration
+            #>    1. If |Declaration| is |Declaration : HoistableDeclaration|, then
+            #>       a. Return the BoundNames of |HoistableDeclaration|.
+            curr_frame().augment_focus_map(pnode)
+        else:
+            # E.g., in IsLabelledFunction, 
+            #>    1. If _item_ is <emu-grammar>LabelledItem : FunctionDeclaration</emu-grammar>, return *true*.
+            # Conceivably, it could *create* a focus_map?
+            # We'll assume it doesn't, and see what happens.
+            pass
 
         return result
 
@@ -4519,6 +4563,19 @@ class _:
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         # XXX should get more precise type for {var} and check that it could have a child of that kind
         return (ptn_type_for(nonterminal), env0)
+
+    def d_exec(expr):
+        [nonterminal, local_ref] = expr.children
+        nt_name = nt_name_from_nonterminal_node(nonterminal)
+        pnode = EXEC(local_ref, ES_ParseNode)
+        selected_children = [
+            child
+            for child in pnode.children
+            if child.symbol == nt_name
+        ]
+        assert len(selected_children) == 1
+        [selected_child] = selected_children
+        return selected_child
 
 @P("{VAL_DESC} : the {nonterminal} of an? {nonterminal}")
 class _:
@@ -4769,6 +4826,25 @@ class _:
             traverse_for_early_errors(covered_thing)
         else:
             it_is_a_syntax_error(rule)
+        return None
+
+@P('{EE_RULE} : If {CONDITION}, {LOCAL_REF} must cover an? {nonterminal}.')
+class _:
+    def s_nv(anode, env0):
+        [cond, local_ref, nont] = anode.children
+        tc_cond(cond, env0)
+        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
+        return None
+
+    def d_exec(rule):
+        [cond, local_ref, nont] = rule.children
+        if EXEC(cond, bool):
+            pnode = EXEC(local_ref, ES_ParseNode)
+            covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
+            if covered_thing:
+                traverse_for_early_errors(covered_thing)
+            else:
+                it_is_a_syntax_error(rule)
         return None
 
 @P("{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}")
@@ -8255,6 +8331,14 @@ class _:
             sup_t |= x_sup_t
 
         return env0.with_type_test(ex, 'isnt a', [sub_t, sup_t], asserting)
+
+    def d_exec(cond):
+        [ex, *vds] = cond.children
+        ex_val = EXEC(ex, E_Value)
+        for vd in vds:
+            matches = value_matches_description(ex_val, vd)
+            if matches: return False
+        return True
 
 # ------------------------------------------------------------------------------
 

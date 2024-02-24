@@ -29,6 +29,7 @@
     For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
     If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
+    If {CONDITION}, {LOCAL_REF} must cover an? {nonterminal}.
     It is a Syntax Error if {CONDITION_1}<ins>, unless {CONDITION_1} and {CONDITION_1}</ins>.
     It is a Syntax Error if {CONDITION}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.
