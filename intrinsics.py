@@ -26,6 +26,15 @@ def get_pdn(phrase):
 
     if re.fullmatch(r'%[^%]+%', phrase):
         # {phrase} is already a PDN
+
+        if phrase == '%GeneratorFunction.prototype.prototype%':
+            # ... but it isn't *the* PDN for that object, this is:
+            return '%GeneratorPrototype%'
+
+        if phrase == '%AsyncGeneratorFunction.prototype.prototype%':
+            # similar
+            return '%AsyncGeneratorPrototype%'
+
         return phrase
 
     # --------------
@@ -37,8 +46,8 @@ def get_pdn(phrase):
 
     result = {
         'the constructor of async function objects': '%AsyncFunction%',
-        'the constructor of async iterator objects': '%AsyncGeneratorFunction%',
-        'the constructor of Generators':             '%GeneratorFunction%',
+        'the constructor of async generator function objects': '%AsyncGeneratorFunction%',
+        'the constructor of generator function objects': '%GeneratorFunction%',
         'the super class of all typed Array constructors': '%TypedArray%',
     }.get(phrase)
     if result: return result
@@ -89,10 +98,10 @@ def normalize_property_path(path):
     # --------------
     # special cases:
 
-    if path == 'Generator.prototype':
-        return 'GeneratorFunction.prototype.prototype'
-    if path == 'AsyncGenerator.prototype':
-        return 'AsyncGeneratorFunction.prototype.prototype'
+    if path == 'the prototype of generator objects':
+        return 'GeneratorPrototype'
+    if path == 'the prototype of async generator objects':
+        return 'AsyncGeneratorPrototype'
 
     # --------------------------------
     # base cases (leftmost component):

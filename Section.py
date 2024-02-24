@@ -1984,6 +1984,8 @@ def check_id(section):
         section.section_kind in ['CallConstruct']
     ):
         pipeline = [
+            undo_3238,
+
             # If the title is a single word (possibly followed by a parameter list),
             # then maybe prepend the parent section's title (47 cases).
             [
@@ -2055,6 +2057,7 @@ def check_id(section):
         'intrinsic: - // properties',
     ]:
         pipeline = [
+            undo_3238,
             remove_initial_The,
             [ None, lambda s: re.sub(r' the (.+) Object$', r' \1', s) ], # 3 cases
             trim_underscores_from_aliases, # 6 cases
@@ -2487,6 +2490,19 @@ def split_certain_words(s):
         .replace('FinalizationRegistry', 'Finalization Registry')
         .replace('WeakRef', 'Weak Ref')
     )
+
+def undo_3238(s):
+    # PR #3238 changed how the spec refers to certain intrinsics,
+    # which changed the titles of certain sections.
+    # However, the PR didn't make collateral changes
+    # to the `id` attribute of those sections.
+    # So here, we locally undo those title-changes,
+    # so that the generated ids match the actual ids.
+    # (Alternatively, we could have just added those ids
+    # to the appropriate `failures` lists.)
+    s = re.sub(r'The %((Async)?Generator)Prototype% Object', r'Properties of the \1 Prototype Object', s)
+    s = re.sub(r'%((Async)?Generator)Prototype%', r'\1.prototype', s)
+    return s
 
 def apply_pipeline(starter, pipeline):
     currents = {starter}
@@ -3483,7 +3499,8 @@ def check_this_function(section, mo):
     func_what = mo.group('func_what1') or mo.group('func_what3')
     if func_what:
         if (
-            '.prototype' in section.section_title and not section.section_title.startswith('get ')
+            ('.prototype' in section.section_title or 'Prototype%' in section.section_title)
+                and not section.section_title.startswith('get ')
             or
             section.this_object in [
                 'Array.from',
