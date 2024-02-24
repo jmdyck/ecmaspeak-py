@@ -555,6 +555,7 @@ class ANode(SpecNode):
         ancestor = self
         while ancestor is not None:
             yield ancestor
+            if not hasattr(ancestor, 'parent'): break # hm
             ancestor = ancestor.parent
 
     def each_descendant_or_self(self):

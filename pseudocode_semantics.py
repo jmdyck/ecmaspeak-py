@@ -4072,6 +4072,9 @@ class _:
         assert term.source_text() == "`super`"
         return a_subset_of(T_grammar_symbol_)
 
+    def s_expr(expr, env0, _):
+        return (T_grammar_symbol_, env0)
+
     def d_exec(literal):
         [nont, term] = literal.children
         assert nont.source_text() == '|ReservedWord|'
@@ -7138,6 +7141,9 @@ class _:
         assert a_t != T_0
         assert b_t != T_0
 
+        if op_st in ['=', '≠']:
+            check_comparison(cond, '=', a_t, b_t)
+
         t_envs = []
         f_envs = []
 
@@ -7285,6 +7291,7 @@ class _:
 
                     (T_BigInt, '>'   , T_BigInt): 'TF',
                     (T_BigInt, '&lt;', T_BigInt): 'TF',
+                    (T_BigInt, '='   , T_BigInt): 'TF',
                     (T_BigInt, '≠'   , T_BigInt): 'TF',
 
                     # --------
@@ -7964,6 +7971,8 @@ class _:
         [exa, exb] = cond.children
         (exa_type, env1) = tc_expr(exa, env0)
         (exb_type, env2) = tc_expr(exb, env1)
+        check_comparison(cond, 'is', exa_type, exb_type)
+
         if exa_type == exb_type:
             # good
             return (env2, env2)
@@ -7980,8 +7989,6 @@ class _:
             return (env3, env3)
 
         else:
-            check_comparison(cond, 'is', exa_type, exb_type)
-
             (common_t, _) = exa_type.split_by(exb_type)
             assert common_t != T_0
             # In the world where the two sides are equal,
@@ -8004,42 +8011,22 @@ class _:
             return (t_env, f_env)
 
 def check_comparison(comparison, comparator, ta, tb):
-    assert comparator in ['is', 'SameValue']
-    pref_comparator = preferred_comparator(ta, tb)
-    assert pref_comparator in ['is', 'SameValue', 'are the same X Record', 'are the same List']
+    cc_command = comparison.closest_containing('{COMMAND}')
+    is_within_Assert = cc_command is not None and cc_command.prod.rhs_s.startswith('Assert: ')
+    pref_comparator = preferred_comparator(ta, tb, is_within_Assert)
     if comparator != pref_comparator:
         add_pass_error(
             comparison,
             f"Should use `{pref_comparator}` to compare {ta} and {tb}"
         )
 
-def preferred_comparator(ta, tb):
+def preferred_comparator(ta, tb, is_within_Assert):
     # Given the static types of two operands in a comparison,
     # return a string that indicates the preferred way to compare them.
 
-    if (
-        ta.is_a_subtype_of_or_equal_to(T_Record)
-        or
-        tb.is_a_subtype_of_or_equal_to(T_Record)
-    ):
-        return 'are the same X Record'
-
-    if (
-        ta.is_a_subtype_of_or_equal_to(T_List)
-        or
-        tb.is_a_subtype_of_or_equal_to(T_List)
-    ):
-        return 'are the same List'
-
-    # SameValue only accepts ECMAScript language values,
-    # so if either operand might not be an ECMAScript language value,
-    # you can't use SameValue.
-    if not ta.is_a_subtype_of_or_equal_to(T_Tangible_): return 'is'
-    if not tb.is_a_subtype_of_or_equal_to(T_Tangible_): return 'is'
-
-    # So at this point, we're guaranteed that both operands are ES language values.
-        
     # From #2877:
+    # - use =, ≠, <, ≤, >, and ≥ for mathematical value and bigint comparisons (except in asserts);
+    #
     # - use `is`, `is not`, ... for number comparisons
     #
     # - use SameValue(..., ...) is *true* for equality comparison of
@@ -8056,51 +8043,65 @@ def preferred_comparator(ta, tb):
     #      etc;
     #   avoid "is different from" or "is the same as"
 
-    if ta is T_Tangible_ or tb is T_Tangible_:
-        # At least one arg is arbitrary enough that you have to use SameValue.
+    if ta == T_bound_function_exotic_object_ and tb == T_constructor_object_:
+        # My static type system thinks that these two stypes are disjoint,
+        # so a comparison would never succeed.
+        # (Below, common_t would be T_0.)
+        # However, [[Construct]] for a bound function exotic object has
+        # `SameValue(_F_, _newTarget_)`
         return 'SameValue'
 
-    if (
-        ta.is_a_subtype_of_or_equal_to(T_Object)
-        and
-        tb.is_a_subtype_of_or_equal_to(T_Object)
-    ):
-        return 'SameValue'
+    (common_t, _) = ta.split_by(tb)
 
-    if (
-        T_Object.is_a_subtype_of_or_equal_to(ta)
-        or
-        T_Object.is_a_subtype_of_or_equal_to(tb)
-    ):
-        return 'SameValue'
+    if common_t == T_0:
+        return "INCOMPARABLE"
 
-    if ta == tb:
-        if ta == T_Boolean or ta == T_String:
+    if common_t.is_a_subtype_of_or_equal_to(T_MathReal_ | T_ExtendedMathReal_) or common_t == T_BigInt:
+        if is_within_Assert:
             return 'is'
-        elif ta == T_Symbol or ta == T_Symbol | T_String:
-            # Should use `is` if the symbols are well-known,
-            # but they probably aren't.
-            return 'SameValue'
         else:
-            assert 0, ta
+            return '='
 
-    if (
-        ta == T_String and tb == T_Null | T_String
-        or
-        ta == T_Null | T_String and tb == T_String
-    ):
+    if common_t == ListType(T_code_point_):
+        # So that it isn't handled by the T_List case
         return 'is'
 
-    if (
-        ta.is_a_subtype_of_or_equal_to(T_Number)
-        and
-        tb.is_a_subtype_of_or_equal_to(T_Number)
-    ):
+    if common_t.is_a_subtype_of_or_equal_to(T_List):
+        return 'are the same List'
+
+    if common_t.is_a_subtype_of_or_equal_to(T_Record):
+        return 'are the same X Record'
+
+    # SameValue only accepts ECMAScript language values,
+    # so if either operand might not be an ECMAScript language value,
+    # you can't use SameValue.
+    (_, ta_spec) = ta.split_by(T_Tangible_)
+    (_, tb_spec) = tb.split_by(T_Tangible_)
+    if ta_spec != T_0 or tb_spec != T_0:
         return 'is'
 
-    # print(ta, tb, file=sta_misc_f)
-    # return 'is'
-    assert 0, (ta, tb)
+    # So at this point, we're guaranteed that both operands are ES language values.
+
+    assert common_t.is_a_subtype_of_or_equal_to(T_Tangible_)
+
+    if common_t.is_a_subtype_of_or_equal_to(T_Object):
+        return 'SameValue'
+    if T_Object.is_a_subtype_of_or_equal_to(common_t):
+        return 'SameValue'
+
+    if T_Symbol.is_a_subtype_of_or_equal_to(common_t):
+        return 'SameValue'
+        # Should use `is` if the symbols are well-known,
+        # but the type system can't tell,
+        # and they probably aren't.
+
+    if common_t.is_a_subtype_of_or_equal_to(T_Undefined | T_Null | T_Boolean | T_Number | T_String):
+        return 'is'
+
+    if common_t == T_BigInt | T_IntegralNumber_:
+        return 'INCOMPARABLE'
+
+    assert 0, common_t
 
 # -------------------
 
@@ -8209,6 +8210,24 @@ class _:
             if dsbn_name != '[[Type]]': break
             t = type_corresponding_to_comptype_literal(vd)
             return env0.with_type_test(lhs, copula, t, asserting)
+
+        if str(vd.prod) == '{VALUE_DESCRIPTION} : {VAL_DESC}':
+            [val_desc] = vd.children
+            assert val_desc.prod.lhs_s == '{VAL_DESC}'
+        elif vd.prod.lhs_s == '{VAL_DESC}':
+            val_desc = vd
+        else:
+            val_desc = None
+        if val_desc is not None and val_desc.prod.rhs_s in [
+            '{LITERAL_ISH}',
+            '{LITERAL}',
+            '{nonterminal}',
+        ]:
+            [rhs_ex] = val_desc.children
+
+            (ex_t, env1) = tc_expr(ex, env0)
+            (rhs_ex_t, env2) = tc_expr(rhs_ex, env1)
+            check_comparison(cond, 'is', ex_t, rhs_ex_t)
 
         (sub_t, sup_t) = type_bracket_for(vd, env0)
         return env0.with_type_test(ex, copula, [sub_t, sup_t], asserting)
@@ -10337,15 +10356,6 @@ class _:
         v = EXEC(ss, E_Value)
         return L.number_of_occurrences_of(v) > 1
 
-@P("{CONDITION_1} : there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [member_var, list_var, stcond] = cond.children
-        env1 = env0.ensure_expr_is_of_type(list_var, ListType(T_String)) # over-specific
-        env2 = env1.plus_new_entry(member_var, T_String)
-        (t_env, f_env) = tc_cond(stcond, env2)
-        return (env1, env1)
-
 @P('{CONDITION_1} : Exactly one element of {var} meets this criterion')
 class _:
     def s_cond(cond, env0, _):
@@ -10999,6 +11009,37 @@ class _:
         env1.assert_expr_is_of_type(var, whose_type)
         return (et, env0)
 
+# ------------------------------------------------------------------------------
+
+def s_X_and_Y_are_the_same_Foo_Record(cond, record_type, env0):
+    [x, y] = cond.children
+
+    (x_t, env1) = tc_expr(x, env0); env1 is env0
+    (y_t, env1) = tc_expr(y, env0); env1 is env0
+
+    check_comparison(cond, 'are the same X Record', x_t, y_t)
+
+    # In the env where they are the same Foo Record,
+    # they must necessarily both be Foo Records.
+    # In the env where they're not the same Foo Record,
+    # there's no constraint on what they are.
+
+    (x_in, _) = x_t.split_by(record_type)
+    (y_in, _) = y_t.split_by(record_type)
+
+    env_same = (
+        env0
+        .with_expr_type_narrowed(x, x_in)
+        .with_expr_type_narrowed(y, y_in)
+    )
+
+    if 'are the same' in cond.prod.rhs_s:
+        return (env_same, env0)
+    elif 'are not the same' in cond.prod.rhs_s:
+        return (env0, env_same)
+    else:
+        assert 0
+
 # ==============================================================================
 #@ 6.2.3 The Set and Relation Specification Types
 
@@ -11084,6 +11125,11 @@ class _:
     def s_expr(expr, env0, _):
         [] = expr.children
         return (T_Completion_Record, env0)
+
+@P('{CONDITION_1} : {SETTABLE} and {SETTABLE} are the same Completion Record')
+class _:
+    def s_cond(cond, env0, asserting):
+        return s_X_and_Y_are_the_same_Foo_Record(cond, T_Completion_Record, env0)
 
 #> The following shorthand terms are sometimes used to refer to Completion Records.
 
@@ -11625,6 +11671,12 @@ class _:
         t = type_for_environment_record_kind(kind)
         return (t, env0)
 
+@P('{CONDITION_1} : {SETTABLE} and {SETTABLE} are not the same Environment Record')
+@P('{CONDITION_1} : {SETTABLE} and {SETTABLE} are the same Environment Record')
+class _:
+    def s_cond(cond, env0, asserting):
+        return s_X_and_Y_are_the_same_Foo_Record(cond, T_Environment_Record, env0)
+
 # ==============================================================================
 #@ 9.1.1.1 Declarative Environment Records
 
@@ -11778,10 +11830,7 @@ class _:
 @P("{CONDITION_1} : {SETTABLE} and {SETTABLE} are not the same Realm Record")
 class _:
     def s_cond(cond, env0, asserting):
-        [avar, bvar] = cond.children
-        env0.assert_expr_is_of_type(avar, T_Realm_Record)
-        env0.assert_expr_is_of_type(bvar, T_Realm_Record)
-        return (env0, env0)
+        return s_X_and_Y_are_the_same_Foo_Record(cond, T_Realm_Record, env0)
 
 @P("{VAL_DESC} : a Record whose field names are intrinsic keys and whose values are objects")
 class _:
@@ -13147,10 +13196,7 @@ class _:
 @P("{CONDITION_1} : {SETTABLE} and {SETTABLE} are not the same Module Record")
 class _:
     def s_cond(cond, env0, asserting):
-        [ex1, ex2] = cond.children
-        env0.assert_expr_is_of_type(ex1, T_Module_Record)
-        env0.assert_expr_is_of_type(ex2, T_Module_Record)
-        return (env0, env0)
+        return s_X_and_Y_are_the_same_Foo_Record(cond, T_Module_Record, env0)
 
 @P("{VAL_DESC} : a ResolvedBinding Record")
 class _:
@@ -14740,6 +14786,11 @@ class _:
 @P("{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events")
 class _:
     s_tb = T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
+
+@P('{CONDITION_1} : {SETTABLE} and {SETTABLE} are not the same Shared Data Block event')
+class _:
+    def s_cond(cond, env0, asserting):
+        return s_X_and_Y_are_the_same_Foo_Record(cond, T_Shared_Data_Block_Event, env0)
 
 @P("{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
 class _:

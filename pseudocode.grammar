@@ -467,7 +467,6 @@
     the source text matched by {var} is strict mode code
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
-    there does not exist an element {DEFVAR} of {SETTABLE} such that {CONDITION_1}
     there exists a CharSetElement in {var} containing exactly one character {DEFVAR} such that {CONDITION_1}
     there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}
     there exists an event {DEFVAR} such that {CONDITION}
@@ -540,8 +539,12 @@
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
+    {SETTABLE} and {SETTABLE} are not the same Environment Record
     {SETTABLE} and {SETTABLE} are not the same Module Record
     {SETTABLE} and {SETTABLE} are not the same Realm Record
+    {SETTABLE} and {SETTABLE} are not the same Shared Data Block event
+    {SETTABLE} and {SETTABLE} are the same Completion Record
+    {SETTABLE} and {SETTABLE} are the same Environment Record
     {SETTABLE} and {SETTABLE} are the same Module Record
     {SETTABLE} has an? {DSBN} field
     {TYPE_TEST}
