@@ -18,9 +18,7 @@ from emu_grammars import GNode
 from E_Value import ES_Value
 
 character_named_ = {
-    # table-31:
-    'ZWNJ'  : '\u200c',
-    'ZWJ'   : '\u200d',
+    # "Unicode Format-Control Characters"
     'ZWNBSP': '\ufeff',
 
     # table-32:
@@ -2152,7 +2150,7 @@ def lexical_Rsymbol_matches_char(rsymbol, char):
     elif T == 'T_u_p':
         p = rsymbol.p
         Other_ID_Start = "\u1885\u1886\u309b\u309c\u2118\u212e"
-        Other_ID_Continue = "\u1369\u136A\u136b\u136c\u136d\u136e\u136f\u1370\u1371\u19d1\u00b7\u0387"
+        Other_ID_Continue = "\u00b7\u0387\u1369\u136a\u136b\u136c\u136d\u136e\u136f\u1370\u1371\u19da\u200c\u200d\u30fb\uff65"
 
         if p == 'ID_Start':
             # see http://unicode.org/reports/tr31/
