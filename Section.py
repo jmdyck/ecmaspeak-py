@@ -1091,73 +1091,151 @@ def _handle_structured_header(section):
 
     if 'description' in dl_dict:
         description_dd = dl_dict['description']
-        retn = []
-        reta = []
+
+        def is_a_sub_of(subnature, vd):
+
+            p = str(vd.prod)
+            if p in [
+                '{VALUE_DESCRIPTION} : either {VAL_DESC_DISJUNCTION}',
+                '{VALUE_DESCRIPTION} : {VAL_DESC_DISJUNCTION}',
+            ]:
+                [vd_disjunction] = vd.children
+                return any(
+                    is_a_sub_of(subnature, vd_child)
+                    for vd_child in vd_disjunction.children
+                )
+
+            elif p in [
+                '{VALUE_DESCRIPTION} : {VAL_DESC}',
+                '{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}',
+            ]:
+                [vd_child] = vd.children
+                return is_a_sub_of(subnature, vd_child)
+
+            elif vd.children == [] or p in [
+                '{VAL_DESC} : {LITERAL}',
+                '{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION}',
+            ]:
+                vds = vd.source_text()
+                return (
+                    subnature == vds
+                )
+
+            elif p == '{VAL_DESC} : an integral Number in {INTERVAL}':
+                return (subnature == 'an integral Number')
+
+            elif p == '{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})':
+                return (subnature == vd.source_text())
+
+            else:
+                assert 0, p
+
         sentences = re.split('(?<=\.) +', description_dd.inner_source_text())
         for sentence in sentences:
-            if sentence.startswith('It returns '):
-                # Maybe if it's a numeric method, we shouldn't bother?
-                for (pattern, nature) in [
-                    ("It returns \*true\* if and only if .+", 'a Boolean'), # except...
-                    ("It returns \*1\*<sub>\U0001d53d</sub> if .+ and \*\+0\*<sub>\U0001d53d</sub> otherwise.", 'an integral Number'),
-                    ("It returns _argument_ converted to a Number value .+.", 'a Number'),
-                    ("It returns _value_ converted to a Number or a BigInt.", 'a Number or a BigInt'),
-                    ("It returns a Number identifying the day .+", 'an integral Number'),
-                    ("It returns a Number identifying the month .+", 'an integral Number'),
-                    ("It returns a String value representing .+", 'a String'),
-                    ("It returns a new Job Abstract Closure .+", 'a Job Abstract Closure'),
-                    ("It returns a new promise resolved with _x_.", 'a promise'),
-                    ("It returns an implementation-approximated value .+", 'a Number'),
-                    ("It returns the day number.+", 'an integral Number'),
-                    ("It returns the day of the month .+", 'an integral Number'),
-                    ("It returns the full year .+", 'an integral Number'),
-                    ("It returns the global object used by the currently running execution context.", 'an object'),
-                    ("It returns the hour of the day .+", 'an integral Number'),
-                    ("It returns the loaded value.", 'unknown'),
-                    ("It returns the millisecond of the second .+", 'an integral Number'),
-                    ("It returns the minute of the hour .+", 'an integral Number'),
-                    ("It returns the number of days .+", 'an integral Number'),
-                    ("It returns the number of left-capturing parentheses.+", 'a non-negative integer'),
-                    ("It returns the number of milliseconds .+", 'an integral Number'),
-                    ("It returns the one's complement of _x_.+", 'unknown'),
-                    ("It returns the second of the minute .+", 'an integral Number'),
-                    ("It returns the sequence of Unicode code points that .+", 'a sequence of Unicode code points'),
-                    ("It returns the time value .+", 'a time value'),
-                    ("It returns the value of its associated binding object's property whose name is _N_.", 'an ECMAScript language value'),
-                    ("It returns the value of its bound identifier whose name is _N_.", 'an ECMAScript language value'),
-                    ("It returns the value of the \*\"length\"\* property of an array-like object.", 'a non-negative integer'),
-                    ("It returns the year .+", 'an integral Number'),
-                ]:
-                    if re.fullmatch(pattern, sentence):
-                        retn.append(nature)
+            mo = re.fullmatch(r'(.+) (returns|returning) (.+)', sentence)
+            if mo:
+                (pre, verb, post) = mo.groups()
+                if (
+                    pre.endswith('whose `next` method')
+                    # CreateListIteratorRecord
+                    or
+                    pre == 'It does not enforce that the constructor function'
+                    or
+                    pre.endswith('that when executed')
+                    or
+                    pre.endswith('where _predicate_')
+                    or
+                    pre == '_op_ takes two List of byte values arguments and'
+
+                ):
+                    continue
+
+                patterns = [
+                    # ----------------
+                    # language values:
+
+                    (r'either ~done~ indicating .+ or the value from the IteratorResult object .+',  ['~done~', 'an ECMAScript language value']),
+                    (r'the value of its associated binding object\'s property .+',  'an ECMAScript language value'),
+                    (r'the value of its bound identifier .+',                       'an ECMAScript language value'),
+
+                    # Undefined
+                    (r'\*undefined\*.', '*undefined*'),
+
+                    # Boolean
+                    (r'\*true\* if and only if .+',               'a Boolean'),
+                    (r'\*true\*, \*false\*, or \*undefined\* .+', ['a Boolean', '*undefined*']),
+
+                    # Number/BigInt
+                    (r'\*1\*<sub>\U0001d53d</sub> if .+ and \*\+0\*<sub>\U0001d53d</sub> otherwise.', ['*1*<sub>𝔽</sub>', '*+0*<sub>𝔽</sub>']),
+                    (r'_value_ converted to a Number or a BigInt.',  ['a Number', 'a BigInt']),
+                    (r'a Number identifying the day of the week .+', 'an integral Number'),
+                    (r'a Number identifying the month .+',           'an integral Number'),
+                    (r'an implementation-approximated value representing the result of raising _base_ to the _exponent_ power.', 'a Number'),
+                    (r'the day number of .+',                        'an integral Number'),
+                    (r'the day of the month .+',                     'an integral Number'),
+                    (r'the full year associated .+',                 'an integral Number'),
+                    (r'the hour of the day .+',                      'an integral Number'),
+                    (r'the loaded value.',                           ['a Number', 'a BigInt']), #?
+                    (r'the millisecond of the second .+',            'an integral Number'),
+                    (r'the minute of the hour .+',                   'an integral Number'),
+                    (r'the number of days in year _y_.',             ['*365*<sub>𝔽</sub>', '*366*<sub>𝔽</sub>']),
+                    (r'the number of milliseconds since .+',         'an integral Number'),
+                    (r'the one\'s complement of _x_.',               'a BigInt'),
+                    (r'the respective Number value.',                'a Number'),
+                    (r'the second of the minute .+',                 'an integral Number'),
+                    (r'the time value of the start of year _y_.',    'a time value'),
+                    (r'the value of the \*"length"\* property of an array-like object.', 'an integral Number'),
+                    (r'the year in which .+',                        'an integral Number'),
+
+                    # Object
+                    (r'a Promise which .+',     'a Promise'),
+                    (r'a new promise .+',       'a Promise'),
+                    (r'either \*false\* indicating .+ or the IteratorResult object .+', ['*false*', 'an Object']),
+                    (r'the global object .+',   'an Object'),
+
+                    # --------------------
+                    # specification values:
+
+                    # List
+                    (r'a List of byte values.',                                   'a List of byte values'),
+                    (r'the sequence of Unicode code points that results from .+', 'a List of code points'),
+
+                    # Record
+                    (r'a Record that gives the index and value of the element found.', 'a Record with fields [[Index]] (an integral Number) and [[Value]] (an ECMAScript language value)'),
+
+                    # mathematical
+                    (r'that integer if it is non-negative and corresponds with an integer index.', 'a non-negative integer'),
+                    (r'the code unit index corresponding to .+',     'a non-negative integer'),
+                    (r'the length of _S_.',                          'a non-negative integer'),
+                    (r'the number of left-capturing parentheses .+', 'a non-negative integer'),
+
+                    # CharSet
+                    (r'_A_.',                   'a CharSet'),
+                    (r'the resulting CharSet.', 'a CharSet'),
+
+                    # Closure
+                    (r'a new Job Abstract Closure that .+', 'a Job Abstract Closure'),
+
+                ]
+                for (pattern, subnatures) in patterns:
+                    if re.fullmatch(pattern, post):
+                        if isinstance(subnatures, str):
+                            subnatures = [subnatures]
+                        for subnature in subnatures:
+                            if not is_a_sub_of(subnature, return_nature):
+                                msg_at_node(
+                                    description_dd,
+                                    f"This description implies that {subnature!r} should be (part of) the declared return type, but it isn't."
+                                )
+                            
+                
                         break
                 else:
-                    assert 0, sentence
-
-            elif 'returning *true*, *false*, or *undefined*' in sentence:
-                retn.append('a Boolean or *undefined*')
-
-            elif sentence == 'Otherwise, it returns *undefined*.':
-                retn.append('*undefined*'),
-
-            elif sentence.startswith('It throws'):
-                for (pattern, nature) in [
-                    ('It throws an error .+',     'throw'),
-                    ('It throws an exception .+', 'throw'),
-                    ('It throws a \*TypeError\* exception .+', 'throw *TypeError*'),
-                ]:
-                    if re.fullmatch(pattern, sentence):
-                        reta.append(nature)
-                        break
-                else:
-                    assert 0, sentence
-
-        return_nature_normal = ' or '.join(retn) if retn else None
-        return_nature_abrupt = ' or '.join(reta) if reta else None
-
-    else:
-        return_nature_normal = None
-        return_nature_abrupt = None
+                    # no break, i.e., no matching pattern
+                    msg_at_node(
+                        description_dd,
+                        "This description talks about a return value, but we don't have a pattern that matches the wording"
+                    )
 
     # --------------------------------------------------------------------------
 
