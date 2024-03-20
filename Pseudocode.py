@@ -811,6 +811,7 @@ def single_or_multi(val_desc):
         return 'M'
 
     if r in [
+        '-1',
         '{LITERAL_ISH}',
         '{LITERAL}',
         '{nonterminal}',
