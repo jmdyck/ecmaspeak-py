@@ -12325,6 +12325,15 @@ class _:
         return env0
 
 # ==============================================================================
+#@ 9.4.2 ResolveBinding
+
+@P("{PROD_REF} : the syntactic production that is being evaluated")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_Parse_Node, env0)
+
+# ==============================================================================
 #@ 9.5 Jobs and Host Operations to Enqueue Jobs
 
 @P("{VAL_DESC} : a Job Abstract Closure")
@@ -12837,11 +12846,7 @@ class _:
 # ==============================================================================
 #@ 11.2.2 Strict Mode Code
 
-@P("{CONDITION_1} : the source text matched by {PROD_REF} is contained in strict mode code")
-@P("{CONDITION_1} : the source text matched by {PROD_REF} is strict mode code")
 @P("{CONDITION_1} : the source text matched by {var} is strict mode code")
-@P("{CONDITION_1} : the source text matched by {var} is non-strict code")
-@P("{CONDITION_1} : {LOCAL_REF} is contained in strict mode code")
 class _:
     def s_cond(cond, env0, asserting):
         [local_ref] = cond.children
@@ -12852,12 +12857,6 @@ class _:
         [local_ref] = cond.children
         pnode = EXEC(local_ref, ES_ParseNode)
         return is_strict(pnode)
-
-@P("{CONDITION_1} : the source text matched by the syntactic production that is being evaluated is contained in strict mode code")
-class _:
-    def s_cond(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
 
 # ------------------------------------------------------------------------------
 

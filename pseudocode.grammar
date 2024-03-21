@@ -458,13 +458,8 @@
     the pairs {PAIR} and {PAIR} are not in {EX}
     the parse succeeded and no early errors were found
     the source text containing {G_SYM} is eval code that is being processed by a direct eval
-    the source text matched by the syntactic production that is being evaluated is contained in strict mode code
-    the source text matched by {PROD_REF} is contained in strict mode code
     the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}, nor a binary property of strings listed in the “Property name” column of {h_emu_xref}
     the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}
-    the source text matched by {PROD_REF} is not strict mode code
-    the source text matched by {PROD_REF} is strict mode code
-    the source text matched by {var} is non-strict code
     the source text matched by {var} is strict mode code
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
@@ -519,7 +514,6 @@
     {EX} is {SETTABLE}
     {EX} is {VALUE_DESCRIPTION}
     {LOCAL_REF} Contains {G_SYM}
-    {LOCAL_REF} is contained in strict mode code
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal}
     {LOCAL_REF} is not nested, directly or indirectly (but not crossing function or `static` initialization block boundaries), within an {nonterminal} or a {nonterminal}
     {LOCAL_REF} is not present
@@ -1053,6 +1047,7 @@
     that {nonterminal}
     the derived {nonterminal}
     the enclosing {nonterminal}
+    the syntactic production that is being evaluated
     the {ORDINAL} {nonterminal}
     the {ORDINAL} {nonterminal} Parse Node contained within {var}
     the {nonterminal}

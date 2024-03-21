@@ -1834,7 +1834,7 @@ nts_behind_var_in_sdo_call = {
     ('Evaluation', '_module_.[[ECMAScriptCode]]'): ['Module'],
 
     # 23800 PerformEval
-    ('IsStrict', '_script_'): ['Script'],
+    ('ScriptIsStrict', '_script_'): ['Script'],
 
     # 23865 EvalDeclarationInstantiation
     ('VarDeclaredNames',            '_body_'): ['ScriptBody'],
