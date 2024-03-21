@@ -6870,6 +6870,83 @@ class _:
     s_tb = a_subset_of(T_MathReal_ | T_MathPosInfinity_)
 
 # ------------------------------------------------------------------------------
+#> This specification denotes most numeric values in base 10;
+
+@P("{VAL_DESC} : -1")
+class _:
+    s_tb = a_subset_of(T_MathInteger_)
+
+@P("{MATH_LITERAL} : {dec_int_lit}")
+class _:
+    s_tb = a_subset_of(T_MathInteger_)
+
+    def s_expr(expr, env0, _):
+        [lit] = expr.children
+        return (T_MathInteger_, env0)
+
+    d_exec = d_exec_pass_down
+
+@P(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
+class _:
+    def s_expr(expr, env0, _):
+        return (T_MathNonNegativeInteger_, env0)
+
+    def d_exec(lit):
+        [chars] = lit.children
+        return ES_Mathnum(int(chars, 10))
+
+@P("{BASE} : 10")
+@P("{BASE} : 2")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_MathInteger_, env0)
+
+    def d_exec(expr):
+        [] = expr.children
+        return ES_Mathnum(int(expr.source_text()))
+
+@P("{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_MathInteger_, env0)
+
+@P("{MATH_LITERAL} : 0.5")
+@P("{MATH_LITERAL} : 3π")
+@P("{MATH_LITERAL} : 8.64")
+@P("{MATH_LITERAL} : π")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_MathReal_, env0)
+
+# ------------------------------------------------------------------------------
+#> it also uses numeric values of the form
+#> 0x followed by digits 0-9 or A-F as base-16 values.
+
+@P("{MATH_LITERAL} : {hex_int_lit}")
+class _:
+    def s_expr(expr, env0, _):
+        [hex_int_lit] = expr.children
+        return (T_MathInteger_, env0)
+
+    d_exec = d_exec_pass_down
+
+@P(r"{hex_int_lit} : \b 0x [0-9A-F]{2,6} \b")
+class _:
+    def d_exec(hex_int_lit):
+        [chars] = hex_int_lit.children
+        return ES_Mathnum(int(chars, 16))
+
+# ------------------------------------------------------------------------------
+#> In general, when this specification refers to a numerical value,
+#> such as in the phrase, "the length of _y_"
+#> or "the integer represented by the four hexadecimal digits ...",
+#> without explicitly specifying a numeric kind,
+#> the phrase refers to a mathematical value.
+
+# ------------------------------------------------------------------------------
 #> When the term <dfn>integer</dfn> is used in this specification,
 #> it refers to a mathematical value which is in the set of integers,
 #> unless otherwise stated.
@@ -7450,83 +7527,6 @@ class _:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
         return (env0, env0)
-
-# ------------------------------------------------------------------------------
-#> In general, when this specification refers to a numerical value,
-#> such as in the phrase, "the length of _y_"
-#> or "the integer represented by the four hexadecimal digits ...",
-#> without explicitly specifying a numeric kind,
-#> the phrase refers to a mathematical value.
-
-# ------------------------------------------------------------------------------
-#> This specification denotes most numeric values in base 10;
-
-@P("{VAL_DESC} : -1")
-class _:
-    s_tb = a_subset_of(T_MathInteger_)
-
-@P("{MATH_LITERAL} : {dec_int_lit}")
-class _:
-    s_tb = a_subset_of(T_MathInteger_)
-
-    def s_expr(expr, env0, _):
-        [lit] = expr.children
-        return (T_MathInteger_, env0)
-
-    d_exec = d_exec_pass_down
-
-@P(r"{dec_int_lit} : \b [0-9]+ (?![0-9A-Za-z])")
-class _:
-    def s_expr(expr, env0, _):
-        return (T_MathNonNegativeInteger_, env0)
-
-    def d_exec(lit):
-        [chars] = lit.children
-        return ES_Mathnum(int(chars, 10))
-
-@P("{BASE} : 10")
-@P("{BASE} : 2")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_MathInteger_, env0)
-
-    def d_exec(expr):
-        [] = expr.children
-        return ES_Mathnum(int(expr.source_text()))
-
-@P("{MATH_LITERAL} : 64 (that is, 8<sup>2</sup>)")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_MathInteger_, env0)
-
-@P("{MATH_LITERAL} : 0.5")
-@P("{MATH_LITERAL} : 3π")
-@P("{MATH_LITERAL} : 8.64")
-@P("{MATH_LITERAL} : π")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_MathReal_, env0)
-
-# ------------------------------------------------------------------------------
-#> it also uses numeric values of the form
-#> 0x followed by digits 0-9 or A-F as base-16 values.
-
-@P("{MATH_LITERAL} : {hex_int_lit}")
-class _:
-    def s_expr(expr, env0, _):
-        [hex_int_lit] = expr.children
-        return (T_MathInteger_, env0)
-
-    d_exec = d_exec_pass_down
-
-@P(r"{hex_int_lit} : \b 0x [0-9A-F]{2,6} \b")
-class _:
-    def d_exec(hex_int_lit):
-        [chars] = hex_int_lit.children
-        return ES_Mathnum(int(chars, 16))
 
 # ------------------------------------------------------------------------------
 
