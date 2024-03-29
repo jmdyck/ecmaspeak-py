@@ -1273,7 +1273,6 @@
     {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, {VAL_DESC}, or {VAL_DESC}
 
 {VAL_DESC} :
-    -1
     ECMAScript source text
     a BigInt
     a Boolean

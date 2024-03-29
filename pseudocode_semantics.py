@@ -6872,10 +6872,6 @@ class _:
 # ------------------------------------------------------------------------------
 #> This specification denotes most numeric values in base 10;
 
-@P("{VAL_DESC} : -1")
-class _:
-    s_tb = a_subset_of(T_MathInteger_)
-
 @P("{MATH_LITERAL} : {dec_int_lit}")
 class _:
     s_tb = a_subset_of(T_MathInteger_)
