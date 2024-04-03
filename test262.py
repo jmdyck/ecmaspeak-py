@@ -97,6 +97,10 @@ def test_one(file_relpath):
         # So you get at least one non-comment line before the comment lines.
         pass
 
+    elif file_relpath.startswith('./annexB/language/comments/single-line-html-close-first-line-'):
+        # For these, the HTML close-comment has to be on the first line of the file.
+        pass
+
     else:
         print(f"... failed to parse the Copyright section in {file_relpath}")
         return
