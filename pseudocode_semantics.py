@@ -10155,10 +10155,10 @@ class _:
         listc = EXEC(varc, ES_List)
         return ES_List.concat(lista, listb, listc)
 
-@P("{EXPR} : a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}")
+@P("{EXPR} : a List whose elements are the elements of {var}, sorted according to lexicographic code unit order")
 class _:
     def s_expr(expr, env0, _):
-        [var, _, _, _] = expr.children
+        [var] = expr.children
         (t, env1) = tc_expr(var, env0); assert env1 is env0
         assert t.is_a_subtype_of_or_equal_to(T_List)
         return (t, env0)
@@ -13596,7 +13596,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_String)
         return (T_String, env0)
 
-@P("{EXPR} : the List of unique available named time zone identifiers")
+@P("{EXPR} : the List of unique available named time zone identifiers, sorted according to lexicographic code unit order")
 class _:
     def s_expr(expr, env0, _):
         [] = expr.children
@@ -13625,13 +13625,6 @@ class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         return (env0, env0)
-
-@P("{COMMAND} : Sort {var} into the same order as if an Array of the same values had been sorted using {percent_word} with {LITERAL} as {var}.")
-class _:
-    def s_nv(anode, env0):
-        [list_var, pc_word, comparefn_lit, comparefn_var] = anode.children
-        env0.assert_expr_is_of_type(list_var, ListType(T_String))
-        return env0
 
 # ==============================================================================
 #@ 21.4.1.26 UTC

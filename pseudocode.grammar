@@ -220,7 +220,6 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
-    Sort {var} into the same order as if an Array of the same values had been sorted using {percent_word} with {LITERAL} as {var}.
     Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
     Suspend the running execution context.
@@ -705,8 +704,8 @@
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
-    a List whose elements are the elements of {var} ordered as if an Array of the same values had been sorted using {percent_word} using {LITERAL} as {var}
     a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}
+    a List whose elements are the elements of {var}, sorted according to lexicographic code unit order
     a List whose elements are the first {var} elements of {EX}
     a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order
@@ -776,7 +775,7 @@
     the List of Unicode code points {var}
     the List of arguments that was passed to this function by {dsb_word} or {dsb_word}
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
-    the List of unique available named time zone identifiers
+    the List of unique available named time zone identifiers, sorted according to lexicographic code unit order
     the List of {nonterminal} items in {PROD_REF}, in source text order
     the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
