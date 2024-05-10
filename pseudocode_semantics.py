@@ -6763,7 +6763,7 @@ class _:
         # which generally wouldn't have any meaning for an instance of a production B.
         #
         # However, in the 4 occurrences of this rule, it does make sense:
-        assert cond.source_text() == "the source text matched by |FormalParameters| is strict mode code"
+        assert cond.source_text() == "IsStrict(|FormalParameters|) is *true*"
         assert emu_grammar.source_text() == "<emu-grammar>UniqueFormalParameters : FormalParameters</emu-grammar>"
         # `UniqueFormalParameters : FormalParameters` only has 1 Early Error rule,
         # and it only refers to |FormalParameters|, which *does* have meaning for the focus node.
