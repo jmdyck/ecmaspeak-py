@@ -13090,7 +13090,7 @@ class _:
         # (The 'proper' way to do this would be to modify the rules involved,
         # or make a new SDO, to compute the quantity of interest.)
 
-        assert noi.source_text() == 'PropertyNameList of |PropertyDefinitionList|'
+        assert noi.source_text() == 'the PropertyNameList of |PropertyDefinitionList|'
 
         PDL = curr_frame().resolve_focus_reference(None, 'PropertyDefinitionList')
 

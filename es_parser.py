@@ -1822,9 +1822,9 @@ class LexicalTIP:
                 HexDigits_text = prec_node.text()
                 # XXX Properly, we should invoke the MV SDO here.
                 HexDigits_MV = int(HexDigits_text, 16)
-                if constraint.c == 'MV of |HexDigits| &le; 0x10FFFF':
+                if constraint.c == 'the MV of |HexDigits| &le; 0x10FFFF':
                     return (HexDigits_MV <= 0x10FFFF)
-                elif constraint.c == 'MV of |HexDigits| > 0x10FFFF':
+                elif constraint.c == 'the MV of |HexDigits| > 0x10FFFF':
                     return (HexDigits_MV > 0x10FFFF)
                 else:
                     assert 0, constraint.c
