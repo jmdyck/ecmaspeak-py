@@ -1190,7 +1190,7 @@ def _handle_structured_header(section):
                     # Object
                     (r'a Promise which .+',     'a Promise'),
                     (r'a new promise .+',       'a Promise'),
-                    (r'either \*false\* indicating .+ or the IteratorResult object .+', ['*false*', 'an Object']),
+                    (r'either ~done~ indicating .+ or the IteratorResult object .+', ['~done~', 'an Object']),
                     (r'the global object .+',   'an Object'),
 
                     # --------------------
