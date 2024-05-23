@@ -10345,7 +10345,7 @@ class _:
 @P("{EXPR} : the number of elements in the List {var}")
 @P("{EX} : The number of elements in {var}")
 @P("{EX} : the number of elements in {EX}")
-@P("{NUM_COMPARAND} : the number of elements in the result of {NAMED_OPERATION_INVOCATION}")
+@P("{NUM_COMPARAND} : the number of elements in {NAMED_OPERATION_INVOCATION}")
 @P("{NUM_COMPARAND} : the number of elements in {var}")
 class _:
     def s_expr(expr, env0, _):

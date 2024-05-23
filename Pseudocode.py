@@ -26,6 +26,7 @@ def do_stuff_with_pseudocode():
     check_value_descriptions()
 
     analyze_static_dependencies()
+    check_the_sdo_name()
     check_optional_parameters()
     check_sdo_coverage()
 
@@ -1171,6 +1172,67 @@ def analyze_static_dependencies():
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def check_the_sdo_name():
+    stderr("check_the_sdo_name ...")
+
+    # https://github.com/tc39/ecma262/pull/3309#issuecomment-2067296673:
+    # In an SDO-invocation, use "the" before the SDO name iff:
+    # - the SDO name is a noun phrase,
+    # - the SDO does not return a completion record, and
+    # - the SDO-invocation does not occur within an AO-invocation.
+
+    for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
+        if op_info.species.startswith('op: discriminated by syntax'):
+            if len(op_info.invocations) == 0:
+                assert op_name == 'Early Errors'
+                continue
+
+            rnn = op_info.headers[0].return_nature_node
+            if rnn is None:
+                assert op_name == 'MV'
+                r = 'a mathematical value'
+            else:
+                r = rnn.source_text()
+            if (
+                r in ['a Boolean', '~unused~', 'either a normal completion containing ~unused~ or an abrupt completion']
+                or
+                op_name.startswith(('Compile', 'Instantiate', 'Define', 'Evaluate'))
+                or 
+                re.fullmatch(r'either a normal completion containing .+ or an abrupt completion', r)
+                or
+                r in ['a Completion Record', 'a return completion', 'a throw completion or a return completion']
+            ):
+                this_sdo_accepts_the = False
+            else:
+                this_sdo_accepts_the = True
+
+            for invocation in op_info.invocations:
+                assert invocation.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}'
+
+                # For an SDO that 'accepts' "the",
+                # we nevertheless suppress 'the' when the SDO-invocation is within an AO-invocation.
+                should_be_the = (
+                    this_sdo_accepts_the
+                    and
+                    invocation.closest_containing('{PREFIX_PAREN}') is None
+                )
+
+                is_the = 'the {cap_word}' in invocation.prod.rhs_s
+
+                if is_the and not should_be_the:
+                    msg_at_node(
+                        invocation,
+                        "For this SDO, there shouldn't be a 'the' before the SDO name"
+                    )
+                elif not is_the and should_be_the:
+                    msg_at_node(
+                        invocation,
+                        "For this SDO, there should be a 'the' before the SDO name"
+                    )
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def check_optional_parameters():
     stderr("check_optional_parameters ...")
 
@@ -1350,13 +1412,13 @@ def analyze_sdo_coverage_info():
                             # 1. If |Statement| is either a |LabelledStatement| or a |BreakableStatement|, then
                             #   1. Return LabelledEvaluation of |Statement| with argument _labelSet_.
                             nts = ['LabelledStatement', 'BreakableStatement']
-                        elif opcall_st == 'TopLevelVarDeclaredNames of |Statement|':
+                        elif opcall_st == 'the TopLevelVarDeclaredNames of |Statement|':
                             # 1. If |Statement| is <emu-grammar>Statement : LabelledStatement</emu-grammar> ,
-                            #    return TopLevelVarDeclaredNames of |Statement|.
+                            #    return the TopLevelVarDeclaredNames of |Statement|.
                             nts = ['LabelledStatement']
-                        elif opcall_st == 'TopLevelVarScopedDeclarations of |Statement|':
+                        elif opcall_st == 'the TopLevelVarScopedDeclarations of |Statement|':
                             # 1. If |Statement| is <emu-grammar>Statement : LabelledStatement</emu-grammar> ,
-                            #    return TopLevelVarScopedDeclarations of |Statement|.
+                            #    return the TopLevelVarScopedDeclarations of |Statement|.
                             nts = ['LabelledStatement']
 
                 elif u_lhs == '{PROD_REF}':

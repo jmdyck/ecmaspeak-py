@@ -633,7 +633,7 @@
 
 {NUM_COMPARAND} :
     the length of {var}
-    the number of elements in the result of {NAMED_OPERATION_INVOCATION}
+    the number of elements in {NAMED_OPERATION_INVOCATION}
     the number of elements in {var}
     the numeric value of {var}
     {FACTOR}
