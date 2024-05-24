@@ -5511,8 +5511,6 @@ class _:
 @P("{COMMAND} : Let {DEFVAR} be {EXPR}.")
 @P("{COMMAND} : Let {DEFVAR} be {MULTILINE_EXPR}")
 @P("{SMALL_COMMAND} : let {DEFVAR} be {EXPR}")
-@P("{SMALL_COMMAND} : let {DEFVAR} be {EXPR}, indicating that an ordinary object should be created as the global object")
-@P("{SMALL_COMMAND} : let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object")
 class _:
     def s_nv(anode, env0):
         [var, expr] = anode.children[0:2]
@@ -11921,6 +11919,36 @@ class _:
     s_tb = T_Intrinsics_Record
 
 # ==============================================================================
+#@ 9.3.1 InitializeHostDefinedRealm
+
+@P("{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Realm_Record)
+        return (env0, env0)
+
+@P("{CONDITION_1} : the host requires that the `this` binding in {var}'s global scope return an object other than the global object")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_Realm_Record)
+        return (env0, env0)
+
+@P("{EXPR} : such an object created in a host-defined manner")
+class _:
+    def s_expr(expr, env0, _):
+        [] = expr.children
+        return (T_Object, env0)
+
+@P("{COMMAND} : Create any host-defined global object properties on {var}.")
+class _:
+    def s_nv(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return env0
+
+# ==============================================================================
 #@ 9.3.2 CreateIntrinsics
 
 #> Set fields of _intrinsics_ with the values listed in
@@ -12341,37 +12369,7 @@ class _:
     s_tb = T_JobCallback_Record
 
 # ==============================================================================
-#@ 9.6 InitializeHostDefinedRealm
-
-@P("{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Realm_Record)
-        return (env0, env0)
-
-@P("{CONDITION_1} : the host requires that the `this` binding in {var}'s global scope return an object other than the global object")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var] = cond.children
-        env0.assert_expr_is_of_type(var, T_Realm_Record)
-        return (env0, env0)
-
-@P("{EXPR} : such an object created in a host-defined manner")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        return (T_Object, env0)
-
-@P("{COMMAND} : Create any host-defined global object properties on {var}.")
-class _:
-    def s_nv(anode, env0):
-        [var] = anode.children
-        env0.assert_expr_is_of_type(var, T_Object)
-        return env0
-
-# ==============================================================================
-#@ 9.7 Agents
+#@ 9.6 Agents
 
 #> An <dfn>agent</dfn> comprises
 #> a set of ECMAScript execution contexts,
@@ -12423,9 +12421,9 @@ class _:
     s_tb = T_agent_signifier_
 
 # ==============================================================================
-#@ 9.10 Processing Model of WeakRef and FinalizationRegistry Targets
+#@ 9.9 Processing Model of WeakRef and FinalizationRegistry Targets
 
-# 9.10.4.1
+# 9.9.4.1
 @P("{SMALL_COMMAND} : perform any host-defined steps for reporting the error")
 class _:
     def s_nv(anode, env0):
@@ -12433,7 +12431,7 @@ class _:
         return env0
 
 # ==============================================================================
-#@ 9.13 CleanupFinalizationRegistry
+#@ 9.12 CleanupFinalizationRegistry
 
 @P("{COMMAND} : Choose any such {var}.")
 class _:

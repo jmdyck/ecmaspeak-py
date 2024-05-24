@@ -277,8 +277,6 @@
     add {var} to {var}
     append {EX} to {SETTABLE}
     let {DEFVAR} be {EXPR}
-    let {DEFVAR} be {EXPR}, indicating that an ordinary object should be created as the global object
-    let {DEFVAR} be {EXPR}, indicating that {var}'s global `this` binding should be the global object
     perform any host-defined steps for reporting the error
     perform {PP_NAMED_OPERATION_INVOCATION}
     return {EXPR}
