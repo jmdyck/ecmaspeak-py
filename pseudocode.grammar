@@ -363,6 +363,7 @@
 
 {CONDITION} :
     ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
+    it is not the case that both {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
@@ -451,8 +452,6 @@
     the implementation does not include local political rules for any time zones
     the implementation only supports the UTC time zone
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
-    the pairs {PAIR} and {PAIR} are in {EX}
-    the pairs {PAIR} and {PAIR} are not in {EX}
     the parse succeeded and no early errors were found
     the source text containing {G_SYM} is eval code that is being processed by a direct eval
     the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}, nor a binary property of strings listed in the “Property name” column of {h_emu_xref}
@@ -461,7 +460,7 @@
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there exists a CharSetElement in {var} containing exactly one character {DEFVAR} such that {CONDITION_1}
-    there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}
+    there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1} and {CONDITION_1}
     there exists an event {DEFVAR} such that {CONDITION}
     there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}
     we return here
@@ -488,7 +487,6 @@
     {EX} contains any duplicate entries for {starred_str} and at least two of those entries were obtained from productions of the form {h_emu_grammar}
     {EX} contains any {nonterminal}
     {EX} contains any {nonterminal}s
-    {EX} contains either {PAIR} or {PAIR}
     {EX} contains more than one occurrence of {starred_str}
     {EX} contains no duplicate entries
     {EX} contains only single code points
@@ -546,7 +544,7 @@
     {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} are finite
     {var} and {var} are finite and non-zero
-    {var} and {var} are in a race in {var}
+    {var} and {var} are in a {h_emu_xref} in {var}
     {var} and {var} do not have disjoint ranges
     {var} and {var} do not have the same number of elements
     {var} and {var} each contain exactly one character
@@ -573,6 +571,7 @@
     {var} does not have either a {DSBN} or an {DSBN} internal slot
     {var} does not include the element {LITERAL}
     {var} does not provide the direct binding for this export
+    {var} happens-before {var} in {var}
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
     {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
@@ -610,6 +609,7 @@
     {var} occurs exactly once in {var}
     {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
+    {var} reads-from {var} in {var}
     {var} starts with {STR_LITERAL}
     {var} starts with {STR_LITERAL} followed by {EX} or more decimal digits
     {var}, {var}, and {var} have the same number of elements
@@ -743,6 +743,7 @@
     an implementation-defined choice of either {var} or {var}
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
+    reads-bytes-from({var}) in {var}
     such an object created in a host-defined manner
     that Record
     the 32-bit two's complement bit string representing {EX}
@@ -1368,8 +1369,6 @@
     a function that returns an <i>Iterator</i> object
     a function that returns an <i>IteratorResult</i> object
     a grammar symbol
-    a happens-before Relation
-    a host-synchronizes-with Relation
     a leading surrogate
     a mathematical value
     a module namespace exotic object
@@ -1389,13 +1388,10 @@
     a property key or Private Name
     a property value or property value alias for the Unicode property {var} listed in {h_a}
     a read-modify-write modification function
-    a reads-bytes-from mathematical function
-    a reads-from Relation
     a return completion
     a sequence of Unicode code points
     a sequence of characters
     a set of algorithm steps
-    a synchronizes-with Relation
     a synthetic function created by ClassStaticBlockDefinitionEvaluation step {h_emu_xref}
     a throw completion
     a time value
@@ -1424,7 +1420,6 @@
     an Object that is defined by either an {nonterminal} or an {nonterminal}
     an abrupt completion
     an agent signifier
-    an agent-order Relation
     an arguments exotic object
     an array index
     an execution context

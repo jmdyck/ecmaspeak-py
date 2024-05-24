@@ -728,7 +728,7 @@ def _handle_oddball_op_section(section):
         # 29.8, 29.9
         op_name = section.section_title
         assert section.block_children[0].source_text().startswith(
-            "<p>For an execution _execution_, two events _E_ and _D_ in SharedDataBlockEventSet(_execution_) are in a "
+            "<p>For an execution _execution_ and events _E_ and _D_ that are contained in SharedDataBlockEventSet(_execution_)"
         )
         params = [
             AlgParam('_execution_', '', 'an execution'),

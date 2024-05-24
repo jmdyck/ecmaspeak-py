@@ -5751,6 +5751,13 @@ class _:
             for subcond in cond.children
         )
 
+@P("{CONDITION} : it is not the case that both {CONDITION_1} and {CONDITION_1}")
+class _:
+    def s_cond(cond, env0, asserting):
+        logical = ('and', cond.children)
+        (env_is_the_case, env_is_not_the_case) = tc_logical(logical, env0, asserting)
+        return (env_is_not_the_case, env_is_the_case)
+
 @P("{CONDITION} : {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -11158,25 +11165,6 @@ class _:
             assert 0
         return env0
 
-@P("{CONDITION_1} : the pairs {PAIR} and {PAIR} are in {EX}")
-@P("{CONDITION_1} : the pairs {PAIR} and {PAIR} are not in {EX}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [paira, pairb, ex] = cond.children
-        env0.assert_expr_is_of_type(paira, T_event_pair_)
-        env0.assert_expr_is_of_type(pairb, T_event_pair_)
-        env0.assert_expr_is_of_type(ex, T_Relation)
-        return (env0, env0)
-
-@P("{CONDITION_1} : {EX} contains either {PAIR} or {PAIR}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [ex, paira, pairb] = cond.children
-        env0.assert_expr_is_of_type(paira, T_event_pair_)
-        env0.assert_expr_is_of_type(pairb, T_event_pair_)
-        env0.assert_expr_is_of_type(ex, T_Relation)
-        return (env0, env0)
-
 @P("{CONDITION_1} : {var} is not in {PREFIX_PAREN}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -14927,13 +14915,14 @@ class _:
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_Event)
         return (env0, env0)
 
-@P("{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1}")
+@P("{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1} and {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
-        [let_var, i, stcond] = cond.children
+        [let_var, i, stconda, stcondb] = cond.children
         env0.assert_expr_is_of_type(i, T_MathInteger_)
         env_for_cond = env0.plus_new_entry(let_var, T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event)
-        return tc_cond(stcond, env_for_cond)
+        logical = ('and', [stconda, stcondb])
+        return tc_logical(logical, env_for_cond, asserting)
 
 # ==============================================================================
 #@ 29.2 Agent Events Records
@@ -14976,45 +14965,35 @@ class _:
 # ==============================================================================
 #@ 29.6 Relations of Candidate Executions
 
-#@ 29.6.1 agent-order
-@P("{VAL_DESC} : an agent-order Relation")
+@P("{CONDITION_1} : {var} reads-from {var} in {var}")
+@P("{CONDITION_1} : {var} happens-before {var} in {var}")
 class _:
-    s_tb = T_Relation
+    def s_cond(cond, env0, _):
+        [eventa_var, eventb_var, execution_var] = cond.children
+        env0.assert_expr_is_of_type(eventa_var, T_Event)
+        env0.assert_expr_is_of_type(eventb_var, T_Event)
+        env0.assert_expr_is_of_type(execution_var, T_Candidate_Execution_Record)
+        return (env0, env0)
 
 #@ 29.6.2 reads-bytes-from
-@P("{VAL_DESC} : a reads-bytes-from mathematical function")
+@P("{EXPR} : reads-bytes-from({var}) in {var}")
 class _:
-    s_tb = ProcType((T_Event,), ListType(T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event))
-
-#@ 29.6.3 reads-from
-@P("{VAL_DESC} : a reads-from Relation")
-class _:
-    s_tb = T_Relation
-
-#@ 29.6.4 host-synchronizes-with
-@P("{VAL_DESC} : a host-synchronizes-with Relation")
-class _:
-    s_tb = T_Relation
-
-#@ 29.6.5 synchronizes-with
-@P("{VAL_DESC} : a synchronizes-with Relation")
-class _:
-    s_tb = T_Relation
-
-#@ 29.6.6 happens-before
-@P("{VAL_DESC} : a happens-before Relation")
-class _:
-    s_tb = T_Relation
+    def s_expr(expr, env0, _):
+        [event_var, execution_var] = expr.children
+        env0.assert_expr_is_of_type(event_var, T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event)
+        env0.assert_expr_is_of_type(execution_var, T_Candidate_Execution_Record)
+        return (ListType(T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event), env0)
 
 # ==============================================================================
 #@ 29.8 Races
 
-@P("{CONDITION_1} : {var} and {var} are in a race in {var}")
+@P("{CONDITION_1} : {var} and {var} are in a {h_emu_xref} in {var}")
 class _:
     def s_cond(cond, env0, asserting):
-        [ea, eb, exe] = cond.children
+        [ea, eb, emu_xref, exe] = cond.children
         env0.assert_expr_is_of_type(ea, T_Shared_Data_Block_Event)
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_Event)
+        assert emu_xref.source_text() == '<emu-xref href="#sec-races">race</emu-xref>'
         env0.assert_expr_is_of_type(exe, T_Candidate_Execution_Record)
         return (env0, env0)
 
