@@ -2039,6 +2039,23 @@ def is_sdo_coverage_exception(sdo_name, lhs_nt, rhs_reduced):
         # "For all other grammatical productions, ..."
         return True
 
+    if sdo_name == 'StringValue' and (
+        lhs_nt == 'LeftHandSideExpression' and rhs_reduced != 'NewExpression'
+        or
+        lhs_nt == 'MemberExpression' and rhs_reduced != 'PrimaryExpression'
+        or
+        lhs_nt == 'PrimaryExpression' and rhs_reduced != 'IdentifierReference'
+    ):
+        # StringValue is applied to a |LeftHandSideExpression|
+        # only when IsIdentifierRef of |LeftHandSideExpression| is *true*.
+        # This excludes all derivations from |LeftHandSideExpression| except for 
+        # LeftHandSideExpression -> NewExpression -> MemberExpression -> PrimaryExpression -> IdentifierReference
+        #
+        # Likewise for StringValue applied to |DestructuringAssignmentTarget|.
+        # (DestructuringAssignmentTarget's only RHS is LeftHandSideExpression,
+        # so it doesn't involve more coverage exceptions.)
+        return True
+
     if sdo_name in ['HasName', 'NamedEvaluation']:
         # Invocations of HasName are guarded by `IsFunctionDefinition of _expr_ is *true*`,
         # so the SDO doesn't need to be defined for most kinds of expr.
