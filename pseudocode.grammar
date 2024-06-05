@@ -1125,6 +1125,7 @@
     Source Text Module Record
     WriteSharedMemory
     a new ExportEntry Record
+    a new Set Record
     a new Waiter Record
     the CaptureRange
     the ClassFieldDefinition Record
@@ -1320,6 +1321,7 @@
     a RegExp Record
     a ResolvedBinding Record
     a Script Record
+    a Set Record
     a Set of events
     a Shared Data Block
     a Shared Data Block event
@@ -1483,6 +1485,7 @@
     byte values
     characters
     code points
+    either ECMAScript language values or {tilded_word}
     either Match Records or *undefined*
     either Objects or Symbols
     either Strings or *undefined*

@@ -7346,6 +7346,7 @@ class _:
                     # Mathematical:
 
                     # always true:
+                    (T_MathInteger_    , '&lt;', T_MathPosInfinity_): 'T',
                     (T_MathInteger_    , '≤'   , T_MathPosInfinity_): 'T',
                     (T_MathNegInfinity_, '≤'   , T_MathInteger_    ): 'T',
                     (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
@@ -7365,6 +7366,7 @@ class _:
                     (T_MathPosInfinity_, '='   , T_MathNegInfinity_): 'F',
                     (T_MathInteger_    , '='   , T_MathNegInfinity_): 'F',
                     (T_MathInteger_    , '='   , T_MathPosInfinity_): 'F',
+                    (T_MathInteger_    , '>'   , T_MathPosInfinity_): 'F',
                     (T_MathInteger_    , '≥'   , T_MathPosInfinity_): 'F',
 
                     # can be true or false:
@@ -8472,6 +8474,12 @@ class _:
 @P("{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types")
 class _:
     s_tb = T_LangTypeName_
+
+@P("{LIST_ELEMENTS_DESCRIPTION} : either ECMAScript language values or {tilded_word}")
+class _:
+    def s_tb(val_desc, env):
+        [tilded_word] = val_desc.children
+        return T_Tangible_ | type_for_tilded_word(tilded_word)
 
 # ==============================================================================
 #@ 6.1.1 The Undefined Type
@@ -10641,7 +10649,7 @@ class _:
     def s_expr(expr, env0, _):
         [seq_ex, subscript_var] = expr.children
         (seq_type, seq_env) = tc_expr(seq_ex, env0); assert seq_env is env0
-        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_); assert env2 is env0
+        env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_)
         if isinstance(seq_type, ListType):
             item_type = seq_type.element_type
         elif seq_type == T_List:
@@ -10657,7 +10665,7 @@ class _:
             item_type = T_MathInteger_
         else:
             assert 0, seq_type
-        return (item_type, env0)
+        return (item_type, env2)
 
 # ------------------------------------------------------------------------------
 # The Record Specification Type
@@ -10763,7 +10771,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [record_constructor_prefix, fields] = expr.children
-        constructor_prefix = record_constructor_prefix.source_text().replace('the ', '')
+        constructor_prefix = record_constructor_prefix.source_text().replace('the ', '').replace('a new ', '')
 
         if constructor_prefix in ['Record', 'Completion Record']:
             schema_name = '' if constructor_prefix == 'Record' else constructor_prefix
@@ -10788,10 +10796,6 @@ class _:
                 record_type_name = constructor_prefix + ' Record'
             elif constructor_prefix == 'PropertyDescriptor':
                 record_type_name = 'Property Descriptor'
-            elif constructor_prefix == 'a new ExportEntry Record':
-                record_type_name = 'ExportEntry Record'
-            elif constructor_prefix == 'a new Waiter Record':
-                record_type_name = 'Waiter Record'
             else:
                 record_type_name = constructor_prefix
             field_info = fields_for_record_type_named_[record_type_name]
@@ -14384,6 +14388,11 @@ declare_isom(T_Object, 'might have', 'slot', '[[MapData]]', ListType(T_MapData_r
 
 # 24.2 Set Objects
 declare_isom(T_Object, 'might have', 'slot', '[[SetData]]', ListType(T_Tangible_ | T_tilde_empty_))
+
+# 24.2.1.1
+@P("{VAL_DESC} : a Set Record")
+class _:
+    s_tb = T_Set_Record
 
 # 24.3 WeakMap Objects
 declare_isom(T_WeakMap_object_, 'must have', 'slot', '[[WeakMapData]]', ListType(T_MapData_record_))
