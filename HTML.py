@@ -255,9 +255,8 @@ def _validate(node):
         return (
             x.element_name in ['th', 'td']
             and
-            x.parent.parent.attrs.get('class', None) == 'lightweight-table'
-            # x.parent is the <tr>
-            # x.parent.parent is the <table>
+            x.nearest_ancestor_satisfying(lambda a: a.element_name == 'table')
+                .attrs.get('class', None) == 'lightweight-table'
         )
         # TODO: Base it on the presence of "<!-- emu-format ignore -->",
         # because not all lightweight-tables are loose about spaces.
