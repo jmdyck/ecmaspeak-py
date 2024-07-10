@@ -9032,11 +9032,6 @@ class _:
         [] = val_desc.children
         return value.isan(EL_Symbol)
 
-@P("{LITERAL} : {atat_word}")
-class _:
-    def s_expr(expr, env0, _):
-        return (T_Symbol, env0)
-
 #> Each Symbol value immutably holds
 #> an associated value called [[Description]]
 #> that is either *undefined* or a String value.
@@ -9903,6 +9898,8 @@ class _:
             '%SharedArrayBuffer%',
         ]:
             rt = T_constructor_object_
+        elif pws.startswith('%Symbol.'):
+            rt = T_Symbol
         else:
             rt = T_Object
         return (rt, env0)

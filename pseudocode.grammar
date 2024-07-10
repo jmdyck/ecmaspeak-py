@@ -1531,7 +1531,6 @@
     {NUMBER_LITERAL}
     {STR_LITERAL}
     {TYPE_NAME}
-    {atat_word}
     {backticked_oth}
     {backticked_word}
     {code_point_lit}

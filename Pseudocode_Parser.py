@@ -165,7 +165,6 @@ tokenizer_for_pseudocode = Tokenizer(r'''
 
     # tokens that begin with other distinctive characters:
     {char_ref}       : & [a-z]+ ;
-    {atat_word}      : @@ \w+ \b
     {percent_word}   : % \w+ (\. \w+)* %
     {nonterminal}    : \| [A-Za-z][A-Za-z0-9]* \?? (\[ .+? \])? \|
     {var}            : \b _ [A-Za-z][A-Za-z0-9]* _ \b

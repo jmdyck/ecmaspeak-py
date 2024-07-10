@@ -122,7 +122,7 @@ def normalize_property_path(path):
         return normalize_property_path(head) + tail
 
     # property key is a Symbol
-    if mo := re.fullmatch(r'(.+) \[ (@@\w+) \]', path):
+    if mo := re.fullmatch(r'(.+) \[ (%Symbol\.\w+%) \]', path):
         (head, tail) = mo.groups()
         return normalize_property_path(head) + f"[{tail}]" # presumably
 
@@ -398,7 +398,7 @@ class S_Intrinsic:
     # It isn't an object itself.
 
     def __init__(self, name):
-        assert re.fullmatch(r'%[^ %]+%', name)
+        # assert re.fullmatch(r'%[^ %]+%', name) # now there can be a %foo% within %bar[...]%
         self.name = name
         self.kind = None
         self.slots = {}
@@ -418,7 +418,29 @@ class S_Intrinsic:
         for (slot_name, slot_value) in sorted(self.slots.items()):
             put(f"        {slot_name}: {slot_value}{check_s_value(slot_value)}")
         put(f"    properties:")
-        for (_, s_prop) in sorted(self.properties.items()):
+
+        # We're about to list the properties,
+        # and we want to do it in a consistent order, to minimize spurious diffs.
+        # But a property key is a String or a Symbol, so how do we order them?
+        # The way we denote String values here (as in the spec) starts with a '*'.
+        # Symbols were formerly denoted starting with '@@' (which comes after '*' in ASCII),
+        # so a simple sort on property keys would put all String keys before all Symbol keys.
+        #
+        # Now (PR #1314), the spec denotes symbol values as %Symbol.foo%,
+        # and '%' comes *before* '*' in ASCII, so a simple sort on keys
+        # would put all Symbols before all Strings.
+        #
+        # To preserve the old order (for backwards compatibility),
+        # we convert '%' to '@' for the sort key.
+        #
+        # (Note that this doesn't change anything in self.properties,
+        # it only affects the sort keys, which the for-loop discards.)
+
+        def strings_before_symbols(properties_item):
+            (prop_key, s_prop) = properties_item
+            return prop_key.replace('%', '@')
+
+        for (_, s_prop) in sorted(self.properties.items(), key=strings_before_symbols):
             put(f"        {s_prop.key}")
             if s_prop.attrs is not None:
                 put(f"            ({s_prop.kind()} property)")
@@ -445,7 +467,7 @@ class S_Intrinsic:
             # Might be ordinary or exotic.
             # From clause 19, we know it doesn't have [[Call]] or [[Construct]].
             self.kind = 'host-defined non-function'
-        elif self.name == '%Array.prototype[@@unscopables]%':
+        elif self.name == '%Array.prototype[%Symbol.unscopables%]%':
             assert self.kind is None
             # "The initial value ... is an object created by the following steps:"
             # where the object is created by OrdinaryObjectCreate(null)
@@ -500,7 +522,7 @@ class S_Intrinsic:
         if '[[Prototype]]' not in self.slots:
             if self.kind in ['a function object', 'a constructor']:
                 Prototype = '%Function.prototype%'
-            elif self.name == '%Array.prototype[@@unscopables]%':
+            elif self.name == '%Array.prototype[%Symbol.unscopables%]%':
                 # Created via `OrdinaryObjectCreate(*null*)`
                 Prototype = '*null*'
             else:
@@ -596,9 +618,9 @@ class S_Intrinsic:
 
             prop_key = '*"name"*'
 
-            if mo := re.search(r'\[@@(\w+)\]:([gs]et)%$', self.name):
+            if mo := re.search(r'\[%Symbol\.(\w+)%\]:([gs]et)%$', self.name):
                 default_name = mo.expand(r'\2 [Symbol.\1]')
-            elif mo := re.search(r'\[@@(\w+)\]%$', self.name):
+            elif mo := re.search(r'\[%Symbol\.(\w+)%\]%$', self.name):
                 default_name = mo.expand(r'[Symbol.\1]')
             elif mo := re.search(r'(\w+)%$', self.name):
                 default_name = mo.expand(r'\1')
@@ -749,7 +771,7 @@ def check_s_value(v):
         r'\*"[^"]*"\*',
 
         # Symbol:
-        r'the well-known symbol @@\w+ \(<emu-xref href="#table-well-known-symbols"></emu-xref>\)',
+        r'the well-known symbol %Symbol\.\w+% \(<emu-xref href="#table-well-known-symbols"></emu-xref>\)',
 
         # Object:
 
@@ -774,7 +796,7 @@ def check_references_to_intrinsics():
     # Instead, just look in literal (text) nodes.
     # (Note that this skips occurrences of "%<var>Foo</var>Prototype%".)
     for tnode in spec.doc_node.each_descendant_named('#LITERAL'):
-        for mo in re.compile(r'%\S+%').finditer(spec.text, tnode.start_posn, tnode.end_posn):
+        for mo in re.compile(r'%[^% ]+%').finditer(spec.text, tnode.start_posn, tnode.end_posn):
             itext = mo.group(0)
             itext_start = mo.start(0)
             if itext in ['%name%', '%name.a.b%']:

@@ -1413,7 +1413,7 @@ def _handle_function_section(section):
         pattern = (
             pattern
             .replace('<PARAMETER_LIST>', r'\((?P<params_str>[^()]*)\)')
-            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
+            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ %Symbol\.\w+% \])+')
         )
         mo = re.fullmatch(pattern, section.section_title)
         if mo:
@@ -1531,7 +1531,7 @@ def _handle_other_section(section):
 
             (r'<PROP_PATH>',                                 'other_property'),
             (r'[a-z]\w+|Infinity|NaN',                       'other_property'),
-            (r'@@\w+',                                       'other_property'),
+            (r'%Symbol\.\w+%',                               'other_property'),
 
             (r'.*',                                'catchall'),
         ]
@@ -1540,7 +1540,7 @@ def _handle_other_section(section):
     for (pattern, result) in pattern_results:
         pattern = (
             pattern
-            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ @@\w+ \])+')
+            .replace('<PROP_PATH>',      r'(\w+|%\w+%)(\.\w+| \[ %Symbol\.\w+% \])+')
         )
         mo = re.fullmatch(pattern, section.section_title)
         if mo:
@@ -1598,7 +1598,7 @@ def _handle_other_section(section):
             # Skip it.
             pass
 
-        elif section.section_title == 'Array.prototype [ @@unscopables ]':
+        elif section.section_title == 'Array.prototype [ %Symbol.unscopables% ]':
             # The section_title identifies a data property,
             # and the algorithm results in its initial value.
             # So CreateIntrinsics invokes this alg, implicitly and indirectly.
@@ -1606,7 +1606,7 @@ def _handle_other_section(section):
             alg_header = AlgHeader_make(
                 section = section,
                 species = 'op: singular',
-                name = 'initializer for @@unscopables',
+                name = 'initializer for %Symbol.unscopables%',
                 params = [],
                 node_at_end_of_header = section.block_children[emu_alg_posn-1],
             )
@@ -1984,7 +1984,7 @@ def check_section_title(section):
     # Check references to well-known symbols.
     mo1 = re.search('\[ *@', title)
     if mo1:
-        mo2 = re.search(r'( |^)\[ @@\w+ \]( |$)', title)
+        mo2 = re.search(r'( |^)\[ %Symbol\.\w+% \]( |$)', title)
         if not mo2:
             msg_at_posn(
                 h1.inner_start_posn + mo1.start(),
@@ -2073,10 +2073,8 @@ def check_id(section):
             # but also things like _NativeError_ and _TypedArray_.)
             trim_underscores_from_aliases,
 
-            # If the final property key is a symbol, drop the square brackets:
-            lambda s: re.sub(r' \[ (@@\w+) \]$', r' \1', s),
-            # and maybe drop the '@@' (4 cases):
-            [ None, lambda s: s.replace('@@', '') ],
+            # If a property key is a symbol, drop the square brackets:
+            lambda s: re.sub(r' \[ (%Symbol\.\w+%) \]', r' \1', s),
 
             # If it's an accessor property, maybe drop the initial 'get' (2 cases)
             [ None, lambda s: re.sub(r'^get ', '', s) ],
@@ -2089,8 +2087,8 @@ def check_id(section):
 
             # Change spaces to hyphens
             change_space_to_hyphen,
-            # and maybe change dots to hyphens too (11 cases)
-            [ None, lambda s: s.replace('.', '-') ],
+            # and maybe change dots to hyphens too, but never after "%symbol" (11 cases)
+            [ None, lambda s: re.sub(r'(?<!%symbol)\.', '-', s) ],
 
             # And prepend 'sec-'
             prepend_sec,
@@ -2106,7 +2104,6 @@ def check_id(section):
             'sec-async-function-prototype-properties-toStringTag',  # 'properties'
             'String.prototype.trimleft',                            # missing 'sec-'
             'String.prototype.trimright',                           # missing 'sec-'
-            'sec-asynciteratorprototype-asynciterator',             # missing '%'            
         ]
 
     # ----------------------------------------------------------------
@@ -3147,13 +3144,13 @@ def extract_intrinsic_info_from_property_section(section):
             section_defines_object = True
         
     elif section.section_kind == 'other_property':
-        if section.section_title == 'Array.prototype [ @@unscopables ]':
+        if section.section_title == 'Array.prototype [ %Symbol.unscopables% ]':
             # The only not-well-known intrinsic that isn't a function?
             section_defines_object = True
         else:
             # The [[Value]] of the property defined by this section
             # is either a primitive value
-            # (e.g. Math.PI or Math[@@toStringTag]),
+            # (e.g. Math.PI or Math[%Symbol.toStringTag%]),
             # or an object defined elsewhere
             # (e.g. Array.prototype or Array.prototype.constructor).
             section_defines_object = False
@@ -3599,12 +3596,12 @@ def confirm_this_property(section, this_prop_t):
 # ------------------------------------------------------------------------------
 
 def split_prop_path(path):
-    if re.fullmatch(r'@@\w+', path):
+    if re.fullmatch(r'%Symbol\.\w+%', path):
         return (None, path)
     if mo := re.fullmatch(r'\*"\w+"\*', path):
         return (None, path)
 
-    mo = re.fullmatch(r'(%\w+%|\w+)(\.\w+| ?\[ ?@@\w+ ?\])*', path)
+    mo = re.fullmatch(r'(%\w+%|\w+)(\.\w+| ?\[ ?%Symbol\.\w+% ?\])*', path)
     assert mo, path
 
     if mo.group(2) is None:
@@ -3616,7 +3613,7 @@ def split_prop_path(path):
     else:
         # {path} is a proper path.
         # Split off the last component:
-        mo = re.fullmatch(r'(.+?)(\.(\w+)| ?\[ ?(@@\w+) ?\])$', path)
+        mo = re.fullmatch(r'(.+?)(\.(\w+)| ?\[ ?(%Symbol\.\w+%) ?\])$', path)
         (g1, _, g3, g4) = mo.groups()
         if g3:
             return (g1, pystr_to_spec_String_literal(g3))
@@ -3920,9 +3917,9 @@ def _check_section_order():
                     t = re.sub(r'^get ', '', t)
                     t = re.sub(r'(^|\.)__', r'\1zz__', t) # to put __proto__ last
                     if section.section_title == 'Properties of the RegExp Prototype Object':
-                        t = re.sub(r' \[ @@(\w+) \]', r'.\1', t)
+                        t = re.sub(r' \[ %symbol\.(\w+)% \]', r'.\1', t)
                     else:
-                        t = re.sub(r' \[ @@(\w+) \]', r'.zz_\1', t)
+                        t = re.sub(r' \[ %symbol\.(\w+)% \]', r'.zz_\1', t)
                     if prev_t is not None and t <= prev_t:
                         msg_at_node(child, '"%s" should be before "%s"' % (child.section_title, prev_title))
                     prev_t = t
