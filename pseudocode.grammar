@@ -805,6 +805,7 @@
     the WaiterList Record that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
     the algorithm steps defined in {h_emu_xref}
+    the bitwise complement of {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
@@ -837,7 +838,6 @@
     the intersection of CharSets {var} and {var}
     the intrinsic function {percent_word}
     the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
-    the inverse tangent of {EX}
     the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last Matcher in {var}
     the last element of {var}
@@ -847,6 +847,7 @@
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
     the primary time zone identifier associated with {var}
+    the negation of {var}; that is, compute a Number with the same magnitude but opposite sign
     the negative of {EX}
     the number of bytes in {var}
     the number of elements in the List {var}
@@ -859,7 +860,6 @@
     the one character in CharSet {var}
     the other {EX} code units of {var}
     the parse of some source text
-    the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of applying that mapping to {var}
     the result of applying the bitwise AND operation to {var} and {var}
     the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
@@ -868,15 +868,10 @@
     the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to IEEE 754-2019 binary64 format
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
-    the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign
     the result of parsing {var} as a date, in exactly the same manner as for the `parse` method ({h_emu_xref})
     the result of performing a sign-extending right shift of {var} by {var} bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the result of performing a zero-filling right shift of {var} by {var} bits. Vacated bits are filled with zero. The mathematical value of the result is exactly representable as a 32-bit unsigned bit string
     the result of raising {EX} to the {EX} power
-    the result of subtracting 1 from the exponential function of {EX}
-    the result of the {MATH_FUNC} of {EX}
-    the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm
-    the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm
     the result of {PP_NAMED_OPERATION_INVOCATION}
     the running execution context
     the second to top element of the execution context stack
@@ -903,8 +898,11 @@
     the union of {var} and {var}
     the value currently bound to {var} in {var}
     the value that {var} corresponds to in {h_emu_xref}
+    the {MATH_FUNC} of {EX}
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
+    toLowercase({var}), according to the Unicode Default Case Conversion algorithm
+    toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm
     {EX}
     {EX} if {CONDITION}. Otherwise, it is {EXPR}
     {EX}, where {DEFVAR} is {EX}

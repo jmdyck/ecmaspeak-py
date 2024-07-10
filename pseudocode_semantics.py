@@ -7239,25 +7239,11 @@ class _:
         env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
         return (T_MathReal_, env2)
 
-@P("{EXPR} : the result of the {MATH_FUNC} of {EX}")
+@P("{EXPR} : the {MATH_FUNC} of {EX}")
 class _:
     def s_expr(expr, env0, _):
         [math_func, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_Number | T_MathReal_)
-        return (T_MathReal_, env1)
-
-@P('{EXPR} : the inverse tangent of {EX}')
-class _:
-    def s_expr(expr, env0, _):
-        [ex] = expr.children
-        env1 = env0.ensure_expr_is_of_type(ex, T_MathReal_)
-        return (T_MathReal_, env1)
-
-@P("{EXPR} : the result of subtracting 1 from the exponential function of {EX}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_MathReal_)
         return (T_MathReal_, env1)
 
 @P("{EXPR} : the square root of the sum of squares of the mathematical values of the elements of {var}")
@@ -9159,7 +9145,7 @@ class _:
             )
             return (T_Number, env1)
 
-@P("{EXPR} : the result of negating {var}; that is, compute a Number with the same magnitude but opposite sign")
+@P("{EXPR} : the negation of {var}; that is, compute a Number with the same magnitude but opposite sign")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -9301,7 +9287,7 @@ class _:
 # ----------------------------------------------
 # Treating an integral Number like a bit-string:
 
-@P("{EXPR} : the result of applying bitwise complement to {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
+@P("{EXPR} : the bitwise complement of {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -13715,7 +13701,7 @@ class _:
 declare_isom(T_String_exotic_object_, 'must have', 'slot', '[[StringData]]', T_String)
 
 #@ 22.1.3.28 String.prototype.toLowerCase
-@P("{EXPR} : the result of toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
+@P("{EXPR} : toLowercase({var}), according to the Unicode Default Case Conversion algorithm")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -14150,7 +14136,7 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_character_)
         return (env1, env1)
 
-@P("{EXPR} : the result of toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm")
+@P("{EXPR} : toUppercase(« {var} »), according to the Unicode Default Case Conversion algorithm")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
