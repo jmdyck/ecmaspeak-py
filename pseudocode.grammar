@@ -418,10 +418,10 @@
     any source text is matched by this production
     control reaches here
     either {DOTTING} or {DOTTING} is {LITERAL}
+    every CharSetElement of {var} consists of a single character (including if {var} is empty)
     it is impossible to create a new Shared Data Block value consisting of {var} bytes
     it is not possible to create a Data Block {var} consisting of {var} bytes
     it must be in the Object Environment Record
-    every CharSetElement of {var} consists of a single character (including if {var} is empty)
     no such execution context exists
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
@@ -528,7 +528,6 @@
     {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
-    {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
     {SETTABLE} and {SETTABLE} are not the same Environment Record
     {SETTABLE} and {SETTABLE} are not the same Module Record
     {SETTABLE} and {SETTABLE} are not the same Realm Record
@@ -537,11 +536,11 @@
     {SETTABLE} and {SETTABLE} are the same Environment Record
     {SETTABLE} and {SETTABLE} are the same Module Record
     {SETTABLE} has an? {DSBN} field
+    {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
     {TYPE_TEST}
     {var} also has a {DSBN} internal slot
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
-    {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} are finite
     {var} and {var} are finite and non-zero
     {var} and {var} are in a {h_emu_xref} in {var}
@@ -550,6 +549,7 @@
     {var} and {var} each contain exactly one character
     {var} and {var} have equal ranges
     {var} and {var} have overlapping ranges
+    {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} have the same number of elements
     {var} binds a single name
     {var} corresponds with a year that cannot be represented in the {h_emu_xref}
@@ -639,23 +639,23 @@
     {SUM}
 
 {NUM_COMPARATOR} :
-    ≥
-    >
-    ≤
     &lt;
-    ≠
     =
+    >
     is at least
     is greater than or equal to
     is strictly greater than
+    ≠
+    ≤
+    ≥
 
 # ---------------------------------------------------------------
 
 {MULTILINE_EXPR} :
     a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}
     the string-concatenation of:{I_BULLETS}
-    the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
     the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
+    the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}
 
 {CLOSURE_KIND} :
     Abstract Closure
@@ -737,10 +737,10 @@
     an empty Set
     an empty sequence of characters
     an implementation-approximated Number value representing {EXPR}
-    an implementation-defined non-negative mathematical value
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
     an implementation-defined choice of either {var} or {var}
+    an implementation-defined non-negative mathematical value
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
     reads-bytes-from({var}) in {var}
@@ -751,18 +751,18 @@
     the Agent Record of the surrounding agent
     the BigInt value that corresponds to {var}
     the CharSet containing all CharSetElements whose character database definition includes the property {var} with value “True”
-    the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}
     the CharSet containing all Unicode code points whose character database definition includes the property {var} with value {var}
+    the CharSet containing all Unicode code points whose character database definition includes the property “General_Category” with value {var}
     the CharSet containing all Unicode code points {DEFVAR} that do not have a {h_a} mapping (that is, scf({var})={var})
     the CharSet containing all characters corresponding to a code point on the right-hand side of the {nonterminal} or {nonterminal} productions
-    the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
     the CharSet containing all characters with a character value in the inclusive interval from {var} to {var}
+    the CharSet containing all characters {DEFVAR} such that {var} is not in {var} but {NAMED_OPERATION_INVOCATION} is in {var}
     the CharSet containing all code point values
     the CharSet containing all code unit values
     the CharSet containing every CharSetElement of {var} that consists of a single character
     the CharSet containing every character in {STR_LITERAL}
-    the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the CharSetElements of {var} which are not also CharSetElements of {var}
+    the CharSet containing the character matched by {PROD_REF}
     the CharSet containing the one string {var}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
@@ -820,8 +820,8 @@
     the code point whose numeric value is {EX}
     the code point {var}
     the concatenation of {var} and {var}
-    the element of {EX} whose {DSBN} is {EX}
     the element of {EX} whose {DSBN} field is {var}
+    the element of {EX} whose {DSBN} is {EX}
     the empty CharSet
     the empty sequence of Unicode code points
     the extended mathematical value of {var}
@@ -846,7 +846,6 @@
     the longest prefix of {var} that satisfies the syntax of a {nonterminal}, which might be {var} itself. If there is no such prefix, return {NUMBER_LITERAL}
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit
     the mathematical value denoted by the result of replacing each significant digit in the decimal representation of {var} after the 20th with a 0 digit and then incrementing it at the 20th position (with carrying as necessary)
-    the primary time zone identifier associated with {var}
     the negation of {var}; that is, compute a Number with the same magnitude but opposite sign
     the negative of {EX}
     the number of bytes in {var}
@@ -860,6 +859,7 @@
     the one character in CharSet {var}
     the other {EX} code units of {var}
     the parse of some source text
+    the primary time zone identifier associated with {var}
     the result of applying that mapping to {var}
     the result of applying the bitwise AND operation to {var} and {var}
     the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
@@ -916,8 +916,6 @@
 
 {EX} :
     ! {var}
-    « »
-    « {EXLIST} »
     ({EX})
     *this* value
     ? {DOTTING}
@@ -974,6 +972,8 @@
     {PP_NAMED_OPERATION_INVOCATION}
     {RECORD_CONSTRUCTOR}
     {h_code_quote}
+    « {EXLIST} »
+    « »
 
 {MATH_FUNC} :
     base 10 logarithm
@@ -1135,8 +1135,8 @@
     the Iterator Record
     the JSON Serialization Record
     the JobCallback Record
-    the MatchState
     the Match Record
+    the MatchState
     the PrivateEnvironment Record
     the PromiseCapability Record
     the PromiseReaction Record
@@ -1343,8 +1343,8 @@
     a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
     a Unicode {h_emu_not_ref_property_name} listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
     a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}
-    a WaiterList Record
     a Waiter Record
+    a WaiterList Record
     a WeakRef
     a WriteSharedMemory event
     a binary Unicode property or binary property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
@@ -1433,9 +1433,9 @@
     an instance of the production {h_emu_grammar}
     an instance of {var}
     an integer
-    an integer ≥ {dsb_word}
     an integer in {INTERVAL}
     an integer index
+    an integer ≥ {dsb_word}
     an integral Number
     an integral Number in {INTERVAL}
     an internal slot name
