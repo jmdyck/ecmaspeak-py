@@ -624,6 +624,8 @@ class S_Intrinsic:
                 default_name = mo.expand(r'[Symbol.\1]')
             elif mo := re.search(r'(\w+)%$', self.name):
                 default_name = mo.expand(r'\1')
+            else:
+                assert False, self.name
 
             default_attrs = {
                 '[[Value]]'       : f'*"{default_name}"*',
