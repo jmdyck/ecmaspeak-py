@@ -501,7 +501,7 @@ element_info = {
         'emu-note'             : ('B', '',          'class id',   '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|code;|emu-not-ref;|emu-xref;|sub;)+'),
         'li'                   : ('B', '',          'oldids',     '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '',          'colspan oldids rowspan', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-not-ref;|emu-xref;|i;|ins;|sub;|sup;)+'),
-        'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)+|#TEXT;((br;|em;|i;|sup;)#TEXT;)*'),
+        'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)*|#TEXT;((br;|em;|i;|sup;)#TEXT;)*'),
         'dd'                   : ('B', '',          '',           '#WS;((p;|ul;)#WS;)+|(#TEXT;|a;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-xref;|i;|sub;|sup;)*'),
 
         # block contains inlines:
@@ -514,7 +514,7 @@ element_info = {
         'p'                    : ('B', '',          '',           'img;|(#COMMENT;|#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
         'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-xref;|i;|ins;|sub;)+'), # though dfn is pretty odd
         'h2'                   : ('B', '',          '',           '#TEXT;'),
-        'th'                   : ('B', '',          '',           '#TEXT;(sup;#TEXT;)?'),
+        'th'                   : ('B', '',          'class',      '#TEXT;(sup;#TEXT;)?'),
         'script'               : ('B', 'src',       '',           '(#TEXT;)?'),
         'dt'                   : ('B', '',          '',           '#TEXT;'),
 
@@ -557,6 +557,7 @@ element_info = {
         'emu-xref'          : ('I', 'href',      'title',      '(#TEXT;|code;)?'),
         'i'                 : ('I', '',          '',           '#TEXT;(sup;#TEXT;)?'),
         'ins'               : ('I', '',          '',           '#TEXT;((a;|emu-xref;|sub;)#TEXT;)?'), # PROPOSALS?
+        'span'              : ('I', '',          'class',      '#TEXT;'),
         'strong'            : ('I', '',          '',           '(#TEXT;|code;)+'),
         'sub'               : ('I', '',          '',           '#TEXT;|dfn;'), # dfn; for num-ref
         'sup'               : ('I', '',          '',           '(#TEXT;|sub;)+'), # sub; for num-ref
@@ -575,10 +576,12 @@ attribute_info = {
     'pre.class'          : r'metadata',
     'code.class'         : r'javascript|html',
     'dl.class'           : r'header',
-    'div.class'          : r'math-display|rhs',
+    'div.class'          : r'math-display|rhs|slash',
     'table.class'        : r'lightweight-table',
     'emu-table.class'    : r'module-overflow',
     'emu-note.class'     : r'module-overflow-note',
+    'th.class'           : r'corner-cell',
+    'span.class'         : r'column|row',
 
     'object.type'        : r'image/svg\+xml',
     'emu-grammar.type'   : r'definition',
