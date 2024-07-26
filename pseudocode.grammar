@@ -308,8 +308,7 @@
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in descending order
-    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal}
-    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of a {nonterminal}, {nonterminal}, or {nonterminal} Contained within {var}
+    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of any {nonterminal}, {nonterminal}, or {nonterminal} {var} such that {CONDITION}
     {nonterminal} {DEFVAR} that {var} contains
 
 {ITEM_NATURE} :
