@@ -1453,7 +1453,7 @@
     source text
     the Environment Record for a |Catch| clause
     the execution context of a generator
-    the single code point {code_point_lit} or {code_point_lit}
+    the single code point {code_point_lit}
     the {nonterminal} of an? {nonterminal}
     {LITERAL_ISH}
     {LITERAL}

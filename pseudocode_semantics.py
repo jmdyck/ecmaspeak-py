@@ -3534,7 +3534,7 @@ class ES_UnicodeCodePoint(ES_Value):
 class _:
     s_tb = T_code_point_
 
-@P("{VAL_DESC} : the single code point {code_point_lit} or {code_point_lit}")
+@P("{VAL_DESC} : the single code point {code_point_lit}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
