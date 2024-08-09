@@ -2270,6 +2270,7 @@ def check_id(section):
             'sec-async-functions-abstract-operations-async-function-start',
             'sec-sharedatablockeventset',
             'sec-tear-free-aligned-reads',
+            'sec-createiterresultobject', # PR #3335 changed the op name without changing the id
         ]
 
     # ----------------------------------------------------------------

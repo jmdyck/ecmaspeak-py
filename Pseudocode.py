@@ -411,7 +411,7 @@ def annotate_invocations(anode):
                 op_names = [cap_word.source_text()]
             elif opn_before_paren.prod.rhs_s == '{var}':
                 # can't do much
-                if opn_before_paren.source_text() == '_convOp_':
+                if opn_before_paren.source_text() == '_conversionOperation_':
                     # Should extract this from "The TypedArray Constructors" table
                     op_names = [
                         'ToInt8',
@@ -425,7 +425,7 @@ def annotate_invocations(anode):
                         'ToBigUint64',
                     ]
                 elif opn_before_paren.source_text() == '_operation_':
-                    assert d.source_text() == '_operation_(_lnum_, _rnum_)'
+                    assert d.source_text() == '_operation_(_lNum_, _rNum_)'
                     # ApplyStringOrNumericBinaryOperator
                     op_names = [
                         'Number::exponentiate',
