@@ -7239,7 +7239,7 @@ class _:
         env2 = env0.ensure_expr_is_of_type(bvar, T_MathReal_)
         return (T_MathReal_, env2)
 
-@P("{EXPR} : the {MATH_FUNC} of {EX}")
+@P("{EX} : the {MATH_FUNC} of {EX}")
 class _:
     def s_expr(expr, env0, _):
         [math_func, ex] = expr.children

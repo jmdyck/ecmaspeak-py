@@ -897,7 +897,6 @@
     the union of {var} and {var}
     the value currently bound to {var} in {var}
     the value that {var} corresponds to in {h_emu_xref}
-    the {MATH_FUNC} of {EX}
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
     toLowercase({var}), according to the Unicode Default Case Conversion algorithm
@@ -960,6 +959,7 @@
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
     the value of {SETTABLE}
+    the {MATH_FUNC} of {EX}
     {CONSTANT_NAME}
     {DSBN}
     {EX} occurrences of {code_unit_lit}
