@@ -7596,7 +7596,7 @@ class _:
         (var_t, env1) = tc_expr(var, env0)
         if var_t == T_ExtendedMathReal_:
             result_t = T_MathReal_
-        elif var_t == T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_:
+        elif var_t.is_a_subtype_of_or_equal_to(T_MathInteger_ | T_MathNegInfinity_ | T_MathPosInfinity_):
             result_t = T_MathInteger_
         else:
             assert 0, var_t
