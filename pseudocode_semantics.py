@@ -566,7 +566,6 @@ type_tweaks_for_op_ = defaultdict(TypeTweaks)
 def set_up_type_tweaks():
     type_tweaks_tuples = [
         ('MV'                              , '*return*'        , T_TBD                , T_MathInteger_),
-        ('PromiseResolve'                  , '_C_'             , T_constructor_object_, T_Object),
 
         ('CreateBuiltinFunction'           , '*return*'        , T_function_object_, T_built_in_function_object_),
 
