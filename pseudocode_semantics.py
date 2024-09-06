@@ -1868,6 +1868,38 @@ def tc_expr(expr, env0, expr_value_will_be_discarded=False):
                     f"warning: expr `{expr_text}` has type {expr_type}, which mixes completions and non-completions"
                 )
 
+    # When an AO has an optional parameter,
+    # we shouldn't do anything with that parameter
+    # until
+    # - we've established that it's present, or
+    # - we've established that it's not present, and set it to a value.
+    #
+    # E.g., something like:
+    #    If _p_ is not present, set _p_ to "default".
+    if T_not_passed.is_a_subtype_of_or_equal_to(expr_type):
+        if (
+            str(expr.prod) == "{LOCAL_REF} : {SETTABLE}"
+            and
+            str(expr.parent.prod) in [
+                "{CONDITION_1} : {LOCAL_REF} is present",
+                "{CONDITION_1} : {LOCAL_REF} is not present",
+            ]
+            or
+            str(expr.prod) == "{SETTABLE} : {var}"
+            and
+            str(expr.parent.prod) in [
+                "{SMALL_COMMAND} : set {SETTABLE} to {EXPR}",
+                "{COMMAND} : Set {SETTABLE} to {EXPR}.",
+            ]
+        ):
+            # good
+            pass
+        else:
+            add_pass_error(
+                expr,
+                f"warning: expr `{expr_text}` might be not-passed"
+            )
+
     if 0 and not expr_value_will_be_discarded:
         if expr_type != T_Top_ and T_not_returned.is_a_subtype_of_or_equal_to(expr_type):
             add_pass_error(
