@@ -552,7 +552,6 @@
     {var} binds a single name
     {var} corresponds with a year that cannot be represented in the {h_emu_xref}
     {var} does not already have a binding for {var}
-    {var} does not contain Type({TYPE_ARG})
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
     {var} does not contain a valid UTF-8 encoding of a Unicode code point
     {var} does not contain an? {nonterminal} Parse Node
@@ -615,9 +614,6 @@
 {PROPERTY_KIND} :
     accessor
     data
-
-{TYPE_ARG} :
-    {var}
 
 {NUM_COMPARISON} :
     {NUM_COMPARAND} {NUM_COMPARATOR} {NUM_COMPARAND}
@@ -1485,7 +1481,6 @@
     errors
     events
     internal slot names
-    names of ECMAScript Language Types
     names of internal slots
     pairs of Synchronize events
     property keys
@@ -1522,7 +1517,6 @@
     {MATH_LITERAL}
     {NUMBER_LITERAL}
     {STR_LITERAL}
-    {TYPE_NAME}
     {backticked_oth}
     {backticked_word}
     {code_point_lit}
@@ -1572,15 +1566,5 @@
     *SyntaxError*
     *TypeError*
     *URIError*
-
-{TYPE_NAME} :
-    BigInt
-    Boolean
-    Null
-    Number
-    Object
-    String
-    Symbol
-    Undefined
 
 # -----------------------

@@ -2058,11 +2058,11 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
 
     # 7.3.20 CreateListFromArrayLike
     elif callee_op_name == 'CreateListFromArrayLike' and len(args) == 2:
-        # The second arg is a list of ES language type names
+        # The second arg is an enum value
         # that constrains the return type.
         assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
         types_arg = args[1]
-        assert types_arg.source_text() == '« String, Symbol »'
+        assert types_arg.source_text() == '~property-key~'
         return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
 
     # 7.4.8 IteratorClose
@@ -3498,7 +3498,6 @@ class _:
 @P("{SETTABLE} : {DOTTING}")
 @P("{TERM} : {FACTOR}")
 @P("{TERM} : {PRODUCT}")
-@P("{TYPE_ARG} : {var}")
 class _:
     s_expr = s_expr_pass_down
     d_exec = d_exec_pass_down
@@ -8435,21 +8434,7 @@ class _:
 #> where “type” refers to the ECMAScript language and specification types
 #> defined in this clause.
 
-@P("{CONDITION_1} : {var} does not contain Type({TYPE_ARG})")
-class _:
-    def s_cond(cond, env0, asserting):
-        # once, in CreateListFromArrayLike
-        [var, type_arg] = cond.children
-        env0.assert_expr_is_of_type(var, ListType(T_LangTypeName_))
-        return (env0, env0)
-
 # ------------------------------------------------------------------------------
-
-@P("{LITERAL} : {TYPE_NAME}")
-class _:
-    def s_expr(expr, env0, _):
-        [type_name] = expr.children
-        return (T_LangTypeName_, env0)
 
 @P("{VAL_DESC} : {LITERAL_ISH}")
 @P("{VAL_DESC} : {LITERAL}")
@@ -8476,10 +8461,6 @@ class _:
 @P("{LIST_ELEMENTS_DESCRIPTION} : ECMAScript language values")
 class _:
     s_tb = T_Tangible_
-
-@P("{LIST_ELEMENTS_DESCRIPTION} : names of ECMAScript Language Types")
-class _:
-    s_tb = T_LangTypeName_
 
 @P("{LIST_ELEMENTS_DESCRIPTION} : either ECMAScript language values or {tilded_word}")
 class _:

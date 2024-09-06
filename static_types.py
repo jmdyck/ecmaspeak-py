@@ -960,7 +960,6 @@ _named_type_hierarchy = {
                 'event_pair_': {},
                 'IEEE_binary32_': {},
                 'IEEE_binary64_': {},
-                'LangTypeName_': {},
                 'List': {},
                 'ExtendedMathReal_': {
                     'MathReal_': {
