@@ -5709,7 +5709,6 @@ class _:
 # (This section is where conditions should be mentioned?)
 
 @P("{CONDITION} : {CONDITION_1}")
-@P("{CONDITION_1} : {TYPE_TEST}")
 @P("{CONDITION_1} : {NUM_COMPARISON}")
 @P("{CONDITION_1} : {NUM_COMPARISON} (ignoring potential non-monotonicity of time values)")
 class _:
@@ -8403,16 +8402,6 @@ class _:
 #>     “the <em>type</em> of _x_”
 #> where “type” refers to the ECMAScript language and specification types
 #> defined in this clause.
-
-@P("{TYPE_TEST} : Type({TYPE_ARG}) is Type({TYPE_ARG})")
-@P("{TYPE_TEST} : Type({TYPE_ARG}) is not Type({TYPE_ARG})")
-class _:
-    def s_cond(cond, env0, asserting):
-        # Env can't represent the effect of these.
-        # If the incoming static types were different,
-        # the 'true' env could at least narrow those to their intersection,
-        # but the form only appears twice, and in both cases the static types are the same.
-        return (env0, env0)
 
 @P("{CONDITION_1} : {var} does not contain Type({TYPE_ARG})")
 class _:

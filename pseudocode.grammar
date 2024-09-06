@@ -536,7 +536,6 @@
     {SETTABLE} and {SETTABLE} are the same Module Record
     {SETTABLE} has an? {DSBN} field
     {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
-    {TYPE_TEST}
     {var} also has a {DSBN} internal slot
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
@@ -616,10 +615,6 @@
 {PROPERTY_KIND} :
     accessor
     data
-
-{TYPE_TEST} :
-    Type({TYPE_ARG}) is Type({TYPE_ARG})
-    Type({TYPE_ARG}) is not Type({TYPE_ARG})
 
 {TYPE_ARG} :
     {var}
