@@ -1049,6 +1049,11 @@ def _handle_structured_header(section):
         parameter_part = f" ({brief_params(0)} )"
     section.section_title = f"{which_semantics}{op_name}{parameter_part}"
 
+    param_names = set(
+        param.name
+        for param in params
+    )
+
     # -----
 
     for_phrase = None
@@ -1083,6 +1088,9 @@ def _handle_structured_header(section):
         assert for_phrase is None, for_phrase
         for_phrase = for_dd.inner_source_text()
         for_phrase_node = Pseudocode.parse(for_dd)
+
+        if mo := re.search(r'\b_\w+_\b', for_phrase):
+            param_names.add(mo.group(0))
 
     if 'effects' in dl_dict:
         effect_dd = dl_dict['effects']
@@ -1235,6 +1243,33 @@ def _handle_structured_header(section):
                     msg_at_node(
                         description_dd,
                         "This description talks about a return value, but we don't have a pattern that matches the wording"
+                    )
+
+            for varname in re.findall(r'\b_\w+_\b', sentence):
+                if varname in param_names:
+                    # The usual case
+                    pass
+                elif (op_name, varname) in [
+                    ("Number::toString", "_r_"),
+                    ("BigInt::toString", "_r_"),
+                    # "The digits used in the representation of a number using radix _r_ are ..."
+
+                    ("CanonicalNumericIndexString", "_n_"),
+                    # "... matches ToString(_n_) for some Number value _n_, ..."
+
+                    ("MaybeSimpleCaseFolding", "_cp_"),
+                    # The description is referring to an external function,
+                    # and including a parameter list.
+
+                    ("AllocateTypedArray", "_TypedArray_"),
+                    # It's referring to the family of TypedArray constructors
+                    # as if it's a singular thing.
+                ]:
+                    pass
+                else:
+                    msg_at_node(
+                        description_dd,
+                        f"This description mentions `{varname}`, which is not a parameter."
                     )
 
     # --------------------------------------------------------------------------

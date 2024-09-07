@@ -459,6 +459,59 @@ class PreambleInfoHolder:
         # desc:
 
         pr_description_paras = self.fields['desc']
+
+        non_param_vars = set()
+        for para in pr_description_paras:
+            for varname in re.findall(r'\b_\w+\b', para):
+                if varname in alg_header.param_names():
+                    # That's the usual case.
+                    pass
+
+                elif (alg_header.name, varname) in [
+                    ("_NativeError_", "_NativeError_"),
+                    ("_TypedArray_",  "_TypedArray_"),
+                    # The section-name is an alias.
+
+                    ("Math.exp",   "_e_"),
+                    ("Math.expm1", "_e_"),
+                    # "where _e_ is the base of the natural logarithms"
+
+                    ("String.prototype.localeCompare", "_S_"),
+                    ("String.prototype.localeCompare", "_thatValue_"),
+                    # previewing aliases that will be defined in the algorithm
+
+                    ("String.prototype.slice",  "_sourceLength_"),
+                    ("String.prototype.substr", "_sourceLength_"),
+                    # "where _sourceLength_ is the length of the String"
+
+                    ("Array.prototype.slice", "_length_"),
+                    # "where _length_ is the length of the array"
+
+                    ("Array.prototype.sort", "_x_"),
+                    ("Array.prototype.sort", "_y_"),
+                    # _comparator_ "should be a function that accepts two arguments _x_ and _y_"
+
+                    ("%TypedArray%.prototype.set",      "_TypedArray_"),
+                    ("%TypedArray%.prototype.subarray", "_TypedArray_"),
+                    # "... this _TypedArray_ ..."
+                    # Hm. Underscores/italics seem unnecessary for this usage.
+
+                    ("JSON.parse", "_key_"),
+                    ("JSON.parse", "_value_"),
+                    # _reviver_ "is a function that takes two parameters, _key_ and _value_"
+                ]:
+                    pass
+
+                else:
+                    non_param_vars.add(varname)
+
+        if non_param_vars:
+            oh_warn()
+            oh_warn(f"In {alg_header.section.section_num} {alg_header.section.section_title},")
+            oh_warn(f"the preamble refers to non-parameter var(s):")
+            for varname in sorted(list(non_param_vars)):
+                oh_warn(f"    {varname}")
+
         assert alg_header.description_paras == []
         alg_header.description_paras = pr_description_paras
 
