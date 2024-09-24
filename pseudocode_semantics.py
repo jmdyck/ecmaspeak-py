@@ -995,12 +995,6 @@ class Env:
 
         (expr_t, env1) = tc_expr(expr, self)
 
-        if spec.text[expr.start_posn-5:expr.start_posn] == 'Type(' and not expr_t.is_a_subtype_of_or_equal_to(T_Tangible_):
-            add_pass_error(
-                expr,
-                f"ST of Type() arg is {expr_t}"
-            )
-
         # assert env1 is self
         # No, e.g. expr_text is '_R_.[[Value]]', where the out-env
         # has a narrower binding for _R_.
@@ -8427,15 +8421,6 @@ class _:
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 6 ECMAScript Data Types and Values
 
-#> Within this specification, the notation
-#>     “Type(_x_)”
-#> is used as shorthand for
-#>     “the <em>type</em> of _x_”
-#> where “type” refers to the ECMAScript language and specification types
-#> defined in this clause.
-
-# ------------------------------------------------------------------------------
-
 @P("{VAL_DESC} : {LITERAL_ISH}")
 @P("{VAL_DESC} : {LITERAL}")
 class _:
@@ -13114,8 +13099,8 @@ class _:
 
 # ==============================================================================
 #@ 13.15.2 Runtime Semantics: Evaluation [of Assignment Operators]
+#@ 13.15.3 ApplyStringOrNumericBinaryOperator
 
-# for PR #1961 compound_assignment
 @P("{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
 class _:
     def s_expr(expr, env0, _):
@@ -13123,25 +13108,14 @@ class _:
         table_result_type_str = table_result_type.source_text()
         if table_result_type_str == 'sequence of Unicode code points':
             result_type = T_Unicode_code_points_
-        else:
-            assert 0, table_result_type_str
-        return (result_type, env0)
-
-# ==============================================================================
-#@ 13.15.3 ApplyStringOrNumericBinaryOperator
-
-@P("{MULTILINE_EXPR} : the {TABLE_RESULT_TYPE} associated with {var} and Type({var}) in the following table:{_indent_}{nlai}{h_figure}{_outdent_}")
-class _:
-    def s_expr(expr, env0, _):
-        [table_result_type, vara, varb, h_figure] = expr.children
-        table_result_type_str = table_result_type.source_text()
-        if table_result_type_str == 'abstract operation':
+        elif table_result_type_str == 'abstract operation':
             # result_type = (
-            #     ProcType([T_Number, T_Number], NormalCompletionType(T_Number) | T_throw_completion)
+            #     ProcType((T_Number, T_Number), T_Number)
             #     |
-            #     ProcType([T_BigInt, T_BigInt], NormalCompletionType(T_BigInt) | T_throw_completion)
+            #     ProcType((T_BigInt, T_BigInt), T_BigInt)
             # )
-            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), NormalCompletionType(T_Number|T_BigInt) | T_throw_completion)
+            # Some of the code can't handle a union of ProcTypes.
+            result_type = ProcType((T_Number|T_BigInt, T_Number|T_BigInt), T_Number|T_BigInt)
         else:
             assert 0, table_result_type_str
         return (result_type, env0)
