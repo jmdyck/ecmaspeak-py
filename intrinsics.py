@@ -676,7 +676,8 @@ class S_Intrinsic:
                         '[[Configurable]]': '*true*',
                     }
                 else:
-                    assert 0, f"{self.name}'s property {prop_key} has kind {kind!r}"
+                    stderr(f"!!! {self.name}'s property {prop_key} has kind {kind!r}")
+                    next
                 self.apply_defaults_for_property(prop_key, default_attrs)
 
     # -------------------------------------------------------------
