@@ -567,8 +567,6 @@ def set_up_type_tweaks():
     type_tweaks_tuples = [
         ('MV'                              , '*return*'        , T_TBD                , T_MathInteger_),
 
-        ('CreateBuiltinFunction'           , '*return*'        , T_function_object_, T_built_in_function_object_),
-
         ('ClassDefinitionEvaluation',
             '*return*',
             NormalCompletionType(T_function_object_)            | T_abrupt_completion, 
