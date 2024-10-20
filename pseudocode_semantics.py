@@ -9791,6 +9791,7 @@ class _:
             'sec-arguments-exotic-objects-delete-p'                                                  : T_Object,
 
             # 10.4.5.*
+            'sec-typedarray-preventextensions'                                                       : T_TypedArray_object_,
             'sec-typedarray-getownproperty'                                                          : T_TypedArray_object_,
             'sec-typedarray-hasproperty'                                                             : T_TypedArray_object_,
             'sec-typedarray-defineownproperty'                                                       : T_TypedArray_object_,
@@ -12707,7 +12708,7 @@ declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[TypedArrayName]]',   
 declare_isom(T_TypedArray_object_, 'must have', 'slot', '[[ByteLength]]',        T_MathNonNegativeInteger_ | T_tilde_auto_)
 
 # ==============================================================================
-#@ 10.4.5.8 TypedArray With Buffer Witness Records
+#@ 10.4.5.9 TypedArray With Buffer Witness Records
 
 @P("{VAL_DESC} : a TypedArray With Buffer Witness Record")
 class _:
