@@ -679,7 +679,7 @@ class S_Intrinsic:
                     }
                 else:
                     stderr(f"!!! {self.name}'s property {prop_key} has kind {kind!r}")
-                    next
+                    default_attrs = {}
                 self.apply_defaults_for_property(prop_key, default_attrs)
 
     # -------------------------------------------------------------
