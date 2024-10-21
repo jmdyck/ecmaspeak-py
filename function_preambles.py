@@ -62,7 +62,7 @@ single_sentence_rules_str = r'''
         # Don't match "The value of _separator_ may be a String of any length or it may be ..."
         # because it belongs in the description, is misleading for parameter-type.
 
-        (The value of the \[\[\w+\]\] attribute is a built-in function) that (requires|takes) (?P<pl>no arguments|an argument _proto_).
+        (The value of the \[\[\w+\]\] attribute is a built-in function) that (requires|takes) (?P<pl>no arguments|an argument _\w+_).
         kind=accessor property
 
     # ==========================================================================

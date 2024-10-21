@@ -2114,7 +2114,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
                     st = mo.group(1)
                     if st == 'the internal slots listed in <emu-xref href="#table-internal-slots-of-ecmascript-function-objects"></emu-xref>':
                         obj_type = T_ECMAScript_function_object_
-                    elif st == '« [[GeneratorState]], [[GeneratorContext]], [[GeneratorBrand]] »':
+                    elif st == 'the list-concatenation of _extraSlots_ and « [[GeneratorState]], [[GeneratorContext]], [[GeneratorBrand]] »':
                         obj_type = T_Generator_object_
                     elif st == '« [[AsyncGeneratorState]], [[AsyncGeneratorContext]], [[AsyncGeneratorQueue]], [[GeneratorBrand]] »':
                         obj_type = T_AsyncGenerator_object_
@@ -2126,6 +2126,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
     # 10.1.13 OrdinaryCreateFromConstructor
     elif callee_op_name == 'OrdinaryCreateFromConstructor':
         assert return_type == NormalCompletionType(T_Object) | T_throw_completion
+        # but we can maybe infer a narrower return_type
         assert len(args) in [2,3]
         proto_arg = args[1]
         proto_st = proto_arg.source_text()
@@ -2139,6 +2140,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
             '*"%Error.prototype%"*'                             : T_Error,
             '*"%FinalizationRegistry.prototype%"*'              : T_FinalizationRegistry_object_,
             '*"%GeneratorFunction.prototype.prototype%"*'       : T_Generator_object_,
+            '*"%Iterator.prototype%"*'                          : T_Iterator_object_,
             '*"%Map.prototype%"*'                               : T_Object,
             '*"%Number.prototype%"*'                            : T_Object,
             '*"%Object.prototype%"*'                            : T_Object,
@@ -7354,6 +7356,7 @@ class _:
 
                     # always true:
                     (T_MathInteger_    , '&lt;', T_MathPosInfinity_): 'T',
+                    (T_MathInteger_    , '≠'   , T_MathPosInfinity_): 'T',
                     (T_MathInteger_    , '≤'   , T_MathPosInfinity_): 'T',
                     (T_MathNegInfinity_, '≤'   , T_MathInteger_    ): 'T',
                     (T_MathNegInfinity_, '&lt;', T_MathInteger_    ): 'T',
@@ -7371,6 +7374,7 @@ class _:
                     (T_MathPosInfinity_, '&lt;', T_MathInteger_): 'F',
                     (T_MathPosInfinity_, '='   , T_MathInteger_): 'F',
                     (T_MathPosInfinity_, '='   , T_MathNegInfinity_): 'F',
+                    (T_MathPosInfinity_, '≠'   , T_MathPosInfinity_): 'F',
                     (T_MathInteger_    , '='   , T_MathNegInfinity_): 'F',
                     (T_MathInteger_    , '='   , T_MathPosInfinity_): 'F',
                     (T_MathInteger_    , '>'   , T_MathPosInfinity_): 'F',
@@ -11624,7 +11628,7 @@ class _:
     s_tb = T_Iterator_Record
 
 # ==============================================================================
-#@ 7.4.10 IfAbruptCloseIterator
+#@ 7.4.12 IfAbruptCloseIterator
 
 @P("{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
 class _:
@@ -14659,11 +14663,21 @@ class _:
 #> An individual object may conform to multiple interfaces.
 
 # ==============================================================================
+#@ 27.1.4 The %Iterator.prototype% Object
+
+declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterator]]', T_Iterator_Record)
+
+# ==============================================================================
 #@ 27.1.1.5 The <i>IteratorResult</i> Interface
 
 @P("{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface")
 class _:
     s_tb = a_subset_of(T_Object)
+
+# ==============================================================================
+#@ 27.1.3.2.1 Iterator.from
+
+declare_isom(T_Object, 'might have', 'slot', '[[Iterated]]', T_Iterator_Record)
 
 # ==============================================================================
 #@ 27.2 Promise Objects

@@ -1480,8 +1480,8 @@ def _handle_function_section(section):
         # The spec leaves off the empty parameter list
         params = []
     else:
-        assert section.section_kind == 'anonymous_built_in_function' or section.section_title == 'set Object.prototype.__proto__'
-        params = None
+        assert section.section_kind == 'anonymous_built_in_function' or section.section_title.startswith('set ')
+        params = None # AlgHeader_make will deduce parameter list from the preamble
 
     n_emu_algs = section.bcen_list.count('emu-alg')
     assert n_emu_algs in [0, 1]
@@ -2268,6 +2268,7 @@ def check_id(section):
 
             lambda s: s.replace('/', ''),
 
+            # Maybe convert to lower-case
             (
                 None
                 if 
@@ -2278,6 +2279,7 @@ def check_id(section):
                     'InnerModuleLinking',
                     'GetImportedModule',
                     'FinishLoadingImportedModule',
+                    'SetterThatIgnoresPrototypeProperties',
                 ))
                 else
                 convert_to_lowercase
@@ -2701,7 +2703,7 @@ def extract_intrinsic_info_from_p_ul_section(section):
         subject = f"each {var} {what}"
         assert p_ist == f"Each {var} {what}:"
 
-    elif (mo := re.fullmatch(r'(Properties of the|The) (%\w+%|[A-Z]\w+) (Constructor|Prototype Object|Intrinsic Object|Object)', section.section_title)):
+    elif (mo := re.fullmatch(r'(Properties of the|The) (%\w+(?:\.\w+)?%|[A-Z]\w+) (Constructor|Prototype Object|Intrinsic Object|Object)', section.section_title)):
         # the usual case
         (prefix, id, suffix) = mo.groups()
         if id == 'Global': id = 'global'
@@ -2883,6 +2885,9 @@ def extract_intrinsic_info_from_p_ul_section(section):
         ):
             pass
 
+        elif li_ist == 'is designed to be subclassable. It may be used as the value of an *extends* clause of a class definition.':
+            pass
+
         elif li_ist == 'acts as the abstract superclass of the various _TypedArray_ constructors.':
             pass
 
@@ -2906,6 +2911,8 @@ def extract_intrinsic_info_from_p_ul_section(section):
         elif mo := re.fullmatch(r'has properties that are indirectly inherited by all \w+ instances\.', li_ist):
             pass
         elif mo := re.fullmatch(r'has properties that are inherited by all (.+) Iterator Objects\.', li_ist):
+            pass
+        elif li_ist == 'has properties that are inherited by all Iterator Helper Objects.':
             pass
         elif li_ist == 'along with its corresponding prototype object, provides common properties that are inherited by all _TypedArray_ constructors and their instances.':
             pass
@@ -3267,8 +3274,9 @@ def _(section, mo, emu_alg):
     r"{THIS} is an accessor property with attributes {ATTRS}. The \[\[Get\]\] and \[\[Set\]\] attributes are defined as follows:"
 )
 def _(section, mo):
-    assert section.bcen_str == 'p'
+    assert section.bcen_str in ['p', 'p emu-note']
     # I.e., the <p> that matches the above is the only block-child in the section.
+    # <emu-note> after child-sections is odd?
     # The "as follows:" refers to the following two subsections.
 
     (g, s) = section.section_children

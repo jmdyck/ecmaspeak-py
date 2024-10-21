@@ -49,6 +49,8 @@ def get_pdn(phrase):
         'the constructor of async generator function objects': '%AsyncGeneratorFunction%',
         'the constructor of generator function objects': '%GeneratorFunction%',
         'the super class of all typed Array constructors': '%TypedArray%',
+        'the prototype of Iterator Helper Objects': '%IteratorHelperPrototype%',
+        'the prototype of wrapped Iterator objects returned by Iterator.from': '%WrapForValidIteratorPrototype%',
     }.get(phrase)
     if result: return result
 
@@ -75,7 +77,7 @@ def get_pdn(phrase):
     if mo := re.fullmatch(r'the (\w+) (constructor|object)', phrase):
         return pc(mo.group(1))
 
-    if mo := re.fullmatch(r'the %(\w+)% (object|intrinsic object)', phrase):
+    if mo := re.fullmatch(r'the %(\w+(\.\w+)*)% (object|intrinsic object)', phrase):
         return pc(mo.group(1))
 
     if mo := re.fullmatch(r'the (\w+) function', phrase):
