@@ -10038,6 +10038,10 @@ class _:
         [led, ex] = val_desc.children
         env.assert_expr_is_of_type(ex, T_MathInteger_)
         (led_sub_t, led_sup_t) = type_bracket_for(led, env)
+        add_pass_error(
+            val_desc,
+            "Strings are measured with 'length', Lists are measured with 'the number of elements'"
+        )
         return a_subset_of(ListType(led_sup_t))
         # inexact because of length restriction
 
@@ -10346,6 +10350,10 @@ class _:
         [list_var, len_var] = cond.children
         env0.assert_expr_is_of_type(list_var, T_List)
         env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
+        add_pass_error(
+            list_var,
+            "Strings are measured with 'length', Lists are measured with 'the number of elements'"
+        )
         return (env0, env0)
 
 @P("{EXPR} : the number of elements in the List {var}")
@@ -11517,6 +11525,10 @@ class _:
         env0.assert_expr_is_of_type(var1, T_MathInteger_)
         env1 = env0.ensure_expr_is_of_type(var3, T_Data_Block | T_Shared_Data_Block)
         env0.assert_expr_is_of_type(var4, T_MathInteger_)
+        add_pass_error(
+            expr,
+            "Strings are measured with 'length', Lists are measured with 'the number of elements'"
+        )
         return (ListType(T_MathInteger_), env1)
 
 @P("{EXPR} : a List whose elements are bytes from {var} at indices in {INTERVAL}")
@@ -14418,6 +14430,10 @@ class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
         env0.assert_expr_is_of_type(var, T_MathInteger_)
+        add_pass_error(
+            expr,
+            "Strings are measured with 'length', Lists are measured with 'the number of elements'"
+        )
         return (ListType(T_MathInteger_), env0)
 
 @P("{LIST_ELEMENTS_DESCRIPTION} : byte values")
