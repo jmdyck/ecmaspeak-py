@@ -4436,7 +4436,7 @@ class _:
 # <nonterminal> is a lexical nonterminal that derives a set of single code points.
 # So this is a way to test whether a code point belongs to a particular set.
 
-#@ 12.7.1.1 
+# 12.7.1.1 
 @P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production")
 class _:
     def s_cond(cond, env0, asserting):
@@ -4450,7 +4450,7 @@ class _:
         nt_name = nt_name_from_nonterminal_node(nont)
         return not pychar_matches_lexical_nonterminal(chr(code_point.scalar), nt_name)
 
-#@ 22.2.1.1
+# 22.2.1.1
 @P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
 class _:
     def s_cond(cond, env0, asserting):
@@ -4458,7 +4458,7 @@ class _:
         env0.assert_expr_is_of_type(noi, T_code_point_)
         return (env0, env0)
 
-#@ 22.2.1.1
+# 22.2.1.1
 @P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production")
 class _:
     def s_cond(cond, env0, asserting):
@@ -4466,7 +4466,7 @@ class _:
         env0.assert_expr_is_of_type(noi, T_MathInteger_)
         return (env0, env0)
 
-#@ 22.2.2.4 Runtime Semantics: CompileAssertion
+# 22.2.2.4 Runtime Semantics: CompileAssertion
 @P("{CONDITION_1} : the character {EX} is matched by {nonterminal}")
 class _:
     def s_cond(cond, env0, asserting):
