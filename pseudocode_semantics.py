@@ -4423,6 +4423,59 @@ class _:
         return True
 
 # ------------------------------------------------------------------------------
+# Above, "matched by" is basically talking about the relation
+# between source text and Parse Nodes that is established by
+# a successful invocation of ParseText.
+#
+# But the spec uses another (related) sense for "matched by":
+# "<text> is matched by <nonterminal>" means that
+# <text> *would* be matched by <nonterminal>
+# *if* it were (part of) the source text in a hypothetical invocation of ParseText.
+#
+# In practice, <text> is (an alias holding) a single code point, and
+# <nonterminal> is a lexical nonterminal that derives a set of single code points.
+# So this is a way to test whether a code point belongs to a particular set.
+
+#@ 12.7.1.1 
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production")
+class _:
+    def s_cond(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, T_code_point_)
+        return (env0, env0)
+
+    def d_exec(cond):
+        [noi, nont] = cond.children
+        code_point = EXEC(noi, ES_UnicodeCodePoint)
+        nt_name = nt_name_from_nonterminal_node(nont)
+        return not pychar_matches_lexical_nonterminal(chr(code_point.scalar), nt_name)
+
+#@ 22.2.1.1
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
+class _:
+    def s_cond(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, T_code_point_)
+        return (env0, env0)
+
+#@ 22.2.1.1
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production")
+class _:
+    def s_cond(cond, env0, asserting):
+        [noi, nont] = cond.children
+        env0.assert_expr_is_of_type(noi, T_MathInteger_)
+        return (env0, env0)
+
+#@ 22.2.2.4 Runtime Semantics: CompileAssertion
+@P("{CONDITION_1} : the character {EX} is matched by {nonterminal}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [ex, nonterminal] = cond.children
+        env0.assert_expr_is_of_type(ex, T_character_)
+        assert nonterminal.source_text() == '|LineTerminator|'
+        return (env0, env0)
+
+# ------------------------------------------------------------------------------
 #> When a Parse Node is an instance of a nonterminal,
 #> it is also an instance of some production
 #> that has that nonterminal as its left-hand side.
@@ -4902,37 +4955,6 @@ def the_nonterminal_that_is_covered_by_pnode(nont, pnode):
             # stderr('covered by:', pnode, "parse failed")
             pnode.covered_thing = None
     return pnode.covered_thing
-
-# ----------------------------------------------------------
-# (this text would be matched by that nonterminal/production
-# if it were source text in an appropriate context)
-
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, T_code_point_)
-        return (env0, env0)
-
-    def d_exec(cond):
-        [noi, nont] = cond.children
-        code_point = EXEC(noi, ES_UnicodeCodePoint)
-        nt_name = nt_name_from_nonterminal_node(nont)
-        return not pychar_matches_lexical_nonterminal(chr(code_point.scalar), nt_name)
-
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, T_code_point_)
-        return (env0, env0)
-
-@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production")
-class _:
-    def s_cond(cond, env0, asserting):
-        [noi, nont] = cond.children
-        env0.assert_expr_is_of_type(noi, T_MathInteger_)
-        return (env0, env0)
 
 # ==============================================================================
 #@ 5.1.5 Grammar Notation
@@ -14074,17 +14096,6 @@ class _:
     def s_tb(val_desc, env):
         assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
         return T_RegExpMatcher_
-
-# ==============================================================================
-#@ 22.2.2.4 Runtime Semantics: CompileAssertion
-
-@P("{CONDITION_1} : the character {EX} is matched by {nonterminal}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [ex, nonterminal] = cond.children
-        env0.assert_expr_is_of_type(ex, T_character_)
-        assert nonterminal.source_text() == '|LineTerminator|'
-        return (env0, env0)
 
 # ==============================================================================
 #@ 22.2.2.7 Runtime Semantics: CompileAtom
