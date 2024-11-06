@@ -1144,7 +1144,7 @@ def _handle_structured_header(section):
             if mo:
                 (pre, verb, post) = mo.groups()
                 if (
-                    pre.endswith('whose `next` method')
+                    pre.endswith('whose [[NextMethod]]')
                     # CreateListIteratorRecord
                     or
                     pre == 'It does not enforce that the constructor function'
@@ -2910,9 +2910,9 @@ def extract_intrinsic_info_from_p_ul_section(section):
 
         elif mo := re.fullmatch(r'has properties that are indirectly inherited by all \w+ instances\.', li_ist):
             pass
-        elif mo := re.fullmatch(r'has properties that are inherited by all (.+) Iterator Objects\.', li_ist):
+        elif mo := re.fullmatch(r'has properties that are inherited by all (.+) Iterator objects\.', li_ist):
             pass
-        elif li_ist == 'has properties that are inherited by all Iterator Helper Objects.':
+        elif li_ist == 'has properties that are inherited by all Iterator Helper objects.':
             pass
         elif li_ist == 'along with its corresponding prototype object, provides common properties that are inherited by all _TypedArray_ constructors and their instances.':
             pass

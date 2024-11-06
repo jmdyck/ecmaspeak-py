@@ -1096,7 +1096,7 @@ def analyze_static_dependencies():
                     'a newly created object',
                     'a new built-in function object',
                     'an ECMAScript function object',
-                    'an Iterator object',
+                    'an iterator object',
                     'internal slot',
                     'own property',
                     'the property named',

@@ -9541,10 +9541,10 @@ class _:
             assert 0
         return (result_type, env0)
 
-@P("{EXPR} : an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below")
+@P("{EXPR} : an iterator object whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below")
 class _:
     def s_expr(expr, env0, _):
-        [emu_xref, var] = expr.children
+        [var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_Object)
         return (T_Iterator_object_, env1)
 
@@ -14673,7 +14673,7 @@ declare_isom(T_FinalizationRegistry_object_, 'must have', 'slot', '[[Cells]]',  
 # ==============================================================================
 #@ 27.1 Iteration
 
-@P("{VAL_DESC} : an Iterator")
+@P("{VAL_DESC} : an iterator object")
 class _:
     s_tb = T_Iterator_object_
 
@@ -14695,9 +14695,9 @@ class _:
 declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterator]]', T_Iterator_Record)
 
 # ==============================================================================
-#@ 27.1.1.5 The <i>IteratorResult</i> Interface
+#@ 27.1.1.5 The IteratorResult Interface
 
-@P("{VAL_DESC} : an Object that conforms to the <i>IteratorResult</i> interface")
+@P("{VAL_DESC} : an Object that conforms to the IteratorResult interface")
 class _:
     s_tb = a_subset_of(T_Object)
 

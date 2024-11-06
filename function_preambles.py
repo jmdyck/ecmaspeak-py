@@ -158,13 +158,10 @@ single_sentence_rules_str = r'''
         retn=\2 \3
         v=\1
 
-        (.+ returns (?P<retn>an Iterator object) .+)
-        v=\1
-
         (.+ returns (?P<retn>an array) .+)
         v=\1
 
-        (.+ returns (?P<retn>an Iterator object) .+)
+        (.+ returns (?P<retn>an iterator object) .+)
         v=\1
 
         (.+ returns either a new promise .+ or the argument itself if the argument is a promise .+)

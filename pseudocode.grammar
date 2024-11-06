@@ -721,7 +721,6 @@
     a newly created Property Descriptor with no fields
     a newly created object with an internal slot for each name in {var}
     a one-element CharSet containing {EX}
-    an Iterator object ({h_emu_xref}) whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     an empty List of Matchers
     an empty Set
     an empty sequence of characters
@@ -732,6 +731,7 @@
     an implementation-defined non-negative mathematical value
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}
+    an iterator object whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     reads-bytes-from({var}) in {var}
     such an object created in a host-defined manner
     that Record
@@ -1353,10 +1353,10 @@
     a finite time value
     a fully populated Property Descriptor
     a function object
-    a function that returns a promise for an <i>IteratorResult</i> object
-    a function that returns an <i>AsyncIterator</i> object
-    a function that returns an <i>Iterator</i> object
-    a function that returns an <i>IteratorResult</i> object
+    a function that returns a promise for an IteratorResult object
+    a function that returns an IteratorResult object
+    a function that returns an async iterator object
+    a function that returns an iterator object
     a grammar symbol
     a leading surrogate
     a mathematical value
@@ -1401,10 +1401,9 @@
     an Environment Record
     an IEEE 754-2019 binary32 NaN value
     an IEEE 754-2019 binary64 NaN value
-    an Iterator
     an Iterator Record
     an Object
-    an Object that conforms to the <i>IteratorResult</i> interface
+    an Object that conforms to the IteratorResult interface
     an Object that has a {dsb_word} internal slot
     an Object that is defined by either an {nonterminal} or an {nonterminal}
     an abrupt completion
@@ -1428,6 +1427,7 @@
     an integral Number
     an integral Number in {INTERVAL}
     an internal slot name
+    an iterator object
     an odd integral Number
     an ordinary object
     an ordinary, extensible object

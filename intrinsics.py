@@ -49,8 +49,8 @@ def get_pdn(phrase):
         'the constructor of async generator function objects': '%AsyncGeneratorFunction%',
         'the constructor of generator function objects': '%GeneratorFunction%',
         'the super class of all typed Array constructors': '%TypedArray%',
-        'the prototype of Iterator Helper Objects': '%IteratorHelperPrototype%',
-        'the prototype of wrapped Iterator objects returned by Iterator.from': '%WrapForValidIteratorPrototype%',
+        'the prototype of Iterator Helper objects': '%IteratorHelperPrototype%',
+        'the prototype of wrapped iterator objects returned by Iterator.from': '%WrapForValidIteratorPrototype%',
     }.get(phrase)
     if result: return result
 

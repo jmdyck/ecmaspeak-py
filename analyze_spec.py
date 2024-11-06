@@ -605,7 +605,7 @@ def check_tables():
                 assert 0
 
         elif 'Properties' in caption:
-            assert re.fullmatch(r'<i>\w+</i> Interface( (Required|Optional))? Properties', caption)
+            assert re.fullmatch(r'[\w ]+ Interface( (Required|Optional))? Properties', caption)
             assert header_line == 'Property; Value; Requirements'
             check_value_descriptions_in_column(1)
 
