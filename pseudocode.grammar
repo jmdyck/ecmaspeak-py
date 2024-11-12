@@ -362,6 +362,7 @@
 
 {CONDITION} :
     ({NUM_COMPARISON} or {NUM_COMPARISON}) and ({NUM_COMPARISON} or {NUM_COMPARISON})
+    either {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}
     it is not the case that both {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}
     {CONDITION_1} and {CONDITION_1}
@@ -474,8 +475,8 @@
     {EX} contains a Record {DEFVAR} such that {CONDITION_1}
     {EX} contains a code unit that is not a radix-{var} digit
     {EX} contains a formal parameter mapping for {var}
-    {EX} contains a single {nonterminal}
     {EX} contains a {nonterminal}
+    {EX} contains an? {h_emu_grammar} Parse Node such that {CONDITION}
     {EX} contains an? {nonterminal} Parse Node
     {EX} contains any code point more than once
     {EX} contains any code points other than {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, {backticked_word}, or {backticked_word}
@@ -489,7 +490,7 @@
     {EX} contains more than one occurrence of {starred_str}
     {EX} contains no duplicate entries
     {EX} contains only single code points
-    {EX} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same
+    {EX} contains two distinct {nonterminal}s {DEFVAR} and {DEFVAR} such that {CONDITION_1} and such that {CONDITION_1}
     {EX} contains {EX}
     {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}
     {EX} does not contain {EX}
@@ -504,7 +505,7 @@
     {EX} is not {SETTABLE}
     {EX} is not {VALUE_DESCRIPTION}
     {EX} is the same Parse Node as {EX}
-    {EX} is {PREFIX_PAREN}
+    {EX} is {NAMED_OPERATION_INVOCATION}
     {EX} is {SETTABLE}
     {EX} is {VALUE_DESCRIPTION}
     {LOCAL_REF} Contains {G_SYM}
@@ -547,6 +548,7 @@
     {var} and {var} each contain exactly one character
     {var} and {var} have equal ranges
     {var} and {var} have overlapping ranges
+    {var} and {var} have the same enclosing {nonterminal}
     {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} have the same number of elements
     {var} binds a single name
@@ -589,6 +591,7 @@
     {var} imports a specific binding for this export
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is as small as possible
+    {var} is contained within {PROD_REF}
     {var} is even
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
@@ -1482,6 +1485,7 @@
     internal slot names
     names of internal slots
     pairs of Synchronize events
+    positive integers
     property keys
     {ERROR_TYPE} objects
     {nonterminal} Parse Nodes

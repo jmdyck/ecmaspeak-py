@@ -1920,6 +1920,10 @@ nts_behind_var_in_sdo_call = {
         'GroupSpecifier',
     ],
 
+    # 35989
+    ('CapturingGroupName', '_x_'): ['GroupSpecifier'],
+    ('CapturingGroupName', '_y_'): ['GroupSpecifier'],
+
     # 37399 JSON.parse
     ('Evaluation', '_script_'): ['Script'],
 }

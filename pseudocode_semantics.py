@@ -4684,6 +4684,13 @@ class _:
         else:
             return contains_it
 
+@P("{CONDITION_1} : {EX} contains an? {h_emu_grammar} Parse Node such that {CONDITION}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [ex, h_emu_grammar, subcond] = cond.children
+        env0.assert_expr_is_of_type(ex, T_Parse_Node)
+        return tc_cond(subcond, env0)
+
 @P('{PROD_REF} : the {nonterminal} Parse Node contained within {var}')
 class _:
     def s_expr(expr, env0, _):
@@ -4734,25 +4741,27 @@ class _:
         assert x_var.source_text() == x_var2.source_text()
         return (T_MathNonNegativeInteger_, env0)
 
-@P("{CONDITION_1} : {EX} contains two or more {nonterminal}s for which {NAMED_OPERATION_INVOCATION} is the same")
+@P("{CONDITION_1} : {EX} contains two distinct {nonterminal}s {DEFVAR} and {DEFVAR} such that {CONDITION_1} and such that {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
-        [ex, nonta, noi] = cond.children
+        [ex, nont, defvara, defvarb, subconda, subcondb] = cond.children
         env0.assert_expr_is_of_type(ex, T_Parse_Node)
-        # XXX noi
-        return (env0, env0)
+        t = ptn_type_for(nont)
+        env1 = env0.plus_new_entry(defvara, t).plus_new_entry(defvarb, t)
+        logical = ('and', [subconda, subcondb])
+        return tc_logical(logical, env1, asserting)
 
     def d_exec(cond):
-        [local_ref, nont, noi] = cond.children
-        pnode = EXEC(local_ref, ES_ParseNode)
+        [ex, nont, defvara, defvarb, subconda, subcondb] = cond.children
+        pnode = EXEC(ex, ES_ParseNode)
         nt_name = nt_name_from_nonterminal_node(nont)
-        vals = set()
+        descendants = set()
         for descendant in pnode.preorder_traverse():
             if descendant.symbol == nt_name:
-                val = EXEC(noi, E_Value)
-                if val in vals: return True
-                vals.add(val)
-        return False
+                descendants.add(descendant)
+        if len(descendants) < 2: return False
+        # TODO
+        assert False
 
 # ------------------------------------------------------------------------------
 # (You can ask about nodes that contain _P_)
@@ -4776,6 +4785,13 @@ class _:
         assert len(containers) == 1
         return containers[0]
 
+@P("{CONDITION_1} : {var} is contained within {PROD_REF}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, prod_ref] = cond.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
 @P("{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}")
 class _:
     def s_expr(expr, env0, _):
@@ -4788,6 +4804,16 @@ class _:
     def s_cond(cond, env0, asserting):
         [var, *nont_] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (env0, env0)
+
+# (... aka nodes that enclose _P_)
+
+@P("{CONDITION_1} : {var} and {var} have the same enclosing {nonterminal}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [vara, varb, nont] = cond.children
+        env0.assert_expr_is_of_type(vara, T_Parse_Node)
+        env0.assert_expr_is_of_type(varb, T_Parse_Node)
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
@@ -5831,6 +5857,7 @@ class _:
 
 @P("{CONDITION} : {CONDITION_1} and {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}")
 @P("{CONDITION} : {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}")
+@P("{CONDITION} : either {CONDITION_1} and {CONDITION_1}, or {CONDITION_1} and {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [a, b, c, d] = cond.children
@@ -7002,6 +7029,7 @@ class _:
     s_tb = T_MathInteger_
 
 @P("{VAL_DESC} : a positive integer")
+@P("{LIST_ELEMENTS_DESCRIPTION} : positive integers")
 class _:
     s_tb = a_subset_of(T_MathNonNegativeInteger_)
 
@@ -8080,7 +8108,7 @@ def same_value(a, b):
 
 @P("{CONDITION_1} : {EX} is not {PREFIX_PAREN}")
 @P("{CONDITION_1} : {EX} is not {SETTABLE}")
-@P("{CONDITION_1} : {EX} is {PREFIX_PAREN}")
+@P("{CONDITION_1} : {EX} is {NAMED_OPERATION_INVOCATION}")
 @P("{CONDITION_1} : {EX} is {SETTABLE}")
 class _:
     def s_cond(cond, env0, asserting):
@@ -10401,13 +10429,6 @@ class _:
             return not L.contains_any_duplicates()
         else:
             return L.contains_any_duplicates()
-
-@P("{CONDITION_1} : {EX} contains a single {nonterminal}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, nonterminal] = cond.children
-        env0.assert_expr_is_of_type(var, ListType(T_Parse_Node))
-        return (env0, env0)
 
 @P("{CONDITION_1} : {EX} contains any {nonterminal}s")
 class _:
@@ -13723,7 +13744,7 @@ class _:
 #@ 22.2 RegExp (Regular Expression) Objects
 
 # ==============================================================================
-#@ 22.2.1.6 Static Semantics: CharacterValue
+#@ 22.2.1.7 Static Semantics: CharacterValue
 
 @P("{EXPR} : the numeric value according to {h_emu_xref}")
 class _:
