@@ -1077,7 +1077,7 @@ def _handle_structured_header(section):
         dt = dl_nw_children[i+0]
         dd = dl_nw_children[i+1]
         dt_s = dt.inner_source_text()
-        assert dt_s in ['for', 'effects', 'description', 'skip global checks'], dt_s
+        assert dt_s in ['for', 'effects', 'description', 'skip global checks', 'skip return checks'], dt_s
         assert dt_s not in dl_dict
         dl_dict[dt_s] = dd
 
