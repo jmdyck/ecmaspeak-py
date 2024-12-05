@@ -484,7 +484,7 @@ def _handle_sdo_section(section):
             (
                 # 3 cases
                 [
-                    ('p', 'Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of \w+:'),
+                    ('p', r'Every grammar production alternative in this specification which is not listed below implicitly has the following default definition of \w+:'),
                     'emu-alg'
                 ],
                 lambda p, emu_alg: (None, emu_alg)
@@ -1138,7 +1138,7 @@ def _handle_structured_header(section):
             else:
                 assert 0, p
 
-        sentences = re.split('(?<=\.) +', description_dd.inner_source_text())
+        sentences = re.split(r'(?<=\.) +', description_dd.inner_source_text())
         for sentence in sentences:
             mo = re.fullmatch(r'(.+) (returns|returning) (.+)', sentence)
             if mo:
@@ -1758,13 +1758,13 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', "The semantics of \w+ is extended as follows:"),
+                    ('p', r"The semantics of \w+ is extended as follows:"),
                 ],
                 None
             ),
             (
                 [
-                    ('p', "The rule for EMU-GRAMMAR is the same as for EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\."),
+                    ('p', r"The rule for EMU-GRAMMAR is the same as for EMU-GRAMMAR but with NONTERMINAL substituted for NONTERMINAL\."),
                 ],
                 lambda p: None
             ),
@@ -1777,7 +1777,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', "\w+ rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL."),
+                    ('p', r"\w+ rules for the EMU-GRAMMAR and EMU-GRAMMAR productions are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL."),
                 ],
                 lambda p: None
             ),
@@ -1790,7 +1790,7 @@ def _handle_changes_section(section):
         patterns = [
             (
                 [
-                    ('p', "\w+ rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following rules, with parameter _direction_, are also added:"),
+                    ('p', r"\w+ rules for the NONTERMINAL productions except for EMU-GRAMMAR are also used for the NONTERMINAL productions, but with NONTERMINAL substituted for NONTERMINAL. The following rules, with parameter _direction_, are also added:"),
                 ],
                 lambda p: None
             ),
@@ -1865,7 +1865,7 @@ def _handle_changes_section(section):
         scan_section(section, patterns)
 
     # --------------------------------------------------------------------------
-    elif (mo := re.fullmatch('Changes to ([A-Z]\w+)', section.section_title)):
+    elif (mo := re.fullmatch(r'Changes to ([A-Z]\w+)', section.section_title)):
         op_name = mo.group(1)
         patterns = [
             (
@@ -1956,7 +1956,7 @@ def _handle_changes_section(section):
             ),
             (
                 [
-                    ('p', 'The (?:static|runtime) semantics of (\w+) in EMU-XREF are augmented with the following:'),
+                    ('p', r'The (?:static|runtime) semantics of (\w+) in EMU-XREF are augmented with the following:'),
                     'emu-grammar',
                     'emu-alg',
                 ],
@@ -2017,7 +2017,7 @@ def check_section_title(section):
             )
 
     # Check references to well-known symbols.
-    mo1 = re.search('\[ *@', title)
+    mo1 = re.search(r'\[ *@', title)
     if mo1:
         mo2 = re.search(r'( |^)\[ %Symbol\.\w+% \]( |$)', title)
         if not mo2:
@@ -3049,7 +3049,7 @@ def extract_intrinsic_info_from_property_section(section):
     # some property of some intrinsic/global object.
     # Figure out which object and which property.
 
-    id_from_title = re.sub(' \(.*', '', section.section_title)
+    id_from_title = re.sub(r' \(.*', '', section.section_title)
 
     if mo := re.fullmatch('(get|set) (.+)', id_from_title):
         (getset, path) = mo.groups()
