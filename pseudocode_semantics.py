@@ -3846,6 +3846,29 @@ class _:
             allowed_code_points.append(cp)
         return code_points.contains_any_code_points_other_than(allowed_code_points)
 
+@P("{CONDITION_1} : {EX} contains the same code point more than once")
+class _:
+    def s_cond(cond, env0, _):
+        [ex] = cond.children
+        env0.assert_expr_is_of_type(ex, T_Unicode_code_points_)
+        return (env0, env0)
+
+@P("{CONDITION_1} : any code point in {EX} is also contained in {EX}")
+class _:
+    def s_cond(cond, env0, _):
+        [exa, exb] = cond.children
+        env0.assert_expr_is_of_type(exa, T_Unicode_code_points_)
+        env0.assert_expr_is_of_type(exb, T_Unicode_code_points_)
+        return (env0, env0)
+
+@P("{CONDITION_1} : {EX} and {EX} are both empty")
+class _:
+    def s_cond(cond, env0, _):
+        [exa, exb] = cond.children
+        env0.assert_expr_is_of_type(exa, T_Unicode_code_points_)
+        env0.assert_expr_is_of_type(exb, T_Unicode_code_points_)
+        return (env0, env0)
+
 # ==============================================================================
 # code unit
 
@@ -8984,6 +9007,14 @@ class _:
         enva = env0.ensure_expr_is_of_type(vara, T_String); assert enva is env0
         envb = env0.ensure_expr_is_of_type(varb, T_String); # assert envb is env0
         return (envb, envb)
+
+@P('{CONDITION_1} : {var} and {var} have no elements in common')
+class _:
+    def s_cond(cond, env0, _):
+        [vara, varb] = cond.children
+        env0.assert_expr_is_of_type(vara, T_String)
+        env0.assert_expr_is_of_type(varb, T_String)
+        return (env0, env0)
 
 # ------------------------------------------------------------------------------
 # going from a String value to some other type of value:

@@ -413,6 +413,7 @@
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When {SETTABLE} is instantiated, it will have a direct binding for {var}
     an implementation-defined debugging facility is available and enabled
+    any code point in {EX} is also contained in {EX}
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text is matched by this production
@@ -467,6 +468,7 @@
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {DOTTING} is {LITERAL} and was never previously set to {LITERAL}
+    {EX} and {EX} are both empty
     {EX} and {EX} are both {LITERAL}
     {EX} and {EX} are both {LITERAL} or both {LITERAL}
     {EX} and {EX} are distinct values
@@ -490,6 +492,7 @@
     {EX} contains more than one occurrence of {starred_str}
     {EX} contains no duplicate entries
     {EX} contains only single code points
+    {EX} contains the same code point more than once
     {EX} contains two distinct {nonterminal}s {DEFVAR} and {DEFVAR} such that {CONDITION_1} and such that {CONDITION_1}
     {EX} contains {EX}
     {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}
@@ -547,6 +550,7 @@
     {var} and {var} do not have the same number of elements
     {var} and {var} each contain exactly one character
     {var} and {var} have equal ranges
+    {var} and {var} have no elements in common
     {var} and {var} have overlapping ranges
     {var} and {var} have the same enclosing {nonterminal}
     {var} and {var} have the same length and the same code units in the same positions
