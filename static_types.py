@@ -1128,7 +1128,7 @@ def _define_tilde_types():
             parent_type = T_tilde_
         parent_tnode = _tnode_for_type_[parent_type]
 
-        tilde_type_name = 'tilde' + re.sub('\W', '_', tilde_word)
+        tilde_type_name = 'tilde' + re.sub(r'\W', '_', tilde_word)
         type = _HierType_etc(tilde_type_name)
         tnode = TNode(type, parent_tnode)
 

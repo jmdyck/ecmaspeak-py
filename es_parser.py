@@ -903,7 +903,7 @@ class _Earley:
                     prev_item = end_item.cause
                     assert isinstance(prev_item, Item)
                     goal_node = prev_item.transit_node
-                    assert goal_node.symbol == re.sub('[~+]\w+', '', goal_symname)
+                    assert goal_node.symbol == re.sub(r'[~+]\w+', '', goal_symname)
                     valid_trees.append(goal_node)
                     if _trace_level >= 1:
                         goal_node.dump(f=_trace_f)
