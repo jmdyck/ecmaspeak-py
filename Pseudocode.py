@@ -751,6 +751,7 @@ def check_val_desc_disjunction(val_desc_disjunction):
         '{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}',
         '{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}',
         '{VAL_DESC} : a normal completion containing {VALUE_DESCRIPTION}',
+        '{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}',
     ]:
         # This is a 'prose' context.
         # The prefix should be "one of" only in the case where

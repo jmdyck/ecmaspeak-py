@@ -14103,10 +14103,6 @@ class _:
 
 # ------------------------------------------------------------------------------
 
-@P("{VAL_DESC} : a MatchResult")
-class _:
-    s_tb = T_MatchResult
-
 @P("{VAL_DESC} : a MatcherContinuation")
 class _:
     s_tb = T_MatcherContinuation
@@ -14125,10 +14121,10 @@ class _:
 # ==============================================================================
 #@ 22.2.2.2 Runtime Semantics: CompilePattern
 
-@P("{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}")
+@P("{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}")
 class _:
     def s_tb(val_desc, env):
-        assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns a MatchResult'
+        assert val_desc.source_text() == 'an Abstract Closure that takes a List of characters and a non-negative integer and returns either a MatchState or ~failure~'
         return T_RegExpMatcher_
 
 # ==============================================================================

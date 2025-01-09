@@ -1283,7 +1283,6 @@
     a List of {LIST_ELEMENTS_DESCRIPTION}
     a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}
     a Match Record
-    a MatchResult
     a MatchState
     a Matcher
     a MatcherContinuation
@@ -1390,7 +1389,7 @@
     a trailing surrogate
     a {h_emu_xref}
     an Abstract Closure
-    an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VAL_DESC}
+    an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}
     an Abstract Closure with no parameters
     an Abstract Closure with two parameters
     an Array
