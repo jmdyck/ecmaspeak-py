@@ -388,7 +388,7 @@
     Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     Exactly one element of {var} meets this criterion
-    GlobalSymbolRegistry does not currently contain an entry for {var}
+    The GlobalSymbolRegistry List does not currently contain an entry for {var}
     LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation
     That Record's {dsb_word} is {EX}
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
@@ -1126,6 +1126,7 @@
     the ClassStaticBlockDefinition Record
     the DataView With Buffer Witness Record
     the ExportEntry Record
+    the GlobalSymbolRegistry Record
     the GraphLoadingState Record
     the ImportEntry Record
     the Iterator Record

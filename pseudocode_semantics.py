@@ -13530,7 +13530,7 @@ class _:
     def s_expr(expr, env0, _):
         return (ListType(T_GlobalSymbolRegistry_Record), env0)
 
-@P("{CONDITION_1} : GlobalSymbolRegistry does not currently contain an entry for {var}")
+@P("{CONDITION_1} : The GlobalSymbolRegistry List does not currently contain an entry for {var}")
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
