@@ -123,7 +123,7 @@ def parse_emu_grammar(emu_grammar):
     for production_n in gnode._productions:
 
         (gnt_n, colons_n, r_n) = production_n.children
-        (_, params_n, opt_n) = gnt_n.children
+        (_, params_n) = gnt_n.children
 
         # --------------------------------------------
 
@@ -143,12 +143,6 @@ def parse_emu_grammar(emu_grammar):
             param_n.groups[1]
             for param_n in params_n.children
         ]
-
-        # --------------------------------------------
-
-        # LHS can't be optional.
-        if opt_n.source_text() != '':
-            msg_at_node(opt_n, "LHS cannot be optional")
 
         # --------------------------------------------
 
@@ -239,8 +233,18 @@ def reduce_rhs(rhs_n):
 
         elif r_item.kind == 'GNT':
             # Drop the params
-            (nt_n, params_n, opt_n) = r_item.children
-            pieces.append(nt_n.source_text() + opt_n.source_text())
+            (nt_n, params_n) = r_item.children
+            pieces.append(nt_n.source_text())
+
+        elif r_item.kind == 'RHS_SYMBOL_QM':
+            [rhs_symbol] = r_item.children
+            if rhs_symbol.kind in ['BACKTICKED_THING', 'NAMED_CHAR']:
+                pieces.append(rhs_symbol.source_text() + '?')
+            elif rhs_symbol.kind == 'GNT':
+                (nt_n, params_n) = rhs_symbol.children
+                pieces.append(nt_n.source_text() + '?')
+            else:
+                assert 0, rhs_symbol.kind
 
         elif r_item.kind in [
             'BUT_ONLY',
@@ -261,10 +265,9 @@ def reduce_rhs(rhs_n):
 
 def decorate_misc(node):
     if node.kind == 'GNT':
-        (nt_n, params_n, opt_n) = node.children
+        (nt_n, params_n) = node.children
         node._nt_name = nt_n.source_text()
         node._params = [param_n.groups for param_n in params_n.children]
-        node._is_optional = opt_n.source_text() == '?'
         return 'prune'
 
     elif node.kind == 'BUT_NOT':
@@ -322,14 +325,14 @@ metagrammar = {
     'RHS_BODY'             : ('|', '^', 'U_RANGE', 'U_PROP', 'U_ANY', 'EMPTY', 'RHS_ITEMS'),
 
     'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' '),
-    'RHS_ITEM'             : ('|', '^', 'RHS_SYMBOL', 'RHS_CONSTRAINT'),
+    'RHS_ITEM'             : ('|', '^', 'RHS_SYMBOL_QM', 'RHS_SYMBOL', 'RHS_CONSTRAINT'),
 
+    'RHS_SYMBOL_QM'        : ('_', 'n', 'RHS_SYMBOL', r'\?'),
     'RHS_SYMBOL'           : ('|', '^', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR'),
 
-    'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS', 'OPTIONAL_OPT'),
+    'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS'),
     'OPTIONAL_PARAMS'      : ('?', '^', 'PARAMS'),
     'PARAMS'               : ('+', 'n', 'PARAM', ', ', r'\[', r'\]'),
-    'OPTIONAL_OPT'         : ('?', 'n', r'\?'),
 
     'RHS_CONSTRAINT'       : ('|', '^', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY', 'BUT_NOT'),
 
@@ -766,7 +769,13 @@ def check_reachability():
         for rhs_n in production_n._rhss:
             for rhs_item_n in rhs_n._rhs_items:
                 rthing_kind = rhs_item_n.kind
-                if rthing_kind in ['GNT', 'NT']:
+                if rthing_kind == 'RHS_SYMBOL_QM':
+                    [symbol_n] = rhs_item_n.children
+                    if symbol_n.kind == 'GNT':
+                        reach(symbol_n._nt_name)
+                    else:
+                        pass
+                elif rthing_kind == 'GNT':
                     reach(rhs_item_n._nt_name)
                 elif rthing_kind == 'BUT_NOT':
                     [exclusion_n] = rhs_item_n.children
@@ -777,6 +786,19 @@ def check_reachability():
                     [lac_set_op, lac_set_operand] = rhs_item_n.children
                     if lac_set_operand.kind == 'NT':
                         reach(lac_set_operand._nt_name)
+                elif rthing_kind in [
+                    'BACKTICKED_THING',
+                    'NAMED_CHAR',
+                    'LAC_SINGLE',
+                    'BUT_ONLY',
+                    'PARAMS',
+                    'U_RANGE',
+                    'U_PROP',
+                    'U_ANY',
+                ]:
+                    pass
+                else:
+                    assert 0, rhs_item_n
 
     for (nt, nt_info) in sorted(info_for_nt_.items()):
         if 'A' in nt_info.def_occs and nt_info.num_colons != 1 and nt not in lexical_symbols:
@@ -805,10 +827,13 @@ def defining_production_check_right(production_n):
             if rhs_body_n.kind == 'RHS_ITEMS':
                 for rhs_item_n in rhs_body_n.children:
 
+                    if rhs_item_n.kind == 'RHS_SYMBOL_QM':
+                        [rhs_item_n] = rhs_item_n.children
+
                     if rhs_item_n.kind != 'GNT':
                         continue
 
-                    (nt_n, optional_params_n, optional_opt_n) = rhs_item_n.children
+                    (nt_n, optional_params_n) = rhs_item_n.children
 
                     r_arg_signs = []
                     r_arg_names = []
@@ -915,7 +940,7 @@ def check_non_defining_prodns(emu_grammars):
         for u_production_n in gnode._productions:
             assert u_production_n.kind in ['ONELINE_PRODUCTION', 'MULTILINE_PRODUCTION']
             (u_gnt_n, u_colons_n, _) = u_production_n.children
-            (u_nt_n, u_params_n, _) = u_gnt_n.children
+            (u_nt_n, u_params_n) = u_gnt_n.children
 
             # -----------------------
 
@@ -1005,7 +1030,7 @@ def check_non_defining_prodns(emu_grammars):
 
                 annotations = []
                 for u_rhs_item_n in u_rhs_n._rhs_items:
-                    if u_rhs_item_n.kind in ['GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'BUT_NOT']:
+                    if u_rhs_item_n.kind in ['RHS_SYMBOL_QM', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'BUT_NOT']:
                         pass
                     elif u_rhs_item_n.kind in ['LAC_SINGLE', 'LAC_SET', 'NLTH', 'PARAMS', 'LABEL']:
                         annotations.append(u_rhs_item_n)
@@ -1076,8 +1101,8 @@ def check_non_defining_prodns(emu_grammars):
 
                     # ------------------
 
-                    if 0 and notes['optional-GNT']:
-                        print(lhs_nt, d_i, notes['optional-GNT'])
+                    if 0 and notes['optional-symbol']:
+                        print(lhs_nt, d_i, notes['optional-symbol'])
 
                     # ------------------
 
@@ -1104,7 +1129,7 @@ def check_non_defining_prodns(emu_grammars):
                                 for tail_optbits in each_optbits_covered_by(tail):
                                     yield '1' + tail_optbits
 
-                    for optbits in each_optbits_covered_by(notes['optional-GNT']):
+                    for optbits in each_optbits_covered_by(notes['optional-symbol']):
                         # Production Use Key
                         puk = (lhs_nt, d_rhs_n._reduced, optbits)
                         emu_grammar.puk_set.add(puk)
@@ -1170,7 +1195,7 @@ def check_non_defining_prodns(emu_grammars):
                     pass
                 else:
                     # Likely a 'use' RHS has been pasted twice?
-                    u_j_s = [u_i+1 for u_i in u_i_s]
+                    u_j_s = [str(u_i+1) for u_i in uis]
                     msg_at_node(u_rhss[-1],
                         f"ERROR: RHS#{','.join(u_j_s)} all match def RHS#{d_i+1}"
                     )
@@ -1214,6 +1239,34 @@ def u_item_matches_d_item(u_item_n, d_item_n):
     # Returns None if they do not match.
     # Otherwise, returns a dict containing notes about the comparison.
 
+    if d_item_n.kind == 'RHS_SYMBOL_QM':
+        [d_symbol] = d_item_n.children
+
+        # In the definition, there's a symbol followed by a '?',
+        # indicating that the symbol is optional.
+        # So in the use, you could have the symbol with or without a '?'
+        # (or the symbol could be absent entirely, but that's handled elsewhere).
+
+        if u_item_n.kind == 'RHS_SYMBOL_QM':
+            # In the use, there's a symbol with a '?'.
+            [u_symbol] = u_item_n.children
+            m = u_item_matches_d_item(u_symbol, d_symbol)
+            if m is not None:
+                m['optional-symbol'] = (d_symbol, 'either')
+                m['L-678'] = 1
+                # 149 occurrences
+        else:
+            # In the use, there's a symbol without a '?'.
+            m = u_item_matches_d_item(u_item_n, d_symbol)
+            if m is not None:
+                m['optional-symbol'] = (d_symbol, 'required')
+                m['L-682'] = 1
+                # 71 occurrences
+
+        return m
+
+    # ----
+
     if u_item_n.kind != d_item_n.kind:
         # 3058 occurrences
         return None
@@ -1233,28 +1286,6 @@ def u_item_matches_d_item(u_item_n, d_item_n):
 
         note['L-670'] = 1
         # 2505 occurrences
-
-        if d_item_n._is_optional:
-            # In the definition, this GNT has a '?'.
-            # So in the use, the GNT could have a '?' or not
-            # (or the GNT could be absent entirely, but that's handled elsewhere).
-            if u_item_n._is_optional:
-                note['optional-GNT'] = (nt_name, 'either')
-                note['L-678'] = 1
-                # 149 occurrences
-            else:
-                note['optional-GNT'] = (nt_name, 'required')
-                note['L-682'] = 1
-                # 71 occurrences
-        else:
-            # In the definition, this GNT does not have a '?'
-            # So in the use, it can't have a '?' either.
-            if u_item_n._is_optional:
-                msg_at_node(u_item_n,
-                    f"ERROR: use has '?' but def does not"
-                )
-            note['L-687'] = 1
-            # 2285 occurrences
 
         if d_item_n._params:
             # In the definition, this GNT has args.
@@ -1302,8 +1333,9 @@ def d_item_doesnt_require_a_matching_u_item(d_item_n):
     if d_item_n.kind in ['PARAMS', 'LABEL', 'BUT_ONLY', 'BUT_NOT', 'LAC_SINGLE', 'LAC_SET', 'NLTH']:
         return {'annotations suppressed': d_item_n.source_text(), 'L-900': 1}
 
-    if d_item_n.kind == 'GNT' and d_item_n._is_optional:
-        return {'optional-GNT': (d_item_n._nt_name, 'omitted'), 'L-903': 1}
+    if d_item_n.kind == 'RHS_SYMBOL_QM':
+        [d_symbol] = d_item_n.children
+        return {'optional-symbol': (d_symbol, 'omitted'), 'L-903': 1}
 
     return None
 
@@ -1474,7 +1506,7 @@ def approximate_annex_A():
                         assert prodn.kind == 'MULTILINE_PRODUCTION'
                         (gnt, _, _) = prodn.children
                         assert gnt.kind == 'GNT'
-                        (nt, _, _) = gnt.children
+                        (nt, _) = gnt.children
                         assert nt.kind == 'NT'
                         lhs_symbol = nt.source_text()
                         tail = 'sup' if is_supplemental else lhs_symbol

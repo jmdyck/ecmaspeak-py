@@ -220,24 +220,38 @@ def simplify_prod(grammar, params_setting, lhs_symbol, rhs_n):
                 exp_thing = T_named(exp_name)
             else:
                 assert 0, nk
-            if rhs_item_n._is_optional:
-                # The spec says that a RHS with N optionals
-                # is an abbreviation for 2^N RHSs,
-                # one for each combination of optionals being present/absent.
-                # However, during parsing,
-                # you want all 2^N to be instances of the same production,
-                # which is harder if they come from different productions.
-                # So instead, treat X? as a non-terminal, defined X? := X | epsilon
-                opt_exp_name = exp_name + '?'
-                if opt_exp_name not in grammar.exp_prodns:
-                    o_lhs = rhs_item_n._nt_name + '?'
-                    o_params_setting = params_setting # XXX should be subset
-                    add_exp_prod1(grammar, opt_exp_name, [exp_thing], o_lhs, rhs_item_n._nt_name, o_params_setting)
-                    add_exp_prod1(grammar, opt_exp_name, [         ], o_lhs,                  '', o_params_setting)
-                    # Conceivably, the parser could infer these rules.
-                exp_rhs.append(NT(opt_exp_name))
+            exp_rhs.append(exp_thing)
+
+        elif rhs_item_n.kind == 'RHS_SYMBOL_QM':
+            # The spec says that a RHS with N optionals
+            # is an abbreviation for 2^N RHSs,
+            # one for each combination of optionals being present/absent.
+            # However, during parsing,
+            # you want all 2^N to be instances of the same production,
+            # which is harder if they come from different productions.
+            # So instead, treat X? as a non-terminal, defined X? := X | epsilon
+
+            [symbol] = rhs_item_n.children
+            if symbol.kind == 'GNT':
+                exp_base = expand_nt_wrt_params_setting(symbol, params_setting)
+                exp_thing = NT(exp_base)
+                o_base = symbol._nt_name
+            elif symbol.kind == 'BACKTICKED_THING':
+                chars = symbol._chars
+                exp_base = chars
+                exp_thing = T_lit(chars)
+                o_base = chars
             else:
-                exp_rhs.append(exp_thing)
+                assert 0, symbol
+
+            opt_exp_name = exp_base + '?'
+            if opt_exp_name not in grammar.exp_prodns:
+                o_lhs = o_base + '?'
+                o_params_setting = params_setting # XXX should be subset
+                add_exp_prod1(grammar, opt_exp_name, [exp_thing], o_lhs, o_base, o_params_setting)
+                add_exp_prod1(grammar, opt_exp_name, [         ], o_lhs,     '', o_params_setting)
+                # Conceivably, the parser could infer these rules.
+            exp_rhs.append(NT(opt_exp_name))
 
         elif rhs_item_n.kind == 'BACKTICKED_THING':
             chars = rhs_item_n._chars

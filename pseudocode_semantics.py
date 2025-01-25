@@ -4126,7 +4126,6 @@ def pychar_matches_rhs(pychar, rhs):
     [r_item] = rhs._rhs_items
 
     if r_item.kind == 'GNT':
-        assert not r_item._is_optional
         assert r_item._params == []
         return pychar_matches_lexical_nonterminal(pychar, r_item._nt_name)
 
@@ -6280,7 +6279,11 @@ def s_resolve_focus_reference(prefix, nonterminal, expr, env0):
             named_r_items = [
                 r_item
                 for r_item in rhs._rhs_items
-                if r_item.kind == 'GNT' and r_item._nt_name == nt_name
+                if (
+                    r_item.kind == 'GNT' and r_item._nt_name == nt_name
+                    or
+                    r_item.kind == 'RHS_SYMBOL_QM' and r_item.children[0].kind == 'GNT' and r_item.children[0]._nt_name == nt_name
+                )
             ]
             rhs_count = len(named_r_items)
             r_items_to_check_for_optionality = []
@@ -6350,7 +6353,7 @@ def s_resolve_focus_reference(prefix, nonterminal, expr, env0):
                 assert 0, prefix
 
             for r_item in r_items_to_check_for_optionality:
-                if r_item._is_optional:
+                if r_item.kind == 'RHS_SYMBOL_QM':
                     extra_t = T_not_in_node
 
     return ptn_type_for(nonterminal) | extra_t

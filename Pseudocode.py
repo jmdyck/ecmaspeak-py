@@ -1498,14 +1498,13 @@ def analyze_sdo_coverage_info():
             d_production_n = nt_info.def_occs['A']
 
             for def_rhs_n in d_production_n._rhss:
-                GNTs = [r for r in def_rhs_n._rhs_items if r.kind == 'GNT']
-                oGNTs = [gnt for gnt in GNTs if gnt._is_optional]
-                nGNTs = [gnt for gnt in GNTs if not gnt._is_optional]
+                RSQs = [r.children[0] for r in def_rhs_n._rhs_items if r.kind == 'RHS_SYMBOL_QM']
+
+                nGNTs = [r for r in def_rhs_n._rhs_items if r.kind == 'GNT']
 
                 reduced_prod_string = f"{lhs_nt} -> {def_rhs_n._reduced}"
 
-                for opt_combo in each_opt_combo(oGNTs):
-                    opt_combo_str = ''.join(omreq[0] for (nt, omreq) in opt_combo)
+                for opt_combo in each_opt_combo(RSQs):
                     optbits = ''.join(
                         {
                             'omitted': '0',
@@ -1515,22 +1514,27 @@ def analyze_sdo_coverage_info():
                     )
 
                     puk = (lhs_nt, def_rhs_n._reduced, optbits)
+                    puk_str = f"{reduced_prod_string} [{optbits}]"
                     used_keys.add(puk)
                     rules = coverage_info_for_this_sdo.get(puk, [])
 
                     if len(rules) == 1:
                         # great
                         if debug:
-                            put(f"{sdo_name} for {reduced_prod_string} has an explicit rule")
+                            put(f"{sdo_name} for {puk_str} has an explicit rule")
                         pass
                     elif len(rules) > 1:
-                        put(f"{sdo_name} for {reduced_prod_string} {opt_combo_str} is handled by {len(rules)} rules!")
+                        put(f"{sdo_name} for {puk_str} is handled by {len(rules)} rules!")
                     elif is_sdo_coverage_exception(sdo_name, lhs_nt, def_rhs_n._reduced):
                         # okay
                         if debug:
                             put(f"{sdo_name} for {reduced_prod_string} is a coverage exception")
                         pass
                     else:
+                        # {puk_str} is not handled by any explicit rule,
+                        # and isn't a coverage exception.
+                        # So check if the chain rule applies.
+
                         nts = [gnt._nt_name for gnt in nGNTs] + required_nts_in(opt_combo)
                         if len(nts) == 1:
                             # The rule for chain productions applies.
@@ -1538,11 +1542,11 @@ def analyze_sdo_coverage_info():
                             [nt] = nts
 
                             if debug:
-                                put(f"{sdo_name} for {reduced_prod_string} chains to {nt}")
+                                put(f"{sdo_name} for {puk_str} chains to {nt}")
 
                             queue_ensure(nt)
                         else:
-                            put(f"{sdo_name} for {reduced_prod_string} {opt_combo_str} needs a rule")
+                            put(f"{sdo_name} for {puk_str} needs a rule")
 
         unused_keys = coverage_info_for_this_sdo.keys() - used_keys
         for unused_key in sorted(unused_keys):
@@ -1552,35 +1556,35 @@ def analyze_sdo_coverage_info():
 
 # -------------------------------
 
-def each_opt_combo(oGNTs):
-    N = len(oGNTs)
+def each_opt_combo(RSQs):
+    N = len(RSQs)
     if N == 0:
         yield []
     elif N == 1:
-        [a] = oGNTs
-        yield [(a._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'required')]
+        [a] = RSQs
+        yield [(a, 'omitted' )]
+        yield [(a, 'required')]
     elif N == 2:
-        [a, b] = oGNTs
-        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'required')]
-        yield [(a._nt_name, 'required'), (b._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'required'), (b._nt_name, 'required')]
+        [a, b] = RSQs
+        yield [(a, 'omitted' ), (b, 'omitted' )]
+        yield [(a, 'omitted' ), (b, 'required')]
+        yield [(a, 'required'), (b, 'omitted' )]
+        yield [(a, 'required'), (b, 'required')]
     elif N == 3:
-        [a, b, c] = oGNTs
-        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'omitted' ), (c._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'omitted' ), (c._nt_name, 'required')]
-        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'required'), (c._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'omitted' ), (b._nt_name, 'required'), (c._nt_name, 'required')]
-        yield [(a._nt_name, 'required'), (b._nt_name, 'omitted' ), (c._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'required'), (b._nt_name, 'omitted' ), (c._nt_name, 'required')]
-        yield [(a._nt_name, 'required'), (b._nt_name, 'required'), (c._nt_name, 'omitted' )]
-        yield [(a._nt_name, 'required'), (b._nt_name, 'required'), (c._nt_name, 'required')]
+        [a, b, c] = RSQs
+        yield [(a, 'omitted' ), (b, 'omitted' ), (c, 'omitted' )]
+        yield [(a, 'omitted' ), (b, 'omitted' ), (c, 'required')]
+        yield [(a, 'omitted' ), (b, 'required'), (c, 'omitted' )]
+        yield [(a, 'omitted' ), (b, 'required'), (c, 'required')]
+        yield [(a, 'required'), (b, 'omitted' ), (c, 'omitted' )]
+        yield [(a, 'required'), (b, 'omitted' ), (c, 'required')]
+        yield [(a, 'required'), (b, 'required'), (c, 'omitted' )]
+        yield [(a, 'required'), (b, 'required'), (c, 'required')]
     else:
         assert 0
 
 def required_nts_in(opt_combo):
-    return [nt for (nt, omreq) in opt_combo if omreq == 'required']
+    return [symbol._nt_name for (symbol, omreq) in opt_combo if omreq == 'required' and symbol.kind == 'GNT']
 
 # a function object's [[ECMAScriptCode]] internal slot
 
