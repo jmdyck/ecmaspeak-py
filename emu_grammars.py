@@ -322,12 +322,16 @@ metagrammar = {
     'RHS_BODY'             : ('|', '^', 'U_RANGE', 'U_PROP', 'U_ANY', 'EMPTY', 'RHS_ITEMS'),
 
     'RHS_ITEMS'            : ('+', 'n', 'RHS_ITEM', ' '),
-    'RHS_ITEM'             : ('|', '^', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY', 'BUT_NOT'),
+    'RHS_ITEM'             : ('|', '^', 'RHS_SYMBOL', 'RHS_CONSTRAINT'),
+
+    'RHS_SYMBOL'           : ('|', '^', 'GNT', 'BACKTICKED_THING', 'NAMED_CHAR'),
 
     'GNT'                  : ('_', 'n', 'NT', 'OPTIONAL_PARAMS', 'OPTIONAL_OPT'),
     'OPTIONAL_PARAMS'      : ('?', '^', 'PARAMS'),
     'PARAMS'               : ('+', 'n', 'PARAM', ', ', r'\[', r'\]'),
     'OPTIONAL_OPT'         : ('?', 'n', r'\?'),
+
+    'RHS_CONSTRAINT'       : ('|', '^', 'LOOKAHEAD_CONSTRAINT', 'NLTH', 'BUT_ONLY', 'BUT_NOT'),
 
     'LOOKAHEAD_CONSTRAINT' : ('|', '^', 'LAC_SINGLE', 'LAC_SET'),
     'LAC_SINGLE'           : ('_', 'n', r'\[lookahead ', 'LAC_SINGLE_OP', ' ', 'TERMINAL_SEQ', r'\]'),
