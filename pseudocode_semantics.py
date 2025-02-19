@@ -9737,7 +9737,7 @@ class _:
         tb = tba | tbb
         return env0.with_type_test(var, 'isnt a', tb, asserting)
 
-@P("{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})")
+@P("{CONDITION_1} : {var} has all of the internal slots of a For-In Iterator instance ({h_emu_xref})")
 class _:
     def s_cond(cond, env0, asserting):
         [var, emu_xref] = cond.children

@@ -577,7 +577,7 @@
     {var} happens-before {var} in {var}
     {var} has a binding for {var}
     {var} has a numeric value less than {code_unit_lit}
-    {var} has all of the internal slots of a For-In Iterator Instance ({h_emu_xref})
+    {var} has all of the internal slots of a For-In Iterator instance ({h_emu_xref})
     {var} has an? {DSBN} internal method
     {var} has an? {DSBN} internal slot
     {var} has an? {DSBN} internal slot whose value is an Object
