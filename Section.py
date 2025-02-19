@@ -2281,6 +2281,8 @@ def check_id(section):
                     'GetImportedModule',
                     'FinishLoadingImportedModule',
                     'SetterThatIgnoresPrototypeProperties',
+                    'ModuleRequestsEqual',
+                    'AllImportAttributesSupported',
                 ))
                 else
                 convert_to_lowercase

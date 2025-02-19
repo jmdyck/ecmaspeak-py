@@ -220,6 +220,7 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
+    Sort {var} according to the lexicographic order of their {dsb_word} field, treating the value of each such field as a sequence of UTF-16 code unit values. {note}
     Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
     Suspend the running execution context.
@@ -304,6 +305,7 @@
     property of the Global Object specified in clause {h_emu_xref}
     single code point {DEFVAR} in {var}
     {ITEM_NATURE} {DEFVAR} of {EX}
+    {ITEM_NATURE} {DEFVAR} of {EX} such that {CONDITION}
     {ITEM_NATURE} {DEFVAR} of {EX}, iterating backwards from its second-to-last element
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order
@@ -317,8 +319,11 @@
     Cyclic Module Record
     ExportEntry Record
     FinalizationRegistry
+    ImportAttribute Record
     ImportEntry Record
+    LoadedModuleRequest Record
     Matcher
+    ModuleRequest Record
     Parse Node
     Private Name
     PrivateElement
@@ -385,12 +390,10 @@
     All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
     All named exports from {var} are resolvable
     Every CharSetElement of {var} consists of a single character
-    Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     Exactly one element of {var} meets this criterion
     The GlobalSymbolRegistry List does not currently contain an entry for {var}
     LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation
-    That Record's {dsb_word} is {EX}
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The execution context stack has at least two elements
     The execution context stack is not empty
@@ -473,7 +476,6 @@
     {EX} and {EX} are both {LITERAL} or both {LITERAL}
     {EX} and {EX} are distinct values
     {EX} and {EX} are valid byte offsets within the memory of {var}
-    {EX} contains a Record whose {dsb_word} is {var}
     {EX} contains a Record {DEFVAR} such that {CONDITION_1}
     {EX} contains a code unit that is not a radix-{var} digit
     {EX} contains a formal parameter mapping for {var}
@@ -497,6 +499,7 @@
     {EX} contains {EX}
     {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}
     {EX} does not contain {EX}
+    {EX} does not contain {VAL_DESC} {DEFVAR} such that {CONDITION_1}
     {EX} is also {VAL_DESC}
     {EX} is empty
     {EX} is listed in the “Code Point” column of {h_emu_xref}
@@ -518,6 +521,7 @@
     {LOCAL_REF} is present
     {LOCAL_REF} is {h_emu_grammar}
     {LOCAL_REF} is {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, {h_emu_grammar}, or {h_emu_grammar}
+    {NAMED_OPERATION_INVOCATION} has two different entries {DEFVAR} and {DEFVAR} such that {CONDITION}
     {NAMED_OPERATION_INVOCATION} is not matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not some Unicode code point matched by the {nonterminal} lexical grammar production
     {NAMED_OPERATION_INVOCATION} is not the numeric value of some code point matched by the {nonterminal} lexical grammar production
@@ -586,6 +590,7 @@
     {var} has any elements
     {var} has attribute values { {DSBN}: *true*, {DSBN}: *true* }
     {var} has been linked and declarations in its module environment have been instantiated
+    {var} has exactly one element
     {var} has no duplicate entries
     {var} has no elements
     {var} has the same numeric value as a leading surrogate or trailing surrogate
@@ -684,6 +689,7 @@
 # ---------------------------------------------------------------
 
 {EXPR} :
+    a List consisting of each {EACH_THING}
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing one or more {ERROR_TYPE} objects
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
@@ -741,7 +747,6 @@
     an iterator object whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below
     reads-bytes-from({var}) in {var}
     such an object created in a host-defined manner
-    that Record
     the 32-bit two's complement bit string representing {EX}
     the Agent Events Record of {DOTTING} whose {DSBN} is {PP_NAMED_OPERATION_INVOCATION}
     the Agent Record of the surrounding agent
@@ -776,7 +781,6 @@
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
-    the Record in {DOTTING} whose {dsb_word} is {var}
     the String representation of {EX}, formatted as a decimal number
     the String representation of {EX}, formatted as a lowercase hexadecimal number
     the String representation of {EX}, formatted as an uppercase hexadecimal number
@@ -1119,6 +1123,7 @@
     Source Text Module Record
     WriteSharedMemory
     a new ExportEntry Record
+    a new ModuleRequest Record
     a new Set Record
     a new Waiter Record
     the CaptureRange
@@ -1128,12 +1133,15 @@
     the ExportEntry Record
     the GlobalSymbolRegistry Record
     the GraphLoadingState Record
+    the ImportAttribute Record
     the ImportEntry Record
     the Iterator Record
     the JSON Serialization Record
     the JobCallback Record
+    the LoadedModuleRequest Record
     the Match Record
     the MatchState
+    the ModuleRequest Record
     the PrivateEnvironment Record
     the PromiseCapability Record
     the PromiseReaction Record
@@ -1287,12 +1295,14 @@
     a JobCallback Record
     a List of {LIST_ELEMENTS_DESCRIPTION}
     a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}
+    a LoadedModuleRequest Record
     a Match Record
     a MatchState
     a Matcher
     a MatcherContinuation
     a Module Namespace Object
     a Module Record
+    a ModuleRequest Record
     a Number
     a Parse Node
     a Private Name
@@ -1408,6 +1418,7 @@
     an Environment Record
     an IEEE 754-2019 binary32 NaN value
     an IEEE 754-2019 binary64 NaN value
+    an ImportAttribute Record
     an Iterator Record
     an Object
     an Object that conforms to the IteratorResult interface
@@ -1464,7 +1475,10 @@
     Cyclic Module Records
     ECMAScript language values
     ExportEntry Records
+    ImportAttribute Records
     ImportEntry Records
+    LoadedModuleRequest Records
+    ModuleRequest Records
     Objects
     Parse Nodes
     Private Names

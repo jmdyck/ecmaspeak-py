@@ -5495,9 +5495,11 @@ class _:
                 "Agent Events Record" : T_Agent_Events_Record,
                 "Cyclic Module Record": T_Cyclic_Module_Record,
                 "ExportEntry Record"  : T_ExportEntry_Record,
+                "ImportAttribute Record": T_ImportAttribute_Record,
                 "ImportEntry Record"  : T_ImportEntry_Record,
                 "Matcher"             : T_Matcher,
                 "Module Record"       : T_Module_Record,
+                "ModuleRequest Record": T_ModuleRequest_Record,
                 "Parse Node"          : T_Parse_Node,
                 "Private Name"        : T_Private_Name,
                 "PrivateElement"      : T_PrivateElement,
@@ -5516,6 +5518,22 @@ class _:
         if 'backwards' in each_thing.prod.rhs_s:
             assert NYI
         return (var, collection.each(item_nature_s))
+
+@P("{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX} such that {CONDITION}")
+class _:
+    def s_nv(each_thing, env0):
+        [item_nature, loop_var, collection_expr, condition] = each_thing.children
+
+        # inside-out:
+        item_type = {
+            "LoadedModuleRequest Record": T_LoadedModuleRequest_Record,
+        }[item_nature.prod.rhs_s]
+        collection_type = ListType(item_type)
+        env1 = env0.ensure_expr_is_of_type(collection_expr, collection_type)
+
+        env2 = env1.plus_new_entry(loop_var, item_type)
+        (tenv, fenv) = tc_cond(condition, env2)
+        return tenv
 
 @P("{CONDITION_1} : The following loop will terminate")
 class _:
@@ -10269,6 +10287,16 @@ class _:
         (lit_t, env1) = tc_expr(literal, env0); assert env1 is env0
         return (ListType(lit_t), env1)
 
+@P("{EXPR} : a List consisting of each {EACH_THING}")
+class _:
+    def s_expr(expr, env0, _):
+        [each_thing] = expr.children
+        env1 = tc_nonvalue(each_thing, env0)
+        # super-kludge: ({EACH_THING} should be handled by tc_expr?)
+        item_name = '_r_'
+        item_type = env1.vars[item_name]
+        return (ListType(item_type), env1)
+
 # ------------------------------------------------------------------------------
 # modify a List:
 
@@ -10443,6 +10471,13 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
         return (env0, env0)
 
+@P("{CONDITION_1} : {var} has exactly one element")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
 # ----------------------------
 # the List contains something:
 
@@ -10481,6 +10516,7 @@ class _:
         )
 
 @P("{CONDITION_1} : {EX} contains {VAL_DESC} {DEFVAR} such that {CONDITION_1}")
+@P('{CONDITION_1} : {EX} does not contain {VAL_DESC} {DEFVAR} such that {CONDITION_1}')
 class _:
     def s_cond(cond, env0, asserting):
         [list_ex, val_desc, new_var, stcond] = cond.children
@@ -10509,6 +10545,15 @@ class _:
         L = EXEC(noi, ES_List)
         v = EXEC(ss, E_Value)
         return L.number_of_occurrences_of(v) > 1
+
+@P("{CONDITION_1} : {NAMED_OPERATION_INVOCATION} has two different entries {DEFVAR} and {DEFVAR} such that {CONDITION}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [list_var, vara, varb, stcond] = cond.children
+        (list_t, env1) = tc_expr(list_var, env0); assert env1 is env0
+        assert isinstance(list_t, ListType)
+        env2 = env0.plus_new_entry(vara, list_t.element_type).plus_new_entry(varb, list_t.element_type)
+        return tc_cond(stcond, env2)
 
 @P('{CONDITION_1} : Exactly one element of {var} meets this criterion')
 class _:
@@ -10772,17 +10817,6 @@ class _:
         # XXX We should check whether its type says it *could* have such a field.
         # XXX The particular DSBN could have a (sub-)type-constraining effect
         return (env1, env1)
-
-@P("{CONDITION_1} : That Record's {dsb_word} is {EX}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [dsb_word, ex] = cond.children
-        dsbn_name = dsb_word.source_text()
-        # "That Record" is from prev step's "contains a Record"
-        assert dsbn_name == '[[Module]]'
-        field_type = T_Module_Record
-        env0.assert_expr_is_of_type(ex, field_type)
-        return (env0, env0)
 
 @P("{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})")
 @P("{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}), {dsb_word} ({VALUE_DESCRIPTION}), and {dsb_word} ({VALUE_DESCRIPTION})")
@@ -11115,21 +11149,6 @@ class _:
         (cond_t_env, cond_f_env) = tc_cond(stcond, env_for_cond)
         return (cond_t_env, env0)
 
-@P("{CONDITION_1} : {EX} contains a Record whose {dsb_word} is {var}")
-@P("{CONDITION_1} : Exactly one element of {DOTTING} is a Record whose {dsb_word} is {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [list_ex, dsb_word, var] = cond.children
-        dsbn_name = dsb_word.source_text()
-        (list_type, env1) = tc_expr(list_ex, env0); assert env1 is env0
-        assert isinstance(list_type, ListType)
-        et = list_type.element_type
-        assert isinstance(et, RecordType)
-        assert et.schema_name == ''
-        field_type = et.type_of_field_named(dsbn_name)
-        env1.assert_expr_is_of_type(var, field_type)
-        return (env0, env0)
-
 @P("{EXPR} : the element of {EX} whose {DSBN} is {EX}")
 @P("{EXPR} : the element of {EX} whose {DSBN} field is {var}")
 class _:
@@ -11145,19 +11164,16 @@ class _:
         env1.assert_expr_is_of_type(val_ex, whose_type)
         return (et, env1)
 
-@P("{EXPR} : the Record in {DOTTING} whose {dsb_word} is {var}")
+@P("{COMMAND} : Sort {var} according to the lexicographic order of their {dsb_word} field, treating the value of each such field as a sequence of UTF-16 code unit values. {note}")
 class _:
-    def s_expr(expr, env0, _):
-        [dotting, dsb_word, var] = expr.children
-        dsbn_name = dsb_word.source_text()
-        (list_type, env1) = tc_expr(dotting, env0); assert env1 is env0
-        assert isinstance(list_type, ListType)
-        et = list_type.element_type
-        assert isinstance(et, RecordType)
-        assert et.schema_name == ''
-        whose_type = et.type_of_field_named(dsbn_name)
-        env1.assert_expr_is_of_type(var, whose_type)
-        return (et, env0)
+    def s_nv(anode, env0):
+        [list_var, dsb_word, _] = anode.children
+        (list_t, env1) = tc_expr(list_var, env0); assert env1 is env0
+        assert isinstance(list_t, ListType)
+        assert list_t.element_type.is_a_subtype_of_or_equal_to(T_Record)
+        rs = spec.RecordSchema_for_name_[list_t.element_type.name]
+        assert rs.somebody_declares_field(dsb_word.source_text())
+        return env0
 
 # ------------------------------------------------------------------------------
 
@@ -13305,7 +13321,25 @@ class _:
     s_tb = T_Script_Record
 
 # ==============================================================================
-#@ 16.2.1.4 Abstract Module Records
+#@ 16.2.1.3 ModuleRequest Records
+
+@P("{VAL_DESC} : a ModuleRequest Record")
+@P("{LIST_ELEMENTS_DESCRIPTION} : ModuleRequest Records")
+class _:
+    s_tb = T_ModuleRequest_Record
+
+@P("{VAL_DESC} : a LoadedModuleRequest Record")
+@P("{LIST_ELEMENTS_DESCRIPTION} : LoadedModuleRequest Records")
+class _:
+    s_tb = T_LoadedModuleRequest_Record
+
+@P("{VAL_DESC} : an ImportAttribute Record")
+@P("{LIST_ELEMENTS_DESCRIPTION} : ImportAttribute Records")
+class _:
+    s_tb = T_ImportAttribute_Record
+
+# ==============================================================================
+#@ 16.2.1.5 Abstract Module Records
 
 @P("{VAL_DESC} : a Module Record")
 class _:
@@ -13326,7 +13360,7 @@ class _:
     s_tb = T_ResolvedBinding_Record
 
 # ==============================================================================
-#@ 16.2.1.5 Cyclic Module Records
+#@ 16.2.1.6 Cyclic Module Records
 
 @P("{VAL_DESC} : a Cyclic Module Record")
 @P("{LIST_ELEMENTS_DESCRIPTION} : Cyclic Module Records")
@@ -13338,21 +13372,7 @@ class _:
     s_tb = T_GraphLoadingState_Record
 
 # ==============================================================================
-#@ 16.2.1.5.1.1 InnerModuleLoading
-
-@P("{EXPR} : that Record")
-class _:
-    def s_expr(expr, env0, _):
-        [] = expr.children
-        rt = RecordType('', (
-                ('[[Specifier]]', T_String),
-                ('[[Module]]'   , T_Module_Record),
-            )
-        )
-        return (rt, env0)
-
-# ==============================================================================
-#@ 16.2.1.5.3.1 InnerModuleEvaluation
+#@ 16.2.1.6.3.1 InnerModuleEvaluation
 
 @P("{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
 class _:
@@ -13364,7 +13384,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.5.3.4 AsyncModuleExecutionFulfilled
+#@ 16.2.1.6.3.4 AsyncModuleExecutionFulfilled
 
 @P("{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
 class _:
@@ -13375,7 +13395,7 @@ class _:
         return (ListType(T_Cyclic_Module_Record), env1)
 
 # ==============================================================================
-#@ 16.2.1.6 Source Text Module Records
+#@ 16.2.1.7 Source Text Module Records
 
 @P("{VAL_DESC} : a Source Text Module Record")
 @P("{LIST_ELEMENTS_DESCRIPTION} : Source Text Module Records")
@@ -13404,7 +13424,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-#@ 16.2.1.6.2 GetExportedNames
+#@ 16.2.1.7.2 GetExportedNames
 @P("{CONDITION_1} : We've reached the starting point of an `export *` circularity")
 class _:
     def s_cond(cond, env0, asserting):
@@ -13412,7 +13432,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.6.3 ResolveExport
+#@ 16.2.1.7.3 ResolveExport
 
 @P("{CONDITION_1} : This is a circular import request")
 class _:
@@ -13440,7 +13460,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.6.4 InitializeEnvironment
+#@ 16.2.1.7.4 InitializeEnvironment
 
 @P("{CONDITION_1} : All named exports from {var} are resolvable")
 class _:
@@ -13450,7 +13470,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.6.5 ExecuteModule
+#@ 16.2.1.7.5 ExecuteModule
 
 @P("{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated")
 class _:
@@ -13460,7 +13480,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.7 GetImportedModule
+#@ 16.2.1.8 GetImportedModule
 
 @P("{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
 class _:
@@ -13470,7 +13490,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.8 HostLoadImportedModule
+#@ 16.2.1.9 HostLoadImportedModule
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 17 Error Handling and Language Extensions

@@ -1198,6 +1198,8 @@ def check_the_sdo_name():
                 r in ['a Boolean', '~unused~', 'either a normal completion containing ~unused~ or an abrupt completion']
                 or
                 op_name.startswith(('Compile', 'Instantiate', 'Define', 'Evaluate'))
+                or
+                op_name == 'WithClauseToAttributes'
                 or 
                 re.fullmatch(r'either a normal completion containing .+ or an abrupt completion', r)
                 or
@@ -1860,6 +1862,10 @@ nts_behind_var_in_sdo_call = {
     ],
     ('ForDeclarationBindingInstantiation',  '_lhs_'): ['ForDeclaration'],
     ('ForDeclarationBindingInitialization', '_lhs_'): ['ForDeclaration'],
+
+    # 19365
+    ( 'Evaluation', '_specifierExpression_'): ['AssignmentExpression'],
+    ( 'Evaluation', '_optionsExpression_'  ): ['AssignmentExpression'],
 
     # 19484 IsSimpleParameterList
     ('IsSimpleParameterList', '_head_'): ['AsyncArrowHead'],
