@@ -1200,6 +1200,7 @@ def _handle_structured_header(section):
                     (r'a new promise .+',       'a Promise'),
                     (r'either ~done~ indicating .+ or the IteratorResult object .+', ['~done~', 'an Object']),
                     (r'the global object .+',   'an Object'),
+                    (r'the object that is .+',  'an Object'),
 
                     # --------------------
                     # specification values:
