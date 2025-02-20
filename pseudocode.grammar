@@ -1149,6 +1149,7 @@
     the Record
     the Reference Record
     the RegExp Record
+    the Synthetic Module Record
     the Time Zone Identifier Record
     the TypedArray With Buffer Witness Record
 
@@ -1337,6 +1338,7 @@
     a Super Reference Record
     a Symbol
     a Synchronize event
+    a Synthetic Module Record
     a Time Zone Identifier Record
     a TypedArray
     a TypedArray With Buffer Witness Record

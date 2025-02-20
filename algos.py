@@ -322,6 +322,7 @@ def check_alg_consistency():
 
                         'Cyclic Module Records'                               : 'a Cyclic Module Record _module_',
                         'Source Text Module Records'                          : 'a Source Text Module Record _module_',
+                        'Implementation of Module Record Abstract Methods'    : 'a Synthetic Module Record _module_',
 
                         'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _O_',
                         'ECMAScript Function Objects'                         : 'an ECMAScript function object _F_',
@@ -383,7 +384,12 @@ def check_alg_consistency():
 
                 # Check that the params in subsequent headers (if any) are consistent:
                 for alg_header in alg.headers[1:]:
-                    assert len(alg_header.params) == len(alg.params)
+                    if len(alg_header.params) != len(alg.params):
+                        sect = alg_header.section
+                        put()
+                        put(f"{sect.section_num} {sect.section_title}")
+                        put(f"  gives header for `{alg.name}` with {len(alg_header.params)} params")
+                        put(f"  but expected {len(alg.params)} params")
                     for (header_param, alg_param) in zip(alg_header.params, alg.params):
                         assert header_param.name   == alg_param.name
                         assert header_param.punct  == alg_param.punct

@@ -206,6 +206,7 @@ sub_to_super_relation = {
     'Function Environment Record'   : 'Declarative Environment Record',
     'Module Environment Record'     : 'Declarative Environment Record',
 
+    'Synthetic Module Record'  : 'Module Record',
     'Cyclic Module Record'     : 'Module Record',
     'Source Text Module Record': 'Cyclic Module Record',
 }
@@ -245,7 +246,10 @@ class RecordSchema:
         self.addl_method_decls[method_decl.name] = method_decl
 
     def add_method_defn(self, method_defn):
-        assert self.somebody_declares_method(method_defn.name)
+        if not self.somebody_declares_method(method_defn.name):
+            print(f"!! RecordSchema({self.tc_schema_name!r}) is adding a defn for method `{method_defn.name}`,")
+            print(f"!!   but the parent chain has no declaration for that method.")
+            print(f"!!   (Maybe the schema isn't connected to its parent.)")
         assert method_defn.name not in self.method_defns
         self.method_defns[method_defn.name] = method_defn
 

@@ -166,7 +166,23 @@ def summarize_headers(alg):
     else:
         assert alg.species.startswith('op: discriminated'), alg.species
         n_params = len(alg.headers[0].tah.parameter_types)
-        assert all(len(header.tah.parameter_types) == n_params for header in alg.headers)
+        if alg.species == "op: discriminated by type: module rec":
+            # PR 3391 introduced Synthetic Module Records,
+            # whose LoadRequestedModules, GetExportedNames, and ResolveExport methods
+            # don't take the optional parameter
+            # that appears in the declaration of the 'abstract' method.
+            # So here, some headers will have all the params,
+            # and some will have only the required params
+            n_required_params = sum(
+                param.punct != '[]'
+                for param in alg.headers[0].params
+            )
+            for header in alg.headers:
+                assert len(header.tah.parameter_types) in [n_required_params, n_params]
+        else:
+            for header in alg.headers:
+                assert len(header.tah.parameter_types) == n_params
+                    
 
         param_names_ = [set() for i in range(n_params)]
         param_types_ = [set() for i in range(n_params)]
@@ -1803,6 +1819,8 @@ def convert_nature_to_type(nature):
             'a Global Environment Record': T_Global_Environment_Record,
             'a Module Environment Record': T_Module_Environment_Record,
             'an Object Environment Record': T_Object_Environment_Record,
+
+            'a Synthetic Module Record': T_Synthetic_Module_Record,
 
             # record field type outside of <td>:
             '*null* or an Environment Record': T_Null | T_Environment_Record,
@@ -11447,7 +11465,15 @@ class _:
 
 @P("{VAL_DESC} : an Abstract Closure")
 class _:
-    s_tb = T_proc_
+    def s_tb(val_desc, env):
+        if val_desc.parent.source_text().startswith("an Abstract Closure, a set of algorithm steps, or some other defini"):
+            return T_proc_
+        elif val_desc.parent.parent.prod.lhs_s == "{FIELD_VALUE_TYPE}":
+            # Additional Fields of Synthetic Module Records
+            # [[EvaluationSteps]]
+            return ProcType((T_Module_Record,), T_Completion_Record)
+        else:
+            assert 0
 
 @P("{VAL_DESC} : an Abstract Closure with no parameters")
 class _:
@@ -13480,7 +13506,14 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.8 GetImportedModule
+#@ 16.2.1.8 Synthetic Module Records
+
+@P('{VAL_DESC} : a Synthetic Module Record')
+class _:
+    s_tb = T_Synthetic_Module_Record
+
+# ==============================================================================
+#@ 16.2.1.9 GetImportedModule
 
 @P("{CONDITION_1} : LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation")
 class _:
@@ -13488,9 +13521,6 @@ class _:
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_Cyclic_Module_Record)
         return (env0, env0)
-
-# ==============================================================================
-#@ 16.2.1.9 HostLoadImportedModule
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 17 Error Handling and Language Extensions

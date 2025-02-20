@@ -982,6 +982,8 @@ def _handle_structured_header(section):
             section.section_kind = 'env_rec_method'
         elif section.parent.parent.section_id == 'sec-module-semantics':
             section.section_kind = 'module_rec_method'
+        elif section.parent.parent.section_id == 'sec-synthetic-module-records':
+            section.section_kind = 'module_rec_method'
         else:
             assert 0, section.section_id
             
@@ -2578,7 +2580,9 @@ def lower_except_last_propname(s):
         return s.lower()
 
 def split_words(s):
-    return re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
+    r = re.sub(r'([a-z])([A-Z])', r'\1 \2', s)
+    r = re.sub(r'(JSON)(Module)', r'\1 \2', r)
+    return r
 
 def split_certain_words(s):
     return ( s
