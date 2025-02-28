@@ -1197,6 +1197,9 @@ def _handle_structured_header(section):
                     (r'the value of the \*"length"\* property of an array-like object.', 'an integral Number'),
                     (r'the year in which .+',                        'an integral Number'),
 
+                    # String
+                    (r'a String representing .+', 'a String'),
+
                     # Object
                     (r'a Promise which .+',     'a Promise'),
                     (r'a new promise .+',       'a Promise'),

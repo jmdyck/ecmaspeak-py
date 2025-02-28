@@ -1750,6 +1750,7 @@ def type_bracket_for(vd, env):
         '{LITERAL}',
         '{NUMBER_LITERAL}',
         '{MATH_LITERAL}',
+        '{code_point_lit}',
         '{LIST_ELEMENTS_DESCRIPTION}',
     ], str(vd.prod)
 
@@ -3498,7 +3499,6 @@ class _:
 @P("{FACTOR} : {NUMBER_LITERAL}")
 @P("{FACTOR} : {PP_NAMED_OPERATION_INVOCATION}")
 @P("{FACTOR} : {SETTABLE}")
-@P("{LITERAL} : {code_point_lit}")
 @P("{LOCAL_REF} : {PROD_REF}")
 @P("{LOCAL_REF} : {SETTABLE}")
 @P("{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN}")
@@ -3516,6 +3516,7 @@ class _:
 
 @P("{LITERAL} : {MATH_LITERAL}")
 @P("{LITERAL} : {NUMBER_LITERAL}")
+@P("{LITERAL} : {code_point_lit}")
 class _:
     s_tb = s_tb_pass_down
     s_expr = s_expr_pass_down
@@ -3586,6 +3587,8 @@ class _:
 @P(r"{code_point_lit} : ` [^`]+ ` \x20 U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)")
 @P(r"{code_point_lit} : \b U \+ [0-9A-F]{4} \x20 \( [A-Z -]+ \)")
 class _:
+    s_tb = a_subset_of(T_code_point_)
+
     def s_expr(expr, env0, _):
         return (T_code_point_, env0)
 
@@ -4513,6 +4516,15 @@ class _:
         [ex, nonterminal] = cond.children
         env0.assert_expr_is_of_type(ex, T_character_)
         assert nonterminal.source_text() == '|LineTerminator|'
+        return (env0, env0)
+
+#@ 22.2.5.1 RegExp.escape ( _S_ )
+@P("{CONDITION_1} : {var} is matched by {nonterminal}")
+@P("{CONDITION_1} : {var} is matched by either {nonterminal} or {nonterminal}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, *nonterminals] = cond.children
+        env0.assert_expr_is_of_type(var, T_code_point_)
         return (env0, env0)
 
 # ------------------------------------------------------------------------------
@@ -5490,6 +5502,10 @@ class _:
         if item_nature.prod.rhs_s == "code point":
             item_type = T_code_point_
             collection_type = T_Unicode_code_points_
+
+        elif item_nature.prod.rhs_s == "code unit":
+            item_type = T_code_unit_
+            collection_type = T_String
 
         elif item_nature.prod.rhs_s == r"event":
             item_type = T_Event
@@ -8741,6 +8757,23 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, T_String)
         return (T_MathNonNegativeInteger_, env1)
 
+@P("{CONDITION_1} : The length of {var} is {EX}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [thing_var, len_ex] = cond.children
+        (thing_t, env1) = tc_expr(thing_var, env0)
+        if thing_t.is_a_subtype_of_or_equal_to(T_String):
+            pass
+        elif thing_t.is_a_subtype_of_or_equal_to(T_List):
+            add_pass_error(
+                thing_var,
+                "Strings are measured with 'length', Lists are measured with 'the number of elements'"
+            )
+        else:
+            assert 0, thing_t
+        env0.assert_expr_is_of_type(len_ex, T_MathNonNegativeInteger_)
+        return (env1, env1)
+
 # ------------------------------------------------------------------------------
 #> In this specification,
 #> the phrase "the <dfn>string-concatenation</dfn> of _A_, _B_, ..."
@@ -10452,18 +10485,6 @@ class _:
 
 # ------------------------------------------------------------------------------
 # the number of elements in the List:
-
-@P("{CONDITION_1} : The length of {var} is {var}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [list_var, len_var] = cond.children
-        env0.assert_expr_is_of_type(list_var, T_List)
-        env0.assert_expr_is_of_type(len_var, T_MathNonNegativeInteger_)
-        add_pass_error(
-            list_var,
-            "Strings are measured with 'length', Lists are measured with 'the number of elements'"
-        )
-        return (env0, env0)
 
 @P("{EXPR} : the number of elements in the List {var}")
 @P("{EX} : The number of elements in {var}")
@@ -14325,6 +14346,24 @@ declare_isom(T_Object, 'might have', 'slot', '[[OriginalSource]]', T_String)
 declare_isom(T_Object, 'might have', 'slot', '[[OriginalFlags]]',  T_String)
 declare_isom(T_Object, 'might have', 'slot', '[[RegExpRecord]]',   T_RegExp_Record)
 declare_isom(T_Object, 'might have', 'slot', '[[RegExpMatcher]]',  T_RegExpMatcher_)
+
+# ==============================================================================
+#@ 22.2.5.1.1 EncodeForRegExpEscape
+
+@P("{CONDITION_1} : {var} is a code point listed in the “Code Point” column of {h_emu_xref}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [cp_var, emu_xref] = cond.children
+        env0.assert_expr_is_of_type(cp_var, T_code_point_)
+        assert emu_xref.source_text() == '<emu-xref href="#table-controlescape-code-point-values"></emu-xref>'
+        return (env0, env0)
+
+@P("{EX} : the string in the “ControlEscape” column of the row whose “Code Point” column contains {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [cp_var] = expr.children
+        env0.assert_expr_is_of_type(cp_var, T_code_point_)
+        return (T_String, env0)
 
 # ==============================================================================
 #@ 22.2.6.13.1 EscapeRegExpPattern

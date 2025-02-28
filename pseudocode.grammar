@@ -335,6 +335,7 @@
     WeakRef
     WeakSet
     code point
+    code unit
     event
     integer
     {nonterminal}
@@ -399,7 +400,7 @@
     The execution context stack is not empty
     The following Set will succeed, since formal parameters mapped by arguments objects are always writable
     The following loop will terminate
-    The length of {var} is {var}
+    The length of {var} is {EX}
     The mathematical value of {var}'s {starred_str} property is {EX}
     The next step never returns an abrupt completion because {CONDITION_1}
     The surrounding agent is in the critical section for {var}
@@ -605,6 +606,8 @@
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
     {var} is in {INTERVAL}
+    {var} is matched by either {nonterminal} or {nonterminal}
+    {var} is matched by {nonterminal}
     {var} is not already suspended
     {var} is not contained within an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {var} is not finite
@@ -612,6 +615,7 @@
     {var} is not in {PREFIX_PAREN}
     {var} is now an empty List
     {var} is now the running execution context
+    {var} is a code point listed in the “Code Point” column of {h_emu_xref}
     {var} is the running execution context again
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} must have an uninitialized binding for {var}
@@ -956,6 +960,7 @@
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the single code point matched by this production
     the source text matched by {PROD_REF}
+    the string in the “ControlEscape” column of the row whose “Code Point” column contains {var}
     the substring of {var} from index {dec_int_lit}
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
