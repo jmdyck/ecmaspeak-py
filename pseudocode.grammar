@@ -704,6 +704,7 @@
     a List of the integers in {INTERVAL}, in descending order
     a List of {EX} {LITERAL} values, indexed 1 through {EX}
     a List whose elements are bytes from {var} at indices in {INTERVAL}
+    a List whose elements are the 2 bytes that are the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary16 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the code units that are the elements of {var}
@@ -812,6 +813,7 @@
     the bitwise complement of {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
+    the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary16 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
     the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row
@@ -869,6 +871,7 @@
     the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
     the result of applying the bitwise inclusive OR operation to {var} and {var}
     the result of clamping {var} between 0 and {EX}
+    the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode
     the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to IEEE 754-2019 binary64 format
     the result of interpreting each of {var}'s 16-bit elements as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
@@ -1423,6 +1426,7 @@
     an ECMAScript function object
     an ECMAScript language value
     an Environment Record
+    an IEEE 754-2019 binary16 NaN value
     an IEEE 754-2019 binary32 NaN value
     an IEEE 754-2019 binary64 NaN value
     an ImportAttribute Record

@@ -3976,6 +3976,7 @@ def _check_section_order():
                         t = re.sub(r' \[ %symbol\.(\w+)% \]', r'.zz_\1', t)
                     if prev_t is not None and t <= prev_t:
                         msg_at_node(child, '"%s" should be before "%s"' % (child.section_title, prev_title))
+                    # TODO: collate digits after letters
                     prev_t = t
                     prev_title = child.section_title
 

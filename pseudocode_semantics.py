@@ -8044,6 +8044,13 @@ class _:
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
         return (T_MathInteger_, env1)
 
+@P("{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary16 value")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env1 = env0.ensure_expr_is_of_type(var, ListType(T_MathInteger_))
+        return (T_IEEE_binary16_, env1)
+
 @P("{EXPR} : the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value")
 class _:
     def s_expr(expr, env0, _):
@@ -9264,7 +9271,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary32_ | T_IEEE_binary64_ | T_MathInteger_)
+        env1 = env0.ensure_expr_is_of_type(var, T_IEEE_binary16_ | T_IEEE_binary32_ | T_IEEE_binary64_ | T_MathInteger_)
         return (T_Number, env1)
 
 @P("{EX} : the Number value for {EX}")
@@ -9324,6 +9331,7 @@ class _:
         env0.assert_expr_is_of_type(ex, T_MathReal_)
         return (T_Number, env0)
 
+@P("{EXPR} : the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode")
 @P("{EXPR} : the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode")
 @P("{EXPR} : the result of converting {var} to IEEE 754-2019 binary64 format")
 @P("{EXPR} : the ECMAScript Number value corresponding to {var}")
@@ -9417,12 +9425,13 @@ def the_Number_value_for(mathnum: ES_Mathnum):
 
 # -----------------------------
 
+@P("{EXPR} : a List whose elements are the 2 bytes that are the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary16 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
 @P("{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
 @P("{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
 class _:
     def s_expr(expr, env0, _):
         var = expr.children[0]
-        env1 = env0.ensure_expr_is_of_type(var, T_Number)
+        env1 = env0.ensure_expr_is_of_type(var, T_Number | T_BigInt)
         return (ListType(T_MathInteger_), env1)
 
 # ----------------------------------------------
@@ -9453,6 +9462,10 @@ class _:
         return (T_MathNonNegativeInteger_, env0)
 
 # ------------------------------------------------------------------------------
+
+@P("{VAL_DESC} : an IEEE 754-2019 binary16 NaN value")
+class _:
+    s_tb = a_subset_of(T_IEEE_binary16_)
 
 @P("{VAL_DESC} : an IEEE 754-2019 binary32 NaN value")
 class _:

@@ -958,6 +958,7 @@ _named_type_hierarchy = {
                 'CharSetElement': {},
                 'Data Block': {},
                 'event_pair_': {},
+                'IEEE_binary16_': {},
                 'IEEE_binary32_': {},
                 'IEEE_binary64_': {},
                 'List': {},
