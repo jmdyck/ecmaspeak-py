@@ -34,6 +34,7 @@ def _parse():
 
     def add_child(child):
         nonlocal current_open_node
+        # stderr(" " * current_open_node.depth(), '+', child.element_name)
         current_open_node.children.append(child)
         child.parent = current_open_node
         if child.element_name.startswith('#') or child.element_name in ['html', 'meta', 'link', 'img', 'br']:
@@ -68,6 +69,8 @@ def _parse():
         current_open_node.inner_end_posn   = end_tag_start_posn
         current_open_node.end_posn         = end_tag_end_posn
         current_open_node = current_open_node.parent
+
+        # stderr("  " * current_open_node.depth(), '-', element_name)
 
     # ---------------------------------------------
 
@@ -108,6 +111,18 @@ def _parse():
             fatal_error(posn, "lexing error")
 
         add_child(HNode(tag_start_posn, tag_end_posn, element_name, attrs))
+
+        # Inside a <style> element, the usual rules don't apply.
+        # PR #3352 introduced a <style> element containing "<em>" and "<p>",
+        # that we must not recognize as start-tags.
+        # I think this is the easiest way to handle it.
+        if element_name == 'style':
+            p = shared.spec_text.find("</style>", tag_end_posn)
+            if p == -1:
+                fatal_error(tag_end_posn, "no </style> tag found")
+            add_child(HNode(tag_end_posn, p, '#LITERAL', {}))
+            return p
+
         return tag_end_posn
 
     # end-tag:
@@ -234,6 +249,12 @@ class HNode(SpecNode):
             return None
         else:
             return self.parent.nearest_ancestor_satisfying(predicate)
+
+    def depth(self):
+        if self.parent is None:
+            return 0
+        else:
+            return 1 + self.parent.depth()
 
 reo_whitespace = re.compile(r'^\s+$')
 
@@ -481,10 +502,10 @@ element_info = {
     # Block-level
 
         # block contains blocks:
-        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;meta;#WS;link;#WS;style;#WS;pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
+        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;meta;#WS;link;#WS;(style;#WS;)+pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
         'emu-clause'        : ('B', 'id', 'aoid example legacy namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
-        'emu-annex'         : ('B', 'id', 'aoid namespace normative oldids type', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
+        'emu-annex'         : ('B', 'id', 'aoid back-matter namespace normative oldids type', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
         'emu-table'         : ('B', 'caption id', 'informative oldids', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', 'caption id', 'informative', '#WS;(object;|img;)#WS;'),
         'figure'            : ('B', '',          '',           '#WS;table;#WS;'),
@@ -510,8 +531,8 @@ element_info = {
         'emu-todo'             : ('B', '',          '',           '(#TEXT;|a;)+'), # PROPOSALS
         'emu-alg'              : ('B', '',          'example replaces-step', '(#TEXT;|a;|b;|code;|emu-grammar;|emu-meta;|emu-not-ref;|emu-xref;|figure;|sub;|sup;|var;)+'), # BLOCK INCLUSIONS: figure
         'emu-caption'          : ('B', '',          '',           '(#TEXT;|emu-xref;)+'),
-        'pre'                  : ('B', '',          'class',      '#TEXT;|code;'),
-        'style'                : ('B', '',          '',           '#TEXT;'),
+        'pre'                  : ('B', '',          'class',      '(#TEXT;|code;|sup;)+'),
+        'style'                : ('B', '',          'media',      '#TEXT;'),
         'p'                    : ('B', '',          '',           'img;|(#COMMENT;|#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
         'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-xref;|i;|ins;|sub;)+'), # though dfn is pretty odd
         'h2'                   : ('B', '',          '',           '#TEXT;'),
@@ -601,6 +622,7 @@ attribute_info = {
     'href'               : r'[-\w:/.#%@]+',
     'id'                 : id_pattern,
     'lang'               : r'en-GB-oxendict',
+    'media'              : 'print',
     'name'               : r'\w+',
     'namespace'          : r'grammar-notation|asi-rules|annexB',
     'oldids'             : f"{id_pattern}(,{id_pattern})*",
@@ -612,6 +634,7 @@ attribute_info = {
     'variants'           : r'(\w+([ -]\w+)*)(,\w+([ -]\w+)*)*',
     'width'              : r'\d+',
 
+    'back-matter'        : None,
     'example'            : None,
     'informative'        : None,
     'legacy'             : None,
