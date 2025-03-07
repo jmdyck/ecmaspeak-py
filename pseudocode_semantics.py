@@ -9243,7 +9243,6 @@ class _:
         return (T_PosInfinityNumber_, env0)
 
 @P("{NUMBER_LITERAL} : {starred_nan_lit}")
-@P("{NUMBER_LITERAL} : the *NaN* Number value")
 class _:
     s_tb = T_NaN_Number_
 
@@ -9425,9 +9424,9 @@ def the_Number_value_for(mathnum: ES_Mathnum):
 
 # -----------------------------
 
-@P("{EXPR} : a List whose elements are the 2 bytes that are the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary16 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
-@P("{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
-@P("{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
+@P("{EXPR} : a List whose elements are the 2 bytes that are the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary16 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
+@P("{EXPR} : a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
+@P("{EXPR} : a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value")
 class _:
     def s_expr(expr, env0, _):
         var = expr.children[0]
@@ -9463,17 +9462,9 @@ class _:
 
 # ------------------------------------------------------------------------------
 
-@P("{VAL_DESC} : an IEEE 754-2019 binary16 NaN value")
+@P("{VAL_DESC} : a NaN")
 class _:
-    s_tb = a_subset_of(T_IEEE_binary16_)
-
-@P("{VAL_DESC} : an IEEE 754-2019 binary32 NaN value")
-class _:
-    s_tb = a_subset_of(T_IEEE_binary32_)
-
-@P("{VAL_DESC} : an IEEE 754-2019 binary64 NaN value")
-class _:
-    s_tb = a_subset_of(T_IEEE_binary64_)
+    s_tb = a_subset_of(T_IEEE_binary16_ | T_IEEE_binary32_ | T_IEEE_binary64_)
 
 # ==============================================================================
 #@ 6.1.6.2 The BigInt Type

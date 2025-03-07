@@ -703,9 +703,9 @@
     a List of the integers in {INTERVAL}, in descending order
     a List of {EX} {LITERAL} values, indexed 1 through {EX}
     a List whose elements are bytes from {var} at indices in {INTERVAL}
-    a List whose elements are the 2 bytes that are the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary16 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
-    a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
+    a List whose elements are the 2 bytes that are the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary16 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
+    a List whose elements are the 4 bytes that are the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary32 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
+    a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
     a List whose elements are the elements of {var}, sorted according to lexicographic code unit order
@@ -1311,6 +1311,7 @@
     a Module Namespace Object
     a Module Record
     a ModuleRequest Record
+    a NaN
     a Number
     a Parse Node
     a Private Name
@@ -1425,9 +1426,6 @@
     an ECMAScript function object
     an ECMAScript language value
     an Environment Record
-    an IEEE 754-2019 binary16 NaN value
-    an IEEE 754-2019 binary32 NaN value
-    an IEEE 754-2019 binary64 NaN value
     an ImportAttribute Record
     an Iterator Record
     an Object
@@ -1584,7 +1582,6 @@
 {NUMBER_LITERAL} :
     *-0.5*{h_sub_fancy_f}
     *0.5*{h_sub_fancy_f}
-    the *NaN* Number value
     {starred_int_lit}{h_sub_fancy_f}
     {starred_nan_lit}
     {starred_neg_infinity_lit}{h_sub_fancy_f}
