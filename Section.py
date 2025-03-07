@@ -2288,6 +2288,7 @@ def check_id(section):
                     'SetterThatIgnoresPrototypeProperties',
                     'ModuleRequestsEqual',
                     'AllImportAttributesSupported',
+                    'IncrementModuleAsyncEvaluationCount',
                 ))
                 else
                 convert_to_lowercase

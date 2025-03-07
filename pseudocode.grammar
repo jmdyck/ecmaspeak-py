@@ -388,7 +388,7 @@
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
-    All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
+    All elements of {var} have their {dsb_word} field set to {VAL_DESC}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}
     All named exports from {var} are resolvable
     Every CharSetElement of {var} consists of a single character
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
@@ -471,7 +471,6 @@
     we return here
     {DOTTING} exists and has been initialized
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
-    {DOTTING} is {LITERAL} and was never previously set to {LITERAL}
     {EX} and {EX} are both empty
     {EX} and {EX} are both {LITERAL}
     {EX} and {EX} are both {LITERAL} or both {LITERAL}
@@ -709,8 +708,8 @@
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format Not-a-Number encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
-    a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}
     a List whose elements are the elements of {var}, sorted according to lexicographic code unit order
+    a List whose elements are the elements of {var}, sorted by their {dsb_word} field in ascending order
     a List whose elements are the first {var} elements of {EX}
     a List whose elements are the {var}-byte binary encoding of {var}. The bytes are ordered in little endian order
     a List whose elements are the {var}-byte binary two's complement encoding of {var}. The bytes are ordered in little endian order

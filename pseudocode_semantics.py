@@ -11179,11 +11179,11 @@ class _:
 # ------------------------------------------------------------------------------
 # List of Records
 
-@P("{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {LITERAL}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}")
+@P("{CONDITION_1} : All elements of {var} have their {dsb_word} field set to {VAL_DESC}, {dsb_word} field set to {LITERAL}, and {dsb_word} field set to {LITERAL}")
 class _:
     def s_cond(cond, env0, asserting):
         [var, dsb1, lit1, dsb2, lit2, dsb3, lit3] = cond.children
-        assert dsb1.source_text() == '[[AsyncEvaluation]]'
+        assert dsb1.source_text() == '[[AsyncEvaluationOrder]]'
         assert dsb2.source_text() == '[[PendingAsyncDependencies]]'
         assert dsb3.source_text() == '[[EvaluationError]]'
         # could check that the lits have the right type.
@@ -13432,25 +13432,13 @@ class _:
     s_tb = T_GraphLoadingState_Record
 
 # ==============================================================================
-#@ 16.2.1.6.3.1 InnerModuleEvaluation
-
-@P("{CONDITION_1} : {DOTTING} is {LITERAL} and was never previously set to {LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [dotting, lita, litb] = cond.children
-        assert lita.source_text() == '*false*'
-        assert litb.source_text() == '*true*'
-        env0.assert_expr_is_of_type(dotting, T_Boolean)
-        return (env0, env0)
-
-# ==============================================================================
 #@ 16.2.1.6.3.4 AsyncModuleExecutionFulfilled
 
-@P("{EXPR} : a List whose elements are the elements of {var}, in the order in which they had their {dsb_word} fields set to {LITERAL} in {cap_word}")
+@P("{EXPR} : a List whose elements are the elements of {var}, sorted by their {dsb_word} field in ascending order")
 class _:
     def s_expr(expr, env0, _):
-        [var, dsb_word, literal, cap_word] = expr.children
-        assert dsb_word.source_text() == '[[AsyncEvaluation]]'
+        [var, dsb_word] = expr.children
+        assert dsb_word.source_text() == '[[AsyncEvaluationOrder]]'
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Cyclic_Module_Record))
         return (ListType(T_Cyclic_Module_Record), env1)
 
