@@ -176,7 +176,6 @@
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Optionally, {SMALL_COMMAND}.
-    Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.
     Perform an implementation-defined debugging action.
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following steps:{IND_COMMANDS}
@@ -531,8 +530,8 @@
     {PROD_REF} does not have an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} has an? <sub>[{cap_word}]</sub> parameter
     {PROD_REF} is `export` {nonterminal}
-    {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
-    {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})
+    {PROD_REF} is contained within a {nonterminal} that is being evaluated for ParseJSON (see step {h_emu_xref} of ParseJSON)
+    {PROD_REF} is contained within a {nonterminal} that is being parsed for ParseJSON (see step {h_emu_xref} of ParseJSON)
     {PROD_REF} is the token `false`
     {PROD_REF} is the token `true`
     {SETTABLE} and {SETTABLE} are not the same Environment Record
@@ -1412,6 +1411,7 @@
     a throw completion
     a time value
     a trailing surrogate
+    a valid JSON text as specified in ECMA-404
     a {h_emu_xref}
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}

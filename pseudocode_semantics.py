@@ -8394,7 +8394,7 @@ class _:
         # kludgey?
         r = is_simple_call(ex)
         if r:
-            assert cond.prod.rhs_s == r"{EX} is {VALUE_DESCRIPTION}"
+            assert cond.prod.rhs_s in [r"{EX} is {VALUE_DESCRIPTION}", "{EX} is not {VALUE_DESCRIPTION}"]
 
             (callee_op_name, var) = r
             #
@@ -14717,23 +14717,20 @@ class _:
 # ==============================================================================
 #@ 25.5.1 JSON.parse
 
-@P("{COMMAND} : Parse {PP_NAMED_OPERATION_INVOCATION} as a JSON text as specified in ECMA-404. Throw a {ERROR_TYPE} exception if it is not a valid JSON text as defined in that specification.")
+@P("{VAL_DESC} : a valid JSON text as specified in ECMA-404")
 class _:
-    def s_nv(anode, env0):
-        [noi, error_type] = anode.children
-        env0.assert_expr_is_of_type(noi, T_Unicode_code_points_)
-        return env0
+    s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
-@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for JSON.parse (see step {h_emu_xref} of {h_emu_xref})")
+@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being parsed for ParseJSON (see step {h_emu_xref} of ParseJSON)")
+@P("{CONDITION_1} : {PROD_REF} is contained within a {nonterminal} that is being evaluated for ParseJSON (see step {h_emu_xref} of ParseJSON)")
 class _:
     def s_cond(cond, env0, asserting):
-        [prod_ref, nont, step_xref, alg_xref] = cond.children
+        [prod_ref, nont, step_xref] = cond.children
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (env0, env0)
 
     def d_exec(cond):
-        [prod_ref, nont, step_xref, alg_xref] = cond.children
+        [prod_ref, nont, step_xref] = cond.children
         node = EXEC(prod_ref, ES_ParseNode)
         container_nt = nt_name_from_nonterminal_node(nont)
         assert container_nt == 'Script'
