@@ -980,9 +980,7 @@ def _handle_structured_header(section):
     if section_type == 'concrete method':
         if section.parent.parent.section_id == 'sec-the-environment-record-type-hierarchy':
             section.section_kind = 'env_rec_method'
-        elif section.parent.parent.section_id == 'sec-module-semantics':
-            section.section_kind = 'module_rec_method'
-        elif section.parent.parent.section_id == 'sec-synthetic-module-records':
+        elif section.parent.parent.parent.section_id == 'sec-module-semantics':
             section.section_kind = 'module_rec_method'
         else:
             assert 0, section.section_id

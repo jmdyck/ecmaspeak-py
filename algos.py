@@ -313,29 +313,34 @@ def check_alg_consistency():
 
                 for alg_header in alg.headers:
                     sect = alg_header.section
-                    expected_for_phrase = {
-                        'Declarative Environment Records'                     : 'a Declarative Environment Record _envRec_',
-                        'Object Environment Records'                          : 'an Object Environment Record _envRec_',
-                        'Function Environment Records'                        : 'a Function Environment Record _envRec_',
-                        'Global Environment Records'                          : 'a Global Environment Record _envRec_',
-                        'Module Environment Records'                          : 'a Module Environment Record _envRec_',
+                    if re.fullmatch(r'Implementation of .*Module Record Abstract Methods', sect.parent.section_title):
+                        # Look at the grandparent
+                        expected_for_phrase = {
+                            'Cyclic Module Records'       : 'a Cyclic Module Record _module_',
+                            'Source Text Module Records'  : 'a Source Text Module Record _module_',
+                            'Synthetic Module Records'    : 'a Synthetic Module Record _module_',
+                        }[sect.parent.parent.section_title]
+                    else:
+                        # Look at the parent
+                        expected_for_phrase = {
+                            'Declarative Environment Records'                     : 'a Declarative Environment Record _envRec_',
+                            'Object Environment Records'                          : 'an Object Environment Record _envRec_',
+                            'Function Environment Records'                        : 'a Function Environment Record _envRec_',
+                            'Global Environment Records'                          : 'a Global Environment Record _envRec_',
+                            'Module Environment Records'                          : 'a Module Environment Record _envRec_',
 
-                        'Cyclic Module Records'                               : 'a Cyclic Module Record _module_',
-                        'Source Text Module Records'                          : 'a Source Text Module Record _module_',
-                        'Implementation of Module Record Abstract Methods'    : 'a Synthetic Module Record _module_',
-
-                        'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _O_',
-                        'ECMAScript Function Objects'                         : 'an ECMAScript function object _F_',
-                        'Built-in Function Objects'                           : 'a built-in function object _F_',
-                        'Bound Function Exotic Objects'                       : 'a bound function exotic object _F_',
-                        'Array Exotic Objects'                                : 'an Array exotic object _A_',
-                        'String Exotic Objects'                               : 'a String exotic object _S_',
-                        'Arguments Exotic Objects'                            : 'an arguments exotic object _args_',
-                        'TypedArray Exotic Objects'                           : 'a TypedArray _O_',
-                        'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _O_',
-                        'Immutable Prototype Exotic Objects'                  : 'an immutable prototype exotic object _O_',
-                        'Proxy Object Internal Methods and Internal Slots'    : 'a Proxy exotic object _O_',
-                    }[sect.parent.section_title]
+                            'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _O_',
+                            'ECMAScript Function Objects'                         : 'an ECMAScript function object _F_',
+                            'Built-in Function Objects'                           : 'a built-in function object _F_',
+                            'Bound Function Exotic Objects'                       : 'a bound function exotic object _F_',
+                            'Array Exotic Objects'                                : 'an Array exotic object _A_',
+                            'String Exotic Objects'                               : 'a String exotic object _S_',
+                            'Arguments Exotic Objects'                            : 'an arguments exotic object _args_',
+                            'TypedArray Exotic Objects'                           : 'a TypedArray _O_',
+                            'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _O_',
+                            'Immutable Prototype Exotic Objects'                  : 'an immutable prototype exotic object _O_',
+                            'Proxy Object Internal Methods and Internal Slots'    : 'a Proxy exotic object _O_',
+                        }[sect.parent.section_title]
                     if alg_header.for_phrase != expected_for_phrase:
                         put()
                         put(f"{sect.section_num} {sect.section_title}")

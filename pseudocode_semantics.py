@@ -13423,7 +13423,7 @@ class _:
     s_tb = T_GraphLoadingState_Record
 
 # ==============================================================================
-#@ 16.2.1.6.3.4 AsyncModuleExecutionFulfilled
+#@ 16.2.1.6.1.3.4 AsyncModuleExecutionFulfilled
 
 @P("{EXPR} : a List whose elements are the elements of {var}, sorted by their {dsb_word} field in ascending order")
 class _:
@@ -13463,7 +13463,7 @@ class _:
         env0.assert_expr_is_of_type(var, T_Source_Text_Module_Record)
         return (env0, env0)
 
-#@ 16.2.1.7.2 GetExportedNames
+#@ 16.2.1.7.2.1 GetExportedNames
 @P("{CONDITION_1} : We've reached the starting point of an `export *` circularity")
 class _:
     def s_cond(cond, env0, asserting):
@@ -13471,7 +13471,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.7.3 ResolveExport
+#@ 16.2.1.7.2.2 ResolveExport
 
 @P("{CONDITION_1} : This is a circular import request")
 class _:
@@ -13499,7 +13499,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.7.4 InitializeEnvironment
+#@ 16.2.1.7.3.1 InitializeEnvironment
 
 @P("{CONDITION_1} : All named exports from {var} are resolvable")
 class _:
@@ -13509,7 +13509,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 16.2.1.7.5 ExecuteModule
+#@ 16.2.1.7.3.2 ExecuteModule
 
 @P("{CONDITION_1} : {var} has been linked and declarations in its module environment have been instantiated")
 class _:
