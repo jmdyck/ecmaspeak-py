@@ -569,6 +569,8 @@
     {var} does not currently have a property {var}
     {var} does not have a Generator component
     {var} does not have a binding for {var}
+    {var} does not have all of the internal slots of a RegExp String Iterator Object Instance (see {h_emu_xref})
+    {var} does not have all of the internal slots of an Array Iterator Instance ({h_emu_xref})
     {var} does not have an own property with key {var}
     {var} does not have an? {DSBN} field
     {var} does not have an? {DSBN} internal slot

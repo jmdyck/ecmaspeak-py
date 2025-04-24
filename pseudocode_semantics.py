@@ -2525,6 +2525,8 @@ def process_isom_table(emu_table):
             'Bound Function Exotic Objects'      : T_bound_function_exotic_object_,
             'Module Namespace Exotic Objects'    : T_module_namespace_exotic_object_,
             'For-In Iterator Instances'          : T_Object,
+            'RegExp String Iterator Instances'   : T_Object,
+            'Array Iterator Instances'           : T_Object,
             'Async-from-Sync Iterator Instances' : T_Object,
             'Promise Instances'                  : T_Promise_object_,
             'Generator Instances'                : T_Generator_object_,
@@ -14420,6 +14422,16 @@ class _:
 class _:
     s_tb = T_Match_Record | T_Undefined
 
+# ==============================================================================
+#@ 22.2.9 RegExp String Iterator Objects
+
+@P("{CONDITION_1} : {var} does not have all of the internal slots of a RegExp String Iterator Object Instance (see {h_emu_xref})")
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, xref] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0.with_expr_type_narrowed(var, T_Iterator_object_))
+
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 23 Indexed Collections
 
@@ -14432,6 +14444,16 @@ class _:
         [var, _, comparator, _, comparator] = anode.children
         env1 = env0.ensure_expr_is_of_type(var, ListType(T_Tangible_))
         return env1
+
+# ==============================================================================
+#@ 23.1.5 Array Iterator Objects
+
+@P('{CONDITION_1} : {var} does not have all of the internal slots of an Array Iterator Instance ({h_emu_xref})')
+class _:
+    def s_cond(cond, env0, asserting):
+        [var, xref] = cond.children
+        env0.assert_expr_is_of_type(var, T_Object)
+        return (env0, env0.with_expr_type_narrowed(var, T_Iterator_object_))
 
 # ==============================================================================
 #@ 23.2 TypedArray Objects

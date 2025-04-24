@@ -3987,7 +3987,7 @@ def _check_section_order():
                         assert child.section_kind in [
                             '- // properties',
                             'catchall',
-                        ]
+                        ], child.section_kind
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
