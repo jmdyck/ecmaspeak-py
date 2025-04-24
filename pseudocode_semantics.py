@@ -14820,7 +14820,7 @@ class _:
 #> An individual object may conform to multiple interfaces.
 
 # ==============================================================================
-#@ 27.1.4 The %Iterator.prototype% Object
+#@ 27.1.4 Properties of the Iterator Prototype Object
 
 declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterator]]', T_Iterator_Record)
 
