@@ -2287,6 +2287,7 @@ def check_id(section):
                     'ModuleRequestsEqual',
                     'AllImportAttributesSupported',
                     'IncrementModuleAsyncEvaluationCount',
+                    'EvaluateModuleSync',
                 ))
                 else
                 convert_to_lowercase
