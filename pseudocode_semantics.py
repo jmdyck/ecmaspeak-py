@@ -14488,7 +14488,7 @@ class _:
     def s_expr(expr, env0, _):
         [emu_xref, var] = expr.children
         env1 = env0.ensure_expr_is_of_type(var, T_TypedArray_element_type)
-        return (ProcType((T_Tangible_,), T_IntegralNumber_), env1)
+        return (ProcType((T_Tangible_,), NormalCompletionType(T_IntegralNumber_) | T_throw_completion), env1)
 
 @P("{EXPR} : the Element Type value specified in {h_emu_xref} for {EX}")
 class _:
