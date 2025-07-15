@@ -400,12 +400,8 @@ def check_ids():
                     msg_at_node(node, f'Expected id="{possibles[0]}"')
 
         if node.element_name == 'emu-alg':
-            for mo in re.finditer(r' \[(\w+)="([^"]+)"\]', node.inner_source_text()):
-                (attr_name, attr_value) = mo.groups()
-                assert attr_name in ['id', 'declared']
-                if attr_name != 'id': continue
-
-                defid = attr_value
+            for mo in re.finditer(r'\bid="([^"]+)"', node.inner_source_text()):
+                defid = mo.group(1)
 
                 # ----------
                 # no duplicate ids

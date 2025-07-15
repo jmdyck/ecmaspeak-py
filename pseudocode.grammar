@@ -451,6 +451,7 @@
     the generator either threw an exception or performed either an implicit or explicit return
     the goal symbol of the syntactic grammar is {nonterminal}
     the host is a web browser
+    the host is a web browser or otherwise supports {h_emu_xref}
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
     the host requires use of an exotic object to serve as {var}'s global object
     the implementation does not include local political rules for any time zones

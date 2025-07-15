@@ -15157,5 +15157,17 @@ class _:
         return (env0, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#@ B Additional ECMAScript Features for Web Browsers
+
+@P("{CONDITION_1} : the host is a web browser or otherwise supports {h_emu_xref}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [h_emu_xref] = cond.children
+        return (env0, env0)
+
+    def d_exec(cond):
+        [h_emu_xref] = cond.children
+        # support everything?
+        return True
 
 # vim: sw=4 ts=4 expandtab

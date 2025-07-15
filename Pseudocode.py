@@ -1860,6 +1860,7 @@ nts_behind_var_in_sdo_call = {
         'ForDeclaration',
         # 'BindingIdentifier', Annex B
     ],
+    ('AssignmentTargetType',                '_lhs_'): ['LeftHandSideExpression'],
     ('ForDeclarationBindingInstantiation',  '_lhs_'): ['ForDeclaration'],
     ('ForDeclarationBindingInitialization', '_lhs_'): ['ForDeclaration'],
 
