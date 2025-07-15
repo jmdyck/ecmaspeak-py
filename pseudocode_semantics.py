@@ -3486,7 +3486,6 @@ class _:
 @P("{EXPR} : the result of {PP_NAMED_OPERATION_INVOCATION}")
 @P("{EXPR} : {EX}")
 @P("{EX} : ({EX})")
-@P("{EX} : The value of {SETTABLE}")
 @P("{EX} : the value of {SETTABLE}")
 @P("{EX} : {LITERAL_ISH}")
 @P("{EX} : {LITERAL}")
@@ -13567,7 +13566,7 @@ class _:
 # ==============================================================================
 #@ 20.2.3.5 Function.prototype.toString
 
-@P("{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}")
+@P("{EXPR} : an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be {DOTTING}")
 class _:
     def s_expr(expr, env0, _):
         var = expr.children[0]

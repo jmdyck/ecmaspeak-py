@@ -746,7 +746,7 @@
     an empty sequence of characters
     an implementation-approximated Number value representing {EXPR}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
-    an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be the value of {DOTTING}
+    an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be {DOTTING}
     an implementation-defined choice of either {var} or {var}
     an implementation-defined non-negative mathematical value
     an implementation-defined string that is either {EX} or {EXPR}
@@ -931,7 +931,6 @@
     NewTarget
     The number of elements in {var}
     The remainder of dividing {EX} by {EX}
-    The value of {SETTABLE}
     a newly created {ERROR_TYPE} object
     a nondeterministically chosen byte value
     an implementation-defined timezone name
