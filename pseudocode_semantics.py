@@ -5136,11 +5136,8 @@ class _:
 #> it is a predicate that is the negation of
 #> the preceding “if” predicate step at the same level.
 
-@P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise {SMALL_COMMAND}.")
-@P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}. Otherwise, {SMALL_COMMAND}.")
 @P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.")
 @P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.")
-@P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise, {SMALL_COMMAND}.")
 class _:
     def s_nv(anode, env0):
         [cond, t_command, f_command] = anode.children
@@ -12665,7 +12662,7 @@ declare_isom(T_constructor_object_, 'must have', 'slot', '[[ConstructorKind]]', 
 # ==============================================================================
 #@ 10.3.3 BuiltinCallOrConstruct
 
-@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; otherwise, {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value")
+@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; otherwise {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value")
 class _:
     def s_expr(expr, env0, _):
         [_, _, avar, bvar, cond, cvar, dvar, evar] = expr.children
