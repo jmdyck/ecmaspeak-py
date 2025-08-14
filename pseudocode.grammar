@@ -916,7 +916,6 @@
     {var}'s intrinsic object named {var}
     {var}'s own property whose key is {var}
     {var}'s single code unit element
-    {var}'s {DSBN} value
     {var}<sup>th</sup> element of {EX}
 
 {EX} :

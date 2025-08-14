@@ -9176,14 +9176,6 @@ class _:
         env0.assert_expr_is_of_type(var, T_String | T_Undefined)
         return (T_Symbol, env0)
 
-@P("{EXPR} : {var}'s {DSBN} value")
-class _:
-    def s_expr(expr, env0, _):
-        [var, dsbn] = expr.children
-        env0.assert_expr_is_of_type(var, T_Symbol)
-        assert dsbn.source_text() == '[[Description]]'
-        return (T_String | T_Undefined, env0)
-
 # ==============================================================================
 #@ 6.1.6 Numeric Types
 
