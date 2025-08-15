@@ -799,12 +799,7 @@ def _handle_other_op_section(section):
     else:
         assert 0, n_emu_algs
 
-    if emu_alg is None and 'emu-table' in section.bcen_set:
-        assert section.bcen_str == 'emu-table' # it turns out
-        [emu_table] = section.block_children
-        handle_op_table(emu_table, alg_header)
-
-    elif section.section_kind in [
+    if section.section_kind in [
         'host-defined_abstract_operation',
         'implementation-defined_abstract_operation',
     ]:
@@ -881,72 +876,6 @@ class TypeDirectedAlgDefn(AlgDefn):
 
         anode = Pseudocode.parse(emu_alg)
         assert anode is None or anode.prod.lhs_s == '{EMU_ALG_BODY}'
-        self.anodes = [anode]
-
-        alg_header.u_defns.append(self)
-
-# ------------------------------------------------------------------------------
-
-def handle_op_table(emu_table, alg_header):
-    # The op is defined by a table that splits on argument type.
-    # I.e., each row has two cells:
-    # - The first cell is the name of an ES language type.
-    # - The second cell is a little algorithm,
-    #   but it's generally not marked as an emu-alg.
-
-    assert emu_table.element_name == 'emu-table'
-    (_, table, _) = emu_table.children
-    assert table.element_name == 'table'
-    for tr in table.each_child_named('tr'):
-        (_, a, _, b, _) = tr.children 
-
-        if a.element_name == 'th' and b.element_name == 'th':
-            assert a.inner_source_text().strip() == 'Argument Type'
-            assert b.inner_source_text().strip() == 'Result'
-            continue
-
-        TabularAlgDefn(alg_header, tr)
-
-class TabularAlgDefn(AlgDefn):
-    def __init__(self, alg_header, tr):
-        assert isinstance(alg_header, AlgHeader)
-        assert isinstance(tr, HNode) and tr.element_name == 'tr'
-
-        self.parent_header = alg_header
-        self.tr = tr
-
-        (_, type_td, _, result_td, _) = tr.children 
-
-        assert type_td.element_name == 'td'
-        assert result_td.element_name == 'td'
-
-        self.type_str = type_td.inner_source_text().strip()
-
-        x = ' '.join(c.element_name for c in result_td.children)
-
-        if x == '#LITERAL p #LITERAL emu-alg #LITERAL':
-            (_, p, _, emu_alg, _) = result_td.children
-            assert p.source_text() == '<p>Apply the following steps:</p>'
-            anode = Pseudocode.parse(emu_alg)
-            assert anode is None or anode.prod.lhs_s == '{EMU_ALG_BODY}'
-
-        elif x in [
-            '#LITERAL',
-            '#LITERAL emu-xref #LITERAL',
-            '#LITERAL sub #LITERAL',
-            '#LITERAL sub #LITERAL sub #LITERAL',
-
-            '#LITERAL emu-note #LITERAL',
-            # ToBoolean: row for 'Object' has a NOTE re [[IsHTMLDDA]]
-
-            '#LITERAL p #LITERAL p #LITERAL',
-        ]:
-            anode = Pseudocode.parse(result_td, 'one_line_alg')
-            assert anode is None or anode.prod.lhs_s == '{ONE_LINE_ALG}'
-
-        else:
-            assert 0, x
-
         self.anodes = [anode]
 
         alg_header.u_defns.append(self)

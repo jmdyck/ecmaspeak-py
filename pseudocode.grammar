@@ -15,7 +15,6 @@
     {_for_phrase_}{FOR_PHRASE}
     {_h1_body_}{H1_BODY}
     {_inline_sdo_rule_}{INLINE_SDO_RULE}
-    {_one_line_alg_}{ONE_LINE_ALG}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -124,11 +123,6 @@
     of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar}
     of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar}
     of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar} or of {h_emu_grammar}
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-{ONE_LINE_ALG} :
-    {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

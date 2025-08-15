@@ -1509,17 +1509,7 @@ def tc_proc(op_name, defns, init_env):
 
         for anode in alg_defn.anodes:
 
-            # kludge:
-            if op_name in ['ToObject', 'RequireObjectCoercible']:
-                # not ToBigInt
-                assert hasattr(alg_defn, 'type_str')
-                arg_type = HierType(alg_defn.type_str)
-                assert isinstance(arg_type, HierType)
-                # in_env = init_env.with_expr_type_narrowed('_argument_', arg_type)
-                in_env = init_env.copy()
-                in_env.vars['_argument_'] = arg_type
-
-            elif hasattr(alg_defn, 'emu_grammars'):
+            if hasattr(alg_defn, 'emu_grammars'):
                 productions = []
                 for emu_grammar in alg_defn.emu_grammars:
                     if emu_grammar:
@@ -1532,7 +1522,7 @@ def tc_proc(op_name, defns, init_env):
                 in_env = init_env
 
             assert isinstance(anode, ANode)
-            if anode.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}', '{ONE_LINE_ALG}']:
+            if anode.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}']:
                 result = tc_nonvalue(anode, in_env)
                 assert result is None
             elif anode.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
@@ -2943,11 +2933,6 @@ class Frame:
             elif s == '{EXPR}':
                 result = EXEC(anode, E_Value)
 
-            elif s == '{ONE_LINE_ALG}':
-                EXEC(anode, None)
-                assert frame.is_returning()
-                result = frame.return_value
-
             else:
                 assert 0, s
 
@@ -3478,7 +3463,6 @@ def d_exec_pass_down_expecting_None(anode):
 @P("{ELSE_PART} : Otherwise, {SMALL_COMMAND}.")
 @P("{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}")
 @P("{COMMAND} : Optionally, {SMALL_COMMAND}.")
-@P("{ONE_LINE_ALG} : {_indent_}{nlai}{COMMAND}{_outdent_}{nlai}")
 class _:
     s_nv = s_nv_pass_down
     d_exec = d_exec_pass_down_expecting_None

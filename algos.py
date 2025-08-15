@@ -62,8 +62,6 @@ import Pseudocode
 #
 # - Most Early Errors
 #   (because most "Early Errors" sections have multiple grammar/constraint pairs)
-#
-# - Operations defined in a table (RequireObjectCoercible + ToObject).
 
 # Cases where an AlgHeader has zero AlgDefns:
 #
