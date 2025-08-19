@@ -1678,9 +1678,6 @@ def _handle_changes_section(section):
     def blah_composite_sdo(op_name, emu_grammar, emu_alg):
         Pseudocode.parse(emu_alg)
 
-    def blah_early_error_block(emu_grammar, ul):
-        EarlyErrorAlgDefn(None, emu_grammar, ul, None)
-
     # For calls to scan_section, we're going to assume this holds,
     # but be sure to undo it if we ultimately return False.
     section.section_kind = 'changes'
@@ -1798,84 +1795,6 @@ def _handle_changes_section(section):
         scan_section(section, patterns)
 
     # --------------------------------------------------------------------------
-    elif (mo := re.fullmatch(r'Changes to ([A-Z]\w+)', section.section_title)):
-        op_name = mo.group(1)
-        patterns = [
-            (
-                # B.3.2.{1,2,3,6}:
-                [
-                    ('p', f'During {op_name} the following steps are performed in place of step EMU-XREF:'),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
-            ),
-            (
-                # B.3.6.1:
-                [
-                    ('p', f'The following step replaces step EMU-XREF of {op_name}:'),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
-            ),
-            (
-                # B.3.6.2:
-                [
-                    ('p', f'The following steps replace step EMU-XREF of {op_name}:'),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: blah_solo_op(op_name, emu_alg)
-            ),
-        ]
-        scan_section(section, patterns)
-
-    # --------------------------------------------------------------------------
-    elif (mo := re.fullmatch('Changes to (.+) Static Semantics: Early Errors', section.section_title)):
-        # B.3.2.{4,5}
-        patterns = [
-            (
-                [
-                    ('p', 'The rules for the following production in EMU-XREF are modified with the addition of the <ins>highlighted</ins> text:'),
-                    'emu-grammar',
-                    'ul',
-                ],
-                lambda p, emu_grammar, ul: blah_early_error_block(emu_grammar, ul)
-            ),
-        ]
-        scan_section(section, patterns)
-
-    # --------------------------------------------------------------------------
-    elif section.section_title == 'VariableStatements in Catch Blocks':
-        # B.3.4
-        patterns = [
-            (
-                [
-                    ('p', 'The content of subclause EMU-XREF is replaced with the following:'),
-                    'emu-grammar',
-                    'ul'
-                ],
-                lambda p, emu_grammar, ul: blah_early_error_block(emu_grammar, ul)
-            ),
-            (
-                ['emu-note'],
-                None
-            ),
-            (
-                [
-                    ('p', '.+ This change is accomplished by modifying the algorithm of EMU-XREF as follows:'),
-                ],
-                None
-            ),
-            (
-                [
-                    ('p', 'Step EMU-XREF is replaced by:'),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: blah_solo_op('EvalDeclarationInstantiation', emu_alg)
-            ),
-        ]
-        scan_section(section, patterns)
-
-    # --------------------------------------------------------------------------
     elif section.section_title == 'Initializers in ForIn Statement Heads':
         # B.3.5
         patterns = [
@@ -1897,22 +1816,6 @@ def _handle_changes_section(section):
             ),
         ]
         scan_section(section, patterns) 
-
-    # --------------------------------------------------------------------------
-    elif (mo := re.fullmatch('Changes to (.+)', section.section_title)):
-        # B.3.6.3
-        assert mo.group(1) == 'the `typeof` Operator'
-        assert section.bcen_str == 'p emu-alg'
-        patterns = [
-            (
-                [
-                    ('p', 'The following step replaces step EMU-XREF of EMU-XREF:'),
-                    'emu-alg'
-                ],
-                lambda p, emu_alg: None
-            ),
-        ]
-        scan_section(section, patterns)
 
     # --------------------------------------------------------------------------
     else:

@@ -285,20 +285,10 @@ def connect_anodes_to_hnodes(base_hnode, base_anode):
 
     connectable_hnode_names = [ hnode_name for (hnode_name, _) in pairs ]
     connectable_hnodes = [
-        child
-        for child in base_hnode.children
-        if child.element_name in connectable_hnode_names
+        hnode
+        for hnode in base_hnode.each_descendant()
+        if hnode.element_name in connectable_hnode_names
     ]
-
-    if base_hnode.element_name == 'li' and re.search('(?s)<p>.*<emu-grammar>', base_hnode.source_text()):
-        assert connectable_hnodes == []
-        (_, p, _) = base_hnode.children
-        assert p.element_name == 'p'
-        connectable_hnodes = [
-            child
-            for child in p.children
-            if child.element_name in connectable_hnode_names
-        ]
 
     # ------------------------
 

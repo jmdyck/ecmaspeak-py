@@ -4752,6 +4752,14 @@ class _:
         env0.assert_expr_is_of_type(root_var, T_Parse_Node)
         return env0.plus_new_entry(loop_var, ptn_type_for(nont))
 
+@P("{EACH_THING} : {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of any {nonterminal}, {nonterminal}, or {nonterminal} {DEFVAR} such that {CONDITION}")
+class _:
+    def s_nv(each_thing, env0):
+        [loop_nont, loop_var, nonta, nontb, nontc, nontd, nonce_var, condition] = each_thing.children
+        env_for_cond = env0.plus_new_entry(nonce_var, T_Parse_Node)
+        tc_cond(condition, env_for_cond)
+        return env0.plus_new_entry(loop_var, ptn_type_for(loop_nont))
+
 @P("{EXPR} : the number of {h_emu_grammar} Parse Nodes contained within {var}")
 class _:
     def s_expr(expr, env0, _):
@@ -5941,6 +5949,7 @@ class _:
 
 @P("{CONDITION} : {CONDITION_1} unless {CONDITION_1}")
 @P("{CONDITION} : {CONDITION_1}, unless {CONDITION_1}")
+@P("{CONDITION} : {CONDITION_1}<span normative-optional>, unless {CONDITION}</span>")
 class _:
     def s_cond(cond, env0, asserting):
         [conda, condb] = cond.children
@@ -5965,7 +5974,6 @@ class _:
 #@ 5.2.1 Abstract Operations
 
 @P("{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.")
-@P("{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}. {note}")
 @P("{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}")
 class _:
     def s_nv(anode, env0):
@@ -6857,6 +6865,16 @@ class _:
 
             if same_value(alg_result, bool_val):
                 it_is_a_syntax_error(rule)
+
+@P("{EE_RULE} : <p>It is a Syntax Error if {CONDITION_1}<span normative-optional>, unless {CONDITION_1}, and both of the following conditions are true:</span></p>{nlai}<ul normative-optional>{_indent_}{nlai}<li>{CONDITION_1}.</li>{nlai}<li>{CONDITION_1}.</li>{_outdent_}{nlai}</ul>")
+class _:
+    def s_nv(anode, env0):
+        [conda, condb, condc, condd] = anode.children
+        tc_cond(conda, env0)
+        tc_cond(condb, env0)
+        tc_cond(condc, env0)
+        tc_cond(condd, env0)
+        return None
 
 @P("{EE_RULE} : <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>")
 class _:
@@ -12947,6 +12965,12 @@ class _:
         pnode = EXEC(local_ref, ES_ParseNode)
         return is_strict(pnode)
 
+@P("{CONDITION_1} : that source text is non-strict code")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
 # ------------------------------------------------------------------------------
 
 def is_strict(pnode):
@@ -13284,6 +13308,13 @@ class _:
         t = ptn_type_for(nonterminal)
         env0.assert_expr_is_of_type(var, t)
         return (t, env0)
+
+# ==============================================================================
+#@ 14.15.2 Runtime Semantics: CatchClauseEvaluation
+
+@P("{VAL_DESC} : the Environment Record for a |Catch| clause")
+class _:
+    s_tb = a_subset_of(T_Environment_Record)
 
 # ==============================================================================
 #@ 14.16 The `debugger` Statement
@@ -15141,5 +15172,59 @@ class _:
         [h_emu_xref] = cond.children
         # support everything?
         return True
+
+# ==============================================================================
+#@ B.3.2 Block-Level Function Declarations Web Legacy Compatibility Semantics
+
+# PR #2952 took the pseudocode monkey-patches that used to be in this annex,
+# and inlined them into main-body semantics.
+# So, although the following forms no longer appear in this annex,
+# they only appear in pseudocode that used to be in this annex,
+# so it's appropriate to put them here.
+# (They're also fairly peculiar.)
+
+@P("{COMMAND} : When the {nonterminal} {var} is evaluated, perform the following steps in place of the {nonterminal} Evaluation algorithm provided in {h_emu_xref}:{IND_COMMANDS}")
+class _:
+    def s_nv(anode, env0):
+        [nont, var, nontb, h_emu_xref, commands] = anode.children
+        assert nont.source_text() == nontb.source_text()
+        env0.assert_expr_is_of_type(var, ptn_type_for(nont))
+
+        class SomethingAlgDefn: pass
+        alg_defn = SomethingAlgDefn()
+        alg_defn.parent_header = None
+        alg_defn.anodes = [commands]
+
+        defns = [alg_defn]
+        env_at_bottom = tc_proc(None, defns, env0)
+        # That shouldn't be env0, it should be a basically empty env,
+        # because {commands} are being performed elsewhere at another time.
+        # But {commands} refers to `_F_` rather than re-defining it,
+        # and passing env0 is the easiest way to have that work.
+
+        return env0
+
+@P("{CONDITION_1} : The duplicate entries are only bound by {cap_word}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [cap_word] = cond.children
+        assert cap_word.source_text() == 'FunctionDeclarations'
+        return (env0, env0)
+
+@P("{CONDITION_1} : replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [nonta, varb, nontc, vard, nonte, varf] = cond.children
+        env0.assert_expr_is_of_type(varb, ptn_type_for(nonta))
+        env0.assert_expr_is_of_type(vard, T_String)
+        env1 = env0.ensure_expr_is_of_type(varf, T_Parse_Node)
+        return (env1, env1)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+#@ B.3.6 The [[IsHTMLDDA]] Internal Slot
+declare_isom(T_Object, 'might have', 'slot', '[[IsHTMLDDA]]', T_tilde_unused_)
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # vim: sw=4 ts=4 expandtab

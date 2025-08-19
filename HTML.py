@@ -220,6 +220,11 @@ class HNode(SpecNode):
                 if child.element_name == element_name:
                     yield child
 
+    def each_descendant(self):
+        for child in self.children:
+            yield child
+            yield from child.each_descendant()
+
     def each_descendant_named(self, element_name):
         # actually, descendant-or-self
         if hasattr(element_name, 'fullmatch'):
@@ -513,7 +518,7 @@ element_info = {
         'thead'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
         'tbody'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
         'tr'                : ('B', '',          '',           '(#WS;)?((th;|td;)(#WS;)?)+'),
-        'ul'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
+        'ul'                : ('B', '',          'normative-optional', '#WS;(li;#WS;)+'),
         'ol'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
         'dl'                : ('B', '',          'class',      '#WS;(dt;#WS;dd;#WS;)*'),
         'object'            : ('B', 'data height type width', '',           'img;'),
@@ -521,7 +526,7 @@ element_info = {
         # block contains blocks or contains inlines, but not both:
         'emu-integration-plans': ('B', '',          '',           '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
         'emu-note'             : ('B', '',          'class id',   '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|code;|emu-not-ref;|emu-xref;|sub;)+'),
-        'li'                   : ('B', '',          'oldids',     '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
+        'li'                   : ('B', '',          'oldids',     '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|span;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
         'td'                   : ('B', '',          'colspan oldids rowspan', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-not-ref;|emu-xref;|i;|ins;|sub;|sup;)+'),
         'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)*|#TEXT;((br;|em;|i;|sup;)#TEXT;)*'),
         'dd'                   : ('B', '',          '',           '#WS;((p;|ul;)#WS;)+|(#TEXT;|a;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-xref;|i;|sub;|sup;)*'),
@@ -533,7 +538,7 @@ element_info = {
         'emu-caption'          : ('B', '',          '',           '(#TEXT;|emu-xref;)+'),
         'pre'                  : ('B', '',          'class',      '(#TEXT;|code;|sup;)+'),
         'style'                : ('B', '',          'media',      '#TEXT;'),
-        'p'                    : ('B', '',          '',           'img;|(#COMMENT;|#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
+        'p'                    : ('B', '',          '',           'img;|(#COMMENT;|#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|span;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
         'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-xref;|i;|ins;|sub;)+'), # though dfn is pretty odd
         'h2'                   : ('B', '',          '',           '#TEXT;'),
         'th'                   : ('B', '',          'class',      '#TEXT;(sup;#TEXT;)?'),
@@ -578,8 +583,8 @@ element_info = {
         'emu-val'           : ('I', '',          '',           '#TEXT;var;#TEXT;'),
         'emu-xref'          : ('I', 'href',      'title',      '(#TEXT;|code;)?'),
         'i'                 : ('I', '',          '',           '#TEXT;(sup;#TEXT;)?'),
-        'ins'               : ('I', '',          '',           '#TEXT;((a;|emu-xref;|sub;)#TEXT;)?'), # PROPOSALS?
-        'span'              : ('I', '',          'class',      '#TEXT;'),
+        'ins'               : ('I', '',          '',           '(#TEXT;|sub;)+'), # Annex B hold-outs
+        'span'              : ('I', '',          'class normative-optional', '(#TEXT;|emu-grammar;|emu-xref;)+'),
         'strong'            : ('I', '',          '',           '(#TEXT;|code;)+'),
         'sub'               : ('I', '',          '',           '#TEXT;|dfn;'), # dfn; for num-ref
         'sup'               : ('I', '',          '',           '(#TEXT;|sub;)+'), # sub; for num-ref

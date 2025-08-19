@@ -134,7 +134,7 @@ tokenizer_for_pseudocode = Tokenizer(r'''
     {h_sub_fancy_z}   : < sub > \u2124 < / sub >
     {h_emu_meta_start} : < emu-meta \x20 [\w-]+ = " [^"]+ ">
     {h_emu_meta_end}   : < / emu-meta >
-    {h_start_tag}    : < [\w-]+ (\x20 \w+ (= " [^"]+ ")? )* >
+    {h_start_tag}    : < [\w-]+ (\x20 [\w-]+ (= " [^"]+ ")? )* >
     {h_end_tag}      : </ [\w-]+ >
 
     # tokens that begin with '*':
@@ -484,7 +484,9 @@ reo_for_rhs_piece_in_pseudocode_grammar = re.compile(r'''(?x)
     | { _? [A-Z] [A-Z_0-9]* }
     | { _? [a-z] \w* }
 
-    | < /? (b|br|i|ins|p|sub|sup|var)>
+    | < /? (b|br|i|ins|li|p|span|sub|sup|ul|var)>
+
+    | < (span|ul) \x20 normative-optional >
 
     | \* [+-] 0 \*
     | \* [A-Za-z]+ \*

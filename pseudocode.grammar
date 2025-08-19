@@ -24,12 +24,12 @@
 
 {EE_RULE} :
     <p>It is a Syntax Error if {CONDITION_1} and the following algorithm returns {BOOL_LITERAL}:</p>{nlai}{h_emu_alg}
+    <p>It is a Syntax Error if {CONDITION_1}<span normative-optional>, unless {CONDITION_1}, and both of the following conditions are true:</span></p>{nlai}<ul normative-optional>{_indent_}{nlai}<li>{CONDITION_1}.</li>{nlai}<li>{CONDITION_1}.</li>{_outdent_}{nlai}</ul>
     <p>{_indent_}{nlai}It is a Syntax Error if {LOCAL_REF} is<br>{nlai}{h_emu_grammar}<br>{nlai}and {LOCAL_REF} ultimately derives a phrase that, if used in place of {LOCAL_REF}, would produce a Syntax Error according to these rules. This rule is recursively applied.{_outdent_}{nlai}</p>
     For each {nonterminal} {DEFVAR} in {NAMED_OPERATION_INVOCATION}: It is a Syntax Error if {CONDITION}.
     If {CONDITION}, it is a Syntax Error if {CONDITION}.
     If {CONDITION}, the Early Error rules for {h_emu_grammar} are applied.
     If {CONDITION}, {LOCAL_REF} must cover an? {nonterminal}.
-    It is a Syntax Error if {CONDITION_1}<ins>, unless {CONDITION_1} and {CONDITION_1}</ins>.
     It is a Syntax Error if {CONDITION}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} in direct eval are defined in {h_emu_xref}.
     It is a Syntax Error if {CONDITION}. Additional early error rules for {G_SYM} within direct eval are defined in {h_emu_xref}.
@@ -172,11 +172,9 @@
     Optionally, {SMALL_COMMAND}.
     Perform an implementation-defined debugging action.
     Perform any necessary implementation-defined initialization of {var}.
-    Perform the following steps:{IND_COMMANDS}
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
     Perform {PP_NAMED_OPERATION_INVOCATION} and suspend the surrounding agent until the time is {DOTTING}, performing the combined operation in such a way that a notification that arrives after the critical section is exited but before the suspension takes effect is not lost. The surrounding agent can only wake from suspension due to a timeout or due to another agent calling NotifyWaiter with arguments {var} and {var} (i.e. via a call to `Atomics.notify`).
     Perform {PP_NAMED_OPERATION_INVOCATION}.
-    Perform {PP_NAMED_OPERATION_INVOCATION}. {note}
     Prepend {var} to {var}.
     Push {var} onto the execution context stack; {var} is now the running execution context.
     Remove from {var} all characters corresponding to a code point on the right-hand side of the {nonterminal} production.
@@ -300,7 +298,7 @@
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in descending order
-    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of any {nonterminal}, {nonterminal}, or {nonterminal} {var} such that {CONDITION}
+    {nonterminal} {DEFVAR} that is directly contained in the {nonterminal} of any {nonterminal}, {nonterminal}, or {nonterminal} {DEFVAR} such that {CONDITION}
     {nonterminal} {DEFVAR} that {var} contains
 
 {ITEM_NATURE} :
@@ -375,6 +373,7 @@
     {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}
+    {CONDITION_1}<span normative-optional>, unless {CONDITION}</span>
 
 {CONDITION_1} :
     A `default` export was not explicitly defined by this module
@@ -386,6 +385,7 @@
     The GlobalSymbolRegistry List does not currently contain an entry for {var}
     LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
+    The duplicate entries are only bound by {cap_word}
     The execution context stack has at least two elements
     The execution context stack is not empty
     The following Set will succeed, since formal parameters mapped by arguments objects are always writable
@@ -420,6 +420,7 @@
     no such execution context exists
     only one argument was passed
     replacing the {nonterminal} {var} with a {nonterminal} that has {var} as a {nonterminal} would not produce any Early Errors for {var}
+    that source text is non-strict code
     the <sub>[Tagged]</sub> parameter was not set
     the Directive Prologue of {PROD_REF} contains a Use Strict Directive
     the async function either threw an exception or performed an implicit or explicit return; all awaiting is done
@@ -435,7 +436,6 @@
     the caller will not be overriding both {var}'s {DSBN} and {DSBN} essential internal methods
     the character {EX} is matched by {nonterminal}
     the decimal representation of {var} has 20 or fewer significant digits
-    the duplicate entries are only bound by {cap_word}
     the execution context stack is empty
     the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
