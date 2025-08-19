@@ -3184,6 +3184,7 @@ def _(section, *_):
 @for_patterns(
 
     (r"An ECMAScript implementation that includes the ECMA-402 Internationalization API must implement {THIS_FUNCTION} as specified in the ECMA-402 specification\. If an ECMAScript implementation does not include the ECMA-402 API the following specification of this method is used."),
+    (r"Given an iterable of Numbers, {THIS_FUNCTION} sums each value in the iterable .+"),
     (r"Given zero or more arguments, {THIS_FUNCTION} calls ToNumber on each of the arguments .+"),
     (r"Given zero or more arguments, {THIS_FUNCTION} returns .+"),
     (r"The interpretation and use of the arguments of {THIS_FUNCTION} are the same as for .+"),
