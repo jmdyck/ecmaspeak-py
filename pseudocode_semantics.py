@@ -6479,7 +6479,7 @@ class _:
         if with_args.prod.rhs_s in [
             'with argument {EX}',
             'with arguments {EX} and {EX}',
-            'with arguments {var}, {var}, and {var}',
+            'with arguments {EX}, {EX}, and {EX}',
         ]:
             args = with_args.children
         else:

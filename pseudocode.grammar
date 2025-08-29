@@ -1064,7 +1064,7 @@
 {WITH_ARGS} :
     with argument {EX}
     with arguments {EX} and {EX}
-    with arguments {var}, {var}, and {var}
+    with arguments {EX}, {EX}, and {EX}
 
 {PREFIX_PAREN} :
     {OPN_BEFORE_PAREN}({EXLIST_OPT})
