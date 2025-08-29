@@ -577,7 +577,7 @@ element_info = {
         'code'              : ('I', '',          'class',      '(#TEXT;|i;|var;)+'),
         'del'               : ('I', '',          '',           '(#TEXT;|emu-xref;)+'), # PROPOSALS
         'dfn'               : ('I', '',          'aoid id oldids variants', '(#TEXT;|emu-eqn;)'),
-        'emu-meta'          : ('I', '',          'effects suppress-effects', '#TEXT;'),
+        'emu-meta'          : ('I', '',          'effects suppress-effects', '(#TEXT;|sub;)+'),
         'emu-not-ref'       : ('I', '',          '',           '#TEXT;'),
         'emu-t'             : ('I', '',          '',           '#TEXT;'),
         'emu-val'           : ('I', '',          '',           '#TEXT;var;#TEXT;'),
