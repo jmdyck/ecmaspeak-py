@@ -2789,7 +2789,7 @@ def extract_intrinsic_info_from_p_ul_section(section):
         elif li_ist == 'is never directly accessible to ECMAScript code.':
             pass
 
-        elif re.fullmatch('is an intrinsic object that has the structure described below, differing only in the name used as the constructor name instead of _TypedArray_, in <emu-xref [^<>]+></emu-xref>.', li_ist):
+        elif re.fullmatch('is an intrinsic object that has the structure described below, differing only in the name used as the constructor name instead of _TypedArray_, in <emu-xref [^<>]+></emu-xref>, except where otherwise noted.', li_ist):
             pass
 
         elif li_ist == 'is a subclass of `Function`.': # This should be above, but I'm not sure where it fits in.

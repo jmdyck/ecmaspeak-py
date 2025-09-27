@@ -2173,6 +2173,14 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
             # in SharedArrayBuffer.prototype.grow
             return_type = T_BigInt
 
+    elif callee_op_name == 'GetValueFromBuffer':
+        assert return_type == T_Number | T_BigInt
+        assert len(args) in [5,6]
+        type_arg = args[2]
+        if type_arg.source_text() == '~uint8~':
+            return_type = T_IntegralNumber_
+            # For the invocation in GetUint8ArrayBytes
+
     else:
         # Just use {return_type}.
         pass
@@ -5528,6 +5536,7 @@ class _:
                 "Private Name"        : T_Private_Name,
                 "PrivateElement"      : T_PrivateElement,
                 "String"              : T_String,
+                "byte"                : T_MathNonNegativeInteger_,
                 "integer"             : T_MathInteger_,
             }[item_nature.prod.rhs_s]
             collection_type = ListType(item_type)
@@ -6766,7 +6775,12 @@ def handle_completion_record_shorthand(operator, operand, env0):
                 tb = tb_for_object_with_slot(slotname_arg)
                 (env2, _) = env1.with_type_test(obj_arg, 'is a', tb, False)
 
-            elif prefix in ['ValidateTypedArray', 'ValidateIntegerTypedArray', 'ValidateAtomicAccessOnIntegerTypedArray']:
+            elif prefix in [
+                'ValidateTypedArray',
+                'ValidateIntegerTypedArray',
+                'ValidateAtomicAccessOnIntegerTypedArray',
+                'ValidateUint8Array',
+            ]:
                 # In the not-returning-early env,
                 # the first arg is guaranteed to be a TypedArray.
                 obj_arg = exes_in_exlist_opt(exlist_opt)[0]
@@ -8714,6 +8728,11 @@ class _:
         [] = val_desc.children
         return value.isan(EL_String)
 
+@P("{VAL_DESC} : a String of length 2 or 3")
+@P("{VAL_DESC} : a String of length 4")
+class _:
+    s_tb = a_subset_of(T_String)
+
 @P("{LIST_ELEMENTS_DESCRIPTION} : either Strings or *undefined*")
 class _:
     s_tb = T_String | T_Undefined
@@ -8739,6 +8758,7 @@ class _:
         return (T_MathNonNegativeInteger_, env0)
 
 @P("{EXPR} : {var}'s single code unit element") # todo: element of String
+@P("{EX} : the sole code unit of {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -9095,6 +9115,13 @@ class _:
         env0.assert_expr_is_of_type(varb, T_String)
         return (env0, env0)
 
+@P("{CONDITION_1} : {var} contains any code units which are not in {STR_LITERAL}")
+class _:
+    def s_cond(cond, env0, _):
+        [var, str_lit] = cond.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (env0, env0)
+
 # ------------------------------------------------------------------------------
 # going from a String value to some other type of value:
 
@@ -9129,6 +9156,13 @@ class _:
             for code_unit in string.code_units
         )
         return ES_UnicodeCodePoints(text)
+
+@P("{EXPR} : the integer value represented by {var} in base-16 notation, using the letters *A* through *F* and *a* through *f* for digits with values 10 through 15")
+class _:
+    def s_expr(expr, env0, _):
+        [zvar] = expr.children
+        env0.assert_expr_is_of_type(zvar, T_String)
+        return (T_MathInteger_, env0)
 
 @P("{EXPR} : the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b> through <b>Z</b> and <b>a</b> through <b>z</b> for digits with values 10 through 35")
 class _:
@@ -10021,6 +10055,8 @@ class _:
             '%RegExp%',
             '%ArrayBuffer%',
             '%SharedArrayBuffer%',
+            '%Map%',
+            '%Uint8Array%',
         ]:
             rt = T_constructor_object_
         elif pws.startswith('%Symbol.'):
@@ -10162,10 +10198,14 @@ class _:
         return (ListType(sub_t), ListType(sup_t))
 
 @P("{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}")
+@P("{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION} of length {dec_int_lit}")
 class _:
     def s_tb(val_desc, env):
         [led, ex] = val_desc.children
-        env.assert_expr_is_of_type(ex, T_MathInteger_)
+        if ex.prod.lhs_s == "{dec_int_lit}":
+            assert env is None
+        else:
+            env.assert_expr_is_of_type(ex, T_MathInteger_)
         (led_sub_t, led_sup_t) = type_bracket_for(led, env)
         add_pass_error(
             val_desc,
@@ -10228,6 +10268,7 @@ class _:
 
 @P("{EXPR} : a copy of the List {var}")
 @P("{EXPR} : a List whose elements are the elements of {var}")
+@P("{EXPR} : a List whose elements are the elements of {var}, in order")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -10487,7 +10528,7 @@ class _:
 @P("{EX} : The number of elements in {var}")
 @P("{EX} : the number of elements in {EX}")
 @P("{NUM_COMPARAND} : the number of elements in {NAMED_OPERATION_INVOCATION}")
-@P("{NUM_COMPARAND} : the number of elements in {var}")
+@P("{FACTOR} : the number of elements in {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -10512,6 +10553,14 @@ class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
+@P("{CONDITION_1} : {EX} is the number of elements in {EX}")
+class _:
+    def s_cond(cond, env0, _):
+        [exa, exb] = cond.children
+        env0.assert_expr_is_of_type(exa, T_MathNonNegativeInteger_)
+        env0.assert_expr_is_of_type(exb, T_List)
         return (env0, env0)
 
 # ----------------------------
@@ -10976,7 +11025,7 @@ class _:
             elif lhs_text == '_element_':
                 dottable_part_of_lhs_t = T_PrivateElement
             else:
-                assert 0, expr.source_text()
+                assert 0, f"In `{expr.source_text()}`, the ST of `{lhs_text}` is {lhs_t}, which cannot take a dot"
 
             msg_lines.append(f"which cannot take a dot")
             msg_lines.append(f"so changing its type to {dottable_part_of_lhs_t}")
@@ -13612,6 +13661,7 @@ class _:
 # ==============================================================================
 #@ 20.5 Error Objects
 
+@P("{VAL_DESC} : a {ERROR_TYPE} object")
 @P("{LIST_ELEMENTS_DESCRIPTION} : {ERROR_TYPE} objects")
 class _:
     def s_tb(led, env):
@@ -14466,6 +14516,10 @@ class _:
 class _:
     s_tb = T_TypedArray_object_
 
+@P("{VAL_DESC} : a Uint8Array")
+class _:
+    s_tb = a_subset_of(T_TypedArray_object_)
+
 @P("{VAL_DESC} : a TypedArray element type")
 class _:
     s_tb = T_TypedArray_element_type
@@ -14515,6 +14569,63 @@ class _:
         [emu_xref, ex] = expr.children
         env1 = env0.ensure_expr_is_of_type(ex, T_String)
         return (T_MathInteger_, env1)
+
+# ==============================================================================
+#@ 23.3 Uint8Array Objects
+
+@P("{COMMAND} : Let {DEFVAR} be {EXPR} (i.e., {EXPR}).")
+class _:
+    def s_nv(anode, env0):
+        [defvar, expra, exprb] = anode.children
+        (expr_t, env1) = tc_expr(expra, env0)
+        env2 = env1.plus_new_entry(defvar, expr_t)
+        env2.assert_expr_is_of_type(exprb, expr_t)
+        return env2
+
+@P("{EXPR} : the unique sequence of 3 bytes resulting from decoding {var} as base64")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_String)
+        return (ListType(T_MathNonNegativeInteger_), env0)
+
+@P("{EXPR} : the sequence such that applying the base64 encoding specified in section 4 of {h_a} to {var} would produce {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [_, vara, varb] = expr.children
+        env0.assert_expr_is_of_type(vara, ListType(T_MathNonNegativeInteger_))
+        env0.assert_expr_is_of_type(varb, T_String)
+        return (ListType(T_MathNonNegativeInteger_), env0)
+
+@P("{CONDITION_1} : {EX} is not an element of the standard base64 alphabet")
+class _:
+    def s_cond(cond, env0, _):
+        [ex] = cond.children
+        env0.assert_expr_is_of_type(ex, T_code_unit_)
+        return (env0, env0)
+
+@P("{EXPR} : the sequence of code points which results from encoding {var} according to the base64 encoding specified in section 4 of {h_a}. Padding is included if and only if {CONDITION}")
+@P("{EXPR} : the sequence of code points which results from encoding {var} according to the base64url encoding specified in section 5 of {h_a}. Padding is included if and only if {CONDITION}")
+class _:
+    def s_expr(expr, env0, _):
+        [var, _, cond] = expr.children
+        env0.assert_expr_is_of_type(var, ListType(T_MathNonNegativeInteger_))
+        tc_cond(cond, env0)
+        return (ListType(T_code_point_), env0)
+
+@P("{SETTABLE} : the value at each index of {SETTABLE}")
+class _:
+    def s_expr(expr, env0, _):
+        [settable] = expr.children
+        env1 = env0.ensure_expr_is_of_type(settable, T_Data_Block | T_Shared_Data_Block)
+        return (T_MathNonNegativeInteger_, env1)
+
+@P("{EXPR} : the value at the corresponding index of {SETTABLE}")
+class _:
+    def s_expr(expr, env0, _):
+        [settable] = expr.children
+        env0.assert_expr_is_of_type(settable, ListType(T_MathNonNegativeInteger_))
+        return (T_MathNonNegativeInteger_, env0)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 24 Keyed Collections

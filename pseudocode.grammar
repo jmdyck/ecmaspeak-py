@@ -161,6 +161,7 @@
     Let {DEFVAR} and {DEFVAR} be integers such that {CONDITION} and for which {NUM_EXPR} is as close to zero as possible. If there are two such sets of {var} and {var}, pick the {var} and {var} for which {PRODUCT} is larger.
     Let {DEFVAR} and {DEFVAR} be the indirection values provided when this binding for {var} was created.
     Let {DEFVAR} be an integer for which {NUM_EXPR} is as close to zero as possible. If there are two such {var}, pick the larger {var}.
+    Let {DEFVAR} be {EXPR} (i.e., {EXPR}).
     Let {DEFVAR} be {EXPR}.
     Let {DEFVAR} be {EXPR}. (However, if {var} = 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not one of 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
     Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)
@@ -322,6 +323,7 @@
     WeakMap
     WeakRef
     WeakSet
+    byte
     code point
     code unit
     event
@@ -497,10 +499,12 @@
     {EX} is neither {VAL_DESC} nor {VAL_DESC}
     {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
     {EX} is never {VAL_DESC}
+    {EX} is not an element of the standard base64 alphabet
     {EX} is not empty
     {EX} is not {PREFIX_PAREN}
     {EX} is not {SETTABLE}
     {EX} is not {VALUE_DESCRIPTION}
+    {EX} is the number of elements in {EX}
     {EX} is the same Parse Node as {EX}
     {EX} is {NAMED_OPERATION_INVOCATION}
     {EX} is {SETTABLE}
@@ -551,6 +555,7 @@
     {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} have the same number of elements
     {var} binds a single name
+    {var} contains any code units which are not in {STR_LITERAL}
     {var} corresponds with a year that cannot be represented in the {h_emu_xref}
     {var} does not already have a binding for {var}
     {var} does not contain a rest parameter, any binding patterns, or any initializers. It may contain duplicate identifiers
@@ -631,7 +636,6 @@
 {NUM_COMPARAND} :
     the length of {var}
     the number of elements in {NAMED_OPERATION_INVOCATION}
-    the number of elements in {var}
     the numeric value of {var}
     {FACTOR}
     {PRODUCT}
@@ -702,6 +706,7 @@
     a List whose elements are the 8 bytes that are the IEEE 754-2019 binary64 format encoding of {var}. The bytes are arranged in little endian order. If {var} is *NaN*, {var} may be set to any implementation chosen IEEE 754-2019 binary64 format NaN encoding. An implementation must always choose the same encoding for each implementation distinguishable *NaN* value
     a List whose elements are the code units that are the elements of {var}
     a List whose elements are the elements of {var}
+    a List whose elements are the elements of {var}, in order
     a List whose elements are the elements of {var}, sorted according to lexicographic code unit order
     a List whose elements are the elements of {var}, sorted by their {dsb_word} field in ascending order
     a List whose elements are the first {var} elements of {EX}
@@ -831,6 +836,7 @@
     the implementation-defined list-separator String value appropriate for the host environment's current locale (such as {STR_LITERAL})
     the index into {var} of the character that was obtained from element {EX} of {var}
     the index within {var} of the first such code unit
+    the integer value represented by {var} in base-16 notation, using the letters *A* through *F* and *a* through *f* for digits with values 10 through 15
     the integer value that is represented by {var} in radix-{var} notation, using the letters <b>A</b> through <b>Z</b> and <b>a</b> through <b>z</b> for digits with values 10 through 35
     the integral Number closest to {var}, preferring the Number closer to +∞ in the case of a tie
     the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}
@@ -877,6 +883,9 @@
     the second to top element of the execution context stack
     the sequence of characters that is the single CharSetElement of {var}
     the sequence of code points resulting from interpreting each of the 16-bit elements of {var} as a Unicode BMP code point. UTF-16 decoding is not applied to the elements
+    the sequence of code points which results from encoding {var} according to the base64 encoding specified in section 4 of {h_a}. Padding is included if and only if {CONDITION}
+    the sequence of code points which results from encoding {var} according to the base64url encoding specified in section 5 of {h_a}. Padding is included if and only if {CONDITION}
+    the sequence such that applying the base64 encoding specified in section 4 of {h_a} to {var} would produce {var}
     the smallest (closest to -∞) integral Number value that is not less than {var}
     the sole element of {PP_NAMED_OPERATION_INVOCATION}
     the sole element of {var}
@@ -896,6 +905,8 @@
     the union of CharSets {var} and {var}
     the union of CharSets {var}, {var} and {var}
     the union of {var} and {var}
+    the unique sequence of 3 bytes resulting from decoding {var} as base64
+    the value at the corresponding index of {SETTABLE}
     the value currently bound to {var} in {var}
     the value that {var} corresponds to in {h_emu_xref}
     the {nonterminal} that is covered by {LOCAL_REF}
@@ -953,6 +964,7 @@
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the single code point matched by this production
+    the sole code unit of {var}
     the source text matched by {PROD_REF}
     the string in the “ControlEscape” column of the row whose “Code Point” column contains {var}
     the substring of {var} from index {dec_int_lit}
@@ -1165,6 +1177,7 @@
     The {EXECUTION_CONTEXT_COMPONENT} of {var}
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
+    the value at each index of {SETTABLE}
     the {DSBN} field of {EXPR}
     the {EXECUTION_CONTEXT_COMPONENT} component of {var}
     the {EXECUTION_CONTEXT_COMPONENT} of the running execution context
@@ -1230,6 +1243,7 @@
 
 {FACTOR} :
     ({NUM_EXPR})
+    the number of elements in {var}
     {BASE}<sup>{EX}</sup>
     {BIGINT_LITERAL}
     {CONSTANT_NAME}
@@ -1294,6 +1308,7 @@
     a Job Abstract Closure
     a JobCallback Record
     a List of {LIST_ELEMENTS_DESCRIPTION}
+    a List of {LIST_ELEMENTS_DESCRIPTION} of length {dec_int_lit}
     a List of {LIST_ELEMENTS_DESCRIPTION} with length equal to {EX}
     a LoadedModuleRequest Record
     a Match Record
@@ -1334,6 +1349,8 @@
     a Source Text Module Record
     a String
     a String exotic object
+    a String of length 2 or 3
+    a String of length 4
     a String which is the name of a TypedArray constructor in {h_emu_xref}
     a Super Reference Record
     a Symbol
@@ -1344,6 +1361,7 @@
     a TypedArray With Buffer Witness Record
     a TypedArray element type
     a UTF-16 code unit
+    a Uint8Array
     a Unicode code point
     a Unicode property name
     a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
@@ -1405,6 +1423,7 @@
     a time value
     a trailing surrogate
     a valid JSON text as specified in ECMA-404
+    a {ERROR_TYPE} object
     a {h_emu_xref}
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}
