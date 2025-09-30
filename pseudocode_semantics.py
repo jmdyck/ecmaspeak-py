@@ -11934,10 +11934,10 @@ class _:
         env0.assert_expr_is_of_type(s_var, T_Boolean)
         return env0
 
-@P("{COMMAND} : {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.")
+@P("{COMMAND} : <emu-not-ref>Record</emu-not-ref> that the binding for {var} in {var} has been initialized.")
 class _:
     def s_nv(anode, env0):
-        [_, key_var, oer_var] = anode.children
+        [key_var, oer_var] = anode.children
         env0.assert_expr_is_of_type(key_var, T_String)
         env0.assert_expr_is_of_type(oer_var, T_Environment_Record)
         return env0
@@ -14319,7 +14319,7 @@ class _:
 
 # Unicode property {name, alias, value, value alias}
 @P("{VAL_DESC} : a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
-@P("{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} listed in the \u201c{h_emu_not_ref_Property_name}\u201d column of {h_emu_xref}")
+@P("{VAL_DESC} : a Unicode <emu-not-ref>property name</emu-not-ref> listed in the \u201c<emu-not-ref>Property name</emu-not-ref>\u201d column of {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
@@ -14335,11 +14335,11 @@ class _:
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{VAL_DESC} : a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}")
+@P("{VAL_DESC} : a Unicode <emu-not-ref>property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref} or {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{VAL_DESC} : a binary Unicode property or binary property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}")
+@P("{VAL_DESC} : a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}")
 @P("{VAL_DESC} : a binary property of strings listed in the “Property name” column of {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
@@ -14355,10 +14355,10 @@ class _:
         env.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return T_Unicode_code_points_
 
-@P("{EXPR} : the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row")
+@P("{EXPR} : the canonical <emu-not-ref>property name</emu-not-ref> of {var} as given in the “Canonical <emu-not-ref>property name</emu-not-ref>” column of the corresponding row")
 class _:
     def s_expr(expr, env0, _):
-        [_, v, _] = expr.children
+        [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 

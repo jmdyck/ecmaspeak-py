@@ -128,6 +128,7 @@
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 {COMMAND} :
+    <emu-not-ref>Record</emu-not-ref> that the binding for {var} in {var} has been initialized.
     ? OperationName().
     ? {var}.OperationName().
     Add {var} to {var}.
@@ -230,7 +231,6 @@
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.
-    {h_emu_not_ref_Record} that the binding for {var} in {var} has been initialized.
     {note}
 
 # ----------------------------------------------
@@ -814,8 +814,8 @@
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary16 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
+    the canonical <emu-not-ref>property name</emu-not-ref> of {var} as given in the “Canonical <emu-not-ref>property name</emu-not-ref>” column of the corresponding row
     the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row
-    the canonical {h_emu_not_ref_property_name} of {var} as given in the “Canonical {h_emu_not_ref_property_name}” column of the corresponding row
     the character matched by {PROD_REF}
     the character represented by {PROD_REF}
     the character value of character {var}
@@ -1362,18 +1362,18 @@
     a TypedArray element type
     a UTF-16 code unit
     a Uint8Array
+    a Unicode <emu-not-ref>property name</emu-not-ref> listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
+    a Unicode <emu-not-ref>property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref} or {h_emu_xref}
     a Unicode code point
     a Unicode property name
     a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
     a Unicode property value
     a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
-    a Unicode {h_emu_not_ref_property_name} listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
-    a Unicode {h_emu_not_ref_property_name} or property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref} or {h_emu_xref}
     a Waiter Record
     a WaiterList Record
     a WeakRef
     a WriteSharedMemory event
-    a binary Unicode property or binary property alias listed in the “{h_emu_not_ref_Property_name} and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “{h_emu_not_ref_Property_name}” column of {h_emu_xref}
+    a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
     a binary property of strings listed in the “Property name” column of {h_emu_xref}
     a bound function exotic object
     a break completion
