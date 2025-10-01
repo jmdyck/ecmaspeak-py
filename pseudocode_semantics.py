@@ -7854,7 +7854,7 @@ def tc_invocation_of_ad_hoc_op(callee_op_name, args, env0):
             return (T_MathReal_, env0)
 
     elif callee_op_name in ['min', 'max']:
-        assert len(args) == 2
+        assert len(args) >= 2
         env1 = env0
         argtypes = []
         for arg in args:
