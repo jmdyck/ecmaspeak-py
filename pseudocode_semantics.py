@@ -7549,8 +7549,6 @@ class _:
                     (T_MathInteger_     , 'is greater than or equal to', T_MathInteger_): 'TF',
                     (T_MathInteger_     , 'is strictly greater than'   , T_MathInteger_): 'TF',
 
-                    (T_MathInteger_, 'is at least', T_MathInteger_): 'TF',
-
                     (T_code_point_ , '≤', T_MathInteger_): 'TF', # but deserves a warning
 
                     # -------
