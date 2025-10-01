@@ -14318,12 +14318,13 @@ class _:
 #@ 22.2.2.9.7 UnicodeMatchProperty
 
 # Unicode property {name, alias, value, value alias}
-@P("{VAL_DESC} : a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}")
-@P("{VAL_DESC} : a Unicode <emu-not-ref>property name</emu-not-ref> listed in the \u201c<emu-not-ref>Property name</emu-not-ref>\u201d column of {h_emu_xref}")
+@P("{VAL_DESC} : a <emu-not-ref>Unicode property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}")
+@P("{VAL_DESC} : a <emu-not-ref>Unicode property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref} or {h_emu_xref}")
+@P("{VAL_DESC} : a <emu-not-ref>Unicode property name</emu-not-ref> listed in the \u201c<emu-not-ref>Property name</emu-not-ref>\u201d column of {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{VAL_DESC} : a Unicode property name")
+@P("{VAL_DESC} : a <emu-not-ref>Unicode property name</emu-not-ref>")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
@@ -14335,16 +14336,16 @@ class _:
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{VAL_DESC} : a Unicode <emu-not-ref>property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref} or {h_emu_xref}")
+@P("{VAL_DESC} : a <emu-not-ref>Unicode property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref} or {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{VAL_DESC} : a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}")
-@P("{VAL_DESC} : a binary property of strings listed in the “Property name” column of {h_emu_xref}")
+@P("{VAL_DESC} : a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}")
+@P("{VAL_DESC} : a binary property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
-@P("{VAL_DESC} : a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}")
+@P("{VAL_DESC} : a canonical, unaliased <emu-not-ref>Unicode property name</emu-not-ref> listed in the “<emu-not-ref>Canonical property name</emu-not-ref>” column of {h_emu_xref}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
 
@@ -14355,14 +14356,14 @@ class _:
         env.assert_expr_is_of_type(var, T_Unicode_code_points_)
         return T_Unicode_code_points_
 
-@P("{EXPR} : the canonical <emu-not-ref>property name</emu-not-ref> of {var} as given in the “Canonical <emu-not-ref>property name</emu-not-ref>” column of the corresponding row")
+@P("{EXPR} : the canonical <emu-not-ref>property name</emu-not-ref> of {var} as given in the “<emu-not-ref>Canonical property name</emu-not-ref>” column of the corresponding row")
 class _:
     def s_expr(expr, env0, _):
         [v] = expr.children
         env0.assert_expr_is_of_type(v, ListType(T_code_point_))
         return (ListType(T_code_point_), env0)
 
-@P("{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}, nor a binary property of strings listed in the “Property name” column of {h_emu_xref}")
+@P("{CONDITION_1} : the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}, nor a binary property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}")
 class _:
     def s_cond(cond, env0, asserting):
         [prod_ref, h_a, h_emu_xref1, h_emu_xref2] = cond.children

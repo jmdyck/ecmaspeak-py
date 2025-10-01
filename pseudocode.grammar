@@ -452,7 +452,7 @@
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static
     the parse succeeded and no early errors were found
     the source text containing {G_SYM} is eval code that is being processed by a direct eval
-    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “Property name and aliases” column of {h_emu_xref}, nor a binary property of strings listed in the “Property name” column of {h_emu_xref}
+    the source text matched by {PROD_REF} is not a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}, nor a binary property or binary property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}, nor a binary property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
     the source text matched by {PROD_REF} is not a property value or property value alias for the Unicode property or property alias given by the source text matched by {PROD_REF} listed in {h_a}
     the source text matched by {var} is strict mode code
     the syntactic goal symbol is not {nonterminal}
@@ -814,7 +814,7 @@
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary16 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary32 value
     the byte elements of {var} concatenated and interpreted as a little-endian bit string encoding of an IEEE 754-2019 binary64 value
-    the canonical <emu-not-ref>property name</emu-not-ref> of {var} as given in the “Canonical <emu-not-ref>property name</emu-not-ref>” column of the corresponding row
+    the canonical <emu-not-ref>property name</emu-not-ref> of {var} as given in the “<emu-not-ref>Canonical property name</emu-not-ref>” column of the corresponding row
     the canonical property value of {var} as given in the “Canonical property value” column of the corresponding row
     the character matched by {PROD_REF}
     the character represented by {PROD_REF}
@@ -1290,6 +1290,10 @@
 
 {VAL_DESC} :
     ECMAScript source text
+    a <emu-not-ref>Unicode property name</emu-not-ref>
+    a <emu-not-ref>Unicode property name</emu-not-ref> listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
+    a <emu-not-ref>Unicode property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}
+    a <emu-not-ref>Unicode property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref} or {h_emu_xref}
     a BigInt
     a Boolean
     a CharSet
@@ -1362,26 +1366,22 @@
     a TypedArray element type
     a UTF-16 code unit
     a Uint8Array
-    a Unicode <emu-not-ref>property name</emu-not-ref> listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
-    a Unicode <emu-not-ref>property name</emu-not-ref> or property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref} or {h_emu_xref}
     a Unicode code point
-    a Unicode property name
-    a Unicode property name or property alias listed in the “Property name and aliases” column of {h_emu_xref}
     a Unicode property value
     a Unicode property value or property value alias for the General_Category (gc) property listed in {h_a}
     a Waiter Record
     a WaiterList Record
     a WeakRef
     a WriteSharedMemory event
-    a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name</emu-not-ref> and aliases” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
-    a binary property of strings listed in the “Property name” column of {h_emu_xref}
+    a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
+    a binary property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
     a bound function exotic object
     a break completion
     a built-in function object
     a callable Object
     a candidate execution
     a candidate execution Record
-    a canonical, unaliased Unicode property name listed in the “Canonical property name” column of {h_emu_xref}
+    a canonical, unaliased <emu-not-ref>Unicode property name</emu-not-ref> listed in the “<emu-not-ref>Canonical property name</emu-not-ref>” column of {h_emu_xref}
     a character
     a code point
     a code unit

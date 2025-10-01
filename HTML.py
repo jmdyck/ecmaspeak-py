@@ -539,7 +539,7 @@ element_info = {
         'pre'                  : ('B', '',          'class',      '(#TEXT;|code;|sup;)+'),
         'style'                : ('B', '',          'media',      '#TEXT;'),
         'p'                    : ('B', '',          '',           'img;|(#COMMENT;|#TEXT;|a;|b;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-prodref;|emu-t;|emu-xref;|i;|ins;|span;|sub;|sup;|var;)+'), # the img; is just for the logo at the start, weird.
-        'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-xref;|i;|ins;|sub;)+'), # though dfn is pretty odd
+        'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-not-ref;|emu-xref;|i;|ins;|sub;)+'), # though dfn is pretty odd
         'h2'                   : ('B', '',          '',           '#TEXT;'),
         'th'                   : ('B', '',          'class',      '#TEXT;(sup;#TEXT;)?'),
         'script'               : ('B', 'src',       '',           '(#TEXT;)?'),
