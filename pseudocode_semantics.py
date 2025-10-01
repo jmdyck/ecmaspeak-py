@@ -14956,11 +14956,6 @@ class _:
 #> An individual object may conform to multiple interfaces.
 
 # ==============================================================================
-#@ 27.1.4 Properties of the Iterator Prototype Object
-
-declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterator]]', T_Iterator_Record)
-
-# ==============================================================================
 #@ 27.1.1.5 The IteratorResult Interface
 
 @P("{VAL_DESC} : an Object that conforms to the IteratorResult interface")
@@ -14971,6 +14966,11 @@ class _:
 #@ 27.1.3.2.1 Iterator.from
 
 declare_isom(T_Object, 'might have', 'slot', '[[Iterated]]', T_Iterator_Record)
+
+# ==============================================================================
+#@ 27.1.3.3 Properties of the Iterator Prototype Object
+
+declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterator]]', T_Iterator_Record)
 
 # ==============================================================================
 #@ 27.2 Promise Objects
