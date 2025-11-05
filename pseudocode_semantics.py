@@ -5451,7 +5451,7 @@ class _:
             "WeakMap"             : T_WeakMap_object_,
             "WeakRef"             : T_WeakRef_object_,
             "WeakSet"             : T_WeakSet_object_,
-            "event"               : T_Shared_Data_Block_Event,
+            "Memory event"        : T_Shared_Data_Block_Event,
             "integer"             : T_MathInteger_,
         }[item_nature.prod.rhs_s]
         env1 = env0.plus_new_entry(loop_var, item_type)
@@ -5505,9 +5505,9 @@ class _:
             item_type = T_code_unit_
             collection_type = T_String
 
-        elif item_nature.prod.rhs_s == r"event":
-            item_type = T_Event
-            collection_type = T_Set | ListType(T_Event)
+        elif item_nature.prod.rhs_s == r"Memory event":
+            item_type = T_Memory_Event
+            collection_type = T_Set | ListType(T_Memory_Event)
 
         elif item_nature.prod.rhs_s == r"ReadSharedMemory or ReadModifyWriteSharedMemory event":
             item_type = T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
@@ -8412,6 +8412,8 @@ class _:
             #
             if callee_op_name == 'IsSharedArrayBuffer':
                 t = T_SharedArrayBuffer_object_
+            elif callee_op_name == 'IsGrowableSharedArrayBuffer':
+                t = T_SharedArrayBuffer_object_
             elif callee_op_name == 'IsPromise':
                 t = T_Promise_object_
             elif callee_op_name == 'IsCallable':
@@ -10923,7 +10925,7 @@ class _:
         dsbn_name = dsbn.source_text()
         if dsbn_name == '[[EventList]]':
             env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
-            return (ListType(T_Event), env0)
+            return (ListType(T_Memory_Event), env0)
         elif dsbn_name == '[[CandidateExecution]]':
             env0.assert_expr_is_of_type(ex, T_Agent_Record)
             return (T_Candidate_Execution_Record, env0)
@@ -11306,8 +11308,8 @@ class _:
     def s_expr(expr, env0, _):
         [a, b] = expr.children
         # over-specific:
-        env0.assert_expr_is_of_type(a, T_Event)
-        env0.assert_expr_is_of_type(b, T_Event)
+        env0.assert_expr_is_of_type(a, T_Memory_Event)
+        env0.assert_expr_is_of_type(b, T_Memory_Event)
         return (T_event_pair_, env0)
 
 @P("{COMMAND} : Add {var} to {var}.")
@@ -11317,21 +11319,13 @@ class _:
         [item_var, collection_var] = anode.children
         (item_type, env1) = tc_expr(item_var, env0); assert env1 is env0
         (collection_type, env2) = tc_expr(collection_var, env0); assert env2 is env0
-        if item_type.is_a_subtype_of_or_equal_to(T_Event) and collection_type == T_Set:
+        if item_type.is_a_subtype_of_or_equal_to(T_Memory_Event) and collection_type == T_Set:
             pass
         elif item_type.is_a_subtype_of_or_equal_to(ListType(T_character_)) and collection_type == T_CharSet:
             pass
         else:
             assert 0
         return env0
-
-@P("{CONDITION_1} : {var} is not in {PREFIX_PAREN}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [item_var, set_pp] = cond.children
-        env0.assert_expr_is_of_type(set_pp, T_Set)
-        env0.assert_expr_is_of_type(item_var, T_Event)
-        return (env0, env0)
 
 # ==============================================================================
 #@ 6.2.4 The Completion Record Specification Type
@@ -15093,7 +15087,7 @@ class _:
 
 T_Shared_Data_Block_Event = T_ReadSharedMemory_Event | T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
 
-T_Event = T_Shared_Data_Block_Event | T_Synchronize_Event | T_Host_Specific_Event
+T_Memory_Event = T_Shared_Data_Block_Event | T_Synchronize_Event | T_Host_Specific_Event
 
 @P("{VAL_DESC} : a WriteSharedMemory event")
 class _:
@@ -15107,14 +15101,13 @@ class _:
 class _:
     s_tb = T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
 
-@P("{VAL_DESC} : a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event")
 @P("{VAL_DESC} : a Shared Data Block event")
 class _:
     s_tb = T_Shared_Data_Block_Event
 
-@P("{LIST_ELEMENTS_DESCRIPTION} : events")
+@P("{LIST_ELEMENTS_DESCRIPTION} : Memory events")
 class _:
-    s_tb = T_Event
+    s_tb = T_Memory_Event
 
 @P("{LIST_ELEMENTS_DESCRIPTION} : WriteSharedMemory or ReadModifyWriteSharedMemory events")
 @P("{LIST_ELEMENTS_DESCRIPTION} : either WriteSharedMemory or ReadModifyWriteSharedMemory events")
@@ -15138,7 +15131,7 @@ class _:
             env_or(a_f_env, b_f_env)
         )
 
-@P("{CONDITION_1} : there exists an event {DEFVAR} such that {CONDITION}")
+@P("{CONDITION_1} : there exists a Memory event {DEFVAR} such that {CONDITION}")
 class _:
     def s_cond(cond, env0, asserting):
         [let_var, stcond] = cond.children
@@ -15164,12 +15157,12 @@ class _:
     s_tb = T_event_pair_
 
 # ------------------------------------------------------------------------------
-#> Let the range of
+#> Let the memory range of
 #> a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
 #> be the Set of contiguous integers
 #> from its [[ByteIndex]] to [[ByteIndex]] + [[ElementSize]] - 1.
 
-@P("{CONDITION_1} : {var} has {var} in its range")
+@P("{CONDITION_1} : {var} has {var} in its memory range")
 class _:
     def s_cond(cond, env0, asserting):
         [sdbe_var, loc_var] = cond.children
@@ -15177,9 +15170,9 @@ class _:
         env2 = env1.ensure_expr_is_of_type(loc_var, T_MathInteger_)
         return (env2, env2)
 
-@P("{CONDITION_1} : {var} and {var} do not have disjoint ranges")
-@P("{CONDITION_1} : {var} and {var} have equal ranges")
-@P("{CONDITION_1} : {var} and {var} have overlapping ranges")
+@P("{CONDITION_1} : {var} and {var} do not have disjoint memory ranges")
+@P("{CONDITION_1} : {var} and {var} have equal memory ranges")
+@P("{CONDITION_1} : {var} and {var} have overlapping memory ranges")
 class _:
     def s_cond(cond, env0, asserting):
         [ea, eb] = cond.children
@@ -15187,7 +15180,7 @@ class _:
         env0.assert_expr_is_of_type(eb, T_Shared_Data_Block_Event)
         return (env0, env0)
 
-@P("{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1} and {CONDITION_1}")
+@P("{CONDITION_1} : there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its memory range such that {CONDITION_1} and {CONDITION_1}")
 class _:
     def s_cond(cond, env0, asserting):
         [let_var, i, stconda, stcondb] = cond.children
@@ -15230,9 +15223,19 @@ class _:
 # ==============================================================================
 #@ 29.5 Abstract Operations for the Memory Model
 
-@P("{VAL_DESC} : a Set of events")
+@P("{VAL_DESC} : a Set of Memory events")
+@P("{VAL_DESC} : a Set of Shared Data Block events")
 class _:
     s_tb = T_Set
+
+#@ 29.5.3 HostEventSet
+@P("{EXPR} : a new Set containing all elements of {EX} that are not in {EX}")
+class _:
+    def s_expr(expr, env0, _):
+        [exa, exb] = expr.children
+        env0.assert_expr_is_of_type(exa, T_Set)
+        env0.assert_expr_is_of_type(exb, T_Set)
+        return (T_Set, env0)
 
 # ==============================================================================
 #@ 29.6 Relations of Candidate Executions
@@ -15242,8 +15245,8 @@ class _:
 class _:
     def s_cond(cond, env0, _):
         [eventa_var, eventb_var, execution_var] = cond.children
-        env0.assert_expr_is_of_type(eventa_var, T_Event)
-        env0.assert_expr_is_of_type(eventb_var, T_Event)
+        env0.assert_expr_is_of_type(eventa_var, T_Memory_Event)
+        env0.assert_expr_is_of_type(eventb_var, T_Memory_Event)
         env0.assert_expr_is_of_type(execution_var, T_Candidate_Execution_Record)
         return (env0, env0)
 

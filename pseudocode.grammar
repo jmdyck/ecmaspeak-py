@@ -312,6 +312,7 @@
     ImportEntry Record
     LoadedModuleRequest Record
     Matcher
+    Memory event
     ModuleRequest Record
     Parse Node
     Private Name
@@ -326,7 +327,6 @@
     byte
     code point
     code unit
-    event
     integer
     {nonterminal}
 
@@ -458,8 +458,8 @@
     the syntactic goal symbol is not {nonterminal}
     the {var}<sup>th</sup> capture of {var} was defined with a {nonterminal}
     there exists a CharSetElement in {var} containing exactly one character {DEFVAR} such that {CONDITION_1}
-    there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its range such that {CONDITION_1} and {CONDITION_1}
-    there exists an event {DEFVAR} such that {CONDITION}
+    there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its memory range such that {CONDITION_1} and {CONDITION_1}
+    there exists a Memory event {DEFVAR} such that {CONDITION}
     there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}
     we return here
     {DOTTING} exists and has been initialized
@@ -545,12 +545,12 @@
     {var} and {var} are finite
     {var} and {var} are finite and non-zero
     {var} and {var} are in a {h_emu_xref} in {var}
-    {var} and {var} do not have disjoint ranges
+    {var} and {var} do not have disjoint memory ranges
     {var} and {var} do not have the same number of elements
     {var} and {var} each contain exactly one character
-    {var} and {var} have equal ranges
+    {var} and {var} have equal memory ranges
     {var} and {var} have no elements in common
-    {var} and {var} have overlapping ranges
+    {var} and {var} have overlapping memory ranges
     {var} and {var} have the same enclosing {nonterminal}
     {var} and {var} have the same length and the same code units in the same positions
     {var} and {var} have the same number of elements
@@ -595,7 +595,7 @@
     {var} has the same numeric value as a leading surrogate or trailing surrogate
     {var} has {DSBN} and {DSBN} internal slots
     {var} has {EX} elements
-    {var} has {var} in its range
+    {var} has {var} in its memory range
     {var} imports a specific binding for this export
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is as small as possible
@@ -610,7 +610,6 @@
     {var} is not contained within an? {nonterminal}, an? {nonterminal}, or an? {nonterminal}
     {var} is not finite
     {var} is not in {INTERVAL}
-    {var} is not in {PREFIX_PAREN}
     {var} is now an empty List
     {var} is now the running execution context
     {var} is a code point listed in the “Code Point” column of {h_emu_xref}
@@ -722,6 +721,7 @@
     a new Property Descriptor that initially has no fields
     a new Realm Record
     a new Record
+    a new Set containing all elements of {EX} that are not in {EX}
     a new Shared Data Block value consisting of {var} bytes. If it is impossible to create such a Shared Data Block, throw a {ERROR_TYPE} exception
     a new Symbol whose {DSBN} is {var}
     a new Synchronize event
@@ -1335,7 +1335,6 @@
     a Proxy exotic object
     a ReadModifyWriteSharedMemory event
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
-    a ReadSharedMemory, WriteSharedMemory, or ReadModifyWriteSharedMemory event
     a Realm Record
     a Record whose field names are intrinsic keys and whose values are objects
     a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})
@@ -1345,7 +1344,8 @@
     a ResolvedBinding Record
     a Script Record
     a Set Record
-    a Set of events
+    a Set of Memory events
+    a Set of Shared Data Block events
     a Shared Data Block
     a Shared Data Block event
     a SharedArrayBuffer
@@ -1497,6 +1497,7 @@
     ImportAttribute Records
     ImportEntry Records
     LoadedModuleRequest Records
+    Memory events
     ModuleRequest Records
     Objects
     Parse Nodes
@@ -1518,7 +1519,6 @@
     either Strings or *undefined*
     either WriteSharedMemory or ReadModifyWriteSharedMemory events
     errors
-    events
     internal slot names
     names of internal slots
     pairs of Synchronize events
