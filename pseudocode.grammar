@@ -446,7 +446,7 @@
     the host is a web browser
     the host is a web browser or otherwise supports {h_emu_xref}
     the host requires that the `this` binding in {var}'s global scope return an object other than the global object
-    the host requires use of an exotic object to serve as {var}'s global object
+    the host requires use of a specific object to serve as {var}'s global object
     the implementation does not include local political rules for any time zones
     the implementation only supports the UTC time zone
     the name is used once for a getter and once for a setter and in no other entries, and the getter and setter are either both static or both non-static

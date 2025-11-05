@@ -12075,7 +12075,7 @@ class _:
 # ==============================================================================
 #@ 9.3.1 InitializeHostDefinedRealm
 
-@P("{CONDITION_1} : the host requires use of an exotic object to serve as {var}'s global object")
+@P("{CONDITION_1} : the host requires use of a specific object to serve as {var}'s global object")
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
