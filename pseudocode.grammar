@@ -1173,7 +1173,6 @@
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the value at each index of {SETTABLE}
-    the {DSBN} field of {EXPR}
     the {EXECUTION_CONTEXT_COMPONENT} component of {var}
     the {EXECUTION_CONTEXT_COMPONENT} of the running execution context
     the {EXECUTION_CONTEXT_COMPONENT} of {var}

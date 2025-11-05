@@ -10885,23 +10885,6 @@ class _:
             fields_info.append( (field_name, field_type) )
         return RecordType('', tuple(fields_info))
 
-@P("{SETTABLE} : the {DSBN} field of {EXPR}")
-class _:
-    def s_expr(expr, env0, _):
-        [dsbn, ex] = expr.children
-        dsbn_name = dsbn.source_text()
-        if dsbn_name == '[[EventList]]':
-            env0.assert_expr_is_of_type(ex, T_Agent_Events_Record)
-            return (ListType(T_Memory_Event), env0)
-        elif dsbn_name == '[[CandidateExecution]]':
-            env0.assert_expr_is_of_type(ex, T_Agent_Record)
-            return (T_Candidate_Execution_Record, env0)
-        elif dsbn_name == '[[LittleEndian]]':
-            env0.assert_expr_is_of_type(ex, T_Agent_Record)
-            return (T_Boolean, env0)
-        else:
-            assert 0, expr
-
 # ------------------------------------------------------------------------------
 #> For notational convenience within this specification,
 #> an object literal-like syntax can be used to express a Record value.
