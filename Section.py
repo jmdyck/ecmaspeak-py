@@ -1472,8 +1472,7 @@ def _handle_other_section(section):
             (r'Implicit Normal Completion',                        'shorthand'),
             (r'Implicit Completion Values',                        'shorthand'),
             (r'Throw an Exception',                                'shorthand'),
-            (r'ReturnIfAbrupt',                                    'shorthand'),
-            (r'ReturnIfAbrupt Shorthands',                         'shorthand'),
+            (r'Shorthands for Unwrapping Completion Records',      'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
             (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
 
@@ -1590,7 +1589,6 @@ def _handle_other_section(section):
             if section.section_title == 'Implicit Completion Values':
                 ensure_alg('shorthand', 'Completion')
             elif section.section_title in [
-                'ReturnIfAbrupt',
                 'Await',
             ]:
                 ensure_alg('shorthand', section.section_title)
@@ -1600,7 +1598,10 @@ def _handle_other_section(section):
                 pass
                 # print('>', section.section_num, section.section_title)
             pass
-        elif section.section_title == 'Syntax-Directed Operations':
+        elif section.section_title in [
+            'Evaluation Order',
+            'Syntax-Directed Operations',
+        ]:
             # just examples
             pass
         else:

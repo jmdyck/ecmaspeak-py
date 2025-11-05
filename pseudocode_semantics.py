@@ -5980,7 +5980,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 5.2.1 Abstract Operations
+#@ 5.2.2 Abstract Operations
 
 @P("{COMMAND} : Perform {PP_NAMED_OPERATION_INVOCATION}.")
 @P("{SMALL_COMMAND} : perform {PP_NAMED_OPERATION_INVOCATION}")
@@ -6196,7 +6196,7 @@ def value_matches_discriminator(value, discriminator):
 #> using a method application style such as _someValue_.OperationName(_arg1_, _arg2_).
 
 # ==============================================================================
-#@ 5.2.2 Syntax-Directed Operations
+#@ 5.2.3 Syntax-Directed Operations
 
 #> When an algorithm is associated with a grammar production,
 #> it may reference the terminal and nonterminal symbols
@@ -6601,10 +6601,10 @@ def execute_sdo_invocation(sdo_name_arg, focus_expr, arg_exprs):
     return execute_alg_defn(sdo_defn, focus_node=focus_node, arg_vals=arg_vals)
 
 # ==============================================================================
-#@ 5.2.3 Runtime Semantics
+#@ 5.2.4 Runtime Semantics
 
 # ==============================================================================
-#@ 5.2.3.2 Throw an Exception
+#@ 5.2.4.2 Throw an Exception
 
 #> Algorithms steps that say to throw an exception, such as
 #>   1. Throw a *TypeError* exception.
@@ -6621,39 +6621,7 @@ class _:
         return None
 
 # ==============================================================================
-#@ 5.2.3.3 ReturnIfAbrupt
-
-#> Algorithms steps that say or are otherwise equivalent to:
-#>     1. ReturnIfAbrupt(_argument_).
-#> mean the same thing as:
-#>     1. If _argument_ is an abrupt completion, return _argument_.
-#>     1. Else if _argument_ is a Completion Record, set _argument_ to _argument_.[[Value]].
-#>
-#> Algorithms steps that say or are otherwise equivalent to:
-#>     1. ReturnIfAbrupt(AbstractOperation()).
-#> mean the same thing as:
-#>     1. Let _hygienicTemp_ be AbstractOperation().
-#>     1. If _hygienicTemp_ is an abrupt completion, return _hygienicTemp_.
-#>     1. Else if _hygienicTemp_ is a Completion Record, set _hygienicTemp_ to _hygienicTemp_.[[Value]].
-#> Where _hygienicTemp_ is ephemeral and visible only in the steps pertaining to ReturnIfAbrupt.
-
-@P("{COMMAND} : ReturnIfAbrupt({EX}).")
-class _:
-    def s_nv(anode, env0):
-        [ex] = anode.children
-        (_, env1) = handle_completion_record_shorthand('ReturnIfAbrupt', ex, env0)
-        return env1
-
-# ==============================================================================
-#@ 5.2.3.4 ReturnIfAbrupt Shorthands
-
-#> Invocations of abstract operations and syntax-directed operations
-#> that are prefixed by ? indicate that ReturnIfAbrupt should be applied
-#> to the resulting Completion Record.
-#> For example, the step:
-#>    1. ? OperationName().
-#> is equivalent to the following step:
-#>    1. ReturnIfAbrupt(OperationName())
+#@ 5.2.4.3 Shorthands for Unwrapping Completion Records
 
 @P("{PP_NAMED_OPERATION_INVOCATION} : ? {NAMED_OPERATION_INVOCATION}")
 @P("{EX} : ? {DOTTING}")
@@ -6799,10 +6767,10 @@ def handle_completion_record_shorthand(operator, operand, env0):
         return (result_type, env2)
 
 # ==============================================================================
-#@ 5.2.3.5 Implicit Normal Completion
+#@ 5.2.4.4 Implicit Normal Completion
 
 # ==============================================================================
-#@ 5.2.4 Static Semantics
+#@ 5.2.5 Static Semantics
 
 #> A special kind of static semantic rule is an Early Error Rule.
 
@@ -6982,7 +6950,7 @@ class EarlyError:
     condition: ANode
 
 # ==============================================================================
-#@ 5.2.5 Mathematical Operations
+#@ 5.2.6 Mathematical Operations
 
 #> This specification makes reference to these kinds of numeric values:
 #>  -- <dfn>Mathematical values</dfn>: Arbitrary real numbers, used as the default numeric type.
@@ -8150,7 +8118,7 @@ class _:
         return (T_MathReal_, env0)
 
 # ==============================================================================
-#@ 5.2.6 Value Notation
+#@ 5.2.7 Value Notation
 
 #> Values which are internal to the specification
 #> and not directly observable from ECMAScript code
@@ -8187,7 +8155,7 @@ def type_for_tilded_word(tilded_word):
     return HierType(f"tilde_{uchars}_")
 
 # ==============================================================================
-#@ 5.2.7 Identity
+#@ 5.2.8 Identity
 
 def same_value(a, b):
     assert a.isan(E_Value)

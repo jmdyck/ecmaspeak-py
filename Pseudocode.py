@@ -467,13 +467,6 @@ def annotate_invocations(anode):
             op_names = ['IfAbruptRejectPromise']
             args = d.children[0:2]
 
-        elif str(d.prod) in [
-            '{COMMAND} : ReturnIfAbrupt({EX}).',
-            '{SMALL_COMMAND} : ReturnIfAbrupt({var})',
-        ]:
-            op_names = ['ReturnIfAbrupt']
-            args = [d.children[0]]
-
         if op_names is not None:
             d._op_invocation = (op_names, args)
 

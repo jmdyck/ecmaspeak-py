@@ -46,7 +46,7 @@ import Pseudocode
 # Cases where an Alg has zero AlgHeaders:
 #
 # - Shorthands
-#   (E.g., ReturnIfAbrupt)
+#   (E.g., IfAbruptRejectPromise)
 #
 # - Operations (mostly numeric) that are defined very briefly
 #   (E.g., abs, floor, scf)

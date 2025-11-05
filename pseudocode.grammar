@@ -129,8 +129,6 @@
 
 {COMMAND} :
     <emu-not-ref>Record</emu-not-ref> that the binding for {var} in {var} has been initialized.
-    ? OperationName().
-    ? {var}.OperationName().
     Add {var} to {var}.
     Append to {var} the elements of {var}.
     Append {EX} and {EX} to {EX}.
@@ -201,7 +199,6 @@
     Return {EXPR}.
     Return {EXPR}. This may be of type Reference.
     Return {MULTILINE_EXPR}
-    ReturnIfAbrupt({EX}).
     Set all of the bytes of {var} to 0.
     Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
     Set {DOTTING} as described in {h_emu_xref}.
@@ -1532,6 +1529,7 @@
 {DOTTING} :
     {DOTTING}.{DSBN}
     {var}.{DSBN}
+    C.{DSBN}
 
 {DSBN} :
     {dsb_percent_word}
