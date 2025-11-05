@@ -411,7 +411,6 @@
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text is matched by this production
     control reaches here
-    either {DOTTING} or {DOTTING} is {LITERAL}
     every CharSetElement of {var} consists of a single character (including if {var} is empty)
     it is impossible to create a new Shared Data Block value consisting of {var} bytes
     it is not possible to create a Data Block {var} consisting of {var} bytes

@@ -8351,7 +8351,6 @@ class _:
         return (envb, envb)
 
 @P("{CONDITION_1} : {var} or {var} is {LITERAL}")
-@P("{CONDITION_1} : either {DOTTING} or {DOTTING} is {LITERAL}")
 class _:
     def s_cond(cond, env0, asserting):
         [v1, v2, lit] = cond.children
