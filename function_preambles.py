@@ -279,7 +279,7 @@ def extract_info_from_preamble(preamble_nodes):
         para_text_remaining = multi_sentence_rules.apply(para_text, info_holder, trace)
         if para_text_remaining != '':
             sentences_remaining = []
-            for sentence in re.split('(?<=\.) +', para_text_remaining):
+            for sentence in re.split(r'(?<=\.) +', para_text_remaining):
                 sentence_remaining = single_sentence_rules.apply(sentence, info_holder, trace)
                 if sentence_remaining != '':
                     sentences_remaining.append(sentence_remaining)
