@@ -395,7 +395,7 @@
     The surrounding agent is in the critical section for {var}
     The surrounding agent is not in the critical section for any WaiterList Record
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
-    There is more than one `*` import that includes the requested name
+    There is more than one `*` export that includes the requested name
     There is no Waiter Record in {DOTTING} whose {dsb_word} field is {EX} and whose {dsb_word} field is {EX}
     This call to Evaluate is not happening at the same time as another call to Evaluate within the surrounding agent
     This is a circular import request

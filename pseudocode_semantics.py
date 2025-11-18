@@ -13482,7 +13482,7 @@ class _:
         [] = cond.children
         return (env0, env0)
 
-@P("{CONDITION_1} : There is more than one `*` import that includes the requested name")
+@P("{CONDITION_1} : There is more than one `*` export that includes the requested name")
 class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
