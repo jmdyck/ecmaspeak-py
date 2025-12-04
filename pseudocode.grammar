@@ -1491,6 +1491,7 @@
     ExportEntry Records
     ImportAttribute Records
     ImportEntry Records
+    Iterator Records
     LoadedModuleRequest Records
     Memory events
     ModuleRequest Records

@@ -11765,6 +11765,7 @@ class _:
 #> used to encapsulate an Iterator or AsyncIterator along with the `next` method.
 
 @P("{VAL_DESC} : an Iterator Record")
+@P("{LIST_ELEMENTS_DESCRIPTION} : Iterator Records")
 class _:
     s_tb = T_Iterator_Record
 
@@ -14914,7 +14915,7 @@ declare_isom(T_Object, 'might have', 'slot', '[[Iterated]]', T_Iterator_Record)
 # ==============================================================================
 #@ 27.1.3.3 Properties of the Iterator Prototype Object
 
-declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterator]]', T_Iterator_Record)
+declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterators]]', ListType(T_Iterator_Record))
 
 # ==============================================================================
 #@ 27.2 Promise Objects
