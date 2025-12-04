@@ -5478,7 +5478,7 @@ class _:
         # that doesn't convert to a precise type,
         # so you need to go outside-in to get the precise type of the loop-variable.
 
-        if item_nature.prod.rhs_s.startswith('Record {'):
+        if item_nature.prod.rhs_s.startswith('Record {') or item_nature.prod.rhs_s == 'Record':
             # outside-in
             (collection_type, env1) = tc_expr(collection_expr, env0)
             assert isinstance(collection_type, ListType)
@@ -5488,9 +5488,10 @@ class _:
             assert item_type.schema_name == ''
             fields_dict = dict(item_type.fields_info)
 
-            assert len(fields_dict) == len(item_nature.children)
-            for dsbn in item_nature.children:
-                assert dsbn.source_text() in fields_dict
+            if item_nature.children:
+                assert len(fields_dict) == len(item_nature.children)
+                for dsbn in item_nature.children:
+                    assert dsbn.source_text() in fields_dict
                 
             return env1.plus_new_entry(loop_var, item_type)
 
@@ -11770,7 +11771,7 @@ class _:
     s_tb = T_Iterator_Record
 
 # ==============================================================================
-#@ 7.4.12 IfAbruptCloseIterator
+#@ 7.4.13 IfAbruptCloseIterator
 
 @P("{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
 class _:
@@ -14908,7 +14909,7 @@ class _:
     s_tb = a_subset_of(T_Object)
 
 # ==============================================================================
-#@ 27.1.3.2.1 Iterator.from
+#@ 27.1.3.2.2 Iterator.from
 
 declare_isom(T_Object, 'might have', 'slot', '[[Iterated]]', T_Iterator_Record)
 

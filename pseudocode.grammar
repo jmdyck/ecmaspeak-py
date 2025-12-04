@@ -315,6 +315,7 @@
     Private Name
     PrivateElement
     ReadSharedMemory or ReadModifyWriteSharedMemory event
+    Record
     Record { {DSBN}, {DSBN} }
     Record { {DSBN}, {DSBN}, {DSBN} }
     String
