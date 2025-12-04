@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2018  J. Michael Dyck <jmdyck@ibiblio.org>
 
-import sys, re, math, pdb, string, pprint
+import sys, re, math, pdb, string, pprint, os
 from collections import defaultdict
 
 from HTML import HNode
@@ -636,6 +636,9 @@ def check_for_unbalanced_ifs():
                     if d.prod.lhs_s == '{IF_OTHER}':
                         arms = [* each_if_arm(d)]
                         assert len(arms) > 0
+                        if len(arms) == 1:
+                            continue
+                            # because there's nothing to 'balance'
 
                         arm_nts = set(
                             str(arm.prod.lhs_s)
@@ -648,8 +651,29 @@ def check_for_unbalanced_ifs():
                         )
                         msg_at_node(d, f"If-command has 'unbalanced' arms: {arm_nts_str}")
 
+                    elif d.prod.lhs_s == '{IF_CLOSED}':
+                        # Editorial-Conventions says:
+                        # > in a collapsed (single-line) if/else,
+                        # > all branches should "do the same thing",
+                        # > e.g. set the same alias, return, perform, etc."
+
+                        arms = [* each_if_arm(d)]
+                        assert len(arms) > 1
+                        pre = os.path.commonprefix(
+                            [arm.source_text() for arm in arms]
+                        )
+                        if re.match(r'return |let _\w+_ be |set _\w+_ to ', pre):
+                            pass
+                        else:
+                            msg_at_node(d, f"If-command branches don't all 'do the same thing'")
+
 def each_if_arm(anode):
-    if anode.prod.lhs_s == '{IF_OTHER}':
+    if anode.prod.lhs_s == '{IF_CLOSED}':
+        for child in anode.children:
+            assert child.prod.lhs_s in ['{SMALL_COMMAND}', '{CONDITION}']
+            if child.prod.lhs_s == '{SMALL_COMMAND}':
+                yield child
+    elif anode.prod.lhs_s == '{IF_OTHER}':
         assert anode.prod.rhs_s == '{IF_OPEN}{IF_TAIL}'
         [if_open, if_tail] = anode.children
         yield from each_if_arm(if_open)
@@ -675,7 +699,7 @@ def each_if_arm(anode):
         assert commands.prod.lhs_s in ['{IND_COMMANDS}', '{SMALL_COMMAND}', '{COMMAND}']
         yield commands
     else:
-        assert 0, anode.prod_lhs_s
+        assert 0, anode.prod.lhs_s
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
