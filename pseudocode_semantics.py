@@ -12596,6 +12596,7 @@ class _:
 
 declare_isom(T_built_in_function_object_, 'must have', 'slot', '[[Realm]]',       T_Realm_Record)
 declare_isom(T_built_in_function_object_, 'must have', 'slot', '[[InitialName]]', T_Null | T_String)
+declare_isom(T_built_in_function_object_, 'must have', 'slot', '[[Async]]',       T_Boolean)
 
 #> If a built-in function object is not implemented as an ECMAScript function
 #> it must provide [[Call]] and [[Construct]] internal methods that conform to the following definitions:
@@ -12691,8 +12692,9 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [var1, var2, var3, dsbn] = expr.children
+        assert var1.source_text() == var2.source_text()
         env1 = env0.ensure_expr_is_of_type(var1, T_proc_ | T_alg_steps)
-        # env1 = env0.ensure_expr_is_of_type(var2, )
+        env1.assert_expr_is_of_type(var3, ListType(T_SlotName_))
         return (T_built_in_function_object_, env1)
 
 # ==============================================================================
@@ -12817,7 +12819,7 @@ class _:
         return env0
 
 # ==============================================================================
-# 10.5 Proxy Object Internal Methods and Internal Slots
+#@ 10.5 Proxy Object Internal Methods and Internal Slots
 
 #> A Proxy object is an exotic object
 #> whose essential internal methods
