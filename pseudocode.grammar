@@ -132,7 +132,6 @@
     Add {var} to {var}.
     Append to {var} the elements of {var}.
     Append {EX} and {EX} to {EX}.
-    Append {EX} to the end of {EX}.
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
     Assert: If {CONDITION}, {CONDITION}.
@@ -201,7 +200,6 @@
     Return {MULTILINE_EXPR}
     Set all of the bytes of {var} to 0.
     Set fields of {DOTTING} with the values listed in {h_emu_xref}. {the_field_names_are_the_names_listed_etc}
-    Set {DOTTING} as described in {h_emu_xref}.
     Set {DOTTING} as specified in {h_emu_xref}.
     Set {DOTTING} to the definition specified in {h_emu_xref}.
     Set {SETTABLE} such that when evaluation is resumed for that execution context, {var} will be called with no arguments.
@@ -536,7 +534,6 @@
     {SETTABLE} and {SETTABLE} are the same Module Record
     {SETTABLE} has an? {DSBN} field
     {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
-    {var} also has a {DSBN} internal slot
     {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
     {var} and {var} are finite
@@ -1037,10 +1034,10 @@
     {LOCAL_REF} Contains {G_SYM}
     {LOCAL_REF} Contains {var}
     {PREFIX_PAREN}
-    {PREFIX_PAREN} (see {h_emu_xref})
     {cap_word} of {LOCAL_REF}
     {cap_word} of {LOCAL_REF} {WITH_ARGS}
     {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}
+    {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end} (see {h_emu_xref})
 
 {LOCAL_REF} :
     {PROD_REF}
@@ -1080,7 +1077,6 @@
 {OPN_BEFORE_PAREN} :
     {DOTTING}
     {SIMPLE_OPERATION_NAME}
-    {h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}
     {var}
     {var}.{cap_word}
 

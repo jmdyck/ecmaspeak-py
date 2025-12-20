@@ -6029,16 +6029,11 @@ class _:
     d_exec = d_exec_pass_down
 
 @P("{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}")
+@P("{NAMED_OPERATION_INVOCATION} : {h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end} (see {h_emu_xref})")
 class _:
     def s_expr(expr, env0, _):
-        [_, noi, _] = expr.children
+        noi = expr.children[1]
         return tc_expr(noi, env0)
-
-@P("{NAMED_OPERATION_INVOCATION} : {PREFIX_PAREN} (see {h_emu_xref})")
-class _:
-    def s_expr(expr, env0, _):
-        [pp, _] = expr.children
-        return tc_expr(pp, env0)
 
 # ------------------------------------------------------------------------------
 #> Abstract operations are typically referenced using a functional application style
@@ -6049,9 +6044,6 @@ class _:
     def s_expr(expr, env0, _):
         [opn_before_paren, arglist] = expr.children[0:2]
         args = exes_in_exlist_opt(arglist)
-
-        if opn_before_paren.prod.rhs_s == '{h_emu_meta_start}{OPN_BEFORE_PAREN}{h_emu_meta_end}':
-            (_, opn_before_paren, _) = opn_before_paren.children
 
         if opn_before_paren.prod.rhs_s in [
             r'{DOTTING}',
@@ -9729,7 +9721,6 @@ class _:
         return tb_for_object_with_slot(dsb_word)
 
 @P("{CONDITION_1} : {var} has an? {DSBN} internal slot")
-@P("{CONDITION_1} : {var} also has a {DSBN} internal slot")
 class _:
     def s_cond(cond, env0, asserting):
         [var, dsbn] = cond.children
@@ -9856,7 +9847,6 @@ class _:
         assert emu_xref.source_text() == '<emu-xref href="#sec-proxy-object-internal-methods-and-internal-slots"></emu-xref>'
         return env0.with_expr_type_narrowed(var, T_Proxy_exotic_object_)
 
-@P("{COMMAND} : Set {DOTTING} as described in {h_emu_xref}.")
 @P("{COMMAND} : Set {DOTTING} as specified in {h_emu_xref}.")
 @P("{COMMAND} : Set {DOTTING} to the definition specified in {h_emu_xref}.")
 class _:
@@ -10357,7 +10347,6 @@ class _:
 # ------------------------------------------------------------------------------
 # modify a List:
 
-@P("{COMMAND} : Append {EX} to the end of {EX}.")
 @P("{COMMAND} : Append {EX} to {EX}.")
 @P("{COMMAND} : Insert {var} as the first element of {var}.")
 @P("{COMMAND} : Prepend {var} to {var}.")

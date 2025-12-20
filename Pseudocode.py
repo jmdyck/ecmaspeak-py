@@ -319,13 +319,15 @@ def annotate_invocations(anode):
         if d.prod.lhs_s == '{NAMED_OPERATION_INVOCATION}':
             rhs = d.prod.rhs_s
 
-            if rhs == '{h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}':
+            if rhs in [
+                '{h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end}',
+                '{h_emu_meta_start}{NAMED_OPERATION_INVOCATION}{h_emu_meta_end} (see {h_emu_xref})',
+            ]:
                 # This will be handled when `d` is set to the inner NOI.
                 pass
 
             elif rhs in [
                 '{PREFIX_PAREN}',
-                '{PREFIX_PAREN} (see {h_emu_xref})',
             ]:
                 # This will be handled below, when `d` is set to the {PREFIX_PAREN}.
                 pass
