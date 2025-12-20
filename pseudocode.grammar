@@ -152,6 +152,7 @@
     Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.
     For each {EACH_THING}, do{IND_COMMANDS}
     For each {EACH_THING}, {SMALL_COMMAND}.
+    IfAbruptCloseAsyncIterator({var}, {var}).
     IfAbruptCloseIterator({var}, {var}).
     IfAbruptRejectPromise({var}, {var}).
     Insert {var} as the first element of {var}.

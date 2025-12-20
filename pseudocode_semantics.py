@@ -11745,8 +11745,10 @@ class _:
 
 # ==============================================================================
 #@ 7.4.13 IfAbruptCloseIterator
+#@ 7.4.15 IfAbruptCloseAsyncIterator
 
 @P("{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
+@P("{COMMAND} : IfAbruptCloseAsyncIterator({var}, {var}).")
 class _:
     def s_nv(anode, env0):
         [vara, varb] = anode.children

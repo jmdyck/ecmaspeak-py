@@ -1472,6 +1472,7 @@ def _handle_other_section(section):
             (r'Shorthands for Unwrapping Completion Records',      'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
             (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
+            (r'IfAbruptCloseAsyncIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
 
             (r'.+ Instances',             'instances: info // properties'),
             (r'Module Namespace Objects', 'instances: info // properties'),
@@ -3401,7 +3402,7 @@ def ispl_prep(s):
                 |
                 (?P<func_name2>\S+)
                 |
-                [Tt]his\ (?P<func_what3>function|method)
+                [Tt]his\ (?P<func_what3>function|method|async\ function)
             ))''')
     )
 
