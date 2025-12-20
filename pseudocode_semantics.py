@@ -5119,15 +5119,6 @@ class _:
 #> which may be used within the algorithm steps
 #> to reference the argument passed in that position.
 
-#> Optional parameters are denoted with surrounding brackets ([ , _name_ ])
-#> and are no different from required parameters within algorithm steps.
-# SPEC BUG: That "no different" part is incorrect for operations.
-@P("{EXPR} : the number of non-optional parameters of the function definition in {h_emu_xref}")
-class _:
-    def s_expr(expr, env0, _):
-        [xref] = expr.children
-        return (T_MathNonNegativeInteger_, env0)
-
 # ------------------------------------------------------------------------------
 #> A step or substep may be written as an “if” predicate
 #> that conditions its substeps.
@@ -9760,13 +9751,6 @@ class _:
         # return env0.with_type_test(var, 'is a', T_String_exotic_object_ | T_Number_exotic_object_, asserting)
         return (env0, env0)
 
-@P("{CONDITION_1} : {var} has an? {DSBN} internal slot whose value is an Object")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, dsbn] = cond.children
-        env0.assert_expr_is_of_type(var, T_Object) # more specific?
-        return (env0, env0)
-
 @P("{CONDITION_1} : {var} does not have an? {DSBN} internal slot")
 class _:
     def s_cond(cond, env0, asserting):
@@ -12656,12 +12640,6 @@ class _:
 @P("{VAL_DESC} : a set of algorithm steps")
 class _:
     s_tb = T_alg_steps
-
-@P("{EXPR} : the algorithm steps defined in {h_emu_xref}")
-class _:
-    def s_expr(expr, env0, _):
-        [emu_xref] = expr.children
-        return (T_alg_steps, env0)
 
 # ------------------------------------------------------------------------------
 

@@ -1364,8 +1364,6 @@ def _handle_function_section(section):
 
         (r'(?P<prop_path>[A-Z]\w+) \( \. \. \. \)',           'function_property_xref'),
 
-        (r'(?P<prop_path>.+) Functions',                      'anonymous_built_in_function'),
-
         (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',         'CallConstruct'),
         (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>',       'CallConstruct'),
         (r'(?P<prop_path>%[A-Z]\w+%) <PARAMETER_LIST>',       'CallConstruct'),
@@ -1413,7 +1411,7 @@ def _handle_function_section(section):
         # The spec leaves off the empty parameter list
         params = []
     else:
-        assert section.section_kind == 'anonymous_built_in_function' or section.section_title.startswith('set ')
+        assert section.section_title.startswith('set ')
         params = None # AlgHeader_make will deduce parameter list from the preamble
 
     n_emu_algs = section.bcen_list.count('emu-alg')
@@ -1426,7 +1424,6 @@ def _handle_function_section(section):
     bif_species = {
         'CallConstruct'               : 'bif: intrinsic',
         'accessor_property'           : 'bif: intrinsic: accessor function',
-        'anonymous_built_in_function' : 'bif: * per realm',
         'function_property'           : 'bif: intrinsic',
     }[section.section_kind]
 
@@ -2010,7 +2007,6 @@ def check_id(section):
         'shorthand',
         '- // properties',
         'instances: info // properties',
-        'anonymous_built_in_function',
         'loop',
     ]:
         pipeline = [

@@ -577,7 +577,6 @@
     {var} has all the internal slots mentioned in {h_emu_xref}
     {var} has an? {DSBN} internal method
     {var} has an? {DSBN} internal slot
-    {var} has an? {DSBN} internal slot whose value is an Object
     {var} has an? {DSBN} or {DSBN} internal slot
     {var} has any duplicate entries
     {var} has any elements
@@ -800,7 +799,6 @@
     the String value {SETTABLE}
     the WaiterList Record that is referenced by the pair ({var}, {var})
     the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
-    the algorithm steps defined in {h_emu_xref}
     the bitwise complement of {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
@@ -850,7 +848,6 @@
     the number of elements in the List {var}
     the number of leading 1 bits in {var}
     the number of leading zero bits in the unsigned 32-bit binary representation of {var}
-    the number of non-optional parameters of the function definition in {h_emu_xref}
     the number of {h_emu_grammar} Parse Nodes contained within {var}
     the number of {h_emu_grammar} Parse Nodes contained within {var} that either occur before {var} or contain {var}
     the numeric value according to {h_emu_xref}

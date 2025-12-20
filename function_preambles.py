@@ -42,12 +42,6 @@ multi_sentence_rules_str = r'''
 single_sentence_rules_str = r'''
 
     # ==========================================================================
-    # Sentences that start with "A" or "An"
-
-        (An? (?P<name>.+) function) is an (?P<kind>anonymous built-in function) that ((has|is) .+)
-        v=!FUNC \4
-
-    # ==========================================================================
     # Sentences that start with "It"
 
         It can take three parameters.
@@ -72,17 +66,6 @@ single_sentence_rules_str = r'''
 
         This method (.+)
         v=!FUNC \1
-
-    # ==========================================================================
-    # Sentences that start with "When"
-
-        # (Ultimately, almost nothing falls through to the description.)
-
-        # -----------------------------------------------------
-
-        # When a|an ...
-
-        When an? (?P<name>.+) function is called with (?P<pl>.+?), the following steps are taken:
 
     # ==========================================================================
     # Miscellaneous starts:
@@ -343,7 +326,6 @@ class PreambleInfoHolder:
 
         vs = join_field_values('kind')
         pr_species = {
-            'anonymous built-in function'               : 'bif: * per realm',
             'accessor property'                         : 'bif: intrinsic: accessor function',
             'method'                                    : 'bif: intrinsic',
             None                                        : None,
