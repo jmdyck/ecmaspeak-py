@@ -7687,6 +7687,9 @@ class _:
 
 # ------------------------------------------------------------------------------
 #> The mathematical function abs(_x_) ...
+#> The mathematical function ln(_x_) ...
+#> The mathematical function log10(_x_) ...
+#> The mathematical function log2(_x_) ...
 #> The mathematical function min(_x1_, _x2_, &hellip; , _xN_) ...
 #> The mathematical function max(_x1_, _x2_, ..., _xN_) ...
 
@@ -7843,6 +7846,12 @@ def tc_invocation_of_ad_hoc_op(callee_op_name, args, env0):
         [arg] = args
         env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
         return (T_MathInteger_, env1)
+
+    elif callee_op_name in ['ln', 'log10', 'log2']:
+        assert len(args) == 1
+        [arg] = args
+        env1 = env0.ensure_expr_is_of_type(arg, T_MathReal_)
+        return (T_MathReal_, env1)
 
     # ----------------------------------------------------------------
 

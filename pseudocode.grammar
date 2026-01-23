@@ -978,8 +978,6 @@
     « »
 
 {MATH_FUNC} :
-    base 10 logarithm
-    base 2 logarithm
     cosine
     cube root
     exponential function
@@ -992,7 +990,6 @@
     inverse hyperbolic tangent
     inverse sine
     inverse tangent
-    natural logarithm
     sine
     square root
     tangent
@@ -1083,6 +1080,9 @@
     ForIn/OfHeadEvaluation
     abs
     floor
+    ln
+    log10
+    log2
     max
     min
     msFromTime

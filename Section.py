@@ -1540,6 +1540,9 @@ def _handle_other_section(section):
     if n_emu_algs == 0:
         if section.section_title == 'Mathematical Operations':
             ensure_alg('op: singular', 'abs')
+            ensure_alg('op: singular', 'ln')
+            ensure_alg('op: singular', 'log10')
+            ensure_alg('op: singular', 'log2')
             ensure_alg('op: singular', 'min')
             ensure_alg('op: singular', 'max')
             ensure_alg('op: singular', 'floor')
