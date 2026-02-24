@@ -163,6 +163,8 @@ def parse(hnode, what=None):
     elif hnode.element_name == 'td':
         if what == 'field_value_type':
             goal = 'FIELD_VALUE_TYPE'
+        elif what == 'op_signature':
+            goal = 'OP_SIGNATURE'
         else:
             assert 0, what
 

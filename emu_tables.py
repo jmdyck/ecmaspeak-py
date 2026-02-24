@@ -31,7 +31,17 @@ def analyze_table(emu_table):
     else:
         assert 0
 
-    if a_caption and not e_caption:
+    if 'type' in emu_table.attrs:
+        tt = emu_table.attrs['type']
+        if tt == "abstract methods":
+            assert e_caption is None
+            if a_caption:
+                caption = a_caption
+            else:
+                caption = "Abstract Methods of " + emu_table.attrs['of']
+        else:
+            assert 0, tt
+    elif a_caption and not e_caption:
         caption = a_caption
     elif e_caption and not a_caption:
         caption = e_caption
@@ -51,7 +61,7 @@ def analyze_table(emu_table):
     emu_table._data_rows = []
 
     for tr in emu_table.each_descendant_named('tr'):
-        assert not tr.attrs
+        assert [* tr.attrs.keys() ] in [ [], ['id'] ]
 
         cell_nodes = []
         for tr_child in tr.children:

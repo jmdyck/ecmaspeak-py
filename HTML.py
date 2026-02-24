@@ -511,13 +511,13 @@ element_info = {
         'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
         'emu-clause'        : ('B', 'id', 'aoid example legacy namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', 'id', 'aoid back-matter namespace normative oldids type', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
-        'emu-table'         : ('B', 'caption id', 'informative oldids', '#WS;(emu-caption;#WS;)?table;#WS;'),
+        'emu-table'         : ('B', 'id', 'caption informative of oldids type', '#WS;(emu-caption;#WS;)?table;#WS;'),
         'emu-figure'        : ('B', 'caption id', 'informative', '#WS;(object;|img;)#WS;'),
         'figure'            : ('B', '',          '',           '#WS;table;#WS;'),
         'table'             : ('B', '',          'class',      '#WS;(thead;#WS;)?(tbody;#WS;|(tr;#WS;)+)'),
         'thead'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
         'tbody'             : ('B', '',          '',           '#WS;(tr;#WS;)+'),
-        'tr'                : ('B', '',          '',           '(#WS;)?((th;|td;)(#WS;)?)+'),
+        'tr'                : ('B', '',          'id',         '(#WS;)?((th;|td;)(#WS;)?)+'),
         'ul'                : ('B', '',          'normative-optional', '#WS;(li;#WS;)+'),
         'ol'                : ('B', '',          '',           '#WS;(li;#WS;)+'),
         'dl'                : ('B', '',          'class',      '#WS;(dt;#WS;dd;#WS;)*'),
@@ -527,7 +527,7 @@ element_info = {
         'emu-integration-plans': ('B', '',          '',           '#WS;(p;#WS;)+|(#TEXT;|a;)+'), # PROPOSALS
         'emu-note'             : ('B', '',          'class id',   '#WS;((div;|emu-alg;|emu-grammar;|emu-table;|figure;|p;|pre;|ul;)#WS;)*|(#TEXT;|a;|code;|emu-not-ref;|emu-xref;|sub;)+'),
         'li'                   : ('B', '',          'oldids',     '#WS;p;#WS;((emu-alg;|emu-note;|ol;|p;|ul;|dl;)#WS;)*|(#COMMENT;|#TEXT;|a;|br;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-not-ref;|emu-val;|emu-xref;|i;|ins;|span;|strong;|sub;|sup;|var;)+'), # num-ref: doesn't have to start with TEXT
-        'td'                   : ('B', '',          'colspan oldids rowspan', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-not-ref;|emu-xref;|i;|ins;|sub;|sup;)+'),
+        'td'                   : ('B', '',          'colspan oldids rowspan', '#WS;((emu-alg;|p;|emu-note;)#WS;)*|(#TEXT;|b;|br;|code;|dfn;|em;|emu-concrete-method-dfns;|emu-not-ref;|emu-xref;|i;|ins;|sub;|sup;)+'),
         'div'                  : ('B', '',          'class id',   '#WS;((h1;|p;|ul;)#WS;)*|#TEXT;((br;|em;|i;|sup;)#TEXT;)*'),
         'dd'                   : ('B', '',          '',           '#WS;((p;|ul;)#WS;)+|(#TEXT;|a;|code;|dfn;|em;|emu-eqn;|emu-grammar;|emu-xref;|i;|sub;|sup;)*'),
 
@@ -568,6 +568,9 @@ element_info = {
         # was inline-only, but then PR #1062 added
         #    <em>This section is non-normative.</em>
         # as quasi-paragraph.
+
+        'emu-concrete-method-dfns' : ('A', 'for', '', ''),
+        # should probably by block, but bleah
 
     # ---------------------------------------------
     # inlines:
@@ -614,6 +617,7 @@ attribute_info = {
     'emu-grammar.type'   : r'definition',
     'emu-clause.type'    : r'abstract operation|concrete method|(host|implementation)-defined abstract operation|internal method|numeric method|sdo',
     'emu-annex.type'     : r'abstract operation',
+    'emu-table.type'     : r'abstract methods',
 
     'a'                  : r'\w+',
     'alt'                : r'[\w .,()?]+',
@@ -623,6 +627,7 @@ attribute_info = {
     'colspan'            : r'\d',
     'data'               : r'img/figure-1.svg',
     'effects'            : r'user-code',
+    'for'                : r'\w+',
     'height'             : r'\d+',
     'href'               : r'[-\w:/.#%@]+',
     'id'                 : id_pattern,
@@ -630,6 +635,7 @@ attribute_info = {
     'media'              : 'print',
     'name'               : r'\w+',
     'namespace'          : r'grammar-notation|asi-rules|annexB',
+    'of'                 : r'(\w+ )+Records',
     'oldids'             : f"{id_pattern}(,{id_pattern})*",
     'rel'                : r'icon',
     'replaces-step'      : id_pattern,

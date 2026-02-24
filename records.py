@@ -7,6 +7,7 @@ import re
 from collections import defaultdict
 
 from shared import spec, open_for_output
+from HTML import HNode
 import Pseudocode
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -66,10 +67,11 @@ def extract_record_schemas():
                 assert 0, caption
             record_schema = ensure_RecordSchema(tc_schema_name)
 
-            assert header_line == 'Method; Purpose'
+            assert header_line in ['Method; Purpose; Definitions', 'Method; Purpose']
             for row in emu_table._data_rows:
-                [method_signature, method_purpose] = row.cell_texts
-                record_schema.add_method_decl(MethodDecl(method_signature, method_purpose))
+                method_signature_td = row.cell_nodes[0]
+                method_purpose = row.cell_texts[1]
+                record_schema.add_method_decl(MethodDecl(method_signature_td, method_purpose))
 
     # ==========================================================================
 
@@ -103,6 +105,11 @@ def extract_record_schemas():
     record_schema = ensure_RecordSchema('Environment Record')
     assert len(record_schema.addl_field_decls) == 0
     record_schema.add_field_decl(FieldDecl('[[OuterEnv]]', '*null* or an Environment Record', 'used to model the logical nesting of Environment Record values'))
+
+    record_schema = ensure_RecordSchema('Module Environment Record')
+    # Need to hard-code this because it doesn't have an "Additional Fields" table
+    # and no longer has an "Additional Methods" table,
+    # so isn't found by the emu-table traversal above.
 
     # --------------------------------------------------------------------------
 
@@ -295,18 +302,24 @@ class FieldDecl:
         self.value_description = value_description
 
 class MethodDecl:
-    def __init__(self, signature, purpose):
-        assert isinstance(signature, str)
+    def __init__(self, signature_td, purpose):
+        assert isinstance(signature_td, HNode)
         assert isinstance(purpose, str)
-        self.signature = signature
+        self.signature = signature_td.inner_source_text()
         self.purpose = purpose
 
-        mo = re.fullmatch(r'([A-Z]\w+)( *)\((.*)\)', signature)
-        assert mo, signature
-        (self.name, gap, parameter_list_str) = mo.groups()
-        # TODO: complain if gap != ''
-        # TODO: complain if parameter_list_str needs trimming
-        parameter_list_str = parameter_list_str.strip()
+        signature_anode = Pseudocode.parse(signature_td, 'op_signature')
+
+        L = len(signature_anode.children)
+        if L == 3:
+            (which_semantics, op_name, return_nature) = signature_anode.children
+        elif L == 4:
+            (which_semantics, op_name, parameter_lines, return_nature) = signature_anode.children
+        else:
+            assert 0, L
+        self.name = op_name.source_text()
+        # TODO: Extract info from {parameter_lines} and {return_nature},
+        # and use that to check definitions that correspond to this decl.
 
 class MethodDefn:
     def __init__(self, alg_header, alg_defn):

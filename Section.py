@@ -644,7 +644,9 @@ def _handle_oddball_op_section(section):
     # we still want to treat it like an op.
 
     if section.section_id in [
+        'sec-declarative-environment-records-getthisbinding',
         'sec-object-environment-records-createimmutablebinding-n-s',
+        'sec-object-environment-records-getthisbinding',
         'sec-module-environment-records-deletebinding-n',
     ]:
         # The clause exists only to tell us that the concrete method is never used.
@@ -678,6 +680,8 @@ def _handle_oddball_op_section(section):
         # but I'd have to tweak it somewhat, and I don't feel like it.
         # Could maybe even leave these cases to _handle_other_op_section.
         params = {
+            'GetThisBinding' : [
+            ],
             'CreateImmutableBinding': [
                 AlgParam('_N_', '', 'a String'),
                 AlgParam('_S_', '', 'a Boolean'),
