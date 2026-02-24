@@ -171,7 +171,7 @@ def parse(hnode, what=None):
         goal = 'FOR_PHRASE'
 
     elif hnode.element_name == 'h1':
-        goal = 'H1_BODY'
+        goal = 'OP_SIGNATURE'
 
     elif hnode.element_name == 'li':
         if what == 'early_error':
@@ -767,7 +767,7 @@ def check_val_desc_disjunction(val_desc_disjunction):
         preferred_prefix = 'one of' if re.fullmatch(r'SSS+', sm_string) else 'either'
 
     elif (
-        gparent_prod.lhs_s in ['{H1_BODY}', '{PARAMETER_DECL}', '{FIELD_VALUE_TYPE}']
+        gparent_prod.lhs_s in ['{OP_SIGNATURE}', '{PARAMETER_DECL}', '{FIELD_VALUE_TYPE}']
         or
         str(gparent_prod).startswith('{VAL_DESC} : a Record with fields')
         or
