@@ -2066,6 +2066,22 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         assert types_arg.source_text() == '~property-key~'
         return_type = NormalCompletionType(ListType(T_String | T_Symbol)) | T_throw_completion
 
+    # 7.3.23 EnumerableOwnProperties
+    elif callee_op_name == 'EnumerableOwnProperties':
+        assert return_type == NormalCompletionType(ListType(T_Tangible_)) | T_throw_completion
+        assert len(args) == 2
+        kind_arg = args[1]
+        kind_arg_st = kind_arg.source_text()
+        if kind_arg_st == '~key~':
+            el_type = T_String
+        elif kind_arg_st == '~value~':
+            el_type = T_Tangible_
+        elif kind_arg_st == '~key+value~':
+            el_type = T_Array_object_
+        else:
+            assert 0, kind_arg_st
+        return_type = NormalCompletionType(ListType(el_type)) | T_throw_completion
+
     # 7.4.8 IteratorClose
     # 7.4.10 AsyncIteratorClose
     elif callee_op_name in ['IteratorClose', 'AsyncIteratorClose']:
