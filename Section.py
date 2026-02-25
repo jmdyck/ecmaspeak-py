@@ -656,9 +656,6 @@ def _handle_oddball_op_section(section):
             r'The (\w+) concrete method of (an? (\w+ Environment Record)) is never used within this specification.',
             p.inner_source_text()
         )
-        # Note that the start of this sentence looks like the start of a standardized preamble,
-        # so we have to detect these cases before _handle_other_op_section's call
-        # to _handle_header_with_std_preamble.
 
         # There's roughly two approaches:
         # - Create the thing, but make the body of it be (effectively) "Assert: False."
@@ -676,8 +673,6 @@ def _handle_oddball_op_section(section):
         (method_name, for_phrase, discriminator) = mo.groups()
 
         # This is a bit kludgey.
-        # I could use _handle_header_with_std_preamble,
-        # but I'd have to tweak it somewhat, and I don't feel like it.
         # Could maybe even leave these cases to _handle_other_op_section.
         params = {
             'GetThisBinding' : [
@@ -781,9 +776,6 @@ def _handle_other_op_section(section):
         # (Or might authors add a `type` attribute but use an old-style header?)
         alg_header = _handle_structured_header(section)
         if alg_header is None: return True
-
-    elif (alg_header := _handle_header_with_std_preamble(section)):
-        pass
 
     else:
         return False
@@ -1223,127 +1215,6 @@ def _handle_structured_header(section):
         return_nature_node = return_nature,
         node_at_end_of_header = section.dl_child,
     )
-
-    return alg_header
-
-# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-def _handle_header_with_std_preamble(section):
-
-    # Over the course of various PRs (latest #2427),
-    # the first para ('preamble') of non-SDO operations
-    # became standardized.
-    s_ist = section.inner_source_text()
-    h1_pattern = r'\n +<h1>(\S+ Semantics: )?(?P<op_name>\S+) \((?P<params_str>[^()]*)\)</h1>'
-    for p_pattern in [
-        r'\n +<p>The ((host|implementation)-defined )?(?P<kind>abstract operation)',
-        r'\n +<p>The (?P=op_name) (?P<kind>(internal|concrete) method)',
-    ]:
-        pattern = h1_pattern + p_pattern
-        mo = re.match(pattern, s_ist)
-        if mo:
-            p_dict = mo.groupdict()
-            break
-    else:
-        return None
-
-    # -------------------------------
-    # At this point, we're committed.
-
-    op_name = p_dict['op_name']
-
-    for_phrase = None
-
-    if p_dict['kind'] == 'abstract operation':
-        if '::' in op_name:
-            section.section_kind = 'numeric_method'
-        else:
-            section.section_kind = 'abstract_operation'
-
-    elif p_dict['kind'] in ['host-defined abstract operation', 'implementation-defined abstract operation']:
-        assert 0
-        section.section_kind = 'abstract_operation'
-
-    elif p_dict['kind'] == 'internal method':
-        section.section_kind = 'internal_method'
-
-    elif p_dict['kind'] == 'concrete method':
-        if section.parent.parent.section_title == "The Environment Record Type Hierarchy":
-            section.section_kind = 'env_rec_method'
-        elif section.parent.parent.section_title == "Module Semantics":
-            section.section_kind = 'module_rec_method'
-        else:
-            assert 0
-
-    else:
-        assert 0
-
-    params = convert_parameter_listing_to_params(p_dict['params_str'])
-    op_species = other_op_species_for_section_kind_[section.section_kind]
-
-    alg_header = AlgHeader_make(
-        section = section,
-        species = op_species,
-        name = op_name,
-        for_phrase = for_phrase,
-        params = params,
-        node_at_end_of_header = section.heading_child
-    )
-
-    # --------------------------------------------------------------------------
-
-    if 1:
-        # Complain about the old header, suggest a structured one.
-
-        posn_of_linestart_before_section = 1 + spec.text.rfind('\n', 0, section.start_posn)
-        section_indent = section.start_posn - posn_of_linestart_before_section
-        
-        ind = ' ' * section_indent
-
-        lines = []
-        lines.append('vvvvvvvv')
-
-        clause_start_tag = '<' + section.element_name
-        for (attr_name, attr_val) in section.attrs.items():
-            # suppress 'aoid' attr, because ecmarkup can generate it:
-            if attr_name == 'aoid': continue
-
-            clause_start_tag += f' {attr_name}="{attr_val}"'
-
-            # insert 'type' attr immediately after 'id' attr:
-            if attr_name == 'id':
-                clause_start_tag += f''' type="{p_dict['kind']}"'''
-
-        clause_start_tag += '>'
-        lines.append(f"{ind}{clause_start_tag}")
-
-        name_for_heading = op_name
-
-        if section.section_title.startswith('Static Semantics:'):
-            name_for_heading = 'Static Semantics: ' + name_for_heading
-
-        if len(params) == 0:
-            lines.append(f"{ind}  <h1>{name_for_heading} ( )</h1>")
-        else:
-            lines.append(f"{ind}  <h1>")
-            lines.append(f"{ind}    {name_for_heading} (")
-            for param in params:
-                optionality = 'optional ' if param.punct == '[]' else ''
-                lines.append(f"{ind}      {optionality}{param.name}: {param.nature},")
-            lines.append(f"{ind}    )")
-            lines.append(f"{ind}  </h1>")
-
-        lines.append(f'{ind}  <dl class="header">')
-
-        if False and for_phrase and kind != 'numeric method':
-            _.dt("for")
-            _.dd(self.for_phrase)
-        
-        lines.append(f'{ind}  </dl>')
-        lines.append("^^^^^^^^")
-        suggestion = '\n'.join(lines)
-
-        msg_at_node(section, f"Should use a structured header? e.g.:\n{suggestion}")
 
     return alg_header
 
