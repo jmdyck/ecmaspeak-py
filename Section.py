@@ -249,12 +249,6 @@ def ensure_every_emu_alg_in_section_is_parsed(section):
                     # 5.2 Algorithm Conventions
                     # This is just showing the format of algorithms,
                     # so it's not meant to be parsable.
-
-                    '\n              1. Otherwise, let ',
-                    # 7.1.12.1 NumberToString
-                    # The is unparsable because the grammar doesn't
-                    # allow an "Otherwise" without a preceding "If",
-                    # and I don't want to warp the grammar to allow it.
                 ),
                 emu_alg.inner_start_posn,
                 emu_alg.inner_end_posn

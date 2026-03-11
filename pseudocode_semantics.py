@@ -3484,7 +3484,6 @@ def d_exec_pass_down_expecting_None(anode):
 @P("{COMMAND} : {IF_OTHER}")
 @P("{ELSE_PART} : Else, {SMALL_COMMAND}.")
 @P("{ELSE_PART} : Else,{IND_COMMANDS}")
-@P("{ELSE_PART} : Otherwise, {SMALL_COMMAND}.")
 @P("{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}")
 @P("{COMMAND} : Optionally, {SMALL_COMMAND}.")
 class _:
@@ -5144,7 +5143,6 @@ class _:
 #> the preceding “if” predicate step at the same level.
 
 @P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.")
-@P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.")
 class _:
     def s_nv(anode, env0):
         [cond, t_command, f_command] = anode.children
@@ -5159,17 +5157,6 @@ class _:
             EXEC(cmdt, None)
         else:
             EXEC(cmdf, None)
-
-@P("{IF_CLOSED} : If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.")
-class _:
-    def s_nv(anode, env0):
-        [cond_a, command_a, cond_b, command_b, command_c] = anode.children
-        (a_t_env, a_f_env) = tc_cond(cond_a, env0)
-        a_benv = tc_nonvalue(command_a, a_t_env)
-        (b_t_env, b_f_env) = tc_cond(cond_b, a_f_env)
-        b_benv = tc_nonvalue(command_b, b_t_env)
-        c_benv = tc_nonvalue(command_c, b_f_env)
-        return envs_or([a_benv, b_benv, c_benv])
 
 @P("{IF_OTHER} : {IF_OPEN}{IF_TAIL}")
 @P("{IF_TAIL} : {_NL_N} {ELSEIF_PART}{IF_TAIL}") # not used for s_nv
@@ -5619,7 +5606,7 @@ class _:
             env_and(f1_env, f2_env)
         )
 
-@P("{COMMAND} : Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.")
+@P("{COMMAND} : Assert: {CONDITION_1} if {CONDITION_1}; else, {CONDITION_1}.")
 class _:
     def s_nv(anode, env0):
         [cond_t, cond_x, cond_f] = anode.children
@@ -12650,7 +12637,7 @@ declare_isom(T_constructor_object_, 'must have', 'slot', '[[ConstructorKind]]', 
 # ==============================================================================
 #@ 10.3.3 BuiltinCallOrConstruct
 
-@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; otherwise {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value")
+@P("{EXPR} : the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; else {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value")
 class _:
     def s_expr(expr, env0, _):
         [_, _, avar, bvar, cond, cvar, dvar, evar] = expr.children

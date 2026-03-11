@@ -136,7 +136,7 @@
     Assert: If {CONDITION}, then {CONDITION}.
     Assert: If {CONDITION}, {CONDITION}.
     Assert: {CONDITION_1} if and only if {CONDITION_1}.
-    Assert: {CONDITION_1} if {CONDITION_1}; otherwise, {CONDITION_1}.
+    Assert: {CONDITION_1} if {CONDITION_1}; else, {CONDITION_1}.
     Assert: {CONDITION_1}, since {CONDITION_1}.
     Assert: {CONDITION}.
     Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
@@ -232,9 +232,7 @@
 # ----------------------------------------------
 
 {IF_CLOSED} :
-    If {CONDITION}, {SMALL_COMMAND}; else if {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
     If {CONDITION}, {SMALL_COMMAND}; else {SMALL_COMMAND}.
-    If {CONDITION}, {SMALL_COMMAND}; otherwise {SMALL_COMMAND}.
 
 {IF_OTHER} :
     {IF_OPEN}{IF_TAIL}
@@ -255,7 +253,6 @@
 {ELSE_PART} :
     Else, {SMALL_COMMAND}.
     Else,{IND_COMMANDS}
-    Otherwise, {SMALL_COMMAND}.
 
 # ----------------------------------------------
 
@@ -763,7 +760,7 @@
     the CharSet containing the one string {var}
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
-    the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; otherwise {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value
+    the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; else {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value
     the ECMAScript Number value corresponding to {var}
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {EX}
