@@ -14469,7 +14469,7 @@ class _:
         [emu_xref] = expr.children
         return (T_String, env0)
 
-@P("{EXPR} : the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}")
+@P("{EXPR} : the abstract operation named in the “Conversion Operation” column of {h_emu_xref} for Element Type {var}")
 class _:
     def s_expr(expr, env0, _):
         [emu_xref, var] = expr.children

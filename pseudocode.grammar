@@ -796,7 +796,7 @@
     the String value whose code units are the elements of the List {var}. If {var} has no elements, the empty String is returned
     the String value {SETTABLE}
     the WaiterList Record that is referenced by the pair ({var}, {var})
-    the abstract operation named in the Conversion Operation column in {h_emu_xref} for Element Type {var}
+    the abstract operation named in the “Conversion Operation” column of {h_emu_xref} for Element Type {var}
     the bitwise complement of {var}. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the byte elements of {var} concatenated and interpreted as a bit string encoding of a binary little-endian two's complement number of bit length {PRODUCT}
     the byte elements of {var} concatenated and interpreted as a bit string encoding of an unsigned little-endian binary number
