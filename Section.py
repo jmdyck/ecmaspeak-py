@@ -216,6 +216,8 @@ def _set_section_kind(section):
         or
         _handle_other_op_section(section)
         or
+        _handle_function_xref_section(section)
+        or
         _handle_function_section(section)
         or
         _handle_changes_section(section)
@@ -1214,6 +1216,23 @@ def _handle_structured_header(section):
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+def _handle_function_xref_section(section):
+    if re.fullmatch(r'[A-Z]\w+ \( \. \. \. \)', section.section_title):
+        section.section_kind = 'function_property_xref'
+
+        check_section_title(section)
+
+        assert section.bcen_str == 'p'
+        assert re.fullmatch(
+            r'<p>See <emu-xref href="#[^"]+"></emu-xref>.</p>',
+            section.block_children[0].source_text()
+        )
+        return True
+    else:
+        return False
+
+# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 def _handle_function_section(section):
 
     if (
@@ -1230,8 +1249,6 @@ def _handle_function_section(section):
         return False
 
     pattern_results = [
-
-        (r'(?P<prop_path>[A-Z]\w+) \( \. \. \. \)',           'function_property_xref'),
 
         (r'(?P<prop_path>[A-Z]\w+) <PARAMETER_LIST>',         'CallConstruct'),
         (r'(?P<prop_path>_[A-Z]\w+_) <PARAMETER_LIST>',       'CallConstruct'),
@@ -1262,14 +1279,6 @@ def _handle_function_section(section):
     # -----------
 
     check_section_title(section)
-
-    if section.section_kind == 'function_property_xref':
-        assert section.bcen_str == 'p'
-        assert re.fullmatch(
-            r'<p>See <emu-xref href="#[^"]+"></emu-xref>.</p>',
-            section.block_children[0].source_text()
-        )
-        return True
 
     prop_path = p_dict['prop_path']
 
