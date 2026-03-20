@@ -615,8 +615,8 @@ attribute_info = {
 
     'object.type'        : r'image/svg\+xml',
     'emu-grammar.type'   : r'definition',
-    'emu-clause.type'    : r'abstract operation|concrete method|(host|implementation)-defined abstract operation|internal method|numeric method|sdo',
-    'emu-annex.type'     : r'abstract operation',
+    'emu-clause.type'    : r'abstract operation|built-in function|concrete method|(host|implementation)-defined abstract operation|internal method|numeric method|sdo',
+    'emu-annex.type'     : r'abstract operation|built-in function',
     'emu-table.type'     : r'abstract methods',
 
     'a'                  : r'\w+',

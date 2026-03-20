@@ -765,6 +765,9 @@ def _handle_other_op_section(section):
         assert 0 # Would have been handled already
         return False
 
+    elif section_type == 'built-in function':
+        return False
+
     elif section_type is not None:
         # type="sdo" has been around for a while,
         # but all the other type="..." attributes were introduced in PR #545.
@@ -1235,17 +1238,7 @@ def _handle_function_xref_section(section):
 
 def _handle_function_section(section):
 
-    if (
-        section.section_title in [
-            'Non-ECMAScript Functions',
-            'URI Handling Functions',
-        ]
-        or
-        section.section_title.startswith('IfAbrupt')
-    ):
-        # The section title would match one of the patterns below,
-        # but we don't want it to,
-        # because the section doesn't define a function.
+    if section.attrs.get('type') != 'built-in function':
         return False
 
     pattern_results = [
@@ -1271,7 +1264,8 @@ def _handle_function_section(section):
         if mo:
             break
     else:
-        return False
+        stderr(f"!! In clause/annex with type='built-in function', title '{section.section_title}' doesn't match any expected pattern")
+        assert 0
 
     p_dict = mo.groupdict()
     section.section_kind = result
