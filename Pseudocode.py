@@ -1385,6 +1385,10 @@ def analyze_sdo_coverage_info():
         # print()
         # print(sdo_name)
 
+        debug = False # (sdo_name == 'HasName')
+        # {debug} creates a lot of output, but it's really useful
+        # when you're trying to figure out why "needs a rule" messages appear.
+
         if 0:
             # old scheme:
             # We look at the productions that the SDO is defined on,
@@ -1481,6 +1485,7 @@ def analyze_sdo_coverage_info():
 
                 if nts:
                     for nt in nts:
+                        if debug: put(f"{sdo_name}: `{opcall.source_text()}` adds {nt} to nt_set")
                         nt_set.add(nt)
                         # print(f" ++ {nt:36} from {opcall.source_text()}")
                 else:
@@ -1495,10 +1500,6 @@ def analyze_sdo_coverage_info():
             if nt not in nt_queue: nt_queue.append(nt)
 
         used_keys = set()
-
-        debug = False # (sdo_name == 'HasName')
-        # {debug} creates a lot of output, but it's really useful
-        # when you're trying to figure out why "needs a rule" messages appear.
 
         for lhs_nt in nt_queue:
             # print('    ', lhs_nt)
