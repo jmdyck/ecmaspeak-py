@@ -1104,6 +1104,22 @@ def check_non_defining_prodns(emu_grammars):
                     if 0 and notes['optional-symbol']:
                         print(lhs_nt, d_i, notes['optional-symbol'])
 
+                    if False:
+                        omitted_symbols = [
+                            symbol
+                            for (symbol, optionality) in notes['optional-symbol']
+                            if optionality == "omitted"
+                        ]
+                        if omitted_symbols:
+                            print()
+                            print(f"In section {cc_section.section_id} {cc_section.section_title}`")
+                            print(f"  use-prodn {u_production_n.source_text()}")
+                            print(f"  matches")
+                            print(f"  def-prodn {lhs_nt} :* {d_rhs_n.source_text().strip()}")
+                            print(f"     by omitting:")
+                            for symbol in omitted_symbols:
+                                print(f"        {symbol}")
+
                     # ------------------
 
                     if 0:
