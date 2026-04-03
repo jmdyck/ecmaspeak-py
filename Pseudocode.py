@@ -1948,6 +1948,13 @@ nts_behind_var_in_sdo_call = {
 
     # 37399 JSON.parse
     ('Evaluation', '_script_'): ['Script'],
+
+    # 47367
+    ('JSONArrayLiteralContentNodes', '_typedValNode_'): ['ArrayLiteral'],
+    # 47386
+    ('PropName', '_propertyNode_'): ['PropertyDefinition'],
+    # 47379
+    ('PropertyDefinitionNodes', '_typedValNode_'): ['ObjectLiteral'],
 }
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, rhs_reduced):

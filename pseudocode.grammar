@@ -321,6 +321,7 @@
     code point
     code unit
     integer
+    nonterminal
     {nonterminal}
 
 # ------------------------------------------------------
@@ -397,6 +398,7 @@
     This is a circular import request
     This is an attempt to change the value of an immutable binding
     This is only possible for getter/setter pairs
+    This step is never reached
     We've reached the starting point of an `export *` circularity
     When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context
     When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
@@ -452,6 +454,7 @@
     there exists a CharSetElement in {var} containing exactly one character {DEFVAR} such that {CONDITION_1}
     there exists a WriteSharedMemory or ReadModifyWriteSharedMemory event {DEFVAR} that has {var} in its memory range such that {CONDITION_1} and {CONDITION_1}
     there exists a Memory event {DEFVAR} such that {CONDITION}
+    there exists an element {DEFVAR} of {var} such that {CONDITION}
     there exists an integer {DEFVAR} in {INTERVAL} such that {CONDITION_1}
     we return here
     {DOTTING} exists and has been initialized
@@ -590,6 +593,7 @@
     {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is as small as possible
     {var} is contained within {PROD_REF}
+    {var} is contained within {var}
     {var} is even
     {var} is finite
     {var} is finite and is neither {NUMBER_LITERAL} nor {NUMBER_LITERAL}
@@ -680,6 +684,7 @@
 {EXPR} :
     a List consisting of each {EACH_THING}
     a List consisting of the sequence of code units that are the elements of {var}
+    a List containing each child node of {var}, in order
     a List containing one or more {ERROR_TYPE} objects
     a List containing the names of all the internal slots that {h_emu_xref} requires for the built-in function object that is about to be created
     a List of length {var} whose elements are nondeterministically chosen byte values
@@ -943,17 +948,20 @@
     the internal slots listed in {h_emu_xref}
     the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)
     the last code point of {var}
+    the last code unit of {var}
     the length of {var}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
     the number of elements in {EX}
     the numeric value of {EX}
+    the parent of {var}
     the remainder of dividing {EX} by {EX}
     the remaining {EX} code units of {var}
     the result of left shifting {var} by {var} bits. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string
     the single code point matched by this production
     the sole code unit of {var}
     the source text matched by {PROD_REF}
+    the source text matched by {var}
     the string in the “ControlEscape” column of the row whose “Code Point” column contains {var}
     the substring of {var} from index {dec_int_lit}
     the substring of {var} from {EX}
@@ -1134,6 +1142,7 @@
     the ImportAttribute Record
     the ImportEntry Record
     the Iterator Record
+    the JSON Parse Record
     the JSON Serialization Record
     the JobCallback Record
     the LoadedModuleRequest Record
@@ -1295,6 +1304,7 @@
     a For-In Iterator
     a Generator
     a GraphLoadingState Record
+    a JSON Parse Record
     a JSON Serialization Record
     a Job Abstract Closure
     a JobCallback Record
@@ -1360,6 +1370,7 @@
     a WaiterList Record
     a WeakRef
     a WriteSharedMemory event
+    a `JSON.parse` built-in function object (see {h_emu_xref})
     a binary Unicode property or binary property alias listed in the “<emu-not-ref>Property name and aliases</emu-not-ref>” column of {h_emu_xref}, or a binary Unicode property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
     a binary property of strings listed in the “<emu-not-ref>Property name</emu-not-ref>” column of {h_emu_xref}
     a bound function exotic object
@@ -1399,6 +1410,7 @@
     a possibly empty List
     a property key
     a property key or Private Name
+    a property name
     a property value or property value alias for the Unicode property {var} listed in {h_a}
     a read-modify-write modification function
     a return completion
@@ -1412,6 +1424,8 @@
     a valid JSON text as specified in ECMA-404
     a {ERROR_TYPE} object
     a {h_emu_xref}
+    an ASCII digit code unit ({hex_int_lit} through {hex_int_lit}, inclusive)
+    an ASCII lowercase letter code unit ({hex_int_lit} through {hex_int_lit}, inclusive)
     an Abstract Closure
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}
     an Abstract Closure with no parameters
@@ -1485,6 +1499,7 @@
     ImportAttribute Records
     ImportEntry Records
     Iterator Records
+    JSON Parse Records
     LoadedModuleRequest Records
     Memory events
     ModuleRequest Records

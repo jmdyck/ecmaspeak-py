@@ -2143,6 +2143,8 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
                         obj_type = T_Generator_object_
                     elif st == '« [[AsyncGeneratorState]], [[AsyncGeneratorContext]], [[AsyncGeneratorQueue]], [[GeneratorBrand]] »':
                         obj_type = T_AsyncGenerator_object_
+                    elif st == '« [[IsRawJSON]] »':
+                        obj_type = T_Object
                     else:
                         assert 0, st
 
@@ -3983,6 +3985,11 @@ class _:
         cu_int = int(cu_hex, 16)
         return ES_CodeUnit(cu_int)
 
+@P("{VAL_DESC} : an ASCII digit code unit ({hex_int_lit} through {hex_int_lit}, inclusive)")
+@P("{VAL_DESC} : an ASCII lowercase letter code unit ({hex_int_lit} through {hex_int_lit}, inclusive)")
+class _:
+    s_tb = a_subset_of(T_code_unit_)
+
 # ==============================================================================
 # code point and/or code unit
 
@@ -4417,6 +4424,13 @@ class _:
         env0.assert_expr_is_of_type(prod_ref, T_Parse_Node)
         return (T_Unicode_code_points_, env0) # XXX spec bug: needs to be T_String?
 
+@P("{EX} : the source text matched by {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (T_Unicode_code_points_, env0)
+
 @P("{EX} : the code point matched by {PROD_REF}")
 class _:
     def s_expr(expr, env0, _):
@@ -4581,8 +4595,8 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         [local_ref, h_emu_grammar] = cond.children
-        env0.assert_expr_is_of_type(local_ref, T_Parse_Node)
-        env1 = env0.copy()
+        env1 = env0.ensure_expr_is_of_type(local_ref, T_Parse_Node)
+        env1 = env1.copy()
         env1.assoc_productions = h_emu_grammar._hnode._gnode._productions
         return (env1, env0)
 
@@ -4691,6 +4705,26 @@ class _:
         ]
         return (defvar, same_tip_children)
 
+@P('{EXPR} : a List containing each child node of {var}, in order')
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (ListType(T_Parse_Node), env0)
+
+# ------------------------------------------------------------------------------
+# (A node is the 'parent' of each of its children.)
+
+@P("{EX} : the parent of {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_Parse_Node)
+        return (T_Parse_Node, env0)
+        # We could be more specific about the parent,
+        # if we have a specific info about the var.
+
+# ------------------------------------------------------------------------------
 # (You can refer to a particular child of X by saying "the {nonterminal} of X".)
 
 @P("{PROD_REF} : the {nonterminal} of {LOCAL_REF}")
@@ -4859,6 +4893,14 @@ class _:
         [var, prod_ref] = cond.children
         env0.assert_expr_is_of_type(var, T_Parse_Node)
         return (env0, env0)
+
+@P('{CONDITION_1} : {var} is contained within {var}')
+class _:
+    def s_cond(cond, env0, asserting):
+        [inner, outer] = cond.children
+        env0.assert_expr_is_of_type(inner, T_Parse_Node)
+        env1 = env0.ensure_expr_is_of_type(outer, T_Parse_Node)
+        return (env1, env1)
 
 @P("{EXPR} : the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}")
 class _:
@@ -5533,6 +5575,7 @@ class _:
                 "String"              : T_String,
                 "byte"                : T_MathNonNegativeInteger_,
                 "integer"             : T_MathInteger_,
+                "nonterminal"         : T_grammar_symbol_,
             }[item_nature.prod.rhs_s]
             collection_type = ListType(item_type)
 
@@ -5622,6 +5665,13 @@ class _:
         (ta_env, fa_env) = tc_cond(conda, env0, asserting=True)
         (tb_env, fb_env) = tc_cond(condb, env0, asserting=True)
         return env_and(ta_env, tb_env)
+
+@P("{CONDITION_1} : This step is never reached")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        assert asserting
+        return (env0, env0)
 
 # ------------------------------------------------------------------------------
 #> Algorithm steps may declare named aliases for any value ...
@@ -8729,6 +8779,7 @@ class _:
         return (T_code_unit_, env1)
 
 @P("{EX} : the first code unit of {var}")
+@P("{EX} : the last code unit of {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -9555,6 +9606,10 @@ class _:
 
 # ------------------------------------------------------------------------------
 #> A <dfn>property name</dfn> is a property key that is a String value.
+
+@P("{VAL_DESC} : a property name")
+class _:
+    s_tb = T_String
 
 @P("{EXPR} : the String value of the property name")
 class _:
@@ -10600,6 +10655,15 @@ class _:
         (list_t, env1) = tc_expr(list_var, env0); assert env1 is env0
         assert isinstance(list_t, ListType)
         env2 = env0.plus_new_entry(vara, list_t.element_type).plus_new_entry(varb, list_t.element_type)
+        return tc_cond(stcond, env2)
+
+@P("{CONDITION_1} : there exists an element {DEFVAR} of {var} such that {CONDITION}")
+class _:
+    def s_cond(cond, env0, asserting):
+        [defvar, list_var, stcond] = cond.children
+        (list_t, env1) = tc_expr(list_var, env0); assert env1 is env0
+        assert isinstance(list_t, ListType)
+        env2 = env1.plus_new_entry(defvar, list_t.element_type)
         return tc_cond(stcond, env2)
 
 @P('{CONDITION_1} : Exactly one element of {var} meets this criterion')
@@ -14790,7 +14854,7 @@ class _:
         return env0
 
 # ==============================================================================
-#@ 25.5.1 JSON.parse
+#@ 25.5.2 JSON.parse
 
 @P("{VAL_DESC} : a valid JSON text as specified in ECMA-404")
 class _:
@@ -14817,15 +14881,32 @@ class _:
 class _:
     s_tb = a_subset_of(T_Object)
 
+@P("{VAL_DESC} : a `JSON.parse` built-in function object (see {h_emu_xref})")
+class _:
+    s_tb = a_subset_of(T_built_in_function_object_)
+
 # ==============================================================================
-#@ 25.5.2.1 JSON Serialization Record
+#@ 25.5.2.2 JSON Parse Record
+
+@P("{VAL_DESC} : a JSON Parse Record")
+@P("{LIST_ELEMENTS_DESCRIPTION} : JSON Parse Records")
+class _:
+    s_tb = T_JSON_Parse_Record
+
+# ==============================================================================
+#@ 25.5.3 JSON.rawJSON ( _text_ )
+
+declare_isom(T_Object, 'might have', 'slot', '[[IsRawJSON]]', T_tilde_empty_)
+
+# ==============================================================================
+#@ 25.5.4.1 JSON Serialization Record
 
 @P("{VAL_DESC} : a JSON Serialization Record")
 class _:
     s_tb = T_JSON_Serialization_Record
 
 # ==============================================================================
-#@ 25.5.2.3 QuoteJSONString
+#@ 25.5.4.3 QuoteJSONString
 
 @P("{CONDITION_1} : {EX} is listed in the “Code Point” column of {h_emu_xref}")
 class _:

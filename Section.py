@@ -1152,6 +1152,9 @@ def _handle_structured_header(section):
                     # Closure
                     (r'a new Job Abstract Closure that .+', 'a Job Abstract Closure'),
 
+                    # Node
+                    (r'the first node that is an instance of a nonterminal corresponding to a JSON value, or ~empty~ if .+', ['a Parse Node', '~empty~']),
+
                 ]
                 for (pattern, subnatures) in patterns:
                     if re.fullmatch(pattern, post):
@@ -3245,7 +3248,7 @@ def _(section, mo):
     (r"The <dfn>GlobalSymbolRegistry List</dfn> is an append-only List that is globally available. .+"),
     (r"The actual return values are implementation-defined .+"),
     (r"The meaning of the optional second and third parameters to this method .+"),
-    (r"The optional _reviver_ parameter is a function that takes two parameters, .+"),
+    (r"The optional _reviver_ parameter is a function that .+"),
     (r"The optional parameters to this method are not used .+"),
     (r"The result must be derived according to the locale-insensitive case mappings .+"),
     (r"This property is non-writable and non-configurable to prevent tampering .+"), # should be an emu-note?
@@ -3308,7 +3311,7 @@ def check_this_function(section, mo):
             # I think converting these to "This function" might be misleading.
             pass
         else:
-            msg_at_posn(section.start_posn, f"Named function")
+            msg_at_posn(section.start_posn, f"A preamble sentence refers to the function by name; usually we just say 'this function' or 'this method'")
 
     # if '`' in mo.group(0): msg_at_posn(section.start_posn, 'check backtick')
 
