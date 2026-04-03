@@ -305,12 +305,14 @@ def _validate(node):
             )
 
         # Check for HTML entities
-        allowed_and_disallowed = [
-            ('&amp;' , '&'   ),
-            ('&lt;'  , '<'   ),
-            ('&nbsp;', '\xa0'),
-            ('&reg;' , '\xae'),
-        ]
+        allowed_and_disallowed = []
+        if node.parent.element_name != 'script':
+            allowed_and_disallowed.extend([
+                ('&amp;' , '&'   ),
+                ('&lt;'  , '<'   ),
+                ('&nbsp;', '\xa0'),
+                ('&reg;' , '\xae'),
+            ])
         if node.parent.element_name in ['emu-grammar']:
             allowed_and_disallowed.extend([
                 ('&gt;'   , None    ), # emu-grammar has both
@@ -507,7 +509,7 @@ element_info = {
     # Block-level
 
         # block contains blocks:
-        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;meta;#WS;link;#WS;(style;#WS;)+pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
+        '#DOC'              : ('B', '',          '',           '#DECL;#WS;html;#WS;meta;#WS;link;#WS;script;#WS;(style;#WS;)+pre;#WS;p;#WS;div;#WS;emu-intro;#WS;(emu-clause;#WS;)+(emu-annex;#WS;)+'),
         'emu-intro'         : ('B', 'id',        '',           '#WS;h1;#WS;((p;|emu-integration-plans;)#WS;)+'),
         'emu-clause'        : ('B', 'id', 'aoid example legacy namespace normative-optional oldids type', '#WS;h1;#WS;((div;|dl;|em;|emu-alg;|emu-import;|emu-eqn;|emu-figure;|emu-grammar;|emu-motivation;|emu-note;|emu-table;|figure;|h2;|ol;|p;|pre;|ul;)#WS;)*((emu-clause;|emu-integration-plans;)#WS;)*'),
         'emu-annex'         : ('B', 'id', 'aoid back-matter namespace normative oldids type', '#WS;h1;#WS;((dl;|emu-alg;|emu-grammar;|emu-note;|emu-prodref;|emu-table;|h2;|ol;|p;|ul;)#WS;)*(emu-annex;#WS;)*'),
@@ -542,7 +544,7 @@ element_info = {
         'h1'                   : ('B', '',          '',           '(#TEXT;|del;|dfn;|emu-not-ref;|emu-xref;|i;|ins;|sub;)+'), # though dfn is pretty odd
         'h2'                   : ('B', '',          '',           '#TEXT;'),
         'th'                   : ('B', '',          'class',      '#TEXT;(sup;#TEXT;)?'),
-        'script'               : ('B', 'src',       '',           '(#TEXT;)?'),
+        'script'               : ('B', '',          'src',        '(#TEXT;)?'),
         'dt'                   : ('B', '',          '',           '#TEXT;'),
 
         # block is empty:
