@@ -264,7 +264,6 @@
     perform {PP_NAMED_OPERATION_INVOCATION}
     return {EXPR}
     reverse the order of the elements of {var}
-    set the corresponding attribute of the property named {var} of object {var} to the value of the field
     set {SETTABLE} to {EXPR}
     suspend {var}
     throw a {ERROR_TYPE} exception
@@ -278,7 +277,7 @@
     code point {DEFVAR} in {var}, iterating backwards from its second-to-last code point
     element {DEFVAR} of {EX}
     element {DEFVAR} of {var}, in reverse List order
-    field of {var}
+    field name {DEFVAR} of {var}
     index {DEFVAR} of {var}
     integer {DEFVAR} in {INTERVAL}
     own property key {DEFVAR} of {var} such that {CONDITION}, in ascending chronological order of property creation
@@ -896,6 +895,7 @@
     the unique sequence of 3 bytes resulting from decoding {var} as base64
     the value at the corresponding index of {SETTABLE}
     the value currently bound to {var} in {var}
+    the value of {var}'s {var} field
     the value that {var} corresponds to in {h_emu_xref}
     the {nonterminal} that is covered by {LOCAL_REF}
     the {nonterminal}, {nonterminal}, or {nonterminal} that most closely contains {var}
@@ -1162,6 +1162,7 @@
 
 {SETTABLE} :
     The {EXECUTION_CONTEXT_COMPONENT} of {var}
+    the attribute named {var} of the property named {var} of object {var}
     the bound value for {var} in {var}
     the running execution context's {EXECUTION_CONTEXT_COMPONENT}
     the value at each index of {SETTABLE}

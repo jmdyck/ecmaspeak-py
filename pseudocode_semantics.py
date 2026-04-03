@@ -9665,6 +9665,15 @@ class _:
             assert 0
         return (result_type, env0)
 
+@P("{SETTABLE} : the attribute named {var} of the property named {var} of object {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [attr_name_var, prop_name_var, object_var] = expr.children
+        env0.assert_expr_is_of_type(object_var, T_Object)
+        env0.assert_expr_is_of_type(prop_name_var, T_String | T_Symbol)
+        env0.assert_expr_is_of_type(attr_name_var, T_String) # T_FieldName_ ?
+        return (T_Tangible_, env0)
+
 @P("{EXPR} : an iterator object whose `next` method iterates over all the String-valued keys of enumerable properties of {var}. The iterator object is never directly accessible to ECMAScript code. The mechanics and order of enumerating the properties is not specified but must conform to the rules specified below")
 class _:
     def s_expr(expr, env0, _):
@@ -11434,21 +11443,22 @@ class _:
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
         return env0
 
-@P("{EACH_THING} : field of {var}")
+# The next two could be generalized to any record type
+
+@P("{EACH_THING} : field name {DEFVAR} of {var}")
 class _:
     def s_nv(each_thing, env0):
-        [desc_var] = each_thing.children
-        loop_var = None # todo: no loop variable!
+        [loop_var, desc_var] = each_thing.children
         env0.assert_expr_is_of_type(desc_var, T_Property_Descriptor)
-        return env0
+        return env0.plus_new_entry(loop_var, T_String) # T_FieldName_ ?
 
-@P("{SMALL_COMMAND} : set the corresponding attribute of the property named {var} of object {var} to the value of the field")
+@P("{EXPR} : the value of {var}'s {var} field")
 class _:
-    def s_nv(anode, env0):
-        [name_var, obj_var] = anode.children
-        env0.ensure_expr_is_of_type(name_var, T_String | T_Symbol)
-        env0.assert_expr_is_of_type(obj_var, T_Object)
-        return env0
+    def s_expr(expr, env0, _):
+        [pd_var, field_name_var] = expr.children
+        env0.assert_expr_is_of_type(pd_var, T_Property_Descriptor)
+        env0.assert_expr_is_of_type(field_name_var, T_String) # T_FieldName_ ?
+        return (T_Tangible_, env0)
 
 # ==============================================================================
 #@ 6.2.7 The Environment Record Specification Type
