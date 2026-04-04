@@ -217,6 +217,7 @@
     Suspend {var}.
     The code points `/` or any {nonterminal} occurring in the pattern shall be escaped in {var} as necessary to ensure that the string-concatenation of {EX}, {EX}, {EX}, and {EX} can be parsed (in an appropriate lexical context) as a {nonterminal} that behaves identically to the constructed regular expression. For example, if {var} is {STR_LITERAL}, then {var} could be {STR_LITERAL} or {STR_LITERAL}, among other possibilities, but not {STR_LITERAL}, because `///` followed by {var} would be parsed as a {nonterminal} rather than a {nonterminal}. If {var} is the empty String, this specification can be met by letting {var} be {STR_LITERAL}.
     Throw a {ERROR_TYPE} exception.
+    Throw {EX}.
     Wait until no agent is in the critical section for {var}, then enter the critical section for {var} (without allowing any other agent to enter).
     Wake the agent whose signifier is {DOTTING} from suspension.
     When the {nonterminal} {var} is evaluated, perform the following steps in place of the {nonterminal} Evaluation algorithm provided in {h_emu_xref}:{IND_COMMANDS}
@@ -268,6 +269,7 @@
     suspend {var}
     throw a {ERROR_TYPE} exception
     throw a {ERROR_TYPE} exception because the structure is cyclical
+    throw {EX}
 
 # ------------------------------------------------------
 

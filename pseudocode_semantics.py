@@ -6641,11 +6641,26 @@ def execute_sdo_invocation(sdo_name_arg, focus_expr, arg_exprs):
 #@ 5.2.4 Runtime Semantics
 
 # ==============================================================================
-#@ 5.2.4.2 Throw an Exception
+#@ 5.2.4.2 Throw
 
-#> Algorithms steps that say to throw an exception, such as
+#> In algorithm steps, the word "throw" is shorthand for
+#> returning the result of calling ThrowCompletion. For example,
+#>   1. If _result_.[[Error]] is not ~none~, throw _result_.[[Error]].
+#> is equivalent to
+#>   1. If _result_.[[Error]] is not ~none~, return ThrowCompletion(_result_.[[Error]]).
+
+@P("{COMMAND} : Throw {EX}.")
+class _:
+    def s_nv(anode, env0):
+        [ex] = anode.children
+        (ex_type, env1) = tc_expr(ex, env0)
+        proc_add_return(env1, ThrowCompletionType(ex_type), anode)
+        return None
+
+#> Algorithm steps that say to throw an exception of a particular type
+#> construct an exception of that type to be thrown. For example,
 #>   1. Throw a *TypeError* exception.
-#> mean the same things as:
+#> is equivalent to
 #>   1. Return ThrowCompletion(a newly created *TypeError* object).
 
 @P("{COMMAND} : Throw a {ERROR_TYPE} exception.")

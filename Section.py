@@ -1343,7 +1343,7 @@ def _handle_other_section(section):
     pattern_results = [
             (r'Implicit Normal Completion',                        'shorthand'),
             (r'Implicit Completion Values',                        'shorthand'),
-            (r'Throw an Exception',                                'shorthand'),
+            (r'Throw',                                             'shorthand'),
             (r'Shorthands for Unwrapping Completion Records',      'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
             (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
@@ -1902,6 +1902,7 @@ def check_id(section):
             'sec-properties-of-the-sharedarraybuffer-instances', # inserted 'the'
             'sec-properties-of-asyncgenerator-intances',         # 'intances'
             'sec-object.prototype-legacy-accessor-methods',      # word order
+            'sec-throw-an-exception',                            # changed the title
         ]
 
     # ----------------------------------------------------------------
