@@ -327,17 +327,17 @@ def check_alg_consistency():
                             'Global Environment Records'                          : 'a Global Environment Record _envRec_',
                             'Module Environment Records'                          : 'a Module Environment Record _envRec_',
 
-                            'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _O_',
-                            'ECMAScript Function Objects'                         : 'an ECMAScript function object _F_',
-                            'Built-in Function Objects'                           : 'a built-in function object _F_',
-                            'Bound Function Exotic Objects'                       : 'a bound function exotic object _F_',
-                            'Array Exotic Objects'                                : 'an Array exotic object _A_',
-                            'String Exotic Objects'                               : 'a String exotic object _S_',
+                            'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _obj_',
+                            'ECMAScript Function Objects'                         : 'an ECMAScript function object _func_',
+                            'Built-in Function Objects'                           : 'a built-in function object _func_',
+                            'Bound Function Exotic Objects'                       : 'a bound function exotic object _func_',
+                            'Array Exotic Objects'                                : 'an Array exotic object _array_',
+                            'String Exotic Objects'                               : 'a String exotic object _str_',
                             'Arguments Exotic Objects'                            : 'an arguments exotic object _args_',
-                            'TypedArray Exotic Objects'                           : 'a TypedArray _O_',
-                            'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _O_',
-                            'Immutable Prototype Exotic Objects'                  : 'an immutable prototype exotic object _O_',
-                            'Proxy Object Internal Methods and Internal Slots'    : 'a Proxy exotic object _O_',
+                            'TypedArray Exotic Objects'                           : 'a TypedArray _obj_',
+                            'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _obj_',
+                            'Immutable Prototype Exotic Objects'                  : 'an immutable prototype exotic object _obj_',
+                            'Proxy Object Internal Methods and Internal Slots'    : 'a Proxy exotic object _obj_',
                         }[sect.parent.section_title]
                     if alg_header.for_phrase != expected_for_phrase:
                         put()

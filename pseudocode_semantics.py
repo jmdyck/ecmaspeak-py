@@ -2584,8 +2584,8 @@ def process_isom_table(emu_table):
                     'Object'                         : T_Object,
                     'Object | Null'                  : T_Object | T_Null,
                     'Undefined | Property Descriptor': T_Undefined | T_Property_Descriptor,
-                    '_PropertyDescriptor_'           : T_Property_Descriptor,
-                    '_Receiver_'                     : T_Tangible_,
+                    '_propertyDescriptor_'           : T_Property_Descriptor,
+                    '_receiver_'                     : T_Tangible_,
                     '_propertyKey_'                  : T_String | T_Symbol,
                     '_value_'                        : T_Tangible_,
                     '<em>any</em>'                   : T_Tangible_,
@@ -4540,7 +4540,7 @@ class _:
         assert nonterminal.source_text() == '|LineTerminator|'
         return (env0, env0)
 
-#@ 22.2.5.1 RegExp.escape ( _S_ )
+#@ 22.2.5.1 RegExp.escape ( _str_ )
 @P("{CONDITION_1} : {var} is matched by {nonterminal}")
 @P("{CONDITION_1} : {var} is matched by either {nonterminal} or {nonterminal}")
 class _:

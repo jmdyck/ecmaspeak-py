@@ -674,11 +674,11 @@ def _handle_oddball_op_section(section):
             'GetThisBinding' : [
             ],
             'CreateImmutableBinding': [
-                AlgParam('_N_', '', 'a String'),
-                AlgParam('_S_', '', 'a Boolean'),
+                AlgParam('_name_',   '', 'a String'),
+                AlgParam('_strict_', '', 'a Boolean'),
             ],
             'DeleteBinding': [
-                AlgParam('_N_', '', 'a String'),
+                AlgParam('_name_', '', 'a String'),
             ],
         }[method_name]
         alg_header = AlgHeader_make(
@@ -700,9 +700,9 @@ def _handle_oddball_op_section(section):
         # 9.10.3
         op_name = 'WeakRef emptying thing'
         assert section.block_children[0].source_text().startswith(
-            "<p>At any time, if a set of objects and/or symbols _S_ is not live,"
+            "<p>At any time, if a set of objects and/or symbols _objectSet_ is not live,"
         )
-        params = [ AlgParam('_S_', '', 'a List of Objects and/or Symbols') ]
+        params = [ AlgParam('_objectSet_', '', 'a List of Objects and/or Symbols') ]
 
     elif section.section_title in [
         'Valid Chosen Reads',
@@ -723,12 +723,12 @@ def _handle_oddball_op_section(section):
         # 29.8, 29.9
         op_name = section.section_title
         assert section.block_children[0].source_text().startswith(
-            "<p>For an execution _execution_ and events _E_ and _D_ that are contained in SharedDataBlockEventSet(_execution_)"
+            "<p>For an execution _execution_ and events _eventA_ and _eventB_ that are contained in SharedDataBlockEventSet(_execution_)"
         )
         params = [
             AlgParam('_execution_', '', 'an execution'),
-            AlgParam('_E_'        , '', 'an event in SharedDataBlockEventSet(_execution_)'),
-            AlgParam('_D_'        , '', 'an event in SharedDataBlockEventSet(_execution_)'),
+            AlgParam('_eventA_'   , '', 'an event in SharedDataBlockEventSet(_execution_)'),
+            AlgParam('_eventB_'   , '', 'an event in SharedDataBlockEventSet(_execution_)'),
         ]
 
     else:
@@ -1142,11 +1142,11 @@ def _handle_structured_header(section):
                     # mathematical
                     (r'that integer if it is non-negative and corresponds with an integer index.', 'a non-negative integer'),
                     (r'the code unit index corresponding to .+',     'a non-negative integer'),
-                    (r'the length of _S_.',                          'a non-negative integer'),
+                    (r'the length of _str_.',                        'a non-negative integer'),
                     (r'the number of left-capturing parentheses .+', 'a non-negative integer'),
 
                     # CharSet
-                    (r'_A_.',                   'a CharSet'),
+                    (r'_charSet_.',             'a CharSet'),
                     (r'the resulting CharSet.', 'a CharSet'),
 
                     # Closure
@@ -1949,8 +1949,8 @@ def check_id(section):
                 else
                 remove_param_list
             ),
-            # but drop _rer_ because that was added later
-            lambda s: re.sub(r' _rer_\b', '', s),
+            # but drop _regexpRecord_ because that was added later
+            lambda s: re.sub(r' _regexpRecord_\b', '', s),
 
             trim_underscores_from_aliases,
 
@@ -2276,6 +2276,29 @@ def extract_param_names(s):
     if mo:
         (pre, param_list) = mo.groups()
         param_names = re.findall(r'\w+', param_list)
+
+        # For backwards compat, undo some of the changes of PR #3789:
+        if 'Environment Records' in pre:
+            back_converter = {
+                '_name_'     : '_N_',
+                '_strict_'   : '_S_',
+                '_deletable_': '_D_',
+                '_value_'    : '_V_',
+            }
+        else:
+            back_converter = {
+                '_obj_'             : '_O_',
+                '_patternOrRegexp_' : '_pattern_',
+                '_propertyKey_'     : '_P_',
+                '_proto_'           : '_V_',
+                '_source_'          : '_X_',
+                '_value_'           : '_V_' if pre == 'Set' else '_value_',
+            }
+        param_names = [
+            back_converter.get(param_name, param_name)
+            for param_name in param_names
+        ]
+
         if param_names:
             return pre + ' ' + ' '.join(param_names)
         else:

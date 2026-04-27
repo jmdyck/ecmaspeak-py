@@ -455,7 +455,7 @@ class PreambleInfoHolder:
                     ("Math.expm1", "_e_"),
                     # "where _e_ is the base of the natural logarithms"
 
-                    ("String.prototype.localeCompare", "_S_"),
+                    ("String.prototype.localeCompare", "_str_"),
                     ("String.prototype.localeCompare", "_thatValue_"),
                     # previewing aliases that will be defined in the algorithm
 

@@ -1625,6 +1625,12 @@ nts_behind_var_in_sdo_call = {
     # 5715 BoundNames
     ('BoundNames', '_head_'): ['AsyncArrowHead'],
     # 11005 FunctionDeclarationInstantiation
+    ('BoundNames', '_fnDecl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+    ],
     # 21588 GlobalDeclarationInstantiation
     # 23713 EvalDeclarationInstantiation
     ('BoundNames', '_f_'): [
@@ -1634,8 +1640,60 @@ nts_behind_var_in_sdo_call = {
         'AsyncGeneratorDeclaration',
     ],
     # 11005 FunctionDeclarationInstantiation +
+    ('BoundNames', '_varDecl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        #
+        'VariableDeclaration',
+        'ForBinding',
+        'BindingIdentifier',
+        #
+        'ClassDeclaration',
+        'LexicalDeclaration',
+    ],
+    ('BoundNames', '_lexDecl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        #
+        'VariableDeclaration',
+        'ForBinding',
+        'BindingIdentifier',
+        #
+        'ClassDeclaration',
+        'LexicalDeclaration',
+    ],
     # 17667 BlockDeclarationInstantiation
+    ('BoundNames', '_decl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        #
+        'VariableDeclaration',
+        'ForBinding',
+        'BindingIdentifier',
+        #
+        'ClassDeclaration',
+        'LexicalDeclaration',
+    ],
     # 21588 GlobalDeclarationInstantiation
+    ('BoundNames', '_varDecl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        #
+        'VariableDeclaration',
+        'ForBinding',
+        'BindingIdentifier',
+        #
+        'ClassDeclaration',
+        'LexicalDeclaration',
+    ],
     # 22788 InitializeEnvironment
     # 23713 EvalDeclarationInstantiation
     ('BoundNames', '_d_'): [
@@ -1714,7 +1772,7 @@ nts_behind_var_in_sdo_call = {
     ('AssignmentTargetType', '_expr_'): ['ParenthesizedExpression'],
 
     # 10885 OrdinaryFunctionCreate
-    ('ExpectedArgumentCount', '_ParameterList_'): [
+    ('ExpectedArgumentCount', '_parameterList_'): [
         'FormalParameters',
         'ArrowParameters',
         'UniqueFormalParameters',
@@ -1726,8 +1784,26 @@ nts_behind_var_in_sdo_call = {
     ('ExpectedArgumentCount', '_formals_'): ['ArrowFormalParameters'],
 
     # 11005 FunctionDeclarationInstantiation
-    # 17667 BlockDeclarationInstantiation
     # 21588 GlobalDeclarationInstantiation
+    ('IsConstantDeclaration', '_lexDecl_'): [
+        'FunctionDeclaration',
+        'ClassDeclaration',
+        'ExportDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        'LexicalDeclaration',
+    ],
+    # 17667 BlockDeclarationInstantiation
+    ('IsConstantDeclaration', '_decl_'): [
+        'FunctionDeclaration',
+        'ClassDeclaration',
+        'ExportDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+        'LexicalDeclaration',
+    ],
     # 22788 InitializeEnvironment
     # 23713 EvalDeclarationInstantiation
     ('IsConstantDeclaration', '_d_'): [
@@ -1741,6 +1817,12 @@ nts_behind_var_in_sdo_call = {
     ],
 
     # 11005 FunctionDeclarationInstantiation
+    ('InstantiateFunctionObject', '_fnDecl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+    ],
     # 21746 GlobalDeclarationInstantiation
     # 23865 EvalDeclarationInstantiation
     ('InstantiateFunctionObject', '_f_'): [
@@ -1750,6 +1832,12 @@ nts_behind_var_in_sdo_call = {
         'AsyncGeneratorDeclaration',
     ],
     # 17813 BlockDeclarationInstantiation
+    ('InstantiateFunctionObject', '_decl_'): [
+        'FunctionDeclaration',
+        'GeneratorDeclaration',
+        'AsyncFunctionDeclaration',
+        'AsyncGeneratorDeclaration',
+    ],
     # 22946 InitializeEnvironment
     ('InstantiateFunctionObject', '_d_'): [
         'FunctionDeclaration',
@@ -1775,7 +1863,7 @@ nts_behind_var_in_sdo_call = {
     ],
 
     # 13349 OrdinaryCallEvaluateBody
-    ('EvaluateBody', '_F_.[[ECMAScriptCode]]'): all_possibilities_for_func_ECMAScriptCode,
+    ('EvaluateBody', '_func_.[[ECMAScriptCode]]'): all_possibilities_for_func_ECMAScriptCode,
 
     # 15190 IsValidRegularExpressionLiteral
     ('FlagText', '_literal_'): ['RegularExpressionLiteral'],
@@ -1825,7 +1913,7 @@ nts_behind_var_in_sdo_call = {
         # 'BindingIdentifier', only in Annex B, which we're not handling yet.
     ],
     # 18965 CaseBlockEvaluation
-    ('Evaluation', '_C_'): ['CaseClause'],
+    ('Evaluation', '_clause_'): ['CaseClause'],
     # 23648 PerformEval
     ('Evaluation', '_body_'): ['ScriptBody'],
     # 38884 GeneratorStart
