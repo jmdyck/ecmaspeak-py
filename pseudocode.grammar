@@ -165,8 +165,8 @@
     Let {DEFVAR} be {EXPR}. (However, if {var} = 10 and {var} contains more than 20 significant digits, every significant digit after the 20th may be replaced by a 0 digit, at the option of the implementation; and if {var} is not one of 2, 4, 8, 10, 16, or 32, then {var} may be an implementation-approximated integer representing the integer value denoted by {var} in radix-{var} notation.)
     Let {DEFVAR} be {EXPR}. (It may be evaluated repeatedly.)
     Let {DEFVAR} be {MULTILINE_EXPR}
-    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even.
-    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose the value of {var} for which {EX} is closest in value to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
+    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose {var} such that {EX} is closest to {EX}. If there are two such possible values of {var}, choose the one that is even.
+    Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose {var} such that {EX} is closest to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Optionally, {SMALL_COMMAND}.
@@ -364,7 +364,6 @@
     {CONDITION_1} or {CONDITION_1} <ins>and {CONDITION_1}</ins>
     {CONDITION_1} unless {CONDITION_1}
     {CONDITION_1} unless {CONDITION_1} and {CONDITION_1}
-    {CONDITION_1}, or if {CONDITION_1}
     {CONDITION_1}, or if {CONDITION_1} and {CONDITION_1}
     {CONDITION_1}, unless {CONDITION_1}
     {CONDITION_1}, {CONDITION_1}, and {CONDITION_1}
@@ -463,7 +462,6 @@
     {DOTTING} is not the ordinary object internal method defined in {h_emu_xref}
     {EX} and {EX} are both empty
     {EX} and {EX} are both {LITERAL}
-    {EX} and {EX} are both {LITERAL} or both {LITERAL}
     {EX} and {EX} are distinct values
     {EX} and {EX} are valid byte offsets within the memory of {var}
     {EX} contains a Record {DEFVAR} such that {CONDITION_1}
@@ -536,7 +534,6 @@
     {SETTABLE} and {SETTABLE} are the same Module Record
     {SETTABLE} has an? {DSBN} field
     {SETTABLE} ≠ {SETTABLE} for some integer {DEFVAR} in {INTERVAL}
-    {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events
     {var} and {var} are both finite
     {var} and {var} are finite
     {var} and {var} are finite and non-zero
@@ -613,7 +610,6 @@
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
-    {var} or {var} is {LITERAL}
     {var} provides the direct binding for this export
     {var} reads-from {var} in {var}
     {var} starts with {STR_LITERAL}
@@ -1479,6 +1475,7 @@
     an? {nonterminal} Parse Node
     any value except a Completion Record
     anything
+    either a WriteSharedMemory or ReadModifyWriteSharedMemory event
     some other definition of a function's behaviour provided in this specification
     source text
     the Environment Record for a |Catch| clause

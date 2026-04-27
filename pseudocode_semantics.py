@@ -5912,7 +5912,6 @@ class _:
         return EXEC(child, bool)
 
 @P("{CONDITION} : {CONDITION_1} or {CONDITION_1}")
-@P("{CONDITION} : {CONDITION_1}, or if {CONDITION_1}")
 @P("{CONDITION} : {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
 @P("{CONDITION} : {CONDITION_1}, {CONDITION_1}, {CONDITION_1}, or {CONDITION_1}")
 class _:
@@ -7850,7 +7849,7 @@ def tc_invocation_of_ad_hoc_op(callee_op_name, args, env0):
         (arg_type, arg_env) = tc_expr(arg, env0)
         if arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_IntegralNumber_):
             return (T_MathInteger_, arg_env)
-        elif arg_type.is_a_subtype_of_or_equal_to(T_FiniteNumber_):
+        elif arg_type.is_a_subtype_of_or_equal_to(T_BigInt | T_FiniteNumber_):
             return (T_MathReal_, env0)
         else:
             add_pass_error(
@@ -8399,27 +8398,6 @@ class _:
             env0.assert_expr_is_of_type(exa, lit_type)
             env0.assert_expr_is_of_type(exb, lit_type)
             return (env0, env0)
-
-@P("{CONDITION_1} : {EX} and {EX} are both {LITERAL} or both {LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        # occurs once, in SameValueNonNumber
-        [exa, exb, litc, litd] = cond.children
-        assert litc.source_text() == '*true*'
-        assert litd.source_text() == '*false*'
-        enva = env0.ensure_expr_is_of_type(exa, T_Boolean); assert enva is env0
-        envb = env0.ensure_expr_is_of_type(exb, T_Boolean); # assert envb is env0
-        return (envb, envb)
-
-@P("{CONDITION_1} : {var} or {var} is {LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [v1, v2, lit] = cond.children
-        (t1, env1) = tc_expr(v1, env0); assert env1 is env0
-        (t2, env2) = tc_expr(v2, env0); assert env2 is env0
-        assert t1 == t2
-        env0.assert_expr_is_of_type(lit, t1)
-        return (env0, env0)
 
 # ------------------------------------------------------------------------------
 
@@ -15142,6 +15120,10 @@ class _:
 class _:
     s_tb = T_ReadSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
 
+@P("{VAL_DESC} : either a WriteSharedMemory or ReadModifyWriteSharedMemory event")
+class _:
+    s_tb = T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event
+
 @P("{VAL_DESC} : a Shared Data Block event")
 class _:
     s_tb = T_Shared_Data_Block_Event
@@ -15159,18 +15141,6 @@ class _:
 class _:
     def s_cond(cond, env0, asserting):
         return s_X_and_Y_are_the_same_Foo_Record(cond, T_Shared_Data_Block_Event, env0)
-
-@P("{CONDITION_1} : {var} and {var} are both WriteSharedMemory or ReadModifyWriteSharedMemory events")
-class _:
-    def s_cond(cond, env0, asserting):
-        # XXX spec is ambiguous: "each is A or B" vs "either both A or both B"
-        [ea, eb] = cond.children
-        (a_t_env, a_f_env) = env0.with_type_test(ea, 'is a', T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event, asserting)
-        (b_t_env, b_f_env) = env0.with_type_test(eb, 'is a', T_WriteSharedMemory_Event | T_ReadModifyWriteSharedMemory_Event, asserting)
-        return (
-            env_and(a_t_env, b_t_env),
-            env_or(a_f_env, b_f_env)
-        )
 
 @P("{CONDITION_1} : there exists a Memory event {DEFVAR} such that {CONDITION}")
 class _:
