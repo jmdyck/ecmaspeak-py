@@ -10427,7 +10427,7 @@ class _:
         env2 = env1.ensure_A_can_be_element_of_list_B(itemb_ex, list_ex)
         return env2
 
-@P("{COMMAND} : Append to {var} the elements of {var}.")
+@P("{COMMAND} : Append the elements of {var} to {var}.")
 class _:
     def s_nv(anode, env0):
         [lista, listb] = anode.children

@@ -130,7 +130,7 @@
 {COMMAND} :
     <emu-not-ref>Record</emu-not-ref> that the binding for {var} in {var} has been initialized.
     Add {var} to {var}.
-    Append to {var} the elements of {var}.
+    Append the elements of {var} to {var}.
     Append {EX} and {EX} to {EX}.
     Append {EX} to {EX}.
     Assert: If {CONDITION}, then {CONDITION}.
