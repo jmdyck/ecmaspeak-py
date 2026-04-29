@@ -139,6 +139,7 @@
     Assert: {CONDITION_1} if {CONDITION_1}; else, {CONDITION_1}.
     Assert: {CONDITION_1}, since {CONDITION_1}.
     Assert: {CONDITION}.
+    Assert: {CONDITION}. {CONDITION}.
     Attempt to parse {var} using {var} as the goal symbol, and analyse the parse result for any early error conditions. Parsing and early error detection may be interleaved in an implementation-defined manner.
     Change its bound value to {var}.
     Choose any such {var}.
@@ -1328,6 +1329,7 @@
     a PromiseCapability Record for an intrinsic {percent_word}
     a PromiseReaction Record
     a Property Descriptor
+    a Proxy
     a Proxy exotic object
     a ReadModifyWriteSharedMemory event
     a ReadSharedMemory or ReadModifyWriteSharedMemory event
@@ -1383,6 +1385,7 @@
     a code unit
     a constructor
     a continue completion
+    a finite Number
     a finite time value
     a fully populated Property Descriptor
     a function object

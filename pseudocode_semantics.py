@@ -5659,6 +5659,7 @@ class _:
         return env_or(tt_env, ft_env)
 
 @P("{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.")
+@P("{COMMAND} : Assert: {CONDITION}. {CONDITION}.")
 class _:
     def s_nv(anode, env0):
         [conda, condb] = anode.children
@@ -9257,6 +9258,10 @@ class _:
     def d_desc(val_desc, value):
         [] = val_desc.children
         return value.isan(EL_Number)
+
+@P("{VAL_DESC} : a finite Number")
+class _:
+    s_tb = T_FiniteNumber_
 
 # --------------
 # make a Number:
@@ -12874,6 +12879,7 @@ class _:
 #> are partially implemented using ECMAScript code.
 
 @P("{VAL_DESC} : a Proxy exotic object")
+@P("{VAL_DESC} : a Proxy")
 class _:
     s_tb = T_Proxy_exotic_object_
 
@@ -13798,10 +13804,10 @@ class _:
     def s_nv(anode, env0):
         [var, cond, literal] = anode.children
         # once, in MakeDay
-        env0.assert_expr_is_of_type(literal, T_Number)
+        env0.assert_expr_is_of_type(literal, T_NaN_Number_)
         env1 = env0.plus_new_entry(var, T_IntegralNumber_)
         (t_env, f_env) = tc_cond(cond, env1)
-        proc_add_return(env1, T_Number, literal)
+        proc_add_return(env1, T_NaN_Number_, literal)
         return env1
 
 # ==============================================================================
