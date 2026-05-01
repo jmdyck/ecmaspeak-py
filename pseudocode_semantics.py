@@ -273,6 +273,27 @@ class TypedAlgHeader:
                 else:
                     assert 0
 
+            if header.species.startswith('bif:'):
+                # As a kludge, we peek at the function's algorithm.
+                # If it contains an "is [not] present" test on this parameter,
+                # then we give the parameter a static type
+                # that acknowledges it might not be present.
+                # (As noted above, this is independent of whether it's
+                # marked with square brackets in the function's parameter list.)
+                assert len(header.u_defns) in [0,1]
+                if len(header.u_defns) == 1:
+                    [algDefn] = header.u_defns
+                    assert algDefn.__class__.__name__ == "SimpleAlgDefn"
+                    assert len(algDefn.anodes) == 1
+                    [anode] = algDefn.anodes
+                    alg_text = anode.source_text()
+                    if (
+                        f"{param.name} is present" in alg_text
+                        or
+                        f"{param.name} is not present" in alg_text
+                    ):
+                        pt = pt | T_not_passed
+
             self.initial_parameter_types[param.name] = pt
 
         self.parameter_types = self.initial_parameter_types.copy()
@@ -6471,21 +6492,7 @@ class _:
         elif ex.is_a('{var}'):
             # It should be the name of a parameter
             assert ex.source_text() in env0.parret.parameter_names
-            if env0.alg_species.startswith('op:'):
-                t = T_not_passed
-            elif env0.alg_species.startswith('bif:'):
-                # In a built-in function,
-                # we can ask if *any* of the parameters is present,
-                # regardless of whether they're marked optional or not.
-                # So this form puts no pre-condition on the parameter's stype.
-                # As for post-condition, in the resulting env where the parameter is not present,
-                # we could restrict the parameter's stype to T_not_passed,
-                # but it's probably not worth it.
-                # E.g., a typical use is:
-                #     If _param_ is not present, set _param_ to <default>.
-                return (env0, env0)
-            else:
-                assert 0
+            t = T_not_passed
         else:
             assert 0, ex.source_text()
         copula = 'is a' if 'not present' in cond.prod.rhs_s else 'isnt a'
