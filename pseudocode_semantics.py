@@ -915,11 +915,63 @@ class Env:
         # might tell you something about the type of {settable}
         # *before* the 'Set' occurs.
 
-        if settable.source_text() in self.parret.parameter_names:
-            add_pass_error(
-                settable,
-                "Error: setting a parameter"
-            )
+        settable_text = settable.source_text()
+
+        if settable_text in self.parret.parameter_names:
+            # We're setting a parameter.
+            # There are a couple of ways this tends to happen.
+            # So we'll let those go, and complain about anything else.
+
+            # When _foo_ is an optional parameter,
+            # it often gets a (default) value via steps like:
+            #   1. If _foo_ is not present, set _foo_ to some_default.
+            # or
+            #   1. If _foo_ is not present, then
+            #      1. Set _foo_ to some_default.
+            #
+            # Similarly, a value of *undefined*
+            # is sometimes the signal to use a default value, e.g.:
+            #   1. If _newTarget_ is *undefined*, set _newTarget_ to _constructor_.
+            # or
+            #   1. If _flags_ is not *undefined*, throw a *TypeError* exception.
+            #   1. Set _flags_ to some_default.
+            #
+            if settable_type.is_a_subtype_of_or_equal_to(T_not_passed | T_Undefined):
+                pass
+
+            # A parameter of a general type/state may be validated/normalized/canonicalized.
+            # e.g.:
+            #   1. Set _key_ to CanonicalizeKeyedCollectionKey(_key_).
+            #   1. Set _replaceValue_ to ? ToString(_replaceValue_).
+            #   1. Set _isLittleEndian_ to ToBoolean(_isLittleEndian_).
+            #   1. Set _exponent_ to ? ToNumber(_exponent_).
+            # 
+            # but we don't want to accept *any* expression involving _foo_, e.g.
+            #   1. Set _index_ to _index_ + 1.
+            #   1. Set _chunk_ to the string-concatenation of _chunk_ and *"AA"*.
+            # because those seem a bit smelly.
+            # 
+            # So be fairly restricted in what we accept for {EXPR}.
+            #
+            elif (
+                str(settable.parent.prod) in [
+                    '{COMMAND} : Set {SETTABLE} to {EXPR}.',
+                    '{SMALL_COMMAND} : set {SETTABLE} to {EXPR}',
+                ]
+                and
+                (expr := settable.parent.children[1])
+                and
+                (pattern := fr'(\? )?(ℝ|CanonicalizeKeyedCollectionKey|StringToCodePoints|ToBigInt|ToBoolean|ToIndex|ToNumber|ToString)\({settable_text}\)')
+                and
+                re.fullmatch(pattern, expr.source_text())
+            ):
+                pass
+
+            else:
+                add_pass_error(
+                    settable,
+                    "warning: setting a parameter"
+                )
 
         if settable_type == T_TBD and expr_type == T_TBD:
             return env2
@@ -959,7 +1011,6 @@ class Env:
             # XXX If the settable is a DOTTING, we should disallow
             # an expr_t that is outside the allowed type of the dotting
 
-            settable_text = settable.source_text()
             if expr_type.is_a_subtype_of_or_equal_to(settable_type):
                 # A change, but probably not worth mentioning
                 pass
