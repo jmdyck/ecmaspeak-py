@@ -8461,7 +8461,6 @@ class _:
 # ------------------------------------------------------------------------------
 
 @P("{CONDITION_1} : {EX} is also {VAL_DESC}")
-@P("{CONDITION_1} : {EX} is never {VAL_DESC}")
 @P("{CONDITION_1} : {EX} is not {VALUE_DESCRIPTION}")
 @P("{CONDITION_1} : {EX} is {VALUE_DESCRIPTION}")
 class _:
@@ -8502,7 +8501,7 @@ class _:
                 #
                 return env0.with_type_test(var, copula, t, asserting)
 
-        if 'not' in cond.prod.rhs_s or 'never' in cond.prod.rhs_s:
+        if 'not' in cond.prod.rhs_s:
             copula = 'isnt a'
         else:
             copula = 'is a'
@@ -11450,13 +11449,6 @@ class _:
         (sub_t, sup_t) = type_bracket_for(child, env)
         return (NormalCompletionType(sub_t), NormalCompletionType(sup_t))
 
-@P("{CONDITION_1} : {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, literal, _] = cond.children
-        env0.assert_expr_is_of_type(literal, T_tilde_unused_)
-        return env0.with_type_test(var, 'is a', NormalCompletionType(T_tilde_unused_), asserting)
-
 #-------------------------------------------------------------------------------
 #> <dfn>break completion</dfn> refers to any Completion Record with a [[Type]] value of ~break~.
 
@@ -12433,7 +12425,6 @@ class _:
 # resume-after-push (i.e., resuming an EC that's just been pushed onto the stack):
 
 @P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.")
 class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex, resb_var] = anode.children
@@ -12443,21 +12434,6 @@ class _:
 
 # ----------------
 # resume-after-pop (i.e., resuming an EC that's just been revealed by a stack-pop):
-
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.")
-class _:
-    def s_nv(anode, env0):
-        [_, ctx_var, _, resa_ex] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        env1 = env0.ensure_expr_is_of_type(resa_ex, NormalCompletionType(T_Tangible_) | T_throw_completion)
-        return env1
-
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.")
-class _:
-    def s_nv(anode, env0):
-        [_, ctx_var, _, b_var] = anode.children
-        env0.assert_expr_is_of_type(ctx_var, T_execution_context)
-        return env0.plus_new_entry(b_var, NormalCompletionType(T_Tangible_) | T_return_completion | T_throw_completion)
 
 @P("{COMMAND} : Resume the context that is now on the top of the execution context stack as the running execution context.")
 class _:
@@ -12478,14 +12454,6 @@ class _:
 # ------
 # other:
 
-@P("{CONDITION_1} : When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
-class _:
-    def s_cond(cond, env0, asserting):
-        [a_var, b_var] = cond.children
-        env0.assert_expr_is_of_type(a_var, T_execution_context)
-        env0.assert_expr_is_of_type(b_var, T_execution_context)
-        return (env0, env0)
-
 @P("{CONDITION_1} : control reaches here")
 class _:
     def s_cond(cond, env0, asserting):
@@ -12498,7 +12466,7 @@ class _:
         [] = cond.children
         return (env0, env0)
 
-@P("{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context")
+@P("{CONDITION_1} : When we reach this step, {var} has already been removed from the execution context stack and {var} is the running execution context again")
 class _:
     def s_cond(cond, env0, asserting):
         [vara, varb] = cond.children

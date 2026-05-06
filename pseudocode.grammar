@@ -225,10 +225,7 @@
     While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}
     {IF_CLOSED}
     {IF_OTHER}
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it.
     {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the value returned by the resumed computation.
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end}. Let {DEFVAR} be the value returned by the resumed computation.
     {note}
 
 # ----------------------------------------------
@@ -402,8 +399,7 @@
     This is only possible for getter/setter pairs
     This step is never reached
     We've reached the starting point of an `export *` circularity
-    When we reach this step, {var} has already been removed from the execution context stack and {var} is the currently running execution context
-    When we return here, {var} has already been removed from the execution context stack and {var} is the currently running execution context
+    When we reach this step, {var} has already been removed from the execution context stack and {var} is the running execution context again
     When {SETTABLE} is instantiated, it will have a direct binding for {var}
     an implementation-defined debugging facility is available and enabled
     any code point in {EX} is also contained in {EX}
@@ -494,7 +490,6 @@
     {EX} is listed in the “Code Point” column of {h_emu_xref}
     {EX} is neither {VAL_DESC} nor {VAL_DESC}
     {EX} is neither {VAL_DESC} nor {VAL_DESC} nor {VAL_DESC}
-    {EX} is never {VAL_DESC}
     {EX} is not an element of the standard base64 alphabet
     {EX} is not empty
     {EX} is not {PREFIX_PAREN}
@@ -590,7 +585,6 @@
     {var} has {EX} elements
     {var} has {var} in its memory range
     {var} imports a specific binding for this export
-    {var} is a normal completion with a value of {LITERAL}. The possible sources of this value are Await or, if the async function doesn't await anything, step {h_emu_xref} above
     {var} is as small as possible
     {var} is contained within {PROD_REF}
     {var} is contained within {var}
