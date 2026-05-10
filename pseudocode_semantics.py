@@ -5731,7 +5731,6 @@ class _:
         return env_or(tt_env, ft_env)
 
 @P("{COMMAND} : Assert: {CONDITION_1}, since {CONDITION_1}.")
-@P("{COMMAND} : Assert: {CONDITION}. {CONDITION}.")
 class _:
     def s_nv(anode, env0):
         [conda, condb] = anode.children
@@ -12912,7 +12911,6 @@ class _:
 #> are partially implemented using ECMAScript code.
 
 @P("{VAL_DESC} : a Proxy exotic object")
-@P("{VAL_DESC} : a Proxy")
 class _:
     s_tb = T_Proxy_exotic_object_
 
