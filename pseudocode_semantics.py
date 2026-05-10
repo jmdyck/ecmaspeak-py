@@ -11072,6 +11072,7 @@ class _:
 
         (dottable_part_of_lhs_t, nondottable_part_of_lhs_t) = lhs_t.split_by(T_Record | T_Object | T_Symbol | T_Private_Name)
 
+        warn_re_cr_type = False
         msg_lines = []
 
         if dottable_part_of_lhs_t == T_0:
@@ -11233,6 +11234,9 @@ class _:
                     field_type = part_of_lhs_t.type_of_field_named(dsbn_name)
                     part_of_dotting_t = field_type
 
+                    if part_of_lhs_t.schema_name == 'Completion Record' and dsbn_name == '[[Type]]':
+                        warn_re_cr_type = True
+
                 else:
                     assert 0, (expr.source_text(), part_of_lhs_t)
 
@@ -11251,6 +11255,9 @@ class _:
                 msg_lines.append(f"So final lhs-type is {final_lhs_t}")
         else:
             env2 = env1
+
+        if warn_re_cr_type:
+            add_pass_error(expr, "WARNING: Explicitly accessing the [[Type]] field of a completion record is rare since PR #3163.")
 
         if msg_lines:
             msg_lines.insert(0, f"`{lhs_text}` has type {lhs_t},")
