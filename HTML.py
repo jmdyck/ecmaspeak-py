@@ -53,6 +53,13 @@ def _parse():
                 f"ERROR: The currently-open element is a {current_open_node.element_name!r}, but this is an end-tag for {element_name!r}.\nSkipping the end-tag, to see if that helps."
 
             )
+            # The above message appears in msgs_in_spec.html, which I examine last,
+            # but this problem can cause anomalies in files I examine earlier,
+            # so I want to know about this problem earlier.
+            (line_num, col_num) = shared.convert_posn_to_linecol(end_tag_start_posn)
+            stderr(f"!! ERROR at line {line_num}, col {col_num}:")
+            stderr(f"!!   The currently-open element is a {current_open_node.element_name!r}, but this is an end-tag for {element_name!r}.")
+
             # This old code might be useful to adapt:
             # if current_open_node.parent is None:
             #     self._report("current_open_node.parent is None")
