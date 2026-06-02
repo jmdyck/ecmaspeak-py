@@ -321,18 +321,18 @@ def check_alg_consistency():
                     else:
                         # Look at the parent
                         expected_for_phrase = {
-                            'Declarative Environment Records'                     : 'a Declarative Environment Record _envRec_',
-                            'Object Environment Records'                          : 'an Object Environment Record _envRec_',
-                            'Function Environment Records'                        : 'a Function Environment Record _envRec_',
-                            'Global Environment Records'                          : 'a Global Environment Record _envRec_',
-                            'Module Environment Records'                          : 'a Module Environment Record _envRec_',
+                            'Declarative Environment Records'                     : 'a Declarative Environment Record _envRecord_',
+                            'Object Environment Records'                          : 'an Object Environment Record _envRecord_',
+                            'Function Environment Records'                        : 'a Function Environment Record _envRecord_',
+                            'Global Environment Records'                          : 'a Global Environment Record _envRecord_',
+                            'Module Environment Records'                          : 'a Module Environment Record _envRecord_',
 
                             'Ordinary Object Internal Methods and Internal Slots' : 'an ordinary object _obj_',
                             'ECMAScript Function Objects'                         : 'an ECMAScript function object _func_',
                             'Built-in Function Objects'                           : 'a built-in function object _func_',
                             'Bound Function Exotic Objects'                       : 'a bound function exotic object _func_',
                             'Array Exotic Objects'                                : 'an Array exotic object _array_',
-                            'String Exotic Objects'                               : 'a String exotic object _str_',
+                            'String Exotic Objects'                               : 'a String exotic object _string_',
                             'Arguments Exotic Objects'                            : 'an arguments exotic object _args_',
                             'TypedArray Exotic Objects'                           : 'a TypedArray _obj_',
                             'Module Namespace Exotic Objects'                     : 'a module namespace exotic object _obj_',

@@ -700,9 +700,9 @@ def _handle_oddball_op_section(section):
         # 9.10.3
         op_name = 'WeakRef emptying thing'
         assert section.block_children[0].source_text().startswith(
-            "<p>At any time, if a set of objects and/or symbols _objectSet_ is not live,"
+            "<p>At any time, if a set of objects and/or symbols _objSet_ is not live,"
         )
-        params = [ AlgParam('_objectSet_', '', 'a List of Objects and/or Symbols') ]
+        params = [ AlgParam('_objSet_', '', 'a List of Objects and/or Symbols') ]
 
     elif section.section_title in [
         'Valid Chosen Reads',
@@ -1099,7 +1099,7 @@ def _handle_structured_header(section):
 
                     # Number/BigInt
                     (r'\*1\*<sub>\U0001d53d</sub> if .+ and \*\+0\*<sub>\U0001d53d</sub> otherwise.', ['*1*<sub>𝔽</sub>', '*+0*<sub>𝔽</sub>']),
-                    (r'_value_ converted to a Number or a BigInt.',  ['a Number', 'a BigInt']),
+                    (r'_arg_ converted to a Number or a BigInt.',   ['a Number', 'a BigInt']),
                     (r'a Number identifying the day of the week .+', 'an integral Number'),
                     (r'a Number identifying the month .+',           'an integral Number'),
                     (r'an implementation-approximated value representing the result of raising _base_ to the _exponent_ power.', 'a Number'),
@@ -1112,7 +1112,7 @@ def _handle_structured_header(section):
                     (r'the minute of the hour .+',                   'an integral Number'),
                     (r'the number of days in year _y_.',             ['*365*<sub>𝔽</sub>', '*366*<sub>𝔽</sub>']),
                     (r'the number of milliseconds since .+',         'an integral Number'),
-                    (r'the one\'s complement of _x_.',               'a BigInt'),
+                    (r'the one\'s complement of _bigint_.',          'a BigInt'),
                     (r'the respective Number value.',                'a Number'),
                     (r'the second of the minute .+',                 'an integral Number'),
                     (r'the time value of the start of year _y_.',    'a time value'),
@@ -1142,7 +1142,7 @@ def _handle_structured_header(section):
                     # mathematical
                     (r'that integer if it is non-negative and corresponds with an integer index.', 'a non-negative integer'),
                     (r'the code unit index corresponding to .+',     'a non-negative integer'),
-                    (r'the length of _str_.',                        'a non-negative integer'),
+                    (r'the length of _string_.',                     'a non-negative integer'),
                     (r'the number of left-capturing parentheses .+', 'a non-negative integer'),
 
                     # CharSet
@@ -1188,7 +1188,7 @@ def _handle_structured_header(section):
                     ("CanonicalNumericIndexString", "_n_"),
                     # "... matches ToString(_n_) for some Number value _n_, ..."
 
-                    ("MaybeSimpleCaseFolding", "_cp_"),
+                    ("MaybeSimpleCaseFolding", "_codePoint_"),
                     # The description is referring to an external function,
                     # and including a parameter list.
 
@@ -1852,6 +1852,8 @@ def check_id(section):
             'sec-async-function-prototype-properties-toStringTag',  # 'properties'
             'String.prototype.trimleft',                            # missing 'sec-'
             'String.prototype.trimright',                           # missing 'sec-'
+            'sec-isfinite-number',                                  # 3837 changed param name from _number_ to _value_ 
+            'sec-isnan-number',                                     # 3837 changed param name from _number_ to _value_ 
         ]
 
     # ----------------------------------------------------------------
@@ -2287,11 +2289,15 @@ def extract_param_names(s):
             }
         else:
             back_converter = {
+                '_argList_'         : '_argumentsList_',
+                '_char_'            : '_ch_',
                 '_obj_'             : '_O_',
                 '_patternOrRegexp_' : '_pattern_',
+                '_propertyDesc_'    : '_desc_',
                 '_propertyKey_'     : '_P_',
                 '_proto_'           : '_V_',
                 '_source_'          : '_X_',
+                '_thisArg_'         : '_thisArgument_',
                 '_value_'           : '_V_' if pre == 'Set' else '_value_',
             }
         param_names = [

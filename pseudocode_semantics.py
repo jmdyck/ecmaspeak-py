@@ -2656,7 +2656,7 @@ def process_isom_table(emu_table):
                     'Object'                         : T_Object,
                     'Object | Null'                  : T_Object | T_Null,
                     'Undefined | Property Descriptor': T_Undefined | T_Property_Descriptor,
-                    '_propertyDescriptor_'           : T_Property_Descriptor,
+                    '_propertyDesc_'                 : T_Property_Descriptor,
                     '_receiver_'                     : T_Tangible_,
                     '_propertyKey_'                  : T_String | T_Symbol,
                     '_value_'                        : T_Tangible_,
@@ -4612,7 +4612,7 @@ class _:
         assert nonterminal.source_text() == '|LineTerminator|'
         return (env0, env0)
 
-#@ 22.2.5.1 RegExp.escape ( _str_ )
+#@ 22.2.5.1 RegExp.escape ( _string_ )
 @P("{CONDITION_1} : {var} is matched by {nonterminal}")
 @P("{CONDITION_1} : {var} is matched by either {nonterminal} or {nonterminal}")
 class _:
@@ -5435,11 +5435,11 @@ class _:
 
         # hack!:
         if cond.source_text() == '_matchSucceeded_ is *false*': # in RegExpBuiltinExec
-            # This case requires that variable _r_, introduced within the loop,
+            # This case requires that variable _result_, introduced within the loop,
             # survive the loop.
             # (It doesn't have to survive from one iteration to the next,
             # just from the last iteration to after.)
-            result = result.plus_new_entry('_r_', T_MatchState)
+            result = result.plus_new_entry('_result_', T_MatchState)
 
         return result
 
@@ -10105,7 +10105,7 @@ class _:
         T = cap_word.source_text()
         assert T in ['Boolean', 'Number', 'String', 'Symbol', 'BigInt']
         assert dsb_word.source_text() == f"[[{T}Data]]"
-        assert var.source_text() == '_argument_'
+        assert var.source_text() == '_arg_'
         assert cap_word2.source_text() == T
         return (T_Object, env0)
 
@@ -10388,7 +10388,7 @@ class _:
         # kludge
         if exa.source_text() == '_names1_':
             et = T_String
-        elif exa.source_text() == '_declarations1_':
+        elif exa.source_text() == '_decls1_':
             et = T_Parse_Node
         elif exa.source_text() == '« _matched_ »':
             et = T_String | T_IntegralNumber_

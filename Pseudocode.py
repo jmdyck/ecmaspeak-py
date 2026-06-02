@@ -417,7 +417,7 @@ def annotate_invocations(anode):
                         'ToBigUint64',
                     ]
                 elif opn_before_paren.source_text() == '_operation_':
-                    assert d.source_text() == '_operation_(_lNum_, _rNum_)'
+                    assert d.source_text() == '_operation_(_leftNumber_, _rightNumber_)'
                     # ApplyStringOrNumericBinaryOperator
                     op_names = [
                         'Number::exponentiate',
@@ -1625,7 +1625,7 @@ nts_behind_var_in_sdo_call = {
     # 5715 BoundNames
     ('BoundNames', '_head_'): ['AsyncArrowHead'],
     # 11005 FunctionDeclarationInstantiation
-    ('BoundNames', '_fnDecl_'): [
+    ('BoundNames', '_funcDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
@@ -1640,7 +1640,8 @@ nts_behind_var_in_sdo_call = {
         'AsyncGeneratorDeclaration',
     ],
     # 11005 FunctionDeclarationInstantiation +
-    ('BoundNames', '_varDecl_'): [
+    # 21588 GlobalDeclarationInstantiation
+    ('BoundNames', '_variableDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
@@ -1653,7 +1654,7 @@ nts_behind_var_in_sdo_call = {
         'ClassDeclaration',
         'LexicalDeclaration',
     ],
-    ('BoundNames', '_lexDecl_'): [
+    ('BoundNames', '_lexicalDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
@@ -1668,20 +1669,6 @@ nts_behind_var_in_sdo_call = {
     ],
     # 17667 BlockDeclarationInstantiation
     ('BoundNames', '_decl_'): [
-        'FunctionDeclaration',
-        'GeneratorDeclaration',
-        'AsyncFunctionDeclaration',
-        'AsyncGeneratorDeclaration',
-        #
-        'VariableDeclaration',
-        'ForBinding',
-        'BindingIdentifier',
-        #
-        'ClassDeclaration',
-        'LexicalDeclaration',
-    ],
-    # 21588 GlobalDeclarationInstantiation
-    ('BoundNames', '_varDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
@@ -1772,7 +1759,7 @@ nts_behind_var_in_sdo_call = {
     ('AssignmentTargetType', '_expr_'): ['ParenthesizedExpression'],
 
     # 10885 OrdinaryFunctionCreate
-    ('ExpectedArgumentCount', '_parameterList_'): [
+    ('ExpectedArgumentCount', '_paramList_'): [
         'FormalParameters',
         'ArrowParameters',
         'UniqueFormalParameters',
@@ -1785,7 +1772,7 @@ nts_behind_var_in_sdo_call = {
 
     # 11005 FunctionDeclarationInstantiation
     # 21588 GlobalDeclarationInstantiation
-    ('IsConstantDeclaration', '_lexDecl_'): [
+    ('IsConstantDeclaration', '_lexicalDecl_'): [
         'FunctionDeclaration',
         'ClassDeclaration',
         'ExportDeclaration',
@@ -1817,7 +1804,7 @@ nts_behind_var_in_sdo_call = {
     ],
 
     # 11005 FunctionDeclarationInstantiation
-    ('InstantiateFunctionObject', '_fnDecl_'): [
+    ('InstantiateFunctionObject', '_funcDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
@@ -1918,7 +1905,7 @@ nts_behind_var_in_sdo_call = {
     ('Evaluation', '_body_'): ['ScriptBody'],
     # 38884 GeneratorStart
     # 39144 AsyncGeneratorStart
-    ('Evaluation', '_generatorBody_'): ['FunctionBody'],
+    ('Evaluation', '_genBody_'): ['FunctionBody'],
     # 39454 AsyncFunctionStart
     ('Evaluation', '_asyncFunctionBody_'): ['FunctionBody', 'ExpressionBody'],
     # 40958 AsyncBlockStart
@@ -1930,9 +1917,11 @@ nts_behind_var_in_sdo_call = {
     ('StringValue', '_n_'): ['IdentifierName'],
 
     # 15879 EvaluateNew
+    ('ArgumentListEvaluation', '_argumentsNode_'): ['Arguments'],
     # 15900 Evaluation
+    ('ArgumentListEvaluation', '_args_'): ['Arguments'],
     # 15932 EvaluateCall
-    ('ArgumentListEvaluation', '_arguments_'): ['Arguments', 'TemplateLiteral'],
+    ('ArgumentListEvaluation', '_argumentListNode_'): ['Arguments', 'TemplateLiteral'],
 
     # 15986 ChainEvaluation
     ('ChainEvaluation', '_optionalChain_'): ['OptionalChain'],
@@ -1963,23 +1952,23 @@ nts_behind_var_in_sdo_call = {
     ('ForDeclarationBindingInitialization', '_lhs_'): ['ForDeclaration'],
 
     # 19365
-    ( 'Evaluation', '_specifierExpression_'): ['AssignmentExpression'],
-    ( 'Evaluation', '_optionsExpression_'  ): ['AssignmentExpression'],
+    ( 'Evaluation', '_specifierExpr_'): ['AssignmentExpression'],
+    ( 'Evaluation', '_optionsExpr_'  ): ['AssignmentExpression'],
 
     # 19484 IsSimpleParameterList
     ('IsSimpleParameterList', '_head_'): ['AsyncArrowHead'],
 
     # 20531 Early Errors
-    ('HasDirectSuper', '_constructor_'): ['ClassElement'],
+    ('HasDirectSuper', '_ctor_'): ['ClassElement'],
 
     # 20657 ClassDefinitionEvaluation
-    ('DefineMethod', '_constructor_'): ['ClassElement'],
+    ('DefineMethod', '_ctor_'): ['ClassElement'],
 
     # 20657 ClassDefinitionEvaluation
-    ('IsStatic', '_e_'): ['ClassElement'],
+    ('IsStatic', '_classElement_'): ['ClassElement'],
 
     # 20657 ClassDefinitionEvaluation
-    ('ClassElementEvaluation', '_e_'): ['ClassElement'],
+    ('ClassElementEvaluation', '_classElement_'): ['ClassElement'],
 
     # 21229 IsInTailPosition
     ('HasCallInTailPosition', '_body_'): ['FunctionBody', 'ConciseBody'],
@@ -1989,7 +1978,7 @@ nts_behind_var_in_sdo_call = {
     # 18665 ForIn/OfHeadEvaluation
     ('Evaluation', '_expr_'): ['ParenthesizedExpression', 'Expression', 'AssignmentExpression'],
     # 21719 ScriptEvaluation
-    ('Evaluation', '_script_'): ['Script'],
+    ('Evaluation', '_scriptNode_'): ['Script'],
 
     # 21746 GlobalDeclarationInstantiation
     ('LexicallyDeclaredNames',      '_script_'): ['Script'],
@@ -2026,7 +2015,7 @@ nts_behind_var_in_sdo_call = {
     ('CapturingGroupName', '_thisGroupName_'): [
         'GroupName',
     ],
-    ('CapturingGroupName', '_gs_'): [
+    ('CapturingGroupName', '_groupSpecifier_'): [
         'GroupSpecifier',
     ],
 
@@ -2038,11 +2027,11 @@ nts_behind_var_in_sdo_call = {
     ('Evaluation', '_script_'): ['Script'],
 
     # 47367
-    ('JSONArrayLiteralContentNodes', '_typedValNode_'): ['ArrayLiteral'],
+    ('JSONArrayLiteralContentNodes', '_typedValueNode_'): ['ArrayLiteral'],
     # 47386
     ('PropName', '_propertyNode_'): ['PropertyDefinition'],
     # 47379
-    ('PropertyDefinitionNodes', '_typedValNode_'): ['ObjectLiteral'],
+    ('PropertyDefinitionNodes', '_typedValueNode_'): ['ObjectLiteral'],
 }
 
 def is_sdo_coverage_exception(sdo_name, lhs_nt, rhs_reduced):
