@@ -1347,6 +1347,7 @@ def _handle_other_section(section):
             (r'Shorthands for Unwrapping Completion Records',      'shorthand'),
             (r'IfAbruptRejectPromise \( _value_, _capability_ \)', 'shorthand'),
             (r'IfAbruptCloseIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
+            (r'IfAbruptCloseIterators \( _value_, _iteratorRecords_ \)', 'shorthand'),
             (r'IfAbruptCloseAsyncIterator \( _value_, _iteratorRecord_ \)', 'shorthand'),
 
             (r'.+ Instances',             'instances: info // properties'),

@@ -5400,6 +5400,15 @@ class _:
 # ------------------------------------------------------------------------------
 #> A step may specify the iterative application of its substeps.
 
+@P('{COMMAND} : Repeat {var} times:{IND_COMMANDS}')
+class _:
+    def s_nv(anode, env0):
+        [n_var, commands] = anode.children
+        env0.assert_expr_is_of_type(n_var, T_MathNonNegativeInteger_)
+        def check_before_body(env):
+            return (env, env)
+        return tc_loop(env0, check_before_body, commands)
+
 @P("{COMMAND} : Repeat,{IND_COMMANDS}")
 class _:
     def s_nv(anode, env0):
@@ -10496,8 +10505,7 @@ class _:
         env0.assert_expr_is_of_type(listb, ListType(T_SlotName_))
         return env0
 
-@P("{COMMAND} : Remove {var} from {var}.")
-@P("{COMMAND} : Remove {var} from {DOTTING}.")
+@P("{COMMAND} : Remove {SETTABLE} from {SETTABLE}.")
 class _:
     def s_nv(anode, env0):
         [item_var, list_ex] = anode.children
@@ -10919,7 +10927,7 @@ class _:
         env2 = env0.ensure_expr_is_of_type(subscript_var, T_MathInteger_)
         if isinstance(seq_type, ListType):
             item_type = seq_type.element_type
-        elif seq_type == T_List:
+        elif seq_type == T_List or seq_type == T_TBD:
             item_type = T_TBD
         elif seq_type.is_a_subtype_of_or_equal_to(T_Data_Block | T_Shared_Data_Block):
             item_type = T_MathInteger_
@@ -11606,6 +11614,12 @@ class _:
 class _:
     s_tb = ProcType((T_Tangible_, T_Tangible_), NormalCompletionType(T_Number) | T_throw_completion)
 
+@P("{VAL_DESC} : an Abstract Closure that takes {VAL_DESC} and returns {VALUE_DESCRIPTION}")
+class _:
+    def s_tb(val_desc, env):
+        assert val_desc.source_text() == 'an Abstract Closure that takes a List of ECMAScript language values and returns an ECMAScript language value'
+        return ProcType((ListType(T_Tangible_),), T_Tangible_)
+
 @P("{MULTILINE_EXPR} : a new {CLOSURE_KIND} with {CLOSURE_PARAMETERS} that captures {CLOSURE_CAPTURES} and performs the following {CLOSURE_STEPS} when called:{IND_COMMANDS}")
 class _:
     def s_expr(expr, env0, _):
@@ -11885,22 +11899,26 @@ class _:
 
 # ==============================================================================
 #@ 7.4.13 IfAbruptCloseIterator
-#@ 7.4.15 IfAbruptCloseAsyncIterator
+#@ 7.4.16 IfAbruptCloseAsyncIterator
 
 @P("{COMMAND} : IfAbruptCloseIterator({var}, {var}).")
+@P("{COMMAND} : IfAbruptCloseIterators({var}, {var}).")
 @P("{COMMAND} : IfAbruptCloseAsyncIterator({var}, {var}).")
 class _:
     def s_nv(anode, env0):
         [vara, varb] = anode.children
         ta = env0.assert_expr_is_of_type(vara, T_Completion_Record)
-        env0.assert_expr_is_of_type(varb, T_Iterator_Record)
+        if 'Iterators' in anode.source_text():
+            env0.assert_expr_is_of_type(varb, ListType(T_Iterator_Record))
+        else:
+            env0.assert_expr_is_of_type(varb, T_Iterator_Record)
 
         (normal_part_of_ta, abrupt_part_of_ta) = ta.split_by(T_normal_completion)
 
         if abrupt_part_of_ta == T_0:
             add_pass_error(
                 vara,
-                f"ST of {vara.source_text()} is {ta}\n    which can't be abrupt, so using 'IfAbruptCloseIterator' is a bit odd"
+                f"ST of {vara.source_text()} is {ta}\n    which can't be abrupt, so using 'IfAbruptCloseFoo' is a bit odd"
             )
         else:
             proc_add_return(env0, abrupt_part_of_ta | T_throw_completion, anode)

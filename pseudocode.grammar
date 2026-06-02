@@ -154,6 +154,7 @@
     For each {EACH_THING}, {SMALL_COMMAND}.
     IfAbruptCloseAsyncIterator({var}, {var}).
     IfAbruptCloseIterator({var}, {var}).
+    IfAbruptCloseIterators({var}, {var}).
     IfAbruptRejectPromise({var}, {var}).
     Insert {var} as the first element of {var}.
     Leave the critical section for {var}.
@@ -183,11 +184,11 @@
     Remove the first {var} elements of {SETTABLE}.
     Remove the last element of {SETTABLE}.
     Remove the own property with name {var} from {var}.
+    Remove {SETTABLE} from {SETTABLE}.
     Remove {var} from the execution context stack and restore the execution context that is at the top of the execution context stack as the running execution context.
     Remove {var} from the execution context stack and restore {var} as the running execution context.
     Remove {var} from the execution context stack.
-    Remove {var} from {DOTTING}.
-    Remove {var} from {var}.
+    Repeat {var} times:{IND_COMMANDS}
     Repeat, until {CONDITION},{IND_COMMANDS}
     Repeat, while {CONDITION},{IND_COMMANDS}
     Repeat,{IND_COMMANDS}
@@ -661,6 +662,7 @@
     {var} and {var}
     {var}, {var}, and {var}
     {var}, {var}, {var}, and {var}
+    {var}, {var}, {var}, {var}, {var}, and {var}
     {var}, {var}, {var}, {var}, {var}, {var}, {var}, and {var}
 
 {CLOSURE_STEPS} :
@@ -1420,6 +1422,7 @@
     an ASCII digit code unit ({hex_int_lit} through {hex_int_lit}, inclusive)
     an ASCII lowercase letter code unit ({hex_int_lit} through {hex_int_lit}, inclusive)
     an Abstract Closure
+    an Abstract Closure that takes {VAL_DESC} and returns {VALUE_DESCRIPTION}
     an Abstract Closure that takes {VAL_DESC} and {VAL_DESC} and returns {VALUE_DESCRIPTION}
     an Abstract Closure with no parameters
     an Abstract Closure with two parameters
