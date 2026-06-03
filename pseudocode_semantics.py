@@ -2250,7 +2250,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
             '*"%WeakMap.prototype%"*'                           : T_WeakMap_object_,
             '*"%WeakRef.prototype%"*'                           : T_WeakRef_object_,
             '*"%WeakSet.prototype%"*'                           : T_WeakSet_object_,
-            '<code>"%<var>NativeError</var>.prototype%"</code>' : T_Error,
+            '*"%<var>NativeError</var>.prototype%"*'            : T_Error,
         }[proto_st]
         return_type = NormalCompletionType(obj_type) | T_throw_completion
 
