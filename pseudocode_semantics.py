@@ -10641,6 +10641,13 @@ class _:
         env0.assert_expr_is_of_type(exb, T_List)
         return (env0, env0)
 
+@P("{CONDITION_1} : The number of elements in {var} is evenly divisible by 3")
+class _:
+    def s_cond(cond, env0, _):
+        [var] = cond.children
+        env0.assert_expr_is_of_type(var, T_List)
+        return (env0, env0)
+
 # ----------------------------
 # the List contains something:
 

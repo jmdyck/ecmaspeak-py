@@ -388,6 +388,7 @@
     The length of {var} is {EX}
     The mathematical value of {var}'s {starred_str} property is {EX}
     The next step never returns an abrupt completion because {CONDITION_1}
+    The number of elements in {var} is evenly divisible by 3
     The surrounding agent is in the critical section for {var}
     The surrounding agent is not in the critical section for any WaiterList Record
     There are sufficient bytes in {var} starting at {var} to represent a value of {var}
