@@ -2410,7 +2410,7 @@ def extract_intrinsic_info_from_WKI_section(section):
         section.put_fact(percent_name, 'exists', '')
 
         if global_name:
-            global_name = detick(global_name)
+            global_name = destarquote(global_name)
             section.put_fact(percent_name, 'is-aka', global_name)
             section.put_fact(
                 'the global object',
@@ -2424,7 +2424,9 @@ def extract_intrinsic_info_from_WKI_section(section):
             non_global_wkis.append(percent_name)
 
         if phrase:
-            section.put_fact(percent_name, 'is-aka', detick(phrase))
+            phrase = detick(phrase)
+            phrase = re.sub(r'<emu-not-ref>(constructors?)</emu-not-ref>', r'\1', phrase)
+            section.put_fact(percent_name, 'is-aka', phrase)
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -3152,7 +3154,7 @@ def _(section, mo, emu_alg):
 
 @for_patterns(
     (r"The( initial)? value of {THIS} is {VALUE} \({H_EMU_XREF}\)\. Each _NativeError_ constructor has a distinct prototype object\."),
-    (r"The( initial)? value of {THIS} is {VALUE} \(see {H_EMU_XREF}\)\. This property has the attributes {ATTRS}\."),
+    (r"The( initial)? value of the {THIS} property of the global object is {VALUE} \(see {H_EMU_XREF}\)\."),
 
     (r"The( initial)? value of the {THIS} property is {VALUE}, defined in {H_EMU_XREF}\."),
     (r"The( initial)? value of the {THIS}( data)? property is {VALUE}\."),
@@ -3166,12 +3168,7 @@ def _(section, mo):
     if 'this' in mo.groupdict():
         confirm_this_property(section, mo.group('this'))
 
-    if 'attrs' in mo.groupdict():
-        attr_dict = attr_string_to_dict(mo.group('attrs'))
-    else:
-        attr_dict = {}
-
-    section.this_property_has_attributes({'[[Value]]': mo.group('value'), **attr_dict})
+    section.this_property_has_attributes({'[[Value]]': mo.group('value')})
 
 # ------------------------------------------------------------------------------
 
@@ -3432,6 +3429,9 @@ def attr_string_to_dict(st):
 def pystr_to_spec_String_literal(pystr):
     assert '"' not in pystr
     return f'*"{pystr}"*'
+
+def destarquote(st):
+    return re.sub(r'^\*"(.*)"\*$', r'\1', st)
 
 def detick(st):
     return st.replace('`', '')

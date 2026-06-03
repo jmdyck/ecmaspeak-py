@@ -158,10 +158,10 @@ def each_row_in_wki_table(emu_table):
         if global_name == '':
             pass
         else:
-            assert re.fullmatch(r"`\w+`", global_name)
-            assert global_name[1:-1] == percent_name[1:-1]
+            assert re.fullmatch(r'\*"\w+"\*', global_name)
+            assert global_name[2:-2] == percent_name[1:-1]
             assert global_name not in global_property_names
-            global_property_names.add(global_name[1:-1])
+            global_property_names.add(global_name[2:-2])
 
         if re.match(r'(A function|An) object that ', assoc):
             phrase = ''
