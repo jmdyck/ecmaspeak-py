@@ -170,7 +170,6 @@
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. If there are multiple possibilities for {var}, choose {var} such that {EX} is closest to {EX}. If there are two such possible values of {var}, choose the one that is even. Note that {var} is the number of digits in the representation of {var} using radix {var} and that {var} is not divisible by {var}.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that the decimal representation of {var} has {SUM} digits, {var} is not divisible by 10, and the least significant digit of {var} is not necessarily uniquely determined by these criteria.
     Let {DEFVAR}, {DEFVAR}, and {DEFVAR} be integers such that {CONDITION}. Note that {var} is the number of digits in the representation of {var} using radix {var}, that {var} is not divisible by {var}, and that the least significant digit of {var} is not necessarily uniquely determined by these criteria.
-    Optionally, {SMALL_COMMAND}.
     Perform an implementation-defined debugging action.
     Perform any necessary implementation-defined initialization of {var}.
     Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}
@@ -731,7 +730,7 @@
     an implementation-approximated Number value representing {EXPR}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}
     an implementation-defined String source code representation of {var}. The representation must have the syntax of a {nonterminal}. Additionally, if {var} has an {DSBN} internal slot and {DOTTING} is a String, the portion of the returned String that would be matched by {nonterminal} {nonterminal} must be {DOTTING}
-    an implementation-defined choice of either {var} or {var}
+    an implementation-defined choice of either {EX} or {EX}
     an implementation-defined non-negative mathematical value
     an implementation-defined string that is either {EX} or {EXPR}
     an instance of the production {h_emu_grammar}

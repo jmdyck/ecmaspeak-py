@@ -3559,7 +3559,6 @@ def d_exec_pass_down_expecting_None(anode):
 @P("{ELSE_PART} : Else, {SMALL_COMMAND}.")
 @P("{ELSE_PART} : Else,{IND_COMMANDS}")
 @P("{COMMAND} : Perform the following substeps in an implementation-defined order, possibly interleaving parsing and error detection:{IND_COMMANDS}")
-@P("{COMMAND} : Optionally, {SMALL_COMMAND}.")
 class _:
     s_nv = s_nv_pass_down
     d_exec = d_exec_pass_down_expecting_None
@@ -7504,13 +7503,13 @@ class _:
         env0.assert_expr_is_of_type(var, T_List)
         return (T_MathReal_, env0)
 
-@P("{EXPR} : an implementation-defined choice of either {var} or {var}")
+@P("{EXPR} : an implementation-defined choice of either {EX} or {EX}")
 class _:
     def s_expr(expr, env0, _):
-        [vara, varb] = expr.children
-        env0.assert_expr_is_of_type(vara, T_MathReal_)
-        env0.assert_expr_is_of_type(varb, T_MathReal_)
-        return (T_MathReal_, env0)
+        [exa, exb] = expr.children
+        (a_t, env1) = tc_expr(exa, env0)
+        (b_t, env2) = tc_expr(exb, env1)
+        return (a_t | b_t, env2)
 
 # comparisons:
 
