@@ -262,6 +262,7 @@
     perform {PP_NAMED_OPERATION_INVOCATION}
     return {EXPR}
     reverse the order of the elements of {var}
+    send that signal
     set {SETTABLE} to {EXPR}
     suspend {var}
     throw a {ERROR_TYPE} exception
@@ -430,6 +431,7 @@
     the character {EX} is matched by {nonterminal}
     the decimal representation of {var} has 20 or fewer significant digits
     the execution context stack is empty
+    the execution environment of the ECMAScript implementation supports signaling to the operating system or CPU that the current executing code is in a spin-wait loop
     the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}
     the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
     the generator either threw an exception or performed either an implicit or explicit return

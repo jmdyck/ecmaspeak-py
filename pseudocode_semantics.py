@@ -14901,6 +14901,21 @@ class _:
         return env0
 
 # ==============================================================================
+#@ 25.4.16 Atomics.pause
+
+@P("{CONDITION_1} : the execution environment of the ECMAScript implementation supports signaling to the operating system or CPU that the current executing code is in a spin-wait loop")
+class _:
+    def s_cond(cond, env0, asserting):
+        [] = cond.children
+        return (env0, env0)
+
+@P("{SMALL_COMMAND} : send that signal")
+class _:
+    def s_nv(anode, env0):
+        [] = anode.children
+        return env0
+
+# ==============================================================================
 #@ 25.5.2 JSON.parse
 
 @P("{VAL_DESC} : a valid JSON text as specified in ECMA-404")

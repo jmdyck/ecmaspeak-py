@@ -1855,6 +1855,7 @@ def check_id(section):
             'String.prototype.trimright',                           # missing 'sec-'
             'sec-isfinite-number',                                  # 3837 changed param name from _number_ to _value_ 
             'sec-isnan-number',                                     # 3837 changed param name from _number_ to _value_ 
+            'Atomics.pause',                                        # 3847
         ]
 
     # ----------------------------------------------------------------
