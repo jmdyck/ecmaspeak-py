@@ -13699,17 +13699,17 @@ declare_isom(T_Object, 'might have', 'slot', '[[BooleanData]]', T_Boolean)
 declare_isom(T_Object, 'might have', 'slot', '[[SymbolData]]', T_Symbol)
 
 # ==============================================================================
-#@ 20.4.2.2 Symbol.for
+#@ 20.4.5.1 GlobalSymbolRegistry Records
 
-@P("{EX} : the GlobalSymbolRegistry List")
+@P("{LIST_ELEMENTS_DESCRIPTION} : GlobalSymbolRegistry Records")
 class _:
-    def s_expr(expr, env0, _):
-        return (ListType(T_GlobalSymbolRegistry_Record), env0)
+    s_tb = T_GlobalSymbolRegistry_Record
 
-@P("{CONDITION_1} : The GlobalSymbolRegistry List does not currently contain an entry for {var}")
+@P("{CONDITION_1} : {var} does not currently contain an entry for {var}")
 class _:
     def s_cond(cond, env0, asserting):
-        [var] = cond.children
+        [list_var, var] = cond.children
+        env0.assert_expr_is_of_type(list_var, ListType(T_GlobalSymbolRegistry_Record))
         env0.assert_expr_is_of_type(var, T_String | T_Symbol)
         return (env0, env0)
 

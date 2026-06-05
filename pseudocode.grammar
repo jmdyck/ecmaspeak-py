@@ -377,7 +377,6 @@
     Every CharSetElement of {var} consists of a single character
     Exactly one element of {var} is a Private Name whose {dsb_word} is {var}
     Exactly one element of {var} meets this criterion
-    The GlobalSymbolRegistry List does not currently contain an entry for {var}
     LoadRequestedModules has completed successfully on {var} prior to invoking this abstract operation
     The current execution context will not subsequently be used for the evaluation of any ECMAScript code or built-in functions. The invocation of Call subsequent to the invocation of this abstract operation will create and push a new execution context before performing any such evaluation
     The duplicate entries are only bound by {cap_word}
@@ -554,6 +553,7 @@
     {var} does not contain an? {nonterminal} Parse Node
     {var} does not contain exactly one character
     {var} does not contain two {nonterminal} Parse Nodes
+    {var} does not currently contain an entry for {var}
     {var} does not currently have a property {var}
     {var} does not have a Generator component
     {var} does not have a binding for {var}
@@ -926,7 +926,6 @@
     an implementation-defined timezone name
     the *this* value
     the BigInt value for {EX}
-    the GlobalSymbolRegistry List
     the Number value for {EX}
     the String {var}
     the character {SETTABLE}
@@ -1495,6 +1494,7 @@
     Cyclic Module Records
     ECMAScript language values
     ExportEntry Records
+    GlobalSymbolRegistry Records
     ImportAttribute Records
     ImportEntry Records
     Iterator Records
