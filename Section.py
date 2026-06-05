@@ -2614,11 +2614,13 @@ def extract_intrinsic_info_from_p_ul_section(section):
                     |
                         \ with\ 
                         (
-                            the\ internal\ state\ necessary\ to\ support\ 
+                            the\ internal\ state\ necessary\ to\ support\ the\ built-in\ methods\ of\ 
                             (
-                                the(\ `\w+`\ and)?\ `\w+.prototype`\ built-in\ methods
+                                %\w+%`\.prototype`
                             |
-                                the\ %\w+%`.prototype`\ built-in\ methods
+                                `\w+\.prototype`
+                            |
+                                `\w+`\ and\ `\w+.prototype`
                             )
                         |
                             an?\ \[\[\w+\]\]\ internal\ slot
