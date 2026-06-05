@@ -14908,7 +14908,7 @@ class _:
         return env0
 
 # ==============================================================================
-#@ 25.4.16 Atomics.pause
+#@ 25.4.12 Atomics.pause
 
 @P("{CONDITION_1} : the execution environment of the ECMAScript implementation supports signaling to the operating system or CPU that the current executing code is in a spin-wait loop")
 class _:
