@@ -1804,15 +1804,9 @@ nts_behind_var_in_sdo_call = {
     ],
 
     # 11005 FunctionDeclarationInstantiation
-    ('InstantiateFunctionObject', '_funcDecl_'): [
-        'FunctionDeclaration',
-        'GeneratorDeclaration',
-        'AsyncFunctionDeclaration',
-        'AsyncGeneratorDeclaration',
-    ],
     # 21746 GlobalDeclarationInstantiation
     # 23865 EvalDeclarationInstantiation
-    ('InstantiateFunctionObject', '_f_'): [
+    ('InstantiateFunctionObject', '_funcDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
@@ -1826,7 +1820,7 @@ nts_behind_var_in_sdo_call = {
         'AsyncGeneratorDeclaration',
     ],
     # 22946 InitializeEnvironment
-    ('InstantiateFunctionObject', '_d_'): [
+    ('InstantiateFunctionObject', '_lexicalDecl_'): [
         'FunctionDeclaration',
         'GeneratorDeclaration',
         'AsyncFunctionDeclaration',
