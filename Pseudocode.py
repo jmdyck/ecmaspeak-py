@@ -1194,7 +1194,10 @@ def check_the_sdo_name():
     for (op_name, op_info) in sorted(spec.alg_info_['op'].items()):
         if op_info.species.startswith('op: discriminated by syntax'):
             if len(op_info.invocations) == 0:
-                assert op_name == 'Early Errors'
+                if op_name == 'Early Errors':
+                    pass
+                else:
+                    stderr(f"!! no invocations for {op_name}")
                 continue
 
             rnn = op_info.headers[0].return_nature_node
@@ -1935,6 +1938,12 @@ nts_behind_var_in_sdo_call = {
     ('TV',  '_templateToken_'): ['NoSubstitutionTemplate', 'TemplateHead', 'TemplateMiddle', 'TemplateTail'],
 
     # 18694 ForIn/OfBodyEvaluation
+    ('IsAwaitUsingDeclaration', '_lhs_'): [
+        'ForDeclaration',
+    ],
+    ('IsUsingDeclaration', '_lhs_'): [
+        'ForDeclaration',
+    ],
     ('IsDestructuring', '_lhs_'): [
         'LeftHandSideExpression',
         'ForBinding',
@@ -1970,7 +1979,7 @@ nts_behind_var_in_sdo_call = {
 
     # 15629 Evaluation
     # 18665 ForIn/OfHeadEvaluation
-    ('Evaluation', '_expr_'): ['ParenthesizedExpression', 'Expression', 'AssignmentExpression'],
+    ('Evaluation', '_expr_'): ['ParenthesizedExpression', 'Expression', 'AssignmentExpression', 'AwaitExpression'],
     # 21719 ScriptEvaluation
     ('Evaluation', '_scriptNode_'): ['Script'],
 

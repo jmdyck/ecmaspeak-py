@@ -156,6 +156,23 @@ def each_boolean_vector_of_length(n):
         yield [True,  False, True]
         yield [True,  True,  False]
         yield [True,  True,  True]
+    elif n == 4:
+        yield [False, False, False, False]
+        yield [False, False, False, True]
+        yield [False, False, True,  False]
+        yield [False, False, True,  True]
+        yield [False, True,  False, False]
+        yield [False, True,  False, True]
+        yield [False, True,  True,  False]
+        yield [False, True,  True,  True]
+        yield [True,  False, False, False]
+        yield [True,  False, False, True]
+        yield [True,  False, True,  False]
+        yield [True,  False, True,  True]
+        yield [True,  True,  False, False]
+        yield [True,  True,  False, True]
+        yield [True,  True,  True,  False]
+        yield [True,  True,  True,  True]
     else:
         assert 0, n
 

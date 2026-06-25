@@ -902,6 +902,7 @@ _named_type_hierarchy = {
                     'Error': {
                         'AggregateError': {},
                         'ReferenceError': {},
+                        'SuppressedError': {},
                         'SyntaxError': {},
                         'TypeError': {},
                         'RangeError': {},
@@ -911,8 +912,10 @@ _named_type_hierarchy = {
                     # 'RegExp': {},
                     'ArrayBuffer_object_': {},
                     'Array_object_': {},
+                    'AsyncDisposableStack_object_': {},
                     'AsyncGenerator_object_': {},
                     'DataView_object_': {},
+                    'DisposableStack_object_': {},
                     'FinalizationRegistry_object_': {},
                     'Generator_object_': {},
                     'Iterator_object_': {},

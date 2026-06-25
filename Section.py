@@ -1779,7 +1779,7 @@ def check_id(section):
     remove_param_list = lambda s: re.sub(r' \(.+', '', s)
     remove_initial_The = lambda s: re.sub(r'^The ', '', s)
     trim_underscores_from_aliases = lambda s: re.sub(r'\b_([A-Za-z]+)_\b', r'\1', s)
-    prepend_parent_section_title = lambda s: section.parent.section_title + ' ' + s
+    prepend_parent_section_title = lambda s: section.parent.section_title + ' ' + s # or should it just use the parent's id?
     remove_backticks = lambda s: s.replace('`', '')
     convert_to_lowercase = lambda s: s.lower()
     change_space_to_hyphen = lambda s: s.replace(' ', '-')
@@ -2561,7 +2561,7 @@ def extract_intrinsic_info_from_p_ul_section(section):
         # does not have
         elif mo := re.fullmatch(r'does not have a \[\[\w+\]\] internal slot\.', li_ist):
             pass
-        elif mo := re.fullmatch(r'does not have a \[\[\w+\]\] internal slot or any of the other internal slots of Promise instances\.', li_ist):
+        elif mo := re.fullmatch(r'does not have an? \[\[\w+\]\] internal slot or any of the other internal slots of \w+ instances\.', li_ist):
             pass
         elif mo := re.fullmatch(r'does not have a \[\[\w+\]\] or any other of the internal slots that are specific to _TypedArray_ instance objects\.', li_ist):
             pass
@@ -2574,7 +2574,7 @@ def extract_intrinsic_info_from_p_ul_section(section):
 
         elif mo := re.fullmatch(r'''(?x)
                 is\ not\ an?\ (\w+)\ (object|instance)
-                (\ or\ an\ AggregateError\ instance)?
+                (\ or\ an?\ \w+\ instance)?
                 (;\ it|\ and)\ does\ not\ have\ an?\ \[\[\w+\]\]\ internal\ slot
                 (
                     \.
@@ -3308,7 +3308,7 @@ def ispl_prep(s):
                 |
                 (?P<func_name2>\S+)
                 |
-                [Tt]his\ (?P<func_what3>function|method|async\ function)
+                [Tt]his\ (?P<func_what3>function|method|async\ function|async\ method)
             ))''')
     )
 

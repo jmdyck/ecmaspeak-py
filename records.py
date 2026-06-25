@@ -106,6 +106,11 @@ def extract_record_schemas():
     assert len(record_schema.addl_field_decls) == 0
     record_schema.add_field_decl(FieldDecl('[[OuterEnv]]', '*null* or an Environment Record', 'used to model the logical nesting of Environment Record values'))
 
+    #> Every Declarative Environment Record also has a [[DisposableResourceStack]] field,
+    #> which contains a List of DisposableResource Records.
+    record_schema = ensure_RecordSchema('Declarative Environment Record')
+    record_schema.add_field_decl(FieldDecl('[[DisposableResourceStack]]', 'a List of DisposableResource Records', 'blah'))
+
     record_schema = ensure_RecordSchema('Module Environment Record')
     # Need to hard-code this because it doesn't have an "Additional Fields" table
     # and no longer has an "Additional Methods" table,

@@ -1892,6 +1892,7 @@ def convert_nature_to_type(nature):
 
             'a List of characters': ListType(T_character_),
             'a List of either CaptureRange or *undefined*': ListType(T_CaptureRange | T_Undefined),
+            'a List of DisposableResource Records': ListType(T_DisposableResource_Record),
 
         }[nature]
 
@@ -2232,10 +2233,12 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
         obj_type = {
             '*"%AggregateError.prototype%"*'                    : T_AggregateError,
             '*"%ArrayBuffer.prototype%"*'                       : T_ArrayBuffer_object_,
+            '*"%AsyncDisposableStack.prototype%"*'              : T_AsyncDisposableStack_object_,
             '*"%AsyncGeneratorPrototype%"*'                     : T_AsyncGenerator_object_,
             '*"%Boolean.prototype%"*'                           : T_Object,
             '*"%DataView.prototype%"*'                          : T_DataView_object_,
             '*"%Date.prototype%"*'                              : T_Object,
+            '*"%DisposableStack.prototype%"*'                   : T_DisposableStack_object_,
             '*"%Error.prototype%"*'                             : T_Error,
             '*"%FinalizationRegistry.prototype%"*'              : T_FinalizationRegistry_object_,
             '*"%GeneratorPrototype%"*'                          : T_Generator_object_,
@@ -2247,6 +2250,7 @@ def tc_invocation_of_singular_op(callee_op, args, expr, env0):
             '*"%RegExp.prototype%"*'                            : T_Object,
             '*"%Set.prototype%"*'                               : T_Object,
             '*"%SharedArrayBuffer.prototype%"*'                 : T_SharedArrayBuffer_object_,
+            '*"%SuppressedError.prototype%"*'                   : T_SuppressedError,
             '*"%WeakMap.prototype%"*'                           : T_WeakMap_object_,
             '*"%WeakRef.prototype%"*'                           : T_WeakRef_object_,
             '*"%WeakSet.prototype%"*'                           : T_WeakSet_object_,
@@ -2619,6 +2623,8 @@ def process_isom_table(emu_table):
             'Promise Instances'                  : T_Promise_object_,
             'Generator Instances'                : T_Generator_object_,
             'AsyncGenerator Instances'           : T_AsyncGenerator_object_,
+            'DisposableStack Instances'          : T_DisposableStack_object_,
+            'AsyncDisposableStack Instances'     : T_AsyncDisposableStack_object_,
         }[holder_text]
         must_or_might = 'might have' if holder_stype == T_Object else 'must have'
         method_or_slot = 'slot'
@@ -10270,6 +10276,10 @@ class ES_List(ES_Value):
 class _:
     s_tb = T_List
 
+@P("{VAL_DESC} : an empty List")
+class _:
+    s_tb = a_subset_of(T_List)
+
 @P("{VAL_DESC} : a List of {LIST_ELEMENTS_DESCRIPTION}")
 class _:
     def s_tb(val_desc, env):
@@ -11930,6 +11940,14 @@ class _:
             proc_add_return(env0, abrupt_part_of_ta | T_throw_completion, anode)
 
         return env0.with_expr_type_replaced(vara, s_dot_field(normal_part_of_ta, '[[Value]]'))
+
+# ==============================================================================
+#@ 7.5.1 DisposableResource Records
+
+@P("{VAL_DESC} : a DisposableResource Record")
+@P("{LIST_ELEMENTS_DESCRIPTION} : DisposableResource Records")
+class _:
+    s_tb = T_DisposableResource_Record
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #@ 8 Syntax-Directed Operations
@@ -15062,13 +15080,13 @@ declare_isom(T_Object, 'might have', 'slot', '[[Iterated]]', T_Iterator_Record)
 declare_isom(T_Generator_object_, 'might have', 'slot', '[[UnderlyingIterators]]', ListType(T_Iterator_Record))
 
 # ==============================================================================
-#@ 27.2 Promise Objects
+#@ 27.5 Promise Objects
 
 @P("{VAL_DESC} : a Promise")
 class _:
     s_tb = T_Promise_object_
 
-#@ 27.2.1.1 PromiseCapability Records
+#@ 27.5.1.1 PromiseCapability Records
 
 @P("{VAL_DESC} : a PromiseCapability Record for an intrinsic {percent_word}")
 class _:
@@ -15078,7 +15096,7 @@ class _:
 class _:
     s_tb = T_PromiseCapability_Record
 
-#@ 27.2.1.1.1 IfAbruptRejectPromise
+#@ 27.5.1.1.1 IfAbruptRejectPromise
 
 @P("{COMMAND} : IfAbruptRejectPromise({var}, {var}).")
 class _:
@@ -15093,21 +15111,21 @@ class _:
         proc_add_return(env0, T_Promise_object_, anode)
         return env0.with_expr_type_replaced(vara, s_dot_field(normal_part_of_ta, '[[Value]]'))
 
-#@ 27.2.1.2 PromiseReaction Records
+#@ 27.5.1.2 PromiseReaction Records
 
 @P("{VAL_DESC} : a PromiseReaction Record")
 @P("{LIST_ELEMENTS_DESCRIPTION} : PromiseReaction Records")
 class _:
     s_tb = T_PromiseReaction_Record
 
-#@ 27.2.1.3 CreateResolvingFunctions
+#@ 27.5.1.3 CreateResolvingFunctions
 
 T_boolean_value_record_ = RecordType('', (('[[Value]]', T_Boolean),))
 
 declare_isom(T_function_object_, 'might have', 'slot', '[[Promise]]',         T_Object)
 declare_isom(T_function_object_, 'might have', 'slot', '[[AlreadyResolved]]', T_boolean_value_record_)
 
-#@ 27.2.4 Properties of the Promise Constructor
+#@ 27.5.4 Properties of the Promise Constructor
 
 declare_isom(T_function_object_, 'might have', 'slot', '[[AlreadyCalled]]',     T_boolean_value_record_ | T_Boolean)
 declare_isom(T_function_object_, 'might have', 'slot', '[[Index]]',             T_MathNonNegativeInteger_)
@@ -15117,7 +15135,7 @@ declare_isom(T_function_object_, 'might have', 'slot', '[[Capability]]',        
 declare_isom(T_function_object_, 'might have', 'slot', '[[RemainingElements]]', RecordType('', (('[[Value]]', T_MathInteger_),)))
 
 # ==============================================================================
-#@ 27.5 Generator Objects
+#@ 27.8 Generator Objects
 
 #> A Generator is an instance of a generator function
 #> and conforms to both the <i>Iterator</i> and <i>Iterable</i> interfaces.
@@ -15133,7 +15151,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 27.6 AsyncGenerator Objects
+#@ 27.9 AsyncGenerator Objects
 
 @P("{VAL_DESC} : an AsyncGenerator")
 class _:
@@ -15150,7 +15168,7 @@ class _:
     s_tb = T_AsyncGeneratorRequest_Record
 
 # ==============================================================================
-#@ 27.7.5.2 AsyncBlockStart
+#@ 27.10.5.2 AsyncBlockStart
 
 @P("{CONDITION_1} : the async function either threw an exception or performed an implicit or explicit return; all awaiting is done")
 class _:

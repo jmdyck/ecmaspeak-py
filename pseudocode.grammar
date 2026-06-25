@@ -1131,6 +1131,7 @@
     the ClassFieldDefinition Record
     the ClassStaticBlockDefinition Record
     the DataView With Buffer Witness Record
+    the DisposableResource Record
     the ExportEntry Record
     the GlobalSymbolRegistry Record
     the GraphLoadingState Record
@@ -1295,6 +1296,7 @@
     a Data Block
     a DataView
     a DataView With Buffer Witness Record
+    a DisposableResource Record
     a FinalizationRegistry
     a For-In Iterator
     a Generator
@@ -1384,6 +1386,7 @@
     a finite time value
     a fully populated Property Descriptor
     a function object
+    a function object that returns a promise
     a function that returns a promise for an IteratorResult object
     a function that returns an IteratorResult object
     a function that returns an async iterator object
@@ -1446,6 +1449,7 @@
     an agent signifier
     an arguments exotic object
     an array index
+    an empty List
     an execution context
     an extensible object that does not have a {starred_str} own property
     an extensible ordinary object with no own properties
@@ -1492,6 +1496,7 @@
     Chosen Value Records
     ClassFieldDefinition Records
     Cyclic Module Records
+    DisposableResource Records
     ECMAScript language values
     ExportEntry Records
     GlobalSymbolRegistry Records
@@ -1606,6 +1611,7 @@
     *AggregateError*
     *RangeError*
     *ReferenceError*
+    *SuppressedError*
     *SyntaxError*
     *TypeError*
     *URIError*
