@@ -12276,12 +12276,19 @@ class _:
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
 
-@P("{CONDITION_1} : {var} is the running execution context again")
+@P("{CONDITION_1} : {var} is the running execution context")
 class _:
     def s_cond(cond, env0, asserting):
         [var] = cond.children
         env0.assert_expr_is_of_type(var, T_execution_context)
         return (env0, env0)
+
+@P("{EXPR} : the Completion Record with which {var} was just resumed")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_execution_context)
+        return (NormalCompletionType(T_Tangible_ | T_tilde_empty_) | T_throw_completion, env0)
 
 # ------------------------------------------------------------------------------
 #> Each execution context has at least the state components listed in
@@ -12489,24 +12496,17 @@ class _:
         [] = anode.children
         return env0
 
-@P("{COMMAND} : Resume {var} passing {EX}. If {var} is ever resumed again, let {DEFVAR} be the Completion Record with which it is resumed.")
+@P("{COMMAND} : Resume {var}, passing {EX}.")
 class _:
     def s_nv(anode, env0):
-        [vara, exb, varc, vard] = anode.children
+        [vara, exb] = anode.children
         env0.assert_expr_is_of_type(vara, T_execution_context)
         env1 = env0.ensure_expr_is_of_type(exb, NormalCompletionType(T_Tangible_) | T_throw_completion)
-        env1.assert_expr_is_of_type(varc, T_execution_context)
-        return env0.plus_new_entry(vard, NormalCompletionType(T_Tangible_ | T_tilde_empty_) | T_throw_completion)
+        return env0
 
 
 # ------
 # other:
-
-@P("{CONDITION_1} : control reaches here")
-class _:
-    def s_cond(cond, env0, asserting):
-        [] = cond.children
-        return (env0, env0)
 
 @P("{CONDITION_1} : we return here")
 class _:

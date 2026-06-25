@@ -195,7 +195,7 @@
     Replace the property named {var} of object {var} with an? {PROPERTY_KIND} property whose {dsb_word} and {dsb_word} attributes are set to {var} and {var}, respectively, and whose {dsb_word} and {dsb_word} attributes are set to the value of the corresponding field in {var} if {var} has that field, or to the attribute's {h_emu_xref} otherwise.
     Replace {var} in {var} with {var}.
     Resume the context that is now on the top of the execution context stack as the running execution context.
-    Resume {var} passing {EX}. If {var} is ever resumed again, let {DEFVAR} be the Completion Record with which it is resumed.
+    Resume {var}, passing {EX}.
     Return {EXPR}.
     Return {EXPR}. This may be of type Reference.
     Return {MULTILINE_EXPR}
@@ -406,7 +406,6 @@
     any element of {NAMED_OPERATION_INVOCATION} also occurs in {NAMED_OPERATION_INVOCATION}
     any element of {NAMED_OPERATION_INVOCATION} does not also occur in either {NAMED_OPERATION_INVOCATION}, or {NAMED_OPERATION_INVOCATION}
     any source text is matched by this production
-    control reaches here
     every CharSetElement of {var} consists of a single character (including if {var} is empty)
     it is impossible to create a new Shared Data Block value consisting of {var} bytes
     it is not possible to create a Data Block {var} consisting of {var} bytes
@@ -603,7 +602,7 @@
     {var} is now an empty List
     {var} is now the running execution context
     {var} is a code point listed in the “Code Point” column of {h_emu_xref}
-    {var} is the running execution context again
+    {var} is the running execution context
     {var} is this specification's name of an intrinsic object. The corresponding object must be an intrinsic that is intended to be used as the {DSBN} value of an object
     {var} must have an uninitialized binding for {var}
     {var} occurs exactly once in {var}
@@ -761,6 +760,7 @@
     the CharSet containing the single character {code_point_lit}
     the CharSet containing the single character {var}
     the Completion Record that is {h_emu_meta_start}the result of evaluating{h_emu_meta_end} {var} in a manner that conforms to the specification of {var}. If {CONDITION}, the *this* value is uninitialized; else {var} provides the *this* value. {var} provides the named parameters. {var} provides the NewTarget value
+    the Completion Record with which {var} was just resumed
     the ECMAScript Number value corresponding to {var}
     the Element Size value specified in {h_emu_xref} for Element Type {var}
     the Element Size value specified in {h_emu_xref} for {EX}
