@@ -432,7 +432,6 @@
     the execution context stack is empty
     the execution environment of the ECMAScript implementation supports signaling to the operating system or CPU that the current executing code is in a spin-wait loop
     the file {h_a} of the Unicode Character Database provides a simple or common case folding mapping for {var}
-    the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}
     the generator either threw an exception or performed either an implicit or explicit return
     the goal symbol of the syntactic grammar is {nonterminal}
     the host is a web browser
@@ -958,7 +957,6 @@
     the source text matched by {PROD_REF}
     the source text matched by {var}
     the string in the “ControlEscape” column of the row whose “Code Point” column contains {var}
-    the substring of {var} from index {dec_int_lit}
     the substring of {var} from {EX}
     the substring of {var} from {EX} to {EX}
     the value of {SETTABLE}

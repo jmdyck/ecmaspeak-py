@@ -8817,7 +8817,6 @@ class _:
         env2 = env1.ensure_expr_is_of_type(end_var, T_MathNonNegativeInteger_)
         return (T_String, env2)
 
-@P("{EX} : the substring of {var} from index {dec_int_lit}")
 @P("{EX} : the substring of {var} from {EX}")
 class _:
     def s_expr(expr, env0, _):
@@ -9040,15 +9039,6 @@ class _:
         [var, str_literal, ex] = cond.children
         env0.assert_expr_is_of_type(var, T_String)
         env0.assert_expr_is_of_type(ex, T_MathNonNegativeInteger_)
-        return (env0, env0)
-
-@P("{CONDITION_1} : the first two code units of {var} are either {STR_LITERAL} or {STR_LITERAL}")
-class _:
-    def s_cond(cond, env0, asserting):
-        [var, lita, litb] = cond.children
-        env0.assert_expr_is_of_type(var, T_String)
-        env0.assert_expr_is_of_type(lita, T_String)
-        env0.assert_expr_is_of_type(litb, T_String)
         return (env0, env0)
 
 # --------------------------------------------
