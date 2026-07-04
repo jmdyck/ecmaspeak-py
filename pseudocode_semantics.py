@@ -2846,19 +2846,13 @@ def get_early_errors_in(pnode):
 def traverse_for_early_errors(pnode):
     if pnode.is_terminal: return
 
-    if pnode.symbol == 'CoverParenthesizedExpressionAndArrowParameterList':
-        # Don't look for early errors within {pnode},
-        # because we'll be looking for them within either:
-        # - the ParenthesizedExpression that is covered by {pnode}, or
-        # - the ArrowFormalParameters that is covered by {pnode}.
-        #
-        # This is needed to prevent the exponential explosion I was getting with
-        # - pass/6b5e7e125097d439.js
-        # - pass/714be6d28082eaa7.js
-        # - pass/882910de7dd1aef9.js
-        # - pass/dd3c63403db5c06e.js
-        # which involve things like ((((a)))) but with way more parens.
-
+    if hasattr(pnode, 'covered_thing'):
+        # We must have encountered an early error rule
+        # indicating that {pnode} must cover something.
+        # Therefore, "no early error rules are applied to {pnode} or any of its descendants".
+        # Instead, early error traversal shifts to the covered node (if it exists).
+        if pnode.covered_thing:
+            traverse_for_early_errors(pnode.covered_thing)
         return
 
     ee_map = spec.sdo_coverage_map['Early Errors']
@@ -3014,7 +3008,7 @@ class Frame:
             s = anode.prod.lhs_s
 
             if s == '{EE_RULE}':
-                if frame.should_apply_the_rule():
+                if True:
                     try:
                         EXEC(anode, None)
                     except ReferenceToNonexistentThing:
@@ -3041,124 +3035,6 @@ class Frame:
                 assert 0, s
 
         return result
-
-    def should_apply_the_rule(frame):
-        if frame._alg_defn.kludgey_p is None: return True
-
-        # kludgey_p hasn't been parsed, so we can't simply run EXEC() on it.
-
-        p_ist = frame._alg_defn.kludgey_p.inner_source_text()
-        if p_ist == "In addition to describing an actual object initializer the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.":
-            # This <p> precedes two Early Error units,
-            # one headed by `PropertyDefinition : CoverInitializedName`,
-            # and one headed by the non-empty alternatives for `ObjectLiteral`.
-            focus_node = frame._focus_node
-            assert focus_node.symbol in ['PropertyDefinition', 'ObjectLiteral']
-
-            def ObjectLiteral_appears_in_a_context_where_ObjectAssignmentPattern_is_required():
-                # What is the referent for |ObjectLiteral|?
-                if focus_node.symbol == 'PropertyDefinition':
-                    # The PropertyDefinition's derivation chain must end with:
-                    #     ObjectLiteral -> PropertyDefinitionList+ -> PropertyDefinition.
-                    for anc in focus_node.each_ancestor():
-                        assert anc.symbol in ['PropertyDefinitionList', 'ObjectLiteral']
-                        if anc.symbol == 'ObjectLiteral':
-                            ObjectLiteral = anc
-                            break
-                    else:
-                        assert 0
-                elif focus_node.symbol == 'ObjectLiteral':
-                    # The |ObjectLiteral| in question is just the focus node.
-                    ObjectLiteral = focus_node
-                else:
-                    assert 0
-                assert ObjectLiteral.symbol == 'ObjectLiteral'
-
-                # "When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required ..."
-                #
-                # So when is that?
-                #
-                # Note that, although the preceding sentence says:
-                # "the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern|"
-                # that's not the point where such a covering originates.
-                #
-                # Instead, it originates in Early Error rules for some (but not all) productions
-                # that involve a LeftHandSideExpression:
-                #     AssignmentExpression : LeftHandSideExpression `=` AssignmentExpression
-                #     DestructuringAssignmentTarget : LeftHandSideExpression
-                #     ForInOfStatement : ...
-                # In each case, if the LeftHandSideExpression is an ObjectLiteral,
-                # then the LeftHandSideExpression is required to cover an AssignmentPattern,
-                # which causes the text of the LeftHandSideExpression (and the ObjectLiteral)
-                # to be reparsed as an ObjectAssignmentPattern.
-                # This situation is presumably what the quoted condition refers to.
-                #
-                # So we need to:
-                # (a) detect whether ObjectLiteral 'is' a LeftHandSideExpression, and then
-                # (b) detect whether that LeftHandSideExpression is in one of these productions.
-
-                # (a)
-                # The relevant derivation chain is
-                # LeftHandSideExpression -> NewExpression -> MemberExpression -> PrimaryExpression -> ObjectLiteral
-                four_levels_up = ObjectLiteral.parent.parent.parent.parent
-                if four_levels_up.symbol != 'LeftHandSideExpression':
-                    # The ObjectLiteral doesn't appear in a context where ObjectAssignmentPattern could be required.
-                    return False
-
-                # The ObjectLiteral is unit-derived from a LeftHandSideExpression,
-                # so it *might* appear in a contect etc. 
-                LeftHandSideExpression = four_levels_up
-
-                # (b)
-                parent_production = LeftHandSideExpression.parent.production
-                parent_prod_str = f"{parent_production.og_lhs} -> {parent_production.og_rhs_reduced}"
-                assert parent_prod_str in [
-                    "AssignmentExpression -> LeftHandSideExpression AssignmentOperator AssignmentExpression",
-                    "AssignmentExpression -> LeftHandSideExpression `=` AssignmentExpression",
-                    "DestructuringAssignmentTarget -> LeftHandSideExpression",
-                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `in` Expression `)` Statement",
-                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
-                    "UpdateExpression -> LeftHandSideExpression",
-                ], parent_prod_str
-                if parent_prod_str in [
-                    "AssignmentExpression -> LeftHandSideExpression `=` AssignmentExpression",
-                    "DestructuringAssignmentTarget -> LeftHandSideExpression",
-                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `in` Expression `)` Statement",
-                    "ForInOfStatement -> `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
-                    "ForInOfStatement -> `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement",
-                ]:
-                    # something about LeftHandSideExpression.covered_thing?
-
-                    # The LeftHandSideExpression is in a context that requires it to cover an AssignmentPattern.
-                    return True
-
-                else:
-                    return False
-
-            def initially_parsing_a_CoverParenthesizedExpressionAndArrowParameterList_or_CoverCallExpressionAndAsyncArrowHead():
-                for anc in focus_node.each_ancestor():
-                    if anc.symbol in [
-                        'CoverParenthesizedExpressionAndArrowParameterList',
-                        'CoverCallExpressionAndAsyncArrowHead',
-                    ]:
-                        return True
-                else:
-                    return False
-
-            # ----------------------------------------------
-
-            if ObjectLiteral_appears_in_a_context_where_ObjectAssignmentPattern_is_required():
-                # ... the following Early Error rules are <b>not</b> applied.
-                return False
-
-            if initially_parsing_a_CoverParenthesizedExpressionAndArrowParameterList_or_CoverCallExpressionAndAsyncArrowHead():
-                # In addition, they are not applied.
-                return False
-
-            return True
-
-        else:
-            assert 0
 
     def is_returning(frame):
         return hasattr(frame, 'return_value')
@@ -5089,6 +4965,7 @@ class _:
 #> where _p_ is a Parse Node (an instance of the generalized production)
 #> and _n_ is a nonterminal from the supplemental grammar.
 #> This means:
+#>  -- No early error rules are applied to _p_ or any of its descendants.
 #>  -- The sequence of tokens originally matched by _p_
 #>     is parsed again using _n_ as the goal symbol.
 #>     If _n_ takes grammatical parameters, then they are set to
@@ -5097,8 +4974,9 @@ class _:
 #>     with no tokens left over, then:
 #>       -- We refer to that instance of _n_ (a Parse Node, unique for a given _p_)
 #>          as "the _n_ that is <dfn>covered</dfn> by _p_".
-#>       -- All Early Error rules for _n_ and its derived productions
-#>          also apply to the _n_ that is covered by _p_.
+#>       -- Early error rules are applied
+#>          to the _n_ that is covered by _p_ and to its descendants,
+#>          as modified by further cases of "must cover".
 #>  -- Otherwise (if the parse fails), it is an early Syntax Error.
 
 @P("{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.")
@@ -5112,10 +4990,10 @@ class _:
         [local_ref, nont] = rule.children
         pnode = EXEC(local_ref, ES_ParseNode)
         covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
-        if covered_thing:
-            traverse_for_early_errors(covered_thing)
-        else:
+        if covered_thing is None:
             it_is_a_syntax_error(rule)
+        # The redirection of the early-error traversal
+        # is handled in `traverse_for_early_errors`.
         return None
 
 @P('{EE_RULE} : If {CONDITION}, {LOCAL_REF} must cover an? {nonterminal}.')
@@ -5131,10 +5009,10 @@ class _:
         if EXEC(cond, bool):
             pnode = EXEC(local_ref, ES_ParseNode)
             covered_thing = the_nonterminal_that_is_covered_by_pnode(nont, pnode)
-            if covered_thing:
-                traverse_for_early_errors(covered_thing)
-            else:
+            if covered_thing is None:
                 it_is_a_syntax_error(rule)
+            # The redirection of the early-error traversal
+            # is handled in `traverse_for_early_errors`.
         return None
 
 @P("{EXPR} : the {nonterminal} that is covered by {LOCAL_REF}")

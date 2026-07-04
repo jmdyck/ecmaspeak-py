@@ -290,24 +290,7 @@ def _handle_early_errors_section(section):
         (
             # 89 cases, the vast majority
             ['emu-grammar', 'ul'],
-            lambda emu_grammar, ul: (emu_grammar, None, ul)
-        ),
-        (
-            # 1 case (13.2.5.1 Static Semantics: Early Errors)
-            # sec-object-initializer-static-semantics-early-errors
-            # Extra <p> constrains application of subsequent 2 emu-grammar+ul pairs.
-            [
-                ('p', '.+ the following Early Error rules .+ not applied .+'),
-                'emu-grammar',
-                'ul',
-                'emu-note',
-                'emu-grammar',
-                'ul',
-            ],
-            lambda p, emu_grammar1, ul1, emu_note, emu_grammar2, ul2: [
-                (emu_grammar1, p, ul1),
-                (emu_grammar2, p, ul2),
-            ]
+            lambda emu_grammar, ul: (emu_grammar, ul)
         ),
         (
             # 1 case (B.1.4.1 "Static Semantics: Early Errors")
@@ -330,9 +313,9 @@ def _handle_early_errors_section(section):
 
     for body in bodies:
         assert isinstance(body, tuple)
-        (emu_grammar, p, ul) = body
+        (emu_grammar, ul) = body
 
-        EarlyErrorAlgDefn(alg_header, emu_grammar, ul, p)
+        EarlyErrorAlgDefn(alg_header, emu_grammar, ul)
 
     return True
 
@@ -340,11 +323,10 @@ def _handle_early_errors_section(section):
 
 class EarlyErrorAlgDefn(AlgDefn):
     # An early error block consists of:
-    # - an <emu-grammar> element (containing 1 or more productions),
-    # - a <ul> element (containing 1 or more "It is a Syntax Error" items), and
-    # - rarely, a <p> element that constrains the applicability of the rules.
+    # - an <emu-grammar> element (containing 1 or more productions), and
+    # - a <ul> element (containing 1 or more "It is a Syntax Error" items).
 
-    def __init__(self, alg_header, emu_grammar, ul, kludgey_p):
+    def __init__(self, alg_header, emu_grammar, ul):
         assert (
             alg_header is None
             # only for Annex B, because we want to syntax-check the rules,
@@ -362,16 +344,10 @@ class EarlyErrorAlgDefn(AlgDefn):
             and
             ul.element_name == 'ul'
         )
-        assert kludgey_p is None or (
-            isinstance(kludgey_p, HNode)
-            and
-            kludgey_p.element_name == 'p'
-        )
 
         self.parent_header = alg_header
         self.emu_grammar = emu_grammar
         self.ul = ul
-        self.kludgey_p = kludgey_p
 
         # ----
 
