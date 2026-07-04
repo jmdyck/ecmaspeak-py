@@ -2981,7 +2981,7 @@ def for_patterns(*patterns):
 
 # ==============================================================================
 # The section defines an accessor property,
-# or just the [[Get]] or [[Set]] attribute of an accessor property.
+# or just the [[Getter]] or [[Setter]] attribute of an accessor property.
 
 @for_patterns(
     (r"{THIS} is an accessor property whose set accessor function is \*undefined\*\. Its get accessor function performs the following steps when called:", 'emu-alg')
@@ -2990,8 +2990,8 @@ def _(section, mo, emu_alg):
     confirm_this_property(section, mo.group('this'))
 
     propAttrs = {
-        '[[Get]]': section.this_object,
-        '[[Set]]': '*undefined*',
+        '[[Getter]]': section.this_object,
+        '[[Setter]]': '*undefined*',
     }
     section.this_property_has_attributes(propAttrs)
 
@@ -3000,7 +3000,7 @@ def _(section, mo, emu_alg):
 # -------------------
 
 @for_patterns(
-    r"{THIS} is an accessor property with attributes {ATTRS}. The \[\[Get\]\] and \[\[Set\]\] attributes are defined as follows:"
+    r"{THIS} is an accessor property with attributes {ATTRS}. The \[\[Getter\]\] and \[\[Setter\]\] attributes are defined as follows:"
 )
 def _(section, mo):
     assert section.bcen_str in ['p', 'p emu-note']
@@ -3012,8 +3012,8 @@ def _(section, mo):
     assert g.section_title.startswith('get ')
     assert s.section_title.startswith('set ')
     propAttrs = {
-        '[[Get]]': g.section_title,
-        '[[Set]]': s.section_title,
+        '[[Getter]]': g.section_title,
+        '[[Setter]]': s.section_title,
         **attr_string_to_dict(mo.group('attrs'))
     }
     section.this_property_has_attributes(propAttrs)
@@ -3021,7 +3021,7 @@ def _(section, mo):
 # ------------------------------------------------------------------------------
 
 @for_patterns(
-    (r'The value of the (\[\[[GS]et\]\]) attribute is a built-in function that .+\. It performs the following steps when called:', 'emu-alg')
+    (r'The value of the (\[\[[GS]etter\]\]) attribute is a built-in function that .+\. It performs the following steps when called:', 'emu-alg')
 )
 def _(section, mo, emu_alg):
     propAttrs = { mo.group(1): section.this_object }

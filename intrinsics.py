@@ -202,8 +202,8 @@ class S_Property:
             ])
             or
             attr_name_set <= set([
-                '[[Get]]',
-                '[[Set]]',
+                '[[Getter]]',
+                '[[Setter]]',
                 '[[Enumerable]]',
                 '[[Configurable]]',
             ])
@@ -214,7 +214,7 @@ class S_Property:
 
     def kind(self):
         is_data = ('[[Value]]' in self.attrs or '[[Writable]]' in self.attrs)
-        is_accessor = ('[[Get]]' in self.attrs or '[[Set]]' in self.attrs)
+        is_accessor = ('[[Getter]]' in self.attrs or '[[Setter]]' in self.attrs)
         assert not (is_data and is_accessor)
         if is_data:
             kind = 'data'
@@ -349,8 +349,8 @@ def print_intrinsic_info():
                 put(f"{intrinsic.name} is {intrinsic.kind}, but has a [[ccb]] slot")
 
         for (_, s_prop) in sorted(intrinsic.properties.items()):
-            if '[[Value]]' not in s_prop.attrs and '[[Get]]' not in s_prop.attrs:
-                put(f"{intrinsic.name} property {s_prop.key}: neither [[Value]] nor [[Get]] is specified")
+            if '[[Value]]' not in s_prop.attrs and '[[Getter]]' not in s_prop.attrs:
+                put(f"{intrinsic.name} property {s_prop.key}: neither [[Value]] nor [[Getter]] is specified")
 
     # ----------
 

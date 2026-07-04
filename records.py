@@ -89,8 +89,8 @@ def extract_record_schemas():
     # the "Property Attributes" tables.
 
     record_schema = ensure_RecordSchema('Property Descriptor')
-    record_schema.add_field_decl(FieldDecl('[[Get]]',          'an Object or *undefined*', ''))
-    record_schema.add_field_decl(FieldDecl('[[Set]]',          'an Object or *undefined*', ''))
+    record_schema.add_field_decl(FieldDecl('[[Getter]]',       'an Object or *undefined*', ''))
+    record_schema.add_field_decl(FieldDecl('[[Setter]]',       'an Object or *undefined*', ''))
     record_schema.add_field_decl(FieldDecl('[[Value]]',        'an ECMAScript language value', ''))
     record_schema.add_field_decl(FieldDecl('[[Writable]]',     'a Boolean', ''))
     record_schema.add_field_decl(FieldDecl('[[Enumerable]]',   'a Boolean', ''))

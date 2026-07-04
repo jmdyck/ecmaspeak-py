@@ -9649,7 +9649,7 @@ class _:
         elif dsbn_name in ['[[Value]]', '[[Writable]]']:
             env0.assert_expr_is_of_type(prop_var, T_data_property_)
             result_type = T_Tangible_ if dsbn_name == '[[Value]]' else T_Boolean
-        elif dsbn_name in ['[[Get]]', '[[Set]]']:
+        elif dsbn_name in ['[[Getter]]', '[[Setter]]']:
             env0.assert_expr_is_of_type(prop_var, T_accessor_property_)
             result_type = T_Object | T_Undefined
         else:
