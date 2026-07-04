@@ -5079,20 +5079,20 @@ class _:
 #> ... In such cases a more restrictive supplemental grammar is provided
 #> that further restricts the acceptable token sequences.
 #> Typically, an early error rule will then state that, in certain contexts,
-#> "_P_ <dfn>must cover</dfn> an _N_",
-#> where _P_ is a Parse Node (an instance of the generalized production)
-#> and _N_ is a nonterminal from the supplemental grammar.
+#> "_p_ <dfn>must cover</dfn> an _n_",
+#> where _p_ is a Parse Node (an instance of the generalized production)
+#> and _n_ is a nonterminal from the supplemental grammar.
 #> This means:
-#>  -- The sequence of tokens originally matched by _P_
-#>     is parsed again using _N_ as the goal symbol.
-#>     If _N_ takes grammatical parameters, then they are set to
-#>     the same values used when _P_ was originally parsed.
-#>  -- If the sequence of tokens can be parsed as a single instance of _N_,
+#>  -- The sequence of tokens originally matched by _p_
+#>     is parsed again using _n_ as the goal symbol.
+#>     If _n_ takes grammatical parameters, then they are set to
+#>     the same values used when _p_ was originally parsed.
+#>  -- If the sequence of tokens can be parsed as a single instance of _n_,
 #>     with no tokens left over, then:
-#>       -- We refer to that instance of _N_ (a Parse Node, unique for a given _P_)
-#>          as "the _N_ that is <dfn>covered</dfn> by _P_".
-#>       -- All Early Error rules for _N_ and its derived productions
-#>          also apply to the _N_ that is covered by _P_.
+#>       -- We refer to that instance of _n_ (a Parse Node, unique for a given _p_)
+#>          as "the _n_ that is <dfn>covered</dfn> by _p_".
+#>       -- All Early Error rules for _n_ and its derived productions
+#>          also apply to the _n_ that is covered by _p_.
 #>  -- Otherwise (if the parse fails), it is an early Syntax Error.
 
 @P("{EE_RULE} : {LOCAL_REF} must cover an? {nonterminal}.")
@@ -8916,13 +8916,13 @@ class _:
         return EL_String(code_units)
 
 # ------------------------------------------------------------------------------
-#> The phrase "the <dfn>substring</dfn> of _S_ from _inclusiveStart_ to _exclusiveEnd_"
-#> (where _S_ is a String value or a sequence of code units and _inclusiveStart_ and _exclusiveEnd_ are integers)
+#> The phrase "the <dfn>substring</dfn> of _str_ from _inclusiveStart_ to _exclusiveEnd_"
+#> (where _str_ is a String value or a sequence of code units and _inclusiveStart_ and _exclusiveEnd_ are integers)
 #> denotes the String value consisting of
-#> the consecutive code units of _S_
+#> the consecutive code units of _str_
 #> beginning at index _inclusiveStart_ and ending immediately before index _exclusiveEnd_
 #> (which is the empty String when _inclusiveStart_ = _exclusiveEnd_).
-#> If the "to" suffix is omitted, the length of _S_ is used as the value of _exclusiveEnd_.
+#> If the "to" suffix is omitted, the length of _str_ is used as the value of _exclusiveEnd_.
 
 @P("{EX} : the substring of {var} from {EX} to {EX}")
 class _:
