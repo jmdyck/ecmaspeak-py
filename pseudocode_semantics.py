@@ -1887,7 +1887,7 @@ def convert_nature_to_type(nature):
 
             # record field type outside of <td>:
             '*null* or an Environment Record': T_Null | T_Environment_Record,
-            'an Object or *undefined*': T_Object | T_Undefined,
+            'a function object or *undefined*': T_function_object_ | T_Undefined,
             'a String or ~namespace~': T_String | T_tilde_namespace_,
 
             'a List of characters': ListType(T_character_),
@@ -8305,7 +8305,7 @@ def preferred_comparator(ta, tb, is_within_Assert):
 
     if common_t.is_a_subtype_of_or_equal_to(T_Object):
         return 'SameValue'
-    if T_Object.is_a_subtype_of_or_equal_to(common_t):
+    if T_function_object_.is_a_subtype_of_or_equal_to(common_t):
         return 'SameValue'
 
     if T_Symbol.is_a_subtype_of_or_equal_to(common_t):
@@ -9651,7 +9651,7 @@ class _:
             result_type = T_Tangible_ if dsbn_name == '[[Value]]' else T_Boolean
         elif dsbn_name in ['[[Getter]]', '[[Setter]]']:
             env0.assert_expr_is_of_type(prop_var, T_accessor_property_)
-            result_type = T_Object | T_Undefined
+            result_type = T_function_object_ | T_Undefined
         else:
             assert 0
         return (result_type, env0)
@@ -10013,6 +10013,8 @@ class _:
             '%Uint8Array%',
         ]:
             rt = T_constructor_object_
+        elif pws == '%ThrowTypeError%':
+            rt = T_function_object_
         elif pws.startswith('%Symbol.'):
             rt = T_Symbol
         else:
