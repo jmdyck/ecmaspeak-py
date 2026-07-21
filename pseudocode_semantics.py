@@ -3744,6 +3744,10 @@ class ES_UnicodeCodePoints(ES_Value):
 class _:
     s_tb = T_Unicode_code_points_
 
+@P("{VAL_DESC} : a sequence of 2 or more code points")
+class _:
+    s_tb = a_subset_of(T_Unicode_code_points_ | T_CharSetElement)
+
 @P("{LITERAL} : {backticked_oth}")
 class _:
     s_tb = a_subset_of(T_Unicode_code_points_)
@@ -5459,6 +5463,7 @@ class _:
         return tenv
 
 @P("{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}")
+@P("{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}, in reverse List order")
 @P("{EACH_THING} : {ITEM_NATURE} {DEFVAR} of {EX}, iterating backwards from its second-to-last element")
 class _:
     def s_nv(each_thing, env0):
@@ -5516,7 +5521,11 @@ class _:
 
         elif item_nature.prod.rhs_s == 'CharSetElement':
             item_type = T_CharSetElement
-            collection_type = T_CharSet
+            collection_type = T_CharSet | ListType(T_CharSetElement)
+
+        elif item_nature.prod.rhs_s == "single code point":
+            item_type = T_code_point_
+            collection_type = T_CharSetElement
 
         elif item_nature.prod.rhs_s == "{nonterminal}":
             [nont] = item_nature.children
@@ -8737,7 +8746,7 @@ class _:
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
-        env1 = env0.ensure_expr_is_of_type(var, T_String)
+        env1 = env0.ensure_expr_is_of_type(var, T_String | T_CharSetElement)
         return (T_MathNonNegativeInteger_, env1)
 
 @P("{CONDITION_1} : The length of {var} is {EX}")
@@ -10346,6 +10355,13 @@ class _:
         item_type = env1.vars[item_name]
         return (ListType(item_type), env1)
 
+@P("{EXPR} : a List consisting of the code points of {var}")
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_CharSetElement)
+        return (ListType(T_code_point_), env0)
+
 # ------------------------------------------------------------------------------
 # modify a List:
 
@@ -10686,7 +10702,7 @@ class _:
 # identify an element in a List:
 
 @P("{EXPR} : the first element of {SETTABLE}")
-@P("{EXPR} : the last element of {var}")
+@P("{EX} : the last element of {var}")
 class _:
     def s_expr(expr, env0, _):
         [var] = expr.children
@@ -13921,31 +13937,8 @@ class _:
 #@ 22.2.2.1 Notation
 
 # ------------------------------------------------------------------------------
-# CharSetElement
-
-@P("{EX} : the last code point of {var}")
-class _:
-    def s_expr(expr, env0, _):
-        [var] = expr.children
-        env0.assert_expr_is_of_type(var, T_CharSetElement)
-        return (T_code_point_, env0)
-
-@P("{EACH_THING} : code point {DEFVAR} in {var}, iterating backwards from its second-to-last code point")
-class _:
-    def s_nv(each_thing, env0):
-        [loop_var, collection_var] = each_thing.children
-        env0.assert_expr_is_of_type(collection_var, T_CharSetElement)
-        return env0.plus_new_entry(loop_var, T_code_point_)
-
-@P("{EACH_THING} : single code point {DEFVAR} in {var}")
-class _:
-    def s_nv(each_thing, env0):
-        [loop_var, collection_var] = each_thing.children
-        env0.assert_expr_is_of_type(collection_var, T_CharSetElement)
-        return env0.plus_new_entry(loop_var, T_code_point_)
-
-# ------------------------------------------------------------------------------
 # CharSet
+
 @P("{VAL_DESC} : a CharSet")
 class _:
     s_tb = T_CharSet
@@ -13956,6 +13949,15 @@ class _:
         [var, nont] = anode.children
         env0.assert_expr_is_of_type(var, T_CharSet)
         return env0
+
+@P("{COMMAND} : Sort {var} according to the length of each CharSetElement in descending order.")
+class _:
+    def s_nv(anode, env0):
+        [var] = anode.children
+        env0.assert_expr_is_of_type(var, ListType(T_CharSetElement))
+        return env0
+
+# ----
 
 @P("{CONDITION_1} : {EX} contains only single code points")
 class _:
@@ -14180,15 +14182,6 @@ class _:
     def s_expr(expr, env0, _):
         [emu_grammar] = expr.children
         return (T_CharSet, env0)
-
-# ---
-
-@P("{EACH_THING} : CharSetElement {DEFVAR} in {var} containing more than 1 character, iterating in descending order of length")
-class _:
-    def s_nv(each_thing, env0):
-        [loop_var, collection_var] = each_thing.children
-        env0.assert_expr_is_of_type(collection_var, T_CharSet)
-        return env0.plus_new_entry(loop_var, T_CharSetElement)
 
 # ------------------------------------------------------------------------------
 # MatchState

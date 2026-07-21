@@ -209,6 +209,7 @@
     Set {var}'s essential internal methods to the default ordinary object definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods to the definitions specified in {h_emu_xref}.
     Set {var}'s essential internal methods, except for {DSBN} and {DSBN}, to the definitions specified in {h_emu_xref}.
+    Sort {var} according to the length of each CharSetElement in descending order.
     Sort {var} according to the lexicographic order of their {dsb_word} field, treating the value of each such field as a sequence of UTF-16 code unit values. {note}
     Sort {var} using an implementation-defined sequence of {h_emu_meta_start}calls to {var}{h_emu_meta_end}. If any such call returns an abrupt completion, stop before performing any further calls to {var} and return that Completion Record.
     Store the individual bytes of {var} into {var}, starting at {var}[{var}].
@@ -272,9 +273,7 @@
 # ------------------------------------------------------
 
 {EACH_THING} :
-    CharSetElement {DEFVAR} in {var} containing more than 1 character, iterating in descending order of length
     child node {DEFVAR} of this Parse Node
-    code point {DEFVAR} in {var}, iterating backwards from its second-to-last code point
     element {DEFVAR} of {EX}
     element {DEFVAR} of {var}, in reverse List order
     field name {DEFVAR} of {var}
@@ -284,9 +283,9 @@
     own property key {DEFVAR} of {var} such that {CONDITION}, in ascending numeric index order
     own property key {DEFVAR} of {var} such that {CONDITION}, in descending numeric index order
     property of the Global Object specified in clause {h_emu_xref}
-    single code point {DEFVAR} in {var}
     {ITEM_NATURE} {DEFVAR} of {EX}
     {ITEM_NATURE} {DEFVAR} of {EX} such that {CONDITION}
+    {ITEM_NATURE} {DEFVAR} of {EX}, in reverse List order
     {ITEM_NATURE} {DEFVAR} of {EX}, iterating backwards from its second-to-last element
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}
     {ITEM_NATURE} {DEFVAR} such that {CONDITION}, in ascending order
@@ -322,6 +321,7 @@
     code unit
     integer
     nonterminal
+    single code point
     {nonterminal}
 
 # ------------------------------------------------------
@@ -677,6 +677,7 @@
 
 {EXPR} :
     a List consisting of each {EACH_THING}
+    a List consisting of the code points of {var}
     a List consisting of the sequence of code units that are the elements of {var}
     a List containing each child node of {var}, in order
     a List containing one or more {ERROR_TYPE} objects
@@ -833,7 +834,6 @@
     the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
     the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last Matcher in {var}
-    the last element of {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {EX}, {EX}, and {EX}
     the longest prefix of {var} that satisfies the syntax of a {nonterminal}, which might be {var} itself. If there is no such prefix, return {NUMBER_LITERAL}
@@ -941,8 +941,8 @@
     the integer represented by the 32-bit two's complement bit string {var}
     the internal slots listed in {h_emu_xref}
     the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)
-    the last code point of {var}
     the last code unit of {var}
+    the last element of {var}
     the length of {var}
     the number of code points in {PROD_REF}
     the number of code points in {PROD_REF}, excluding all occurrences of {nonterminal}
@@ -1411,6 +1411,7 @@
     a property value or property value alias for the Unicode property {var} listed in {h_a}
     a read-modify-write modification function
     a return completion
+    a sequence of 2 or more code points
     a sequence of Unicode code points
     a sequence of characters
     a set of algorithm steps
