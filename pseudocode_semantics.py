@@ -6768,6 +6768,12 @@ def handle_completion_record_shorthand(operator, operand, env0):
                 gen_arg = exes_in_exlist_opt(exlist_opt)[0]
                 env2 = env1.with_expr_type_narrowed(gen_arg, T_Generator_object_)
 
+            elif prefix == 'NewPromiseCapability':
+                # In the not-returning-early env,
+                # the first (and only) arg is guaranteed to be a constructor.
+                ctor_arg = exes_in_exlist_opt(exlist_opt)[0]
+                env2 = env1.with_expr_type_narrowed(ctor_arg, T_constructor_object_)
+
             else:
                 env2 = env1
 
