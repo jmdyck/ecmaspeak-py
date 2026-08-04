@@ -3556,7 +3556,16 @@ class _:
         return (T_code_point_, env0)
 
 @P("{EXPR} : the code point {var}")
-        # This means "the code point whose numeric value is {var}"
+class _:
+    def s_expr(expr, env0, _):
+        [var] = expr.children
+        env0.assert_expr_is_of_type(var, T_MathInteger_)
+        add_pass_error(
+            expr,
+            "This should be `the code point whose numeric value is ...`"
+        )
+        return (T_code_point_, env0)
+
 @P("{EXPR} : the code point whose numeric value is {EX}")
 class _:
     def s_expr(expr, env0, _):
@@ -7171,6 +7180,13 @@ class _:
         op_st = op.source_text()
 
         def type_arithmetic(a_mt, op_st, b_mt, a, b):
+            if a_mt in [T_code_point_, T_code_unit_]:
+                add_pass_error(
+                    a,
+                    f"ST includes {a_mt}, which you shouldn't do arithmetic on"
+                )
+                a_mt = T_MathNonNegativeInteger_
+
             triple = (a_mt, op_st, b_mt)
             result_t = {
 
@@ -7217,8 +7233,6 @@ class _:
                 (T_MathInteger_, 'modulo' , T_MathInteger_): T_MathInteger_,
                 (T_MathInteger_, 'plus'   , T_MathInteger_): T_MathInteger_,
                 (T_MathInteger_, 'times'  , T_MathInteger_): T_MathInteger_,
-                (T_code_point_ , '-'      , T_MathInteger_): T_MathInteger_, # warn
-                (T_code_unit_  , '-'      , T_MathInteger_): T_MathInteger_, # warn
 
                 # --------
 
@@ -7441,6 +7455,14 @@ class _:
 
         for a_memtype in a_memtypes:
             for b_memtype in b_memtypes:
+
+                if a_memtype in [T_code_point_, T_code_unit_]:
+                    add_pass_error(
+                        a,
+                        f"ST includes {a_mt}, which you shouldn't do comparisons on"
+                    )
+                    a_memtype = T_MathNonNegativeInteger_
+
                 triple = (a_memtype, op_st, b_memtype)
                 something = {
 
@@ -7532,8 +7554,6 @@ class _:
 
                     (T_MathInteger_     , 'is greater than or equal to', T_MathInteger_): 'TF',
                     (T_MathInteger_     , 'is strictly greater than'   , T_MathInteger_): 'TF',
-
-                    (T_code_point_ , '≤', T_MathInteger_): 'TF', # but deserves a warning
 
                     # -------
                     # Number:
