@@ -856,7 +856,7 @@
     the result of applying the bitwise AND operation to {var} and {var}
     the result of applying the bitwise exclusive OR (XOR) operation to {var} and {var}
     the result of applying the bitwise inclusive OR operation to {var} and {var}
-    the result of clamping {var} between 0 and {EX}
+    the result of clamping {EX} between {EX} and {EX}
     the result of converting {var} to IEEE 754-2019 binary16 format using roundTiesToEven mode
     the result of converting {var} to IEEE 754-2019 binary32 format using roundTiesToEven mode
     the result of converting {var} to IEEE 754-2019 binary64 format

@@ -7760,10 +7760,11 @@ class _:
 #> produces _upper_ if _x_ > _upper_,
 #> and otherwise produces _x_.
 
-@P("{EXPR} : the result of clamping {var} between 0 and {EX}")
+@P("{EXPR} : the result of clamping {EX} between {EX} and {EX}")
 class _:
     def s_expr(expr, env0, _):
-        [var, upper_ex] = expr.children
+        [var, lower_ex, upper_ex] = expr.children
+        env0.assert_expr_is_of_type(lower_ex, T_MathInteger_)
         env0.assert_expr_is_of_type(upper_ex, T_MathInteger_)
         (var_t, env1) = tc_expr(var, env0)
         if var_t == T_ExtendedMathReal_:
