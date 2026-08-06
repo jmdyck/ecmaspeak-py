@@ -225,7 +225,7 @@
     While {CONDITION}, an implementation may perform the following steps:{IND_COMMANDS}
     {IF_CLOSED}
     {IF_OTHER}
-    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.
+    {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} passing {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record passed by the resumed computation.
     {note}
 
 # ----------------------------------------------

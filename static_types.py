@@ -878,6 +878,7 @@ _named_type_hierarchy = {
             'not_in_node': {},   # for an optional child of a node
             'not_set': {},       # for a metavariable that might not be initialized
             'not_returned': {},  # for when control falls off the end of an operation
+            'never': {},         # for when control never returns from some alg
         },
         'Normal': {
             'Tangible_': {

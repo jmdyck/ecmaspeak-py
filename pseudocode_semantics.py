@@ -1595,8 +1595,8 @@ def tc_proc(op_name, defns, init_env):
 
             assert isinstance(anode, ANode)
             if anode.prod.lhs_s in ['{EMU_ALG_BODY}', '{IND_COMMANDS}', '{EE_RULE}']:
-                result = tc_nonvalue(anode, in_env)
-                assert result is None
+                out_env = tc_nonvalue(anode, in_env)
+                assert out_env is None
             elif anode.prod.lhs_s in ['{EXPR}', '{NAMED_OPERATION_INVOCATION}']:
                 (out_t, out_env) = tc_expr(anode, in_env)
                 proc_add_return(out_env, out_t, anode)
@@ -1614,13 +1614,18 @@ def tc_proc(op_name, defns, init_env):
         assert final_env is None
         return None
 
-    assert final_env is not None
-
-    if T_Top_.is_a_subtype_of_or_equal_to(final_env.vars['*return*']):
-        print()
-        for e in rr_envs:
-            print(e.vars['*return*'])
-        #? assert 0, final_env.vars['*return*']
+    if final_env is None:
+        # The alg never returns.
+        # i.e., it ends with a transfer of control,
+        # and "Assert: This step is never reached"
+        # Currently, this only happens in abstract closures.
+        assert op_name is None
+    else:
+        if T_Top_.is_a_subtype_of_or_equal_to(final_env.vars['*return*']):
+            print()
+            for e in rr_envs:
+                print(e.vars['*return*'])
+            #? assert 0, final_env.vars['*return*']
 
     return final_env
 
@@ -5653,7 +5658,7 @@ class _:
     def s_cond(cond, env0, asserting):
         [] = cond.children
         assert asserting
-        return (env0, env0)
+        return (None, env0)
 
 # ------------------------------------------------------------------------------
 #> Algorithm steps may declare named aliases for any value ...
@@ -11608,7 +11613,14 @@ class _:
 
         defns = [alg_defn]
         env_after_commands = tc_proc(None, defns, env_for_commands)
-        t = ProcType(tuple(clo_param_types), env_after_commands.vars['*return*'])
+        if env_after_commands is None:
+            # The closure never returns, it just transfers control and never regains it.
+            # But the closure needs a return-type.
+            ret_type = T_never
+        else:
+            ret_type = env_after_commands.vars['*return*']
+
+        t = ProcType(tuple(clo_param_types), ret_type)
         return (t, env0)
 
 # ==============================================================================
@@ -12392,7 +12404,7 @@ class _:
 # -----------------
 # resume-after-push (i.e., resuming an EC that's just been pushed onto the stack):
 
-@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} using {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record returned by the resumed computation.")
+@P("{COMMAND} : {h_emu_meta_start}Resume the suspended evaluation of {var}{h_emu_meta_end} passing {EX} as the result of the operation that suspended it. Let {DEFVAR} be the Completion Record passed by the resumed computation.")
 class _:
     def s_nv(anode, env0):
         [_, ctx_var, _, resa_ex, resb_var] = anode.children
