@@ -61,9 +61,8 @@
 # --------------------------
 
 {CONSTANT_DEF} :
-    {CONSTANT_NAME} = {dec_int_lit}
-    {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f}
-    {CONSTANT_NAME} = {starred_int_lit}{h_sub_fancy_f} = {EXPR}
+    {CONSTANT_NAME} = {EXPR}
+    {CONSTANT_NAME} = {EXPR} = {EXPR}
 
 # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
@@ -1192,6 +1191,7 @@
 # --------------------------------
 
 {NUM_EXPR} :
+    10<sup>{dec_int_lit}</sup>
     {EX} raised to the power {EX}
     {PRODUCT}
     {SUM}
@@ -1256,6 +1256,9 @@
     msPerHour
     msPerMinute
     msPerSecond
+    nsPerMicrosecond
+    nsPerMillisecond
+    nsPerSecond
 
 # --------------------------------
 

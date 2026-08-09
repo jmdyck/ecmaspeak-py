@@ -13736,6 +13736,9 @@ class _:
             'msPerHour'        : T_IntegralNumber_,
             'msPerMinute'      : T_IntegralNumber_,
             'msPerSecond'      : T_IntegralNumber_,
+            'nsPerMicrosecond' : T_MathNonNegativeInteger_,
+            'nsPerMillisecond' : T_MathNonNegativeInteger_,
+            'nsPerSecond'      : T_MathNonNegativeInteger_,
         }[constant_name_str]
         return (result_type, env0)
 
