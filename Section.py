@@ -1029,8 +1029,8 @@ def _handle_structured_header(section):
                     subnature == vds
                 )
 
-            elif p == '{VAL_DESC} : an integral Number in {INTERVAL}':
-                return (subnature == 'an integral Number')
+            elif p == '{VAL_DESC} : an integer in {INTERVAL}':
+                return (subnature == 'an integer')
 
             elif p == '{VAL_DESC} : a Record with fields {dsb_word} ({VALUE_DESCRIPTION}) and {dsb_word} ({VALUE_DESCRIPTION})':
                 return (subnature == vd.source_text())
@@ -1074,26 +1074,15 @@ def _handle_structured_header(section):
                     (r'\*true\*, \*false\*, or \*undefined\* .+', ['a Boolean', '*undefined*']),
 
                     # Number/BigInt
-                    (r'\*1\*<sub>\U0001d53d</sub> if .+ and \*\+0\*<sub>\U0001d53d</sub> otherwise.', ['*1*<sub>𝔽</sub>', '*+0*<sub>𝔽</sub>']),
                     (r'_arg_ converted to a Number or a BigInt.',   ['a Number', 'a BigInt']),
-                    (r'a Number identifying the day of the week .+', 'an integral Number'),
-                    (r'a Number identifying the month .+',           'an integral Number'),
                     (r'an implementation-approximated value representing the result of raising _base_ to the _exponent_ power.', 'a Number'),
-                    (r'the day number of .+',                        'an integral Number'),
-                    (r'the day of the month .+',                     'an integral Number'),
                     (r'the full year associated .+',                 'an integral Number'),
-                    (r'the hour of the day .+',                      'an integral Number'),
                     (r'the loaded value.',                           ['a Number', 'a BigInt']), #?
-                    (r'the millisecond of the second .+',            'an integral Number'),
-                    (r'the minute of the hour .+',                   'an integral Number'),
                     (r'the number of days in year _y_.',             ['*365*<sub>𝔽</sub>', '*366*<sub>𝔽</sub>']),
-                    (r'the number of milliseconds since .+',         'an integral Number'),
                     (r'the one\'s complement of _bigint_.',          'a BigInt'),
                     (r'the respective Number value.',                'a Number'),
-                    (r'the second of the minute .+',                 'an integral Number'),
                     (r'the time value of the start of year _y_.',    'a time value'),
                     (r'the value of the \*"length"\* property of an array-like object.', 'an integral Number'),
-                    (r'the year in which .+',                        'an integral Number'),
 
                     # String
                     (r'a String representing .+', 'a String'),
@@ -1120,6 +1109,18 @@ def _handle_structured_header(section):
                     (r'the code unit index corresponding to .+',     'a non-negative integer'),
                     (r'the length of _string_.',                     'a non-negative integer'),
                     (r'the number of left-capturing parentheses .+', 'a non-negative integer'),
+
+                    (r'1 if .+ and 0 otherwise.',                      ['1', '0']),
+                    (r'an integer identifying the day of the week .+', 'an integer'),
+                    (r'an integer identifying the month .+',           'an integer'),
+                    (r'the day number of .+',                          'an integer'),
+                    (r'the day of the month .+',                       'an integer'),
+                    (r'the hour of the day .+',                        'an integer'),
+                    (r'the millisecond of the second .+',              'an integer'),
+                    (r'the minute of the hour .+',                     'an integer'),
+                    (r'the number of milliseconds since .+',           'an integer'),
+                    (r'the second of the minute .+',                   'an integer'),
+                    (r'the year in which .+',                          'an integer'),
 
                     # CharSet
                     (r'_charSet_.',             'a CharSet'),

@@ -92,7 +92,6 @@
 {OP_NAME} :
     ForIn/OfBodyEvaluation
     ForIn/OfHeadEvaluation
-    msFromTime
     {cap_word}
     {cap_word}::{low_word}
     {dsb_word}
@@ -769,7 +768,8 @@
     the List of octets resulting by applying the UTF-8 transformation to {DOTTING}
     the List of unique available named time zone identifiers, sorted according to lexicographic code unit order
     the List of {nonterminal} items in {PROD_REF}, in source text order
-    the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}
+    the Name of the entry in {h_emu_xref} whose Month Index = {PP_NAMED_OPERATION_INVOCATION}
+    the Name of the entry in {h_emu_xref} whose WeekDay Index = {PP_NAMED_OPERATION_INVOCATION}
     the Number value that corresponds to {var}
     the Parse Node (an instance of {var}) at the root of the parse tree resulting from the parse
     the Private Name in {var} whose {dsb_word} is {var}
@@ -831,7 +831,7 @@
     the intersection of CharSets {var} and {var}
     the intrinsic function {percent_word}
     the intrinsic object associated with the constructor name {DOTTING} in {h_emu_xref}
-    the largest integral Number {DEFVAR} (closest to +∞) such that {CONDITION_1}
+    the largest integer {DEFVAR} (closest to +∞) such that {CONDITION_1}
     the last Matcher in {var}
     the list-concatenation of {EX} and {EX}
     the list-concatenation of {EX}, {EX}, and {EX}
@@ -1082,7 +1082,6 @@
     log2
     max
     min
-    msFromTime
     scf
     truncate
     {NUMERIC_TYPE_INDICATOR}::{low_word}
@@ -1467,7 +1466,6 @@
     an integer index
     an integer ≥ {dsb_word}
     an integral Number
-    an integral Number in {INTERVAL}
     an internal slot name
     an iterator object
     an odd integral Number

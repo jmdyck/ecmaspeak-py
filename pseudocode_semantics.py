@@ -7994,12 +7994,20 @@ class _:
         [interval] = val_desc.children
         if env is None:
             if interval.source_text() in [
+                'the inclusive interval from 0 to 11',
                 'the inclusive interval from 0 to 23',
+                'the inclusive interval from 0 to 23',
+                'the inclusive interval from 0 to 365',
                 'the inclusive interval from 0 to 59',
+                'the inclusive interval from 0 to 59',
+                'the inclusive interval from 0 to 6',
+                'the inclusive interval from 0 to 999',
                 'the inclusive interval from 0 to 999',
                 'the inclusive interval from 1 to 12',
                 'the inclusive interval from 1 to 31',
+                'the inclusive interval from 1 to 31',
                 'the inclusive interval from 2 to 36',
+                'the interval from 0 (inclusive) to msPerDay (exclusive)',
             ]:
                 sup_t = T_MathNonNegativeInteger_
             else:
@@ -8023,25 +8031,6 @@ class _:
         [interval] = expr.children
         env0.assert_expr_is_of_type(interval, T_MathNonNegativeInteger_)
         return (ListType(T_MathNonNegativeInteger_), env0)
-
-@P('{VAL_DESC} : an integral Number in {INTERVAL}')
-class _:
-    def s_tb(val_desc, env):
-        [interval] = val_desc.children
-        if env is None:
-            assert interval.source_text() in [
-                "the inclusive interval from *+0*<sub>𝔽</sub> to *6*<sub>𝔽</sub>",
-                "the inclusive interval from *+0*<sub>𝔽</sub> to *11*<sub>𝔽</sub>",
-                "the inclusive interval from *+0*<sub>𝔽</sub> to *23*<sub>𝔽</sub>",
-                "the inclusive interval from *+0*<sub>𝔽</sub> to *59*<sub>𝔽</sub>",
-                "the inclusive interval from *+0*<sub>𝔽</sub> to *365*<sub>𝔽</sub>",
-                "the inclusive interval from *+0*<sub>𝔽</sub> to *999*<sub>𝔽</sub>",
-                "the inclusive interval from *1*<sub>𝔽</sub> to *31*<sub>𝔽</sub>",
-                "the interval from *+0*<sub>𝔽</sub> (inclusive) to msPerDay (exclusive)",
-            ], interval.source_text()
-        else:
-            env.assert_expr_is_of_type(interval, T_IntegralNumber_)
-        return a_subset_of(T_IntegralNumber_)
 
 # ------------------------------------------------------------------------------
 # (The spec should talk about bit strings somewhere.)
@@ -9325,13 +9314,13 @@ class _:
         env0.assert_expr_is_of_type(var, T_Number)
         return (T_Number, env0)
 
-@P("{EXPR} : the largest integral Number {DEFVAR} (closest to +\u221e) such that {CONDITION_1}")
+@P("{EXPR} : the largest integer {DEFVAR} (closest to +\u221e) such that {CONDITION_1}")
 class _:
     def s_expr(expr, env0, _):
         [defvar, cond] = expr.children
-        env1 = env0.plus_new_entry(defvar, T_IntegralNumber_)
+        env1 = env0.plus_new_entry(defvar, T_MathNonNegativeInteger_)
         (t_env, _) = tc_cond(cond, env1)
-        return (T_IntegralNumber_, t_env)
+        return (T_MathNonNegativeInteger_, t_env)
 
 @P("{EXPR} : the integral Number nearest {var} in the direction of *+0*{h_sub_fancy_f}")
 class _:
@@ -13732,10 +13721,10 @@ class _:
             'HoursPerDay'      : T_MathNonNegativeInteger_,
             'MinutesPerHour'   : T_MathNonNegativeInteger_,
             'SecondsPerMinute' : T_MathNonNegativeInteger_,
-            'msPerDay'         : T_IntegralNumber_,
-            'msPerHour'        : T_IntegralNumber_,
-            'msPerMinute'      : T_IntegralNumber_,
-            'msPerSecond'      : T_IntegralNumber_,
+            'msPerDay'         : T_MathNonNegativeInteger_,
+            'msPerHour'        : T_MathNonNegativeInteger_,
+            'msPerMinute'      : T_MathNonNegativeInteger_,
+            'msPerSecond'      : T_MathNonNegativeInteger_,
             'nsPerMicrosecond' : T_MathNonNegativeInteger_,
             'nsPerMillisecond' : T_MathNonNegativeInteger_,
             'nsPerSecond'      : T_MathNonNegativeInteger_,
@@ -13743,7 +13732,7 @@ class _:
         return (result_type, env0)
 
 # ==============================================================================
-#@ 21.4.1.19 Time Zone Identifiers
+#@ 21.4.1.18 Time Zone Identifiers
 
 @P("{VAL_DESC} : a non-primary time zone identifier in this implementation")
 class _:
@@ -13769,7 +13758,7 @@ class _:
         return (T_String, env0)
 
 # ==============================================================================
-#@ 21.4.1.22 Time Zone Identifier Record
+#@ 21.4.1.21 Time Zone Identifier Record
 
 @P("{VAL_DESC} : a Time Zone Identifier Record")
 @P("{LIST_ELEMENTS_DESCRIPTION} : Time Zone Identifier Records")
@@ -13777,7 +13766,7 @@ class _:
     s_tb = T_Time_Zone_Identifier_Record
 
 # ==============================================================================
-#@ 21.4.1.23 AvailableNamedTimeZoneIdentifiers
+#@ 21.4.1.22 AvailableNamedTimeZoneIdentifiers
 
 @P("{CONDITION_1} : the implementation does not include local political rules for any time zones")
 @P("{CONDITION_1} : the implementation only supports the UTC time zone")
@@ -13787,7 +13776,7 @@ class _:
         return (env0, env0)
 
 # ==============================================================================
-#@ 21.4.1.26 UTC
+#@ 21.4.1.25 UTC
 
 @P("{EX} : the largest integral Number &lt; {var} for which {CONDITION_1} (i.e., {var} represents the last local time before the transition)")
 class _:
@@ -13798,7 +13787,7 @@ class _:
         return (T_IntegralNumber_, env0)
 
 # ==============================================================================
-#@ 21.4.1.28 MakeDay
+#@ 21.4.1.27 MakeDay
 
 @P("{COMMAND} : Find a finite time value {DEFVAR} such that {CONDITION}; but if this is not possible (because some argument is out of range), return {LITERAL}.")
 class _:
@@ -13855,11 +13844,12 @@ class _:
 # ==============================================================================
 #@ 21.4.4.41.2 DateString
 
-@P("{EXPR} : the Name of the entry in {h_emu_xref} with the Number {PP_NAMED_OPERATION_INVOCATION}")
+@P("{EXPR} : the Name of the entry in {h_emu_xref} whose Month Index = {PP_NAMED_OPERATION_INVOCATION}")
+@P("{EXPR} : the Name of the entry in {h_emu_xref} whose WeekDay Index = {PP_NAMED_OPERATION_INVOCATION}")
 class _:
     def s_expr(expr, env0, _):
         [emu_xref, noi] = expr.children
-        env1 = env0.ensure_expr_is_of_type(noi, T_IntegralNumber_)
+        env1 = env0.ensure_expr_is_of_type(noi, T_MathNonNegativeInteger_)
         return (T_String, env1)
 
 # ==============================================================================
